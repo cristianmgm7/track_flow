@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:trackflow/screens/auth.dart';
+import 'package:trackflow/screens/dashboard.dart';
 import 'package:trackflow/theme/theme.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -19,7 +21,14 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      home: const AuthScreen(),
+      home: StreamBuilder(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          return snapshot.hasData
+              ? const DashboardScreen()
+              : const AuthScreen();
+        },
+      ),
     );
   }
 }

@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static ThemeData theme = ThemeData(
     brightness: Brightness.light,
-    primaryColor: Colors.black,
-    scaffoldBackgroundColor: Color(0xFFF5F5F5),
+    primaryColor: Colors.white,
+    scaffoldBackgroundColor: Colors.black26,
     textTheme: TextTheme(
       displayLarge: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
-        color: Colors.black,
+        color: Colors.white,
       ),
       bodyLarge: TextStyle(fontSize: 16, color: Colors.grey[800]),
       titleMedium: TextStyle(fontSize: 14, color: Colors.grey[600]),
