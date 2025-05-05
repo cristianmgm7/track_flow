@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 final _firebaseAuth = FirebaseAuth.instance;
+final _googleSignIn = GoogleSignIn();
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -17,6 +19,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var _isLogin = true;
   var _email = '';
   var _password = '';
+  var _isLoading = false;
 
   Future<void> _submit() async {
     final isValid = _formKey.currentState!.validate();
@@ -24,6 +27,9 @@ class _AuthScreenState extends State<AuthScreen> {
       return;
     }
     _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
     try {
       if (_isLogin) {
         final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
@@ -42,6 +48,42 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message ?? 'authentication error')),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await _firebaseAuth.signInWithCredential(credential);
+    } catch (e) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to sign in with Google: ${e.toString()}'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -129,6 +171,17 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Text(_isLogin ? "Sign in" : "Sign up"),
               ),
               SizedBox(height: 16),
+              GestureDetector(
+                onTap: _signInWithGoogle,
+                child: Image.asset(
+                  _isLogin
+                      ? 'assets/images/ios_dark_sq_SI@1x.png'
+                      : 'assets/images/ios_dark_sq_SU@1x.png',
+                  height: 50, // Adjust as needed for your UI
+                  fit: BoxFit.contain,
+                ),
+              ),
+              SizedBox(height: 16),
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -139,6 +192,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   _isLogin ? "Create an account" : "I already have an account",
                 ),
               ),
+              SizedBox(height: 16),
             ],
           ),
         ),

@@ -39,6 +39,7 @@ dependencies:
   firebase_storage: ^12.4.5
   image_picker: ^1.1.2
   google_sign_in: ^6.1.5
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -92,3 +93,14 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  assets:
+    - assets/images/
+    - assets/images/ios_dark_sq_SI@1x.png
+    - assets/images/ios_dark_sq_SU@1x.png
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto-Medium.ttf
+          weight: 500
