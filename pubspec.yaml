@@ -99,8 +99,8 @@ flutter:
     - assets/images/ios_dark_sq_SI@1x.png
     - assets/images/ios_dark_sq_SU@1x.png
 
-  fonts:
-    - family: Roboto
-      fonts:
-        - asset: assets/fonts/Roboto-Medium.ttf
-          weight: 500
+  # fonts:
+  #   - family: Roboto
+  #     fonts:
+  #       - asset: assets/fonts/Roboto-Medium.ttf
+  #         weight: 500

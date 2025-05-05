@@ -51,7 +51,7 @@ class DashboardScreen extends StatelessWidget {
             SizedBox(height: 16),
             // Active Projects
             Text(
-              "Active Projects",
+              "Active Projects on TrackFlow",
               style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 8),

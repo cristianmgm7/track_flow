@@ -19,7 +19,7 @@ class _AuthScreenState extends State<AuthScreen> {
   var _isLogin = true;
   var _email = '';
   var _password = '';
-  var _isLoading = false;
+  var _isLoading = true;
 
   Future<void> _submit() async {
     final isValid = _formKey.currentState!.validate();
@@ -56,17 +56,33 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    print('Signing in with Google');
     setState(() {
       _isLoading = true;
     });
     try {
+      // First, try to sign out to clear any existing state
+      await _googleSignIn.signOut();
+
+      // Then attempt to sign in
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Sign-In was cancelled by the user.'),
+          ),
+        );
         return;
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        throw Exception('Failed to get Google Auth tokens');
+      }
+
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -78,8 +94,10 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to sign in with Google: ${e.toString()}'),
+          duration: const Duration(seconds: 5),
         ),
       );
+      print('Google Sign-In Error: $e'); // For debugging
     } finally {
       setState(() {
         _isLoading = false;
@@ -95,13 +113,8 @@ class _AuthScreenState extends State<AuthScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Icon(
-                Icons.music_note,
-                size: 64,
-                color: Theme.of(context).primaryColor,
-              ),
+              Image.asset('assets/images/logo.png', height: 100),
               SizedBox(height: 16),
               Text(
                 "Welcome to TrackFlow",
@@ -167,6 +180,13 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               SizedBox(height: 16),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Color(0xFF1F1F1F),
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  minimumSize: Size(200, 50),
+                ),
                 onPressed: _submit,
                 child: Text(_isLogin ? "Sign in" : "Sign up"),
               ),
