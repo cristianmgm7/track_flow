@@ -5,11 +5,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
-  void _onIntroEnd(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('hasCompletedOnboarding', true);
-    if (context.mounted) {
-      Navigator.of(context).pushReplacementNamed('/login');
+  Future<void> _completeOnboarding(BuildContext context) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('hasCompletedOnboarding', true);
+      if (context.mounted) {
+        // Use pushAndRemoveUntil to clear the navigation stack
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
+    } catch (e) {
+      // If there's an error, still try to navigate
+      if (context.mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
     }
   }
 
@@ -49,9 +57,10 @@ class OnboardingScreen extends StatelessWidget {
 
     return IntroductionScreen(
       pages: pages,
-      onDone: () => _onIntroEnd(context),
+      onDone: () => _completeOnboarding(context),
       showSkipButton: true,
       skip: const Text("Skip"),
+      onSkip: () => _completeOnboarding(context),
       next: const Icon(Icons.arrow_forward),
       done: const Text(
         "Get Started",
@@ -65,6 +74,11 @@ class OnboardingScreen extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(25.0)),
         ),
       ),
+      skipOrBackFlex: 0,
+      nextFlex: 0,
+      showBackButton: false,
+      freeze: false,
+      animationDuration: 350,
     );
   }
 }

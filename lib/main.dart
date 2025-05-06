@@ -25,35 +25,25 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      home: FutureBuilder<bool>(
-        future: _checkFirstTime(),
+      home: FutureBuilder<AppState>(
+        future: _determineInitialState(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
 
-          // If it's the first time, show the launch screen
-          if (snapshot.data == true) {
-            return const LaunchScreen();
-          }
+          final appState = snapshot.data ?? AppState.launch;
 
-          // Otherwise, check authentication state
-          return StreamBuilder<User?>(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, authSnapshot) {
-              if (authSnapshot.connectionState == ConnectionState.waiting) {
-                return const SplashScreen();
-              }
-
-              // If user is authenticated, show dashboard
-              if (authSnapshot.hasData) {
-                return const DashboardScreen();
-              }
-
-              // If user is not authenticated, show auth screen
+          switch (appState) {
+            case AppState.launch:
+              return const LaunchScreen();
+            case AppState.onboarding:
+              return const OnboardingScreen();
+            case AppState.auth:
               return const AuthScreen();
-            },
-          );
+            case AppState.dashboard:
+              return const DashboardScreen();
+          }
         },
       ),
       routes: {
@@ -64,14 +54,37 @@ class App extends StatelessWidget {
     );
   }
 
-  Future<bool> _checkFirstTime() async {
+  Future<AppState> _determineInitialState() async {
     try {
+      // Check if user is already authenticated
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        return AppState.dashboard;
+      }
+
+      // Check if this is a fresh install or reinstall
       final prefs = await SharedPreferences.getInstance();
       final hasCompletedOnboarding = prefs.getBool('hasCompletedOnboarding');
-      return hasCompletedOnboarding == null || !hasCompletedOnboarding;
+      final hasSeenLaunch = prefs.getBool('hasSeenLaunch');
+
+      // Fresh install or reinstall
+      if (hasSeenLaunch == null) {
+        await prefs.setBool('hasSeenLaunch', true);
+        return AppState.launch;
+      }
+
+      // Has seen launch but not completed onboarding
+      if (hasCompletedOnboarding == null || !hasCompletedOnboarding) {
+        return AppState.onboarding;
+      }
+
+      // Has completed onboarding but not logged in
+      return AppState.auth;
     } catch (e) {
-      // If there's an error, assume it's first time
-      return true;
+      // If there's an error, start from launch
+      return AppState.launch;
     }
   }
 }
+
+enum AppState { launch, onboarding, auth, dashboard }
