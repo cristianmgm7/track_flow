@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/screens/auth.dart';
-import 'package:trackflow/theme/theme.dart';
 
 void main() {
   runApp(const App());
@@ -11,10 +9,18 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'TrackFlow',
-      theme: AppTheme.theme,
-      home: const AuthScreen(),
+    return MaterialApp(title: 'TrackFlow', home: const HomeScreen());
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('TrackFlow')),
+      body: Center(child: Text('Welcome to TrackFlow!')),
     );
   }
 }
