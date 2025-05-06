@@ -1,6 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:trackflow/screens/auth.dart';
 import 'package:trackflow/widgets/preferences.dart';
 import 'package:trackflow/widgets/profile_information.dart';
 import 'package:trackflow/widgets/sign_out.dart';
