@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+//import 'package:trackflow/screens/login_screen.dart';
+
+class LaunchScreen extends StatelessWidget {
+  const LaunchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        padding: const EdgeInsets.all(16.0),
+        child: Stack(
+          children: [
+            // Theme toggle in top right
+            Positioned(
+              top: 16,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.brightness_6),
+                onPressed: () {
+                  // TODO: Implement theme toggle
+                },
+              ),
+            ),
+            // Main content
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo
+                  const Icon(Icons.music_note, size: 80, color: Colors.blue),
+                  const SizedBox(height: 32),
+                  // Title
+                  Text(
+                    'Welcome to TrackFlow',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  // Description
+                  Text(
+                    'The ultimate platform for artists, producers, and songwriters to collaborate on music projects.',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  // Get Started button
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/onboarding');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
+                      ),
+                    ),
+                    child: const Text('Get Started'),
+                  ),
+                  const SizedBox(height: 16),
+                  // Login link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Already have an account? ',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/login');
+                        },
+                        child: const Text('Log in'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
