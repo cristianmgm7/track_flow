@@ -40,6 +40,8 @@ dependencies:
   image_picker: ^1.1.2
   google_sign_in: ^6.1.5
   google_fonts: ^6.1.0
+  introduction_screen: ^3.1.12
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

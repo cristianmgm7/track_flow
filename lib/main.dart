@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/screens/auth.dart';
 import 'package:trackflow/screens/dashboard.dart';
+import 'package:trackflow/screens/launch_screen.dart';
+import 'package:trackflow/screens/onboarding_screen.dart';
 import 'package:trackflow/screens/splash.dart';
 import 'package:trackflow/theme/theme.dart';
 
@@ -22,18 +25,66 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      home: StreamBuilder(
-        stream: FirebaseAuth.instance.authStateChanges(),
+      home: FutureBuilder<AppState>(
+        future: _determineInitialState(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SplashScreen();
           }
-          if (snapshot.hasData) {
-            return const DashboardScreen();
+
+          final appState = snapshot.data ?? AppState.launch;
+
+          switch (appState) {
+            case AppState.launch:
+              return const LaunchScreen();
+            case AppState.onboarding:
+              return const OnboardingScreen();
+            case AppState.auth:
+              return const AuthScreen();
+            case AppState.dashboard:
+              return const DashboardScreen();
           }
-          return const AuthScreen();
         },
       ),
+      routes: {
+        '/onboarding': (context) => const OnboardingScreen(),
+        '/login': (context) => const AuthScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
+      },
     );
   }
+
+  Future<AppState> _determineInitialState() async {
+    try {
+      // Check if user is already authenticated
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        return AppState.dashboard;
+      }
+
+      // Check if this is a fresh install or reinstall
+      final prefs = await SharedPreferences.getInstance();
+      final hasCompletedOnboarding = prefs.getBool('hasCompletedOnboarding');
+      final hasSeenLaunch = prefs.getBool('hasSeenLaunch');
+
+      // Fresh install or reinstall
+      if (hasSeenLaunch == null) {
+        await prefs.setBool('hasSeenLaunch', true);
+        return AppState.launch;
+      }
+
+      // Has seen launch but not completed onboarding
+      if (hasCompletedOnboarding == null || !hasCompletedOnboarding) {
+        return AppState.onboarding;
+      }
+
+      // Has completed onboarding but not logged in
+      return AppState.auth;
+    } catch (e) {
+      // If there's an error, start from launch
+      return AppState.launch;
+    }
+  }
 }
+
+enum AppState { launch, onboarding, auth, dashboard }
