@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/models/models.dart';
-import 'package:trackflow/data/data.dart';
-import 'package:trackflow/screens/seetings_acount.dart';
+import 'package:trackflow/core/models/models.dart';
+import 'package:trackflow/core/data/data.dart';
+import 'package:trackflow/features/settings/presentation/pages/seetings_acount.dart';
+import 'package:trackflow/core/constants/theme.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/widgets/preferences.dart';
-import 'package:trackflow/widgets/profile_information.dart';
-import 'package:trackflow/widgets/sign_out.dart';
+import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
+import 'package:trackflow/features/profile/presentation/widgets/profile_information.dart';
+import 'package:trackflow/features/auth/presentation/widgets/sign_out.dart';
+import 'package:trackflow/core/constants/theme.dart';
 
 class AccountSettingsScreen extends StatelessWidget {
   const AccountSettingsScreen({super.key});

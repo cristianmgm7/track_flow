@@ -1,15 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trackflow/screens/auth.dart';
-import 'package:trackflow/screens/dashboard.dart';
-import 'package:trackflow/screens/launch_screen.dart';
-import 'package:trackflow/screens/onboarding_screen.dart';
-import 'package:trackflow/screens/splash.dart';
-import 'package:trackflow/theme/theme.dart';
-
+import 'package:trackflow/features/auth/presentation/pages/auth.dart';
+import 'package:trackflow/features/auth/presentation/pages/splash.dart';
+import 'package:trackflow/features/home/presentation/pages/dashboard.dart';
+import 'package:trackflow/features/onboarding/presentation/pages/launch_screen.dart';
+import 'package:trackflow/features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'package:trackflow/core/constants/theme.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:trackflow/core/config/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

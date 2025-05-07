@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/constants/theme.dart';
 
 class LaunchScreen extends StatelessWidget {
   const LaunchScreen({super.key});
