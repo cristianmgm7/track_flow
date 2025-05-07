@@ -7,6 +7,8 @@ import 'package:trackflow/core/config/firebase_options.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() async {
@@ -24,6 +26,9 @@ class App extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => AuthBloc()..add(AuthCheckRequested()),
+        ),
+        BlocProvider(
+          create: (context) => OnboardingBloc()..add(OnboardingStarted()),
         ),
       ],
       child: MaterialApp.router(
