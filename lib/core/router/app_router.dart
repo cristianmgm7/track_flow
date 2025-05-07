@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,14 +13,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
+// final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
+//   debugLabel: 'shell',
+// );
 
 class AppRouter {
   static GoRouter router(BuildContext context) {
     final authBloc = context.read<AuthBloc>();
-
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: '/',
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
       redirect: (context, state) async {
         final authState = authBloc.state;
         final isAuthRoute = state.matchedLocation == '/auth';
@@ -65,7 +69,12 @@ class AppRouter {
           return null;
         }
 
-        // For any other state (loading, error, etc.)
+        // If auth state is loading, stay on current route
+        if (authState is AuthLoading) {
+          return null;
+        }
+
+        // For any other state (error, etc.)
         return null;
       },
       routes: [
@@ -84,5 +93,22 @@ class AppRouter {
           (context, state) =>
               Scaffold(body: Center(child: Text('Error: ${state.error}'))),
     );
+  }
+}
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
   }
 }

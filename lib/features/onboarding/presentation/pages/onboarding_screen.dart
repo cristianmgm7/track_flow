@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
@@ -13,7 +14,7 @@ class OnboardingScreen extends StatelessWidget {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state is OnboardingCompleted) {
-          Navigator.pushReplacementNamed(context, '/auth');
+          context.go('/auth');
         } else if (state is OnboardingError) {
           ScaffoldMessenger.of(
             context,
