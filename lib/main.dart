@@ -29,7 +29,7 @@ class App extends StatelessWidget {
       child: MaterialApp.router(
         title: 'TrackFlow',
         theme: AppTheme.theme,
-        routerConfig: goRouter,
+        routerConfig: AppRouter.router(context),
       ),
     );
   }
