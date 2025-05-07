@@ -13,9 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
-// final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
-//   debugLabel: 'shell',
-// );
 
 class AppRouter {
   static GoRouter router(BuildContext context) {
