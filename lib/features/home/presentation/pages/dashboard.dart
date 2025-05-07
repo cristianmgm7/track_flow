@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/models/models.dart';
 import 'package:trackflow/core/data/data.dart';
 import 'package:trackflow/features/settings/presentation/pages/seetings_acount.dart';
-import 'package:trackflow/core/constants/theme.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';

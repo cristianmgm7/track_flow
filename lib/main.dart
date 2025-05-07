@@ -12,15 +12,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const App());
-}
-
-class App extends StatelessWidget {
-  const App({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiBlocProvider(
+  runApp(
+    MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => AuthBloc()..add(AuthCheckRequested()),
@@ -29,11 +22,20 @@ class App extends StatelessWidget {
           create: (context) => OnboardingBloc()..add(OnboardingStarted()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'TrackFlow',
-        theme: AppTheme.theme,
-        routerConfig: AppRouter.router(context),
-      ),
+      child: const App(),
+    ),
+  );
+}
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp.router(
+      title: 'TrackFlow',
+      theme: AppTheme.theme,
+      routerConfig: AppRouter.router(context),
     );
   }
 }
