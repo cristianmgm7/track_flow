@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
 import 'package:trackflow/features/profile/presentation/widgets/profile_information.dart';
 import 'package:trackflow/features/auth/presentation/widgets/sign_out.dart';
-import 'package:trackflow/core/constants/theme.dart';
 
 class AccountSettingsScreen extends StatelessWidget {
   const AccountSettingsScreen({super.key});
@@ -18,12 +17,12 @@ class AccountSettingsScreen extends StatelessWidget {
           children: [
             // Profile Information Card
             ProfileInformation(),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             // Preferences Card
-            Preferences(),
-            SizedBox(height: 16),
+            const Preferences(),
+            const SizedBox(height: 16),
             // Sign Out Card
-            SignOut(),
+            const SignOut(),
           ],
         ),
       ),

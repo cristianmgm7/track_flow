@@ -186,7 +186,7 @@ class DashboardScreen extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundImage: AssetImage(
-            activity.user.avatar ?? "assets/placeholder.png",
+            activity.user.avatar ?? "assets/images/logo.png",
           ),
         ),
         title: Text(
