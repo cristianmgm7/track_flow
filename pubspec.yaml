@@ -42,6 +42,8 @@ dependencies:
   google_fonts: ^6.1.0
   introduction_screen: ^3.1.12
   shared_preferences: ^2.2.2
+  flutter_bloc: ^8.1.4
+  go_router: ^13.2.0
 
 dev_dependencies:
   flutter_test:
