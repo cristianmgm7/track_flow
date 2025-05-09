@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class LaunchScreen extends StatelessWidget {
   const LaunchScreen({super.key});
@@ -12,18 +13,6 @@ class LaunchScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Stack(
           children: [
-            // Theme toggle in top right
-            Positioned(
-              top: 16,
-              right: 16,
-              child: IconButton(
-                icon: const Icon(Icons.brightness_6),
-                onPressed: () {
-                  // TODO: Implement theme toggle
-                },
-              ),
-            ),
-            // Main content
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -54,7 +43,7 @@ class LaunchScreen extends StatelessWidget {
                   // Get Started button
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/onboarding');
+                      context.go('/onboarding');
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -75,7 +64,7 @@ class LaunchScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.pushNamed(context, '/login');
+                          context.go('/auth');
                         },
                         child: const Text('Log in'),
                       ),
