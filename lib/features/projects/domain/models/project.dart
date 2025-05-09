@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Represents a music project in the application.
+///
+/// A project is the core entity that groups tasks, ideas, notes, and files
+/// related to a specific music production.
 class Project {
   final String id;
   final String userId;
@@ -17,6 +21,7 @@ class Project {
     required this.status,
   });
 
+  /// Creates a Project instance from a Firestore document.
   factory Project.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Project(
@@ -29,6 +34,7 @@ class Project {
     );
   }
 
+  /// Converts the Project instance to a Map for Firestore storage.
   Map<String, dynamic> toFirestore() {
     return {
       'userId': userId,
@@ -39,6 +45,7 @@ class Project {
     };
   }
 
+  /// Creates a copy of this Project with the given fields replaced with new values.
   Project copyWith({
     String? id,
     String? userId,
@@ -56,4 +63,16 @@ class Project {
       status: status ?? this.status,
     );
   }
+
+  /// Project status constants
+  static const String statusDraft = 'draft';
+  static const String statusInProgress = 'in_progress';
+  static const String statusFinished = 'finished';
+
+  /// List of valid project statuses
+  static const List<String> validStatuses = [
+    statusDraft,
+    statusInProgress,
+    statusFinished,
+  ];
 }
