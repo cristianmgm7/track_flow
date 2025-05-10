@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/projects_bloc.dart';
 import '../blocs/projects_event.dart';
 import '../blocs/projects_state.dart';
+import 'project_form_page.dart';
 
 class ProjectDetailsPage extends StatelessWidget {
   final String projectId;
@@ -42,7 +43,11 @@ class ProjectDetailsPage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.edit),
                   onPressed: () {
-                    // TODO: Navigate to edit page
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ProjectFormPage(project: project),
+                      ),
+                    );
                   },
                 ),
                 IconButton(
