@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/domain/models/project.dart';
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
-import 'package:provider/provider.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 
 class ProjectFormScreen extends StatefulWidget {
   final Project? project;
@@ -23,6 +27,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _status = Project.statusDraft;
     _loadProject();
   }
 
@@ -32,9 +39,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     } else {
       final projectId = GoRouterState.of(context).pathParameters['id'];
       if (projectId != null) {
-        final projectRepository = context.read<ProjectRepository>();
         try {
-          _project = await projectRepository.getProject(projectId);
+          context.read<ProjectsBloc>().add(LoadProjectDetails(projectId));
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -52,10 +58,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
     if (mounted) {
       setState(() {
-        _titleController = TextEditingController(text: _project?.title);
-        _descriptionController = TextEditingController(
-          text: _project?.description,
-        );
+        _titleController.text = _project?.title ?? '';
+        _descriptionController.text = _project?.description ?? '';
         _status = _project?.status ?? Project.statusDraft;
       });
     }
@@ -68,91 +72,21 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isEditing = _project != null;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Edit Project' : 'New Project'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body:
-          _project == null &&
-                  GoRouterState.of(context).pathParameters['id'] != null
-              ? const Center(child: CircularProgressIndicator())
-              : Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Title',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a title';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _status,
-                      decoration: const InputDecoration(
-                        labelText: 'Status',
-                        border: OutlineInputBorder(),
-                      ),
-                      items:
-                          Project.validStatuses.map((status) {
-                            return DropdownMenuItem(
-                              value: status,
-                              child: Text(
-                                status.replaceAll('_', ' ').toUpperCase(),
-                              ),
-                            );
-                          }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _status = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _saveProject,
-                      child: Text(
-                        isEditing ? 'Update Project' : 'Create Project',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-    );
-  }
-
   Future<void> _saveProject() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final projectRepository = context.read<ProjectRepository>();
-    final userId = 'current-user-id'; // TODO: Get from auth service
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be logged in to save projects'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final userId = authState.user.uid;
 
     final project = Project(
       id: _project?.id ?? '',
@@ -166,24 +100,115 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       status: _status,
     );
 
-    try {
-      if (_project == null) {
-        await projectRepository.createProject(project);
-      } else {
-        await projectRepository.updateProject(project);
-      }
-      if (mounted) {
-        context.pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (_project == null) {
+      context.read<ProjectsBloc>().add(CreateProject(project));
+    } else {
+      context.read<ProjectsBloc>().add(UpdateProject(project));
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = _project != null;
+
+    return BlocListener<ProjectsBloc, ProjectsState>(
+      listener: (context, state) {
+        if (state is ProjectDetailsLoaded && _project == null) {
+          setState(() {
+            _project = state.project;
+            _titleController.text = state.project.title;
+            _descriptionController.text = state.project.description ?? '';
+            _status = state.project.status;
+          });
+        } else if (state is ProjectOperationSuccess) {
+          context.pop();
+        } else if (state is ProjectsError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${state.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isEditing ? 'Edit Project' : 'New Project'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: BlocBuilder<ProjectsBloc, ProjectsState>(
+          builder: (context, state) {
+            if (state is ProjectsLoading && _project == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a title';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _status,
+                    decoration: const InputDecoration(
+                      labelText: 'Status',
+                      border: OutlineInputBorder(),
+                    ),
+                    items:
+                        Project.validStatuses.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(
+                              status.replaceAll('_', ' ').toUpperCase(),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _status = value;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _saveProject,
+                    child: Text(
+                      isEditing ? 'Update Project' : 'Create Project',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

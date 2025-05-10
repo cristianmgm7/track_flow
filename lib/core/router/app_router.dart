@@ -13,6 +13,10 @@ import 'package:trackflow/features/onboarding/presentation/pages/launch_screen.d
 import 'package:trackflow/features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -59,9 +63,12 @@ class AppRouter {
 
         // Check onboarding status
         if (onboardingState is OnboardingChecked) {
-          if (!onboardingState.hasCompletedOnboarding &&
-              (isAuthRoute || isDashboardRoute)) {
-            return '/onboarding';
+          if (!onboardingState.hasCompletedOnboarding) {
+            if (isAuthRoute || isDashboardRoute) {
+              return '/onboarding';
+            }
+          } else if (isOnboardingRoute) {
+            return '/auth';
           }
         }
 
@@ -89,6 +96,22 @@ class AppRouter {
             GoRoute(
               path: '/dashboard/projects/new',
               builder: (context, state) => const ProjectFormScreen(),
+            ),
+            GoRoute(
+              path: '/dashboard/projects/:id',
+              builder: (context, state) {
+                final projectId = state.pathParameters['id']!;
+                // Load project details when the screen is opened
+                context.read<ProjectsBloc>().add(LoadProjectDetails(projectId));
+                return BlocBuilder<ProjectsBloc, ProjectsState>(
+                  builder: (context, state) {
+                    if (state is ProjectDetailsLoaded) {
+                      return ProjectDetailsScreen(project: state.project);
+                    }
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                );
+              },
             ),
             GoRoute(
               path: '/dashboard/projects/:id/edit',
