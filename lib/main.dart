@@ -8,17 +8,23 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/projects/data/repositories/firestore_project_repository.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider(
+        BlocProvider<ProjectsBloc>(
+          create: (context) => ProjectsBloc(FirestoreProjectRepository()),
+        ),
+        BlocProvider<AuthBloc>(
           create: (context) => AuthBloc()..add(AuthCheckRequested()),
         ),
-        BlocProvider(
+        BlocProvider<OnboardingBloc>(
           create: (context) => OnboardingBloc()..add(OnboardingStarted()),
         ),
       ],

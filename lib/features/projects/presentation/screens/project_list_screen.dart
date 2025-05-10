@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../domain/models/project.dart';
-import '../../domain/repositories/project_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/projects/domain/models/project.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import '../widgets/project_card.dart';
-import 'project_form_screen.dart';
 
-class ProjectListScreen extends StatelessWidget {
+class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});
 
   @override
+  State<ProjectListScreen> createState() => _ProjectListScreenState();
+}
+
+class _ProjectListScreenState extends State<ProjectListScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<ProjectsBloc>().add(
+      LoadProjects('current-user-id'),
+    ); // TODO: Get from auth service
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final projectRepository = context.read<ProjectRepository>();
     final userId = 'current-user-id'; // TODO: Get from auth service
 
     return Scaffold(
@@ -20,53 +34,46 @@ class ProjectListScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ProjectFormScreen(),
-                ),
-              );
+              context.push('/dashboard/projects/new');
             },
           ),
         ],
       ),
-      body: StreamBuilder<List<Project>>(
-        stream: projectRepository.getUserProjects(userId),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          if (!snapshot.hasData) {
+      body: BlocBuilder<ProjectsBloc, ProjectsState>(
+        builder: (context, state) {
+          if (state is ProjectsLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final projects = snapshot.data!;
+          if (state is ProjectsError) {
+            return Center(child: Text('Error: ${state.message}'));
+          }
 
-          if (projects.isEmpty) {
-            return const Center(
-              child: Text('No projects yet. Create your first project!'),
+          if (state is ProjectsLoaded) {
+            final projects = state.projects;
+
+            if (projects.isEmpty) {
+              return const Center(
+                child: Text('No projects yet. Create your first project!'),
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                final project = projects[index];
+                return ProjectCard(
+                  project: project,
+                  onTap: () {
+                    context.push('/dashboard/projects/${project.id}/edit');
+                  },
+                );
+              },
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              final project = projects[index];
-              return ProjectCard(
-                project: project,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProjectFormScreen(project: project),
-                    ),
-                  );
-                },
-              );
-            },
-          );
+          return const SizedBox.shrink();
         },
       ),
     );
