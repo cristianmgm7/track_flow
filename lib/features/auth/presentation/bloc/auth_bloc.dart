@@ -1,14 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final AuthRepository _authRepository;
 
-  AuthBloc() : super(AuthInitial()) {
+  AuthBloc(this._authRepository) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
@@ -20,12 +18,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      emit(AuthAuthenticated(user));
-    } else {
-      emit(AuthUnauthenticated());
-    }
+    emit(AuthLoading());
+    await emit.forEach<AuthState>(
+      _authRepository.authState,
+      onData: (state) => state,
+      onError: (_, __) => AuthError('Failed to check auth state'),
+    );
   }
 
   Future<void> _onAuthSignInRequested(
@@ -34,13 +32,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
+      await _authRepository.signInWithEmailAndPassword(
+        event.email,
+        event.password,
       );
-      emit(AuthAuthenticated(userCredential.user!));
-    } on FirebaseAuthException catch (e) {
-      emit(AuthError(e.message ?? 'An error occurred during sign in'));
+    } catch (e) {
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -50,13 +47,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
+      await _authRepository.signUpWithEmailAndPassword(
+        event.email,
+        event.password,
       );
-      emit(AuthAuthenticated(userCredential.user!));
-    } on FirebaseAuthException catch (e) {
-      emit(AuthError(e.message ?? 'An error occurred during sign up'));
+    } catch (e) {
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -66,10 +62,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _auth.signOut();
-      emit(AuthUnauthenticated());
+      await _authRepository.signOut();
     } catch (e) {
-      emit(AuthError('An error occurred during sign out'));
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -79,23 +74,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        emit(AuthError('Google sign in was cancelled'));
-        return;
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final userCredential = await _auth.signInWithCredential(credential);
-      emit(AuthAuthenticated(userCredential.user!));
+      await _authRepository.signInWithGoogle();
     } catch (e) {
-      emit(AuthError('An error occurred during Google sign in'));
+      emit(AuthError(e.toString()));
     }
   }
 }

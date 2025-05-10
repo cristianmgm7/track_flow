@@ -7,10 +7,12 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/features/projects/presentation/pages/projects_screen.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final Widget child;
+
+  const DashboardScreen({super.key, required this.child});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -19,23 +21,30 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const ProjectsScreen(),
-    const CollaborationScreen(),
-    const ProfileScreen(),
-    const SettingsScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: widget.child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
           });
+          switch (index) {
+            case 0:
+              context.go('/dashboard');
+              break;
+            case 1:
+              context.go('/dashboard/collaboration');
+              break;
+            case 2:
+              context.go('/dashboard/profile');
+              break;
+            case 3:
+              context.go('/dashboard/settings');
+              break;
+          }
         },
         destinations: const [
           NavigationDestination(

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../../domain/models/project.dart';
+import 'package:trackflow/features/projects/domain/models/project.dart';
 
 abstract class ProjectsEvent extends Equatable {
   const ProjectsEvent();

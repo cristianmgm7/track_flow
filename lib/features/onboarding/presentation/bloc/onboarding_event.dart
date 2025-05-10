@@ -1,10 +1,14 @@
-abstract class OnboardingEvent {}
+import 'package:equatable/equatable.dart';
 
-class OnboardingStarted extends OnboardingEvent {}
+abstract class OnboardingEvent extends Equatable {
+  const OnboardingEvent();
 
-class OnboardingStepCompleted extends OnboardingEvent {
-  final int step;
-  OnboardingStepCompleted(this.step);
+  @override
+  List<Object?> get props => [];
 }
 
-class CompleteOnboarding extends OnboardingEvent {}
+class OnboardingCheckRequested extends OnboardingEvent {}
+
+class OnboardingMarkCompleted extends OnboardingEvent {}
+
+class OnboardingMarkLaunchSeen extends OnboardingEvent {}

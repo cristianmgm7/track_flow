@@ -13,7 +13,7 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
-        if (state is OnboardingCompleted) {
+        if (state is OnboardingChecked && state.hasCompletedOnboarding) {
           context.go('/auth');
         } else if (state is OnboardingError) {
           ScaffoldMessenger.of(
@@ -78,12 +78,12 @@ class OnboardingScreen extends StatelessWidget {
           return IntroductionScreen(
             pages: pages,
             onDone: () {
-              context.read<OnboardingBloc>().add(CompleteOnboarding());
+              context.read<OnboardingBloc>().add(OnboardingMarkCompleted());
             },
             showSkipButton: true,
             skip: const Text("Skip"),
             onSkip: () {
-              context.read<OnboardingBloc>().add(CompleteOnboarding());
+              context.read<OnboardingBloc>().add(OnboardingMarkCompleted());
             },
             next: const Icon(Icons.arrow_forward),
             done: const Text(
