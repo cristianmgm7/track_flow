@@ -100,4 +100,16 @@ class ProjectDTO {
       status: status ?? this.status,
     );
   }
+
+  /// Creates a ProjectDTO from a map of data.
+  factory ProjectDTO.fromMap(Map<String, dynamic> data) {
+    return ProjectDTO(
+      id: data[fieldId] as String,
+      userId: data[fieldUserId] as String,
+      title: data[fieldTitle] as String,
+      description: (data[fieldDescription] as String?) ?? '',
+      createdAt: (data[fieldCreatedAt] as Timestamp).toDate(),
+      status: data[fieldStatus] as String,
+    );
+  }
 }
