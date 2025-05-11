@@ -1,4 +1,4 @@
-import '../models/project.dart';
+import '../entities/project.dart';
 
 /// Abstract class defining the contract for project operations.
 ///
