@@ -6,6 +6,19 @@ abstract class ProjectsEvent extends Equatable {
 
   @override
   List<Object?> get props => [];
+
+  // Validate common project fields
+  void validateProject(Project project) {
+    if (project.title.isEmpty) {
+      throw ValidationException('Project title cannot be empty');
+    }
+    if (project.description.isEmpty) {
+      throw ValidationException('Project description cannot be empty');
+    }
+    if (!Project.validStatuses.contains(project.status)) {
+      throw ValidationException('Invalid project status: ${project.status}');
+    }
+  }
 }
 
 class LoadProjects extends ProjectsEvent {
@@ -51,4 +64,13 @@ class LoadProjectDetails extends ProjectsEvent {
 
   @override
   List<Object?> get props => [projectId];
+}
+
+class ValidationException implements Exception {
+  final String message;
+
+  ValidationException(this.message);
+
+  @override
+  String toString() => message;
 }

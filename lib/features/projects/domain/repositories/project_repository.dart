@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 import '../entities/project.dart';
 
 /// Abstract class defining the contract for project operations.
@@ -6,20 +8,31 @@ import '../entities/project.dart';
 /// on projects, following the repository pattern to abstract the data source.
 abstract class ProjectRepository {
   /// Creates a new project.
-  Future<Project> createProject(Project project);
+  Future<Either<Failure, Project>> createProject(Project project);
 
   /// Updates an existing project.
-  Future<void> updateProject(Project project);
+  Future<Either<Failure, Project>> updateProject(Project project);
 
   /// Deletes a project by its ID.
-  Future<void> deleteProject(String projectId);
+  Future<Either<Failure, void>> deleteProject(String projectId);
 
   /// Gets a project by its ID.
-  Future<Project?> getProject(String projectId);
+  Future<Either<Failure, Project>> getProjectById(String projectId);
 
   /// Gets all projects for a specific user.
-  Stream<List<Project>> getUserProjects(String userId);
+  ///
+  /// Returns Either:
+  /// - Right: Stream of project lists if successful
+  /// - Left: Failure if initial stream setup fails
+  Either<Failure, Stream<List<Project>>> getUserProjects(String userId);
 
   /// Gets all projects for a specific user with a given status.
-  Stream<List<Project>> getUserProjectsByStatus(String userId, String status);
+  ///
+  /// Returns Either:
+  /// - Right: Stream of filtered project lists if successful
+  /// - Left: Failure if initial stream setup fails
+  Either<Failure, Stream<List<Project>>> getUserProjectsByStatus(
+    String userId,
+    String status,
+  );
 }

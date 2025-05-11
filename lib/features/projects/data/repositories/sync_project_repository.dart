@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/projects/data/repositories/firestore_project_repository.dart';
@@ -75,17 +77,37 @@ class SyncProjectRepository implements ProjectRepository {
     try {
       switch (operation.type) {
         case SyncOperationType.create:
-          await _remoteRepository.createProject(operation.project!);
+          final result = await _remoteRepository.createProject(
+            operation.project!,
+          );
+          result.fold((failure) => throw Exception(failure.message), (
+            project,
+          ) async {
+            final dto = ProjectDTO.fromEntity(project);
+            await _localDataSource.cacheProject(dto);
+          });
           break;
         case SyncOperationType.update:
-          await _remoteRepository.updateProject(operation.project!);
+          final result = await _remoteRepository.updateProject(
+            operation.project!,
+          );
+          result.fold((failure) => throw Exception(failure.message), (
+            project,
+          ) async {
+            final dto = ProjectDTO.fromEntity(project);
+            await _localDataSource.cacheProject(dto);
+          });
           break;
         case SyncOperationType.delete:
-          await _remoteRepository.deleteProject(operation.projectId!);
+          final result = await _remoteRepository.deleteProject(
+            operation.projectId!,
+          );
+          result.fold((failure) => throw Exception(failure.message), (_) async {
+            await _localDataSource.removeCachedProject(operation.projectId!);
+          });
           break;
       }
     } catch (e) {
-      // If sync fails, keep the operation in the queue
       _syncQueue.add(operation);
       rethrow;
     }
@@ -97,98 +119,152 @@ class SyncProjectRepository implements ProjectRepository {
   }
 
   @override
-  Future<Project> createProject(Project project) async {
+  Future<Either<Failure, Project>> createProject(Project project) async {
     // Always write to local storage first
-    final localProject = await _localRepository.createProject(project);
+    final localResult = await _localRepository.createProject(project);
 
-    // Queue sync operation
-    _queueSyncOperation(SyncOperation.create(project));
-
-    return localProject;
+    return localResult.fold((failure) => Left(failure), (localProject) {
+      // Queue sync operation
+      _queueSyncOperation(SyncOperation.create(localProject));
+      return Right(localProject);
+    });
   }
 
   @override
-  Future<void> updateProject(Project project) async {
+  Future<Either<Failure, Project>> updateProject(Project project) async {
     // Always update local storage first
-    await _localRepository.updateProject(project);
+    final localResult = await _localRepository.updateProject(project);
 
-    // Queue sync operation
-    _queueSyncOperation(SyncOperation.update(project));
+    return localResult.fold((failure) => Left(failure), (localProject) {
+      // Queue sync operation
+      _queueSyncOperation(SyncOperation.update(localProject));
+      return Right(localProject);
+    });
   }
 
   @override
-  Future<void> deleteProject(String projectId) async {
+  Future<Either<Failure, void>> deleteProject(String projectId) async {
     // Always delete from local storage first
-    await _localRepository.deleteProject(projectId);
+    final localResult = await _localRepository.deleteProject(projectId);
 
-    // Queue sync operation
-    _queueSyncOperation(SyncOperation.delete(projectId));
+    return localResult.fold((failure) => Left(failure), (_) {
+      // Queue sync operation
+      _queueSyncOperation(SyncOperation.delete(projectId));
+      return const Right(null);
+    });
   }
 
   @override
-  Future<Project?> getProject(String projectId) async {
+  Future<Either<Failure, Project>> getProjectById(String projectId) async {
     // Always read from local storage first
-    return _localRepository.getProject(projectId);
+    final localResult = await _localRepository.getProjectById(projectId);
+
+    // If online and not found locally, try remote
+    if (localResult.isLeft()) {
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (connectivityResult != ConnectivityResult.none) {
+        final remoteResult = await _remoteRepository.getProjectById(projectId);
+        return remoteResult.fold((failure) => Left(failure), (project) async {
+          // Cache the remote project locally
+          await _localRepository.createProject(project);
+          return Right(project);
+        });
+      }
+    }
+
+    return localResult;
   }
 
   @override
-  Stream<List<Project>> getUserProjects(String userId) async* {
-    // Start with local data
-    yield* _localRepository.getUserProjects(userId);
+  Either<Failure, Stream<List<Project>>> getUserProjects(String userId) {
+    try {
+      // Create a stream that combines local and remote data
+      final stream = StreamController<List<Project>>();
 
-    // If online, sync with remote
-    final connectivityResult = await _connectivity.checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
-      try {
-        // Get remote data
-        await for (final remoteProjects in _remoteRepository.getUserProjects(
-          userId,
-        )) {
-          // Update local storage with remote data
-          for (final project in remoteProjects) {
-            await _localDataSource.cacheProject(ProjectDTO.fromEntity(project));
-          }
-          // Yield updated local data
-          final localProjects = await _localDataSource.getCachedProjects(
-            userId,
+      // Start with local data
+      _localRepository.getUserProjects(userId).fold(
+        (failure) => stream.addError(failure),
+        (localStream) {
+          localStream.listen(
+            (projects) => stream.add(projects),
+            onError: (error) => stream.addError(error),
           );
-          yield localProjects.map((dto) => dto.toEntity()).toList();
+        },
+      );
+
+      // If online, sync with remote
+      _connectivity.checkConnectivity().then((connectivityResult) {
+        if (connectivityResult != ConnectivityResult.none) {
+          _remoteRepository.getUserProjects(userId).fold(
+            (failure) => stream.addError(failure),
+            (remoteStream) {
+              remoteStream.listen((projects) async {
+                // Update local storage with remote data
+                for (final project in projects) {
+                  await _localRepository.createProject(project);
+                }
+                stream.add(projects);
+              }, onError: (error) => stream.addError(error));
+            },
+          );
         }
-      } catch (e) {
-        // If sync fails, continue with local data
-        print('Sync failed: $e');
-      }
+      });
+
+      return Right(stream.stream);
+    } catch (e) {
+      return Left(
+        UnexpectedFailure(
+          message: 'Failed to setup projects stream: ${e.toString()}',
+        ),
+      );
     }
   }
 
   @override
-  Stream<List<Project>> getUserProjectsByStatus(
+  Either<Failure, Stream<List<Project>>> getUserProjectsByStatus(
     String userId,
     String status,
-  ) async* {
-    // Start with local data
-    yield* _localRepository.getUserProjectsByStatus(userId, status);
+  ) {
+    try {
+      // Create a stream that combines local and remote data
+      final stream = StreamController<List<Project>>();
 
-    // If online, sync with remote
-    final connectivityResult = await _connectivity.checkConnectivity();
-    if (connectivityResult != ConnectivityResult.none) {
-      try {
-        // Get remote data
-        await for (final remoteProjects in _remoteRepository
-            .getUserProjectsByStatus(userId, status)) {
-          // Update local storage with remote data
-          for (final project in remoteProjects) {
-            await _localDataSource.cacheProject(ProjectDTO.fromEntity(project));
-          }
-          // Yield updated local data
-          final localProjects = await _localDataSource
-              .getCachedProjectsByStatus(userId, status);
-          yield localProjects.map((dto) => dto.toEntity()).toList();
+      // Start with local data
+      _localRepository.getUserProjectsByStatus(userId, status).fold(
+        (failure) => stream.addError(failure),
+        (localStream) {
+          localStream.listen(
+            (projects) => stream.add(projects),
+            onError: (error) => stream.addError(error),
+          );
+        },
+      );
+
+      // If online, sync with remote
+      _connectivity.checkConnectivity().then((connectivityResult) {
+        if (connectivityResult != ConnectivityResult.none) {
+          _remoteRepository.getUserProjectsByStatus(userId, status).fold(
+            (failure) => stream.addError(failure),
+            (remoteStream) {
+              remoteStream.listen((projects) async {
+                // Update local storage with remote data
+                for (final project in projects) {
+                  await _localRepository.createProject(project);
+                }
+                stream.add(projects);
+              }, onError: (error) => stream.addError(error));
+            },
+          );
         }
-      } catch (e) {
-        // If sync fails, continue with local data
-        print('Sync failed: $e');
-      }
+      });
+
+      return Right(stream.stream);
+    } catch (e) {
+      return Left(
+        UnexpectedFailure(
+          message: 'Failed to setup projects stream: ${e.toString()}',
+        ),
+      );
     }
   }
 

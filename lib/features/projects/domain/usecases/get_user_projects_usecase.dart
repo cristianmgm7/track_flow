@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 
@@ -6,20 +8,22 @@ import 'package:trackflow/features/projects/domain/repositories/project_reposito
 /// This use case implements the business rules for retrieving projects:
 /// - Only returns projects owned by the specified user
 /// - Projects are sorted by creation date (newest first)
+/// - Handles various failure cases with Either type
 class GetUserProjectsUseCase {
-  final ProjectRepository _repository;
-
   GetUserProjectsUseCase(this._repository);
+
+  final ProjectRepository _repository;
 
   /// Get all projects for a specific user.
   ///
-  /// Returns a stream of project lists, sorted by creation date (newest first).
-  /// The stream will emit new lists whenever the underlying data changes.
+  /// Returns an Either with:
+  /// - Left: Failure if something goes wrong
+  /// - Right: Stream of project lists, sorted by creation date (newest first)
   ///
-  /// Throws [Exception] if the user ID is invalid or if there's a repository error.
-  Stream<List<Project>> call(String userId) {
+  /// The stream will emit new lists whenever the underlying data changes.
+  Either<Failure, Stream<List<Project>>> call(String userId) {
     if (userId.isEmpty) {
-      throw Exception('User ID cannot be empty');
+      return Left(ValidationFailure(message: 'User ID cannot be empty'));
     }
 
     return _repository.getUserProjects(userId);
@@ -27,20 +31,23 @@ class GetUserProjectsUseCase {
 
   /// Get all projects for a specific user with a given status.
   ///
-  /// Returns a stream of project lists, filtered by status and sorted by creation date.
-  /// The stream will emit new lists whenever the underlying data changes.
+  /// Returns an Either with:
+  /// - Left: Failure if something goes wrong
+  /// - Right: Stream of project lists, filtered by status and sorted by creation date
   ///
-  /// Throws [Exception] if:
-  /// - User ID is invalid
-  /// - Status is not a valid project status
-  /// - There's a repository error
-  Stream<List<Project>> getByStatus(String userId, String status) {
+  /// The stream will emit new lists whenever the underlying data changes.
+  Either<Failure, Stream<List<Project>>> getByStatus(
+    String userId,
+    String status,
+  ) {
     if (userId.isEmpty) {
-      throw Exception('User ID cannot be empty');
+      return Left(ValidationFailure(message: 'User ID cannot be empty'));
     }
 
     if (!Project.validStatuses.contains(status)) {
-      throw Exception('Invalid project status: $status');
+      return Left(
+        ValidationFailure(message: 'Invalid project status: $status'),
+      );
     }
 
     return _repository.getUserProjectsByStatus(userId, status);

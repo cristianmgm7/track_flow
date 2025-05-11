@@ -1,5 +1,7 @@
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 
 /// Use case for updating an existing project.
 ///
@@ -28,10 +30,11 @@ class UpdateProjectUseCase {
     }
 
     // Get existing project to validate ownership and status transition
-    final existingProject = await _repository.getProject(project.id);
-    if (existingProject == null) {
-      throw Exception('Project not found');
-    }
+    final result = await _repository.getProjectById(project.id);
+    final existingProject = result.fold(
+      (failure) => throw Exception(failure.message),
+      (project) => project,
+    );
 
     // Verify ownership
     if (existingProject.userId != project.userId) {

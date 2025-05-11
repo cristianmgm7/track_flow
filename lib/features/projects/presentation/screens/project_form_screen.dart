@@ -92,10 +92,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       id: _project?.id ?? '',
       userId: userId,
       title: _titleController.text,
-      description:
-          _descriptionController.text.isEmpty
-              ? null
-              : _descriptionController.text,
+      description: _descriptionController.text,
       createdAt: _project?.createdAt ?? DateTime.now(),
       status: _status,
     );

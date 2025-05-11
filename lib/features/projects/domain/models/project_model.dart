@@ -10,9 +10,10 @@ class ProjectModel extends Project {
     required super.id,
     required super.userId,
     required super.title,
-    super.description,
+    required super.description,
     required super.createdAt,
     required super.status,
+    super.updatedAt,
   });
 
   /// Creates a ProjectModel instance from a Firestore document.
@@ -22,7 +23,7 @@ class ProjectModel extends Project {
       id: doc.id,
       userId: data['userId'] as String,
       title: data['title'] as String,
-      description: data['description'] as String?,
+      description: (data['description'] as String?) ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       status: data['status'] as String,
     );
@@ -48,6 +49,7 @@ class ProjectModel extends Project {
     String? description,
     DateTime? createdAt,
     String? status,
+    DateTime? updatedAt,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -56,6 +58,7 @@ class ProjectModel extends Project {
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      updatedAt: updatedAt,
     );
   }
 }

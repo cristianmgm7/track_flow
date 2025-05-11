@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'projects_event.dart';
@@ -19,71 +20,102 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     LoadProjects event,
     Emitter<ProjectsState> emit,
   ) async {
-    try {
-      emit(ProjectsLoading());
-      await emit.forEach<List<Project>>(
-        _projectRepository.getUserProjects(event.userId),
-        onData: (projects) => ProjectsLoaded(projects),
-        onError: (_, __) => const ProjectsError('Failed to load projects'),
-      );
-    } catch (e) {
-      emit(ProjectsError(e.toString()));
-    }
+    emit(ProjectsLoading());
+
+    final result = _projectRepository.getUserProjects(event.userId);
+
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (projectsStream) async {
+        try {
+          await emit.forEach<List<Project>>(
+            projectsStream,
+            onData: (projects) => ProjectsLoaded(projects),
+            onError:
+                (error, _) => ProjectsError(
+                  'Failed to load projects: ${error.toString()}',
+                ),
+          );
+        } catch (e) {
+          emit(ProjectsError('An unexpected error occurred: ${e.toString()}'));
+        }
+      },
+    );
   }
 
   Future<void> _onCreateProject(
     CreateProject event,
     Emitter<ProjectsState> emit,
   ) async {
-    try {
-      emit(ProjectsLoading());
-      await _projectRepository.createProject(event.project);
-      emit(const ProjectOperationSuccess('Project created successfully'));
-    } catch (e) {
-      emit(ProjectsError(e.toString()));
-    }
+    emit(ProjectsLoading());
+
+    final result = await _projectRepository.createProject(event.project);
+
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (project) =>
+          emit(const ProjectOperationSuccess('Project created successfully')),
+    );
   }
 
   Future<void> _onUpdateProject(
     UpdateProject event,
     Emitter<ProjectsState> emit,
   ) async {
-    try {
-      emit(ProjectsLoading());
-      await _projectRepository.updateProject(event.project);
-      emit(const ProjectOperationSuccess('Project updated successfully'));
-    } catch (e) {
-      emit(ProjectsError(e.toString()));
-    }
+    emit(ProjectsLoading());
+
+    final result = await _projectRepository.updateProject(event.project);
+
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (project) =>
+          emit(const ProjectOperationSuccess('Project updated successfully')),
+    );
   }
 
   Future<void> _onDeleteProject(
     DeleteProject event,
     Emitter<ProjectsState> emit,
   ) async {
-    try {
-      emit(ProjectsLoading());
-      await _projectRepository.deleteProject(event.projectId);
-      emit(const ProjectOperationSuccess('Project deleted successfully'));
-    } catch (e) {
-      emit(ProjectsError(e.toString()));
-    }
+    emit(ProjectsLoading());
+
+    final result = await _projectRepository.deleteProject(event.projectId);
+
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (_) =>
+          emit(const ProjectOperationSuccess('Project deleted successfully')),
+    );
   }
 
   Future<void> _onLoadProjectDetails(
     LoadProjectDetails event,
     Emitter<ProjectsState> emit,
   ) async {
-    try {
-      emit(ProjectsLoading());
-      final project = await _projectRepository.getProject(event.projectId);
-      if (project != null) {
-        emit(ProjectDetailsLoaded(project));
-      } else {
-        emit(const ProjectsError('Project not found'));
-      }
-    } catch (e) {
-      emit(ProjectsError(e.toString()));
+    emit(ProjectsLoading());
+
+    final result = await _projectRepository.getProjectById(event.projectId);
+
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (project) => emit(ProjectDetailsLoaded(project)),
+    );
+  }
+
+  String _mapFailureToMessage(Failure failure) {
+    switch (failure.runtimeType) {
+      case ServerFailure:
+        return 'Server error occurred. Please try again later.';
+      case NetworkFailure:
+        return 'Please check your internet connection.';
+      case ValidationFailure:
+        return failure.message;
+      case AuthenticationFailure:
+        return 'Authentication error. Please login again.';
+      case DatabaseFailure:
+        return 'Database error occurred. Please try again.';
+      default:
+        return 'Unexpected error occurred. Please try again later.';
     }
   }
 }
