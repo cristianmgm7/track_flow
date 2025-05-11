@@ -103,13 +103,32 @@ class ProjectDTO {
 
   /// Creates a ProjectDTO from a map of data.
   factory ProjectDTO.fromMap(Map<String, dynamic> data) {
+    final createdAtRaw = data[fieldCreatedAt];
+    final createdAt =
+        createdAtRaw is Timestamp
+            ? createdAtRaw.toDate()
+            : createdAtRaw is DateTime
+            ? createdAtRaw
+            : DateTime.parse(createdAtRaw.toString());
     return ProjectDTO(
       id: data[fieldId] as String,
       userId: data[fieldUserId] as String,
       title: data[fieldTitle] as String,
       description: (data[fieldDescription] as String?) ?? '',
-      createdAt: (data[fieldCreatedAt] as Timestamp).toDate(),
+      createdAt: createdAt,
       status: data[fieldStatus] as String,
     );
+  }
+
+  /// Converts the DTO to a map for local storage (Hive).
+  Map<String, dynamic> toMap() {
+    return {
+      fieldId: id,
+      fieldUserId: userId,
+      fieldTitle: title,
+      fieldDescription: description,
+      fieldCreatedAt: createdAt, // DateTime only
+      fieldStatus: status,
+    };
   }
 }

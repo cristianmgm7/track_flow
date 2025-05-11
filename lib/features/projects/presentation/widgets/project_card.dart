@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/models/project.dart';
+import '../../domain/entities/project.dart';
 
 class ProjectCard extends StatelessWidget {
   final Project project;

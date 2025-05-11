@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/config/firebase_options.dart';
 import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';
 import 'package:trackflow/features/onboarding/data/repositories/shared_prefs_onboarding_repository.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 /// Service responsible for initializing all app dependencies and services
 class AppInitializer {
@@ -20,6 +21,10 @@ class AppInitializer {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Initialize Hive
+    await Hive.initFlutter();
+    await Hive.openBox<Map<String, dynamic>>('projects');
 
     // Initialize SharedPreferences
     prefs = await SharedPreferences.getInstance();

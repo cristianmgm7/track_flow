@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive/hive.dart';
 import '../models/project_dto.dart';
 
@@ -51,7 +50,7 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
 
     // Cache all projects
     await _box.put(userKey, {
-      for (var project in projects) project.id: project.toFirestore(),
+      for (var project in projects) project.id: project.toMap(),
     });
 
     // Cache projects by status
@@ -63,7 +62,7 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
     for (var entry in projectsByStatus.entries) {
       final statusKey = _getUserStatusKey(userId, entry.key);
       await _box.put(statusKey, {
-        for (var project in entry.value) project.id: project.toFirestore(),
+        for (var project in entry.value) project.id: project.toMap(),
       });
     }
   }
@@ -101,12 +100,12 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
 
     // Update user's projects
     final userData = _box.get(userKey) ?? {};
-    userData[project.id] = project.toFirestore();
+    userData[project.id] = project.toMap();
     await _box.put(userKey, userData);
 
     // Update status-specific projects
     final statusData = _box.get(statusKey) ?? {};
-    statusData[project.id] = project.toFirestore();
+    statusData[project.id] = project.toMap();
     await _box.put(statusKey, statusData);
   }
 

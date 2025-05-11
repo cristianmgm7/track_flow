@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/projects/domain/models/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';

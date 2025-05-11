@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/features/projects/domain/models/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';

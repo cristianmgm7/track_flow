@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/models/models.dart';
-import 'package:trackflow/core/data/data.dart';
-import 'package:trackflow/features/settings/presentation/pages/seetings_acount.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:go_router/go_router.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Widget child;
@@ -24,6 +19,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('TrackFlow'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              context.read<AuthBloc>().add(AuthSignOutRequested());
+            },
+          ),
+        ],
+      ),
       body: widget.child,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
