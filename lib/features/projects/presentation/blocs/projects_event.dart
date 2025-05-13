@@ -66,6 +66,15 @@ class LoadProjectDetails extends ProjectsEvent {
   List<Object?> get props => [projectId];
 }
 
+class ProgressProjectStatus extends ProjectsEvent {
+  final Project project;
+
+  const ProgressProjectStatus(this.project);
+
+  @override
+  List<Object?> get props => [project];
+}
+
 class ValidationException implements Exception {
   final String message;
 

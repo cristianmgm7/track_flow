@@ -15,6 +15,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<UpdateProject>(_onUpdateProject);
     on<DeleteProject>(_onDeleteProject);
     on<LoadProjectDetails>(_onLoadProjectDetails);
+    on<ProgressProjectStatus>(_onProgressProjectStatus);
   }
 
   Future<void> _onLoadProjects(
@@ -34,7 +35,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
             onData:
                 (projects) => ProjectsLoaded(
                   projects,
-                  // Convert projects to models for UI logic
                   models: projects.map((p) => ProjectModel(p)).toList(),
                 ),
             onError:
@@ -126,12 +126,33 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     final result = await _projectRepository.getProjectById(event.projectId);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(
-        ProjectDetailsLoaded(
-          project,
-          model: ProjectModel(project), // Provide model for UI logic
-        ),
-      ),
+      (project) =>
+          emit(ProjectDetailsLoaded(project, model: ProjectModel(project))),
+    );
+  }
+
+  Future<void> _onProgressProjectStatus(
+    ProgressProjectStatus event,
+    Emitter<ProjectsState> emit,
+  ) async {
+    emit(ProjectsLoading());
+
+    final model = ProjectModel(event.project);
+    final progressResult = model.progressStatus();
+
+    await progressResult.fold(
+      (failure) async => emit(ProjectsError(failure.message)),
+      (updatedProject) async {
+        final result = await _projectRepository.updateProject(updatedProject);
+        result.fold(
+          (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+          (project) => emit(
+            ProjectOperationSuccess(
+              'Project status updated to ${model.getDisplayStatus()}',
+            ),
+          ),
+        );
+      },
     );
   }
 

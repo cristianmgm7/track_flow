@@ -19,7 +19,7 @@ class CreateProjectUseCase {
   ///
   /// Returns Either<Failure, Project>.
   Future<Either<Failure, Project>> call(Project project) async {
-    // Use ProjectModel for validation
+    // Use ProjectModel for validation and business rules
     final model = ProjectModel(project);
 
     return model.validate().fold(

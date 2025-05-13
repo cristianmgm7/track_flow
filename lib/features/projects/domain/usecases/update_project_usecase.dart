@@ -1,74 +1,36 @@
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/projects/domain/models/project_model.dart';
 
 /// Use case for updating an existing project.
 ///
 /// This use case implements the business rules for updating projects:
-/// - Verifies project exists
-/// - Verifies user owns the project
-/// - Validates status transitions
-/// - Ensures required fields are present
+/// - Uses ProjectModel for validation and business rules
+/// - Ensures project can be edited (not finished)
+/// - Validates all project fields
+/// - Calls repository to update the project
 class UpdateProjectUseCase {
-  UpdateProjectUseCase(this._repository);
-
-  // instance variable
   final ProjectRepository _repository;
 
-  // constructor injection
+  UpdateProjectUseCase(this._repository);
 
-  /// Update an existing project.
+  /// Updates an existing project.
   ///
-  /// Throws [Exception] if:
-  /// - Project doesn't exist
-  /// - User doesn't own the project
-  /// - Status transition is invalid
-  /// - Required fields are missing
-  /// - There's a repository error
-  Future<void> call(Project project) async {
-    // Validate required fields
-    if (project.title.isEmpty) {
-      throw Exception('Project title cannot be empty');
+  /// Returns Either<Failure, Project>.
+  Future<Either<Failure, Project>> call(Project project) async {
+    final model = ProjectModel(project);
+
+    // Check if project can be edited
+    if (!model.canEdit()) {
+      return Left(ValidationFailure('Cannot modify a finished project'));
     }
 
-    // Get existing project to validate ownership and status transition
-    final result = await _repository.getProjectById(project.id);
-    final existingProject = result.fold(
-      (failure) => throw Exception(failure.message),
-      (project) => project,
+    // Validate project fields
+    return model.validate().fold(
+      (failure) => Left(failure),
+      (validProject) => _repository.updateProject(validProject),
     );
-
-    // Verify ownership
-    if (existingProject.userId != project.userId) {
-      throw Exception('User does not own this project');
-    }
-
-    // Validate status transition
-    _validateStatusTransition(existingProject.status, project.status);
-
-    // Update the project
-    await _repository.updateProject(project);
-  }
-
-  /// Validates that the status transition is allowed.
-
-  /// Allowed transitions:
-  /// - draft -> in_progress
-  /// - in_progress -> finished
-  /// - Any status -> same status (no change)
-  void _validateStatusTransition(String oldStatus, String newStatus) {
-    if (oldStatus == newStatus) return; // No change is always valid
-
-    final validTransitions = {
-      Project.statusDraft: [Project.statusInProgress],
-      Project.statusInProgress: [Project.statusFinished],
-      Project.statusFinished: [], // Can't transition from finished
-    };
-
-    final allowedTransitions = validTransitions[oldStatus] ?? [];
-    if (!allowedTransitions.contains(newStatus)) {
-      throw Exception(
-        'Invalid status transition: cannot change from $oldStatus to $newStatus',
-      );
-    }
   }
 }
