@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/services/app_initializer.dart';
 import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';

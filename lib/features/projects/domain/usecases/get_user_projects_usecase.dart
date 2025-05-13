@@ -23,7 +23,7 @@ class GetUserProjectsUseCase {
   /// The stream will emit new lists whenever the underlying data changes.
   Either<Failure, Stream<List<Project>>> call(String userId) {
     if (userId.isEmpty) {
-      return Left(ValidationFailure(message: 'User ID cannot be empty'));
+      return Left(ValidationFailure('User ID cannot be empty'));
     }
 
     return _repository.getUserProjects(userId);
@@ -41,13 +41,11 @@ class GetUserProjectsUseCase {
     String status,
   ) {
     if (userId.isEmpty) {
-      return Left(ValidationFailure(message: 'User ID cannot be empty'));
+      return Left(ValidationFailure('User ID cannot be empty'));
     }
 
     if (!Project.validStatuses.contains(status)) {
-      return Left(
-        ValidationFailure(message: 'Invalid project status: $status'),
-      );
+      return Left(ValidationFailure('Invalid project status: $status'));
     }
 
     return _repository.getUserProjectsByStatus(userId, status);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/constants/theme.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';
@@ -20,6 +21,7 @@ void main() async {
     MyApp(
       authRepository: initializer.authRepository,
       onboardingRepository: initializer.onboardingRepository,
+      prefs: initializer.prefs,
     ),
   );
 }
@@ -27,32 +29,38 @@ void main() async {
 class MyApp extends StatelessWidget {
   final FirebaseAuthRepository authRepository;
   final SharedPrefsOnboardingRepository onboardingRepository;
+  final SharedPreferences prefs;
 
   const MyApp({
     super.key,
     required this.authRepository,
     required this.onboardingRepository,
+    required this.prefs,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>(
-          create:
-              (context) => AuthBloc(authRepository)..add(AuthCheckRequested()),
-        ),
-        BlocProvider<ProjectsBloc>(
-          create: (context) => ProjectsBloc(SyncProjectRepository()),
-        ),
-        BlocProvider<OnboardingBloc>(
-          create:
-              (context) =>
-                  OnboardingBloc(onboardingRepository)
-                    ..add(OnboardingCheckRequested()),
-        ),
-      ],
-      child: const App(),
+    return MultiRepositoryProvider(
+      providers: [RepositoryProvider.value(value: prefs)],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create:
+                (context) =>
+                    AuthBloc(authRepository)..add(AuthCheckRequested()),
+          ),
+          BlocProvider<ProjectsBloc>(
+            create: (context) => ProjectsBloc(SyncProjectRepository()),
+          ),
+          BlocProvider<OnboardingBloc>(
+            create:
+                (context) =>
+                    OnboardingBloc(onboardingRepository)
+                      ..add(OnboardingCheckRequested()),
+          ),
+        ],
+        child: const App(),
+      ),
     );
   }
 }

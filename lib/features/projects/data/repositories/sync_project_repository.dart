@@ -126,9 +126,7 @@ class SyncProjectRepository implements ProjectRepository {
       return Right(project);
     } catch (e) {
       return Left(
-        DatabaseFailure(
-          message: 'Failed to create project locally: ${e.toString()}',
-        ),
+        DatabaseFailure('Failed to create project locally: ${e.toString()}'),
       );
     }
   }
@@ -146,9 +144,7 @@ class SyncProjectRepository implements ProjectRepository {
       return Right(project);
     } catch (e) {
       return Left(
-        DatabaseFailure(
-          message: 'Failed to update project locally: ${e.toString()}',
-        ),
+        DatabaseFailure('Failed to update project locally: ${e.toString()}'),
       );
     }
   }
@@ -165,9 +161,7 @@ class SyncProjectRepository implements ProjectRepository {
       return const Right(null);
     } catch (e) {
       return Left(
-        DatabaseFailure(
-          message: 'Failed to delete project locally: ${e.toString()}',
-        ),
+        DatabaseFailure('Failed to delete project locally: ${e.toString()}'),
       );
     }
   }
@@ -193,11 +187,9 @@ class SyncProjectRepository implements ProjectRepository {
         });
       }
 
-      return Left(DatabaseFailure(message: 'Project not found'));
+      return Left(DatabaseFailure('Project not found'));
     } catch (e) {
-      return Left(
-        DatabaseFailure(message: 'Failed to get project: ${e.toString()}'),
-      );
+      return Left(DatabaseFailure('Failed to get project: ${e.toString()}'));
     }
   }
 
@@ -233,9 +225,7 @@ class SyncProjectRepository implements ProjectRepository {
       return Right(controller.stream);
     } catch (e) {
       return Left(
-        UnexpectedFailure(
-          message: 'Failed to setup projects stream: ${e.toString()}',
-        ),
+        UnexpectedFailure('Failed to setup projects stream: ${e.toString()}'),
       );
     }
   }
@@ -277,9 +267,7 @@ class SyncProjectRepository implements ProjectRepository {
       return Right(controller.stream);
     } catch (e) {
       return Left(
-        UnexpectedFailure(
-          message: 'Failed to setup projects stream: ${e.toString()}',
-        ),
+        UnexpectedFailure('Failed to setup projects stream: ${e.toString()}'),
       );
     }
   }

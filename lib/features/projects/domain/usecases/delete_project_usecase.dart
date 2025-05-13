@@ -21,18 +21,16 @@ class DeleteProjectUseCase {
     required String userId,
   }) async {
     if (projectId.isEmpty) {
-      return Left(ValidationFailure(message: 'Project ID cannot be empty'));
+      return Left(ValidationFailure('Project ID cannot be empty'));
     }
     if (userId.isEmpty) {
-      return Left(ValidationFailure(message: 'User ID cannot be empty'));
+      return Left(ValidationFailure('User ID cannot be empty'));
     }
     // Get the project to check ownership
     final result = await _repository.getProjectById(projectId);
     return result.fold((failure) => Left(failure), (project) {
       if (project.userId != userId) {
-        return Left(
-          PermissionFailure(message: 'User does not own this project'),
-        );
+        return Left(PermissionFailure('User does not own this project'));
       }
       return _repository.deleteProject(projectId);
     });

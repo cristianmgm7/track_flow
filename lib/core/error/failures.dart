@@ -1,60 +1,46 @@
 import 'package:equatable/equatable.dart';
 
+/// Base class for all failures in the application
 abstract class Failure extends Equatable {
   final String message;
-  final String code;
 
-  const Failure({required this.message, required this.code});
+  const Failure(this.message);
 
   @override
-  List<Object?> get props => [message, code];
+  List<Object> get props => [message];
 }
 
-class ServerFailure extends Failure {
-  const ServerFailure({
-    super.message = 'A server error occurred',
-    super.code = 'SERVER_ERROR',
-  });
-}
-
-class NetworkFailure extends Failure {
-  const NetworkFailure({
-    super.message = 'A network error occurred',
-    super.code = 'NETWORK_ERROR',
-  });
-}
-
+/// Represents validation failures
 class ValidationFailure extends Failure {
-  const ValidationFailure({
-    required super.message,
-    super.code = 'VALIDATION_ERROR',
-  });
+  const ValidationFailure(super.message);
 }
 
+/// Represents server/API failures
+class ServerFailure extends Failure {
+  const ServerFailure(super.message);
+}
+
+/// Represents network connectivity failures
+class NetworkFailure extends Failure {
+  const NetworkFailure(super.message);
+}
+
+/// Represents authentication failures
 class AuthenticationFailure extends Failure {
-  const AuthenticationFailure({
-    super.message = 'Authentication failed',
-    super.code = 'AUTH_ERROR',
-  });
+  const AuthenticationFailure(super.message);
 }
 
+/// Represents database operation failures
 class DatabaseFailure extends Failure {
-  const DatabaseFailure({
-    super.message = 'Database operation failed',
-    super.code = 'DATABASE_ERROR',
-  });
+  const DatabaseFailure(super.message);
 }
 
+/// Represents unexpected failures
 class UnexpectedFailure extends Failure {
-  const UnexpectedFailure({
-    super.message = 'An unexpected error occurred',
-    super.code = 'UNEXPECTED_ERROR',
-  });
+  const UnexpectedFailure(super.message);
 }
 
+/// Represents permission/access failures
 class PermissionFailure extends Failure {
-  const PermissionFailure({
-    super.message = 'Permission denied',
-    super.code = 'PERMISSION_ERROR',
-  });
+  const PermissionFailure([super.message = 'Permission denied']);
 }

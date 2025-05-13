@@ -13,12 +13,13 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
-  final User user;
+  final User? user;
+  final bool isOfflineMode;
 
-  const AuthAuthenticated(this.user);
+  const AuthAuthenticated([this.user, this.isOfflineMode = false]);
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, isOfflineMode];
 }
 
 class AuthUnauthenticated extends AuthState {}
@@ -29,7 +30,7 @@ class AuthError extends AuthState {
   const AuthError(this.message);
 
   @override
-  List<Object?> get props => [message];
+  List<Object> get props => [message];
 }
 
 class AuthOnboardingChecked extends AuthState {

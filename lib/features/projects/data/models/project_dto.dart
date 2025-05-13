@@ -7,6 +7,14 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 /// including field names and data types. It handles the conversion between Firestore
 /// documents and domain entities.
 class ProjectDTO {
+  const ProjectDTO({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.description,
+    required this.createdAt,
+    required this.status,
+  });
   static const String collection = 'projects';
 
   // Firestore field names
@@ -17,21 +25,13 @@ class ProjectDTO {
   static const String fieldCreatedAt = 'createdAt';
   static const String fieldStatus = 'status';
 
+  // instance variables
   final String id;
   final String userId;
   final String title;
   final String description;
   final DateTime createdAt;
   final String status;
-
-  const ProjectDTO({
-    required this.id,
-    required this.userId,
-    required this.title,
-    required this.description,
-    required this.createdAt,
-    required this.status,
-  });
 
   /// Creates a ProjectDTO from a Firestore document.
   factory ProjectDTO.fromFirestore(DocumentSnapshot doc) {

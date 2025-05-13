@@ -48,17 +48,15 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       if (e.code == 'permission-denied') {
         return Left(
           AuthenticationFailure(
-            message: 'You don\'t have permission to create projects',
+            'You don\'t have permission to create projects',
           ),
         );
       }
-      return Left(
-        DatabaseFailure(message: 'Failed to create project: ${e.message}'),
-      );
+      return Left(DatabaseFailure('Failed to create project: ${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
-          message: 'An unexpected error occurred while creating the project',
+          'An unexpected error occurred while creating the project',
         ),
       );
     }
@@ -78,20 +76,18 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       if (e.code == 'permission-denied') {
         return Left(
           AuthenticationFailure(
-            message: 'You don\'t have permission to update this project',
+            'You don\'t have permission to update this project',
           ),
         );
       }
       if (e.code == 'not-found') {
-        return Left(DatabaseFailure(message: 'Project not found'));
+        return Left(DatabaseFailure('Project not found'));
       }
-      return Left(
-        DatabaseFailure(message: 'Failed to update project: ${e.message}'),
-      );
+      return Left(DatabaseFailure('Failed to update project: ${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
-          message: 'An unexpected error occurred while updating the project',
+          'An unexpected error occurred while updating the project',
         ),
       );
     }
@@ -109,17 +105,15 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       if (e.code == 'permission-denied') {
         return Left(
           AuthenticationFailure(
-            message: 'You don\'t have permission to delete this project',
+            'You don\'t have permission to delete this project',
           ),
         );
       }
-      return Left(
-        DatabaseFailure(message: 'Failed to delete project: ${e.message}'),
-      );
+      return Left(DatabaseFailure('Failed to delete project: ${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
-          message: 'An unexpected error occurred while deleting the project',
+          'An unexpected error occurred while deleting the project',
         ),
       );
     }
@@ -135,7 +129,7 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
               .get();
 
       if (!doc.exists) {
-        return Left(DatabaseFailure(message: 'Project not found'));
+        return Left(DatabaseFailure('Project not found'));
       }
 
       return Right(ProjectDTO.fromFirestore(doc).toEntity());
@@ -143,17 +137,15 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       if (e.code == 'permission-denied') {
         return Left(
           AuthenticationFailure(
-            message: 'You don\'t have permission to access this project',
+            'You don\'t have permission to access this project',
           ),
         );
       }
-      return Left(
-        DatabaseFailure(message: 'Failed to fetch project: ${e.message}'),
-      );
+      return Left(DatabaseFailure('Failed to fetch project: ${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
-          message: 'An unexpected error occurred while fetching the project',
+          'An unexpected error occurred while fetching the project',
         ),
       );
     }
@@ -177,15 +169,12 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       return Right(stream);
     } on FirebaseException catch (e) {
       return Left(
-        DatabaseFailure(
-          message: 'Failed to setup projects stream: ${e.message}',
-        ),
+        DatabaseFailure('Failed to setup projects stream: ${e.message}'),
       );
     } catch (e) {
       return Left(
         UnexpectedFailure(
-          message:
-              'An unexpected error occurred while setting up projects stream',
+          'An unexpected error occurred while setting up projects stream',
         ),
       );
     }
@@ -213,15 +202,12 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       return Right(stream);
     } on FirebaseException catch (e) {
       return Left(
-        DatabaseFailure(
-          message: 'Failed to setup projects stream: ${e.message}',
-        ),
+        DatabaseFailure('Failed to setup projects stream: ${e.message}'),
       );
     } catch (e) {
       return Left(
         UnexpectedFailure(
-          message:
-              'An unexpected error occurred while setting up projects stream',
+          'An unexpected error occurred while setting up projects stream',
         ),
       );
     }

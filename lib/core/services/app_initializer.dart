@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/config/firebase_options.dart';
@@ -11,26 +13,44 @@ class AppInitializer {
   late final SharedPreferences prefs;
   late final FirebaseAuthRepository authRepository;
   late final SharedPrefsOnboardingRepository onboardingRepository;
+  FirebaseAuth? _firebaseAuth;
 
   /// Initialize all app dependencies
   Future<void> initialize() async {
-    // Initialize Flutter bindings
-    WidgetsFlutterBinding.ensureInitialized();
+    try {
+      // Initialize Flutter bindings
+      WidgetsFlutterBinding.ensureInitialized();
 
-    // Initialize Firebase
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+      // Initialize Firebase with error handling
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        _firebaseAuth = FirebaseAuth.instance;
+      } catch (e) {
+        debugPrint('Firebase initialization failed: $e');
+        _firebaseAuth = null;
+        // Continue app initialization even if Firebase fails
+        // This allows the app to work in offline mode or when Google Play Services are not available
+      }
 
-    // Initialize Hive
-    await Hive.initFlutter();
-    await Hive.openBox<Map<String, dynamic>>('projects');
+      // Initialize Hive for local storage
+      await Hive.initFlutter();
+      await Hive.openBox<Map<String, dynamic>>('projects');
 
-    // Initialize SharedPreferences
-    prefs = await SharedPreferences.getInstance();
+      // Initialize SharedPreferences
+      prefs = await SharedPreferences.getInstance();
 
-    // Initialize repositories
-    authRepository = FirebaseAuthRepository(prefs: prefs);
-    onboardingRepository = SharedPrefsOnboardingRepository(prefs);
+      // Initialize repositories with potentially null Firebase auth
+      authRepository = FirebaseAuthRepository(
+        auth: _firebaseAuth,
+        googleSignIn: _firebaseAuth != null ? GoogleSignIn() : null,
+        prefs: prefs,
+      );
+      onboardingRepository = SharedPrefsOnboardingRepository(prefs);
+    } catch (e) {
+      debugPrint('App initialization error: $e');
+      rethrow;
+    }
   }
 }

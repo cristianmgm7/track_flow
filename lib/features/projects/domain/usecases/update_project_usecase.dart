@@ -9,9 +9,12 @@ import 'package:trackflow/features/projects/domain/repositories/project_reposito
 /// - Validates status transitions
 /// - Ensures required fields are present
 class UpdateProjectUseCase {
+  UpdateProjectUseCase(this._repository);
+
+  // instance variable
   final ProjectRepository _repository;
 
-  UpdateProjectUseCase(this._repository);
+  // constructor injection
 
   /// Update an existing project.
   ///

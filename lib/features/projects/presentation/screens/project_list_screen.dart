@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -9,7 +10,9 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_state.da
 import '../widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
-  const ProjectListScreen({super.key});
+  final SharedPreferences prefs;
+
+  const ProjectListScreen({super.key, required this.prefs});
 
   @override
   State<ProjectListScreen> createState() => _ProjectListScreenState();
@@ -25,7 +28,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   void _loadProjects() {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      context.read<ProjectsBloc>().add(LoadProjects(authState.user.uid));
+      final userId =
+          authState.isOfflineMode
+              ? 'offline-${widget.prefs.getString('offline_email') ?? 'user'}'
+              : authState.user!.uid;
+      context.read<ProjectsBloc>().add(LoadProjects(userId));
     }
   }
 

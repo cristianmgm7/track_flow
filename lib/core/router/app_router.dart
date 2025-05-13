@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
@@ -26,6 +27,7 @@ class AppRouter {
   static GoRouter router(BuildContext context) {
     final authBloc = context.read<AuthBloc>();
     final onboardingBloc = context.read<OnboardingBloc>();
+    final prefs = context.read<SharedPreferences>();
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: '/',
@@ -91,11 +93,11 @@ class AppRouter {
           routes: [
             GoRoute(
               path: '/dashboard',
-              builder: (context, state) => const ProjectListScreen(),
+              builder: (context, state) => ProjectListScreen(prefs: prefs),
             ),
             GoRoute(
               path: '/dashboard/projects/new',
-              builder: (context, state) => const ProjectFormScreen(),
+              builder: (context, state) => ProjectFormScreen(prefs: prefs),
             ),
             GoRoute(
               path: '/dashboard/projects/:id',
@@ -117,7 +119,7 @@ class AppRouter {
               path: '/dashboard/projects/:id/edit',
               builder: (context, state) {
                 final projectId = state.pathParameters['id']!;
-                return ProjectFormScreen(project: null);
+                return ProjectFormScreen(project: null, prefs: prefs);
               },
             ),
           ],

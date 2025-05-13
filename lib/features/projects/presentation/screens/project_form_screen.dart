@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -10,8 +11,9 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_state.da
 
 class ProjectFormScreen extends StatefulWidget {
   final Project? project;
+  final SharedPreferences prefs;
 
-  const ProjectFormScreen({super.key, this.project});
+  const ProjectFormScreen({super.key, this.project, required this.prefs});
 
   @override
   State<ProjectFormScreen> createState() => _ProjectFormScreenState();
@@ -86,7 +88,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       return;
     }
 
-    final userId = authState.user.uid;
+    final userId =
+        authState.isOfflineMode
+            ? 'offline-${widget.prefs.getString('offline_email') ?? 'user'}'
+            : authState.user!.uid;
 
     final project = Project(
       id: _project?.id ?? '',

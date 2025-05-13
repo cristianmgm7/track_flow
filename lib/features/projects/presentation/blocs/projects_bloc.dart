@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/models/project_model.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
@@ -30,7 +31,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
         try {
           await emit.forEach<List<Project>>(
             projectsStream,
-            onData: (projects) => ProjectsLoaded(projects),
+            onData:
+                (projects) => ProjectsLoaded(
+                  projects,
+                  // Convert projects to models for UI logic
+                  models: projects.map((p) => ProjectModel(p)).toList(),
+                ),
             onError:
                 (error, _) => ProjectsError(
                   'Failed to load projects: ${error.toString()}',
@@ -49,12 +55,21 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    final result = await _projectRepository.createProject(event.project);
+    // Use ProjectModel for validation and business rules
+    final model = ProjectModel(event.project);
+    final validationResult = model.validate();
 
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) =>
-          emit(const ProjectOperationSuccess('Project created successfully')),
+    await validationResult.fold(
+      (failure) async => emit(ProjectsError(failure.message)),
+      (validProject) async {
+        final result = await _projectRepository.createProject(validProject);
+        result.fold(
+          (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+          (project) => emit(
+            const ProjectOperationSuccess('Project created successfully'),
+          ),
+        );
+      },
     );
   }
 
@@ -64,12 +79,27 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    final result = await _projectRepository.updateProject(event.project);
+    // Use ProjectModel for validation and business rules
+    final model = ProjectModel(event.project);
 
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) =>
-          emit(const ProjectOperationSuccess('Project updated successfully')),
+    if (!model.canEdit()) {
+      emit(ProjectsError('Cannot edit a finished project'));
+      return;
+    }
+
+    final validationResult = model.validate();
+
+    await validationResult.fold(
+      (failure) async => emit(ProjectsError(failure.message)),
+      (validProject) async {
+        final result = await _projectRepository.updateProject(validProject);
+        result.fold(
+          (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+          (project) => emit(
+            const ProjectOperationSuccess('Project updated successfully'),
+          ),
+        );
+      },
     );
   }
 
@@ -80,7 +110,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     emit(ProjectsLoading());
 
     final result = await _projectRepository.deleteProject(event.projectId);
-
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
@@ -95,27 +124,16 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     emit(ProjectsLoading());
 
     final result = await _projectRepository.getProjectById(event.projectId);
-
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectDetailsLoaded(project)),
+      (project) => emit(
+        ProjectDetailsLoaded(
+          project,
+          model: ProjectModel(project), // Provide model for UI logic
+        ),
+      ),
     );
   }
 
-  String _mapFailureToMessage(Failure failure) {
-    switch (failure.runtimeType) {
-      case ServerFailure:
-        return 'Server error occurred. Please try again later.';
-      case NetworkFailure:
-        return 'Please check your internet connection.';
-      case ValidationFailure:
-        return failure.message;
-      case AuthenticationFailure:
-        return 'Authentication error. Please login again.';
-      case DatabaseFailure:
-        return 'Database error occurred. Please try again.';
-      default:
-        return 'Unexpected error occurred. Please try again later.';
-    }
-  }
+  String _mapFailureToMessage(Failure failure) => failure.message;
 }

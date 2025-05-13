@@ -7,6 +7,14 @@ import '../entities/project.dart';
 /// This repository interface defines all the operations that can be performed
 /// on projects, following the repository pattern to abstract the data source.
 abstract class ProjectRepository {
+  // constructor injection
+  ProjectRepository(this._repository);
+
+  final ProjectRepository _repository;
+
+  // esto son solo metodos que se van a implementar en la clase que implemente esta interfaz
+  // es como decirle usted es capaz de hacer esto, pero no lo implementa, solo lo define
+
   /// Creates a new project.
   Future<Either<Failure, Project>> createProject(Project project);
 
