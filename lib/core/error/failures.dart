@@ -51,3 +51,10 @@ class UnexpectedFailure extends Failure {
     super.code = 'UNEXPECTED_ERROR',
   });
 }
+
+class PermissionFailure extends Failure {
+  const PermissionFailure({
+    super.message = 'Permission denied',
+    super.code = 'PERMISSION_ERROR',
+  });
+}

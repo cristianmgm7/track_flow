@@ -1,7 +1,5 @@
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
-import 'package:dartz/dartz.dart';
-import 'package:trackflow/core/error/failures.dart';
 
 /// Use case for updating an existing project.
 ///
@@ -49,7 +47,7 @@ class UpdateProjectUseCase {
   }
 
   /// Validates that the status transition is allowed.
-  ///
+
   /// Allowed transitions:
   /// - draft -> in_progress
   /// - in_progress -> finished

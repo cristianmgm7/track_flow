@@ -24,8 +24,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
 
     final result = _projectRepository.getUserProjects(event.userId);
 
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+    await result.fold(
+      (failure) async => emit(ProjectsError(_mapFailureToMessage(failure))),
       (projectsStream) async {
         try {
           await emit.forEach<List<Project>>(

@@ -1,7 +1,9 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
-import 'package:mockito/annotations.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:dartz/dartz.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -12,8 +14,8 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_state.da
 import 'projects_bloc_test.mocks.dart';
 
 void main() {
-  late MockProjectRepository mockRepository;
   late ProjectsBloc bloc;
+  late MockProjectRepository mockRepository;
 
   setUp(() {
     mockRepository = MockProjectRepository();
@@ -24,174 +26,191 @@ void main() {
     bloc.close();
   });
 
-  group('ProjectsBloc', () {
-    final testProject = Project(
-      id: 'test-id',
-      userId: 'user-123',
-      title: 'Test Project',
-      description: 'Test Description',
-      createdAt: DateTime(2024, 1, 1),
-      status: Project.statusDraft,
-    );
+  final testProject = Project(
+    id: 'test-id',
+    title: 'Test Project',
+    description: 'Test Description',
+    userId: 'test-user',
+    status: Project.statusDraft,
+    createdAt: DateTime.now(),
+  );
 
-    test('initial state is ProjectsInitial', () {
-      expect(bloc.state, isA<ProjectsInitial>());
-    });
+  final testProjects = [testProject];
+
+  group('LoadProjects', () {
+    final userId = 'test-user';
+    final projectsStream = Stream.value(testProjects);
 
     blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectsLoaded] when LoadProjects succeeds',
+      'emits [ProjectsLoading, ProjectsLoaded] when projects are loaded successfully',
       build: () {
         when(
-          mockRepository.getUserProjects('user-123'),
-        ).thenAnswer((_) => Stream.value([testProject]));
+          mockRepository.getUserProjects(userId),
+        ).thenReturn(Right(projectsStream));
         return bloc;
       },
-      act: (bloc) => bloc.add(const LoadProjects('user-123')),
+      act: (bloc) => bloc.add(LoadProjects(userId)),
+      expect: () => [ProjectsLoading(), ProjectsLoaded(testProjects)],
+    );
+
+    blocTest<ProjectsBloc, ProjectsState>(
+      'emits [ProjectsLoading, ProjectsError] when loading fails',
+      build: () {
+        when(
+          mockRepository.getUserProjects(userId),
+        ).thenReturn(Left(ServerFailure()));
+        return bloc;
+      },
+      act: (bloc) => bloc.add(LoadProjects(userId)),
       expect:
           () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectsLoaded>().having(
-              (state) => state.projects,
-              'projects',
-              [testProject],
+            ProjectsLoading(),
+            const ProjectsError(
+              'Server error occurred. Please try again later.',
             ),
           ],
     );
+  });
 
+  group('CreateProject', () {
     blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectsError] when LoadProjects fails',
-      build: () {
-        when(
-          mockRepository.getUserProjects('user-123'),
-        ).thenAnswer((_) => Stream.error('Failed to load projects'));
-        return bloc;
-      },
-      act: (bloc) => bloc.add(const LoadProjects('user-123')),
-      expect:
-          () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectsError>().having(
-              (state) => state.message,
-              'error message',
-              'Failed to load projects',
-            ),
-          ],
-    );
-
-    blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectOperationSuccess] when CreateProject succeeds',
+      'emits [ProjectsLoading, ProjectOperationSuccess] when project is created successfully',
       build: () {
         when(
           mockRepository.createProject(testProject),
-        ).thenAnswer((_) async => testProject);
+        ).thenAnswer((_) async => Right(testProject));
         return bloc;
       },
       act: (bloc) => bloc.add(CreateProject(testProject)),
       expect:
           () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectOperationSuccess>().having(
-              (state) => state.message,
-              'success message',
-              'Project created successfully',
-            ),
+            ProjectsLoading(),
+            const ProjectOperationSuccess('Project created successfully'),
           ],
     );
 
     blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectsError] when CreateProject fails',
+      'emits [ProjectsLoading, ProjectsError] when creation fails',
       build: () {
         when(
           mockRepository.createProject(testProject),
-        ).thenThrow(Exception('Failed to create project'));
+        ).thenAnswer((_) async => Left(ServerFailure()));
         return bloc;
       },
       act: (bloc) => bloc.add(CreateProject(testProject)),
       expect:
           () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectsError>().having(
-              (state) => state.message,
-              'error message',
-              'Exception: Failed to create project',
+            ProjectsLoading(),
+            const ProjectsError(
+              'Server error occurred. Please try again later.',
             ),
           ],
     );
+  });
 
+  group('UpdateProject', () {
     blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectOperationSuccess] when UpdateProject succeeds',
+      'emits [ProjectsLoading, ProjectOperationSuccess] when project is updated successfully',
       build: () {
         when(
           mockRepository.updateProject(testProject),
-        ).thenAnswer((_) async {});
+        ).thenAnswer((_) async => Right(testProject));
         return bloc;
       },
       act: (bloc) => bloc.add(UpdateProject(testProject)),
       expect:
           () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectOperationSuccess>().having(
-              (state) => state.message,
-              'success message',
-              'Project updated successfully',
-            ),
+            ProjectsLoading(),
+            const ProjectOperationSuccess('Project updated successfully'),
           ],
     );
 
     blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectOperationSuccess] when DeleteProject succeeds',
-      build: () {
-        when(mockRepository.deleteProject('test-id')).thenAnswer((_) async {});
-        return bloc;
-      },
-      act: (bloc) => bloc.add(const DeleteProject('test-id')),
-      expect:
-          () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectOperationSuccess>().having(
-              (state) => state.message,
-              'success message',
-              'Project deleted successfully',
-            ),
-          ],
-    );
-
-    blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectDetailsLoaded] when LoadProjectDetails succeeds',
+      'emits [ProjectsLoading, ProjectsError] when update fails',
       build: () {
         when(
-          mockRepository.getProject('test-id'),
-        ).thenAnswer((_) async => testProject);
+          mockRepository.updateProject(testProject),
+        ).thenAnswer((_) async => Left(ServerFailure()));
         return bloc;
       },
-      act: (bloc) => bloc.add(const LoadProjectDetails('test-id')),
+      act: (bloc) => bloc.add(UpdateProject(testProject)),
       expect:
           () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectDetailsLoaded>().having(
-              (state) => state.project,
-              'project',
-              testProject,
+            ProjectsLoading(),
+            const ProjectsError(
+              'Server error occurred. Please try again later.',
             ),
+          ],
+    );
+  });
+
+  group('DeleteProject', () {
+    final projectId = 'test-id';
+
+    blocTest<ProjectsBloc, ProjectsState>(
+      'emits [ProjectsLoading, ProjectOperationSuccess] when project is deleted successfully',
+      build: () {
+        when(
+          mockRepository.deleteProject(projectId),
+        ).thenAnswer((_) async => const Right(null));
+        return bloc;
+      },
+      act: (bloc) => bloc.add(DeleteProject(projectId)),
+      expect:
+          () => [
+            ProjectsLoading(),
+            const ProjectOperationSuccess('Project deleted successfully'),
           ],
     );
 
     blocTest<ProjectsBloc, ProjectsState>(
-      'emits [ProjectsLoading, ProjectsError] when LoadProjectDetails fails',
+      'emits [ProjectsLoading, ProjectsError] when deletion fails',
       build: () {
         when(
-          mockRepository.getProject('test-id'),
-        ).thenAnswer((_) async => null);
+          mockRepository.deleteProject(projectId),
+        ).thenAnswer((_) async => Left(ServerFailure()));
         return bloc;
       },
-      act: (bloc) => bloc.add(const LoadProjectDetails('test-id')),
+      act: (bloc) => bloc.add(DeleteProject(projectId)),
       expect:
           () => [
-            isA<ProjectsLoading>(),
-            isA<ProjectsError>().having(
-              (state) => state.message,
-              'error message',
-              'Project not found',
+            ProjectsLoading(),
+            const ProjectsError(
+              'Server error occurred. Please try again later.',
+            ),
+          ],
+    );
+  });
+
+  group('LoadProjectDetails', () {
+    final projectId = 'test-id';
+
+    blocTest<ProjectsBloc, ProjectsState>(
+      'emits [ProjectsLoading, ProjectDetailsLoaded] when project details are loaded successfully',
+      build: () {
+        when(
+          mockRepository.getProjectById(projectId),
+        ).thenAnswer((_) async => Right(testProject));
+        return bloc;
+      },
+      act: (bloc) => bloc.add(LoadProjectDetails(projectId)),
+      expect: () => [ProjectsLoading(), ProjectDetailsLoaded(testProject)],
+    );
+
+    blocTest<ProjectsBloc, ProjectsState>(
+      'emits [ProjectsLoading, ProjectsError] when loading details fails',
+      build: () {
+        when(
+          mockRepository.getProjectById(projectId),
+        ).thenAnswer((_) async => Left(ServerFailure()));
+        return bloc;
+      },
+      act: (bloc) => bloc.add(LoadProjectDetails(projectId)),
+      expect:
+          () => [
+            ProjectsLoading(),
+            const ProjectsError(
+              'Server error occurred. Please try again later.',
             ),
           ],
     );

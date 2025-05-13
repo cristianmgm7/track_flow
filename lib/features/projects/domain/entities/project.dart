@@ -5,7 +5,6 @@
 /// independent of any framework or external concerns.
 library;
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 class Project extends Equatable {
@@ -96,11 +95,6 @@ class Project extends Equatable {
               ? DateTime.parse(map['updatedAt'] as String)
               : null,
     );
-  }
-
-  factory Project.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Project.fromMap({'id': doc.id, ...data});
   }
 
   @override
