@@ -1,0 +1,61 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Music Project Management Feature Rules
+
+## Feature Definition
+- Ensure the feature allows users to create, view, edit, and delete personal music projects.
+
+## Functional Requirements
+- Validate that a new project can be created with a name, description, and initial status.
+- Ensure the user can view their project list.
+- Allow editing of existing projects.
+- Enable deletion of projects with confirmation.
+- Display project details correctly.
+- Handle error cases such as empty project names, project not found, and network issues.
+
+## Technical Requirements
+- Verify that the feature requires an internet connection for Firestore operations.
+- Ensure the use of Firebase Firestore for storing projects.
+- Plan for potential local caching using Isar/Hive in the future.
+
+## Data Modeling
+- Confirm the `Project` class includes fields for `id`, `userId`, `title`, `description`, `createdAt`, and `status`.
+
+## UI/UX Design
+- Implement screens for project list, create/edit form, and project details.
+- Ensure flows such as Create → List → Detail and Edit → Updated detail are smooth.
+- Provide confirmation before deleting projects.
+- Implement instant field validation and sort projects by creation date.
+
+## Architecture & Structure
+- Follow the clean architecture with domain, data, and presentation layers.
+- Implement use cases like `CreateProjectUseCase` and `UpdateProjectUseCase`.
+- Use `ProjectsRepository` and `ProjectsRemoteDataSource` for data handling.
+- Manage state with `ProjectsBloc` and related pages.
+
+## State Management
+- Define Bloc events like `LoadProjects`, `CreateProject`, `UpdateProject`, and `DeleteProject`.
+- Handle Bloc states such as `ProjectsLoading`, `ProjectsLoaded`, `ProjectOperationSuccess`, and `ProjectError`.
+- Implement side effects for Firestore read/write operations and show Snackbars for errors/confirmations.
+
+## Security & Authentication
+- Ensure only authenticated users can create/view their projects.
+- Implement Firestore rules to restrict access based on user authentication.
+- Validate project creation and editing permissions.
+
+## Testing
+- Write unit tests for model data validation and use case logic.
+- Conduct integration tests simulating Firestore interactions.
+- Perform widget tests for the create form and project list display.
+
+## Scalability & Maintainability
+- Design the feature to be easily scalable, allowing for future additions like files, tasks, and tags.
+- Maintain a well-structured module with decoupled business logic.
+
+## Integration & Deployment
+- Ensure integration with authentication so users only see their own projects.
+- Maintain modularity and ease of testing.
+- Use Git branches for feature development, specifically `feature/projects-crud`.

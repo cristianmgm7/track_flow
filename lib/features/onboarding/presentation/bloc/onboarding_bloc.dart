@@ -1,60 +1,71 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'onboarding_event.dart';
 import 'onboarding_state.dart';
 
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
-  OnboardingBloc() : super(OnboardingInitial()) {
-    on<OnboardingStarted>(_onOnboardingStarted);
-    on<OnboardingStepCompleted>(_onOnboardingStepCompleted);
-    on<CompleteOnboarding>(_onOnboardingCompleted);
+  final OnboardingRepository _onboardingRepository;
+
+  OnboardingBloc(this._onboardingRepository) : super(OnboardingInitial()) {
+    on<OnboardingCheckRequested>(_onCheckRequested);
+    on<OnboardingMarkCompleted>(_onMarkCompleted);
+    on<OnboardingMarkLaunchSeen>(_onMarkLaunchSeen);
   }
 
-  Future<void> _onOnboardingStarted(
-    OnboardingStarted event,
+  Future<void> _onCheckRequested(
+    OnboardingCheckRequested event,
     Emitter<OnboardingState> emit,
   ) async {
     emit(OnboardingLoading());
     try {
-      final prefs = await SharedPreferences.getInstance();
       final hasCompletedOnboarding =
-          prefs.getBool('hasCompletedOnboarding') ?? false;
-
-      if (hasCompletedOnboarding) {
-        emit(OnboardingCompleted());
-      } else {
-        emit(OnboardingInitial());
-      }
+          await _onboardingRepository.hasCompletedOnboarding();
+      final hasSeenLaunch = await _onboardingRepository.hasSeenLaunch();
+      emit(
+        OnboardingChecked(
+          hasCompletedOnboarding: hasCompletedOnboarding,
+          hasSeenLaunch: hasSeenLaunch,
+        ),
+      );
     } catch (e) {
-      emit(OnboardingError('Failed to check onboarding status'));
+      emit(OnboardingError(e.toString()));
     }
   }
 
-  Future<void> _onOnboardingStepCompleted(
-    OnboardingStepCompleted event,
+  Future<void> _onMarkCompleted(
+    OnboardingMarkCompleted event,
     Emitter<OnboardingState> emit,
   ) async {
-    emit(OnboardingLoading());
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt('onboardingStep', event.step);
-      emit(OnboardingInitial());
+      await _onboardingRepository.markOnboardingCompleted();
+      final hasSeenLaunch = await _onboardingRepository.hasSeenLaunch();
+      emit(
+        OnboardingChecked(
+          hasCompletedOnboarding: true,
+          hasSeenLaunch: hasSeenLaunch,
+        ),
+      );
     } catch (e) {
-      emit(OnboardingError('Failed to save onboarding step'));
+      emit(OnboardingError(e.toString()));
     }
   }
 
-  Future<void> _onOnboardingCompleted(
-    CompleteOnboarding event,
+  Future<void> _onMarkLaunchSeen(
+    OnboardingMarkLaunchSeen event,
     Emitter<OnboardingState> emit,
   ) async {
-    emit(OnboardingLoading());
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('hasCompletedOnboarding', true);
-      emit(OnboardingCompleted());
+      await _onboardingRepository.markLaunchScreenSeen();
+      final hasCompletedOnboarding =
+          await _onboardingRepository.hasCompletedOnboarding();
+      emit(
+        OnboardingChecked(
+          hasCompletedOnboarding: hasCompletedOnboarding,
+          hasSeenLaunch: true,
+        ),
+      );
     } catch (e) {
-      emit(OnboardingError('Failed to complete onboarding'));
+      emit(OnboardingError(e.toString()));
     }
   }
 }
