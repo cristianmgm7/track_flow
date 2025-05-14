@@ -100,6 +100,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       description: _descriptionController.text,
       createdAt: _project?.createdAt ?? DateTime.now(),
       status: _status,
+      updatedAt: _project != null ? DateTime.now() : null,
     );
 
     if (_project == null) {

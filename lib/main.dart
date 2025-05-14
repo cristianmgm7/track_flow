@@ -12,11 +12,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/core/services/app_initializer.dart';
+import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
+import 'package:get_it/get_it.dart';
+import 'package:trackflow/core/services/service_locator.dart';
 
 void main() async {
   final initializer = AppInitializer();
   await initializer.initialize();
-
+  setupProjectDependencies();
   runApp(
     MyApp(
       authRepository: initializer.authRepository,
@@ -50,7 +53,7 @@ class MyApp extends StatelessWidget {
                     AuthBloc(authRepository)..add(AuthCheckRequested()),
           ),
           BlocProvider<ProjectsBloc>(
-            create: (context) => ProjectsBloc(SyncProjectRepository()),
+            create: (context) => ProjectsBloc(sl<ProjectUseCases>()),
           ),
           BlocProvider<OnboardingBloc>(
             create:

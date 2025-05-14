@@ -49,7 +49,6 @@ class ProjectDTO {
   /// Converts the DTO to a Firestore document map.
   Map<String, dynamic> toFirestore() {
     return {
-      fieldId: id,
       fieldUserId: userId,
       fieldTitle: title,
       fieldDescription: description,

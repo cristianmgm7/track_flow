@@ -22,8 +22,9 @@ class ProjectModel {
 
   /// Validates all business rules for a project
   Either<ValidationFailure, Project> validate() {
-    if (id.isEmpty) {
-      return Left(ValidationFailure('Project ID cannot be empty'));
+    // Only validate ID if it's not empty (for existing projects)
+    if (id.isNotEmpty && id.isEmpty) {
+      return Left(ValidationFailure('Project ID is invalid'));
     }
 
     if (title.isEmpty) {
