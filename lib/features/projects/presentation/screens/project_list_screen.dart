@@ -31,7 +31,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       final userId =
           authState.isOfflineMode
               ? 'offline-${widget.prefs.getString('offline_email') ?? 'user'}'
-              : authState.user!.uid;
+              : authState.user.id;
       context.read<ProjectsBloc>().add(LoadProjects(userId));
     }
   }

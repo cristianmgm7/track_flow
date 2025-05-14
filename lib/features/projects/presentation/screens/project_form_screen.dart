@@ -91,7 +91,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     final userId =
         authState.isOfflineMode
             ? 'offline-${widget.prefs.getString('offline_email') ?? 'user'}'
-            : authState.user!.uid;
+            : authState.user.id;
 
     final project = Project(
       id: _project?.id ?? '',

@@ -7,6 +7,18 @@ import 'package:trackflow/features/projects/domain/usecases/delete_project_useca
 import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
+// Auth imports
+import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/get_auth_state_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final sl = GetIt.instance;
 
@@ -24,6 +36,31 @@ void setupProjectDependencies() {
       deleteProject: sl(),
       getUserProjects: sl(),
       getProjectById: sl(),
+    ),
+  );
+}
+
+Future<void> setupAuthDependencies() async {
+  final prefs = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<AuthRepository>(
+    () => FirebaseAuthRepository(
+      auth: FirebaseAuth.instance,
+      googleSignIn: GoogleSignIn(),
+      prefs: prefs,
+    ),
+  );
+  sl.registerLazySingleton(() => SignInUseCase(sl()));
+  sl.registerLazySingleton(() => SignUpUseCase(sl()));
+  sl.registerLazySingleton(() => SignOutUseCase(sl()));
+  sl.registerLazySingleton(() => GoogleSignInUseCase(sl()));
+  sl.registerLazySingleton(() => GetAuthStateUseCase(sl()));
+  sl.registerLazySingleton(
+    () => AuthUseCases(
+      signIn: sl(),
+      signUp: sl(),
+      signOut: sl(),
+      googleSignIn: sl(),
+      getAuthState: sl(),
     ),
   );
 }
