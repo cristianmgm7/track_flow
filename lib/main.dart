@@ -9,12 +9,12 @@ import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:trackflow/features/onboarding/data/repositories/shared_prefs_onboarding_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
+
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/core/services/app_initializer.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
-import 'package:get_it/get_it.dart';
 import 'package:trackflow/core/services/service_locator.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 void main() async {
   final initializer = AppInitializer();
@@ -43,26 +43,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
-      providers: [RepositoryProvider.value(value: prefs)],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<AuthBloc>(
-            create:
-                (context) =>
-                    AuthBloc(authRepository)..add(AuthCheckRequested()),
-          ),
-          BlocProvider<ProjectsBloc>(
-            create: (context) => ProjectsBloc(sl<ProjectUseCases>()),
-          ),
-          BlocProvider<OnboardingBloc>(
-            create:
-                (context) =>
-                    OnboardingBloc(onboardingRepository)
-                      ..add(OnboardingCheckRequested()),
-          ),
-        ],
-        child: const App(),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated && state.user != null) {
+          context.read<ProjectsBloc>().currentUserId = state.user!.uid;
+        }
+        if (state is AuthUnauthenticated) {
+          context.read<ProjectsBloc>().currentUserId = null;
+        }
+      },
+      child: MultiRepositoryProvider(
+        providers: [RepositoryProvider.value(value: prefs)],
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>(
+              create:
+                  (context) =>
+                      AuthBloc(authRepository)..add(AuthCheckRequested()),
+            ),
+            BlocProvider<ProjectsBloc>(
+              create: (context) => ProjectsBloc(sl<ProjectUseCases>()),
+            ),
+            BlocProvider<OnboardingBloc>(
+              create:
+                  (context) =>
+                      OnboardingBloc(onboardingRepository)
+                        ..add(OnboardingCheckRequested()),
+            ),
+          ],
+          child: const App(),
+        ),
       ),
     );
   }

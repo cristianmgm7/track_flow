@@ -8,8 +8,9 @@ import 'projects_state.dart';
 
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final ProjectUseCases useCases;
+  String? currentUserId;
 
-  ProjectsBloc(this.useCases) : super(ProjectsInitial()) {
+  ProjectsBloc(this.useCases, {this.currentUserId}) : super(ProjectsInitial()) {
     on<LoadProjects>(_onLoadProjects);
     on<CreateProject>(_onCreateProject);
     on<UpdateProject>(_onUpdateProject);
@@ -85,8 +86,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    // TODO: Replace with actual userId from auth context or state
-    final userId = '';
+    final userId = currentUserId;
+    if (userId == null) {
+      emit(ProjectsError('User not authenticated'));
+      return;
+    }
+
     final result = await useCases.deleteProject(
       projectId: event.projectId,
       userId: userId,
