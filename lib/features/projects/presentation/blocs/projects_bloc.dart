@@ -3,13 +3,28 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/models/project_model.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
-  final ProjectRepository _projectRepository;
+  final CreateProjectUseCase _createProjectUseCase;
+  final UpdateProjectUseCase _updateProjectUseCase;
+  final DeleteProjectUseCase _deleteProjectUseCase;
+  final GetUserProjectsUseCase _getUserProjectsUseCase;
+  final GetProjectByIdUseCase _getProjectByIdUseCase;
 
-  ProjectsBloc(this._projectRepository) : super(ProjectsInitial()) {
+  ProjectsBloc(
+    this._createProjectUseCase,
+    this._updateProjectUseCase,
+    this._deleteProjectUseCase,
+    this._getUserProjectsUseCase,
+    this._getProjectByIdUseCase,
+  ) : super(ProjectsInitial()) {
     on<LoadProjects>(_onLoadProjects);
     on<CreateProject>(_onCreateProject);
     on<UpdateProject>(_onUpdateProject);
@@ -24,7 +39,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    final result = _projectRepository.getUserProjects(event.userId);
+    final result = _getUserProjectsUseCase(event.userId);
 
     await result.fold(
       (failure) async => emit(ProjectsError(_mapFailureToMessage(failure))),
@@ -55,21 +70,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    // Use ProjectModel for validation and business rules
-    final model = ProjectModel(event.project);
-    final validationResult = model.validate();
+    final result = await _createProjectUseCase(event.project);
 
-    await validationResult.fold(
-      (failure) async => emit(ProjectsError(failure.message)),
-      (validProject) async {
-        final result = await _projectRepository.createProject(validProject);
-        result.fold(
-          (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-          (project) => emit(
-            const ProjectOperationSuccess('Project created successfully'),
-          ),
-        );
-      },
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (project) =>
+          emit(const ProjectOperationSuccess('Project created successfully')),
     );
   }
 
@@ -79,27 +85,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    // Use ProjectModel for validation and business rules
-    final model = ProjectModel(event.project);
+    final result = await _updateProjectUseCase(event.project);
 
-    if (!model.canEdit()) {
-      emit(ProjectsError('Cannot edit a finished project'));
-      return;
-    }
-
-    final validationResult = model.validate();
-
-    await validationResult.fold(
-      (failure) async => emit(ProjectsError(failure.message)),
-      (validProject) async {
-        final result = await _projectRepository.updateProject(validProject);
-        result.fold(
-          (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-          (project) => emit(
-            const ProjectOperationSuccess('Project updated successfully'),
-          ),
-        );
-      },
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (project) =>
+          emit(const ProjectOperationSuccess('Project updated successfully')),
     );
   }
 
@@ -109,7 +100,13 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    final result = await _projectRepository.deleteProject(event.projectId);
+    // TODO: Replace with actual userId from auth context or state
+    final userId = '';
+    final result = await _deleteProjectUseCase(
+      projectId: event.projectId,
+      userId: userId,
+    );
+
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
@@ -123,7 +120,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    final result = await _projectRepository.getProjectById(event.projectId);
+    final result = await _getProjectByIdUseCase(event.projectId);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (project) =>
@@ -143,7 +140,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     await progressResult.fold(
       (failure) async => emit(ProjectsError(failure.message)),
       (updatedProject) async {
-        final result = await _projectRepository.updateProject(updatedProject);
+        final result = await _updateProjectUseCase(updatedProject);
         result.fold(
           (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
           (project) => emit(
