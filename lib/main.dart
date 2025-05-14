@@ -43,34 +43,34 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        if (state is AuthAuthenticated && state.user != null) {
-          context.read<ProjectsBloc>().currentUserId = state.user!.uid;
-        }
-        if (state is AuthUnauthenticated) {
-          context.read<ProjectsBloc>().currentUserId = null;
-        }
-      },
-      child: MultiRepositoryProvider(
-        providers: [RepositoryProvider.value(value: prefs)],
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider<AuthBloc>(
-              create:
-                  (context) =>
-                      AuthBloc(authRepository)..add(AuthCheckRequested()),
-            ),
-            BlocProvider<ProjectsBloc>(
-              create: (context) => ProjectsBloc(sl<ProjectUseCases>()),
-            ),
-            BlocProvider<OnboardingBloc>(
-              create:
-                  (context) =>
-                      OnboardingBloc(onboardingRepository)
-                        ..add(OnboardingCheckRequested()),
-            ),
-          ],
+    return MultiRepositoryProvider(
+      providers: [RepositoryProvider.value(value: prefs)],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create:
+                (context) =>
+                    AuthBloc(authRepository)..add(AuthCheckRequested()),
+          ),
+          BlocProvider<ProjectsBloc>(
+            create: (context) => ProjectsBloc(sl<ProjectUseCases>()),
+          ),
+          BlocProvider<OnboardingBloc>(
+            create:
+                (context) =>
+                    OnboardingBloc(onboardingRepository)
+                      ..add(OnboardingCheckRequested()),
+          ),
+        ],
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthAuthenticated && state.user != null) {
+              context.read<ProjectsBloc>().currentUserId = state.user!.uid;
+            }
+            if (state is AuthUnauthenticated) {
+              context.read<ProjectsBloc>().currentUserId = null;
+            }
+          },
           child: const App(),
         ),
       ),

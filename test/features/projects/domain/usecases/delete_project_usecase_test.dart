@@ -54,10 +54,7 @@ void main() {
       final result = await useCase(projectId: '', userId: 'test-user');
 
       // assert
-      expect(
-        result,
-        Left(ValidationFailure(message: 'Project ID cannot be empty')),
-      );
+      expect(result, Left(ValidationFailure('Project ID cannot be empty')));
       verifyNever(mockRepository.getProjectById(any));
       verifyNever(mockRepository.deleteProject(any));
     });
@@ -67,10 +64,7 @@ void main() {
       final result = await useCase(projectId: 'test-id', userId: '');
 
       // assert
-      expect(
-        result,
-        Left(ValidationFailure(message: 'User ID cannot be empty')),
-      );
+      expect(result, Left(ValidationFailure('User ID cannot be empty')));
       verifyNever(mockRepository.getProjectById(any));
       verifyNever(mockRepository.deleteProject(any));
     });
@@ -98,7 +92,7 @@ void main() {
         // assert
         expect(
           result,
-          Left(PermissionFailure(message: 'User does not own this project')),
+          Left(PermissionFailure('User does not own this project')),
         );
         verify(mockRepository.getProjectById('test-id'));
         verifyNever(mockRepository.deleteProject(any));
@@ -109,13 +103,13 @@ void main() {
       // arrange
       when(
         mockRepository.getProjectById('test-id'),
-      ).thenAnswer((_) async => Left(ServerFailure()));
+      ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
 
       // act
       final result = await useCase(projectId: 'test-id', userId: 'test-user');
 
       // assert
-      expect(result, Left(ServerFailure()));
+      expect(result, Left(ServerFailure('Repository error')));
       verify(mockRepository.getProjectById('test-id'));
       verifyNever(mockRepository.deleteProject(any));
     });
@@ -127,13 +121,13 @@ void main() {
       ).thenAnswer((_) async => Right(testProject));
       when(
         mockRepository.deleteProject('test-id'),
-      ).thenAnswer((_) async => Left(ServerFailure()));
+      ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
 
       // act
       final result = await useCase(projectId: 'test-id', userId: 'test-user');
 
       // assert
-      expect(result, Left(ServerFailure()));
+      expect(result, Left(ServerFailure('Repository error')));
       verify(mockRepository.getProjectById('test-id'));
       verify(mockRepository.deleteProject('test-id'));
       verifyNoMoreInteractions(mockRepository);

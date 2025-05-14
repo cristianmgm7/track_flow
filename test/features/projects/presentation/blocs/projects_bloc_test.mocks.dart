@@ -10,8 +10,16 @@ import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/error/failures.dart' as _i5;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i6;
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart'
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart'
     as _i3;
+import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
+    as _i8;
+import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart'
+    as _i10;
+import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart'
+    as _i9;
+import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
+    as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -37,126 +45,172 @@ class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
         );
 }
 
-/// A class which mocks [ProjectRepository].
+/// A class which mocks [CreateProjectUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockProjectRepository extends _i1.Mock implements _i3.ProjectRepository {
-  MockProjectRepository() {
+class MockCreateProjectUseCase extends _i1.Mock
+    implements _i3.CreateProjectUseCase {
+  MockCreateProjectUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> createProject(
-          _i6.Project? project) =>
+  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> call(_i6.Project? project) =>
       (super.noSuchMethod(
         Invocation.method(
-          #createProject,
+          #call,
           [project],
         ),
         returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
             _FakeEither_0<_i5.Failure, _i6.Project>(
           this,
           Invocation.method(
-            #createProject,
+            #call,
             [project],
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
+}
+
+/// A class which mocks [UpdateProjectUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockUpdateProjectUseCase extends _i1.Mock
+    implements _i7.UpdateProjectUseCase {
+  MockUpdateProjectUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> updateProject(
-          _i6.Project? project) =>
+  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> call(_i6.Project? project) =>
       (super.noSuchMethod(
         Invocation.method(
-          #updateProject,
+          #call,
           [project],
         ),
         returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
             _FakeEither_0<_i5.Failure, _i6.Project>(
           this,
           Invocation.method(
-            #updateProject,
+            #call,
             [project],
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
+}
+
+/// A class which mocks [DeleteProjectUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDeleteProjectUseCase extends _i1.Mock
+    implements _i8.DeleteProjectUseCase {
+  MockDeleteProjectUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, void>> deleteProject(String? projectId) =>
+  _i4.Future<_i2.Either<_i5.Failure, void>> call({
+    required String? projectId,
+    required String? userId,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #deleteProject,
-          [projectId],
+          #call,
+          [],
+          {
+            #projectId: projectId,
+            #userId: userId,
+          },
         ),
         returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
             _FakeEither_0<_i5.Failure, void>(
           this,
           Invocation.method(
-            #deleteProject,
-            [projectId],
+            #call,
+            [],
+            {
+              #projectId: projectId,
+              #userId: userId,
+            },
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
+}
+
+/// A class which mocks [GetUserProjectsUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetUserProjectsUseCase extends _i1.Mock
+    implements _i9.GetUserProjectsUseCase {
+  MockGetUserProjectsUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> getProjectById(
-          String? projectId) =>
+  _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>> call(String? userId) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getProjectById,
-          [projectId],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
-            _FakeEither_0<_i5.Failure, _i6.Project>(
-          this,
-          Invocation.method(
-            #getProjectById,
-            [projectId],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
-
-  @override
-  _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>> getUserProjects(
-          String? userId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getUserProjects,
+          #call,
           [userId],
         ),
         returnValue: _FakeEither_0<_i5.Failure, _i4.Stream<List<_i6.Project>>>(
           this,
           Invocation.method(
-            #getUserProjects,
+            #call,
             [userId],
           ),
         ),
       ) as _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>);
 
   @override
-  _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>
-      getUserProjectsByStatus(
+  _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>> getByStatus(
     String? userId,
     String? status,
   ) =>
-          (super.noSuchMethod(
-            Invocation.method(
-              #getUserProjectsByStatus,
-              [
-                userId,
-                status,
-              ],
-            ),
-            returnValue:
-                _FakeEither_0<_i5.Failure, _i4.Stream<List<_i6.Project>>>(
-              this,
-              Invocation.method(
-                #getUserProjectsByStatus,
-                [
-                  userId,
-                  status,
-                ],
-              ),
-            ),
-          ) as _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>);
+      (super.noSuchMethod(
+        Invocation.method(
+          #getByStatus,
+          [
+            userId,
+            status,
+          ],
+        ),
+        returnValue: _FakeEither_0<_i5.Failure, _i4.Stream<List<_i6.Project>>>(
+          this,
+          Invocation.method(
+            #getByStatus,
+            [
+              userId,
+              status,
+            ],
+          ),
+        ),
+      ) as _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>);
+}
+
+/// A class which mocks [GetProjectByIdUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetProjectByIdUseCase extends _i1.Mock
+    implements _i10.GetProjectByIdUseCase {
+  MockGetProjectByIdUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> call(String? projectId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [projectId],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
+            _FakeEither_0<_i5.Failure, _i6.Project>(
+          this,
+          Invocation.method(
+            #call,
+            [projectId],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
 }

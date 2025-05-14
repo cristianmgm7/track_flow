@@ -59,10 +59,7 @@ void main() {
     final result = await useCase(invalidProject);
 
     // assert
-    expect(
-      result,
-      Left(ValidationFailure(message: 'Project title cannot be empty')),
-    );
+    expect(result, Left(ValidationFailure('Project title cannot be empty')));
     verifyNever(mockRepository.createProject(invalidProject));
   });
 
@@ -81,7 +78,7 @@ void main() {
     final result = await useCase(invalidProject);
 
     // assert
-    expect(result, Left(ValidationFailure(message: 'User ID cannot be empty')));
+    expect(result, Left(ValidationFailure('User ID cannot be empty')));
     verifyNever(mockRepository.createProject(invalidProject));
   });
 
@@ -100,7 +97,10 @@ void main() {
     final result = await useCase(invalidProject);
 
     // assert
-    expect(result, Left(ValidationFailure(message: 'Invalid project status')));
+    expect(
+      result,
+      Left(ValidationFailure('Invalid project status: invalid_status')),
+    );
     verifyNever(mockRepository.createProject(invalidProject));
   });
 
@@ -108,14 +108,59 @@ void main() {
     // arrange
     when(
       mockRepository.createProject(testProject),
-    ).thenAnswer((_) async => Left(ServerFailure()));
+    ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
 
     // act
     final result = await useCase(testProject);
 
     // assert
-    expect(result, Left(ServerFailure()));
+    expect(result, Left(ServerFailure('Repository error')));
     verify(mockRepository.createProject(testProject));
     verifyNoMoreInteractions(mockRepository);
+  });
+
+  test(
+    'should return Right(Project) when validation passes and repository succeeds',
+    () async {
+      final project = Project(
+        id: '',
+        userId: 'user123',
+        title: 'Test Project',
+        description: 'A test project',
+        createdAt: DateTime.now(),
+        status: 'draft',
+      );
+
+      // Arrange: repository returns Right(project)
+      when(
+        mockRepository.createProject(any),
+      ).thenAnswer((_) async => Right(project));
+
+      // Act
+      final result = await useCase(project);
+
+      // Assert
+      expect(result, Right(project));
+      verify(mockRepository.createProject(any)).called(1);
+    },
+  );
+
+  test('should return Left(ValidationFailure) when validation fails', () async {
+    final invalidProject = Project(
+      id: '',
+      userId: '',
+      title: '',
+      description: '',
+      createdAt: DateTime.now(),
+      status: 'draft',
+    );
+
+    // Act
+    final result = await useCase(invalidProject);
+
+    // Assert
+    expect(result.isLeft(), true);
+    expect(result.fold((l) => l, (r) => null), isA<ValidationFailure>());
+    verifyNever(mockRepository.createProject(any));
   });
 }

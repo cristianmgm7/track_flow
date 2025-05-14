@@ -86,4 +86,31 @@ class Project extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'userId': userId,
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+    };
+  }
+
+  factory Project.fromMap(Map<String, dynamic> map) {
+    return Project(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      description: map['description'] as String,
+      userId: map['userId'] as String,
+      status: map['status'] as String,
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      updatedAt:
+          map['updatedAt'] != null
+              ? DateTime.parse(map['updatedAt'] as String)
+              : null,
+    );
+  }
 }

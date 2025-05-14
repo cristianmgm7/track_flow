@@ -74,7 +74,10 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
     if (data == null) return [];
 
     return data.entries.map((e) {
-      return ProjectDTO.fromMap({'id': e.key, ...e.value});
+      return ProjectDTO.fromMap({
+        'id': e.key,
+        ...Map<String, dynamic>.from(e.value),
+      });
     }).toList();
   }
 
@@ -88,7 +91,10 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
     if (data == null) return [];
 
     return data.entries.map((e) {
-      return ProjectDTO.fromMap({'id': e.key, ...e.value});
+      return ProjectDTO.fromMap({
+        'id': e.key,
+        ...Map<String, dynamic>.from(e.value),
+      });
     }).toList();
   }
 
@@ -116,7 +122,10 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
       if (key is String && key.startsWith('user_')) {
         final data = _box.get(key);
         if (data != null && data.containsKey(id)) {
-          return ProjectDTO.fromMap({'id': id, ...data[id]});
+          return ProjectDTO.fromMap({
+            'id': id,
+            ...Map<String, dynamic>.from(data[id]),
+          });
         }
       }
     }

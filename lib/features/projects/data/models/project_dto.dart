@@ -130,4 +130,25 @@ class ProjectDTO {
       fieldStatus: status,
     };
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is ProjectDTO &&
+        other.id == id &&
+        other.userId == userId &&
+        other.title == title &&
+        other.description == description &&
+        other.createdAt == createdAt &&
+        other.status == status;
+  }
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      userId.hashCode ^
+      title.hashCode ^
+      description.hashCode ^
+      createdAt.hashCode ^
+      status.hashCode;
 }

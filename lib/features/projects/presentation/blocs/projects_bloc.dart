@@ -143,5 +143,23 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     );
   }
 
-  String _mapFailureToMessage(Failure failure) => failure.message;
+  String _mapFailureToMessage(Failure failure) {
+    if (failure is ValidationFailure) {
+      return failure.message;
+    } else if (failure is PermissionFailure) {
+      return "You don't have permission to perform this action.";
+    } else if (failure is DatabaseFailure) {
+      return "A database error occurred. Please try again.";
+    } else if (failure is AuthenticationFailure) {
+      return "Authentication error. Please log in again.";
+    } else if (failure is NetworkFailure) {
+      return "No internet connection. Please check your network.";
+    } else if (failure is ServerFailure) {
+      return "A server error occurred. Please try again later.";
+    } else if (failure is UnexpectedFailure) {
+      // Optionally log failure.message here
+      return "An unexpected error occurred. Please try again later.";
+    }
+    return "An unknown error occurred.";
+  }
 }

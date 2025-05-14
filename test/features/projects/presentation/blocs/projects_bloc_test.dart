@@ -9,17 +9,45 @@ import 'package:trackflow/features/projects/domain/repositories/project_reposito
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/projects/domain/models/project_model.dart';
+import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 
-@GenerateMocks([ProjectRepository])
+@GenerateMocks([
+  CreateProjectUseCase,
+  UpdateProjectUseCase,
+  DeleteProjectUseCase,
+  GetUserProjectsUseCase,
+  GetProjectByIdUseCase,
+])
 import 'projects_bloc_test.mocks.dart';
 
 void main() {
   late ProjectsBloc bloc;
-  late MockProjectRepository mockRepository;
+  late MockCreateProjectUseCase mockCreateProjectUseCase;
+  late MockUpdateProjectUseCase mockUpdateProjectUseCase;
+  late MockDeleteProjectUseCase mockDeleteProjectUseCase;
+  late MockGetUserProjectsUseCase mockGetUserProjectsUseCase;
+  late MockGetProjectByIdUseCase mockGetProjectByIdUseCase;
 
   setUp(() {
-    mockRepository = MockProjectRepository();
-    bloc = ProjectsBloc(mockRepository);
+    mockCreateProjectUseCase = MockCreateProjectUseCase();
+    mockUpdateProjectUseCase = MockUpdateProjectUseCase();
+    mockDeleteProjectUseCase = MockDeleteProjectUseCase();
+    mockGetUserProjectsUseCase = MockGetUserProjectsUseCase();
+    mockGetProjectByIdUseCase = MockGetProjectByIdUseCase();
+    final useCases = ProjectUseCases(
+      createProject: mockCreateProjectUseCase,
+      updateProject: mockUpdateProjectUseCase,
+      deleteProject: mockDeleteProjectUseCase,
+      getUserProjects: mockGetUserProjectsUseCase,
+      getProjectById: mockGetProjectByIdUseCase,
+    );
+    bloc = ProjectsBloc(useCases);
   });
 
   tearDown(() {
@@ -45,28 +73,38 @@ void main() {
       'emits [ProjectsLoading, ProjectsLoaded] when projects are loaded successfully',
       build: () {
         when(
-          mockRepository.getUserProjects(userId),
+          mockGetUserProjectsUseCase(userId),
         ).thenReturn(Right(projectsStream));
         return bloc;
       },
       act: (bloc) => bloc.add(LoadProjects(userId)),
-      expect: () => [ProjectsLoading(), ProjectsLoaded(testProjects)],
+      expect:
+          () => [
+            isA<ProjectsLoading>(),
+            isA<ProjectsLoaded>().having(
+              (s) => s.projects,
+              'projects',
+              testProjects,
+            ),
+          ],
     );
 
     blocTest<ProjectsBloc, ProjectsState>(
       'emits [ProjectsLoading, ProjectsError] when loading fails',
       build: () {
         when(
-          mockRepository.getUserProjects(userId),
-        ).thenReturn(Left(ServerFailure()));
+          mockGetUserProjectsUseCase(any),
+        ).thenReturn(Left(ServerFailure('')));
         return bloc;
       },
       act: (bloc) => bloc.add(LoadProjects(userId)),
       expect:
           () => [
-            ProjectsLoading(),
-            const ProjectsError(
-              'Server error occurred. Please try again later.',
+            isA<ProjectsLoading>(),
+            isA<ProjectsError>().having(
+              (e) => e.message,
+              'message',
+              'A server error occurred. Please try again later.',
             ),
           ],
     );
@@ -77,7 +115,7 @@ void main() {
       'emits [ProjectsLoading, ProjectOperationSuccess] when project is created successfully',
       build: () {
         when(
-          mockRepository.createProject(testProject),
+          mockCreateProjectUseCase(any),
         ).thenAnswer((_) async => Right(testProject));
         return bloc;
       },
@@ -93,16 +131,18 @@ void main() {
       'emits [ProjectsLoading, ProjectsError] when creation fails',
       build: () {
         when(
-          mockRepository.createProject(testProject),
-        ).thenAnswer((_) async => Left(ServerFailure()));
+          mockCreateProjectUseCase(any),
+        ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
         return bloc;
       },
       act: (bloc) => bloc.add(CreateProject(testProject)),
       expect:
           () => [
-            ProjectsLoading(),
-            const ProjectsError(
-              'Server error occurred. Please try again later.',
+            isA<ProjectsLoading>(),
+            isA<ProjectsError>().having(
+              (e) => e.message,
+              'message',
+              'A server error occurred. Please try again later.',
             ),
           ],
     );
@@ -113,7 +153,7 @@ void main() {
       'emits [ProjectsLoading, ProjectOperationSuccess] when project is updated successfully',
       build: () {
         when(
-          mockRepository.updateProject(testProject),
+          mockUpdateProjectUseCase(any),
         ).thenAnswer((_) async => Right(testProject));
         return bloc;
       },
@@ -129,16 +169,18 @@ void main() {
       'emits [ProjectsLoading, ProjectsError] when update fails',
       build: () {
         when(
-          mockRepository.updateProject(testProject),
-        ).thenAnswer((_) async => Left(ServerFailure()));
+          mockUpdateProjectUseCase(any),
+        ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
         return bloc;
       },
       act: (bloc) => bloc.add(UpdateProject(testProject)),
       expect:
           () => [
-            ProjectsLoading(),
-            const ProjectsError(
-              'Server error occurred. Please try again later.',
+            isA<ProjectsLoading>(),
+            isA<ProjectsError>().having(
+              (e) => e.message,
+              'message',
+              'A server error occurred. Please try again later.',
             ),
           ],
     );
@@ -146,20 +188,28 @@ void main() {
 
   group('DeleteProject', () {
     final projectId = 'test-id';
+    final userId = 'test-user';
 
     blocTest<ProjectsBloc, ProjectsState>(
       'emits [ProjectsLoading, ProjectOperationSuccess] when project is deleted successfully',
       build: () {
         when(
-          mockRepository.deleteProject(projectId),
+          mockDeleteProjectUseCase(projectId: projectId, userId: userId),
         ).thenAnswer((_) async => const Right(null));
         return bloc;
       },
-      act: (bloc) => bloc.add(DeleteProject(projectId)),
+      act: (bloc) {
+        bloc.currentUserId = userId;
+        bloc.add(DeleteProject(projectId));
+      },
       expect:
           () => [
-            ProjectsLoading(),
-            const ProjectOperationSuccess('Project deleted successfully'),
+            isA<ProjectsLoading>(),
+            isA<ProjectOperationSuccess>().having(
+              (s) => s.message,
+              'message',
+              'Project deleted successfully',
+            ),
           ],
     );
 
@@ -167,16 +217,21 @@ void main() {
       'emits [ProjectsLoading, ProjectsError] when deletion fails',
       build: () {
         when(
-          mockRepository.deleteProject(projectId),
-        ).thenAnswer((_) async => Left(ServerFailure()));
+          mockDeleteProjectUseCase(projectId: projectId, userId: userId),
+        ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
         return bloc;
       },
-      act: (bloc) => bloc.add(DeleteProject(projectId)),
+      act: (bloc) {
+        bloc.currentUserId = userId;
+        bloc.add(DeleteProject(projectId));
+      },
       expect:
           () => [
-            ProjectsLoading(),
-            const ProjectsError(
-              'Server error occurred. Please try again later.',
+            isA<ProjectsLoading>(),
+            isA<ProjectsError>().having(
+              (e) => e.message,
+              'message',
+              'A server error occurred. Please try again later.',
             ),
           ],
     );
@@ -189,28 +244,38 @@ void main() {
       'emits [ProjectsLoading, ProjectDetailsLoaded] when project details are loaded successfully',
       build: () {
         when(
-          mockRepository.getProjectById(projectId),
+          mockGetProjectByIdUseCase(projectId),
         ).thenAnswer((_) async => Right(testProject));
         return bloc;
       },
       act: (bloc) => bloc.add(LoadProjectDetails(projectId)),
-      expect: () => [ProjectsLoading(), ProjectDetailsLoaded(testProject)],
+      expect:
+          () => [
+            isA<ProjectsLoading>(),
+            isA<ProjectDetailsLoaded>().having(
+              (s) => s.project,
+              'project',
+              testProject,
+            ),
+          ],
     );
 
     blocTest<ProjectsBloc, ProjectsState>(
       'emits [ProjectsLoading, ProjectsError] when loading details fails',
       build: () {
         when(
-          mockRepository.getProjectById(projectId),
-        ).thenAnswer((_) async => Left(ServerFailure()));
+          mockGetProjectByIdUseCase(projectId),
+        ).thenAnswer((_) async => Left(ServerFailure('Repository error')));
         return bloc;
       },
       act: (bloc) => bloc.add(LoadProjectDetails(projectId)),
       expect:
           () => [
-            ProjectsLoading(),
-            const ProjectsError(
-              'Server error occurred. Please try again later.',
+            isA<ProjectsLoading>(),
+            isA<ProjectsError>().having(
+              (e) => e.message,
+              'message',
+              'A server error occurred. Please try again later.',
             ),
           ],
     );

@@ -55,10 +55,7 @@ void main() {
       final result = useCase('');
 
       // assert
-      expect(
-        result,
-        Left(ValidationFailure(message: 'User ID cannot be empty')),
-      );
+      expect(result, Left(ValidationFailure('User ID cannot be empty')));
       verifyNever(mockRepository.getUserProjects(any));
     });
 
@@ -66,13 +63,13 @@ void main() {
       // arrange
       when(
         mockRepository.getUserProjects(testUserId),
-      ).thenReturn(Left(ServerFailure()));
+      ).thenReturn(Left(ServerFailure('Repository error')));
 
       // act
       final result = useCase(testUserId);
 
       // assert
-      expect(result, Left(ServerFailure()));
+      expect(result, Left(ServerFailure('Repository error')));
       verify(mockRepository.getUserProjects(testUserId));
       verifyNoMoreInteractions(mockRepository);
     });
@@ -100,10 +97,7 @@ void main() {
       final result = useCase.getByStatus('', testStatus);
 
       // assert
-      expect(
-        result,
-        Left(ValidationFailure(message: 'User ID cannot be empty')),
-      );
+      expect(result, Left(ValidationFailure('User ID cannot be empty')));
       verifyNever(mockRepository.getUserProjectsByStatus(any, any));
     });
 
@@ -114,9 +108,7 @@ void main() {
       // assert
       expect(
         result,
-        Left(
-          ValidationFailure(message: 'Invalid project status: invalid_status'),
-        ),
+        Left(ValidationFailure('Invalid project status: invalid_status')),
       );
       verifyNever(mockRepository.getUserProjectsByStatus(any, any));
     });
@@ -125,13 +117,13 @@ void main() {
       // arrange
       when(
         mockRepository.getUserProjectsByStatus(testUserId, testStatus),
-      ).thenReturn(Left(ServerFailure()));
+      ).thenReturn(Left(ServerFailure('Repository error')));
 
       // act
       final result = useCase.getByStatus(testUserId, testStatus);
 
       // assert
-      expect(result, Left(ServerFailure()));
+      expect(result, Left(ServerFailure('Repository error')));
       verify(mockRepository.getUserProjectsByStatus(testUserId, testStatus));
       verifyNoMoreInteractions(mockRepository);
     });
