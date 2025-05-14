@@ -1,12 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import 'package:trackflow/features/auth/domain/entities/email.dart';
+import 'package:trackflow/features/auth/domain/entities/password.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepository _authRepository;
+  final AuthUseCases _authUseCases;
 
-  AuthBloc(this._authRepository) : super(AuthInitial()) {
+  AuthBloc(this._authUseCases) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
@@ -19,9 +21,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    await emit.forEach<AuthState>(
-      _authRepository.authState,
-      onData: (state) => state,
+    await emit.forEach(
+      _authUseCases.getAuthState(),
+      onData:
+          (user) =>
+              user != null ? AuthAuthenticated(user) : AuthUnauthenticated(),
       onError: (_, __) => AuthError('Failed to check auth state'),
     );
   }
@@ -31,14 +35,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    try {
-      await _authRepository.signInWithEmailAndPassword(
-        event.email,
-        event.password,
-      );
-    } catch (e) {
-      emit(AuthError(e.toString()));
-    }
+    final result = await _authUseCases.signIn(
+      Email(event.email),
+      Password(event.password),
+    );
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (user) => emit(AuthAuthenticated(user)),
+    );
   }
 
   Future<void> _onAuthSignUpRequested(
@@ -46,14 +50,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    try {
-      await _authRepository.signUpWithEmailAndPassword(
-        event.email,
-        event.password,
-      );
-    } catch (e) {
-      emit(AuthError(e.toString()));
-    }
+    final result = await _authUseCases.signUp(
+      Email(event.email),
+      Password(event.password),
+    );
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (user) => emit(AuthAuthenticated(user)),
+    );
   }
 
   Future<void> _onAuthSignOutRequested(
@@ -61,11 +65,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    try {
-      await _authRepository.signOut();
-    } catch (e) {
-      emit(AuthError(e.toString()));
-    }
+    await _authUseCases.signOut();
+    emit(AuthUnauthenticated());
   }
 
   Future<void> _onAuthGoogleSignInRequested(
@@ -73,10 +74,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    try {
-      await _authRepository.signInWithGoogle();
-    } catch (e) {
-      emit(AuthError(e.toString()));
-    }
+    final result = await _authUseCases.googleSignIn();
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (user) => emit(AuthAuthenticated(user)),
+    );
   }
 }

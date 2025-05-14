@@ -44,3 +44,12 @@ class UnexpectedFailure extends Failure {
 class PermissionFailure extends Failure {
   const PermissionFailure([super.message = 'Permission denied']);
 }
+
+class InvalidEmailFailure extends Failure {
+  const InvalidEmailFailure() : super('Invalid email format');
+}
+
+class InvalidPasswordFailure extends Failure {
+  const InvalidPasswordFailure()
+    : super('Password must be at least 6 characters');
+}
