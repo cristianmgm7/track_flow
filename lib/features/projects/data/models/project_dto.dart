@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 
 /// Data Transfer Object for Project documents in Firestore.
 ///
@@ -65,7 +66,7 @@ class ProjectDTO {
       title: title,
       description: description,
       createdAt: createdAt,
-      status: status,
+      status: ProjectStatus(status),
     );
   }
 
@@ -77,7 +78,7 @@ class ProjectDTO {
       title: project.title,
       description: project.description ?? '',
       createdAt: project.createdAt,
-      status: project.status,
+      status: project.status.value.fold((f) => ProjectStatus.draft, (s) => s),
     );
   }
 

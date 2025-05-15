@@ -2,7 +2,6 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/projects/domain/models/project_model.dart';
 
 /// Use case for updating an existing project.
 ///

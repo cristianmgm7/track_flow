@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/models/project_model.dart';
 
 abstract class ProjectsState extends Equatable {
   const ProjectsState();

@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/models/project_model.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
@@ -118,9 +117,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-
-    final model = ProjectModel(event.project);
-    final progressResult = model.progressStatus();
+    final progressResult = event.project.progressStatus();
 
     await progressResult.fold(
       (failure) async => emit(ProjectsError(failure.message)),
@@ -130,7 +127,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
           (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
           (project) => emit(
             ProjectOperationSuccess(
-              'Project status updated to ${model.getDisplayStatus()}',
+              'Project status updated to ${updatedProject.getDisplayStatus()}',
             ),
           ),
         );

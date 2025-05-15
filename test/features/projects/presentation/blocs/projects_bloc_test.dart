@@ -5,11 +5,10 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/domain/models/project_model.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
@@ -59,7 +58,7 @@ void main() {
     title: 'Test Project',
     description: 'Test Description',
     userId: 'test-user',
-    status: Project.statusDraft,
+    status: ProjectStatus('draft'),
     createdAt: DateTime.now(),
   );
 

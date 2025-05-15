@@ -5,9 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:uuid/uuid.dart';
 
 class ProjectFormScreen extends StatefulWidget {
   final Project? project;
@@ -62,7 +64,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       setState(() {
         _titleController.text = _project?.title ?? '';
         _descriptionController.text = _project?.description ?? '';
-        _status = _project?.status ?? Project.statusDraft;
+        _status =
+            _project?.status.value.fold((f) => Project.statusDraft, (s) => s) ??
+            Project.statusDraft;
       });
     }
   }
@@ -94,12 +98,12 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             : authState.user.id;
 
     final project = Project(
-      id: _project?.id ?? '',
+      id: _project?.id ?? Uuid().v4(),
       userId: userId,
       title: _titleController.text,
       description: _descriptionController.text,
       createdAt: _project?.createdAt ?? DateTime.now(),
-      status: _status,
+      status: ProjectStatus(_status),
       updatedAt: _project != null ? DateTime.now() : null,
     );
 
@@ -121,7 +125,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             _project = state.project;
             _titleController.text = state.project.title;
             _descriptionController.text = state.project.description ?? '';
-            _status = state.project.status;
+            _status = state.project.status.value.fold(
+              (f) => Project.statusDraft,
+              (s) => s,
+            );
           });
         } else if (state is ProjectOperationSuccess) {
           context.pop();
