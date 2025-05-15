@@ -33,11 +33,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
         try {
           await emit.forEach<List<Project>>(
             projectsStream,
-            onData:
-                (projects) => ProjectsLoaded(
-                  projects,
-                  models: projects.map((p) => ProjectModel(p)).toList(),
-                ),
+            onData: (projects) => ProjectsLoaded(projects),
             onError:
                 (error, _) => ProjectsError(
                   'Failed to load projects: ${error.toString()}',
@@ -113,8 +109,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     final result = await useCases.getProjectById(event.projectId);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) =>
-          emit(ProjectDetailsLoaded(project, model: ProjectModel(project))),
+      (project) => emit(ProjectDetailsLoaded(project)),
     );
   }
 

@@ -5,6 +5,9 @@
 library;
 
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 
 /// Pure entity class that represents a project in the domain
 class Project extends Equatable {
@@ -12,7 +15,7 @@ class Project extends Equatable {
   final String title;
   final String description;
   final String userId;
-  final String status;
+  final ProjectStatus status;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -72,7 +75,7 @@ class Project extends Equatable {
     String? title,
     String? description,
     String? userId,
-    String? status,
+    ProjectStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -93,7 +96,7 @@ class Project extends Equatable {
       'title': title,
       'description': description,
       'userId': userId,
-      'status': status,
+      'status': status.value.fold((f) => null, (s) => s),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };
@@ -105,12 +108,106 @@ class Project extends Equatable {
       title: map['title'] as String,
       description: map['description'] as String,
       userId: map['userId'] as String,
-      status: map['status'] as String,
+      status: ProjectStatus(map['status'] as String),
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt:
           map['updatedAt'] != null
               ? DateTime.parse(map['updatedAt'] as String)
               : null,
     );
+  }
+
+  Either<ValidationFailure, Project> validate() {
+    if (id.isEmpty) {
+      return Left(ValidationFailure('Project ID is invalid'));
+    }
+    if (title.isEmpty) {
+      return Left(ValidationFailure('Project title cannot be empty'));
+    }
+    if (userId.isEmpty) {
+      return Left(ValidationFailure('User ID cannot be empty'));
+    }
+    if (status.value.isLeft()) {
+      return Left(ValidationFailure('Invalid project status'));
+    }
+    return Right(this);
+  }
+
+  String get statusValue => status.value.fold((f) => '', (s) => s);
+
+  String getDisplayStatus() {
+    return statusValue.replaceAll('_', ' ').toUpperCase();
+  }
+
+  bool canEdit() {
+    return statusValue != ProjectStatus.finished;
+  }
+
+  bool isActive() {
+    return statusValue == ProjectStatus.inProgress;
+  }
+
+  Duration getDuration() {
+    return DateTime.now().difference(createdAt);
+  }
+
+  String getFormattedDuration() {
+    final duration = getDuration();
+    if (duration.inDays > 0) {
+      return '${duration.inDays} days';
+    } else if (duration.inHours > 0) {
+      return '${duration.inHours} hours';
+    } else {
+      return '${duration.inMinutes} minutes';
+    }
+  }
+
+  bool needsAttention() {
+    if (statusValue != ProjectStatus.inProgress) return false;
+    final duration = getDuration();
+    if (duration.inDays > 30) return true;
+    return false;
+  }
+
+  ProjectStatus getNextStatus() {
+    switch (statusValue) {
+      case ProjectStatus.draft:
+        return ProjectStatus(ProjectStatus.inProgress);
+      case ProjectStatus.inProgress:
+        return ProjectStatus(ProjectStatus.finished);
+      default:
+        return status;
+    }
+  }
+
+  Either<ValidationFailure, Project> progressStatus() {
+    if (!canEdit()) {
+      return Left(ValidationFailure('Cannot modify a finished project'));
+    }
+    final newProject = copyWith(
+      status: getNextStatus(),
+      updatedAt: DateTime.now(),
+    );
+    return Right(newProject);
+  }
+
+  bool canBeAssignedTo(String userId) {
+    if (!canEdit()) return false;
+    if (this.userId == userId) return true;
+    // Add more complex assignment rules here
+    return true;
+  }
+
+  double getCompletionPercentage() {
+    switch (statusValue) {
+      case ProjectStatus.draft:
+        return 0.0;
+      case ProjectStatus.inProgress:
+        return 50.0;
+      case ProjectStatus.finished:
+        return 100.0;
+      default:
+        return 0.0;
+    }
   }
 }

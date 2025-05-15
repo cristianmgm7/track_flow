@@ -86,10 +86,8 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 itemCount: projects.length,
                 itemBuilder: (context, index) {
                   final project = projects[index];
-                  final model = state.models[index];
                   return ProjectCard(
                     project: project,
-                    model: model,
                     onTap: () {
                       context.push('/dashboard/projects/${project.id}');
                     },

@@ -15,22 +15,20 @@ class ProjectsLoading extends ProjectsState {}
 
 class ProjectsLoaded extends ProjectsState {
   final List<Project> projects;
-  final List<ProjectModel> models;
 
-  const ProjectsLoaded(this.projects, {required this.models});
+  const ProjectsLoaded(this.projects);
 
   @override
-  List<Object?> get props => [projects, models];
+  List<Object?> get props => [projects];
 }
 
 class ProjectDetailsLoaded extends ProjectsState {
   final Project project;
-  final ProjectModel model;
 
-  const ProjectDetailsLoaded(this.project, {required this.model});
+  const ProjectDetailsLoaded(this.project);
 
   @override
-  List<Object?> get props => [project, model];
+  List<Object?> get props => [project];
 }
 
 class ProjectOperationSuccess extends ProjectsState {

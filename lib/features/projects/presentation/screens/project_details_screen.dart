@@ -2,18 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/models/project_model.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 
 class ProjectDetailsScreen extends StatelessWidget {
   final Project project;
-  late final ProjectModel model;
-
-  ProjectDetailsScreen({super.key, required this.project}) {
-    model = ProjectModel(project);
-  }
+  const ProjectDetailsScreen({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {
@@ -39,12 +34,12 @@ class ProjectDetailsScreen extends StatelessWidget {
         appBar: AppBar(
           title: Text(project.title),
           actions: [
-            if (!model.canEdit())
+            if (!project.canEdit())
               const Chip(
                 label: Text('FINISHED'),
                 backgroundColor: Colors.green,
               ),
-            if (model.canEdit())
+            if (project.canEdit())
               TextButton.icon(
                 onPressed: () {
                   context.read<ProjectsBloc>().add(
@@ -52,13 +47,15 @@ class ProjectDetailsScreen extends StatelessWidget {
                   );
                 },
                 icon: const Icon(Icons.arrow_forward),
-                label: Text('Move to ${model.getNextStatus().toUpperCase()}'),
+                label: Text(
+                  'Move to ${project.getNextStatus().value.fold((f) => '', (s) => s).toUpperCase()}',
+                ),
               ),
             PopupMenuButton<String>(
               onSelected: (value) {
                 switch (value) {
                   case 'edit':
-                    if (!model.canEdit()) {
+                    if (!project.canEdit()) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Cannot edit a finished project'),
@@ -78,7 +75,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                   (context) => [
                     PopupMenuItem(
                       value: 'edit',
-                      enabled: model.canEdit(),
+                      enabled: project.canEdit(),
                       child: const Row(
                         children: [
                           Icon(Icons.edit),
@@ -128,7 +125,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Created ${model.getFormattedDuration()} ago',
+                                  'Created ${project.getFormattedDuration()} ago',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ],
@@ -144,7 +141,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                       ],
-                      if (model.isActive()) ...[
+                      if (project.isActive()) ...[
                         const SizedBox(height: 16),
                         const Divider(),
                         const SizedBox(height: 16),
@@ -157,7 +154,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: LinearProgressIndicator(
-                                value: model.getCompletionPercentage() / 100,
+                                value: project.getCompletionPercentage() / 100,
                                 backgroundColor: Colors.grey[200],
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   Theme.of(context).primaryColor,
@@ -166,14 +163,14 @@ class ProjectDetailsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 16),
                             Text(
-                              '${model.getCompletionPercentage().toInt()}%',
+                              '${project.getCompletionPercentage().toInt()}%',
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
                       ],
-                      if (model.needsAttention()) ...[
+                      if (project.needsAttention()) ...[
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -226,7 +223,7 @@ class ProjectDetailsScreen extends StatelessWidget {
 
     return Chip(
       label: Text(
-        model.getDisplayStatus(),
+        project.getDisplayStatus(),
         style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
       backgroundColor: color,

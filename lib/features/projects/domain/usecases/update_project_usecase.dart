@@ -20,15 +20,13 @@ class UpdateProjectUseCase {
   ///
   /// Returns Either<Failure, Project>.
   Future<Either<Failure, Project>> call(Project project) async {
-    final model = ProjectModel(project);
-
     // Check if project can be edited
-    if (!model.canEdit()) {
+    if (!project.canEdit()) {
       return Left(ValidationFailure('Cannot modify a finished project'));
     }
 
     // Validate project fields
-    return model.validate().fold(
+    return project.validate().fold(
       (failure) => Left(failure),
       (validProject) => _repository.updateProject(validProject),
     );

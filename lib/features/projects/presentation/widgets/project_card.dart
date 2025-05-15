@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/project.dart';
-import '../../domain/models/project_model.dart';
 
 class ProjectCard extends StatelessWidget {
   final Project project;
-  final ProjectModel model;
   final VoidCallback onTap;
 
-  const ProjectCard({
-    super.key,
-    required this.project,
-    required this.model,
-    required this.onTap,
-  });
+  const ProjectCard({super.key, required this.project, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +16,7 @@ class ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           children: [
-            if (model.needsAttention())
+            if (project.needsAttention())
               const Positioned(
                 top: 8,
                 right: 8,
@@ -59,22 +52,22 @@ class ProjectCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Created ${model.getFormattedDuration()} ago',
+                          'Created ${project.getFormattedDuration()} ago',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
-                      if (model.isActive())
+                      if (project.isActive())
                         Text(
-                          '${model.getCompletionPercentage().toInt()}% complete',
+                          '${project.getCompletionPercentage().toInt()}% complete',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                     ],
                   ),
-                  if (model.isActive()) ...[
+                  if (project.isActive()) ...[
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
-                      value: model.getCompletionPercentage() / 100,
+                      value: project.getCompletionPercentage() / 100,
                       backgroundColor: Colors.grey[200],
                       valueColor: AlwaysStoppedAnimation<Color>(
                         Theme.of(context).primaryColor,
@@ -108,7 +101,7 @@ class ProjectCard extends StatelessWidget {
 
     return Chip(
       label: Text(
-        model.getDisplayStatus(),
+        project.getDisplayStatus(),
         style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
       backgroundColor: color,
