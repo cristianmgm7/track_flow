@@ -14,25 +14,33 @@ class DeleteProjectUseCase {
   DeleteProjectUseCase(this._repository);
 
   /// Deletes a project by its ID and userId.
-  ///
+
   /// Returns Either<Failure, void>.
   Future<Either<Failure, void>> call({
     required String projectId,
     required String userId,
   }) async {
-    if (projectId.isEmpty) {
-      return Left(ValidationFailure('Project ID cannot be empty'));
-    }
-    if (userId.isEmpty) {
-      return Left(ValidationFailure('User ID cannot be empty'));
-    }
-    // Get the project to check ownership
-    final result = await _repository.getProjectById(projectId);
-    return result.fold((failure) => Left(failure), (project) {
-      if (project.userId != userId) {
-        return Left(PermissionFailure('User does not own this project'));
+    try {
+      if (projectId.isEmpty) {
+        return Left(ValidationFailure('Project ID cannot be empty'));
       }
-      return _repository.deleteProject(projectId);
-    });
+      if (userId.isEmpty) {
+        return Left(ValidationFailure('User ID cannot be empty'));
+      }
+      // Get the project to check ownership
+      final result = await _repository.getProjectById(projectId);
+      return await result.fold((failure) => Left(failure), (project) async {
+        if (project.userId.value != userId) {
+          return Left(PermissionFailure('User does not own this project'));
+        }
+        final deleteResult = await _repository.deleteProject(projectId);
+        return deleteResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(null),
+        );
+      });
+    } catch (e) {
+      return Left(UnexpectedFailure(e.toString()));
+    }
   }
 }

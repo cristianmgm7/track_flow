@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
@@ -98,8 +100,8 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             : authState.user.id;
 
     final project = Project(
-      id: _project?.id ?? Uuid().v4(),
-      userId: userId,
+      id: _project?.id ?? ProjectId(Uuid().v4()),
+      userId: UserId(userId),
       title: _titleController.text,
       description: _descriptionController.text,
       createdAt: _project?.createdAt ?? DateTime.now(),

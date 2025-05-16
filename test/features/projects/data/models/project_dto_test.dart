@@ -1,20 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:mockito/mockito.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 
 class MockDocumentSnapshot extends Mock implements DocumentSnapshot {}
 
 void main() {
   group('ProjectDTO', () {
     final testProject = Project(
-      id: '1',
-      userId: 'user1',
+      id: ProjectId('1'),
+      userId: UserId('user1'),
       title: 'Test Project',
       description: 'A test project',
       createdAt: DateTime(2023, 1, 1),
-      status: 'draft',
+      status: ProjectStatus(Project.statusDraft),
     );
 
     final testDTO = ProjectDTO(

@@ -2,8 +2,11 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart';
 
@@ -21,11 +24,11 @@ void main() {
 
   final testDate = DateTime(2024, 1, 1);
   final testProject = Project(
-    id: 'test-id',
+    id: ProjectId('test-id'),
     title: 'Test Project',
     description: 'Test Description',
-    userId: 'test-user',
-    status: Project.statusDraft,
+    userId: UserId('test-user'),
+    status: ProjectStatus(Project.statusDraft),
     createdAt: testDate,
   );
 

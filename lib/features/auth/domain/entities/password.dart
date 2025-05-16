@@ -2,16 +2,19 @@ import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/value_object.dart';
 import 'package:trackflow/core/error/failures.dart';
 
-class Password extends ValueObject<Either<Failure, String>> {
-  static const _minLength = 6;
+Either<Failure, String> validatePassword(String input) {
+  const minLength = 6;
+  if (input.length >= minLength) {
+    return right(input);
+  } else {
+    return left(const InvalidPasswordFailure());
+  }
+}
 
-  factory Password(String input) {
-    if (input.length >= _minLength) {
-      return Password._(right(input));
-    } else {
-      return Password._(left(InvalidPasswordFailure()));
-    }
+class PasswordValue extends ValueObject<Either<Failure, String>> {
+  factory PasswordValue(String input) {
+    return PasswordValue._(validatePassword(input));
   }
 
-  const Password._(super.value);
+  const PasswordValue._(super.value);
 }

@@ -2,8 +2,11 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 
@@ -21,11 +24,11 @@ void main() {
 
   final testDate = DateTime(2024, 1, 1);
   final testProject = Project(
-    id: 'test-id',
+    id: ProjectId('test-id'),
     title: 'Test Project',
     description: 'Test Description',
-    userId: 'test-user',
-    status: Project.statusDraft,
+    userId: UserId('test-user'),
+    status: ProjectStatus(Project.statusDraft),
     createdAt: testDate,
   );
 
@@ -47,11 +50,11 @@ void main() {
   test('should return ValidationFailure when title is empty', () async {
     // arrange
     final invalidProject = Project(
-      id: 'test-id',
+      id: ProjectId('test-id'),
       title: '',
       description: 'Test Description',
-      userId: 'test-user',
-      status: Project.statusDraft,
+      userId: UserId('test-user'),
+      status: ProjectStatus(Project.statusDraft),
       createdAt: testDate,
     );
 
@@ -66,11 +69,11 @@ void main() {
   test('should return ValidationFailure when userId is empty', () async {
     // arrange
     final invalidProject = Project(
-      id: 'test-id',
+      id: ProjectId('test-id'),
       title: 'Test Project',
       description: 'Test Description',
-      userId: '',
-      status: Project.statusDraft,
+      userId: UserId(''),
+      status: ProjectStatus(Project.statusDraft),
       createdAt: testDate,
     );
 
@@ -85,11 +88,11 @@ void main() {
   test('should return ValidationFailure when status is invalid', () async {
     // arrange
     final invalidProject = Project(
-      id: 'test-id',
+      id: ProjectId('test-id'),
       title: 'Test Project',
       description: 'Test Description',
-      userId: 'test-user',
-      status: 'invalid_status',
+      userId: UserId('test-user'),
+      status: ProjectStatus('invalid_status'),
       createdAt: testDate,
     );
 
@@ -123,12 +126,12 @@ void main() {
     'should return Right(Project) when validation passes and repository succeeds',
     () async {
       final project = Project(
-        id: '',
-        userId: 'user123',
+        id: ProjectId(''),
+        userId: UserId('user123'),
         title: 'Test Project',
         description: 'A test project',
         createdAt: DateTime.now(),
-        status: 'draft',
+        status: ProjectStatus(Project.statusDraft),
       );
 
       // Arrange: repository returns Right(project)
@@ -147,12 +150,12 @@ void main() {
 
   test('should return Left(ValidationFailure) when validation fails', () async {
     final invalidProject = Project(
-      id: '',
-      userId: '',
+      id: ProjectId(''),
+      userId: UserId(''),
       title: '',
       description: '',
       createdAt: DateTime.now(),
-      status: 'draft',
+      status: ProjectStatus(Project.statusDraft),
     );
 
     // Act

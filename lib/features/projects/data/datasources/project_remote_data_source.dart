@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
 import '../../domain/entities/project.dart';
 import '../models/project_dto.dart';
 
@@ -43,7 +44,7 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
           .collection(ProjectDTO.collection)
           .add(dto.toFirestore());
 
-      return Right(project.copyWith(id: docRef.id));
+      return Right(project.copyWith(id: ProjectId(docRef.id)));
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -68,7 +69,7 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       final dto = ProjectDTO.fromEntity(project);
       await _firestore
           .collection(ProjectDTO.collection)
-          .doc(project.id)
+          .doc(project.id.value)
           .update(dto.toFirestore());
 
       return Right(project);

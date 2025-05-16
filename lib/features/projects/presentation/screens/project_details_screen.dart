@@ -5,6 +5,7 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/projects/presentation/helpers/project_presenter.dart';
 
 class ProjectDetailsScreen extends StatelessWidget {
   final Project project;
@@ -125,7 +126,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Created ${project.getFormattedDuration()} ago',
+                                  'Created ${ProjectPresenter.getFormattedDuration(project)} ago',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ],
@@ -154,7 +155,11 @@ class ProjectDetailsScreen extends StatelessWidget {
                           children: [
                             Expanded(
                               child: LinearProgressIndicator(
-                                value: project.getCompletionPercentage() / 100,
+                                value:
+                                    ProjectPresenter.getCompletionPercentage(
+                                      project,
+                                    ) /
+                                    100,
                                 backgroundColor: Colors.grey[200],
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   Theme.of(context).primaryColor,
@@ -163,7 +168,7 @@ class ProjectDetailsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 16),
                             Text(
-                              '${project.getCompletionPercentage().toInt()}%',
+                              '${ProjectPresenter.getCompletionPercentage(project).toInt()}%',
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
@@ -223,7 +228,7 @@ class ProjectDetailsScreen extends StatelessWidget {
 
     return Chip(
       label: Text(
-        project.getDisplayStatus(),
+        ProjectPresenter.getDisplayStatus(project),
         style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
       backgroundColor: color,
@@ -248,7 +253,9 @@ class ProjectDetailsScreen extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  context.read<ProjectsBloc>().add(DeleteProject(project.id));
+                  context.read<ProjectsBloc>().add(
+                    DeleteProject(project.id.value),
+                  );
                 },
                 child: const Text(
                   'Delete',

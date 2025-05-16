@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 
 abstract class ProjectsEvent extends Equatable {
   const ProjectsEvent();
@@ -15,7 +16,7 @@ abstract class ProjectsEvent extends Equatable {
     if (project.description.isEmpty) {
       throw ValidationException('Project description cannot be empty');
     }
-    if (!Project.validStatuses.contains(project.status)) {
+    if (!ProjectStatus.validStatuses.contains(project.status)) {
       throw ValidationException('Invalid project status: ${project.status}');
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
@@ -9,6 +10,8 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:mockito/mockito.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:mockito/annotations.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'sync_project_repository_test.mocks.dart';
 
 @GenerateNiceMocks([
@@ -25,11 +28,11 @@ void main() {
   late MockConnectivity mockConnectivity;
 
   final testProject = Project(
-    id: '1',
+    id: ProjectId('1'),
     title: 'Test Project',
     description: 'A test project',
-    userId: 'user1',
-    status: Project.statusDraft,
+    userId: UserId('user1'),
+    status: ProjectStatus(Project.statusDraft),
     createdAt: DateTime.now(),
     updatedAt: null,
   );
@@ -88,14 +91,14 @@ void main() {
       mockConnectivity.onConnectivityChanged,
     ).thenAnswer((_) => const Stream.empty());
 
-    final result = await repository.deleteProject(testProject.id);
+    final result = await repository.deleteProject(testProject.id.value);
     expect(result.isRight(), true);
     verify(mockLocal.removeCachedProject(any)).called(1);
   });
 
   test('getProjectById returns project from local if present', () async {
     when(mockLocal.getCachedProject(any)).thenAnswer((_) async => testDTO);
-    final result = await repository.getProjectById(testProject.id);
+    final result = await repository.getProjectById(testProject.id.value);
     expect(result.isRight(), true);
     expect(result.getOrElse(() => throw ''), isA<Project>());
     verify(mockLocal.getCachedProject(any)).called(1);
@@ -106,7 +109,7 @@ void main() {
     when(
       mockConnectivity.checkConnectivity(),
     ).thenAnswer((_) async => ConnectivityResult.none);
-    final result = await repository.getProjectById(testProject.id);
+    final result = await repository.getProjectById(testProject.id.value);
     expect(result.isLeft(), true);
   });
 }

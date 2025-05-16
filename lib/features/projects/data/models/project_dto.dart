@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_status.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 
 /// Data Transfer Object for Project documents in Firestore.
 ///
@@ -61,8 +63,8 @@ class ProjectDTO {
   /// Converts the DTO to a domain entity.
   Project toEntity() {
     return Project(
-      id: id,
-      userId: userId,
+      id: ProjectId(id),
+      userId: UserId(userId),
       title: title,
       description: description,
       createdAt: createdAt,
@@ -73,12 +75,12 @@ class ProjectDTO {
   /// Creates a DTO from a domain entity.
   factory ProjectDTO.fromEntity(Project project) {
     return ProjectDTO(
-      id: project.id,
-      userId: project.userId,
+      id: project.id.value,
+      userId: project.userId.value.getOrElse(() => ''),
       title: project.title,
-      description: project.description ?? '',
+      description: project.description,
       createdAt: project.createdAt,
-      status: project.status.value.fold((f) => ProjectStatus.draft, (s) => s),
+      status: project.status.value.getOrElse(() => ProjectStatus.draft),
     );
   }
 
@@ -127,7 +129,7 @@ class ProjectDTO {
       fieldUserId: userId,
       fieldTitle: title,
       fieldDescription: description,
-      fieldCreatedAt: createdAt, // DateTime only
+      fieldCreatedAt: createdAt.toIso8601String(),
       fieldStatus: status,
     };
   }

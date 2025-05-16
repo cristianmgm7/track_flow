@@ -36,8 +36,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     final result = await _authUseCases.signIn(
-      Email(event.email),
-      Password(event.password),
+      EmailAddress(event.email),
+      PasswordValue(event.password),
     );
     result.fold(
       (failure) => emit(AuthError(failure.message)),
@@ -51,8 +51,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     final result = await _authUseCases.signUp(
-      Email(event.email),
-      Password(event.password),
+      EmailAddress(event.email),
+      PasswordValue(event.password),
     );
     result.fold(
       (failure) => emit(AuthError(failure.message)),

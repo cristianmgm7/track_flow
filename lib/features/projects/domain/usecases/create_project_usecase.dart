@@ -2,6 +2,8 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/entities/user_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
 
 /// Use case for creating a new project.
 ///
@@ -18,10 +20,14 @@ class CreateProjectUseCase {
   ///
   /// Returns Either<Failure, Project>.
   Future<Either<Failure, Project>> call(Project project) async {
-    // Use Project entity for validation and business rules
-    return project.validate().fold(
-      (failure) => Left(failure),
-      (validProject) => _repository.createProject(validProject),
-    );
+    try {
+      // Use Project entity for validation and business rules
+      return project.validate().fold(
+        (failure) => Left(failure),
+        (validProject) => _repository.createProject(validProject),
+      );
+    } catch (e) {
+      return Left(ValidationFailure(e.toString()));
+    }
   }
 }

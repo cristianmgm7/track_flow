@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/features/projects/presentation/helpers/project_presenter.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -52,13 +53,13 @@ class ProjectCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Created ${project.getFormattedDuration()} ago',
+                          'Created ${ProjectPresenter.getFormattedDuration(project)} ago',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
                       if (project.isActive())
                         Text(
-                          '${project.getCompletionPercentage().toInt()}% complete',
+                          '${ProjectPresenter.getCompletionPercentage(project).toInt()}% complete',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
@@ -67,7 +68,9 @@ class ProjectCard extends StatelessWidget {
                   if (project.isActive()) ...[
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
-                      value: project.getCompletionPercentage() / 100,
+                      value:
+                          ProjectPresenter.getCompletionPercentage(project) /
+                          100,
                       backgroundColor: Colors.grey[200],
                       valueColor: AlwaysStoppedAnimation<Color>(
                         Theme.of(context).primaryColor,
@@ -101,7 +104,7 @@ class ProjectCard extends StatelessWidget {
 
     return Chip(
       label: Text(
-        project.getDisplayStatus(),
+        ProjectPresenter.getDisplayStatus(project),
         style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
       backgroundColor: color,

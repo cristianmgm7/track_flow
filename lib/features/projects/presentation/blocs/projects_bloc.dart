@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
+import 'package:trackflow/features/projects/presentation/helpers/project_presenter.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
@@ -127,7 +128,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
           (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
           (project) => emit(
             ProjectOperationSuccess(
-              'Project status updated to ${updatedProject.getDisplayStatus()}',
+              'Project status updated to ${ProjectPresenter.getDisplayStatus(updatedProject)}',
             ),
           ),
         );

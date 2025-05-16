@@ -6,18 +6,18 @@ import 'package:trackflow/core/error/failures.dart';
 void main() {
   group('Password ValueObject', () {
     test('should return Right(password) for a valid password', () {
-      final password = Password('123456');
+      final password = PasswordValue('123456');
       expect(password.value, right('123456'));
     });
 
     test('should return Left(InvalidPasswordFailure) for a short password', () {
-      final password = Password('123');
+      final password = PasswordValue('123');
       expect(password.value, left(const InvalidPasswordFailure()));
     });
 
     test('should be value-equal for same password', () {
-      final password1 = Password('abcdef');
-      final password2 = Password('abcdef');
+      final password1 = PasswordValue('abcdef');
+      final password2 = PasswordValue('abcdef');
       expect(password1, equals(password2));
     });
   });

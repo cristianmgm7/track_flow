@@ -3,8 +3,10 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
@@ -54,11 +56,11 @@ void main() {
   });
 
   final testProject = Project(
-    id: 'test-id',
+    id: ProjectId('test-id'),
     title: 'Test Project',
     description: 'Test Description',
-    userId: 'test-user',
-    status: ProjectStatus('draft'),
+    userId: UserId('test-user'),
+    status: ProjectStatus(Project.statusDraft),
     createdAt: DateTime.now(),
   );
 
