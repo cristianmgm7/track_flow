@@ -7,6 +7,7 @@ import 'dart:async' as _i4;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:trackflow/core/entities/unique_id.dart' as _i7;
 import 'package:trackflow/core/error/failures.dart' as _i5;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i6;
@@ -46,117 +47,56 @@ class MockProjectRepository extends _i1.Mock implements _i3.ProjectRepository {
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> createProject(
+  _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> createProject(
           _i6.Project? project) =>
       (super.noSuchMethod(
         Invocation.method(
           #createProject,
           [project],
         ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
-            _FakeEither_0<_i5.Failure, _i6.Project>(
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
           this,
           Invocation.method(
             #createProject,
             [project],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> updateProject(
+  _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> updateProject(
           _i6.Project? project) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateProject,
           [project],
         ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
-            _FakeEither_0<_i5.Failure, _i6.Project>(
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
           this,
           Invocation.method(
             #updateProject,
             [project],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, void>> deleteProject(String? projectId) =>
+  _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> deleteProject(
+          _i7.UniqueId? id) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteProject,
-          [projectId],
+          [id],
         ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
-            _FakeEither_0<_i5.Failure, void>(
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
           this,
           Invocation.method(
             #deleteProject,
-            [projectId],
+            [id],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
-
-  @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> getProjectById(
-          String? projectId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getProjectById,
-          [projectId],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
-            _FakeEither_0<_i5.Failure, _i6.Project>(
-          this,
-          Invocation.method(
-            #getProjectById,
-            [projectId],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
-
-  @override
-  _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>> getUserProjects(
-          String? userId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getUserProjects,
-          [userId],
-        ),
-        returnValue: _FakeEither_0<_i5.Failure, _i4.Stream<List<_i6.Project>>>(
-          this,
-          Invocation.method(
-            #getUserProjects,
-            [userId],
-          ),
-        ),
-      ) as _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>);
-
-  @override
-  _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>
-      getUserProjectsByStatus(
-    String? userId,
-    String? status,
-  ) =>
-          (super.noSuchMethod(
-            Invocation.method(
-              #getUserProjectsByStatus,
-              [
-                userId,
-                status,
-              ],
-            ),
-            returnValue:
-                _FakeEither_0<_i5.Failure, _i4.Stream<List<_i6.Project>>>(
-              this,
-              Invocation.method(
-                #getUserProjectsByStatus,
-                [
-                  userId,
-                  status,
-                ],
-              ),
-            ),
-          ) as _i2.Either<_i5.Failure, _i4.Stream<List<_i6.Project>>>);
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 }

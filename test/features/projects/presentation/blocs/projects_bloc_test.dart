@@ -3,11 +3,8 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/entities/project_id.dart';
-import 'package:trackflow/features/projects/domain/entities/project_status.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
@@ -15,18 +12,12 @@ import 'package:trackflow/features/projects/domain/usecases/project_usecases.dar
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 
 @GenerateMocks([
   CreateProjectUseCase,
   UpdateProjectUseCase,
   DeleteProjectUseCase,
-  GetUserProjectsUseCase,
-  GetProjectByIdUseCase,
 ])
-import 'projects_bloc_test.mocks.dart';
-
 void main() {
   late ProjectsBloc bloc;
   late MockCreateProjectUseCase mockCreateProjectUseCase;

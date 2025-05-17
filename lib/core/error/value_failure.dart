@@ -34,3 +34,9 @@ class ShortPassword<T> extends ValueFailure<T> {
 class EmptyField<T> extends ValueFailure<T> {
   const EmptyField(T failedValue) : super(failedValue, 'Field cannot be empty');
 }
+
+class ExceedingLength<T> extends ValueFailure<T> {
+  final int max;
+  const ExceedingLength(T failedValue, this.max)
+    : super(failedValue, 'Value must be less than $max characters');
+}

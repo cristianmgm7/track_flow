@@ -1,32 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/projects/domain/entities/project_id.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../../domain/entities/project.dart';
 import '../models/project_dto.dart';
 
 /// Abstract class defining the contract for remote project operations.
 abstract class ProjectRemoteDataSource {
   /// Creates a new project in the remote database.
-  Future<Either<Failure, Project>> createProject(Project project);
+  Future<Either<Failure, Unit>> createProject(Project project);
 
   /// Updates an existing project in the remote database.
-  Future<Either<Failure, Project>> updateProject(Project project);
+  Future<Either<Failure, Unit>> updateProject(Project project);
 
   /// Deletes a project from the remote database.
-  Future<Either<Failure, void>> deleteProject(String id);
-
-  /// Gets a project by its ID from the remote database.
-  Future<Either<Failure, Project>> getProjectById(String id);
-
-  /// Gets all projects for a specific user from the remote database.
-  Either<Failure, Stream<List<Project>>> getUserProjects(String userId);
-
-  /// Gets all projects for a specific user with a given status from the remote database.
-  Either<Failure, Stream<List<Project>>> getUserProjectsByStatus(
-    String userId,
-    String status,
-  );
+  Future<Either<Failure, Unit>> deleteProject(UniqueId id);
 }
 
 /// Implementation of [ProjectRemoteDataSource] using Firestore.
@@ -37,14 +25,15 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<Either<Failure, Project>> createProject(Project project) async {
+  Future<Either<Failure, Unit>> createProject(Project project) async {
     try {
-      final dto = ProjectDTO.fromEntity(project);
+      final dto = ProjectDTO.fromDomain(project);
       final docRef = await _firestore
           .collection(ProjectDTO.collection)
           .add(dto.toFirestore());
-
-      return Right(project.copyWith(id: ProjectId(docRef.id)));
+      // Optionally update the project with the new id if needed
+      // final createdProject = project.copyWith(id: UniqueId.fromUniqueString(docRef.id));
+      return Right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -53,7 +42,7 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
           ),
         );
       }
-      return Left(DatabaseFailure('Failed to create project: ${e.message}'));
+      return Left(DatabaseFailure('Failed to create project: \\${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
@@ -64,15 +53,14 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, Project>> updateProject(Project project) async {
+  Future<Either<Failure, Unit>> updateProject(Project project) async {
     try {
-      final dto = ProjectDTO.fromEntity(project);
+      final dto = ProjectDTO.fromDomain(project);
       await _firestore
           .collection(ProjectDTO.collection)
           .doc(project.id.value)
           .update(dto.toFirestore());
-
-      return Right(project);
+      return Right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -84,7 +72,7 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
       if (e.code == 'not-found') {
         return Left(DatabaseFailure('Project not found'));
       }
-      return Left(DatabaseFailure('Failed to update project: ${e.message}'));
+      return Left(DatabaseFailure('Failed to update project: \\${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
@@ -95,13 +83,10 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, void>> deleteProject(String projectId) async {
+  Future<Either<Failure, Unit>> deleteProject(UniqueId id) async {
     try {
-      await _firestore
-          .collection(ProjectDTO.collection)
-          .doc(projectId)
-          .delete();
-      return const Right(null);
+      await _firestore.collection(ProjectDTO.collection).doc(id.value).delete();
+      return Right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -110,105 +95,11 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
           ),
         );
       }
-      return Left(DatabaseFailure('Failed to delete project: ${e.message}'));
+      return Left(DatabaseFailure('Failed to delete project: \\${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
           'An unexpected error occurred while deleting the project',
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<Failure, Project>> getProjectById(String projectId) async {
-    try {
-      final doc =
-          await _firestore
-              .collection(ProjectDTO.collection)
-              .doc(projectId)
-              .get();
-
-      if (!doc.exists) {
-        return Left(DatabaseFailure('Project not found'));
-      }
-
-      return Right(ProjectDTO.fromFirestore(doc).toEntity());
-    } on FirebaseException catch (e) {
-      if (e.code == 'permission-denied') {
-        return Left(
-          AuthenticationFailure(
-            'You don\'t have permission to access this project',
-          ),
-        );
-      }
-      return Left(DatabaseFailure('Failed to fetch project: ${e.message}'));
-    } catch (e) {
-      return Left(
-        UnexpectedFailure(
-          'An unexpected error occurred while fetching the project',
-        ),
-      );
-    }
-  }
-
-  @override
-  Either<Failure, Stream<List<Project>>> getUserProjects(String userId) {
-    try {
-      final stream = _firestore
-          .collection(ProjectDTO.collection)
-          .where(ProjectDTO.fieldUserId, isEqualTo: userId)
-          .orderBy(ProjectDTO.fieldCreatedAt, descending: true)
-          .snapshots()
-          .map(
-            (snapshot) =>
-                snapshot.docs
-                    .map((doc) => ProjectDTO.fromFirestore(doc).toEntity())
-                    .toList(),
-          );
-
-      return Right(stream);
-    } on FirebaseException catch (e) {
-      return Left(
-        DatabaseFailure('Failed to setup projects stream: ${e.message}'),
-      );
-    } catch (e) {
-      return Left(
-        UnexpectedFailure(
-          'An unexpected error occurred while setting up projects stream',
-        ),
-      );
-    }
-  }
-
-  @override
-  Either<Failure, Stream<List<Project>>> getUserProjectsByStatus(
-    String userId,
-    String status,
-  ) {
-    try {
-      final stream = _firestore
-          .collection(ProjectDTO.collection)
-          .where(ProjectDTO.fieldUserId, isEqualTo: userId)
-          .where(ProjectDTO.fieldStatus, isEqualTo: status)
-          .orderBy(ProjectDTO.fieldCreatedAt, descending: true)
-          .snapshots()
-          .map(
-            (snapshot) =>
-                snapshot.docs
-                    .map((doc) => ProjectDTO.fromFirestore(doc).toEntity())
-                    .toList(),
-          );
-
-      return Right(stream);
-    } on FirebaseException catch (e) {
-      return Left(
-        DatabaseFailure('Failed to setup projects stream: ${e.message}'),
-      );
-    } catch (e) {
-      return Left(
-        UnexpectedFailure(
-          'An unexpected error occurred while setting up projects stream',
         ),
       );
     }

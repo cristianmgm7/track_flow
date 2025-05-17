@@ -1,111 +1,105 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/entities/project_status.dart';
-import 'package:trackflow/features/projects/domain/entities/project_id.dart';
-import 'package:trackflow/core/entities/user_id.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project_name.dart';
+import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 
-/// Data Transfer Object for Project documents in Firestore.
+/// Data Transfer Object for Project documents in Firestore/local storage.
 ///
 /// This class represents the exact structure of how projects are stored in Firestore,
 /// including field names and data types. It handles the conversion between Firestore
 /// documents and domain entities.
 class ProjectDTO {
+  final String id;
+  final String ownerId;
+  final String name;
+  final String description;
+  final DateTime createdAt;
+
   const ProjectDTO({
     required this.id,
-    required this.userId,
-    required this.title,
+    required this.ownerId,
+    required this.name,
     required this.description,
     required this.createdAt,
-    required this.status,
   });
   static const String collection = 'projects';
 
-  // Firestore field names
-  static const String fieldId = 'id';
-  static const String fieldUserId = 'userId';
-  static const String fieldTitle = 'title';
-  static const String fieldDescription = 'description';
-  static const String fieldCreatedAt = 'createdAt';
-  static const String fieldStatus = 'status';
+  factory ProjectDTO.fromDomain(Project project) => ProjectDTO(
+    id: project.id.value,
+    ownerId: project.ownerId.value,
+    name: project.name.value.fold((l) => '', (r) => r),
+    description: project.description.value.fold((l) => '', (r) => r),
+    createdAt: project.createdAt,
+  );
 
-  // instance variables
-  final String id;
-  final String userId;
-  final String title;
-  final String description;
-  final DateTime createdAt;
-  final String status;
+  Project toDomain() => Project(
+    id: UniqueId.fromUniqueString(id),
+    ownerId: UserId.fromUniqueString(ownerId),
+    name: ProjectName(name),
+    description: ProjectDescription(description),
+    createdAt: createdAt,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'ownerId': ownerId,
+    'name': name,
+    'description': description,
+    'createdAt': createdAt.toIso8601String(),
+  };
+
+  factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
+    id: json['id'] as String,
+    ownerId: json['ownerId'] as String,
+    name: json['name'] as String,
+    description: json['description'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+  );
 
   /// Creates a ProjectDTO from a Firestore document.
   factory ProjectDTO.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return ProjectDTO(
-      id: data[fieldId] as String,
-      userId: data[fieldUserId] as String,
-      title: data[fieldTitle] as String,
-      description: (data[fieldDescription] as String?) ?? '',
-      createdAt: (data[fieldCreatedAt] as Timestamp).toDate(),
-      status: data[fieldStatus] as String,
+      id: data['id'] as String,
+      ownerId: data['ownerId'] as String,
+      name: data['name'] as String,
+      description: (data['description'] as String?) ?? '',
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }
 
   /// Converts the DTO to a Firestore document map.
   Map<String, dynamic> toFirestore() {
     return {
-      fieldUserId: userId,
-      fieldTitle: title,
-      fieldDescription: description,
-      fieldCreatedAt: Timestamp.fromDate(createdAt),
-      fieldStatus: status,
+      'id': id,
+      'ownerId': ownerId,
+      'name': name,
+      'description': description,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
-  }
-
-  /// Converts the DTO to a domain entity.
-  Project toEntity() {
-    return Project(
-      id: ProjectId(id),
-      userId: UserId(userId),
-      title: title,
-      description: description,
-      createdAt: createdAt,
-      status: ProjectStatus(status),
-    );
-  }
-
-  /// Creates a DTO from a domain entity.
-  factory ProjectDTO.fromEntity(Project project) {
-    return ProjectDTO(
-      id: project.id.value,
-      userId: project.userId.value.getOrElse(() => ''),
-      title: project.title,
-      description: project.description,
-      createdAt: project.createdAt,
-      status: project.status.value.getOrElse(() => ProjectStatus.draft),
-    );
   }
 
   /// Creates a copy of this DTO with the given fields replaced with new values.
   ProjectDTO copyWith({
     String? id,
-    String? userId,
-    String? title,
+    String? ownerId,
+    String? name,
     String? description,
     DateTime? createdAt,
-    String? status,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
-      userId: userId ?? this.userId,
-      title: title ?? this.title,
+      ownerId: ownerId ?? this.ownerId,
+      name: name ?? this.name,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
-      status: status ?? this.status,
     );
   }
 
   /// Creates a ProjectDTO from a map of data.
   factory ProjectDTO.fromMap(Map<String, dynamic> data) {
-    final createdAtRaw = data[fieldCreatedAt];
+    final createdAtRaw = data['createdAt'];
     final createdAt =
         createdAtRaw is Timestamp
             ? createdAtRaw.toDate()
@@ -113,24 +107,22 @@ class ProjectDTO {
             ? createdAtRaw
             : DateTime.parse(createdAtRaw.toString());
     return ProjectDTO(
-      id: data[fieldId] as String,
-      userId: data[fieldUserId] as String,
-      title: data[fieldTitle] as String,
-      description: (data[fieldDescription] as String?) ?? '',
+      id: data['id'] as String,
+      ownerId: data['ownerId'] as String,
+      name: data['name'] as String,
+      description: (data['description'] as String?) ?? '',
       createdAt: createdAt,
-      status: data[fieldStatus] as String,
     );
   }
 
   /// Converts the DTO to a map for local storage (Hive).
   Map<String, dynamic> toMap() {
     return {
-      fieldId: id,
-      fieldUserId: userId,
-      fieldTitle: title,
-      fieldDescription: description,
-      fieldCreatedAt: createdAt.toIso8601String(),
-      fieldStatus: status,
+      'id': id,
+      'ownerId': ownerId,
+      'name': name,
+      'description': description,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
@@ -139,19 +131,17 @@ class ProjectDTO {
     if (identical(this, other)) return true;
     return other is ProjectDTO &&
         other.id == id &&
-        other.userId == userId &&
-        other.title == title &&
+        other.ownerId == ownerId &&
+        other.name == name &&
         other.description == description &&
-        other.createdAt == createdAt &&
-        other.status == status;
+        other.createdAt == createdAt;
   }
 
   @override
   int get hashCode =>
       id.hashCode ^
-      userId.hashCode ^
-      title.hashCode ^
+      ownerId.hashCode ^
+      name.hashCode ^
       description.hashCode ^
-      createdAt.hashCode ^
-      status.hashCode;
+      createdAt.hashCode;
 }
