@@ -5,14 +5,63 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/helpers/project_presenter.dart';
+import 'package:trackflow/core/services/service_locator.dart';
+import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
-class ProjectDetailsScreen extends StatelessWidget {
-  final Project project;
-  const ProjectDetailsScreen({super.key, required this.project});
+class ProjectDetailsScreen extends StatefulWidget {
+  final String projectId;
+  const ProjectDetailsScreen({super.key, required this.projectId});
+
+  @override
+  State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
+}
+
+class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
+  Project? _project;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProject();
+  }
+
+  Future<void> _fetchProject() async {
+    final result = await sl<ProjectUseCases>().getProjectById(
+      UniqueId.fromUniqueString(widget.projectId),
+    );
+    result.fold(
+      (failure) => setState(() {
+        _error = failure.message;
+        _loading = false;
+      }),
+      (project) => setState(() {
+        _project = project;
+        _loading = false;
+      }),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('Error: [${_error!}')),
+      );
+    }
+    if (_project == null) {
+      return Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: Text('Project not found')),
+      );
+    }
+    final project = _project!;
     return BlocListener<ProjectsBloc, ProjectsState>(
       listener: (context, state) {
         if (state is ProjectOperationSuccess) {
@@ -25,7 +74,7 @@ class ProjectDetailsScreen extends StatelessWidget {
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.message}'),
+              content: Text('Error: [${state.message}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -33,39 +82,15 @@ class ProjectDetailsScreen extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(project.title),
+          title: Text(project.name.value.fold((l) => '', (r) => r)),
           actions: [
-            if (!project.canEdit())
-              const Chip(
-                label: Text('FINISHED'),
-                backgroundColor: Colors.green,
-              ),
-            if (project.canEdit())
-              TextButton.icon(
-                onPressed: () {
-                  context.read<ProjectsBloc>().add(
-                    ProgressProjectStatus(project),
-                  );
-                },
-                icon: const Icon(Icons.arrow_forward),
-                label: Text(
-                  'Move to ${project.getNextStatus().value.fold((f) => '', (s) => s).toUpperCase()}',
-                ),
-              ),
             PopupMenuButton<String>(
               onSelected: (value) {
                 switch (value) {
                   case 'edit':
-                    if (!project.canEdit()) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Cannot edit a finished project'),
-                          backgroundColor: Colors.orange,
-                        ),
-                      );
-                      return;
-                    }
-                    context.push('/dashboard/projects/${project.id}/edit');
+                    context.push(
+                      '/dashboard/projects/${project.id.value}/edit',
+                    );
                     break;
                   case 'delete':
                     _showDeleteConfirmation(context);
@@ -74,10 +99,9 @@ class ProjectDetailsScreen extends StatelessWidget {
               },
               itemBuilder:
                   (context) => [
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: 'edit',
-                      enabled: project.canEdit(),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(Icons.edit),
                           SizedBox(width: 8),
@@ -104,135 +128,36 @@ class ProjectDetailsScreen extends StatelessWidget {
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  project.title,
-                                  style:
-                                      Theme.of(context).textTheme.headlineSmall,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Created ${ProjectPresenter.getFormattedDuration(project)} ago',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                          ),
-                          _buildStatusChip(context),
-                        ],
-                      ),
-                      if (project.description.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          project.description,
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ],
-                      if (project.isActive()) ...[
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Progress',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: LinearProgressIndicator(
-                                value:
-                                    ProjectPresenter.getCompletionPercentage(
-                                      project,
-                                    ) /
-                                    100,
-                                backgroundColor: Colors.grey[200],
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Theme.of(context).primaryColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              '${ProjectPresenter.getCompletionPercentage(project).toInt()}%',
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (project.needsAttention()) ...[
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.warning, color: Colors.orange),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'This project may need attention as it has been active for more than 30 days.',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(color: Colors.orange[700]),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    project.name.value.fold((l) => '', (r) => r),
+                    style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Created at: [${_formatDate(project.createdAt)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  if (project.description.value
+                      .fold((l) => '', (r) => r)
+                      .isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      project.description.value.fold((l) => '', (r) => r),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildStatusChip(BuildContext context) {
-    Color color;
-    switch (project.status) {
-      case Project.statusDraft:
-        color = Colors.grey;
-        break;
-      case Project.statusInProgress:
-        color = Colors.blue;
-        break;
-      case Project.statusFinished:
-        color = Colors.green;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
-    return Chip(
-      label: Text(
-        ProjectPresenter.getDisplayStatus(project),
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-      backgroundColor: color,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
     );
   }
 
@@ -253,9 +178,7 @@ class ProjectDetailsScreen extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  context.read<ProjectsBloc>().add(
-                    DeleteProject(project.id.value),
-                  );
+                  context.read<ProjectsBloc>().add(DeleteProject(_project!.id));
                 },
                 child: const Text(
                   'Delete',
@@ -266,4 +189,8 @@ class ProjectDetailsScreen extends StatelessWidget {
           ),
     );
   }
+}
+
+String _formatDate(DateTime date) {
+  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }

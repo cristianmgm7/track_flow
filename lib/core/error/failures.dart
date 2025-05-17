@@ -53,3 +53,10 @@ class InvalidPasswordFailure extends Failure {
   const InvalidPasswordFailure()
     : super('Password must be at least 6 characters');
 }
+
+
+
+
+/// ------------------------------------------------------------
+/// 
+/// 

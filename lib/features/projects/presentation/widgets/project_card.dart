@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/projects/presentation/helpers/project_presenter.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -15,100 +14,48 @@ class ProjectCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
-        child: Stack(
-          children: [
-            if (project.needsAttention())
-              const Positioned(
-                top: 8,
-                right: 8,
-                child: Icon(Icons.warning, color: Colors.orange),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                project.name.value.fold((l) => '', (r) => r),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          project.title,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      _buildStatusChip(context),
-                    ],
-                  ),
-                  if (project.description.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      project.description,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Created ${ProjectPresenter.getFormattedDuration(project)} ago',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                      if (project.isActive())
-                        Text(
-                          '${ProjectPresenter.getCompletionPercentage(project).toInt()}% complete',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                    ],
-                  ),
-                  if (project.isActive()) ...[
-                    const SizedBox(height: 8),
-                    LinearProgressIndicator(
-                      value:
-                          ProjectPresenter.getCompletionPercentage(project) /
-                          100,
-                      backgroundColor: Colors.grey[200],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).primaryColor,
-                      ),
-                    ),
-                  ],
-                ],
+              if (project.description.value
+                  .fold((l) => '', (r) => r)
+                  .isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  project.description.value.fold((l) => '', (r) => r),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                'Created ${_getFormattedDuration(project.createdAt)} ago',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusChip(BuildContext context) {
-    Color color;
-    switch (project.status) {
-      case Project.statusDraft:
-        color = Colors.grey;
-        break;
-      case Project.statusInProgress:
-        color = Colors.blue;
-        break;
-      case Project.statusFinished:
-        color = Colors.green;
-        break;
-      default:
-        color = Colors.grey;
+  String _getFormattedDuration(DateTime createdAt) {
+    final duration = DateTime.now().difference(createdAt);
+    if (duration.inDays > 0) {
+      return '${duration.inDays}d';
+    } else if (duration.inHours > 0) {
+      return '${duration.inHours}h';
+    } else if (duration.inMinutes > 0) {
+      return '${duration.inMinutes}m';
+    } else {
+      return 'just now';
     }
-
-    return Chip(
-      label: Text(
-        ProjectPresenter.getDisplayStatus(project),
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-      backgroundColor: color,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-    );
   }
 }

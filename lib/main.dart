@@ -61,12 +61,7 @@ class MyApp extends StatelessWidget {
         ],
         child: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthAuthenticated) {
-              context.read<ProjectsBloc>().currentUserId = state.user.id;
-            }
-            if (state is AuthUnauthenticated) {
-              context.read<ProjectsBloc>().currentUserId = null;
-            }
+            // Removed currentUserId logic as it's no longer needed in ProjectsBloc
           },
           child: const App(),
         ),

@@ -1,43 +1,22 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/entities/project_status.dart';
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class ProjectsEvent extends Equatable {
   const ProjectsEvent();
 
   @override
   List<Object?> get props => [];
-
-  // Validate common project fields
-  void validateProject(Project project) {
-    if (project.title.isEmpty) {
-      throw ValidationException('Project title cannot be empty');
-    }
-    if (project.description.isEmpty) {
-      throw ValidationException('Project description cannot be empty');
-    }
-    if (!ProjectStatus.validStatuses.contains(project.status)) {
-      throw ValidationException('Invalid project status: ${project.status}');
-    }
-  }
-}
-
-class LoadProjects extends ProjectsEvent {
-  final String userId;
-
-  const LoadProjects(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
 }
 
 class CreateProject extends ProjectsEvent {
-  final Project project;
+  final CreateProjectParams params;
 
-  const CreateProject(this.project);
+  const CreateProject(this.params);
 
   @override
-  List<Object?> get props => [project];
+  List<Object?> get props => [params];
 }
 
 class UpdateProject extends ProjectsEvent {
@@ -50,12 +29,21 @@ class UpdateProject extends ProjectsEvent {
 }
 
 class DeleteProject extends ProjectsEvent {
-  final String projectId;
+  final UniqueId projectId;
 
   const DeleteProject(this.projectId);
 
   @override
   List<Object?> get props => [projectId];
+}
+
+class LoadProjects extends ProjectsEvent {
+  final String userId;
+
+  const LoadProjects(this.userId);
+
+  @override
+  List<Object?> get props => [userId];
 }
 
 class LoadProjectDetails extends ProjectsEvent {

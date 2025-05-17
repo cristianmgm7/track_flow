@@ -4,8 +4,6 @@ import 'package:trackflow/features/projects/domain/repositories/project_reposito
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_user_projects_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 // Auth imports
 import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';
@@ -27,14 +25,12 @@ void setupProjectDependencies() {
   sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProjectUseCase(sl()));
-  sl.registerLazySingleton(() => GetUserProjectsUseCase(sl()));
-  sl.registerLazySingleton(() => GetProjectByIdUseCase(sl()));
   sl.registerLazySingleton(
     () => ProjectUseCases(
       createProject: sl(),
       updateProject: sl(),
       deleteProject: sl(),
-      getUserProjects: sl(),
+      repository: sl(),
       getProjectById: sl(),
     ),
   );

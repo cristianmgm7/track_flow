@@ -7,7 +7,6 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import '../widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
   final SharedPreferences prefs;
@@ -68,34 +67,17 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
             }
           },
           builder: (context, state) {
-            if (state is ProjectsLoading && state is! ProjectsLoaded) {
+            if (state is ProjectsLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-
-            if (state is ProjectsLoaded) {
-              final projects = state.projects;
-
-              if (projects.isEmpty) {
-                return const Center(
-                  child: Text('No projects yet. Create your first project!'),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: projects.length,
-                itemBuilder: (context, index) {
-                  final project = projects[index];
-                  return ProjectCard(
-                    project: project,
-                    onTap: () {
-                      context.push('/dashboard/projects/${project.id}');
-                    },
-                  );
-                },
+            if (state is ProjectOperationSuccess) {
+              return Center(child: Text(state.message));
+            }
+            if (state is ProjectsError) {
+              return Center(
+                child: Text(state.message, style: TextStyle(color: Colors.red)),
               );
             }
-
             return const Center(child: Text('No projects available'));
           },
         ),

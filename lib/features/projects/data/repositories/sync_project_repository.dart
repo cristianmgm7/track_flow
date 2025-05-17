@@ -69,6 +69,24 @@ class SyncProjectRepository implements ProjectRepository {
       );
     }
   }
+
+  @override
+  Future<Either<Failure, Project>> getProjectById(UniqueId id) async {
+    try {
+      // Try local first
+      final localDto = await _localDataSource.getCachedProject(id);
+      if (localDto != null) {
+        return Right(localDto.toDomain());
+      }
+      // Optionally, try remote (not implemented in ProjectRemoteDataSource, so just fail for now)
+      // You can implement remote fetch if needed
+      return Left(DatabaseFailure('Project not found'));
+    } catch (e) {
+      return Left(
+        DatabaseFailure('Failed to fetch project: \\${e.toString()}'),
+      );
+    }
+  }
 }
 
 /// Represents the status of the sync operation

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trackflow/core/entities/user_id.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/entities/project_id.dart';
-import 'package:trackflow/features/projects/domain/entities/project_status.dart';
+import 'package:trackflow/features/projects/domain/entities/project_name.dart';
+import 'package:trackflow/features/projects/domain/entities/project_description.dart';
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:uuid/uuid.dart';
 
 class ProjectFormScreen extends StatefulWidget {
   final Project? project;
@@ -27,7 +27,6 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late String _status;
   Project? _project;
 
   @override
@@ -35,40 +34,20 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
-    _status = Project.statusDraft;
     _loadProject();
   }
 
   Future<void> _loadProject() async {
     if (widget.project != null) {
       _project = widget.project;
-    } else {
-      final projectId = GoRouterState.of(context).pathParameters['id'];
-      if (projectId != null) {
-        try {
-          context.read<ProjectsBloc>().add(LoadProjectDetails(projectId));
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error loading project: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-            context.pop();
-          }
-          return;
-        }
-      }
     }
-
-    if (mounted) {
+    if (mounted && _project != null) {
       setState(() {
-        _titleController.text = _project?.title ?? '';
-        _descriptionController.text = _project?.description ?? '';
-        _status =
-            _project?.status.value.fold((f) => Project.statusDraft, (s) => s) ??
-            Project.statusDraft;
+        _titleController.text = _project!.name.value.fold((l) => '', (r) => r);
+        _descriptionController.text = _project!.description.value.fold(
+          (l) => '',
+          (r) => r,
+        );
       });
     }
   }
@@ -94,25 +73,23 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       return;
     }
 
-    final userId =
-        authState.isOfflineMode
-            ? 'offline-${widget.prefs.getString('offline_email') ?? 'user'}'
-            : authState.user.id;
-
-    final project = Project(
-      id: _project?.id ?? ProjectId(Uuid().v4()),
-      userId: UserId(userId),
-      title: _titleController.text,
-      description: _descriptionController.text,
-      createdAt: _project?.createdAt ?? DateTime.now(),
-      status: ProjectStatus(_status),
-      updatedAt: _project != null ? DateTime.now() : null,
-    );
+    final ownerId = UniqueId.fromUniqueString(authState.user.id);
+    final name = ProjectName(_titleController.text);
+    final description = ProjectDescription(_descriptionController.text);
 
     if (_project == null) {
-      context.read<ProjectsBloc>().add(CreateProject(project));
+      final params = CreateProjectParams(
+        ownerId: UserId.fromUniqueString(ownerId.value),
+        name: name,
+        description: description,
+      );
+      context.read<ProjectsBloc>().add(CreateProject(params));
     } else {
-      context.read<ProjectsBloc>().add(UpdateProject(project));
+      final updatedProject = _project!.copyWith(
+        name: name,
+        description: description,
+      );
+      context.read<ProjectsBloc>().add(UpdateProject(updatedProject));
     }
   }
 
@@ -122,17 +99,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
     return BlocListener<ProjectsBloc, ProjectsState>(
       listener: (context, state) {
-        if (state is ProjectDetailsLoaded && _project == null) {
-          setState(() {
-            _project = state.project;
-            _titleController.text = state.project.title;
-            _descriptionController.text = state.project.description ?? '';
-            _status = state.project.status.value.fold(
-              (f) => Project.statusDraft,
-              (s) => s,
-            );
-          });
-        } else if (state is ProjectOperationSuccess) {
+        if (state is ProjectOperationSuccess) {
           context.pop();
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -183,30 +150,6 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: const InputDecoration(
-                      labelText: 'Status',
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                        Project.validStatuses.map((status) {
-                          return DropdownMenuItem(
-                            value: status,
-                            child: Text(
-                              status.replaceAll('_', ' ').toUpperCase(),
-                            ),
-                          );
-                        }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _status = value;
-                        });
-                      }
-                    },
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(

@@ -103,16 +103,7 @@ class AppRouter {
               path: '/dashboard/projects/:id',
               builder: (context, state) {
                 final projectId = state.pathParameters['id']!;
-                // Load project details when the screen is opened
-                context.read<ProjectsBloc>().add(LoadProjectDetails(projectId));
-                return BlocBuilder<ProjectsBloc, ProjectsState>(
-                  builder: (context, state) {
-                    if (state is ProjectDetailsLoaded) {
-                      return ProjectDetailsScreen(project: state.project);
-                    }
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                );
+                return ProjectDetailsScreen(projectId: projectId);
               },
             ),
             GoRoute(
