@@ -3,18 +3,20 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final ProjectUseCases useCases;
 
   ProjectsBloc(this.useCases) : super(ProjectsInitial()) {
-    on<CreateProject>(_onCreateProject);
-    on<UpdateProject>(_onUpdateProject);
-    on<DeleteProject>(_onDeleteProject);
+    on<CreateProjectRequested>(_onCreateProjectRequested);
+    on<UpdateProjectRequested>(_onUpdateProjectRequested);
+    on<DeleteProjectRequested>(_onDeleteProjectRequested);
+    on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
   }
 
-  Future<void> _onCreateProject(
-    CreateProject event,
+  Future<void> _onCreateProjectRequested(
+    CreateProjectRequested event,
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
@@ -26,8 +28,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     );
   }
 
-  Future<void> _onUpdateProject(
-    UpdateProject event,
+  Future<void> _onUpdateProjectRequested(
+    UpdateProjectRequested event,
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
@@ -39,8 +41,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     );
   }
 
-  Future<void> _onDeleteProject(
-    DeleteProject event,
+  Future<void> _onDeleteProjectRequested(
+    DeleteProjectRequested event,
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
@@ -49,6 +51,20 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
           emit(const ProjectOperationSuccess('Project deleted successfully')),
+    );
+  }
+
+  Future<void> _onGetProjectByIdRequested(
+    GetProjectByIdRequested event,
+    Emitter<ProjectsState> emit,
+  ) async {
+    emit(ProjectsLoading());
+    final result = await useCases.getProjectById(
+      UniqueId.fromUniqueString(event.projectId),
+    );
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (project) => emit(ProjectDetailsLoaded(project)),
     );
   }
 

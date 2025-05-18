@@ -10,58 +10,32 @@ abstract class ProjectsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class CreateProject extends ProjectsEvent {
+class CreateProjectRequested extends ProjectsEvent {
   final CreateProjectParams params;
-
-  const CreateProject(this.params);
-
+  const CreateProjectRequested(this.params);
   @override
   List<Object?> get props => [params];
 }
 
-class UpdateProject extends ProjectsEvent {
+class UpdateProjectRequested extends ProjectsEvent {
   final Project project;
-
-  const UpdateProject(this.project);
-
+  const UpdateProjectRequested(this.project);
   @override
   List<Object?> get props => [project];
 }
 
-class DeleteProject extends ProjectsEvent {
+class DeleteProjectRequested extends ProjectsEvent {
   final UniqueId projectId;
-
-  const DeleteProject(this.projectId);
-
+  const DeleteProjectRequested(this.projectId);
   @override
   List<Object?> get props => [projectId];
 }
 
-class LoadProjects extends ProjectsEvent {
-  final String userId;
-
-  const LoadProjects(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
-}
-
-class LoadProjectDetails extends ProjectsEvent {
+class GetProjectByIdRequested extends ProjectsEvent {
   final String projectId;
-
-  const LoadProjectDetails(this.projectId);
-
+  const GetProjectByIdRequested(this.projectId);
   @override
   List<Object?> get props => [projectId];
-}
-
-class ProgressProjectStatus extends ProjectsEvent {
-  final Project project;
-
-  const ProgressProjectStatus(this.project);
-
-  @override
-  List<Object?> get props => [project];
 }
 
 class ValidationException implements Exception {
