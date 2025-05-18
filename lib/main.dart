@@ -19,7 +19,7 @@ void main() async {
   final initializer = AppInitializer();
   await initializer.initialize();
   setupProjectDependencies();
-  await setupAuthDependencies();
+  await setupAuthDependencies(initializer.prefs);
   runApp(
     MyApp(
       prefs: initializer.prefs,

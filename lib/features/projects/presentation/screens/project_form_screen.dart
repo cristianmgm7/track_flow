@@ -83,13 +83,13 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         name: name,
         description: description,
       );
-      context.read<ProjectsBloc>().add(CreateProject(params));
+      context.read<ProjectsBloc>().add(CreateProjectRequested(params));
     } else {
       final updatedProject = _project!.copyWith(
         name: name,
         description: description,
       );
-      context.read<ProjectsBloc>().add(UpdateProject(updatedProject));
+      context.read<ProjectsBloc>().add(UpdateProjectRequested(updatedProject));
     }
   }
 

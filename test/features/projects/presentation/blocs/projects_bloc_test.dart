@@ -16,6 +16,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 
+import '../../domain/usecases/update_project_usecase_test.mocks.dart';
 @GenerateMocks([
   CreateProjectUseCase,
   UpdateProjectUseCase,
@@ -28,15 +29,19 @@ void main() {
   late MockCreateProjectUseCase mockCreateProjectUseCase;
   late MockUpdateProjectUseCase mockUpdateProjectUseCase;
   late MockDeleteProjectUseCase mockDeleteProjectUseCase;
+  late MockGetProjectByIdUseCase mockGetProjectByIdUseCase;
 
   setUp(() {
     mockCreateProjectUseCase = MockCreateProjectUseCase();
     mockUpdateProjectUseCase = MockUpdateProjectUseCase();
     mockDeleteProjectUseCase = MockDeleteProjectUseCase();
+    mockGetProjectByIdUseCase = MockGetProjectByIdUseCase();
     final useCases = ProjectUseCases(
       createProject: mockCreateProjectUseCase,
       updateProject: mockUpdateProjectUseCase,
       deleteProject: mockDeleteProjectUseCase,
+      getProjectById: mockGetProjectByIdUseCase,
+      repository: MockProjectRepository(),
     );
     bloc = ProjectsBloc(useCases);
   });
@@ -64,7 +69,7 @@ void main() {
         ).thenAnswer((_) async => Right(unit));
         return bloc;
       },
-      act: (bloc) => bloc.add(CreateProject(params)),
+      act: (bloc) => bloc.add(CreateProjectRequested(params)),
       expect:
           () => [
             ProjectsLoading(),
@@ -80,7 +85,7 @@ void main() {
         ).thenAnswer((_) async => Left(ServerFailure('error')));
         return bloc;
       },
-      act: (bloc) => bloc.add(CreateProject(params)),
+      act: (bloc) => bloc.add(CreateProjectRequested(params)),
       expect:
           () => [
             ProjectsLoading(),
@@ -98,7 +103,7 @@ void main() {
         ).thenAnswer((_) async => Right(unit));
         return bloc;
       },
-      act: (bloc) => bloc.add(UpdateProject(project)),
+      act: (bloc) => bloc.add(UpdateProjectRequested(project)),
       expect:
           () => [
             ProjectsLoading(),
@@ -114,7 +119,7 @@ void main() {
         ).thenAnswer((_) async => Left(ServerFailure('error')));
         return bloc;
       },
-      act: (bloc) => bloc.add(UpdateProject(project)),
+      act: (bloc) => bloc.add(UpdateProjectRequested(project)),
       expect:
           () => [
             ProjectsLoading(),
@@ -132,7 +137,7 @@ void main() {
         ).thenAnswer((_) async => Right(unit));
         return bloc;
       },
-      act: (bloc) => bloc.add(DeleteProject(projectId)),
+      act: (bloc) => bloc.add(DeleteProjectRequested(projectId)),
       expect:
           () => [
             ProjectsLoading(),
@@ -148,7 +153,7 @@ void main() {
         ).thenAnswer((_) async => Left(ServerFailure('error')));
         return bloc;
       },
-      act: (bloc) => bloc.add(DeleteProject(projectId)),
+      act: (bloc) => bloc.add(DeleteProjectRequested(projectId)),
       expect:
           () => [
             ProjectsLoading(),

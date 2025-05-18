@@ -1,6 +1,5 @@
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/error/value_failure.dart';
 import '../entities/email.dart';
 import '../entities/password.dart';
 import '../entities/user.dart';

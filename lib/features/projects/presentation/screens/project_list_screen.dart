@@ -27,11 +27,8 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   void _loadProjects() {
     final authState = context.read<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      final userId =
-          authState.isOfflineMode
-              ? 'offline-${widget.prefs.getString('offline_email') ?? 'user'}'
-              : authState.user.id;
-      context.read<ProjectsBloc>().add(LoadProjects(userId));
+      // Placeholder: In the new Bloc-driven logic, project list loading will be handled differently.
+      // Remove the call to context.read<ProjectsBloc>().add(LoadProjects(userId));
     }
   }
 

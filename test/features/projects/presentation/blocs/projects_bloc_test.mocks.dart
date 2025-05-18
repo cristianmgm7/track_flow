@@ -15,6 +15,8 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
     as _i3;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
     as _i8;
+import 'package:trackflow/features/projects/domain/usecases/get_projec_by_id_usecase.dart'
+    as _i10;
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
     as _i6;
 
@@ -33,13 +35,8 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
 // ignore_for_file: subtype_of_sealed_class
 
 class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
-  _FakeEither_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeEither_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 /// A class which mocks [CreateProjectUseCase].
@@ -53,21 +50,18 @@ class MockCreateProjectUseCase extends _i1.Mock
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> call(
-          _i3.CreateProjectParams? params) =>
+    _i3.CreateProjectParams? params,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #call,
-          [params],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i5.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #call,
-            [params],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+            Invocation.method(#call, [params]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i5.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#call, [params]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 }
 
 /// A class which mocks [UpdateProjectUseCase].
@@ -82,19 +76,15 @@ class MockUpdateProjectUseCase extends _i1.Mock
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> call(_i7.Project? project) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #call,
-          [project],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i5.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #call,
-            [project],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+            Invocation.method(#call, [project]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i5.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#call, [project]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 }
 
 /// A class which mocks [DeleteProjectUseCase].
@@ -109,17 +99,33 @@ class MockDeleteProjectUseCase extends _i1.Mock
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> call(_i9.UniqueId? id) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #call,
-          [id],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i5.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #call,
-            [id],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+            Invocation.method(#call, [id]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i5.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#call, [id]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+}
+
+class MockGetProjectByIdUseCase extends _i1.Mock
+    implements _i10.GetProjectByIdUseCase {
+  MockGetProjectByIdUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i7.Project>> call(_i9.UniqueId? id) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [id]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i7.Project>>.value(
+              _FakeEither_0<_i5.Failure, _i7.Project>(
+                this,
+                Invocation.method(#call, [id]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i7.Project>>);
 }

@@ -11,6 +11,7 @@ class ProjectUseCases {
   final DeleteProjectUseCase deleteProject;
   final ProjectRepository repository;
   final GetProjectByIdUseCase getProjectById;
+
   ProjectUseCases({
     required this.createProject,
     required this.updateProject,

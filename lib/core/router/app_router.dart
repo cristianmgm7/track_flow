@@ -15,9 +15,6 @@ import 'package:trackflow/features/onboarding/presentation/pages/onboarding_scre
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
