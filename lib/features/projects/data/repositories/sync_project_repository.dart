@@ -87,6 +87,18 @@ class SyncProjectRepository implements ProjectRepository {
       );
     }
   }
+
+  @override
+  Future<Either<Failure, List<Project>>> getAllProjects() async {
+    try {
+      final projects = await _localDataSource.getAllProjects();
+      return Right(projects.map((e) => e.toDomain()).toList());
+    } catch (e) {
+      return Left(
+        DatabaseFailure('Failed to fetch projects: \\${e.toString()}'),
+      );
+    }
+  }
 }
 
 /// Represents the status of the sync operation

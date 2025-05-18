@@ -46,3 +46,5 @@ class ValidationException implements Exception {
   @override
   String toString() => message;
 }
+
+class LoadAllProjectsRequested extends ProjectsEvent {}

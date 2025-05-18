@@ -7,11 +7,17 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Projects CRUD flow', (WidgetTester tester) async {
-    app.main();
+    app.main(testMode: true);
     await tester.pumpAndSettle();
 
-    // CREATE
+    // Debug: Check if add button is present
     final addButton = find.byIcon(Icons.add);
+    print('Add button found: \\${addButton.evaluate().length}');
+    if (addButton.evaluate().isEmpty) {
+      debugDumpApp();
+    }
+
+    // CREATE
     await tester.tap(addButton);
     await tester.pumpAndSettle();
 

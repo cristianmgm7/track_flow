@@ -18,6 +18,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('DashboardScreen build called');
     return Scaffold(
       appBar: AppBar(
         title: const Text('TrackFlow'),

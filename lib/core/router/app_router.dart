@@ -21,15 +21,17 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(BuildContext context) {
+  static GoRouter router(BuildContext context, {bool testMode = true}) {
     final authBloc = context.read<AuthBloc>();
     final onboardingBloc = context.read<OnboardingBloc>();
     final prefs = context.read<SharedPreferences>();
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: '/',
+      initialLocation: testMode ? '/dashboard' : '/',
       refreshListenable: GoRouterRefreshStream(authBloc.stream),
       redirect: (context, state) async {
+        print('Router redirect called. testMode: $testMode');
+        if (testMode) return null;
         final authState = authBloc.state;
         final onboardingState = onboardingBloc.state;
         final isAuthRoute = state.matchedLocation == '/auth';
@@ -90,7 +92,10 @@ class AppRouter {
           routes: [
             GoRoute(
               path: '/dashboard',
-              builder: (context, state) => ProjectListScreen(prefs: prefs),
+              builder: (context, state) {
+                print('GoRouter: /dashboard builder called');
+                return ProjectListScreen(prefs: prefs);
+              },
             ),
             GoRoute(
               path: '/dashboard/projects/new',

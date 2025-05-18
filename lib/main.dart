@@ -15,15 +15,17 @@ import 'package:trackflow/core/services/service_locator.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 
-void main() async {
+void main({bool testMode = false}) async {
+  print('main() called with testMode: $testMode');
   final initializer = AppInitializer();
   await initializer.initialize();
-  setupProjectDependencies();
+  setupProjectDependencies(testMode: testMode);
   await setupAuthDependencies(initializer.prefs);
   runApp(
     MyApp(
       prefs: initializer.prefs,
       onboardingRepository: initializer.onboardingRepository,
+      testMode: testMode,
     ),
   );
 }
@@ -31,12 +33,16 @@ void main() async {
 class MyApp extends StatelessWidget {
   final SharedPreferences prefs;
   final SharedPrefsOnboardingRepository onboardingRepository;
+  final bool testMode;
 
-  const MyApp({
+  MyApp({
     super.key,
     required this.prefs,
     required this.onboardingRepository,
-  });
+    this.testMode = false,
+  }) {
+    print('MyApp constructor called, testMode: $testMode');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +69,7 @@ class MyApp extends StatelessWidget {
           listener: (context, state) {
             // Removed currentUserId logic as it's no longer needed in ProjectsBloc
           },
-          child: const App(),
+          child: App(testMode: testMode),
         ),
       ),
     );
@@ -71,14 +77,17 @@ class MyApp extends StatelessWidget {
 }
 
 class App extends StatelessWidget {
-  const App({super.key});
+  final bool testMode;
+  App({super.key, this.testMode = true}) {
+    print('App constructor called, testMode: $testMode');
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      routerConfig: AppRouter.router(context),
+      routerConfig: AppRouter.router(context, testMode: testMode),
     );
   }
 }

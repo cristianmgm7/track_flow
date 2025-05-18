@@ -21,7 +21,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProjects();
+    context.read<ProjectsBloc>().add(LoadAllProjectsRequested());
   }
 
   void _loadProjects() {
@@ -34,6 +34,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('ProjectListScreen build called');
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {

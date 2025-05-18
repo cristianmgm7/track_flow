@@ -18,38 +18,48 @@ class AppInitializer {
   /// Initialize all app dependencies
   Future<void> initialize() async {
     try {
+      print('AppInitializer: Starting initialization');
       // Initialize Flutter bindings
       WidgetsFlutterBinding.ensureInitialized();
+      print('AppInitializer: Flutter bindings initialized');
 
       // Initialize Firebase with error handling
       try {
+        print('AppInitializer: Initializing Firebase');
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
         _firebaseAuth = FirebaseAuth.instance;
+        print('AppInitializer: Firebase initialized');
       } catch (e) {
         debugPrint('Firebase initialization failed: $e');
         _firebaseAuth = null;
-        // Continue app initialization even if Firebase fails
-        // This allows the app to work in offline mode or when Google Play Services are not available
+        print('AppInitializer: Firebase failed, continuing');
       }
 
       // Initialize Hive for local storage
-      await Hive.initFlutter();
-      await Hive.openBox<Map<String, dynamic>>('projects');
+      // print('AppInitializer: Initializing Hive');
+      // await Hive.initFlutter();
+      // await Hive.openBox<Map<String, dynamic>>('projects');
+      print('AppInitializer: Hive initialized (disabled)');
 
       // Initialize SharedPreferences
+      print('AppInitializer: Initializing SharedPreferences');
       prefs = await SharedPreferences.getInstance();
+      print('AppInitializer: SharedPreferences initialized');
 
       // Initialize repositories with potentially null Firebase auth
+      print('AppInitializer: Initializing repositories');
       authRepository = FirebaseAuthRepository(
         auth: _firebaseAuth,
         googleSignIn: _firebaseAuth != null ? GoogleSignIn() : null,
         prefs: prefs,
       );
       onboardingRepository = SharedPrefsOnboardingRepository(prefs);
+      print('AppInitializer: Repositories initialized');
     } catch (e) {
       debugPrint('App initialization error: $e');
+      print('AppInitializer: Error during initialization: $e');
       rethrow;
     }
   }

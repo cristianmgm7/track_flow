@@ -13,6 +13,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
+
+    on<LoadAllProjectsRequested>(_onLoadAllProjectsRequested);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -65,6 +67,18 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (project) => emit(ProjectDetailsLoaded(project)),
+    );
+  }
+
+  Future<void> _onLoadAllProjectsRequested(
+    LoadAllProjectsRequested event,
+    Emitter<ProjectsState> emit,
+  ) async {
+    emit(ProjectsLoading());
+    final result = await useCases.getAllProjects();
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (projects) => emit(ProjectsLoaded(projects)),
     );
   }
 

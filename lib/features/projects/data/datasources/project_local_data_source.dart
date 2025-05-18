@@ -12,6 +12,9 @@ abstract class ProjectLocalDataSource {
 
   /// Removes a project from the cache.
   Future<void> removeCachedProject(UniqueId id);
+
+  /// Gets all cached projects.
+  Future<List<ProjectDTO>> getAllProjects();
 }
 
 /// Implementation of [ProjectLocalDataSource] using Hive.
@@ -41,5 +44,10 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
   @override
   Future<void> removeCachedProject(UniqueId id) async {
     await _box.delete(id.value);
+  }
+
+  @override
+  Future<List<ProjectDTO>> getAllProjects() async {
+    return _box.values.map((e) => ProjectDTO.fromMap(e)).toList();
   }
 }
