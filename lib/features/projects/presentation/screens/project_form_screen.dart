@@ -100,6 +100,14 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     return BlocListener<ProjectsBloc, ProjectsState>(
       listener: (context, state) {
         if (state is ProjectOperationSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isEditing ? 'Project updated!' : 'Project created!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
           context.pop();
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -120,12 +128,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         ),
         body: BlocBuilder<ProjectsBloc, ProjectsState>(
           builder: (context, state) {
-            if (state is ProjectsLoading && _project == null) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
+            final isLoading = state is ProjectsLoading;
             return Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -141,6 +147,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                       }
                       return null;
                     },
+                    enabled: !isLoading,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -150,13 +157,21 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
+                    enabled: !isLoading,
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: _saveProject,
-                    child: Text(
-                      isEditing ? 'Update Project' : 'Create Project',
-                    ),
+                    onPressed: isLoading ? null : _saveProject,
+                    child:
+                        isLoading
+                            ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : Text(
+                              isEditing ? 'Update Project' : 'Create Project',
+                            ),
                   ),
                 ],
               ),

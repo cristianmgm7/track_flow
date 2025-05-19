@@ -1,5 +1,10 @@
 import 'package:get_it/get_it.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/projects/data/datasources/in_memory.dart';
 import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_description.dart';
+import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/get_projec_by_id_usecase.dart';
@@ -19,55 +24,36 @@ import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:dartz/dartz.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
+
+final List<Project> initialProjects = [
+  Project(
+    id: UniqueId.fromUniqueString('1'),
+    name: ProjectName('Project 1'),
+    description: ProjectDescription('Description 1'),
+    createdAt: DateTime.now(),
+    ownerId: UserId.fromUniqueString('1'),
+  ),
+  Project(
+    id: UniqueId.fromUniqueString('2'),
+    name: ProjectName('Project 2'),
+    description: ProjectDescription('Description 2'),
+    createdAt: DateTime.now(),
+    ownerId: UserId.fromUniqueString('2'),
+  ),
+  Project(
+    id: UniqueId.fromUniqueString('3'),
+    name: ProjectName('Project 3'),
+    description: ProjectDescription('Description 3'),
+    createdAt: DateTime.now(),
+    ownerId: UserId.fromUniqueString('3'),
+  ),
+];
 
 final sl = GetIt.instance;
 
-class InMemoryProjectRepository implements ProjectRepository {
-  final Map<String, Project> _projects = {};
-
-  @override
-  Future<Either<Failure, Unit>> createProject(Project project) async {
-    _projects[project.id.value] = project;
-    return Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updateProject(Project project) async {
-    if (_projects.containsKey(project.id.value)) {
-      _projects[project.id.value] = project;
-      return Right(unit);
-    }
-    return Left(DatabaseFailure('Project not found'));
-  }
-
-  @override
-  Future<Either<Failure, Unit>> deleteProject(UniqueId id) async {
-    _projects.remove(id.value);
-    return Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Project>> getProjectById(UniqueId id) async {
-    final project = _projects[id.value];
-    if (project != null) {
-      return Right(project);
-    }
-    return Left(DatabaseFailure('Project not found'));
-  }
-
-  @override
-  Future<Either<Failure, List<Project>>> getAllProjects() async {
-    return Right(_projects.values.toList());
-  }
-}
-
 void setupProjectDependencies({bool testMode = true}) {
   sl.registerLazySingleton<ProjectRepository>(
-    () => InMemoryProjectRepository(),
+    () => InMemoryProjectRepository(initialProjects: initialProjects),
   );
   sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
