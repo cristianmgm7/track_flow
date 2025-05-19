@@ -66,13 +66,9 @@ class InMemoryProjectRepository implements ProjectRepository {
 }
 
 void setupProjectDependencies({bool testMode = true}) {
-  if (testMode) {
-    sl.registerLazySingleton<ProjectRepository>(
-      () => InMemoryProjectRepository(),
-    );
-  } else {
-    sl.registerLazySingleton<ProjectRepository>(() => SyncProjectRepository());
-  }
+  sl.registerLazySingleton<ProjectRepository>(
+    () => InMemoryProjectRepository(),
+  );
   sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProjectUseCase(sl()));

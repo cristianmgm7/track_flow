@@ -15,7 +15,7 @@ import 'package:trackflow/core/services/service_locator.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 
-void main({bool testMode = false}) async {
+void main({bool testMode = true}) async {
   print('main() called with testMode: $testMode');
   final initializer = AppInitializer();
   await initializer.initialize();
