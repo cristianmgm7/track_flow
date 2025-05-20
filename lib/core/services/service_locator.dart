@@ -19,10 +19,14 @@ import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 
 final sl = GetIt.instance;
 
 void setupProjectDependencies({bool testMode = true}) {
+  //blocs
+  sl.registerFactory(() => ProjectsBloc(sl()));
+
   sl.registerLazySingleton<ProjectRepository>(() => SyncProjectRepository());
   sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));

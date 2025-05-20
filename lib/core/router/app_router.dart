@@ -21,7 +21,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(BuildContext context, {bool testMode = true}) {
+  static GoRouter router(BuildContext context, {bool testMode = false}) {
     final authBloc = context.read<AuthBloc>();
     final onboardingBloc = context.read<OnboardingBloc>();
     final prefs = context.read<SharedPreferences>();

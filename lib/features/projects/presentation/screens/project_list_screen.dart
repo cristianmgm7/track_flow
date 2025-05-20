@@ -9,7 +9,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectListScreen extends StatefulWidget {
   final SharedPreferences prefs;

@@ -54,7 +54,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           if (state is ProjectsError) {
             return Scaffold(
               appBar: AppBar(),
-              body: Center(child: Text('Error: ${state.message}')),
+              body: Center(child: Text('Error: ${state.message}')),
             );
           }
           if (state is ProjectDetailsLoaded) {
