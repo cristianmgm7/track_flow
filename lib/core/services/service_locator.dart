@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart';
 import 'package:trackflow/features/projects/domain/usecases/getting_all-projects_use_case.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
@@ -27,6 +28,7 @@ void setupProjectDependencies({bool testMode = true}) {
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProjectUseCase(sl()));
   sl.registerLazySingleton(() => GetAllProjectsUseCase(sl()));
+  sl.registerLazySingleton(() => GetProjectByIdUseCase(sl()));
   sl.registerLazySingleton(
     () => ProjectUseCases(
       createProject: sl(),
@@ -34,6 +36,7 @@ void setupProjectDependencies({bool testMode = true}) {
       deleteProject: sl(),
       repository: sl(),
       getAllProjects: sl(),
+      getProjectById: sl(),
     ),
   );
 }

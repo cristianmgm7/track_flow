@@ -35,13 +35,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     }
   }
 
-  void _openProjectFormScreen({Project? project}) {
+  void _openProjectFormScreen() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder:
-          (context) => ProjectFormScreen(prefs: widget.prefs, project: project),
+      builder: (context) => ProjectFormScreen(),
     );
+    context.read<ProjectsBloc>().add(LoadAllProjectsRequested());
   }
 
   @override
@@ -102,7 +102,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   final project = projects[index];
                   return ProjectCard(
                     project: project,
-                    onTap: () => _openProjectFormScreen(project: project),
+                    onTap:
+                        () =>
+                            context.push('/projectdetails/${project.id.value}'),
                   );
                 },
               );

@@ -99,13 +99,13 @@ class AppRouter {
             ),
             GoRoute(
               path: '/dashboard/projects/new',
-              builder: (context, state) => ProjectFormScreen(prefs: prefs),
+              builder: (context, state) => ProjectFormScreen(),
             ),
             GoRoute(
-              path: '/dashboard/projects/:id/edit',
+              path: '/projectdetails/:id',
               builder: (context, state) {
                 final projectId = state.pathParameters['id']!;
-                return ProjectFormScreen(project: null, prefs: prefs);
+                return ProjectDetailsScreen(projectId: projectId);
               },
             ),
           ],

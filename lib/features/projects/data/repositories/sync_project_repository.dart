@@ -61,6 +61,11 @@ class SyncProjectRepository implements ProjectRepository {
   Future<Either<Failure, List<Project>>> getAllProjects() async {
     return _remoteDataSource.getAllProjects();
   }
+
+  @override
+  Future<Either<Failure, Project>> getProjectById(String id) async {
+    return _remoteDataSource.getProjectById(id);
+  }
 }
 
 /// Represents the status of the sync operation
