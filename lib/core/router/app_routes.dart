@@ -1,6 +1,7 @@
 class AppRoutes {
   // Base routes
-  static const String root = '/';
+  static const String splash = '/';
+  static const String welcome = '/welcome';
   static const String onboarding = '/onboarding';
   static const String auth = '/auth';
 

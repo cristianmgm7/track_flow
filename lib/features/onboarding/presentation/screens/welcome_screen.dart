@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 
-class LaunchScreen extends StatelessWidget {
-  const LaunchScreen({super.key});
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +65,7 @@ class LaunchScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.go('/auth');
+                          context.go(AppRoutes.auth);
                         },
                         child: const Text('Log in'),
                       ),

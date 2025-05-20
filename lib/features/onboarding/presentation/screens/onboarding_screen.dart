@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
 
 class OnboardingScreen extends StatelessWidget {
@@ -14,7 +14,7 @@ class OnboardingScreen extends StatelessWidget {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state is OnboardingChecked && state.hasCompletedOnboarding) {
-          context.go('/auth');
+          context.go(AppRoutes.auth);
         } else if (state is OnboardingError) {
           ScaffoldMessenger.of(
             context,
@@ -77,14 +77,10 @@ class OnboardingScreen extends StatelessWidget {
 
           return IntroductionScreen(
             pages: pages,
-            onDone: () {
-              context.read<OnboardingBloc>().add(OnboardingMarkCompleted());
-            },
+            onDone: () => context.go(AppRoutes.auth),
             showSkipButton: true,
             skip: const Text("Skip"),
-            onSkip: () {
-              context.read<OnboardingBloc>().add(OnboardingMarkCompleted());
-            },
+            onSkip: () => context.go(AppRoutes.auth),
             next: const Icon(Icons.arrow_forward),
             done: const Text(
               "Get Started",
