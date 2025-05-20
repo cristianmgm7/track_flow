@@ -7,7 +7,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('Projects CRUD flow', (WidgetTester tester) async {
-    app.main(testMode: true);
+    app.main();
     await tester.pumpAndSettle();
 
     // Debug: Check if add button is present

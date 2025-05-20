@@ -23,7 +23,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 
 final sl = GetIt.instance;
 
-void setupProjectDependencies({bool testMode = true}) {
+void setupProjectDependencies() {
   //blocs
   sl.registerFactory(() => ProjectsBloc(sl()));
 

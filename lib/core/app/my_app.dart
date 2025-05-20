@@ -17,15 +17,9 @@ import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 class MyApp extends StatelessWidget {
   final SharedPreferences prefs;
   final SharedPrefsOnboardingRepository onboardingRepository;
-  final bool testMode;
 
-  MyApp({
-    super.key,
-    required this.prefs,
-    required this.onboardingRepository,
-    this.testMode = false,
-  }) {
-    debugPrint('MyApp constructor called, testMode: $testMode');
+  MyApp({super.key, required this.prefs, required this.onboardingRepository}) {
+    debugPrint('MyApp constructor called');
   }
 
   @override
@@ -53,7 +47,7 @@ class MyApp extends StatelessWidget {
           listener: (context, state) {
             // Removed currentUserId logic as it's no longer needed in ProjectsBloc
           },
-          child: _App(testMode: testMode),
+          child: _App(),
         ),
       ),
     );
@@ -61,10 +55,8 @@ class MyApp extends StatelessWidget {
 }
 
 class _App extends StatelessWidget {
-  final bool testMode;
-
-  _App({this.testMode = true}) {
-    debugPrint('App constructor called, testMode: $testMode');
+  _App() {
+    debugPrint('App constructor called');
   }
 
   @override
@@ -72,7 +64,7 @@ class _App extends StatelessWidget {
     return MaterialApp.router(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      routerConfig: AppRouter.router(context, testMode: testMode),
+      routerConfig: AppRouter.router(context),
     );
   }
 }
