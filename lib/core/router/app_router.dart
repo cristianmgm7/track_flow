@@ -15,41 +15,44 @@ import 'package:trackflow/features/onboarding/presentation/pages/onboarding_scre
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 
 class AppRouter {
-  static GoRouter router(BuildContext context, {bool testMode = false}) {
+  static GoRouter router(BuildContext context) {
     final authBloc = context.read<AuthBloc>();
     final onboardingBloc = context.read<OnboardingBloc>();
     final prefs = context.read<SharedPreferences>();
+
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: testMode ? '/dashboard' : '/',
+      initialLocation: AppRoutes.root,
       refreshListenable: GoRouterRefreshStream(authBloc.stream),
       redirect: (context, state) async {
-        debugPrint('Router redirect called. testMode: $testMode');
-        if (testMode) return null;
+        debugPrint('Router redirect called');
         final authState = authBloc.state;
         final onboardingState = onboardingBloc.state;
-        final isAuthRoute = state.matchedLocation == '/auth';
-        final isOnboardingRoute = state.matchedLocation == '/onboarding';
-        final isLaunchRoute = state.matchedLocation == '/';
-        final isDashboardRoute = state.matchedLocation.startsWith('/dashboard');
+        final isAuthRoute = state.matchedLocation == AppRoutes.auth;
+        final isOnboardingRoute = state.matchedLocation == AppRoutes.onboarding;
+        final isLaunchRoute = state.matchedLocation == AppRoutes.root;
+        final isDashboardRoute = state.matchedLocation.startsWith(
+          AppRoutes.dashboard,
+        );
 
         // Handle launch screen
         if (onboardingState is OnboardingChecked &&
             !onboardingState.hasSeenLaunch) {
           onboardingBloc.add(OnboardingMarkLaunchSeen());
-          return '/';
+          return AppRoutes.root;
         }
 
         // Handle authentication state
         if (authState is AuthAuthenticated) {
           if (isAuthRoute || isOnboardingRoute || isLaunchRoute) {
-            return '/dashboard';
+            return AppRoutes.dashboard;
           }
           return null;
         }
@@ -57,7 +60,7 @@ class AppRouter {
         // If user is not authenticated
         if (authState is AuthUnauthenticated) {
           if (isDashboardRoute) {
-            return '/auth';
+            return AppRoutes.auth;
           }
           return null;
         }
@@ -66,10 +69,10 @@ class AppRouter {
         if (onboardingState is OnboardingChecked) {
           if (!onboardingState.hasCompletedOnboarding) {
             if (isAuthRoute || isDashboardRoute) {
-              return '/onboarding';
+              return AppRoutes.onboarding;
             }
           } else if (isOnboardingRoute) {
-            return '/auth';
+            return AppRoutes.auth;
           }
         }
 
@@ -81,28 +84,34 @@ class AppRouter {
         return null;
       },
       routes: [
-        GoRoute(path: '/', builder: (context, state) => const LaunchScreen()),
         GoRoute(
-          path: '/onboarding',
+          path: AppRoutes.root,
+          builder: (context, state) => const LaunchScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.onboarding,
           builder: (context, state) => const OnboardingScreen(),
         ),
-        GoRoute(path: '/auth', builder: (context, state) => const AuthScreen()),
+        GoRoute(
+          path: AppRoutes.auth,
+          builder: (context, state) => const AuthScreen(),
+        ),
         ShellRoute(
           builder: (context, state, child) => DashboardScreen(child: child),
           routes: [
             GoRoute(
-              path: '/dashboard',
+              path: AppRoutes.dashboard,
               builder: (context, state) {
                 debugPrint('GoRouter: /dashboard builder called');
                 return ProjectListScreen(prefs: prefs);
               },
             ),
             GoRoute(
-              path: '/dashboard/projects/new',
+              path: AppRoutes.newProject,
               builder: (context, state) => ProjectFormScreen(),
             ),
             GoRoute(
-              path: '/projectdetails/:id',
+              path: AppRoutes.projectDetails,
               builder: (context, state) {
                 final projectId = state.pathParameters['id']!;
                 return ProjectDetailsScreen(projectId: projectId);
