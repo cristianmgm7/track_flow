@@ -1,4 +1,3 @@
-import 'package:trackflow/features/projects/domain/usecases/get_projec_by_id_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/getting_all-projects_use_case.dart';
 
 import 'create_project_usecase.dart';
@@ -11,7 +10,6 @@ class ProjectUseCases {
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
   final ProjectRepository repository;
-  final GetProjectByIdUseCase getProjectById;
 
   final GetAllProjectsUseCase getAllProjects;
 
@@ -20,7 +18,6 @@ class ProjectUseCases {
     required this.updateProject,
     required this.deleteProject,
     required this.repository,
-    required this.getProjectById,
 
     required this.getAllProjects,
   });

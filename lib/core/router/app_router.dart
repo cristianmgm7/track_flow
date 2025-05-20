@@ -102,13 +102,6 @@ class AppRouter {
               builder: (context, state) => ProjectFormScreen(prefs: prefs),
             ),
             GoRoute(
-              path: '/dashboard/projects/:id',
-              builder: (context, state) {
-                final projectId = state.pathParameters['id']!;
-                return ProjectDetailsScreen(projectId: projectId);
-              },
-            ),
-            GoRoute(
               path: '/dashboard/projects/:id/edit',
               builder: (context, state) {
                 final projectId = state.pathParameters['id']!;

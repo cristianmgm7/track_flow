@@ -7,7 +7,5 @@ abstract class ProjectRepository {
   Future<Either<Failure, Unit>> createProject(Project project);
   Future<Either<Failure, Unit>> updateProject(Project project);
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
-
-  Future<Either<Failure, Project>> getProjectById(UniqueId id);
   Future<Either<Failure, List<Project>>> getAllProjects();
 }

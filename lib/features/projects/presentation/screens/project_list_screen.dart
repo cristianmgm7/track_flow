@@ -7,6 +7,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
@@ -34,6 +35,15 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     }
   }
 
+  void _openProjectFormScreen({Project? project}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder:
+          (context) => ProjectFormScreen(prefs: widget.prefs, project: project),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     print('ProjectListScreen build called');
@@ -49,9 +59,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {
-                context.push('/dashboard/projects/new');
-              },
+              onPressed: () => _openProjectFormScreen(),
             ),
           ],
         ),
@@ -94,21 +102,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   final project = projects[index];
                   return ProjectCard(
                     project: project,
-                    onTap:
-                        () => context.push(
-                          '/dashboard/projects/${project.id.value}',
-                        ),
+                    onTap: () => _openProjectFormScreen(project: project),
                   );
                 },
               );
             }
             return const Center(child: Text('No projects available'));
           },
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => context.push('/dashboard/projects/new'),
-          tooltip: 'Create New Project',
-          child: const Icon(Icons.add),
         ),
       ),
     );
