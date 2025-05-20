@@ -17,7 +17,7 @@ import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 import 'package:trackflow/core/dev/dev_sign_in.dart';
 
 void main({bool testMode = false, bool devSignIn = true}) async {
-  print('main() called with testMode: $testMode');
+  debugPrint('main() called with testMode: $testMode');
   final initializer = AppInitializer();
   await initializer.initialize();
   setupProjectDependencies(testMode: testMode);
@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
     required this.onboardingRepository,
     this.testMode = false,
   }) {
-    print('MyApp constructor called, testMode: $testMode');
+    debugPrint('MyApp constructor called, testMode: $testMode');
   }
 
   @override
@@ -93,7 +93,7 @@ class MyApp extends StatelessWidget {
 class App extends StatelessWidget {
   final bool testMode;
   App({super.key, this.testMode = true}) {
-    print('App constructor called, testMode: $testMode');
+    debugPrint('App constructor called, testMode: $testMode');
   }
 
   @override

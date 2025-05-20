@@ -45,7 +45,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('ProjectListScreen build called');
+    debugPrint('ProjectListScreen build called');
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {

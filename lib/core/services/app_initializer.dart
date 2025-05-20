@@ -21,48 +21,48 @@ class AppInitializer {
   /// Initialize all app dependencies
   Future<void> initialize() async {
     try {
-      print('AppInitializer: Starting initialization');
+      debugPrint('AppInitializer: Starting initialization');
       // Initialize Flutter bindings
       WidgetsFlutterBinding.ensureInitialized();
-      print('AppInitializer: Flutter bindings initialized');
+      debugPrint('AppInitializer: Flutter bindings initialized');
 
       // Initialize Firebase with error handling
       try {
-        print('AppInitializer: Initializing Firebase');
+        debugPrint('AppInitializer: Initializing Firebase');
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
         _firebaseAuth = FirebaseAuth.instance;
-        print('AppInitializer: Firebase initialized');
+        debugPrint('AppInitializer: Firebase initialized');
       } catch (e) {
         debugPrint('Firebase initialization failed: $e');
         _firebaseAuth = null;
-        print('AppInitializer: Firebase failed, continuing');
+        debugPrint('AppInitializer: Firebase failed, continuing');
       }
 
       // Initialize Hive for local storage
-      print('AppInitializer: Initializing Hive');
+      debugPrint('AppInitializer: Initializing Hive');
       await Hive.initFlutter();
       await Hive.openBox<Map<String, dynamic>>('projects');
-      print('AppInitializer: Hive initialized (disabled)');
+      debugPrint('AppInitializer: Hive initialized (disabled)');
 
       // Initialize SharedPreferences
-      print('AppInitializer: Initializing SharedPreferences');
+      debugPrint('AppInitializer: Initializing SharedPreferences');
       prefs = await SharedPreferences.getInstance();
-      print('AppInitializer: SharedPreferences initialized');
+      debugPrint('AppInitializer: SharedPreferences initialized');
 
       // Initialize repositories with potentially null Firebase auth
-      print('AppInitializer: Initializing repositories');
+      debugPrint('AppInitializer: Initializing repositories');
       authRepository = FirebaseAuthRepository(
         auth: _firebaseAuth,
         googleSignIn: _firebaseAuth != null ? GoogleSignIn() : null,
         prefs: prefs,
       );
       onboardingRepository = SharedPrefsOnboardingRepository(prefs);
-      print('AppInitializer: Repositories initialized');
+      debugPrint('AppInitializer: Repositories initialized');
     } catch (e) {
       debugPrint('App initialization error: $e');
-      print('AppInitializer: Error during initialization: $e');
+      debugPrint('AppInitializer: Error during initialization: $e');
       rethrow;
     }
   }

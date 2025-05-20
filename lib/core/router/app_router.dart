@@ -30,7 +30,7 @@ class AppRouter {
       initialLocation: testMode ? '/dashboard' : '/',
       refreshListenable: GoRouterRefreshStream(authBloc.stream),
       redirect: (context, state) async {
-        print('Router redirect called. testMode: $testMode');
+        debugPrint('Router redirect called. testMode: $testMode');
         if (testMode) return null;
         final authState = authBloc.state;
         final onboardingState = onboardingBloc.state;
@@ -93,7 +93,7 @@ class AppRouter {
             GoRoute(
               path: '/dashboard',
               builder: (context, state) {
-                print('GoRouter: /dashboard builder called');
+                debugPrint('GoRouter: /dashboard builder called');
                 return ProjectListScreen(prefs: prefs);
               },
             ),
