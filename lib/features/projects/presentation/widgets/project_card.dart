@@ -11,9 +11,11 @@ class ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -22,6 +24,8 @@ class ProjectCard extends StatelessWidget {
               Text(
                 project.name.value.fold((l) => '', (r) => r),
                 style: Theme.of(context).textTheme.titleLarge,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               if (project.description.value
                   .fold((l) => '', (r) => r)
@@ -37,7 +41,9 @@ class ProjectCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Created ${_getFormattedDuration(project.createdAt)} ago',
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
               ),
             ],
           ),

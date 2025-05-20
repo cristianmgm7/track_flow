@@ -31,7 +31,7 @@ class ProjectsError extends ProjectsState {
 }
 
 class ProjectDetailsLoaded extends ProjectsState {
-  final dynamic project; // Replace dynamic with Project if import is available
+  final Project project;
   const ProjectDetailsLoaded(this.project);
   @override
   List<Object?> get props => [project];

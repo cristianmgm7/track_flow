@@ -7,6 +7,8 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
+import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
   final SharedPreferences prefs;
@@ -32,6 +34,15 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     }
   }
 
+  void _openProjectFormScreen() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => ProjectFormScreen(),
+    );
+    context.read<ProjectsBloc>().add(LoadAllProjectsRequested());
+  }
+
   @override
   Widget build(BuildContext context) {
     print('ProjectListScreen build called');
@@ -47,9 +58,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           actions: [
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {
-                context.push('/dashboard/projects/new');
-              },
+              onPressed: () => _openProjectFormScreen(),
             ),
           ],
         ),
@@ -74,6 +83,29 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
             if (state is ProjectsError) {
               return Center(
                 child: Text(state.message, style: TextStyle(color: Colors.red)),
+              );
+            }
+            if (state is ProjectsLoaded) {
+              final projects = state.projects;
+              if (projects.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No projects yet. Tap + to create your first project!',
+                  ),
+                );
+              }
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return ProjectCard(
+                    project: project,
+                    onTap:
+                        () =>
+                            context.push('/projectdetails/${project.id.value}'),
+                  );
+                },
               );
             }
             return const Center(child: Text('No projects available'));

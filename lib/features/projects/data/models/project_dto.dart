@@ -10,12 +10,6 @@ import 'package:trackflow/features/projects/domain/entities/project_description.
 /// including field names and data types. It handles the conversion between Firestore
 /// documents and domain entities.
 class ProjectDTO {
-  final String id;
-  final String ownerId;
-  final String name;
-  final String description;
-  final DateTime createdAt;
-
   const ProjectDTO({
     required this.id,
     required this.ownerId,
@@ -23,6 +17,13 @@ class ProjectDTO {
     required this.description,
     required this.createdAt,
   });
+
+  final String id;
+  final String ownerId;
+  final String name;
+  final String description;
+  final DateTime createdAt;
+
   static const String collection = 'projects';
 
   factory ProjectDTO.fromDomain(Project project) => ProjectDTO(

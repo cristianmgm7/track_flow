@@ -21,7 +21,7 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(BuildContext context, {bool testMode = true}) {
+  static GoRouter router(BuildContext context, {bool testMode = false}) {
     final authBloc = context.read<AuthBloc>();
     final onboardingBloc = context.read<OnboardingBloc>();
     final prefs = context.read<SharedPreferences>();
@@ -99,20 +99,13 @@ class AppRouter {
             ),
             GoRoute(
               path: '/dashboard/projects/new',
-              builder: (context, state) => ProjectFormScreen(prefs: prefs),
+              builder: (context, state) => ProjectFormScreen(),
             ),
             GoRoute(
-              path: '/dashboard/projects/:id',
+              path: '/projectdetails/:id',
               builder: (context, state) {
                 final projectId = state.pathParameters['id']!;
                 return ProjectDetailsScreen(projectId: projectId);
-              },
-            ),
-            GoRoute(
-              path: '/dashboard/projects/:id/edit',
-              builder: (context, state) {
-                final projectId = state.pathParameters['id']!;
-                return ProjectFormScreen(project: null, prefs: prefs);
               },
             ),
           ],

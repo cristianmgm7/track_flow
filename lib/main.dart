@@ -14,13 +14,15 @@ import 'package:trackflow/features/projects/domain/usecases/project_usecases.dar
 import 'package:trackflow/core/services/service_locator.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
+import 'package:trackflow/core/dev/dev_sign_in.dart';
 
-void main({bool testMode = false}) async {
+void main({bool testMode = false, bool devSignIn = true}) async {
   print('main() called with testMode: $testMode');
   final initializer = AppInitializer();
   await initializer.initialize();
   setupProjectDependencies(testMode: testMode);
   await setupAuthDependencies(initializer.prefs);
+
   runApp(
     MyApp(
       prefs: initializer.prefs,
@@ -28,6 +30,18 @@ void main({bool testMode = false}) async {
       testMode: testMode,
     ),
   );
+
+  // After the first frame, trigger dev sign-in if needed
+  if (devSignIn) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context =
+          WidgetsBinding.instance.focusManager.primaryFocus?.context ??
+          WidgetsBinding.instance.rootElement;
+      if (context != null) {
+        signInDevUserIfNeeded(context);
+      }
+    });
+  }
 }
 
 class MyApp extends StatelessWidget {

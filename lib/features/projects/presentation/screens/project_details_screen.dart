@@ -26,16 +26,19 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     return BlocListener<ProjectsBloc, ProjectsState>(
       listener: (context, state) {
         if (state is ProjectOperationSuccess) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.green,
+            ),
+          );
           if (state.message.contains('deleted')) {
             context.pop();
           }
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.message}'),
+              content: Text('Error: ${state.message}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -60,45 +63,19 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               appBar: AppBar(
                 title: Text(project.name.value.fold((l) => '', (r) => r)),
                 actions: [
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'edit':
-                          context.push(
-                            '/dashboard/projects/${project.id.value}/edit',
-                          );
-                          break;
-                        case 'delete':
-                          _showDeleteConfirmation(context, project.id);
-                          break;
-                      }
-                    },
-                    itemBuilder:
-                        (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit),
-                                SizedBox(width: 8),
-                                Text('Edit Project'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete, color: Colors.red),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Delete Project',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    tooltip: 'Edit Project',
+                    onPressed:
+                        () => context.push(
+                          '/dashboard/projects/${project.id.value}/edit',
+                        ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: 'Delete Project',
+                    onPressed:
+                        () => _showDeleteConfirmation(context, project.id),
                   ),
                 ],
               ),
