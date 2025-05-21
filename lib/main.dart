@@ -9,10 +9,5 @@ void main() async {
   setupProjectDependencies();
   await setupAuthDependencies(initializer.prefs);
 
-  runApp(
-    MyApp(
-      prefs: initializer.prefs,
-      onboardingRepository: initializer.onboardingRepository,
-    ),
-  );
+  runApp(MyApp());
 }
