@@ -2,22 +2,18 @@ import 'package:hive/hive.dart';
 import '../models/project_dto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-/// Abstract class defining the contract for local project operations.
 abstract class ProjectLocalDataSource {
-  /// Caches a single project locally.
   Future<void> cacheProject(ProjectDTO project);
 
-  /// Gets a cached project by its ID.
   Future<ProjectDTO?> getCachedProject(UniqueId id);
 
-  /// Removes a project from the cache.
   Future<void> removeCachedProject(UniqueId id);
 
-  /// Gets all cached projects.
   Future<List<ProjectDTO>> getAllProjects();
+
+  Stream<List<ProjectDTO>> watchAllProjects();
 }
 
-/// Implementation of [ProjectLocalDataSource] using Hive.
 class HiveProjectLocalDataSource implements ProjectLocalDataSource {
   static const String _boxName = 'projects';
   late final Box<Map<String, dynamic>> _box;
@@ -49,5 +45,10 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
     return _box.values.map((e) => ProjectDTO.fromMap(e)).toList();
+  }
+
+  @override
+  Stream<List<ProjectDTO>> watchAllProjects() {
+    return _box.watch().asyncMap((_) => getAllProjects());
   }
 }

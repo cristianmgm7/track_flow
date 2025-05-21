@@ -1,8 +1,10 @@
 import 'package:get_it/get_it.dart';
 import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/repositories/projects_repository_impl.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
@@ -30,14 +32,20 @@ final sl = GetIt.instance;
 
 void setupProjectDependencies() {
   //blocs
-  sl.registerFactory(() => ProjectsBloc(sl()));
+  sl.registerFactory(() => ProjectsBloc(sl(), sl()));
   sl.registerFactory(() => AuthBloc(sl()));
   sl.registerFactory(
     () => AppFlowCubit(authRepository: sl(), onboardingRepository: sl()),
   );
 
   //repositories
-  sl.registerLazySingleton<ProjectsRepository>(() => SyncProjectRepository());
+  sl.registerLazySingleton<ProjectsRepository>(
+    () => ProjectsRepositoryImpl(
+      remoteDataSource: sl(),
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
   sl.registerLazySingleton<OnboardingRepository>(
     () => OnboardingRepositoryImpl(sl()),
   );
@@ -65,7 +73,13 @@ void setupProjectDependencies() {
   sl.registerLazySingleton<ProjectRemoteDataSource>(
     () => FirestoreProjectDataSource(),
   );
+  sl.registerLazySingleton<ProjectLocalDataSource>(
+    () => HiveProjectLocalDataSource(box: sl()),
+  );
+  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 }
+
+class LocalProjectDataSource {}
 
 Future<void> setupAuthDependencies(SharedPreferences prefs) async {
   sl.registerLazySingleton<AuthRepository>(

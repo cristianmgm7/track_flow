@@ -7,6 +7,7 @@ import 'package:trackflow/features/onboarding/domain/repositories/onboarding_rep
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'package:trackflow/core/services/service_locator.dart';
@@ -27,7 +28,11 @@ class MyApp extends StatelessWidget {
                   AuthBloc(sl<AuthUseCases>())..add(AuthCheckRequested()),
         ),
         BlocProvider<ProjectsBloc>(
-          create: (context) => ProjectsBloc(sl<ProjectUseCases>()),
+          create:
+              (context) => ProjectsBloc(
+                sl<ProjectUseCases>(),
+                sl<WatchAllProjectsUseCase>(),
+              ),
         ),
         BlocProvider<OnboardingBloc>(
           create:

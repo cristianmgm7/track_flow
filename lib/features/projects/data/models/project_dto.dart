@@ -4,11 +4,6 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 
-/// Data Transfer Object for Project documents in Firestore/local storage.
-///
-/// This class represents the exact structure of how projects are stored in Firestore,
-/// including field names and data types. It handles the conversion between Firestore
-/// documents and domain entities.
 class ProjectDTO {
   const ProjectDTO({
     required this.id,

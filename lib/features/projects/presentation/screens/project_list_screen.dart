@@ -32,7 +32,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('ProjectListScreen build called');
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Projects'),

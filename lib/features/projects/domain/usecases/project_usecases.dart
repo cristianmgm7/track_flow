@@ -12,7 +12,6 @@ class ProjectUseCases {
   final DeleteProjectUseCase deleteProject;
   final ProjectsRepository repository;
   final GetProjectByIdUseCase getProjectById;
-
   final GetAllProjectsUseCase getAllProjects;
 
   ProjectUseCases({

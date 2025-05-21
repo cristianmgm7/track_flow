@@ -1,4 +1,6 @@
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -48,3 +50,13 @@ class ValidationException implements Exception {
 }
 
 class LoadAllProjectsRequested extends ProjectsEvent {}
+
+//Watching Projects stream
+class StartWatchingProjects extends ProjectsEvent {}
+
+class ProjectsUpdated extends ProjectsEvent {
+  final Either<Failure, List<Project>> projects;
+  const ProjectsUpdated(this.projects);
+  @override
+  List<Object?> get props => [projects];
+}
