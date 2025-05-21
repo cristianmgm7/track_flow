@@ -10,4 +10,7 @@ abstract class OnboardingRepository {
 
   /// Mark launch screen as seen
   Future<void> markLaunchScreenSeen();
+
+  /// Get the onboarding state
+  Future<bool> hasSeenOnboarding();
 }

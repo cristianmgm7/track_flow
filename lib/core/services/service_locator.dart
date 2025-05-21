@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:trackflow/core/app/app_flow_cubit.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
@@ -27,10 +28,13 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 
 final sl = GetIt.instance;
 
-void setupProjectDependencies({bool testMode = true}) {
+void setupProjectDependencies() {
   //blocs
   sl.registerFactory(() => ProjectsBloc(sl()));
   sl.registerFactory(() => AuthBloc(sl()));
+  sl.registerFactory(
+    () => AppFlowCubit(authRepository: sl(), onboardingRepository: sl()),
+  );
 
   //repositories
   sl.registerLazySingleton<ProjectRepository>(() => SyncProjectRepository());
