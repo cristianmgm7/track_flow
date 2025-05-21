@@ -1,4 +1,4 @@
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -10,7 +10,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 /// - Checks ownership before deletion
 /// - Calls repository to delete the project
 class DeleteProjectUseCase {
-  final ProjectRepository _repository;
+  final ProjectsRepository _repository;
 
   DeleteProjectUseCase(this._repository);
 

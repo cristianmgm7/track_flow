@@ -11,7 +11,7 @@ import 'package:trackflow/core/entities/unique_id.dart' as _i7;
 import 'package:trackflow/core/error/failures.dart' as _i5;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i6;
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart'
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i3;
 
 // ignore_for_file: type=lint
@@ -29,13 +29,8 @@ import 'package:trackflow/features/projects/domain/repositories/project_reposito
 // ignore_for_file: subtype_of_sealed_class
 
 class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
-  _FakeEither_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeEither_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 /// A class which mocks [ProjectRepository].
@@ -48,55 +43,46 @@ class MockProjectRepository extends _i1.Mock implements _i3.ProjectRepository {
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> createProject(
-          _i6.Project? project) =>
+    _i6.Project? project,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #createProject,
-          [project],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i5.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #createProject,
-            [project],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+            Invocation.method(#createProject, [project]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i5.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#createProject, [project]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> updateProject(
-          _i6.Project? project) =>
+    _i6.Project? project,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #updateProject,
-          [project],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i5.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #updateProject,
-            [project],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+            Invocation.method(#updateProject, [project]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i5.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#updateProject, [project]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> deleteProject(
-          _i7.UniqueId? id) =>
+    _i7.UniqueId? id,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #deleteProject,
-          [id],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i5.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #deleteProject,
-            [id],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+            Invocation.method(#deleteProject, [id]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i5.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#deleteProject, [id]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 }

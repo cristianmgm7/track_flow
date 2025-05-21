@@ -3,7 +3,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-abstract class ProjectRepository {
+abstract class ProjectsRepository {
   Future<Either<Failure, Unit>> createProject(Project project);
   Future<Either<Failure, Unit>> updateProject(Project project);
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);

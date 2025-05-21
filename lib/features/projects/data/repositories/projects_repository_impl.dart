@@ -13,8 +13,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 /// 2. Syncs with Firestore when online
 /// 3. Reads from local storage for immediate access
 /// 4. Periodically syncs with Firestore in the background
-class ProjectsRepositoryImpl implements ProjectsRepository {
-  ProjectsRepositoryImpl({ProjectRemoteDataSource? remoteDataSource})
+class SyncProjectRepository implements ProjectsRepository {
+  SyncProjectRepository({ProjectRemoteDataSource? remoteDataSource})
     : _remoteDataSource = remoteDataSource ?? FirestoreProjectDataSource();
 
   final ProjectRemoteDataSource _remoteDataSource;

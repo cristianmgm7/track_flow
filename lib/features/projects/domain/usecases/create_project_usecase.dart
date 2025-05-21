@@ -1,5 +1,5 @@
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -25,7 +25,7 @@ class CreateProjectParams extends Equatable {
 }
 
 class CreateProjectUseCase {
-  final ProjectRepository _repository;
+  final ProjectsRepository _repository;
 
   CreateProjectUseCase(this._repository);
 

@@ -7,7 +7,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
-import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
+import 'package:trackflow/features/projects/data/repositories/projects_repository_impl.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';

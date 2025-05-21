@@ -4,8 +4,8 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
-import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
-import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
+import 'package:trackflow/features/projects/data/repositories/projects_repository_impl.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart';
 import 'package:trackflow/features/projects/domain/usecases/getting_all-projects_use_case.dart';
@@ -37,7 +37,7 @@ void setupProjectDependencies() {
   );
 
   //repositories
-  sl.registerLazySingleton<ProjectRepository>(() => SyncProjectRepository());
+  sl.registerLazySingleton<ProjectsRepository>(() => SyncProjectRepository());
   sl.registerLazySingleton<OnboardingRepository>(
     () => OnboardingRepositoryImpl(sl()),
   );
