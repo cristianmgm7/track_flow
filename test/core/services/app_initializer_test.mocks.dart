@@ -8,10 +8,10 @@ import 'dart:async' as _i4;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/error/failures.dart' as _i6;
-import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart'
+import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
     as _i3;
 import 'package:trackflow/features/auth/domain/entities/user.dart' as _i5;
-import 'package:trackflow/features/onboarding/data/repositories/shared_prefs_onboarding_repository.dart'
+import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart'
     as _i7;
 
 // ignore_for_file: type=lint
@@ -29,13 +29,8 @@ import 'package:trackflow/features/onboarding/data/repositories/shared_prefs_onb
 // ignore_for_file: subtype_of_sealed_class
 
 class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
-  _FakeEither_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeEither_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 /// A class which mocks [FirebaseAuthRepository].
@@ -48,10 +43,12 @@ class MockFirebaseAuthRepository extends _i1.Mock
   }
 
   @override
-  _i4.Stream<_i5.User?> get authState => (super.noSuchMethod(
-        Invocation.getter(#authState),
-        returnValue: _i4.Stream<_i5.User?>.empty(),
-      ) as _i4.Stream<_i5.User?>);
+  _i4.Stream<_i5.User?> get authState =>
+      (super.noSuchMethod(
+            Invocation.getter(#authState),
+            returnValue: _i4.Stream<_i5.User?>.empty(),
+          )
+          as _i4.Stream<_i5.User?>);
 
   @override
   _i4.Future<_i2.Either<_i6.Failure, _i5.User>> signInWithEmailAndPassword(
@@ -59,25 +56,18 @@ class MockFirebaseAuthRepository extends _i1.Mock
     String? password,
   ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #signInWithEmailAndPassword,
-          [
-            email,
-            password,
-          ],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i6.Failure, _i5.User>>.value(
-            _FakeEither_0<_i6.Failure, _i5.User>(
-          this,
-          Invocation.method(
-            #signInWithEmailAndPassword,
-            [
-              email,
-              password,
-            ],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i6.Failure, _i5.User>>);
+            Invocation.method(#signInWithEmailAndPassword, [email, password]),
+            returnValue: _i4.Future<_i2.Either<_i6.Failure, _i5.User>>.value(
+              _FakeEither_0<_i6.Failure, _i5.User>(
+                this,
+                Invocation.method(#signInWithEmailAndPassword, [
+                  email,
+                  password,
+                ]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i6.Failure, _i5.User>>);
 
   @override
   _i4.Future<_i2.Either<_i6.Failure, _i5.User>> signUpWithEmailAndPassword(
@@ -85,52 +75,40 @@ class MockFirebaseAuthRepository extends _i1.Mock
     String? password,
   ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #signUpWithEmailAndPassword,
-          [
-            email,
-            password,
-          ],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i6.Failure, _i5.User>>.value(
-            _FakeEither_0<_i6.Failure, _i5.User>(
-          this,
-          Invocation.method(
-            #signUpWithEmailAndPassword,
-            [
-              email,
-              password,
-            ],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i6.Failure, _i5.User>>);
+            Invocation.method(#signUpWithEmailAndPassword, [email, password]),
+            returnValue: _i4.Future<_i2.Either<_i6.Failure, _i5.User>>.value(
+              _FakeEither_0<_i6.Failure, _i5.User>(
+                this,
+                Invocation.method(#signUpWithEmailAndPassword, [
+                  email,
+                  password,
+                ]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i6.Failure, _i5.User>>);
 
   @override
   _i4.Future<_i2.Either<_i6.Failure, _i5.User>> signInWithGoogle() =>
       (super.noSuchMethod(
-        Invocation.method(
-          #signInWithGoogle,
-          [],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i6.Failure, _i5.User>>.value(
-            _FakeEither_0<_i6.Failure, _i5.User>(
-          this,
-          Invocation.method(
-            #signInWithGoogle,
-            [],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i6.Failure, _i5.User>>);
+            Invocation.method(#signInWithGoogle, []),
+            returnValue: _i4.Future<_i2.Either<_i6.Failure, _i5.User>>.value(
+              _FakeEither_0<_i6.Failure, _i5.User>(
+                this,
+                Invocation.method(#signInWithGoogle, []),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i6.Failure, _i5.User>>);
 
   @override
-  _i4.Future<void> signOut() => (super.noSuchMethod(
-        Invocation.method(
-          #signOut,
-          [],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+  _i4.Future<void> signOut() =>
+      (super.noSuchMethod(
+            Invocation.method(#signOut, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 }
 
 /// A class which mocks [SharedPrefsOnboardingRepository].
@@ -143,40 +121,36 @@ class MockSharedPrefsOnboardingRepository extends _i1.Mock
   }
 
   @override
-  _i4.Future<bool> hasCompletedOnboarding() => (super.noSuchMethod(
-        Invocation.method(
-          #hasCompletedOnboarding,
-          [],
-        ),
-        returnValue: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+  _i4.Future<bool> hasCompletedOnboarding() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasCompletedOnboarding, []),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
 
   @override
-  _i4.Future<bool> hasSeenLaunch() => (super.noSuchMethod(
-        Invocation.method(
-          #hasSeenLaunch,
-          [],
-        ),
-        returnValue: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+  _i4.Future<bool> hasSeenLaunch() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasSeenLaunch, []),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
 
   @override
-  _i4.Future<void> markOnboardingCompleted() => (super.noSuchMethod(
-        Invocation.method(
-          #markOnboardingCompleted,
-          [],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+  _i4.Future<void> markOnboardingCompleted() =>
+      (super.noSuchMethod(
+            Invocation.method(#markOnboardingCompleted, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 
   @override
-  _i4.Future<void> markLaunchScreenSeen() => (super.noSuchMethod(
-        Invocation.method(
-          #markLaunchScreenSeen,
-          [],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+  _i4.Future<void> markLaunchScreenSeen() =>
+      (super.noSuchMethod(
+            Invocation.method(#markLaunchScreenSeen, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 }

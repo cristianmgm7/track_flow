@@ -5,16 +5,16 @@ import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
-import 'package:trackflow/features/auth/data/models/user_dto.dart';
+import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 
-class FirebaseAuthRepository implements AuthRepository {
+class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth? _auth;
   final GoogleSignIn? _googleSignIn;
   final SharedPreferences _prefs;
   bool _isOfflineMode = false;
 
-  FirebaseAuthRepository({
+  AuthRepositoryImpl({
     FirebaseAuth? auth,
     GoogleSignIn? googleSignIn,
     required SharedPreferences prefs,
@@ -42,7 +42,7 @@ class FirebaseAuthRepository implements AuthRepository {
     }
     return _auth!.authStateChanges().map((user) {
       if (user == null) return null;
-      return UserDto.fromFirebase(user).toDomain();
+      return AuthDto.fromFirebase(user).toDomain();
     });
   }
 
@@ -64,7 +64,7 @@ class FirebaseAuthRepository implements AuthRepository {
       final user = cred.user;
       if (user == null)
         return left(AuthenticationFailure('No user found after sign in'));
-      return right(UserDto.fromFirebase(user).toDomain());
+      return right(AuthDto.fromFirebase(user).toDomain());
     } catch (e) {
       return left(AuthenticationFailure(e.toString()));
     }
@@ -88,7 +88,7 @@ class FirebaseAuthRepository implements AuthRepository {
       final user = cred.user;
       if (user == null)
         return left(AuthenticationFailure('No user found after sign up'));
-      return right(UserDto.fromFirebase(user).toDomain());
+      return right(AuthDto.fromFirebase(user).toDomain());
     } catch (e) {
       return left(AuthenticationFailure(e.toString()));
     }
@@ -120,7 +120,7 @@ class FirebaseAuthRepository implements AuthRepository {
         return left(
           AuthenticationFailure('No user found after Google sign in'),
         );
-      return right(UserDto.fromFirebase(user).toDomain());
+      return right(AuthDto.fromFirebase(user).toDomain());
     } catch (e) {
       return left(AuthenticationFailure(e.toString()));
     }
@@ -134,5 +134,10 @@ class FirebaseAuthRepository implements AuthRepository {
       return;
     }
     await Future.wait([_auth!.signOut(), _googleSignIn!.signOut()]);
+  }
+
+  @override
+  Future<bool> isLoggedIn() async {
+    return _auth!.currentUser != null;
   }
 }

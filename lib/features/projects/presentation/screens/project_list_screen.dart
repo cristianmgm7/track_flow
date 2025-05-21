@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -11,9 +10,7 @@ import 'package:trackflow/features/projects/presentation/screens/project_form_sc
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
-  final SharedPreferences prefs;
-
-  const ProjectListScreen({super.key, required this.prefs});
+  const ProjectListScreen({super.key});
 
   @override
   State<ProjectListScreen> createState() => _ProjectListScreenState();

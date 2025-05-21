@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
 
-class SharedPrefsOnboardingRepository implements OnboardingRepository {
+class OnboardingRepositoryImpl implements OnboardingRepository {
   final SharedPreferences _prefs;
 
-  SharedPrefsOnboardingRepository(this._prefs);
+  OnboardingRepositoryImpl(this._prefs);
 
   @override
   Future<bool> hasCompletedOnboarding() async {
@@ -24,5 +24,10 @@ class SharedPrefsOnboardingRepository implements OnboardingRepository {
   @override
   Future<void> markLaunchScreenSeen() async {
     await _prefs.setBool('hasSeenLaunch', true);
+  }
+
+  @override
+  Future<bool> hasSeenOnboarding() async {
+    return _prefs.getBool('hasSeenOnboarding') ?? false;
   }
 }

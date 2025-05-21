@@ -2,11 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/features/auth/presentation/pages/splash.dart';
-import 'package:trackflow/features/auth/presentation/pages/auth.dart';
+import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
+import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/pages/dashboard.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -14,6 +11,7 @@ import 'package:trackflow/features/projects/presentation/screens/project_form_sc
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/core/app/app_flow_cubit.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -21,31 +19,24 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
 
 class AppRouter {
   static GoRouter router(BuildContext context) {
-    final authBloc = context.watch<AuthBloc>();
-    final prefs = context.read<SharedPreferences>();
+    final appFlowCubit = context.watch<AppFlowCubit>();
 
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: AppRoutes.splash,
-      refreshListenable: GoRouterRefreshStream(authBloc.stream),
-      redirect: (context, state) async {
-        debugPrint('Router redirect called');
-
-        // Skip redirect for splash screen
-        if (state.matchedLocation != AppRoutes.splash) {
-          return null;
+      refreshListenable: GoRouterRefreshStream(appFlowCubit.stream),
+      redirect: (context, state) {
+        final status = appFlowCubit.state;
+        switch (status) {
+          case AppStatus.unknown:
+            return AppRoutes.splash;
+          case AppStatus.onboarding:
+            return AppRoutes.onboarding;
+          case AppStatus.unauthenticated:
+            return AppRoutes.welcome;
+          case AppStatus.authenticated:
+            return AppRoutes.dashboard;
         }
-
-        final authState = authBloc.state;
-
-        // Handle authentication state
-        if (authState is AuthAuthenticated) {
-          return AppRoutes.dashboard;
-        } else if (authState is AuthUnauthenticated) {
-          return AppRoutes.welcome;
-        }
-
-        return AppRoutes.splash;
       },
       routes: [
         GoRoute(
@@ -69,7 +60,7 @@ class AppRouter {
           routes: [
             GoRoute(
               path: AppRoutes.dashboard,
-              builder: (context, state) => ProjectListScreen(prefs: prefs),
+              builder: (context, state) => ProjectListScreen(),
             ),
             GoRoute(
               path: AppRoutes.newProject,

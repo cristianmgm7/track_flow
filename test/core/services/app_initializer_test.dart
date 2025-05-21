@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/services/app_initializer.dart';
-import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';
-import 'package:trackflow/features/onboarding/data/repositories/shared_prefs_onboarding_repository.dart';
+import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart';
 
 // Generate mocks
 @GenerateMocks([FirebaseAuthRepository, SharedPrefsOnboardingRepository])

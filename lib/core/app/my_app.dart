@@ -11,6 +11,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'package:trackflow/core/services/service_locator.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
+import 'package:trackflow/core/app/app_flow_cubit.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -33,6 +34,13 @@ class MyApp extends StatelessWidget {
               (context) =>
                   OnboardingBloc(sl<OnboardingRepository>())
                     ..add(OnboardingCheckRequested()),
+        ),
+        BlocProvider<AppFlowCubit>(
+          create:
+              (context) => AppFlowCubit(
+                authRepository: sl(),
+                onboardingRepository: sl(),
+              ),
         ),
       ],
       child: _App(),

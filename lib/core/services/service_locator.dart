@@ -1,4 +1,8 @@
 import 'package:get_it/get_it.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart';
+import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/repositories/sync_project_repository.dart';
 import 'package:trackflow/features/projects/domain/repositories/project_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
@@ -8,7 +12,7 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 // Auth imports
-import 'package:trackflow/features/auth/data/repositories/firebase_auth_repository.dart';
+import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
@@ -23,11 +27,18 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 
 final sl = GetIt.instance;
 
-void setupProjectDependencies() {
+void setupProjectDependencies({bool testMode = true}) {
   //blocs
   sl.registerFactory(() => ProjectsBloc(sl()));
+  sl.registerFactory(() => AuthBloc(sl()));
 
+  //repositories
   sl.registerLazySingleton<ProjectRepository>(() => SyncProjectRepository());
+  sl.registerLazySingleton<OnboardingRepository>(
+    () => OnboardingRepositoryImpl(sl()),
+  );
+
+  //usecases
   sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProjectUseCase(sl()));
@@ -43,11 +54,18 @@ void setupProjectDependencies() {
       getProjectById: sl(),
     ),
   );
+  //core!
+
+  //
+  //datasources
+  sl.registerLazySingleton<ProjectRemoteDataSource>(
+    () => FirestoreProjectDataSource(),
+  );
 }
 
 Future<void> setupAuthDependencies(SharedPreferences prefs) async {
   sl.registerLazySingleton<AuthRepository>(
-    () => FirebaseAuthRepository(
+    () => AuthRepositoryImpl(
       auth: FirebaseAuth.instance,
       googleSignIn: GoogleSignIn(),
       prefs: prefs,
