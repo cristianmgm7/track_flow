@@ -36,5 +36,6 @@ class AppFlowCubit extends Cubit<AppStatus> {
   }
 
   void loggedIn() => emit(AppStatus.authenticated);
+
   void loggedOut() => emit(AppStatus.unauthenticated);
 }

@@ -15,7 +15,6 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
     as _i3;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
     as _i8;
-import 'package:trackflow/features/projects/domain/usecases/get_projec_by_id_usecase.dart'
     as _i10;
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
     as _i6;

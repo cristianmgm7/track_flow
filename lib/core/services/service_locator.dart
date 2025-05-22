@@ -1,4 +1,6 @@
 import 'package:get_it/get_it.dart';
+import 'package:hive/hive.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:trackflow/core/app/app_flow_cubit.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
@@ -10,7 +12,6 @@ import 'package:trackflow/features/projects/data/repositories/projects_repositor
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart';
-import 'package:trackflow/features/projects/domain/usecases/getting_all-projects_use_case.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
@@ -26,6 +27,7 @@ import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 
 final sl = GetIt.instance;
@@ -54,7 +56,6 @@ void setupProjectDependencies() {
   sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProjectUseCase(sl()));
-  sl.registerLazySingleton(() => GetAllProjectsUseCase(sl()));
   sl.registerLazySingleton(() => GetProjectByIdUseCase(sl()));
   sl.registerLazySingleton(
     () => ProjectUseCases(
@@ -62,12 +63,13 @@ void setupProjectDependencies() {
       updateProject: sl(),
       deleteProject: sl(),
       repository: sl(),
-      getAllProjects: sl(),
       getProjectById: sl(),
     ),
   );
   //core!
-
+  sl.registerLazySingleton<InternetConnectionChecker>(
+    () => InternetConnectionChecker(),
+  );
   //
   //datasources
   sl.registerLazySingleton<ProjectRemoteDataSource>(
@@ -78,8 +80,6 @@ void setupProjectDependencies() {
   );
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 }
-
-class LocalProjectDataSource {}
 
 Future<void> setupAuthDependencies(SharedPreferences prefs) async {
   sl.registerLazySingleton<AuthRepository>(
@@ -103,4 +103,8 @@ Future<void> setupAuthDependencies(SharedPreferences prefs) async {
       getAuthState: sl(),
     ),
   );
+  sl.registerLazySingleton(() => WatchAllProjectsUseCase(sl()));
+  final projectsBox = await Hive.openBox<Map<String, dynamic>>('projectsBox');
+  // Register it with GetIt
+  sl.registerSingleton<Box<Map<String, dynamic>>>(projectsBox);
 }

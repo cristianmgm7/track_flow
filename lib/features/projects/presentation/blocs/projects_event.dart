@@ -49,8 +49,6 @@ class ValidationException implements Exception {
   String toString() => message;
 }
 
-class LoadAllProjectsRequested extends ProjectsEvent {}
-
 //Watching Projects stream
 class StartWatchingProjects extends ProjectsEvent {}
 

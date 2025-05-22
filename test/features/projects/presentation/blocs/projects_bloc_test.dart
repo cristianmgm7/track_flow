@@ -30,6 +30,7 @@ void main() {
   late MockUpdateProjectUseCase mockUpdateProjectUseCase;
   late MockDeleteProjectUseCase mockDeleteProjectUseCase;
   late MockGetProjectByIdUseCase mockGetProjectByIdUseCase;
+  late MockWatchAllProjectsUseCase mockWatchAllProjectsUseCase;
 
   setUp(() {
     mockCreateProjectUseCase = MockCreateProjectUseCase();
@@ -41,7 +42,7 @@ void main() {
       updateProject: mockUpdateProjectUseCase,
       deleteProject: mockDeleteProjectUseCase,
       getProjectById: mockGetProjectByIdUseCase,
-      repository: MockProjectRepository(),
+      repository: MockProjectsRepository(),
     );
     bloc = ProjectsBloc(useCases);
   });
@@ -162,3 +163,5 @@ void main() {
     );
   });
 }
+
+class MockWatchAllProjectsUseCase {}

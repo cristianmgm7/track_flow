@@ -18,7 +18,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectsBloc>().add(LoadAllProjectsRequested());
+    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   void _openProjectFormScreen() {
@@ -27,7 +27,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       isScrollControlled: true,
       builder: (context) => ProjectFormScreen(),
     );
-    context.read<ProjectsBloc>().add(LoadAllProjectsRequested());
+    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   @override
