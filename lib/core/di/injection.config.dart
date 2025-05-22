@@ -69,6 +69,8 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
+    gh.lazySingleton<_i974.FirebaseFirestore>(
+        () => appModule.firebaseFirestore);
     gh.lazySingleton<_i116.GoogleSignIn>(() => appModule.googleSignIn);
     gh.lazySingleton<_i973.InternetConnectionChecker>(
         () => appModule.internetConnectionChecker);

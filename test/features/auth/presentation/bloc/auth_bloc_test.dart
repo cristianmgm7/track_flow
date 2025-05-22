@@ -4,7 +4,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -15,10 +14,6 @@ import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/get_auth_state_usecase.dart';
-import 'package:trackflow/core/entities/value_object.dart';
-import 'package:trackflow/core/error/value_failure.dart';
-
-class MockAuthUseCases extends Mock implements AuthUseCases {}
 
 class FakeEmail extends Fake implements EmailAddress {}
 
@@ -46,7 +41,6 @@ void main() {
   late MockSignOutUseCase mockSignOutUseCase;
   late MockGoogleSignInUseCase mockGoogleSignInUseCase;
   late MockGetAuthStateUseCase mockGetAuthStateUseCase;
-  late AuthUseCases useCases;
   final testUser = domain.User(id: '123', email: 'test@example.com');
 
   setUp(() {
@@ -55,14 +49,14 @@ void main() {
     mockSignOutUseCase = MockSignOutUseCase();
     mockGoogleSignInUseCase = MockGoogleSignInUseCase();
     mockGetAuthStateUseCase = MockGetAuthStateUseCase();
-    useCases = AuthUseCases(
+
+    bloc = AuthBloc(
       signIn: mockSignInUseCase,
       signUp: mockSignUpUseCase,
       signOut: mockSignOutUseCase,
       googleSignIn: mockGoogleSignInUseCase,
       getAuthState: mockGetAuthStateUseCase,
     );
-    bloc = AuthBloc(useCases);
   });
 
   blocTest<AuthBloc, AuthState>(
