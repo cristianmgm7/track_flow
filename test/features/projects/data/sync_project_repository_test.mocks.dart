@@ -36,50 +36,41 @@ import 'package:trackflow/features/projects/domain/entities/project.dart'
 // ignore_for_file: subtype_of_sealed_class
 
 class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
-  _FakeEither_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
+  _FakeEither_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
 }
 
 /// A class which mocks [ProjectLocalDataSource].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockProjectLocalDataSource extends _i1.Mock
-    implements _i3.ProjectLocalDataSource {
+    implements _i3.ProjectsLocalDataSource {
   @override
-  _i4.Future<void> cacheProject(_i5.ProjectDTO? project) => (super.noSuchMethod(
-        Invocation.method(
-          #cacheProject,
-          [project],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+  _i4.Future<void> cacheProject(_i5.ProjectDTO? project) =>
+      (super.noSuchMethod(
+            Invocation.method(#cacheProject, [project]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 
   @override
   _i4.Future<_i5.ProjectDTO?> getCachedProject(_i6.UniqueId? id) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #getCachedProject,
-          [id],
-        ),
-        returnValue: _i4.Future<_i5.ProjectDTO?>.value(),
-        returnValueForMissingStub: _i4.Future<_i5.ProjectDTO?>.value(),
-      ) as _i4.Future<_i5.ProjectDTO?>);
+            Invocation.method(#getCachedProject, [id]),
+            returnValue: _i4.Future<_i5.ProjectDTO?>.value(),
+            returnValueForMissingStub: _i4.Future<_i5.ProjectDTO?>.value(),
+          )
+          as _i4.Future<_i5.ProjectDTO?>);
 
   @override
-  _i4.Future<void> removeCachedProject(_i6.UniqueId? id) => (super.noSuchMethod(
-        Invocation.method(
-          #removeCachedProject,
-          [id],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+  _i4.Future<void> removeCachedProject(_i6.UniqueId? id) =>
+      (super.noSuchMethod(
+            Invocation.method(#removeCachedProject, [id]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 }
 
 /// A class which mocks [ProjectRemoteDataSource].
@@ -89,84 +80,69 @@ class MockProjectRemoteDataSource extends _i1.Mock
     implements _i7.ProjectRemoteDataSource {
   @override
   _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>> createProject(
-          _i9.Project? project) =>
+    _i9.Project? project,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #createProject,
-          [project],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i8.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #createProject,
-            [project],
-          ),
-        )),
-        returnValueForMissingStub:
-            _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
-                _FakeEither_0<_i8.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #createProject,
-            [project],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
+            Invocation.method(#createProject, [project]),
+            returnValue: _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i8.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#createProject, [project]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
+                  _FakeEither_0<_i8.Failure, _i2.Unit>(
+                    this,
+                    Invocation.method(#createProject, [project]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>> updateProject(
-          _i9.Project? project) =>
+    _i9.Project? project,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #updateProject,
-          [project],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i8.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #updateProject,
-            [project],
-          ),
-        )),
-        returnValueForMissingStub:
-            _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
-                _FakeEither_0<_i8.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #updateProject,
-            [project],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
+            Invocation.method(#updateProject, [project]),
+            returnValue: _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i8.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#updateProject, [project]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
+                  _FakeEither_0<_i8.Failure, _i2.Unit>(
+                    this,
+                    Invocation.method(#updateProject, [project]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>> deleteProject(
-          _i6.UniqueId? id) =>
+    _i6.UniqueId? id,
+  ) =>
       (super.noSuchMethod(
-        Invocation.method(
-          #deleteProject,
-          [id],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
-            _FakeEither_0<_i8.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #deleteProject,
-            [id],
-          ),
-        )),
-        returnValueForMissingStub:
-            _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
-                _FakeEither_0<_i8.Failure, _i2.Unit>(
-          this,
-          Invocation.method(
-            #deleteProject,
-            [id],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
+            Invocation.method(#deleteProject, [id]),
+            returnValue: _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
+              _FakeEither_0<_i8.Failure, _i2.Unit>(
+                this,
+                Invocation.method(#deleteProject, [id]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>.value(
+                  _FakeEither_0<_i8.Failure, _i2.Unit>(
+                    this,
+                    Invocation.method(#deleteProject, [id]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
 }
 
 /// A class which mocks [Connectivity].
@@ -176,21 +152,24 @@ class MockConnectivity extends _i1.Mock implements _i10.Connectivity {
   @override
   _i4.Stream<_i11.ConnectivityResult> get onConnectivityChanged =>
       (super.noSuchMethod(
-        Invocation.getter(#onConnectivityChanged),
-        returnValue: _i4.Stream<_i11.ConnectivityResult>.empty(),
-        returnValueForMissingStub: _i4.Stream<_i11.ConnectivityResult>.empty(),
-      ) as _i4.Stream<_i11.ConnectivityResult>);
+            Invocation.getter(#onConnectivityChanged),
+            returnValue: _i4.Stream<_i11.ConnectivityResult>.empty(),
+            returnValueForMissingStub:
+                _i4.Stream<_i11.ConnectivityResult>.empty(),
+          )
+          as _i4.Stream<_i11.ConnectivityResult>);
 
   @override
   _i4.Future<_i11.ConnectivityResult> checkConnectivity() =>
       (super.noSuchMethod(
-        Invocation.method(
-          #checkConnectivity,
-          [],
-        ),
-        returnValue: _i4.Future<_i11.ConnectivityResult>.value(
-            _i11.ConnectivityResult.bluetooth),
-        returnValueForMissingStub: _i4.Future<_i11.ConnectivityResult>.value(
-            _i11.ConnectivityResult.bluetooth),
-      ) as _i4.Future<_i11.ConnectivityResult>);
+            Invocation.method(#checkConnectivity, []),
+            returnValue: _i4.Future<_i11.ConnectivityResult>.value(
+              _i11.ConnectivityResult.bluetooth,
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i11.ConnectivityResult>.value(
+                  _i11.ConnectivityResult.bluetooth,
+                ),
+          )
+          as _i4.Future<_i11.ConnectivityResult>);
 }

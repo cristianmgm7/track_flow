@@ -1,8 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
-import 'injection.config.dart';
+import 'package:trackflow/core/di/injection.config.dart';
 
-final GetIt getIt = GetIt.instance;
+final GetIt sl = GetIt.instance;
 
 @InjectableInit()
-Future<void> configureDependencies() async => $initGetIt(getIt);
+Future<void> configureDependencies() async => sl.init();
