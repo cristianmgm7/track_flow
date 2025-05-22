@@ -77,6 +77,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     return _remoteDataSource.getProjectById(id);
   }
 
+  // watching projects stream
   @override
   Stream<Either<Failure, List<Project>>> watchAllProjects() {
     return _localDataSource.watchAllProjects().map(

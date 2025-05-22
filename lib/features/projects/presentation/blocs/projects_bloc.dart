@@ -19,7 +19,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
   final GetProjectByIdUseCase getProjectById;
-  final WatchAllProjectsUseCase watchAllProjects;
+  final WatchAllProjectsUseCase watchAllProjects; //
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
 
@@ -34,10 +34,10 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
-
     on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
 
     on<StartWatchingProjects>(_onStartWatchingProjects);
+    on<ProjectsUpdated>(_onProjectsUpdated);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -96,10 +96,24 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     StartWatchingProjects event,
     Emitter<ProjectsState> emit,
   ) {
+    emit(ProjectsLoading());
     _projectsSubscription?.cancel();
     _projectsSubscription = watchAllProjects().listen(
       (projects) => add(ProjectsUpdated(projects)),
     );
+  }
+
+  void _onProjectsUpdated(ProjectsUpdated event, Emitter<ProjectsState> emit) {
+    event.projects.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (projects) => emit(ProjectsLoaded(projects)),
+    );
+  }
+
+  @override
+  Future<void> close() {
+    _projectsSubscription?.cancel();
+    return super.close();
   }
 
   String _mapFailureToMessage(Failure failure) {
