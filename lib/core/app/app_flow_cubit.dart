@@ -18,21 +18,21 @@ class AppFlowCubit extends Cubit<AppStatus> {
   }
 
   Future<void> _init() async {
-    final hasSeenOnboarding = await onboardingRepository.hasSeenOnboarding();
+    final hasSeenOnboarding =
+        await onboardingRepository.checkOnboardingCompleted();
+    final hasSeenWelcomeScreen =
+        await onboardingRepository.checkWelcomeScreenSeen();
     final isLoggedIn = await authRepository.isLoggedIn();
 
     if (!hasSeenOnboarding) {
+      emit(AppStatus.onboarding);
+    } else if (!hasSeenWelcomeScreen) {
       emit(AppStatus.onboarding);
     } else if (!isLoggedIn) {
       emit(AppStatus.unauthenticated);
     } else {
       emit(AppStatus.authenticated);
     }
-  }
-
-  Future<void> onboardingCompleted() async {
-    await onboardingRepository.markOnboardingCompleted();
-    emit(AppStatus.unauthenticated);
   }
 
   void loggedIn() => emit(AppStatus.authenticated);

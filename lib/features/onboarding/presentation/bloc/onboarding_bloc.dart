@@ -9,65 +9,21 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final OnboardingRepository _onboardingRepository;
 
   OnboardingBloc(this._onboardingRepository) : super(OnboardingInitial()) {
-    on<OnboardingCheckRequested>(_onCheckRequested);
-    on<OnboardingMarkCompleted>(_onMarkCompleted);
-    on<OnboardingMarkLaunchSeen>(_onMarkLaunchSeen);
+    on<OnboardingMarkCompleted>(_onboardingMarkCompleted);
+    on<WelcomeScreenMarkCompleted>(_welcomeScreenMarkCompleted);
   }
 
-  Future<void> _onCheckRequested(
-    OnboardingCheckRequested event,
-    Emitter<OnboardingState> emit,
-  ) async {
-    emit(OnboardingLoading());
-    try {
-      final hasCompletedOnboarding =
-          await _onboardingRepository.hasCompletedOnboarding();
-      final hasSeenLaunch = await _onboardingRepository.hasSeenLaunch();
-      emit(
-        OnboardingChecked(
-          hasCompletedOnboarding: hasCompletedOnboarding,
-          hasSeenLaunch: hasSeenLaunch,
-        ),
-      );
-    } catch (e) {
-      emit(OnboardingError(e.toString()));
-    }
-  }
-
-  Future<void> _onMarkCompleted(
+  Future<void> _onboardingMarkCompleted(
     OnboardingMarkCompleted event,
     Emitter<OnboardingState> emit,
   ) async {
-    try {
-      await _onboardingRepository.markOnboardingCompleted();
-      final hasSeenLaunch = await _onboardingRepository.hasSeenLaunch();
-      emit(
-        OnboardingChecked(
-          hasCompletedOnboarding: true,
-          hasSeenLaunch: hasSeenLaunch,
-        ),
-      );
-    } catch (e) {
-      emit(OnboardingError(e.toString()));
-    }
+    await _onboardingRepository.onboardingCompleted();
   }
 
-  Future<void> _onMarkLaunchSeen(
-    OnboardingMarkLaunchSeen event,
+  Future<void> _welcomeScreenMarkCompleted(
+    WelcomeScreenMarkCompleted event,
     Emitter<OnboardingState> emit,
   ) async {
-    try {
-      await _onboardingRepository.markLaunchScreenSeen();
-      final hasCompletedOnboarding =
-          await _onboardingRepository.hasCompletedOnboarding();
-      emit(
-        OnboardingChecked(
-          hasCompletedOnboarding: hasCompletedOnboarding,
-          hasSeenLaunch: true,
-        ),
-      );
-    } catch (e) {
-      emit(OnboardingError(e.toString()));
-    }
+    await _onboardingRepository.welcomeScreenSeenCompleted();
   }
 }

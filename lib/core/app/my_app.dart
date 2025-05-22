@@ -60,7 +60,7 @@ class MyApp extends StatelessWidget {
           create:
               (context) =>
                   OnboardingBloc(sl<OnboardingRepository>())
-                    ..add(OnboardingCheckRequested()),
+                    ..add(WelcomeScreenMarkCompleted()),
         ),
       ],
       child: _App(),

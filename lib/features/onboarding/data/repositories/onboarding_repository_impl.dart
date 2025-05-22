@@ -6,30 +6,25 @@ import 'package:trackflow/features/onboarding/domain/repositories/onboarding_rep
 class OnboardingRepositoryImpl implements OnboardingRepository {
   final SharedPreferences _prefs;
 
-  OnboardingRepositoryImpl(this._prefs);
+  OnboardingRepositoryImpl({required SharedPreferences prefs}) : _prefs = prefs;
 
   @override
-  Future<bool> hasCompletedOnboarding() async {
-    return _prefs.getBool('hasCompletedOnboarding') ?? false;
+  Future<bool> onboardingCompleted() async {
+    return _prefs.setBool('onboardingCompleted', true);
   }
 
   @override
-  Future<bool> hasSeenLaunch() async {
-    return _prefs.getBool('hasSeenLaunch') ?? false;
+  Future<void> welcomeScreenSeenCompleted() async {
+    await _prefs.setBool('welcomeScreenSeenCompleted', true);
   }
 
   @override
-  Future<void> markOnboardingCompleted() async {
-    await _prefs.setBool('hasCompletedOnboarding', true);
+  Future<bool> checkWelcomeScreenSeen() async {
+    return _prefs.getBool('welcomeScreenSeenCompleted') ?? false;
   }
 
   @override
-  Future<void> markLaunchScreenSeen() async {
-    await _prefs.setBool('hasSeenLaunch', true);
-  }
-
-  @override
-  Future<bool> hasSeenOnboarding() async {
-    return _prefs.getBool('hasSeenOnboarding') ?? false;
+  Future<bool> checkOnboardingCompleted() async {
+    return _prefs.getBool('onboardingCompleted') ?? false;
   }
 }

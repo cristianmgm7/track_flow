@@ -33,7 +33,7 @@ class AppRouter {
           case AppStatus.onboarding:
             return AppRoutes.onboarding;
           case AppStatus.unauthenticated:
-            return AppRoutes.welcome;
+            return AppRoutes.auth;
           case AppStatus.authenticated:
             return AppRoutes.dashboard;
         }

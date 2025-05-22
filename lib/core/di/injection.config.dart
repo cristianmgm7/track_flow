@@ -82,7 +82,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.projectsBox,
     );
     gh.lazySingleton<_i1029.OnboardingRepository>(
-      () => _i1022.OnboardingRepositoryImpl(gh<_i460.SharedPreferences>()),
+      () =>
+          _i1022.OnboardingRepositoryImpl(prefs: gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i952.NetworkInfo>(
       () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()),
