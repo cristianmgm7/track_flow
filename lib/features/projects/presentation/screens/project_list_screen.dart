@@ -27,7 +27,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       isScrollControlled: true,
       builder: (context) => ProjectFormScreen(),
     );
-    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   @override
@@ -42,17 +41,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           ),
         ],
       ),
-      body: BlocConsumer<ProjectsBloc, ProjectsState>(
-        listener: (context, state) {
-          if (state is ProjectsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${state.message}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
+      body: BlocBuilder<ProjectsBloc, ProjectsState>(
         builder: (context, state) {
           if (state is ProjectsLoading) {
             return const Center(child: CircularProgressIndicator());
