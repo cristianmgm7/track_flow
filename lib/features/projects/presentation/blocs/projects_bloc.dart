@@ -2,22 +2,35 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
+@factoryMethod
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
-  final ProjectUseCases useCases;
+  final CreateProjectUseCase createProject;
+  final UpdateProjectUseCase updateProject;
+  final DeleteProjectUseCase deleteProject;
+  final GetProjectByIdUseCase getProjectById;
   final WatchAllProjectsUseCase watchAllProjects;
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
 
   //constructor
-  ProjectsBloc(this.useCases, this.watchAllProjects)
-    : super(ProjectsInitial()) {
+  ProjectsBloc({
+    required this.createProject,
+    required this.updateProject,
+    required this.deleteProject,
+    required this.getProjectById,
+    required this.watchAllProjects,
+  }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
@@ -32,7 +45,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.createProject(event.params);
+    final result = await createProject(event.params);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
@@ -45,7 +58,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.updateProject(event.project);
+    final result = await updateProject(event.project);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
@@ -58,7 +71,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.deleteProject(event.projectId);
+    final result = await deleteProject(event.projectId);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
@@ -71,7 +84,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.getProjectById(event.projectId);
+    final result = await getProjectById(event.projectId);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (project) => emit(ProjectDetailsLoaded(project)),

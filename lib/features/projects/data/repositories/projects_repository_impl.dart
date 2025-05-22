@@ -12,6 +12,10 @@ import 'package:trackflow/core/entities/unique_id.dart';
 
 @LazySingleton(as: ProjectsRepository)
 class ProjectsRepositoryImpl implements ProjectsRepository {
+  final ProjectRemoteDataSource _remoteDataSource;
+  final ProjectsLocalDataSource _localDataSource;
+  final NetworkInfo _networkInfo;
+
   ProjectsRepositoryImpl({
     required ProjectRemoteDataSource remoteDataSource,
     required ProjectsLocalDataSource localDataSource,
@@ -19,10 +23,6 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
        _networkInfo = networkInfo;
-
-  final ProjectRemoteDataSource _remoteDataSource;
-  final ProjectsLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
 
   @override
   Future<Either<Failure, Unit>> createProject(Project project) async {

@@ -15,7 +15,7 @@ class AppInitializer {
   late final SharedPreferences prefs;
   late final AuthRepositoryImpl authRepository;
   late final OnboardingRepositoryImpl onboardingRepository;
-  late final HiveProjectLocalDataSource projectLocalDataSource;
+  late final ProjectsLocalDataSource projectLocalDataSource;
   late final AppFlowCubit appFlowCubit;
   FirebaseAuth? _firebaseAuth;
 
