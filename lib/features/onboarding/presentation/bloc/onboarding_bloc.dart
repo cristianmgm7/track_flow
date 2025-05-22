@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
 import 'onboarding_event.dart';
 import 'onboarding_state.dart';
 
+@injectable
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final OnboardingRepository _onboardingRepository;
 

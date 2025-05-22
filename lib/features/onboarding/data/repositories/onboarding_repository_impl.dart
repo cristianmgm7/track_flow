@@ -1,6 +1,8 @@
+import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
 
+@LazySingleton(as: OnboardingRepository)
 class OnboardingRepositoryImpl implements OnboardingRepository {
   final SharedPreferences _prefs;
 
