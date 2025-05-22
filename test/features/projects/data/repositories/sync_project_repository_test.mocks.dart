@@ -80,6 +80,24 @@ class MockProjectLocalDataSource extends _i1.Mock
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<_i5.ProjectDTO>> getAllProjects() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllProjects,
+          [],
+        ),
+        returnValue: _i4.Future<List<_i5.ProjectDTO>>.value(<_i5.ProjectDTO>[]),
+      ) as _i4.Future<List<_i5.ProjectDTO>>);
+
+  @override
+  _i4.Stream<List<_i5.ProjectDTO>> watchAllProjects() => (super.noSuchMethod(
+        Invocation.method(
+          #watchAllProjects,
+          [],
+        ),
+        returnValue: _i4.Stream<List<_i5.ProjectDTO>>.empty(),
+      ) as _i4.Stream<List<_i5.ProjectDTO>>);
 }
 
 /// A class which mocks [ProjectRemoteDataSource].
@@ -144,4 +162,39 @@ class MockProjectRemoteDataSource extends _i1.Mock
           ),
         )),
       ) as _i4.Future<_i2.Either<_i8.Failure, _i2.Unit>>);
+
+  @override
+  _i4.Future<_i2.Either<_i8.Failure, List<_i9.Project>>> getAllProjects() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllProjects,
+          [],
+        ),
+        returnValue:
+            _i4.Future<_i2.Either<_i8.Failure, List<_i9.Project>>>.value(
+                _FakeEither_0<_i8.Failure, List<_i9.Project>>(
+          this,
+          Invocation.method(
+            #getAllProjects,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i8.Failure, List<_i9.Project>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i8.Failure, _i9.Project>> getProjectById(String? id) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getProjectById,
+          [id],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i8.Failure, _i9.Project>>.value(
+            _FakeEither_0<_i8.Failure, _i9.Project>(
+          this,
+          Invocation.method(
+            #getProjectById,
+            [id],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i8.Failure, _i9.Project>>);
 }

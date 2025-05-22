@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
@@ -9,24 +10,18 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-/// A repository that implements offline-first with sync capabilities.
-///
-/// This repository:
-/// 1. Always writes to local storage first
-/// 2. Syncs with Firestore when online
-/// 3. Reads from local storage for immediate access
-/// 4. Periodically syncs with Firestore in the background
+@LazySingleton(as: ProjectsRepository)
 class ProjectsRepositoryImpl implements ProjectsRepository {
   ProjectsRepositoryImpl({
     required ProjectRemoteDataSource remoteDataSource,
-    required ProjectLocalDataSource localDataSource,
+    required ProjectsLocalDataSource localDataSource,
     required NetworkInfo networkInfo,
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
        _networkInfo = networkInfo;
 
   final ProjectRemoteDataSource _remoteDataSource;
-  final ProjectLocalDataSource _localDataSource;
+  final ProjectsLocalDataSource _localDataSource;
   final NetworkInfo _networkInfo;
 
   @override

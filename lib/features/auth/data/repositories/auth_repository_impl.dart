@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;

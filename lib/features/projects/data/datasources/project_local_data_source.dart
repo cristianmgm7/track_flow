@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
+import 'package:injectable/injectable.dart';
 import '../models/project_dto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-abstract class ProjectLocalDataSource {
+abstract class ProjectsLocalDataSource {
   Future<void> cacheProject(ProjectDTO project);
 
   Future<ProjectDTO?> getCachedProject(UniqueId id);
@@ -14,12 +15,12 @@ abstract class ProjectLocalDataSource {
   Stream<List<ProjectDTO>> watchAllProjects();
 }
 
-class HiveProjectLocalDataSource implements ProjectLocalDataSource {
-  static const String _boxName = 'projects';
+@LazySingleton(as: ProjectsLocalDataSource)
+class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   late final Box<Map<String, dynamic>> _box;
 
-  HiveProjectLocalDataSource({Box<Map<String, dynamic>>? box}) {
-    _box = box ?? Hive.box<Map<String, dynamic>>(_boxName);
+  ProjectsLocalDataSourceImpl({required Box<Map<String, dynamic>> box}) {
+    _box = box;
   }
 
   @override

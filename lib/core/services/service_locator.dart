@@ -35,7 +35,15 @@ final sl = GetIt.instance;
 void setupProjectDependencies() {
   //blocs
   sl.registerFactory(() => ProjectsBloc(sl(), sl()));
-  sl.registerFactory(() => AuthBloc(sl()));
+  sl.registerFactory(
+    () => AuthBloc(
+      signIn: sl(),
+      signUp: sl(),
+      signOut: sl(),
+      googleSignIn: sl(),
+      getAuthState: sl(),
+    ),
+  );
   sl.registerFactory(
     () => AppFlowCubit(authRepository: sl(), onboardingRepository: sl()),
   );
@@ -87,6 +95,7 @@ Future<void> setupAuthDependencies(SharedPreferences prefs) async {
       auth: FirebaseAuth.instance,
       googleSignIn: GoogleSignIn(),
       prefs: prefs,
+      networkInfo: sl(),
     ),
   );
   sl.registerLazySingleton(() => SignInUseCase(sl()));
@@ -94,15 +103,6 @@ Future<void> setupAuthDependencies(SharedPreferences prefs) async {
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => GoogleSignInUseCase(sl()));
   sl.registerLazySingleton(() => GetAuthStateUseCase(sl()));
-  sl.registerLazySingleton(
-    () => AuthUseCases(
-      signIn: sl(),
-      signUp: sl(),
-      signOut: sl(),
-      googleSignIn: sl(),
-      getAuthState: sl(),
-    ),
-  );
   sl.registerLazySingleton(() => WatchAllProjectsUseCase(sl()));
   final projectsBox = await Hive.openBox<Map<String, dynamic>>('projectsBox');
   // Register it with GetIt
