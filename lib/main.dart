@@ -9,7 +9,6 @@ void main() async {
   await Firebase.initializeApp();
   await configureDependencies();
   await Hive.initFlutter();
-  var box = await Hive.openBox<Map<String, dynamic>>('projectsBox');
-  await box.clear();
+  await Hive.openBox<Map<String, dynamic>>('projectsBox');
   runApp(MyApp());
 }

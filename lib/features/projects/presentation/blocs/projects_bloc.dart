@@ -17,7 +17,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final CreateProjectUseCase createProject;
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
-  final WatchAllProjectsUseCase watchAllProjects; //
+  final WatchAllProjectsUseCase watchAllProjects;
+  //
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
 
@@ -32,8 +33,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
 
-    on<StartWatchingProjects>(_onStartWatchingProjects);
     on<ProjectsUpdated>(_onProjectsUpdated);
+    on<StartWatchingProjects>(_onStartWatchingProjects);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -80,18 +81,24 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     StartWatchingProjects event,
     Emitter<ProjectsState> emit,
   ) {
+    print('start watching projects');
     emit(ProjectsLoading());
     //final x = _projectsSubscription;
     _projectsSubscription?.cancel();
-    _projectsSubscription = watchAllProjects().listen(
-      (projects) => add(ProjectsUpdated(projects)),
-    );
+    _projectsSubscription = watchAllProjects().listen((projects) {
+      print('projects updated: $projects');
+      return add(ProjectsUpdated(projects));
+    });
   }
 
   void _onProjectsUpdated(ProjectsUpdated event, Emitter<ProjectsState> emit) {
+    print('projects updated: ${event.projects}');
     event.projects.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (projects) => emit(ProjectsLoaded(projects)),
+      (projects) {
+        print('projects loaded: $projects');
+        emit(ProjectsLoaded(projects));
+      },
     );
   }
 

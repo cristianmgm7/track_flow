@@ -49,7 +49,10 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   }
 
   @override
-  Stream<List<ProjectDTO>> watchAllProjects() {
-    return _box.watch().asyncMap((_) => getAllProjects());
+  Stream<List<ProjectDTO>> watchAllProjects() async* {
+    // Emitir el estado actual al suscribirse
+    yield await getAllProjects();
+    // Luego escuchar los cambios
+    yield* _box.watch().asyncMap((_) => getAllProjects());
   }
 }

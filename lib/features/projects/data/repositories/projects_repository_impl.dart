@@ -67,16 +67,6 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, List<Project>>> getAllProjects() async {
-    return _remoteDataSource.getAllProjects();
-  }
-
-  @override
-  Future<Either<Failure, Project>> getProjectById(String id) async {
-    return _remoteDataSource.getProjectById(id);
-  }
-
   // watching projects stream
   @override
   Stream<Either<Failure, List<Project>>> watchAllProjects() {

@@ -15,7 +15,6 @@ import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -52,7 +51,6 @@ class MyApp extends StatelessWidget {
                 createProject: sl<CreateProjectUseCase>(),
                 updateProject: sl<UpdateProjectUseCase>(),
                 deleteProject: sl<DeleteProjectUseCase>(),
-                getProjectById: sl<GetProjectByIdUseCase>(),
                 watchAllProjects: sl<WatchAllProjectsUseCase>(),
               ),
         ),

@@ -51,8 +51,7 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
     as _i594;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
     as _i1043;
-import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart'
-    as _i102;
+
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
     as _i532;
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart'
@@ -137,9 +136,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1043.DeleteProjectUseCase>(
       () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()),
     );
-    gh.lazySingleton<_i102.GetProjectByIdUseCase>(
-      () => _i102.GetProjectByIdUseCase(gh<_i1022.ProjectsRepository>()),
-    );
+
     gh.lazySingleton<_i594.CreateProjectUseCase>(
       () => _i594.CreateProjectUseCase(gh<_i1022.ProjectsRepository>()),
     );
