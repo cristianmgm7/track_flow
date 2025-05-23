@@ -9,7 +9,6 @@ import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_u
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_use_case.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
@@ -18,7 +17,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final CreateProjectUseCase createProject;
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
-  final GetProjectByIdUseCase getProjectById;
   final WatchAllProjectsUseCase watchAllProjects; //
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
@@ -28,13 +26,11 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     required this.createProject,
     required this.updateProject,
     required this.deleteProject,
-    required this.getProjectById,
     required this.watchAllProjects,
   }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
-    on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
 
     on<StartWatchingProjects>(_onStartWatchingProjects);
     on<ProjectsUpdated>(_onProjectsUpdated);
@@ -79,25 +75,13 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     );
   }
 
-  Future<void> _onGetProjectByIdRequested(
-    GetProjectByIdRequested event,
-    Emitter<ProjectsState> emit,
-  ) async {
-    emit(ProjectsLoading());
-    final result = await getProjectById(event.projectId);
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectDetailsLoaded(project)),
-    );
-  }
-
   //Watching Projects stream
   void _onStartWatchingProjects(
     StartWatchingProjects event,
     Emitter<ProjectsState> emit,
   ) {
     emit(ProjectsLoading());
-    final x = _projectsSubscription;
+    //final x = _projectsSubscription;
     _projectsSubscription?.cancel();
     _projectsSubscription = watchAllProjects().listen(
       (projects) => add(ProjectsUpdated(projects)),
