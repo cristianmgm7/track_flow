@@ -97,6 +97,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) {
     emit(ProjectsLoading());
+    final x = _projectsSubscription;
     _projectsSubscription?.cancel();
     _projectsSubscription = watchAllProjects().listen(
       (projects) => add(ProjectsUpdated(projects)),
