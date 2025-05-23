@@ -25,6 +25,5 @@ abstract class AppModule {
       InternetConnectionChecker();
 
   @lazySingleton
-  Box<Map<String, dynamic>> get projectsBox =>
-      Hive.box<Map<String, dynamic>>('projectsBox');
+  Box<Map> get projectsBox => Hive.box<Map>('projectsBox');
 }

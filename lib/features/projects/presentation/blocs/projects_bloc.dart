@@ -48,6 +48,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       (_) =>
           emit(const ProjectOperationSuccess('Project created successfully')),
     );
+    add(StartWatchingProjects());
   }
 
   Future<void> _onUpdateProjectRequested(
@@ -81,22 +82,17 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     StartWatchingProjects event,
     Emitter<ProjectsState> emit,
   ) {
-    print('start watching projects');
     emit(ProjectsLoading());
-    //final x = _projectsSubscription;
     _projectsSubscription?.cancel();
     _projectsSubscription = watchAllProjects().listen((projects) {
-      print('projects updated: $projects');
       return add(ProjectsUpdated(projects));
     });
   }
 
   void _onProjectsUpdated(ProjectsUpdated event, Emitter<ProjectsState> emit) {
-    print('projects updated: ${event.projects}');
     event.projects.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (projects) {
-        print('projects loaded: $projects');
         emit(ProjectsLoaded(projects));
       },
     );

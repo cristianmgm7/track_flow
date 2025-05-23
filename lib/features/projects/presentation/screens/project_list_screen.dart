@@ -27,6 +27,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       isScrollControlled: true,
       builder: (context) => ProjectFormScreen(),
     );
+    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   @override

@@ -9,6 +9,18 @@ void main() async {
   await Firebase.initializeApp();
   await configureDependencies();
   await Hive.initFlutter();
-  await Hive.openBox<Map<String, dynamic>>('projectsBox');
+  await Hive.openBox<Map>('projectsBox');
+  //await Hive.deleteBoxFromDisk('projectsBox');
+  // var box = await Hive.openBox('projectsBox');
+  // debugPrint('Contents of projectsBox:');
+  // for (var key in box.keys) {
+  //   final value = box.get(key);
+  //   if (value is Map) {
+  //     debugPrint('Key: $key, Value: ${Map<String, dynamic>.from(value)}');
+  //   } else {
+  //     debugPrint('Key: $key, Value: $value');
+  //   }
+  // }
+
   runApp(MyApp());
 }
