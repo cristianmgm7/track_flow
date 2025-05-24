@@ -7,8 +7,6 @@ abstract class OnboardingEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class OnboardingCheckRequested extends OnboardingEvent {}
-
 class OnboardingMarkCompleted extends OnboardingEvent {}
 
-class OnboardingMarkLaunchSeen extends OnboardingEvent {}
+class WelcomeScreenMarkCompleted extends OnboardingEvent {}

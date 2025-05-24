@@ -1,16 +1,13 @@
 abstract class OnboardingRepository {
-  /// Check if user has completed onboarding
-  Future<bool> hasCompletedOnboarding();
+  /// mark onboarding as completed
+  Future<bool> onboardingCompleted();
 
-  /// Check if user has seen launch screen
-  Future<bool> hasSeenLaunch();
+  /// mark welcome screen as completed
+  Future<void> welcomeScreenSeenCompleted();
 
-  /// Mark onboarding as completed
-  Future<void> markOnboardingCompleted();
+  /// Check if user has seen welcome screen
+  Future<bool> checkWelcomeScreenSeen();
 
-  /// Mark launch screen as seen
-  Future<void> markLaunchScreenSeen();
-
-  /// Get the onboarding state
-  Future<bool> hasSeenOnboarding();
+  /// check if onboarding is completed
+  Future<bool> checkOnboardingCompleted();
 }
