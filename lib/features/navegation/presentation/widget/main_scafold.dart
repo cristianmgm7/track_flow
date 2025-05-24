@@ -21,7 +21,6 @@ class MainScaffold extends StatelessWidget {
         onTap: (index) {
           debugPrint('onTap: $index');
           final tab = AppTab.values[index];
-          if (tab == currentTab) return; // Evita bucle si ya está en el tab
           context.read<NavigationCubit>().setTab(tab);
           switch (tab) {
             case AppTab.dashboard:
