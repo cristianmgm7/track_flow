@@ -7,10 +7,12 @@ class AppRoutes {
 
   // Dashboard routes
   static const String dashboard = '/dashboard';
+  static const String projects = '/projects';
   static const String newProject = '/dashboard/projects/new';
 
   // Project routes
-  static const String projectDetails = '/projectdetails/:id';
+  static const String projectDetails = '/projectdetails';
+  static const String settingsAccount = '/settingsaccount';
 
   // Helper method to generate project details route with ID
   static String projectDetailsWithId(String id) => '/projectdetails/$id';

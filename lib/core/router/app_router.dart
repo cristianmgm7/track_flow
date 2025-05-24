@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
-import 'package:trackflow/features/home/presentation/pages/dashboard.dart';
+import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
@@ -12,6 +12,7 @@ import 'package:trackflow/features/projects/presentation/screens/project_list_sc
 import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:trackflow/features/settings/presentation/pages/seetings_acount.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -23,7 +24,7 @@ class AppRouter {
 
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: AppRoutes.splash,
+      initialLocation: AppRoutes.dashboard,
       refreshListenable: GoRouterRefreshStream(appFlowCubit.stream),
       redirect: (context, state) {
         final status = appFlowCubit.state;
@@ -55,11 +56,19 @@ class AppRouter {
           path: AppRoutes.auth,
           builder: (context, state) => const AuthScreen(),
         ),
+        GoRoute(
+          path: AppRoutes.dashboard,
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.projects,
+          builder: (context, state) => ProjectListScreen(),
+        ),
         ShellRoute(
-          builder: (context, state, child) => DashboardScreen(child: child),
+          builder: (context, state, child) => DashboardScreen(),
           routes: [
             GoRoute(
-              path: AppRoutes.dashboard,
+              path: AppRoutes.projects,
               builder: (context, state) => ProjectListScreen(),
             ),
             GoRoute(
@@ -72,6 +81,10 @@ class AppRouter {
                 final projectId = state.pathParameters['id']!;
                 return ProjectDetailsScreen(projectId: projectId);
               },
+            ),
+            GoRoute(
+              path: AppRoutes.settingsAccount,
+              builder: (context, state) => const SettingsAccountScreen(),
             ),
           ],
         ),
