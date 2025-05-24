@@ -12,7 +12,7 @@ import 'package:trackflow/features/projects/domain/usecases/delete_project_useca
 import 'projects_event.dart';
 import 'projects_state.dart';
 
-@factoryMethod
+@injectable
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final CreateProjectUseCase createProject;
   final UpdateProjectUseCase updateProject;
@@ -32,7 +32,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
-
     on<ProjectsUpdated>(_onProjectsUpdated);
     on<StartWatchingProjects>(_onStartWatchingProjects);
   }

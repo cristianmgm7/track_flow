@@ -17,6 +17,7 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:internet_connection_checker/internet_connection_checker.dart'
     as _i973;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
+import 'package:trackflow/core/app/app_flow_cubit.dart' as _i685;
 import 'package:trackflow/core/di/app_module.dart' as _i850;
 import 'package:trackflow/core/network/network_info.dart' as _i952;
 import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
@@ -33,6 +34,8 @@ import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart'
     as _i488;
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart'
     as _i490;
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart'
+    as _i340;
 import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart'
     as _i1022;
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart'
@@ -55,6 +58,8 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
     as _i532;
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart'
     as _i461;
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart'
+    as _i534;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -98,6 +103,10 @@ extension GetItInjectableX on _i174.GetIt {
           prefs: gh<_i460.SharedPreferences>(),
           networkInfo: gh<_i952.NetworkInfo>(),
         ));
+    gh.factory<_i685.AppFlowCubit>(() => _i685.AppFlowCubit(
+          authRepository: gh<_i104.AuthRepository>(),
+          onboardingRepository: gh<_i1029.OnboardingRepository>(),
+        ));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
         () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i836.GetAuthStateUseCase>(
@@ -114,6 +123,13 @@ extension GetItInjectableX on _i174.GetIt {
               localDataSource: gh<_i334.ProjectsLocalDataSource>(),
               networkInfo: gh<_i952.NetworkInfo>(),
             ));
+    gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
+          signIn: gh<_i843.SignInUseCase>(),
+          signUp: gh<_i490.SignUpUseCase>(),
+          signOut: gh<_i488.SignOutUseCase>(),
+          googleSignIn: gh<_i690.GoogleSignInUseCase>(),
+          getAuthState: gh<_i836.GetAuthStateUseCase>(),
+        ));
     gh.lazySingleton<_i461.WatchAllProjectsUseCase>(
         () => _i461.WatchAllProjectsUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i1043.DeleteProjectUseCase>(
@@ -122,6 +138,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i594.CreateProjectUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i532.UpdateProjectUseCase>(
         () => _i532.UpdateProjectUseCase(gh<_i1022.ProjectsRepository>()));
+    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
+          createProject: gh<_i594.CreateProjectUseCase>(),
+          updateProject: gh<_i532.UpdateProjectUseCase>(),
+          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
+          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
+        ));
     return this;
   }
 }

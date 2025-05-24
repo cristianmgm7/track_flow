@@ -43,6 +43,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         ],
       ),
       body: BlocBuilder<ProjectsBloc, ProjectsState>(
+        buildWhen:
+            (previous, current) =>
+                current is! ProjectOperationSuccess &&
+                current is! ProjectsError &&
+                current is! ProjectsLoading,
         builder: (context, state) {
           if (state is ProjectsLoading) {
             return const Center(child: CircularProgressIndicator());

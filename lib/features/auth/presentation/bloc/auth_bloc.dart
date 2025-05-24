@@ -10,7 +10,7 @@ import 'auth_state.dart';
 import 'package:trackflow/features/auth/domain/entities/email.dart';
 import 'package:trackflow/features/auth/domain/entities/password.dart';
 
-@factoryMethod
+@injectable
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInUseCase signIn;
   final SignUpUseCase signUp;
