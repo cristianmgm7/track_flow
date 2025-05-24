@@ -42,17 +42,12 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
           ),
         ],
       ),
-      body: BlocConsumer<ProjectsBloc, ProjectsState>(
-        listener: (context, state) {
-          if (state is ProjectsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${state.message}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
+      body: BlocBuilder<ProjectsBloc, ProjectsState>(
+        buildWhen:
+            (previous, current) =>
+                current is! ProjectOperationSuccess &&
+                current is! ProjectsError &&
+                current is! ProjectsLoading,
         builder: (context, state) {
           if (state is ProjectsLoading) {
             return const Center(child: CircularProgressIndicator());

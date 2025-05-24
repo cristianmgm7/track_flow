@@ -3,7 +3,6 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ProjectsState extends Equatable {
   const ProjectsState();
-
   @override
   List<Object?> get props => [];
 }

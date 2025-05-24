@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import '../../domain/entities/project.dart';
@@ -18,12 +19,12 @@ abstract class ProjectRemoteDataSource {
   Future<Either<Failure, Project>> getProjectById(String id);
 }
 
-/// Implementation of [ProjectRemoteDataSource] using Firestore.
-class FirestoreProjectDataSource implements ProjectRemoteDataSource {
+@LazySingleton(as: ProjectRemoteDataSource)
+class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   final FirebaseFirestore _firestore;
 
-  FirestoreProjectDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  ProjectsRemoteDatasSourceImpl({required FirebaseFirestore firestore})
+    : _firestore = firestore;
 
   @override
   Future<Either<Failure, Unit>> createProject(Project project) async {

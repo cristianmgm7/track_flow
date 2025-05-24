@@ -2,28 +2,37 @@ import 'dart:async';
 
 import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
+@injectable
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
-  final ProjectUseCases useCases;
+  final CreateProjectUseCase createProject;
+  final UpdateProjectUseCase updateProject;
+  final DeleteProjectUseCase deleteProject;
   final WatchAllProjectsUseCase watchAllProjects;
+  //
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
 
   //constructor
-  ProjectsBloc(this.useCases, this.watchAllProjects)
-    : super(ProjectsInitial()) {
+  ProjectsBloc({
+    required this.createProject,
+    required this.updateProject,
+    required this.deleteProject,
+    required this.watchAllProjects,
+  }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
-
-    on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
-
+    on<ProjectsUpdated>(_onProjectsUpdated);
     on<StartWatchingProjects>(_onStartWatchingProjects);
   }
 
@@ -32,12 +41,13 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.createProject(event.params);
+    final result = await createProject(event.params);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
           emit(const ProjectOperationSuccess('Project created successfully')),
     );
+    add(StartWatchingProjects());
   }
 
   Future<void> _onUpdateProjectRequested(
@@ -45,7 +55,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.updateProject(event.project);
+    final result = await updateProject(event.project);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
@@ -58,23 +68,11 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await useCases.deleteProject(event.projectId);
+    final result = await deleteProject(event.projectId);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>
           emit(const ProjectOperationSuccess('Project deleted successfully')),
-    );
-  }
-
-  Future<void> _onGetProjectByIdRequested(
-    GetProjectByIdRequested event,
-    Emitter<ProjectsState> emit,
-  ) async {
-    emit(ProjectsLoading());
-    final result = await useCases.getProjectById(event.projectId);
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectDetailsLoaded(project)),
     );
   }
 
@@ -83,10 +81,26 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     StartWatchingProjects event,
     Emitter<ProjectsState> emit,
   ) {
+    emit(ProjectsLoading());
     _projectsSubscription?.cancel();
-    _projectsSubscription = watchAllProjects().listen(
-      (projects) => add(ProjectsUpdated(projects)),
+    _projectsSubscription = watchAllProjects().listen((projects) {
+      return add(ProjectsUpdated(projects));
+    });
+  }
+
+  void _onProjectsUpdated(ProjectsUpdated event, Emitter<ProjectsState> emit) {
+    event.projects.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (projects) {
+        emit(ProjectsLoaded(projects));
+      },
     );
+  }
+
+  @override
+  Future<void> close() {
+    _projectsSubscription?.cancel();
+    return super.close();
   }
 
   String _mapFailureToMessage(Failure failure) {

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -43,8 +46,11 @@ class WelcomeScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   // Get Started button
                   ElevatedButton(
-                    onPressed: () async {
-                      await context.read<AppFlowCubit>().onboardingCompleted();
+                    onPressed: () {
+                      context.go(AppRoutes.onboarding);
+                      context.read<OnboardingBloc>().add(
+                        WelcomeScreenMarkCompleted(),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -65,7 +71,10 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.read<AppFlowCubit>().loggedIn();
+                          context.go(AppRoutes.auth);
+                          context.read<OnboardingBloc>().add(
+                            WelcomeScreenMarkCompleted(),
+                          );
                         },
                         child: const Text('Log in'),
                       ),

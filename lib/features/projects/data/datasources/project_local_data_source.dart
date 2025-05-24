@@ -1,8 +1,9 @@
 import 'package:hive/hive.dart';
+import 'package:injectable/injectable.dart';
 import '../models/project_dto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-abstract class ProjectLocalDataSource {
+abstract class ProjectsLocalDataSource {
   Future<void> cacheProject(ProjectDTO project);
 
   Future<ProjectDTO?> getCachedProject(UniqueId id);
@@ -14,12 +15,12 @@ abstract class ProjectLocalDataSource {
   Stream<List<ProjectDTO>> watchAllProjects();
 }
 
-class HiveProjectLocalDataSource implements ProjectLocalDataSource {
-  static const String _boxName = 'projects';
-  late final Box<Map<String, dynamic>> _box;
+@LazySingleton(as: ProjectsLocalDataSource)
+class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
+  late final Box<Map> _box;
 
-  HiveProjectLocalDataSource({Box<Map<String, dynamic>>? box}) {
-    _box = box ?? Hive.box<Map<String, dynamic>>(_boxName);
+  ProjectsLocalDataSourceImpl({required Box<Map> box}) {
+    _box = box;
   }
 
   @override
@@ -44,11 +45,19 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
 
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values.map((e) => ProjectDTO.fromMap(e)).toList();
+    return _box.values
+        .whereType<Map>() // solo mapas
+        .map((e) => ProjectDTO.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   @override
-  Stream<List<ProjectDTO>> watchAllProjects() {
-    return _box.watch().asyncMap((_) => getAllProjects());
+  Stream<List<ProjectDTO>> watchAllProjects() async* {
+    // Emitir el estado actual al suscribirse
+
+    yield await getAllProjects();
+
+    // Luego escuchar los cambios
+    yield* _box.watch().asyncMap((_) => getAllProjects());
   }
 }
