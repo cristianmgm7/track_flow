@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
-import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -39,7 +36,14 @@ class AppRouter {
           case AppStatus.unauthenticated:
             return AppRoutes.auth;
           case AppStatus.authenticated:
-            return AppRoutes.dashboard;
+            // Solo redirige a dashboard si está en una ruta no permitida
+            // Si ya está en una ruta válida, no redirijas
+            if (state.matchedLocation == AppRoutes.splash ||
+                state.matchedLocation == AppRoutes.onboarding ||
+                state.matchedLocation == AppRoutes.auth) {
+              return AppRoutes.dashboard;
+            }
+            return null; // Permite navegar a cualquier ruta válida
         }
       },
       routes: [
