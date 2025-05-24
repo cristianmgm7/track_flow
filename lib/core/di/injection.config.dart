@@ -36,6 +36,8 @@ import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart'
     as _i490;
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart'
     as _i340;
+import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart'
+    as _i508;
 import 'package:trackflow/features/onboarding/data/repositories/onboarding_repository_impl.dart'
     as _i1022;
 import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart'
@@ -77,6 +79,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.prefs,
       preResolve: true,
     );
+    gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
     gh.lazySingleton<_i974.FirebaseFirestore>(
         () => appModule.firebaseFirestore);
