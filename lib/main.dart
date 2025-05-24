@@ -1,41 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/constants/theme.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:trackflow/core/config/firebase_options.dart';
-import 'package:trackflow/core/router/app_router.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/core/app/my_app.dart';
+import 'package:trackflow/core/services/app_initializer.dart';
+import 'package:trackflow/core/services/injection.dart';
+import 'package:trackflow/core/services/service_locator.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(
-    MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => AuthBloc()..add(AuthCheckRequested()),
-        ),
-        BlocProvider(
-          create: (context) => OnboardingBloc()..add(OnboardingStarted()),
-        ),
-      ],
-      child: const App(),
-    ),
-  );
-}
+  final initializer = AppInitializer();
+  await initializer.initialize();
+  await Hive.initFlutter();
+  sl.registerLazySingleton<SharedPreferences>(() => initializer.prefs);
+  setupProjectDependencies();
+  setupAuthDependencies(initializer.prefs);
 
-class App extends StatelessWidget {
-  const App({super.key});
+  await configureDependencies();
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TrackFlow',
-      theme: AppTheme.theme,
-      routerConfig: AppRouter.router(context),
-    );
-  }
+  runApp(MyApp());
 }

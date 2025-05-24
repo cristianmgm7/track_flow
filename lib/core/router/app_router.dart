@@ -2,13 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/features/auth/presentation/pages/auth.dart';
+import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
+import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/pages/dashboard.dart';
-import 'package:trackflow/features/onboarding/presentation/pages/launch_screen.dart';
-import 'package:trackflow/features/onboarding/presentation/pages/onboarding_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
+import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
+import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/core/app/app_flow_cubit.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -16,74 +19,61 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
 
 class AppRouter {
   static GoRouter router(BuildContext context) {
-    final authBloc = context.read<AuthBloc>();
+    final appFlowCubit = context.watch<AppFlowCubit>();
+
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: '/',
-      refreshListenable: GoRouterRefreshStream(authBloc.stream),
-      redirect: (context, state) async {
-        final authState = authBloc.state;
-        final isAuthRoute = state.matchedLocation == '/auth';
-        final isOnboardingRoute = state.matchedLocation == '/onboarding';
-        final isLaunchRoute = state.matchedLocation == '/';
-        final isDashboardRoute = state.matchedLocation == '/dashboard';
-
-        // Get onboarding status
-        final prefs = await SharedPreferences.getInstance();
-        final hasCompletedOnboarding =
-            prefs.getBool('hasCompletedOnboarding') ?? false;
-        final hasSeenLaunch = prefs.getBool('hasSeenLaunch') ?? false;
-
-        // Handle launch screen
-        if (!hasSeenLaunch) {
-          await prefs.setBool('hasSeenLaunch', true);
-          return '/';
+      initialLocation: AppRoutes.splash,
+      refreshListenable: GoRouterRefreshStream(appFlowCubit.stream),
+      redirect: (context, state) {
+        final status = appFlowCubit.state;
+        switch (status) {
+          case AppStatus.unknown:
+            return AppRoutes.splash;
+          case AppStatus.onboarding:
+            return AppRoutes.onboarding;
+          case AppStatus.unauthenticated:
+            return AppRoutes.welcome;
+          case AppStatus.authenticated:
+            return AppRoutes.dashboard;
         }
-
-        // Handle authentication state
-        if (authState is AuthAuthenticated) {
-          // If user is authenticated and tries to access auth/onboarding/launch screens
-          if (isAuthRoute || isOnboardingRoute || isLaunchRoute) {
-            return '/dashboard';
-          }
-          return null;
-        }
-
-        // If user is not authenticated
-        if (authState is AuthUnauthenticated) {
-          // If user hasn't completed onboarding
-          if (!hasCompletedOnboarding) {
-            if (isAuthRoute || isDashboardRoute) {
-              return '/onboarding';
-            }
-            return null;
-          }
-
-          // If user has completed onboarding but not authenticated
-          if (isDashboardRoute) {
-            return '/auth';
-          }
-          return null;
-        }
-
-        // If auth state is loading, stay on current route
-        if (authState is AuthLoading) {
-          return null;
-        }
-
-        // For any other state (error, etc.)
-        return null;
       },
       routes: [
-        GoRoute(path: '/', builder: (context, state) => const LaunchScreen()),
         GoRoute(
-          path: '/onboarding',
+          path: AppRoutes.splash,
+          builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.welcome,
+          builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.onboarding,
           builder: (context, state) => const OnboardingScreen(),
         ),
-        GoRoute(path: '/auth', builder: (context, state) => const AuthScreen()),
         GoRoute(
-          path: '/dashboard',
-          builder: (context, state) => const DashboardScreen(),
+          path: AppRoutes.auth,
+          builder: (context, state) => const AuthScreen(),
+        ),
+        ShellRoute(
+          builder: (context, state, child) => DashboardScreen(child: child),
+          routes: [
+            GoRoute(
+              path: AppRoutes.dashboard,
+              builder: (context, state) => ProjectListScreen(),
+            ),
+            GoRoute(
+              path: AppRoutes.newProject,
+              builder: (context, state) => ProjectFormScreen(),
+            ),
+            GoRoute(
+              path: AppRoutes.projectDetails,
+              builder: (context, state) {
+                final projectId = state.pathParameters['id']!;
+                return ProjectDetailsScreen(projectId: projectId);
+              },
+            ),
+          ],
         ),
       ],
       errorBuilder:
@@ -100,9 +90,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
       (dynamic _) => notifyListeners(),
     );
   }
-
   late final StreamSubscription<dynamic> _subscription;
-
   @override
   void dispose() {
     _subscription.cancel();

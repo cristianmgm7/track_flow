@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/app/app_flow_cubit.dart';
 
-class LaunchScreen extends StatelessWidget {
-  const LaunchScreen({super.key});
+class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +43,8 @@ class LaunchScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   // Get Started button
                   ElevatedButton(
-                    onPressed: () {
-                      context.go('/onboarding');
+                    onPressed: () async {
+                      await context.read<AppFlowCubit>().onboardingCompleted();
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -64,7 +65,7 @@ class LaunchScreen extends StatelessWidget {
                       ),
                       TextButton(
                         onPressed: () {
-                          context.go('/auth');
+                          context.read<AppFlowCubit>().loggedIn();
                         },
                         child: const Text('Log in'),
                       ),
