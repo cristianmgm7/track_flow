@@ -19,6 +19,7 @@ class MainScaffold extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: AppTab.values.indexOf(currentTab),
         onTap: (index) {
+          debugPrint('onTap: $index');
           final tab = AppTab.values[index];
           context.read<NavigationCubit>().setTab(tab);
           switch (tab) {

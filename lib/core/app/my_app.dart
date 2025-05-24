@@ -8,6 +8,7 @@ import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -18,9 +19,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AppFlowCubit>(create: (context) => sl<AppFlowCubit>()),
-        BlocProvider<NavigationCubit>(
-          create: (context) => sl<NavigationCubit>(),
-        ),
+        BlocProvider<NavigationCubit>.value(value: sl<NavigationCubit>()),
         BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
         BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
         BlocProvider<OnboardingBloc>(create: (context) => sl<OnboardingBloc>()),
@@ -30,16 +29,29 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _App extends StatelessWidget {
+class _App extends StatefulWidget {
   _App() {
     debugPrint('App constructor called');
   }
+  @override
+  State<_App> createState() => _AppState();
+}
+
+class _AppState extends State<_App> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = AppRouter.router(context.read<AppFlowCubit>());
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      routerConfig: AppRouter.router(context),
+      routerConfig: _router,
     );
   }
 }

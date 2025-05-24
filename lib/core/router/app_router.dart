@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
@@ -23,9 +24,7 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(BuildContext context) {
-    final appFlowCubit = context.watch<AppFlowCubit>();
-
+  static GoRouter router(AppFlowCubit appFlowCubit) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: AppRoutes.dashboard,
@@ -62,11 +61,7 @@ class AppRouter {
         ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
-          builder:
-              (context, state, child) => BlocProvider.value(
-                value: context.read<NavigationCubit>(),
-                child: MainScaffold(child: child),
-              ),
+          builder: (context, state, child) => MainScaffold(child: child),
           routes: [
             GoRoute(
               path: AppRoutes.dashboard,
