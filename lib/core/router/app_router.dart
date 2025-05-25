@@ -36,14 +36,13 @@ class AppRouter {
           case AppStatus.unauthenticated:
             return AppRoutes.auth;
           case AppStatus.authenticated:
-            // Solo redirige a dashboard si está en una ruta no permitida
-            // Si ya está en una ruta válida, no redirijas
+            // Only redirect to dashboard if not already in a valid route
             if (state.matchedLocation == AppRoutes.splash ||
                 state.matchedLocation == AppRoutes.onboarding ||
                 state.matchedLocation == AppRoutes.auth) {
               return AppRoutes.dashboard;
             }
-            return null; // Permite navegar a cualquier ruta válida
+            return null; // Allow navigation to any valid route
         }
       },
       routes: [
@@ -79,7 +78,9 @@ class AppRouter {
               path: AppRoutes.notifications,
               builder:
                   (context, state) => const Scaffold(
-                    body: Center(child: Text("Notifications")),
+                    body: Center(
+                      child: Text("Notifications"),
+                    ), // TODO: Add notifications screen
                   ),
             ),
             GoRoute(
@@ -104,6 +105,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
     );
   }
   late final StreamSubscription<dynamic> _subscription;
+
   @override
   void dispose() {
     _subscription.cancel();

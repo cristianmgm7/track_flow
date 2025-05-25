@@ -33,7 +33,7 @@ class MainScaffold extends StatelessWidget {
               context.go(AppRoutes.notifications);
               break;
             case AppTab.settings:
-              context.go(AppRoutes.settingsAccount);
+              context.go(AppRoutes.settings);
               break;
           }
         },

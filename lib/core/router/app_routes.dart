@@ -8,7 +8,7 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';
   static const String notifications = '/notifications';
-  static const String settingsAccount = '/settings';
+  static const String settings = '/settings';
 
   static const String newProject = '/dashboard/projects/new';
 
