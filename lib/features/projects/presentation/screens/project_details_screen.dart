@@ -1,159 +1,175 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
-  final String projectId;
-  const ProjectDetailsScreen({super.key, required this.projectId});
+  const ProjectDetailsScreen({super.key});
 
   @override
   State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
+  // 0 = Tasks, 1 = Comments
+  int _selectedTab = 0;
+
   @override
   void initState() {
     super.initState();
-    context.read<ProjectsBloc>().add(GetProjectByIdRequested(widget.projectId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProjectsBloc, ProjectsState>(
-      listener: (context, state) {
-        if (state is ProjectOperationSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.green,
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Project Details',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            // Audio player placeholder
+            Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey[700],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'Audio Player (placeholder)',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ),
-          );
-          if (state.message.contains('deleted')) {
-            context.pop();
-          }
-        } else if (state is ProjectsError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      },
-      child: BlocBuilder<ProjectsBloc, ProjectsState>(
-        builder: (context, state) {
-          if (state is ProjectsLoading) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (state is ProjectsError) {
-            return Scaffold(
-              appBar: AppBar(),
-              body: Center(child: Text('Error: ${state.message}')),
-            );
-          }
-          if (state is ProjectDetailsLoaded) {
-            final project = state.project;
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(project.name.value.fold((l) => '', (r) => r)),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    tooltip: 'Edit Project',
-                    onPressed:
-                        () => context.push(
-                          '/dashboard/projects/${project.id.value}/edit',
-                        ),
+            const SizedBox(height: 24),
+            // Toggle buttons
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[700],
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _TabButton(
+                    label: 'Tasks',
+                    selected: _selectedTab == 0,
+                    color: const Color(0xFFF25BB4),
+                    onTap: () => setState(() => _selectedTab = 0),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    tooltip: 'Delete Project',
-                    onPressed:
-                        () => _showDeleteConfirmation(context, project.id),
+                  const SizedBox(width: 16),
+                  _TabButton(
+                    label: 'Comments',
+                    selected: _selectedTab == 1,
+                    color: const Color(0xFF6DD3FF),
+                    onTap: () => setState(() => _selectedTab = 1),
                   ),
                 ],
               ),
-              body: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          project.name.value.fold((l) => '', (r) => r),
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Created at: ${_formatDate(project.createdAt)}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        if (project.description.value
-                            .fold((l) => '', (r) => r)
-                            .isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            project.description.value.fold((l) => '', (r) => r),
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }
-          // Default fallback
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: Text('Project not found')),
-          );
-        },
+            ),
+            const SizedBox(height: 24),
+            // Content area
+            Expanded(
+              child:
+                  _selectedTab == 0
+                      ? _TasksListPlaceholder()
+                      : _CommentsListPlaceholder(),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
 
-  void _showDeleteConfirmation(BuildContext context, UniqueId projectId) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Project'),
-            content: const Text(
-              'Are you sure you want to delete this project? This action cannot be undone.',
+class _TabButton extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+  const _TabButton({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+        decoration: BoxDecoration(
+          color: selected ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TasksListPlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: 4,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder:
+          (context, index) => Container(
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey[700],
+              borderRadius: BorderRadius.circular(32),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  context.read<ProjectsBloc>().add(
-                    DeleteProjectRequested(projectId),
-                  );
-                },
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Task ${index + 1}',
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+            ),
           ),
     );
   }
 }
 
-String _formatDate(DateTime date) {
-  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+class _CommentsListPlaceholder extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: 3,
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemBuilder:
+          (context, index) => Container(
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey[700],
+              borderRadius: BorderRadius.circular(32),
+            ),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'Comment ${index + 1}',
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+            ),
+          ),
+    );
+  }
 }

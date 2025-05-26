@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
@@ -79,8 +80,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   direction: DismissDirection.endToStart,
                   background: Container(
                     color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   onDismissed: (direction) {
@@ -93,9 +92,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   },
                   child: ProjectCard(
                     project: project,
-                    onTap:
-                        () =>
-                            context.push('/projectdetails/${project.id.value}'),
+                    onTap: () => context.push(AppRoutes.projectDetails),
                   ),
                 );
               },
