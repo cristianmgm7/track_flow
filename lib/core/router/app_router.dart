@@ -84,8 +84,8 @@ class AppRouter {
                   ),
             ),
             GoRoute(
-              path: AppRoutes.settingsAccount,
-              builder: (context, state) => const SettingsAccountScreen(),
+              path: AppRoutes.settings,
+              builder: (context, state) => const SettingsScreen(),
             ),
           ],
         ),
