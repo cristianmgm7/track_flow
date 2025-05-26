@@ -74,10 +74,29 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
               itemCount: projects.length,
               itemBuilder: (context, index) {
                 final project = projects[index];
-                return ProjectCard(
-                  project: project,
-                  onTap:
-                      () => context.push('/projectdetails/${project.id.value}'),
+                return Dismissible(
+                  key: Key(project.id.value),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  onDismissed: (direction) {
+                    context.read<ProjectsBloc>().add(
+                      DeleteProjectRequested(project.id),
+                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Project deleted')));
+                  },
+                  child: ProjectCard(
+                    project: project,
+                    onTap:
+                        () =>
+                            context.push('/projectdetails/${project.id.value}'),
+                  ),
                 );
               },
             );
