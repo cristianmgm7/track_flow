@@ -59,16 +59,12 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
     as _i534;
 
 extension GetItInjectableX on _i174.GetIt {
-// initializes the registration of main-scope dependencies inside of GetIt
+  // initializes the registration of main-scope dependencies inside of GetIt
   Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
   }) async {
-    final gh = _i526.GetItHelper(
-      this,
-      environment,
-      environmentFilter,
-    );
+    final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final appModule = _$AppModule();
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => appModule.prefs,
@@ -77,66 +73,100 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
     gh.lazySingleton<_i974.FirebaseFirestore>(
-        () => appModule.firebaseFirestore);
+      () => appModule.firebaseFirestore,
+    );
     gh.lazySingleton<_i116.GoogleSignIn>(() => appModule.googleSignIn);
     gh.lazySingleton<_i973.InternetConnectionChecker>(
-        () => appModule.internetConnectionChecker);
+      () => appModule.internetConnectionChecker,
+    );
     gh.lazySingleton<_i979.Box<Map<dynamic, dynamic>>>(
-        () => appModule.projectsBox);
+      () => appModule.projectsBox,
+    );
     gh.lazySingleton<_i952.NetworkInfo>(
-        () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()));
-    gh.lazySingleton<_i102.ProjectRemoteDataSource>(() =>
-        _i102.ProjectsRemoteDatasSourceImpl(
-            firestore: gh<_i974.FirebaseFirestore>()));
-    gh.lazySingleton<_i334.ProjectsLocalDataSource>(() =>
-        _i334.ProjectsLocalDataSourceImpl(
-            box: gh<_i979.Box<Map<dynamic, dynamic>>>()));
-    gh.lazySingleton<_i104.AuthRepository>(() => _i447.AuthRepositoryImpl(
-          auth: gh<_i59.FirebaseAuth>(),
-          googleSignIn: gh<_i116.GoogleSignIn>(),
-          prefs: gh<_i460.SharedPreferences>(),
-          networkInfo: gh<_i952.NetworkInfo>(),
-        ));
+      () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()),
+    );
+    gh.lazySingleton<_i102.ProjectRemoteDataSource>(
+      () => _i102.ProjectsRemoteDatasSourceImpl(
+        firestore: gh<_i974.FirebaseFirestore>(),
+      ),
+    );
+    gh.lazySingleton<_i334.ProjectsLocalDataSource>(
+      () => _i334.ProjectsLocalDataSourceImpl(
+        box: gh<_i979.Box<Map<dynamic, dynamic>>>(),
+      ),
+    );
+    gh.lazySingleton<_i104.AuthRepository>(
+      () => _i447.AuthRepositoryImpl(
+        auth: gh<_i59.FirebaseAuth>(),
+        googleSignIn: gh<_i116.GoogleSignIn>(),
+        prefs: gh<_i460.SharedPreferences>(),
+        networkInfo: gh<_i952.NetworkInfo>(),
+      ),
+    );
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
-        () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
+      () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()),
+    );
     gh.lazySingleton<_i836.GetAuthStateUseCase>(
-        () => _i836.GetAuthStateUseCase(gh<_i104.AuthRepository>()));
+      () => _i836.GetAuthStateUseCase(gh<_i104.AuthRepository>()),
+    );
     gh.lazySingleton<_i843.SignInUseCase>(
-        () => _i843.SignInUseCase(gh<_i104.AuthRepository>()));
+      () => _i843.SignInUseCase(gh<_i104.AuthRepository>()),
+    );
     gh.lazySingleton<_i490.SignUpUseCase>(
-        () => _i490.SignUpUseCase(gh<_i104.AuthRepository>()));
+      () => _i490.SignUpUseCase(gh<_i104.AuthRepository>()),
+    );
     gh.lazySingleton<_i442.OnboardingUseCase>(
-        () => _i442.OnboardingUseCase(gh<_i104.AuthRepository>()));
+      () => _i442.OnboardingUseCase(gh<_i104.AuthRepository>()),
+    );
     gh.lazySingleton<_i488.SignOutUseCase>(
-        () => _i488.SignOutUseCase(gh<_i104.AuthRepository>()));
+      () => _i488.SignOutUseCase(gh<_i104.AuthRepository>()),
+    );
     gh.lazySingleton<_i1022.ProjectsRepository>(
-        () => _i553.ProjectsRepositoryImpl(
-              remoteDataSource: gh<_i102.ProjectRemoteDataSource>(),
-              localDataSource: gh<_i334.ProjectsLocalDataSource>(),
-              networkInfo: gh<_i952.NetworkInfo>(),
-            ));
-    gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
-          signIn: gh<_i843.SignInUseCase>(),
-          signUp: gh<_i490.SignUpUseCase>(),
-          signOut: gh<_i488.SignOutUseCase>(),
-          googleSignIn: gh<_i690.GoogleSignInUseCase>(),
-          getAuthState: gh<_i836.GetAuthStateUseCase>(),
-          onboarding: gh<_i442.OnboardingUseCase>(),
-        ));
+      () => _i553.ProjectsRepositoryImpl(
+        remoteDataSource: gh<_i102.ProjectRemoteDataSource>(),
+        localDataSource: gh<_i334.ProjectsLocalDataSource>(),
+        networkInfo: gh<_i952.NetworkInfo>(),
+      ),
+    );
     gh.lazySingleton<_i461.WatchAllProjectsUseCase>(
-        () => _i461.WatchAllProjectsUseCase(gh<_i1022.ProjectsRepository>()));
-    gh.lazySingleton<_i1043.DeleteProjectUseCase>(
-        () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()));
+      () => _i461.WatchAllProjectsUseCase(
+        gh<_i1022.ProjectsRepository>(),
+        gh<_i104.AuthRepository>(),
+      ),
+    );
     gh.lazySingleton<_i594.CreateProjectUseCase>(
-        () => _i594.CreateProjectUseCase(gh<_i1022.ProjectsRepository>()));
+      () => _i594.CreateProjectUseCase(
+        gh<_i1022.ProjectsRepository>(),
+        gh<_i104.AuthRepository>(),
+      ),
+    );
     gh.lazySingleton<_i532.UpdateProjectUseCase>(
-        () => _i532.UpdateProjectUseCase(gh<_i1022.ProjectsRepository>()));
-    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
-          createProject: gh<_i594.CreateProjectUseCase>(),
-          updateProject: gh<_i532.UpdateProjectUseCase>(),
-          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
-          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
-        ));
+      () => _i532.UpdateProjectUseCase(
+        gh<_i1022.ProjectsRepository>(),
+        gh<_i104.AuthRepository>(),
+      ),
+    );
+    gh.factory<_i340.AuthBloc>(
+      () => _i340.AuthBloc(
+        signIn: gh<_i843.SignInUseCase>(),
+        signUp: gh<_i490.SignUpUseCase>(),
+        signOut: gh<_i488.SignOutUseCase>(),
+        googleSignIn: gh<_i690.GoogleSignInUseCase>(),
+        getAuthState: gh<_i836.GetAuthStateUseCase>(),
+        onboarding: gh<_i442.OnboardingUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i1043.DeleteProjectUseCase>(
+      () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()),
+    );
+    gh.factory<_i534.ProjectsBloc>(
+      () => _i534.ProjectsBloc(
+        createProject: gh<_i594.CreateProjectUseCase>(),
+        updateProject: gh<_i532.UpdateProjectUseCase>(),
+        deleteProject: gh<_i1043.DeleteProjectUseCase>(),
+        watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
+      ),
+    );
     return this;
   }
 }
