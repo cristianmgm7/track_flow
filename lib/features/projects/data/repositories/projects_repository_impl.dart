@@ -25,21 +25,25 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
        _networkInfo = networkInfo;
 
   @override
-  Future<Either<Failure, Unit>> createProject(Project project) async {
-    final dto = ProjectDTO.fromDomain(project);
+  Future<Either<Failure, Project>> createProject(Project project) async {
     final hasConnected = await _networkInfo.isConnected;
     if (hasConnected) {
       try {
-        await _remoteDataSource.createProject(project);
-        await _localDataSource.cacheProject(dto);
-        return Right(unit);
+        final result = await _remoteDataSource.createProject(project);
+        return await result.fold((failure) => Left(failure), (
+          projectWithId,
+        ) async {
+          final dto = ProjectDTO.fromDomain(projectWithId);
+          await _localDataSource.cacheProject(dto);
+          return Right(projectWithId);
+        });
       } catch (e) {
         return Left(
-          DatabaseFailure('Failed to create project: \\${e.toString()}'),
+          DatabaseFailure('Failed to create project: ${e.toString()}'),
         );
       }
     }
-    return Right(unit);
+    return Left(DatabaseFailure('No internet connection'));
   }
 
   @override

@@ -8,7 +8,7 @@ import '../models/project_dto.dart';
 
 /// Abstract class defining the contract for remote project operations.
 abstract class ProjectRemoteDataSource {
-  Future<Either<Failure, Unit>> createProject(Project project);
+  Future<Either<Failure, Project>> createProject(Project project);
 
   Future<Either<Failure, Unit>> updateProject(Project project);
 
@@ -27,11 +27,17 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
     : _firestore = firestore;
 
   @override
-  Future<Either<Failure, Unit>> createProject(Project project) async {
+  Future<Either<Failure, Project>> createProject(Project project) async {
     final dto = ProjectDTO.fromDomain(project);
     try {
-      await _firestore.collection(ProjectDTO.collection).add(dto.toFirestore());
-      return Right(unit);
+      final docRef = await _firestore
+          .collection(ProjectDTO.collection)
+          .add(dto.toFirestore());
+      final projectWithId = project.copyWith(
+        id: UniqueId.fromUniqueString(docRef.id),
+      );
+      await docRef.update({'id': docRef.id});
+      return Right(projectWithId);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -40,7 +46,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
           ),
         );
       }
-      return Left(DatabaseFailure('Failed to create project: \\${e.message}'));
+      return Left(DatabaseFailure('Failed to create project: ${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(

@@ -28,7 +28,7 @@ class CreateProjectUseCase {
 
   CreateProjectUseCase(this._repository, this._authRepository);
 
-  Future<Either<Failure, Unit>> call(CreateProjectParams params) async {
+  Future<Either<Failure, Project>> call(CreateProjectParams params) async {
     final userIdResult = await _authRepository.getSignedInUserId();
     return await userIdResult.fold((failure) => left(failure), (
       userIdString,
