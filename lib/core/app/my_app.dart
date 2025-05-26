@@ -4,7 +4,6 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/core/app/app_flow_cubit.dart';
@@ -18,13 +17,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AppFlowCubit>(create: (context) => sl<AppFlowCubit>()),
+        BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),
         ),
-        BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
+        BlocProvider<AppFlowCubit>(create: (context) => sl<AppFlowCubit>()),
         BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
-        BlocProvider<OnboardingBloc>(create: (context) => sl<OnboardingBloc>()),
       ],
       child: _App(),
     );

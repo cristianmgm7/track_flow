@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
-import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
+import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart';
 
 // domain/entities/app_status.dart
 enum AppStatus { unknown, onboarding, unauthenticated, authenticated }
@@ -9,7 +9,7 @@ enum AppStatus { unknown, onboarding, unauthenticated, authenticated }
 @injectable // presentation/bloc/app_flow_cubit.dart
 class AppFlowCubit extends Cubit<AppStatus> {
   final AuthRepository authRepository;
-  final OnboardingRepository onboardingRepository;
+  final OnboardingUseCase onboardingRepository;
 
   AppFlowCubit({
     required this.authRepository,

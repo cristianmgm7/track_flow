@@ -147,4 +147,25 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     return _auth.currentUser != null;
   }
+
+  // onboarding
+  @override
+  Future<bool> onboardingCompleted() async {
+    return _prefs.setBool('onboardingCompleted', true);
+  }
+
+  @override
+  Future<void> welcomeScreenSeenCompleted() async {
+    await _prefs.setBool('welcomeScreenSeenCompleted', true);
+  }
+
+  @override
+  Future<bool> checkWelcomeScreenSeen() async {
+    return _prefs.getBool('welcomeScreenSeenCompleted') ?? false;
+  }
+
+  @override
+  Future<bool> checkOnboardingCompleted() async {
+    return _prefs.getBool('onboardingCompleted') ?? false;
+  }
 }

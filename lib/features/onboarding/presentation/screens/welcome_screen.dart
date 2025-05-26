@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -48,7 +48,7 @@ class WelcomeScreen extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () {
                       context.go(AppRoutes.onboarding);
-                      context.read<OnboardingBloc>().add(
+                      context.read<AuthBloc>().add(
                         WelcomeScreenMarkCompleted(),
                       );
                     },
@@ -72,7 +72,7 @@ class WelcomeScreen extends StatelessWidget {
                       TextButton(
                         onPressed: () {
                           context.go(AppRoutes.auth);
-                          context.read<OnboardingBloc>().add(
+                          context.read<AuthBloc>().add(
                             WelcomeScreenMarkCompleted(),
                           );
                         },

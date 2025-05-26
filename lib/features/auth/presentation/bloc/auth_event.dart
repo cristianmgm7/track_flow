@@ -32,3 +32,8 @@ class AuthSignUpRequested extends AuthEvent {
 class AuthSignOutRequested extends AuthEvent {}
 
 class AuthGoogleSignInRequested extends AuthEvent {}
+
+// Onboarding Events
+class OnboardingMarkCompleted extends AuthEvent {}
+
+class WelcomeScreenMarkCompleted extends AuthEvent {}
