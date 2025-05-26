@@ -168,4 +168,12 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<bool> checkOnboardingCompleted() async {
     return _prefs.getBool('onboardingCompleted') ?? false;
   }
+
+  // user
+  @override
+  Future<Either<Failure, String>> getSignedInUserId() async {
+    final user = _auth.currentUser;
+    if (user == null) return left(AuthenticationFailure('No user found'));
+    return right(user.uid);
+  }
 }

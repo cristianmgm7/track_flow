@@ -9,5 +9,5 @@ abstract class ProjectsRepository {
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
 
   /// Streams all projects.
-  Stream<Either<Failure, List<Project>>> watchAllProjects();
+  Stream<Either<Failure, List<Project>>> watchAllProjects(UserId ownerId);
 }

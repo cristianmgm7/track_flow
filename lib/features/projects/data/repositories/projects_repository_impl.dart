@@ -45,8 +45,9 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Unit>> updateProject(Project project) async {
     try {
-      //final dto = ProjectDTO.fromDomain(project);
       await _remoteDataSource.updateProject(project);
+      final dto = ProjectDTO.fromDomain(project);
+      await _localDataSource.cacheProject(dto);
       return Right(unit);
     } catch (e) {
       return Left(
@@ -59,20 +60,21 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   Future<Either<Failure, Unit>> deleteProject(UniqueId id) async {
     try {
       await _remoteDataSource.deleteProject(id);
+      await _localDataSource.removeCachedProject(id);
       return Right(unit);
     } catch (e) {
-      return Left(
-        DatabaseFailure('Failed to delete project: \\${e.toString()}'),
-      );
+      return Left(DatabaseFailure('Failed to delete project: ${e.toString()}'));
     }
   }
 
   // watching projects stream
   @override
-  Stream<Either<Failure, List<Project>>> watchAllProjects() {
-    return _localDataSource.watchAllProjects().map(
-      (projects) =>
-          Right(projects.map((project) => project.toDomain()).toList()),
-    );
+  Stream<Either<Failure, List<Project>>> watchAllProjects(UserId ownerId) {
+    return _localDataSource
+        .watchAllProjects(ownerId)
+        .map(
+          (projects) =>
+              Right(projects.map((project) => project.toDomain()).toList()),
+        );
   }
 }

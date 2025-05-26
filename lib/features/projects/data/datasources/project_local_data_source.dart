@@ -12,7 +12,7 @@ abstract class ProjectsLocalDataSource {
 
   Future<List<ProjectDTO>> getAllProjects();
 
-  Stream<List<ProjectDTO>> watchAllProjects();
+  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId);
 }
 
 @LazySingleton(as: ProjectsLocalDataSource)
@@ -46,18 +46,22 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
     return _box.values
-        .whereType<Map>() // solo mapas
+        .whereType<Map>() // only maps
         .map((e) => ProjectDTO.fromMap(Map<String, dynamic>.from(e)))
         .toList();
   }
 
   @override
-  Stream<List<ProjectDTO>> watchAllProjects() async* {
-    // Emitir el estado actual al suscribirse
+  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
+    // Emitir el estado actual filtrado al suscribirse
+    yield (await getAllProjects())
+        .where((dto) => dto.ownerId == ownerId.value)
+        .toList();
 
-    yield await getAllProjects();
-
-    // Luego escuchar los cambios
-    yield* _box.watch().asyncMap((_) => getAllProjects());
+    // Luego escuchar los cambios y filtrar también
+    yield* _box.watch().asyncMap((_) async {
+      final all = await getAllProjects();
+      return all.where((dto) => dto.ownerId == ownerId.value).toList();
+    });
   }
 }

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
@@ -41,14 +40,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     final name = ProjectName(_titleController.text);
     final description = ProjectDescription(_descriptionController.text);
 
-    // You may need to provide a dummy or local ownerId if required by your domain logic
-    final ownerId = UniqueId(); // or UserId.fromUniqueString('local') if needed
-
-    final params = CreateProjectParams(
-      ownerId: UserId.fromUniqueString(ownerId.value),
-      name: name,
-      description: description,
-    );
+    final params = CreateProjectParams(name: name, description: description);
     context.read<ProjectsBloc>().add(CreateProjectRequested(params));
     context.pop();
   }

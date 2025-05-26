@@ -17,7 +17,6 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:internet_connection_checker/internet_connection_checker.dart'
     as _i973;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
-import 'package:trackflow/core/app/app_flow_cubit.dart' as _i685;
 import 'package:trackflow/core/di/app_module.dart' as _i850;
 import 'package:trackflow/core/network/network_info.dart' as _i952;
 import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
@@ -116,10 +115,6 @@ extension GetItInjectableX on _i174.GetIt {
               localDataSource: gh<_i334.ProjectsLocalDataSource>(),
               networkInfo: gh<_i952.NetworkInfo>(),
             ));
-    gh.factory<_i685.AppFlowCubit>(() => _i685.AppFlowCubit(
-          authRepository: gh<_i104.AuthRepository>(),
-          onboardingRepository: gh<_i442.OnboardingUseCase>(),
-        ));
     gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
           signIn: gh<_i843.SignInUseCase>(),
           signUp: gh<_i490.SignUpUseCase>(),

@@ -32,16 +32,5 @@ class SignUpUseCase {
       email.value.getOrElse(() => ''),
       password.value.getOrElse(() => ''),
     );
-
-    // Y cuando usas el email:
-    // Si quieres el valor, usas: email.value.getOrElse(() => '')
-    // Si quieres el error, usas: email.value.swap().getOrElse(() => DefaultFailure())
   }
 }
-
-// getOrElse() is used to get the value from the Either object
-// swap() is used to swap the value of the Either object
-// getOrElse(() => const InvalidEmailFailure()) is used to get the value from the Either object
-// getOrElse(() => const InvalidPasswordFailure()) is used to get the value from the Either object
-
-// all this properties are from the ValueObject class that extends Equatable

@@ -38,4 +38,7 @@ abstract class AuthRepository {
 
   /// check if onboarding is completed
   Future<bool> checkOnboardingCompleted();
+
+  /// get the signed in user id
+  Future<Either<Failure, String>> getSignedInUserId();
 }
