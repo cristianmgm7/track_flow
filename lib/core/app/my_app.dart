@@ -3,10 +3,10 @@ import 'package:trackflow/core/constants/theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
-import 'package:trackflow/core/app/app_flow_cubit.dart';
 import 'package:go_router/go_router.dart';
 
 class MyApp extends StatelessWidget {
@@ -17,11 +17,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
+        BlocProvider<AuthBloc>(
+          create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
+        ),
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),
         ),
-        BlocProvider<AppFlowCubit>(create: (context) => sl<AppFlowCubit>()),
         BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
       ],
       child: _App(),
@@ -43,7 +44,7 @@ class _AppState extends State<_App> {
   @override
   void initState() {
     super.initState();
-    _router = AppRouter.router(context.read<AppFlowCubit>());
+    _router = AppRouter.router(context.read<AuthBloc>());
   }
 
   @override

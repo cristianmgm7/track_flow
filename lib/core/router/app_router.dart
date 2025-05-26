@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
@@ -9,7 +10,7 @@ import 'package:trackflow/features/onboarding/presentation/screens/welcome_scree
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/pages/seetings_acount.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
@@ -21,29 +22,25 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(AppFlowCubit appFlowCubit) {
+  static GoRouter router(AuthBloc authBloc) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: AppRoutes.dashboard,
-      refreshListenable: GoRouterRefreshStream(appFlowCubit.stream),
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
       redirect: (context, state) {
-        final status = appFlowCubit.state;
-        switch (status) {
-          case AppStatus.unknown:
-            return AppRoutes.splash;
-          case AppStatus.onboarding:
-            return AppRoutes.onboarding;
-          case AppStatus.unauthenticated:
-            return AppRoutes.auth;
-          case AppStatus.authenticated:
-            // Only redirect to dashboard if not already in a valid route
-            if (state.matchedLocation == AppRoutes.splash ||
+        final authState = authBloc.state;
+        if (authState is AuthInitial) return AppRoutes.splash;
+        if (authState is OnboardingInitial) return AppRoutes.onboarding;
+        if (authState is WelcomeScreenInitial) return AppRoutes.welcome;
+        if (authState is AuthUnauthenticated) return AppRoutes.auth;
+        if (authState is AuthAuthenticated &&
+            (state.matchedLocation == AppRoutes.splash ||
                 state.matchedLocation == AppRoutes.onboarding ||
-                state.matchedLocation == AppRoutes.auth) {
-              return AppRoutes.dashboard;
-            }
-            return null; // Allow navigation to any valid route
+                state.matchedLocation == AppRoutes.auth ||
+                state.matchedLocation == AppRoutes.welcome)) {
+          return AppRoutes.dashboard;
         }
+        return null;
       },
       routes: [
         GoRoute(

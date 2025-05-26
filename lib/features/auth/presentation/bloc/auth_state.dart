@@ -39,6 +39,8 @@ class OnboardingInitial extends AuthState {}
 
 class OnboardingLoading extends AuthState {}
 
+class WelcomeScreenInitial extends AuthState {}
+
 class OnboardingChecked extends AuthState {
   final bool hasCompletedOnboarding;
   final bool hasSeenLaunch;
