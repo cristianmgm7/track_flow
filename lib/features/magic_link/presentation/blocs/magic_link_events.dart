@@ -63,12 +63,12 @@ class MagicLinkConsumed extends MagicLinkEvent {
 }
 
 class MagicLinkResent extends MagicLinkEvent {
-  final String email;
+  final String linkId;
 
-  const MagicLinkResent({required this.email});
+  const MagicLinkResent({required this.linkId});
 
   @override
-  List<Object?> get props => [email];
+  List<Object?> get props => [linkId];
 }
 
 class MagicLinkResendFailed extends MagicLinkEvent {

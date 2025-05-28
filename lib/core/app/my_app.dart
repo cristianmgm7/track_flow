@@ -4,6 +4,7 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
+import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<NavigationCubit>(),
         ),
         BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
+        BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
       ],
       child: _App(),
     );

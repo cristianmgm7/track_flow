@@ -1,51 +1,50 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/magic_link/data/datasources/magic_link_remote_data_source.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 
 @Injectable(as: MagicLinkRepository)
-class MagicLinkImpl extends MagicLinkRepository {
+class MagicLinkRepositoryImp extends MagicLinkRepository {
   final MagicLinkRemoteDataSource _magicLinkRemoteDataSource;
-  final MagicLinkLocalDataSource _magicLinkLocalDataSource;
 
-  MagicLinkImpl(
-    this._magicLinkRemoteDataSource,
-    this._magicLinkLocalDataSource,
-  );
+  MagicLinkRepositoryImp(this._magicLinkRemoteDataSource);
 
   @override
   Future<Either<Failure, MagicLink>> generateMagicLink({
-    required UserId userId,
+    required String projectId,
   }) async {
-    return await _magicLinkRemoteDataSource.generateMagicLink(email);
+    return await _magicLinkRemoteDataSource.generateMagicLink(
+      projectId: projectId,
+    );
   }
 
   @override
   Future<Either<Failure, MagicLink>> validateMagicLink({
     required String linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.validateMagicLink(linkId);
+    return await _magicLinkRemoteDataSource.validateMagicLink(linkId: linkId);
   }
 
   @override
   Future<Either<Failure, Unit>> consumeMagicLink({
     required String linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.consumeMagicLink(linkId);
+    return await _magicLinkRemoteDataSource.consumeMagicLink(linkId: linkId);
   }
 
   @override
-  Future<Either<Failure, Unit>> resendMagicLink({required String email}) async {
-    return await _magicLinkRemoteDataSource.resendMagicLink(email);
+  Future<Either<Failure, Unit>> resendMagicLink({
+    required String linkId,
+  }) async {
+    return await _magicLinkRemoteDataSource.resendMagicLink(linkId: linkId);
   }
 
   @override
   Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({
     required String linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.getMagicLinkStatus(linkId);
+    return await _magicLinkRemoteDataSource.getMagicLinkStatus(linkId: linkId);
   }
 }
