@@ -67,6 +67,8 @@ import 'package:trackflow/features/projects/data/repositories/projects_repositor
     as _i553;
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i1022;
+import 'package:trackflow/features/projects/domain/usecases/add_collaborator_usecase.dart'
+    as _i740;
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart'
     as _i594;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
@@ -103,7 +105,7 @@ extension GetItInjectableX on _i174.GetIt {
         () => appModule.internetConnectionChecker);
     gh.lazySingleton<_i979.Box<Map<dynamic, dynamic>>>(
         () => appModule.projectsBox);
-    gh.factory<_i1010.MagicLinkLocalDataSource>(
+    gh.lazySingleton<_i1010.MagicLinkLocalDataSource>(
         () => _i1010.MagicLinkLocalDataSourceImpl());
     gh.lazySingleton<_i952.NetworkInfo>(
         () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()));
@@ -136,8 +138,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i490.SignUpUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i488.SignOutUseCase>(
         () => _i488.SignOutUseCase(gh<_i104.AuthRepository>()));
-    gh.lazySingleton<_i179.GenerateMagicLinkUseCase>(
-        () => _i179.GenerateMagicLinkUseCase(gh<_i524.MagicLinkRepository>()));
     gh.lazySingleton<_i661.ConsumeMagicLinkUseCase>(
         () => _i661.ConsumeMagicLinkUseCase(gh<_i524.MagicLinkRepository>()));
     gh.lazySingleton<_i741.ValidateMagicLinkUseCase>(
@@ -146,13 +146,11 @@ extension GetItInjectableX on _i174.GetIt {
         _i1050.GetMagicLinkStatusUseCase(gh<_i524.MagicLinkRepository>()));
     gh.lazySingleton<_i856.ResendMagicLinkUseCase>(
         () => _i856.ResendMagicLinkUseCase(gh<_i524.MagicLinkRepository>()));
-    gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
-          generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
-          validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),
-          consumeMagicLink: gh<_i661.ConsumeMagicLinkUseCase>(),
-          resendMagicLink: gh<_i856.ResendMagicLinkUseCase>(),
-          getMagicLinkStatus: gh<_i1050.GetMagicLinkStatusUseCase>(),
-        ));
+    gh.lazySingleton<_i179.GenerateMagicLinkUseCase>(
+        () => _i179.GenerateMagicLinkUseCase(
+              gh<_i524.MagicLinkRepository>(),
+              gh<_i104.AuthRepository>(),
+            ));
     gh.lazySingleton<_i1022.ProjectsRepository>(
         () => _i553.ProjectsRepositoryImpl(
               remoteDataSource: gh<_i102.ProjectRemoteDataSource>(),
@@ -182,6 +180,8 @@ extension GetItInjectableX on _i174.GetIt {
           getAuthState: gh<_i836.GetAuthStateUseCase>(),
           onboarding: gh<_i442.OnboardingUseCase>(),
         ));
+    gh.lazySingleton<_i740.AddCollaboratorUseCase>(
+        () => _i740.AddCollaboratorUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i1043.DeleteProjectUseCase>(
         () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()));
     gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
@@ -189,6 +189,15 @@ extension GetItInjectableX on _i174.GetIt {
           updateProject: gh<_i532.UpdateProjectUseCase>(),
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
+        ));
+    gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
+          generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
+          validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),
+          consumeMagicLink: gh<_i661.ConsumeMagicLinkUseCase>(),
+          resendMagicLink: gh<_i856.ResendMagicLinkUseCase>(),
+          getMagicLinkStatus: gh<_i1050.GetMagicLinkStatusUseCase>(),
+          addCollaboratorUseCase: gh<_i740.AddCollaboratorUseCase>(),
+          authRepository: gh<_i104.AuthRepository>(),
         ));
     return this;
   }

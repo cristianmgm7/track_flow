@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_link_use_case.dart';
 import 'package:trackflow/features/magic_link/domain/usecases/consume_magic_link_use_case.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:trackflow/features/projects/domain/usecases/add_collaborator_usecase.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 class MagicLinkHandlerScreen extends StatefulWidget {
   final String token;
@@ -68,7 +70,10 @@ class _MagicLinkHandlerScreenState extends State<MagicLinkHandlerScreen> {
       // 4. Agregar usuario al proyecto
       final addCollaboratorUseCase = context.read<AddCollaboratorUseCase>();
       final addResult = await addCollaboratorUseCase(
-        AddCollaboratorParams(projectId: magicLink.projectId, userId: userId),
+        AddCollaboratorParams(
+          projectId: UniqueId.fromUniqueString(magicLink.projectId),
+          userId: UserId.fromUniqueString(userId),
+        ),
       );
       if (addResult.isLeft()) {
         setState(() {

@@ -9,6 +9,7 @@ class Project {
   final ProjectDescription description;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final List<UserId> collaborators;
 
   const Project({
     required this.id,
@@ -17,6 +18,7 @@ class Project {
     required this.description,
     required this.createdAt,
     this.updatedAt,
+    this.collaborators = const [],
   });
 
   Project copyWith({
@@ -26,6 +28,7 @@ class Project {
     ProjectDescription? description,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<UserId>? collaborators,
   }) {
     return Project(
       id: id ?? this.id,
@@ -34,6 +37,7 @@ class Project {
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      collaborators: collaborators ?? this.collaborators,
     );
   }
 }

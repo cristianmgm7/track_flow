@@ -10,4 +10,9 @@ abstract class ProjectsRepository {
 
   /// Streams all projects.
   Stream<Either<Failure, List<Project>>> watchAllProjects(UserId ownerId);
+
+  Future<Either<Failure, Unit>> addCollaborator({
+    required UniqueId projectId,
+    required UserId userId,
+  });
 }

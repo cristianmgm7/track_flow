@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
@@ -11,6 +12,7 @@ class ProjectDTO {
     required this.name,
     required this.description,
     required this.createdAt,
+    this.collaborators = const [],
   });
 
   final String id;
@@ -18,6 +20,7 @@ class ProjectDTO {
   final String name;
   final String description;
   final DateTime createdAt;
+  final List<String> collaborators;
 
   static const String collection = 'projects';
 
@@ -27,6 +30,7 @@ class ProjectDTO {
     name: project.name.value.fold((l) => '', (r) => r),
     description: project.description.value.fold((l) => '', (r) => r),
     createdAt: project.createdAt,
+    collaborators: project.collaborators.map((u) => u.value).toList(),
   );
 
   Project toDomain() => Project(
@@ -35,6 +39,8 @@ class ProjectDTO {
     name: ProjectName(name),
     description: ProjectDescription(description),
     createdAt: createdAt,
+    collaborators:
+        collaborators.map((id) => UserId.fromUniqueString(id)).toList(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -43,6 +49,7 @@ class ProjectDTO {
     'name': name,
     'description': description,
     'createdAt': createdAt.toIso8601String(),
+    'collaborators': collaborators,
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -51,6 +58,11 @@ class ProjectDTO {
     name: json['name'] as String,
     description: json['description'] as String,
     createdAt: DateTime.parse(json['createdAt'] as String),
+    collaborators:
+        (json['collaborators'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
   );
 
   /// Creates a ProjectDTO from a Firestore document.
@@ -62,6 +74,11 @@ class ProjectDTO {
       name: data['name'] as String,
       description: (data['description'] as String?) ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      collaborators:
+          (data['collaborators'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -73,6 +90,7 @@ class ProjectDTO {
       'name': name,
       'description': description,
       'createdAt': Timestamp.fromDate(createdAt),
+      'collaborators': collaborators,
     };
   }
 
@@ -83,6 +101,7 @@ class ProjectDTO {
     String? name,
     String? description,
     DateTime? createdAt,
+    List<String>? collaborators,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -90,6 +109,7 @@ class ProjectDTO {
       name: name ?? this.name,
       description: description ?? this.description,
       createdAt: createdAt ?? this.createdAt,
+      collaborators: collaborators ?? this.collaborators,
     );
   }
 
@@ -108,6 +128,11 @@ class ProjectDTO {
       name: data['name'] as String,
       description: (data['description'] as String?) ?? '',
       createdAt: createdAt,
+      collaborators:
+          (data['collaborators'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -119,6 +144,7 @@ class ProjectDTO {
       'name': name,
       'description': description,
       'createdAt': createdAt.toIso8601String(),
+      'collaborators': collaborators,
     };
   }
 
@@ -130,7 +156,8 @@ class ProjectDTO {
         other.ownerId == ownerId &&
         other.name == name &&
         other.description == description &&
-        other.createdAt == createdAt;
+        other.createdAt == createdAt &&
+        listEquals(other.collaborators, collaborators);
   }
 
   @override
@@ -139,5 +166,6 @@ class ProjectDTO {
       ownerId.hashCode ^
       name.hashCode ^
       description.hashCode ^
-      createdAt.hashCode;
+      createdAt.hashCode ^
+      collaborators.hashCode;
 }

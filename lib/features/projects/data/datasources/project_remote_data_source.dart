@@ -17,6 +17,11 @@ abstract class ProjectRemoteDataSource {
   Future<Either<Failure, List<Project>>> getAllProjects();
 
   Future<Either<Failure, Project>> getProjectById(String id);
+
+  Future<Either<Failure, Unit>> addCollaborator({
+    required String projectId,
+    required String userId,
+  });
 }
 
 @LazySingleton(as: ProjectRemoteDataSource)
@@ -140,6 +145,40 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       return Left(DatabaseFailure('Failed to fetch project: ${e.message}'));
     } catch (e) {
       return Left(UnexpectedFailure('An unexpected error occurred'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> addCollaborator({
+    required String projectId,
+    required String userId,
+  }) async {
+    try {
+      final docRef = _firestore
+          .collection(ProjectDTO.collection)
+          .doc(projectId);
+      await docRef.update({
+        'collaborators': FieldValue.arrayUnion([userId]),
+      });
+      return Right(unit);
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        return Left(
+          AuthenticationFailure(
+            'You don\'t have permission to update this project',
+          ),
+        );
+      }
+      if (e.code == 'not-found') {
+        return Left(DatabaseFailure('Project not found'));
+      }
+      return Left(DatabaseFailure('Failed to add collaborator: ${e.message}'));
+    } catch (e) {
+      return Left(
+        UnexpectedFailure(
+          'An unexpected error occurred while adding collaborator',
+        ),
+      );
     }
   }
 }

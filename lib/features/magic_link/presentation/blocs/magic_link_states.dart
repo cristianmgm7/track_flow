@@ -81,3 +81,16 @@ class MagicLinkStatusError extends MagicLinkState {
   @override
   List<Object?> get props => [error];
 }
+
+// Magic Link Handling.............
+
+class MagicLinkHandling extends MagicLinkState {}
+
+class MagicLinkHandleSuccessState extends MagicLinkState {}
+
+class MagicLinkHandleErrorState extends MagicLinkState {
+  final Failure error;
+  const MagicLinkHandleErrorState({required this.error});
+  @override
+  List<Object?> get props => [error];
+}

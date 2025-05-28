@@ -97,3 +97,20 @@ class MagicLinkStatusCheckFailed extends MagicLinkEvent {
   @override
   List<Object?> get props => [failure];
 }
+
+// Magic Link Handling.............
+class MagicLinkHandleRequested extends MagicLinkEvent {
+  final String token;
+  const MagicLinkHandleRequested({required this.token});
+  @override
+  List<Object?> get props => [token];
+}
+
+class MagicLinkHandleSuccess extends MagicLinkEvent {}
+
+class MagicLinkHandleError extends MagicLinkEvent {
+  final Failure failure;
+  const MagicLinkHandleError({required this.failure});
+  @override
+  List<Object?> get props => [failure];
+}

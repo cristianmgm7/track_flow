@@ -81,4 +81,19 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
               Right(projects.map((project) => project.toDomain()).toList()),
         );
   }
+
+  @override
+  Future<Either<Failure, Unit>> addCollaborator({
+    required UniqueId projectId,
+    required UserId userId,
+  }) async {
+    final hasConnected = await _networkInfo.isConnected;
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
+    }
+    return await _remoteDataSource.addCollaborator(
+      projectId: projectId.value,
+      userId: userId.value,
+    );
+  }
 }
