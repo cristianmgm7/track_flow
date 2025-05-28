@@ -55,7 +55,7 @@ dependencies:
   internet_connection_checker: ^1.0.0+1
   injectable: ^2.3.2
   share_plus: ^7.2.1
-  
+  firebase_dynamic_links: ^6.1.5
 
 dev_dependencies:
   flutter_test:
