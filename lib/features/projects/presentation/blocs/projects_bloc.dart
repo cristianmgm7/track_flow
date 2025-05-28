@@ -44,8 +44,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     final result = await createProject(event.params);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (_) =>
-          emit(const ProjectOperationSuccess('Project created successfully')),
+      (project) => emit(ProjectCreatedSuccess(project)),
     );
     add(StartWatchingProjects());
   }

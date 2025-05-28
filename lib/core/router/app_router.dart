@@ -8,6 +8,7 @@ import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
@@ -62,7 +63,9 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.projectDetails,
-          builder: (context, state) => ProjectDetailsScreen(),
+          builder:
+              (context, state) =>
+                  ProjectDetailsScreen(project: state.extra as Project),
         ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,

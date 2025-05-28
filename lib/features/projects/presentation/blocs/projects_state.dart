@@ -20,6 +20,15 @@ class ProjectOperationSuccess extends ProjectsState {
   List<Object?> get props => [message];
 }
 
+class ProjectCreatedSuccess extends ProjectsState {
+  final Project project;
+
+  const ProjectCreatedSuccess(this.project);
+
+  @override
+  List<Object?> get props => [project];
+}
+
 class ProjectsError extends ProjectsState {
   final String message;
 

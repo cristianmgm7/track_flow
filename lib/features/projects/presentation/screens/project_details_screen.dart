@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
-  const ProjectDetailsScreen({super.key});
+  final Project project;
+  const ProjectDetailsScreen({super.key, required this.project});
 
   @override
   State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
@@ -22,9 +25,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       appBar: AppBar(
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Project Details',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          widget.project.name.value.fold((l) => 'Project Details', (r) => r),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
       body: Padding(
@@ -50,6 +53,20 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               ),
             ),
             const SizedBox(height: 24),
+            // Botón para compartir el link de invitación
+            ElevatedButton.icon(
+              icon: const Icon(Icons.share),
+              label: const Text('Compartir invitación'),
+              onPressed: () {
+                final projectId = widget.project.id.value;
+                final inviteLink =
+                    'https://tusitio.com/invite?projectId=$projectId';
+                Share.share('Únete a mi proyecto: $inviteLink');
+              },
+            ),
+            const SizedBox(height: 16),
+            // Mostrar el ID del proyecto
+            const SizedBox(height: 16),
             // Toggle buttons
             Container(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),

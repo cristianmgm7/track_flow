@@ -7,6 +7,7 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
 
 class ProjectFormScreen extends StatefulWidget {
   const ProjectFormScreen({super.key});
@@ -42,21 +43,24 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
     final params = CreateProjectParams(name: name, description: description);
     context.read<ProjectsBloc>().add(CreateProjectRequested(params));
-    context.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<ProjectsBloc, ProjectsState>(
       listener: (context, state) {
-        if (state is ProjectOperationSuccess) {
+        if (state is ProjectCreatedSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Project created!'),
               backgroundColor: Colors.green,
             ),
           );
-          context.pop();
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => ProjectDetailsScreen(project: state.project),
+            ),
+          );
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

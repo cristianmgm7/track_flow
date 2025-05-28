@@ -92,7 +92,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   },
                   child: ProjectCard(
                     project: project,
-                    onTap: () => context.push(AppRoutes.projectDetails),
+                    onTap:
+                        () => context.go(
+                          AppRoutes.projectDetails,
+                          extra: project,
+                        ),
                   ),
                 );
               },
