@@ -14,9 +14,11 @@ class MagicLinkRepositoryImp extends MagicLinkRepository {
   @override
   Future<Either<Failure, MagicLink>> generateMagicLink({
     required String projectId,
+    required String userId,
   }) async {
     return await _magicLinkRemoteDataSource.generateMagicLink(
       projectId: projectId,
+      userId: userId,
     );
   }
 

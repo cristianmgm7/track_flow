@@ -8,6 +8,7 @@ import 'package:trackflow/features/magic_link/data/models/magic_link_dto.dart';
 abstract class MagicLinkRemoteDataSource {
   Future<Either<Failure, MagicLink>> generateMagicLink({
     required String projectId,
+    required String userId,
   });
   Future<Either<Failure, MagicLink>> validateMagicLink({
     required String linkId,
@@ -29,17 +30,20 @@ class MagicLinkRemoteDataSourceImpl extends MagicLinkRemoteDataSource {
   @override
   Future<Either<Failure, MagicLink>> generateMagicLink({
     required String projectId,
+    required String userId,
   }) async {
     try {
       final docRef = await _firestore.collection('magic_links').add({
-        'url': '', // You may want to generate a URL here
-        'userId': '', // Set the sender's userId
+        'url': '', // Placeholder, will update after doc creation
+        'userId': userId,
         'projectId': projectId,
         'createdAt': Timestamp.now(),
         'expiresAt': null,
         'isUsed': false,
         'status': 'valid',
       });
+      final url = 'https://yourapp.com/magic-link/${docRef.id}';
+      await docRef.update({'url': url});
       final doc = await docRef.get();
       final dto = MagicLinkDto.fromFirestore(doc);
       return Right(dto.toDomain());

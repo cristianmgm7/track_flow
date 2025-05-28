@@ -3,28 +3,37 @@ import 'package:injectable/injectable.dart';
 import 'package:equatable/equatable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 
 @immutable
 class GenerateMagicLinkParams extends Equatable {
-  final String email;
+  final String projectId;
 
-  const GenerateMagicLinkParams({required this.email});
+  const GenerateMagicLinkParams({required this.projectId});
 
   @override
-  List<Object?> get props => [email];
+  List<Object?> get props => [projectId];
 }
 
 @lazySingleton
 class GenerateMagicLinkUseCase {
   final MagicLinkRepository _repository;
+  final AuthRepository _authRepository;
 
-  GenerateMagicLinkUseCase(this._repository);
+  GenerateMagicLinkUseCase(this._repository, this._authRepository);
 
   Future<Either<Failure, MagicLink>> call(
     GenerateMagicLinkParams params,
   ) async {
-    return await _repository.generateMagicLink(params.email);
+    final userIdOrFailure = await _authRepository.getSignedInUserId();
+    return userIdOrFailure.fold(
+      (failure) => Left(failure),
+      (userId) => _repository.generateMagicLink(
+        projectId: params.projectId,
+        userId: userId,
+      ),
+    );
   }
 }
