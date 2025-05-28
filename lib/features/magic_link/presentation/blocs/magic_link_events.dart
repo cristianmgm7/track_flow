@@ -9,12 +9,12 @@ abstract class MagicLinkEvent extends Equatable {
 }
 
 class MagicLinkRequested extends MagicLinkEvent {
-  final String email;
+  final String projectId;
 
-  const MagicLinkRequested({required this.email});
+  const MagicLinkRequested({required this.projectId});
 
   @override
-  List<Object?> get props => [email];
+  List<Object?> get props => [projectId];
 }
 
 class MagicLinkGenerated extends MagicLinkEvent {
