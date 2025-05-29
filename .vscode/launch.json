@@ -12,6 +12,14 @@
             "program": "lib/main.dart",
             "deviceId": "00008030-00010C31110A802E"
         },
+        {
+            "name": "track_flow (iPhoneX cris)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "deviceId": "011a383549b06a289a4fd1d32ac5145d13066afe"
+        },
         
         {
             "name": "track_flow (iPhone Thomas)",

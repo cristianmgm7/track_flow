@@ -47,6 +47,15 @@ class _AppState extends State<_App> {
   void initState() {
     super.initState();
     _router = AppRouter.router(context.read<AuthBloc>());
+
+    // final dynamicLinkService = getIt<DynamicLinkService>();
+    // dynamicLinkService.magicLinkToken.addListener(() {
+    //   final token = dynamicLinkService.magicLinkToken.value;
+    //   if (token != null && token.isNotEmpty) {
+    //     _router.routerDelegate.go('/magic-link/$token');
+    //     dynamicLinkService.magicLinkToken.value = null;
+    //   }
+    // });
   }
 
   @override

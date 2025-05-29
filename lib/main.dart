@@ -7,8 +7,8 @@ import 'package:trackflow/features/magic_link/presentation/screens/magic_link_ha
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DynamicLinkService().init();
   await Firebase.initializeApp();
+  await DynamicLinkService().init();
   await configureDependencies();
   await Hive.initFlutter();
   await Hive.openBox<Map>('projectsBox');

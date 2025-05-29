@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
@@ -34,7 +35,7 @@ class MagicLinkRemoteDataSourceImpl extends MagicLinkRemoteDataSource {
   }) async {
     try {
       final docRef = await _firestore.collection('magic_links').add({
-        'url': '', // Placeholder, will update after doc creation
+        'url': '', // Placeholder
         'userId': userId,
         'projectId': projectId,
         'createdAt': Timestamp.now(),
@@ -42,7 +43,27 @@ class MagicLinkRemoteDataSourceImpl extends MagicLinkRemoteDataSource {
         'isUsed': false,
         'status': 'valid',
       });
-      final url = 'https://yourapp.com/magic-link/${docRef.id}';
+
+      // Genera el Dynamic Link
+      final dynamicLinkParams = DynamicLinkParameters(
+        uriPrefix: 'https://trackflow.page.link',
+        link: Uri.parse('https://trackflow.page.link/magic-link/${docRef.id}'),
+        androidParameters: AndroidParameters(
+          packageName: 'com.trackflow.app',
+          minimumVersion: 0,
+        ),
+        iosParameters: IOSParameters(
+          bundleId: 'com.trackflow.ios',
+          minimumVersion: '0',
+        ),
+        // Puedes agregar socialMetaTagParameters, etc.
+      );
+
+      final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
+        dynamicLinkParams,
+      );
+      final url = dynamicLink.shortUrl.toString();
+
       await docRef.update({'url': url});
       final doc = await docRef.get();
       final dto = MagicLinkDto.fromFirestore(doc);
