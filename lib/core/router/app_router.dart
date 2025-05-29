@@ -5,6 +5,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
+import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -60,6 +61,13 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.auth,
           builder: (context, state) => const AuthScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.magicLink,
+          builder:
+              (context, state) => MagicLinkHandlerScreen(
+                token: state.pathParameters['token'] ?? '',
+              ),
         ),
         GoRoute(
           path: AppRoutes.projectDetails,

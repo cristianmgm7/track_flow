@@ -9,6 +9,7 @@ import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cub
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/services/dynamic_link_service.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -48,14 +49,17 @@ class _AppState extends State<_App> {
     super.initState();
     _router = AppRouter.router(context.read<AuthBloc>());
 
-    // final dynamicLinkService = getIt<DynamicLinkService>();
-    // dynamicLinkService.magicLinkToken.addListener(() {
-    //   final token = dynamicLinkService.magicLinkToken.value;
-    //   if (token != null && token.isNotEmpty) {
-    //     _router.routerDelegate.go('/magic-link/$token');
-    //     dynamicLinkService.magicLinkToken.value = null;
-    //   }
-    // });
+    // Escuchar el dynamic link
+    final dynamicLinkService = sl<DynamicLinkService>();
+    dynamicLinkService.magicLinkToken.addListener(() {
+      final token = dynamicLinkService.magicLinkToken.value;
+      if (token != null && token.isNotEmpty) {
+        // Navegar a la pantalla de manejo del magic link (ajusta la ruta cuando la tengas)
+        _router.go('/magic-link/$token');
+        // Limpiar el token después de manejarlo
+        dynamicLinkService.magicLinkToken.value = null;
+      }
+    });
   }
 
   @override

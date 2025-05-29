@@ -19,6 +19,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart'
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:trackflow/core/di/app_module.dart' as _i850;
 import 'package:trackflow/core/network/network_info.dart' as _i952;
+import 'package:trackflow/core/services/dynamic_link_service.dart' as _i559;
 import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
     as _i447;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart'
@@ -97,6 +98,7 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
+    gh.singleton<_i559.DynamicLinkService>(() => _i559.DynamicLinkService());
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
     gh.lazySingleton<_i974.FirebaseFirestore>(
         () => appModule.firebaseFirestore);

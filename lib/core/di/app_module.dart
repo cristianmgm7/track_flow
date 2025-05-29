@@ -5,13 +5,9 @@ import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:trackflow/core/services/dynamic_link_service.dart';
 
 @module
 abstract class AppModule {
-  @lazySingleton
-  DynamicLinkService get dynamicLinkService => DynamicLinkService();
-
   @lazySingleton
   FirebaseAuth get firebaseAuth => FirebaseAuth.instance;
 
