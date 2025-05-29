@@ -7,12 +7,12 @@ import 'package:trackflow/features/magic_link/domain/repositories/magic_link_rep
 
 @immutable
 class ConsumeMagicLinkParams extends Equatable {
-  final String linkId;
+  final String token;
 
-  const ConsumeMagicLinkParams({required this.linkId});
+  const ConsumeMagicLinkParams({required this.token});
 
   @override
-  List<Object?> get props => [linkId];
+  List<Object?> get props => [token];
 }
 
 @lazySingleton
@@ -22,6 +22,6 @@ class ConsumeMagicLinkUseCase {
   ConsumeMagicLinkUseCase(this._repository);
 
   Future<Either<Failure, void>> call(ConsumeMagicLinkParams params) async {
-    return await _repository.consumeMagicLink(params.linkId);
+    return await _repository.consumeMagicLink(linkId: params.token);
   }
 }

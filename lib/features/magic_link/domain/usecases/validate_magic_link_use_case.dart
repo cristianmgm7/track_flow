@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
+import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
 
 @immutable
 class ValidateMagicLinkParams extends Equatable {
@@ -21,7 +22,9 @@ class ValidateMagicLinkUseCase {
 
   ValidateMagicLinkUseCase(this._repository);
 
-  Future<Either<Failure, void>> call(ValidateMagicLinkParams params) async {
-    return await _repository.validateMagicLink(params.linkId);
+  Future<Either<Failure, MagicLink>> call(
+    ValidateMagicLinkParams params,
+  ) async {
+    return await _repository.validateMagicLink(linkId: params.linkId);
   }
 }

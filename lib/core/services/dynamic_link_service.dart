@@ -1,7 +1,9 @@
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
 
 /// Service to handle incoming Firebase Dynamic Links (Magic Links)
+@singleton
 class DynamicLinkService {
   static final DynamicLinkService _instance = DynamicLinkService._internal();
   factory DynamicLinkService() => _instance;

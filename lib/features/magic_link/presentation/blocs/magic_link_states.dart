@@ -31,7 +31,12 @@ class MagicLinkGenerationError extends MagicLinkState {
   List<Object?> get props => [error];
 }
 
-class MagicLinkValidatedSuccess extends MagicLinkState {}
+class MagicLinkValidatedSuccess extends MagicLinkState {
+  final MagicLink magicLink;
+  const MagicLinkValidatedSuccess(this.magicLink);
+  @override
+  List<Object?> get props => [magicLink];
+}
 
 class MagicLinkValidationError extends MagicLinkState {
   final Failure error;

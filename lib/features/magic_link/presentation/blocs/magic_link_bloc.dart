@@ -63,7 +63,7 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
     );
     result.fold(
       (failure) => emit(MagicLinkValidationError(error: failure)),
-      (_) => emit(MagicLinkValidatedSuccess()),
+      (magicLink) => emit(MagicLinkValidatedSuccess(magicLink)),
     );
   }
 
@@ -73,7 +73,7 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
   ) async {
     emit(MagicLinkLoading());
     final result = await consumeMagicLink(
-      ConsumeMagicLinkParams(linkId: event.linkId),
+      ConsumeMagicLinkParams(token: event.linkId),
     );
     result.fold(
       (failure) => emit(MagicLinkConsumedError(error: failure)),
@@ -142,7 +142,7 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
     final userId = userIdOrFailure.getOrElse(() => '');
     // 3. Consumir el magic link
     final consumeResult = await consumeMagicLink(
-      ConsumeMagicLinkParams(linkId: event.token),
+      ConsumeMagicLinkParams(token: event.token),
     );
     if (consumeResult.isLeft()) {
       emit(

@@ -7,12 +7,12 @@ import 'package:trackflow/features/magic_link/domain/repositories/magic_link_rep
 
 @immutable
 class ResendMagicLinkParams extends Equatable {
-  final String email;
+  final String linkId;
 
-  const ResendMagicLinkParams({required this.email});
+  const ResendMagicLinkParams({required this.linkId});
 
   @override
-  List<Object?> get props => [email];
+  List<Object?> get props => [linkId];
 }
 
 @lazySingleton
@@ -22,6 +22,6 @@ class ResendMagicLinkUseCase {
   ResendMagicLinkUseCase(this._repository);
 
   Future<Either<Failure, void>> call(ResendMagicLinkParams params) async {
-    return (await _repository.resendMagicLink(email: params.email)).map((_) {});
+    return (await _repository.resendMagicLink(linkId: params.linkId)).map((_) {});
   }
 }
