@@ -49,7 +49,7 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
     );
     result.fold(
       (failure) => emit(MagicLinkGenerationError(error: failure)),
-      (magicLink) => emit(MagicLinkGeneratedSuccess(linkId: magicLink.id)),
+      (magicLink) => emit(MagicLinkGeneratedSuccess(linkUrl: magicLink.url)),
     );
   }
 

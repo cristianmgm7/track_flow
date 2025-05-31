@@ -5,7 +5,7 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String auth = '/auth';
 
-  static const String magicLink = '/magic-link';
+  static const String magicLink = '/magiclink';
 
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';

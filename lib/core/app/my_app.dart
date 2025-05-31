@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/core/constants/theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
@@ -55,7 +56,7 @@ class _AppState extends State<_App> {
       final token = dynamicLinkService.magicLinkToken.value;
       if (token != null && token.isNotEmpty) {
         // Navegar a la pantalla de manejo del magic link (ajusta la ruta cuando la tengas)
-        _router.go('/magic-link/$token');
+        _router.go(AppRoutes.magicLink);
         // Limpiar el token después de manejarlo
         dynamicLinkService.magicLinkToken.value = null;
       }

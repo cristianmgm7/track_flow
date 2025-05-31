@@ -14,12 +14,12 @@ class MagicLinkInitial extends MagicLinkState {}
 class MagicLinkLoading extends MagicLinkState {}
 
 class MagicLinkGeneratedSuccess extends MagicLinkState {
-  final String linkId;
+  final String linkUrl;
 
-  const MagicLinkGeneratedSuccess({required this.linkId});
+  const MagicLinkGeneratedSuccess({required this.linkUrl});
 
   @override
-  List<Object?> get props => [linkId];
+  List<Object?> get props => [linkUrl];
 }
 
 class MagicLinkGenerationError extends MagicLinkState {

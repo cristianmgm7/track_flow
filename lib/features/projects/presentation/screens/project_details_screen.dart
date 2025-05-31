@@ -28,7 +28,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     return BlocListener<MagicLinkBloc, MagicLinkState>(
       listener: (context, state) {
         if (state is MagicLinkGeneratedSuccess) {
-          final link = state.linkId; // linkId es el url generado
+          final link = state.linkUrl; // linkId es el url generado
           Share.share('Únete a mi proyecto: $link');
         } else if (state is MagicLinkGenerationError) {
           ScaffoldMessenger.of(context).showSnackBar(
