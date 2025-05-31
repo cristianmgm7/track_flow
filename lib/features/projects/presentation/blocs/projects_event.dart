@@ -59,16 +59,8 @@ class ProjectsUpdated extends ProjectsEvent {
   List<Object?> get props => [projects];
 }
 
-class AddParticipantRequested extends ProjectsEvent {
-  final String projectId;
-  final String participantId;
-  const AddParticipantRequested(this.projectId, this.participantId);
-  @override
-  List<Object?> get props => [projectId, participantId];
-}
-
 class JoinProjectWithIdRequested extends ProjectsEvent {
-  final String projectId;
+  final UniqueId projectId;
   const JoinProjectWithIdRequested(this.projectId);
   @override
   List<Object?> get props => [projectId];

@@ -96,4 +96,35 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       userId: userId.value,
     );
   }
+
+  @override
+  Future<Either<Failure, Unit>> joinProjectWithId({
+    required UniqueId projectId,
+    required UserId userId,
+  }) async {
+    final hasConnected = await _networkInfo.isConnected;
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
+    }
+
+    // Obtener el proyecto remoto
+    final projectOrFailure = await _remoteDataSource.getProjectById(
+      projectId.value,
+    );
+    if (projectOrFailure.isRight()) {
+      final project = projectOrFailure.fold((l) => null, (r) => r);
+      if (project == null) {
+        return Left(DatabaseFailure('Project not found'));
+      }
+      final projectDTO = ProjectDTO.fromDomain(project);
+      await _localDataSource.cacheProject(projectDTO);
+
+      // Agregar el colaborador
+      return await _remoteDataSource.addCollaborator(
+        projectId: projectId.value,
+        userId: userId.value,
+      );
+    }
+    return Left(DatabaseFailure('Project not found'));
+  }
 }

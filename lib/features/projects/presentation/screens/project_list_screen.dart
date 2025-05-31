@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
@@ -31,15 +32,68 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
+  void _showJoinProjectDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String projectId = '';
+        return AlertDialog(
+          title: const Text('Unirse a Proyecto'),
+          content: TextField(
+            onChanged: (value) {
+              projectId = value;
+            },
+            decoration: const InputDecoration(
+              hintText: 'Ingrese el ID del proyecto',
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Unirse'),
+              onPressed: () {
+                context.read<ProjectsBloc>().add(
+                  JoinProjectWithIdRequested(UniqueId.fromString(projectId)),
+                );
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Projects'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openProjectFormScreen(),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'create') {
+                _openProjectFormScreen();
+              } else if (value == 'join') {
+                _showJoinProjectDialog(context);
+              }
+            },
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'create',
+                    child: Text('Crear Proyecto'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'join',
+                    child: Text('Unirse a Proyecto con ID'),
+                  ),
+                ],
           ),
         ],
       ),

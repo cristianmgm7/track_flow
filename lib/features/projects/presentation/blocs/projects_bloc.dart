@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/usecases/join_project_with_id_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
@@ -18,6 +19,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
   final WatchAllProjectsUseCase watchAllProjects;
+  final JoinProjectWithIdUseCase joinProjectWithId;
   //
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
@@ -28,12 +30,14 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     required this.updateProject,
     required this.deleteProject,
     required this.watchAllProjects,
+    required this.joinProjectWithId,
   }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<ProjectsUpdated>(_onProjectsUpdated);
     on<StartWatchingProjects>(_onStartWatchingProjects);
+    on<JoinProjectWithIdRequested>(_onJoinProjectWithIdRequested);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -119,5 +123,19 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       return "An unexpected error occurred. Please try again later.";
     }
     return "An unknown error occurred.";
+  }
+
+  void _onJoinProjectWithIdRequested(
+    JoinProjectWithIdRequested event,
+    Emitter<ProjectsState> emit,
+  ) async {
+    emit(ProjectsLoading());
+    final result = await joinProjectWithId(
+      JoinProjectWithIdParams(projectId: event.projectId),
+    );
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (_) => emit(const ProjectOperationSuccess('Project joined successfully')),
+    );
   }
 }

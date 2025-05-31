@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
-import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_events.dart';
-import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_states.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -25,128 +21,86 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<MagicLinkBloc, MagicLinkState>(
-      listener: (context, state) {
-        if (state is MagicLinkGeneratedSuccess) {
-          final link = state.linkUrl; // linkId es el url generado
-          Share.share('Únete a mi proyecto: $link');
-        } else if (state is MagicLinkGenerationError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error al generar el enlace: \\${state.error.message}',
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          widget.project.name.value.fold((l) => 'Project Details', (r) => r),
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            // Audio player placeholder
+            Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey[700],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'Audio Player (placeholder)',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
             ),
-          );
-        }
-      },
-      child: BlocBuilder<MagicLinkBloc, MagicLinkState>(
-        builder: (context, state) {
-          final isLoading = state is MagicLinkLoading;
-          return Stack(
-            children: [
-              Scaffold(
-                appBar: AppBar(
-                  elevation: 0,
-                  iconTheme: const IconThemeData(color: Colors.white),
-                  title: Text(
-                    widget.project.name.value.fold(
-                      (l) => 'Project Details',
-                      (r) => r,
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                body: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      // Audio player placeholder
-                      Container(
-                        height: 180,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[700],
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Audio Player (placeholder)',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Botón para compartir el link de invitación
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.share),
-                        label: const Text('Compartir invitación'),
-                        onPressed:
-                            isLoading
-                                ? null
-                                : () {
-                                  context.read<MagicLinkBloc>().add(
-                                    MagicLinkRequested(
-                                      projectId: widget.project.id.value,
-                                    ),
-                                  );
-                                },
-                      ),
-                      const SizedBox(height: 16),
-                      // Mostrar el ID del proyecto
-                      const SizedBox(height: 16),
-                      // Toggle buttons
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[700],
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _TabButton(
-                              label: 'Tasks',
-                              selected: _selectedTab == 0,
-                              color: const Color(0xFFF25BB4),
-                              onTap: () => setState(() => _selectedTab = 0),
-                            ),
-                            const SizedBox(width: 16),
-                            _TabButton(
-                              label: 'Comments',
-                              selected: _selectedTab == 1,
-                              color: const Color(0xFF6DD3FF),
-                              onTap: () => setState(() => _selectedTab = 1),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      // Content area
-                      Expanded(
-                        child:
-                            _selectedTab == 0
-                                ? _TasksListPlaceholder()
-                                : _CommentsListPlaceholder(),
-                      ),
-                    ],
-                  ),
-                ),
+            const SizedBox(height: 24),
+            // Botón para compartir el ID del proyecto
+            ElevatedButton.icon(
+              icon: const Icon(Icons.share),
+              label: const Text('Compartir ID del proyecto'),
+              onPressed: () {
+                final projectId = widget.project.id.value;
+                Share.share('Únete a mi proyecto con este ID: $projectId');
+              },
+            ),
+            const SizedBox(height: 16),
+            // Mostrar el ID del proyecto
+            const SizedBox(height: 16),
+            // Toggle buttons
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey[700],
+                borderRadius: BorderRadius.circular(32),
               ),
-              if (isLoading)
-                Container(
-                  color: Colors.black.withOpacity(0.3),
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-            ],
-          );
-        },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _TabButton(
+                    label: 'Tasks',
+                    selected: _selectedTab == 0,
+                    color: const Color(0xFFF25BB4),
+                    onTap: () => setState(() => _selectedTab = 0),
+                  ),
+                  const SizedBox(width: 16),
+                  _TabButton(
+                    label: 'Comments',
+                    selected: _selectedTab == 1,
+                    color: const Color(0xFF6DD3FF),
+                    onTap: () => setState(() => _selectedTab = 1),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Content area
+            Expanded(
+              child:
+                  _selectedTab == 0
+                      ? _TasksListPlaceholder()
+                      : _CommentsListPlaceholder(),
+            ),
+          ],
+        ),
       ),
     );
   }

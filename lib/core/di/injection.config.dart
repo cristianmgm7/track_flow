@@ -74,6 +74,8 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
     as _i594;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
     as _i1043;
+import 'package:trackflow/features/projects/domain/usecases/join_project_with_id_usecase.dart'
+    as _i183;
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
     as _i532;
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart'
@@ -174,6 +176,11 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i1022.ProjectsRepository>(),
               gh<_i104.AuthRepository>(),
             ));
+    gh.lazySingleton<_i183.JoinProjectWithIdUseCase>(
+        () => _i183.JoinProjectWithIdUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i104.AuthRepository>(),
+            ));
     gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
           signIn: gh<_i843.SignInUseCase>(),
           signUp: gh<_i490.SignUpUseCase>(),
@@ -186,12 +193,6 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i740.AddCollaboratorUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i1043.DeleteProjectUseCase>(
         () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()));
-    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
-          createProject: gh<_i594.CreateProjectUseCase>(),
-          updateProject: gh<_i532.UpdateProjectUseCase>(),
-          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
-          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
-        ));
     gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
           generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),
@@ -200,6 +201,13 @@ extension GetItInjectableX on _i174.GetIt {
           getMagicLinkStatus: gh<_i1050.GetMagicLinkStatusUseCase>(),
           addCollaboratorUseCase: gh<_i740.AddCollaboratorUseCase>(),
           authRepository: gh<_i104.AuthRepository>(),
+        ));
+    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
+          createProject: gh<_i594.CreateProjectUseCase>(),
+          updateProject: gh<_i532.UpdateProjectUseCase>(),
+          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
+          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
+          joinProjectWithId: gh<_i183.JoinProjectWithIdUseCase>(),
         ));
     return this;
   }

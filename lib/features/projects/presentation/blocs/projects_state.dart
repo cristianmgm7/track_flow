@@ -53,6 +53,7 @@ class ProjectsLoaded extends ProjectsState {
   List<Object?> get props => [projects];
 }
 
+/// Add Participant
 class ParticipantAdded extends ProjectsState {
   final String participantId;
 
