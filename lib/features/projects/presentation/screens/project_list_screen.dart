@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
@@ -30,7 +29,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       isScrollControlled: true,
       builder: (context) => ProjectFormScreen(),
     );
-    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   void _showJoinProjectDialog(BuildContext context) {
@@ -38,7 +36,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       context: context,
       builder: (context) => JoinAsCollaboratorScreen(),
     );
-    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   @override

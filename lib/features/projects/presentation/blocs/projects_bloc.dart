@@ -107,7 +107,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     return super.close();
   }
 
-  void _onJoinProjectWithIdRequested(
+  Future<void> _onJoinProjectWithIdRequested(
     JoinProjectWithIdRequested event,
     Emitter<ProjectsState> emit,
   ) async {
@@ -117,8 +117,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     );
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (_) {
-        emit(const ProjectOperationSuccess('Project joined successfully'));
+      (project) {
+        emit(JoinProjectSuccess(project));
         add(StartWatchingProjects());
       },
     );

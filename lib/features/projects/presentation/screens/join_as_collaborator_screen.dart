@@ -33,7 +33,6 @@ class _JoinAsCollaboratorScreenState extends State<JoinAsCollaboratorScreen> {
 
   void _joinProject() {
     if (!_formKey.currentState!.validate()) return;
-
     final projectId = UniqueId.fromString(_projectIdController.text);
     context.read<ProjectsBloc>().add(JoinProjectWithIdRequested(projectId));
   }
