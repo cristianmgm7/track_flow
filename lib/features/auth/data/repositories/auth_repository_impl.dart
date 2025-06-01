@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
@@ -15,16 +16,34 @@ class AuthRepositoryImpl implements AuthRepository {
   final GoogleSignIn _googleSignIn;
   final SharedPreferences _prefs;
   final NetworkInfo _networkInfo;
+  final FirebaseFirestore _firestore;
 
   AuthRepositoryImpl({
     required FirebaseAuth auth,
     required GoogleSignIn googleSignIn,
     required SharedPreferences prefs,
     required NetworkInfo networkInfo,
+    required FirebaseFirestore firestore,
   }) : _auth = auth,
        _googleSignIn = googleSignIn,
        _prefs = prefs,
-       _networkInfo = networkInfo;
+       _networkInfo = networkInfo,
+       _firestore = firestore;
+
+  Future<void> _createUserProfileIfNotExists(User user) async {
+    final userRef = _firestore.collection('user_profile').doc(user.uid);
+    final existing = await userRef.get();
+    if (!existing.exists) {
+      await userRef.set({
+        'id': user.uid,
+        'name': user.displayName ?? '',
+        'email': user.email ?? '',
+        'avatarUrl': user.photoURL ?? '',
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+      });
+    }
+  }
 
   @override
   Stream<domain.User?> get authState async* {
@@ -87,6 +106,9 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       final user = cred.user;
+      if (user != null) {
+        await _createUserProfileIfNotExists(user);
+      }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign up'));
       return right(AuthDto.fromFirebase(user).toDomain());
@@ -118,6 +140,9 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final cred = await _auth.signInWithCredential(credential);
       final user = cred.user;
+      if (user != null) {
+        await _createUserProfileIfNotExists(user);
+      }
       if (user == null)
         return left(
           AuthenticationFailure('No user found after Google sign in'),
