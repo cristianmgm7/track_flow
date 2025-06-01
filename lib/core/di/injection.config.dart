@@ -82,6 +82,18 @@ import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_u
     as _i461;
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart'
     as _i534;
+import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart'
+    as _i744;
+import 'package:trackflow/features/user_profile/data/repositories/user_profile_repository_impl.dart'
+    as _i416;
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart'
+    as _i839;
+import 'package:trackflow/features/user_profile/domain/usecases/get_user_profile_usecase.dart'
+    as _i120;
+import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart'
+    as _i435;
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart'
+    as _i218;
 
 extension GetItInjectableX on _i174.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -113,6 +125,13 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i1010.MagicLinkLocalDataSourceImpl());
     gh.lazySingleton<_i952.NetworkInfo>(
         () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()));
+    gh.lazySingleton<_i104.AuthRepository>(() => _i447.AuthRepositoryImpl(
+          auth: gh<_i59.FirebaseAuth>(),
+          googleSignIn: gh<_i116.GoogleSignIn>(),
+          prefs: gh<_i460.SharedPreferences>(),
+          networkInfo: gh<_i952.NetworkInfo>(),
+          firestore: gh<_i974.FirebaseFirestore>(),
+        ));
     gh.lazySingleton<_i442.MagicLinkRemoteDataSource>(() =>
         _i442.MagicLinkRemoteDataSourceImpl(
             firestore: gh<_i974.FirebaseFirestore>()));
@@ -122,14 +141,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i334.ProjectsLocalDataSource>(() =>
         _i334.ProjectsLocalDataSourceImpl(
             box: gh<_i979.Box<Map<dynamic, dynamic>>>()));
+    gh.lazySingleton<_i744.UserProfileRemoteDataSource>(() =>
+        _i744.UserProfileRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()));
     gh.factory<_i524.MagicLinkRepository>(() =>
         _i133.MagicLinkRepositoryImp(gh<_i442.MagicLinkRemoteDataSource>()));
-    gh.lazySingleton<_i104.AuthRepository>(() => _i447.AuthRepositoryImpl(
-          auth: gh<_i59.FirebaseAuth>(),
-          googleSignIn: gh<_i116.GoogleSignIn>(),
-          prefs: gh<_i460.SharedPreferences>(),
-          networkInfo: gh<_i952.NetworkInfo>(),
-        ));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
         () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i836.GetAuthStateUseCase>(
@@ -181,6 +196,13 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i1022.ProjectsRepository>(),
               gh<_i104.AuthRepository>(),
             ));
+    gh.lazySingleton<_i839.UserProfileRepository>(() =>
+        _i416.UserProfileRepositoryImpl(
+            gh<_i744.UserProfileRemoteDataSource>()));
+    gh.factory<_i120.GetUserProfileUseCase>(
+        () => _i120.GetUserProfileUseCase(gh<_i839.UserProfileRepository>()));
+    gh.factory<_i435.UpdateUserProfileUseCase>(() =>
+        _i435.UpdateUserProfileUseCase(gh<_i839.UserProfileRepository>()));
     gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
           signIn: gh<_i843.SignInUseCase>(),
           signUp: gh<_i490.SignUpUseCase>(),
@@ -188,6 +210,10 @@ extension GetItInjectableX on _i174.GetIt {
           googleSignIn: gh<_i690.GoogleSignInUseCase>(),
           getAuthState: gh<_i836.GetAuthStateUseCase>(),
           onboarding: gh<_i442.OnboardingUseCase>(),
+        ));
+    gh.factory<_i218.UserProfileBloc>(() => _i218.UserProfileBloc(
+          getUserProfileUseCase: gh<_i120.GetUserProfileUseCase>(),
+          updateUserProfileUseCase: gh<_i435.UpdateUserProfileUseCase>(),
         ));
     gh.lazySingleton<_i740.AddCollaboratorUseCase>(
         () => _i740.AddCollaboratorUseCase(gh<_i1022.ProjectsRepository>()));
