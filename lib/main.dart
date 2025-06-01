@@ -11,6 +11,8 @@ void main() async {
   await configureDependencies();
   await DynamicLinkService().init();
   await Hive.initFlutter();
+  // SOLO EN DESARROLLO: Borra el box antes de abrirlo
+  //await Hive.deleteBoxFromDisk('projectsBox');
   await Hive.openBox<Map>('projectsBox');
   runApp(MyApp());
 }

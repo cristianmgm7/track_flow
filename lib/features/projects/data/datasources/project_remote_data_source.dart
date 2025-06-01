@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -160,6 +161,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       await docRef.update({
         'collaborators': FieldValue.arrayUnion([userId]),
       });
+      debugPrint('Collaborator added: $userId');
       return Right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {

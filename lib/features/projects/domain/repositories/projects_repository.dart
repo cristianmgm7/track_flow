@@ -16,7 +16,7 @@ abstract class ProjectsRepository {
     required UserId userId,
   });
 
-  Future<Either<Failure, Unit>> joinProjectWithId({
+  Future<Either<Failure, Project>> joinProjectWithId({
     required UniqueId projectId,
     required UserId userId,
   });

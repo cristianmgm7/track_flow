@@ -98,7 +98,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> joinProjectWithId({
+  Future<Either<Failure, Project>> joinProjectWithId({
     required UniqueId projectId,
     required UserId userId,
   }) async {
@@ -111,20 +111,20 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     final projectOrFailure = await _remoteDataSource.getProjectById(
       projectId.value,
     );
-    if (projectOrFailure.isRight()) {
-      final project = projectOrFailure.fold((l) => null, (r) => r);
-      if (project == null) {
-        return Left(DatabaseFailure('Project not found'));
-      }
+
+    return projectOrFailure.fold((failure) => Left(failure), (project) async {
       final projectDTO = ProjectDTO.fromDomain(project);
       await _localDataSource.cacheProject(projectDTO);
 
       // Agregar el colaborador
-      return await _remoteDataSource.addCollaborator(
+      final addCollaboratorResult = await _remoteDataSource.addCollaborator(
         projectId: projectId.value,
         userId: userId.value,
       );
-    }
-    return Left(DatabaseFailure('Project not found'));
+      return addCollaboratorResult.fold(
+        (failure) => Left(failure),
+        (_) => Right(project),
+      );
+    });
   }
 }

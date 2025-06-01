@@ -7,6 +7,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
+import 'package:trackflow/features/projects/presentation/screens/join_as_collaborator_screen.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
@@ -33,40 +34,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   void _showJoinProjectDialog(BuildContext context) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        String projectId = '';
-        return AlertDialog(
-          title: const Text('Unirse a Proyecto'),
-          content: TextField(
-            onChanged: (value) {
-              projectId = value;
-            },
-            decoration: const InputDecoration(
-              hintText: 'Ingrese el ID del proyecto',
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Unirse'),
-              onPressed: () {
-                context.read<ProjectsBloc>().add(
-                  JoinProjectWithIdRequested(UniqueId.fromString(projectId)),
-                );
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      builder: (context) => JoinAsCollaboratorScreen(),
     );
+    context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
   @override
@@ -129,29 +101,11 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
               itemCount: projects.length,
               itemBuilder: (context, index) {
                 final project = projects[index];
-                return Dismissible(
-                  key: Key(project.id.value),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    color: Colors.red,
-                    child: const Icon(Icons.delete, color: Colors.white),
-                  ),
-                  onDismissed: (direction) {
-                    context.read<ProjectsBloc>().add(
-                      DeleteProjectRequested(project.id),
-                    );
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Project deleted')));
-                  },
-                  child: ProjectCard(
-                    project: project,
-                    onTap:
-                        () => context.go(
-                          AppRoutes.projectDetails,
-                          extra: project,
-                        ),
-                  ),
+                return ProjectCard(
+                  project: project,
+                  onTap:
+                      () =>
+                          context.go(AppRoutes.projectDetails, extra: project),
                 );
               },
             );

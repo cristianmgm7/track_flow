@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dartz/dartz.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -106,6 +107,24 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     return super.close();
   }
 
+  void _onJoinProjectWithIdRequested(
+    JoinProjectWithIdRequested event,
+    Emitter<ProjectsState> emit,
+  ) async {
+    emit(ProjectsLoading());
+    final result = await joinProjectWithId(
+      JoinProjectWithIdParams(projectId: event.projectId),
+    );
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (_) {
+        emit(const ProjectOperationSuccess('Project joined successfully'));
+        add(StartWatchingProjects());
+      },
+    );
+    debugPrint('Project joined: and start watching projects');
+  }
+
   String _mapFailureToMessage(Failure failure) {
     if (failure is ValidationFailure) {
       return failure.message;
@@ -123,19 +142,5 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       return "An unexpected error occurred. Please try again later.";
     }
     return "An unknown error occurred.";
-  }
-
-  void _onJoinProjectWithIdRequested(
-    JoinProjectWithIdRequested event,
-    Emitter<ProjectsState> emit,
-  ) async {
-    emit(ProjectsLoading());
-    final result = await joinProjectWithId(
-      JoinProjectWithIdParams(projectId: event.projectId),
-    );
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (_) => emit(const ProjectOperationSuccess('Project joined successfully')),
-    );
   }
 }

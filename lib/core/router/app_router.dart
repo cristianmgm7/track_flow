@@ -69,12 +69,6 @@ class AppRouter {
                 token: state.pathParameters['token'] ?? '',
               ),
         ),
-        GoRoute(
-          path: AppRoutes.projectDetails,
-          builder:
-              (context, state) =>
-                  ProjectDetailsScreen(project: state.extra as Project),
-        ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) => MainScaffold(child: child),
@@ -99,6 +93,12 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.settings,
               builder: (context, state) => const SettingsScreen(),
+            ),
+            GoRoute(
+              path: AppRoutes.projectDetails,
+              builder:
+                  (context, state) =>
+                      ProjectDetailsScreen(project: state.extra as Project),
             ),
           ],
         ),

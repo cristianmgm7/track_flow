@@ -23,7 +23,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           widget.project.name.value.fold((l) => 'Project Details', (r) => r),

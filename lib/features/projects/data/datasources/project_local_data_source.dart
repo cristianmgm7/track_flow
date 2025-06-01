@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
 import '../models/project_dto.dart';
@@ -26,6 +27,8 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<void> cacheProject(ProjectDTO project) async {
     await _box.put(project.id, project.toMap());
+    debugPrint('Project cached: \\${project.id}');
+    printBoxContents();
   }
 
   @override
@@ -54,14 +57,32 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
     // Emitir el estado actual filtrado al suscribirse
+    debugPrint('Watching all projects');
     yield (await getAllProjects())
-        .where((dto) => dto.ownerId == ownerId.value)
+        .where(
+          (dto) =>
+              dto.ownerId == ownerId.value ||
+              dto.collaborators.contains(ownerId.value),
+        )
         .toList();
 
     // Luego escuchar los cambios y filtrar también
     yield* _box.watch().asyncMap((_) async {
       final all = await getAllProjects();
-      return all.where((dto) => dto.ownerId == ownerId.value).toList();
+      return all
+          .where(
+            (dto) =>
+                dto.ownerId == ownerId.value ||
+                dto.collaborators.contains(ownerId.value),
+          )
+          .toList();
     });
+  }
+
+  void printBoxContents() {
+    debugPrint('Contenido de la base de datos Hive:');
+    for (var key in _box.keys) {
+      debugPrint('Clave: $key, Valor: ${_box.get(key)}');
+    }
   }
 }
