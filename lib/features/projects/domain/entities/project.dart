@@ -2,14 +2,17 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 
+enum UserRole { owner, admin, member, viewer }
+
 class Project {
-  final UniqueId id;
+  final ProjectId id;
   final UserId ownerId;
   final ProjectName name;
   final ProjectDescription description;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final List<UserId> collaborators;
+  final Map<UserId, UserRole> roles;
 
   const Project({
     required this.id,
@@ -19,10 +22,11 @@ class Project {
     required this.createdAt,
     this.updatedAt,
     this.collaborators = const [],
+    this.roles = const {},
   });
 
   Project copyWith({
-    UniqueId? id,
+    ProjectId? id,
     UserId? ownerId,
     ProjectName? name,
     ProjectDescription? description,

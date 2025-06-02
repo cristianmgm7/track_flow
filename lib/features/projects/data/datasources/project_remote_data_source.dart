@@ -40,7 +40,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
           .collection(ProjectDTO.collection)
           .add(dto.toFirestore());
       final projectWithId = project.copyWith(
-        id: UniqueId.fromUniqueString(docRef.id),
+        id: ProjectId.fromUniqueString(docRef.id),
       );
       await docRef.update({'id': docRef.id});
       return Right(projectWithId);
