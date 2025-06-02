@@ -26,3 +26,14 @@ class UserId extends UniqueId {
 
   const UserId._(super.value) : super._();
 }
+
+class ProjectId extends UniqueId {
+  factory ProjectId() => ProjectId._(const Uuid().v4());
+
+  factory ProjectId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return ProjectId._(input);
+  }
+
+  const ProjectId._(super.value) : super._();
+}

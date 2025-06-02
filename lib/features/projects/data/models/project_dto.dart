@@ -34,7 +34,7 @@ class ProjectDTO {
   );
 
   Project toDomain() => Project(
-    id: UniqueId.fromUniqueString(id),
+    id: ProjectId.fromUniqueString(id),
     ownerId: UserId.fromUniqueString(ownerId),
     name: ProjectName(name),
     description: ProjectDescription(description),

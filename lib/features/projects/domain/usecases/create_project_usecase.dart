@@ -34,7 +34,7 @@ class CreateProjectUseCase {
       userIdString,
     ) async {
       final project = Project(
-        id: UniqueId(),
+        id: ProjectId(),
         ownerId: UserId.fromUniqueString(userIdString),
         name: params.name,
         description: params.description,
