@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
@@ -48,10 +49,15 @@ class UserProfileDTO {
       name: json['name'] as String,
       email: json['email'] as String,
       avatarUrl: json['avatarUrl'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          (json['createdAt'] is Timestamp)
+              ? (json['createdAt'] as Timestamp).toDate()
+              : DateTime.parse(json['createdAt'] as String),
       updatedAt:
-          json['updatedAt'] != null
-              ? DateTime.parse(json['updatedAt'] as String)
+          (json['updatedAt'] != null)
+              ? (json['updatedAt'] is Timestamp)
+                  ? (json['updatedAt'] as Timestamp).toDate()
+                  : DateTime.parse(json['updatedAt'] as String)
               : null,
     );
   }

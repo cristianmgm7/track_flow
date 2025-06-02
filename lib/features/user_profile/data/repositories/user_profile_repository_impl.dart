@@ -16,8 +16,14 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Future<Either<Failure, UserProfile>> getUserProfile(UserId userId) async {
     try {
-      final userProfile = await _remoteDataSource.getProfile(userId.value);
-      return right(userProfile.toDomain());
+      final userProfiles = await _remoteDataSource.getProfilesByIds(
+        userId.value,
+      );
+      return await userProfiles.fold((failure) => left(failure), (
+        userProfile,
+      ) async {
+        return right(userProfile);
+      });
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }

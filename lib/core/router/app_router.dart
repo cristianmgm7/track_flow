@@ -14,7 +14,7 @@ import 'package:trackflow/features/projects/presentation/screens/project_details
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/settings/presentation/pages/seetings_acount.dart';
+import 'package:trackflow/features/settings/presentation/screens/seetings_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',

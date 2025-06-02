@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/get_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_events.dart';
@@ -24,9 +23,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
-    final result = await getUserProfileUseCase(
-      UserId.fromUniqueString(event.userId),
-    );
+    final result = await getUserProfileUseCase();
     result.fold(
       (failure) => emit(UserProfileError()),
       (profile) => emit(UserProfileLoaded(profile)),

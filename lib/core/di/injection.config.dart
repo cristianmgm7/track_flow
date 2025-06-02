@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:trackflow/core/di/app_module.dart' as _i850;
 import 'package:trackflow/core/network/network_info.dart' as _i952;
 import 'package:trackflow/core/services/dynamic_link_service.dart' as _i559;
+import 'package:trackflow/core/session/session_storage.dart' as _i383;
 import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
     as _i447;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart'
@@ -132,6 +133,8 @@ extension GetItInjectableX on _i174.GetIt {
           networkInfo: gh<_i952.NetworkInfo>(),
           firestore: gh<_i974.FirebaseFirestore>(),
         ));
+    gh.lazySingleton<_i383.SessionStorage>(
+        () => _i383.SessionStorage(prefs: gh<_i460.SharedPreferences>()));
     gh.lazySingleton<_i442.MagicLinkRemoteDataSource>(() =>
         _i442.MagicLinkRemoteDataSourceImpl(
             firestore: gh<_i974.FirebaseFirestore>()));
@@ -199,8 +202,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i839.UserProfileRepository>(() =>
         _i416.UserProfileRepositoryImpl(
             gh<_i744.UserProfileRemoteDataSource>()));
-    gh.factory<_i120.GetUserProfileUseCase>(
-        () => _i120.GetUserProfileUseCase(gh<_i839.UserProfileRepository>()));
     gh.factory<_i435.UpdateUserProfileUseCase>(() =>
         _i435.UpdateUserProfileUseCase(gh<_i839.UserProfileRepository>()));
     gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
@@ -210,6 +211,10 @@ extension GetItInjectableX on _i174.GetIt {
           googleSignIn: gh<_i690.GoogleSignInUseCase>(),
           getAuthState: gh<_i836.GetAuthStateUseCase>(),
           onboarding: gh<_i442.OnboardingUseCase>(),
+        ));
+    gh.factory<_i120.GetUserProfileUseCase>(() => _i120.GetUserProfileUseCase(
+          gh<_i839.UserProfileRepository>(),
+          gh<_i383.SessionStorage>(),
         ));
     gh.factory<_i218.UserProfileBloc>(() => _i218.UserProfileBloc(
           getUserProfileUseCase: gh<_i120.GetUserProfileUseCase>(),

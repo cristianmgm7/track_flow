@@ -12,7 +12,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_events.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -26,9 +25,7 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
         ),
         BlocProvider<UserProfileBloc>(
-          create:
-              (context) =>
-                  sl<UserProfileBloc>()..add(LoadUserProfile('user-id')),
+          create: (context) => sl<UserProfileBloc>(),
         ),
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),

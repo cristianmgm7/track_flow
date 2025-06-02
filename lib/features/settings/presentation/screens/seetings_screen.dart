@@ -7,9 +7,23 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
 import 'package:trackflow/features/settings/presentation/widgets/profile_information.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_events.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<UserProfileBloc>().add(LoadUserProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +40,22 @@ class SettingsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Information Card
-              ProfileInformation(),
-              const SizedBox(height: 16),
+              BlocBuilder<UserProfileBloc, UserProfileState>(
+                builder: (context, state) {
+                  if (state is UserProfileLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (state is UserProfileLoaded) {
+                    return Column(
+                      children: [
+                        ProfileInformation(profile: state.profile),
+                        const SizedBox(height: 16),
+                      ],
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
               // Preferences Card
               const Preferences(),
               const SizedBox(height: 16),

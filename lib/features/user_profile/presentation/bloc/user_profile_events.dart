@@ -7,8 +7,7 @@ abstract class UserProfileEvent extends Equatable {
 }
 
 class LoadUserProfile extends UserProfileEvent {
-  final String userId;
-  LoadUserProfile(this.userId);
+  LoadUserProfile();
 }
 
 class SaveUserProfile extends UserProfileEvent {

@@ -9,6 +9,7 @@ import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/session/session_storage.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -29,6 +30,19 @@ class AuthRepositoryImpl implements AuthRepository {
        _prefs = prefs,
        _networkInfo = networkInfo,
        _firestore = firestore;
+
+  Future<void> _cacheUserId(User user) async {
+    final userId = user.uid;
+    await SessionStorage(prefs: _prefs).saveUserId(userId);
+  }
+
+  // user
+  @override
+  Future<Either<Failure, String>> getSignedInUserId() async {
+    final user = _auth.currentUser;
+    if (user == null) return left(AuthenticationFailure('No user found'));
+    return right(user.uid);
+  }
 
   Future<void> _createUserProfileIfNotExists(User user) async {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
@@ -81,6 +95,9 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
       final user = cred.user;
+      if (user != null) {
+        await _cacheUserId(user);
+      }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign in'));
       return right(AuthDto.fromFirebase(user).toDomain());
@@ -108,6 +125,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = cred.user;
       if (user != null) {
         await _createUserProfileIfNotExists(user);
+        await _cacheUserId(user);
       }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign up'));
@@ -142,6 +160,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = cred.user;
       if (user != null) {
         await _createUserProfileIfNotExists(user);
+        await _cacheUserId(user);
       }
       if (user == null)
         return left(
@@ -192,13 +211,5 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> checkOnboardingCompleted() async {
     return _prefs.getBool('onboardingCompleted') ?? false;
-  }
-
-  // user
-  @override
-  Future<Either<Failure, String>> getSignedInUserId() async {
-    final user = _auth.currentUser;
-    if (user == null) return left(AuthenticationFailure('No user found'));
-    return right(user.uid);
   }
 }
