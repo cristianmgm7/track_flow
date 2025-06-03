@@ -4,6 +4,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_description.dart';
+import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 
 @LazySingleton(as: ProjectRepository)
 class ProjectDetailRepositoryImpl implements ProjectRepository {
@@ -11,10 +13,17 @@ class ProjectDetailRepositoryImpl implements ProjectRepository {
   Future<Either<Failure, Project>> getProjectById(ProjectId id) async {
     try {
       // Simulate fetching project by ID
-      final project = Project(id: id, name: 'Sample Project');
+      final project = Project(
+        id: id,
+        name: ProjectName('Sample Project'),
+        description: ProjectDescription('Sample Description'),
+        ownerId: UserId.fromUniqueString('ownerId'),
+        createdAt: DateTime.now(),
+        collaborators: [],
+      );
       return Right(project);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -27,7 +36,7 @@ class ProjectDetailRepositoryImpl implements ProjectRepository {
       // Simulate adding a participant
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -40,7 +49,7 @@ class ProjectDetailRepositoryImpl implements ProjectRepository {
       // Simulate removing a participant
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -54,7 +63,7 @@ class ProjectDetailRepositoryImpl implements ProjectRepository {
       // Simulate updating a participant's role
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -64,9 +73,12 @@ class ProjectDetailRepositoryImpl implements ProjectRepository {
   ) async* {
     try {
       // Simulate observing project participants
-      yield Right([UserId('user1'), UserId('user2')]);
+      yield Right([
+        UserId.fromUniqueString('user1'),
+        UserId.fromUniqueString('user2'),
+      ]);
     } catch (e) {
-      yield Left(ServerFailure());
+      yield Left(ServerFailure(e.toString()));
     }
   }
 }

@@ -4,6 +4,8 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/entities/project_description.dart';
+import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 
 abstract class ProjectDetailRemoteDataSource {
   Future<Either<Failure, Project>> fetchProjectById(ProjectId id);
@@ -34,10 +36,17 @@ class ProjectDetailRemoteDataSourceImpl
   Future<Either<Failure, Project>> fetchProjectById(ProjectId id) async {
     try {
       // Simulate fetching project by ID from remote source
-      final project = Project(id: id, name: 'Sample Project');
+      final project = Project(
+        id: id,
+        name: ProjectName('Sample Project'),
+        description: ProjectDescription('Sample Description'),
+        ownerId: UserId.fromUniqueString('ownerId'),
+        createdAt: DateTime.now(),
+        collaborators: [],
+      );
       return Right(project);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -50,7 +59,7 @@ class ProjectDetailRemoteDataSourceImpl
       // Simulate adding a participant to a project in remote source
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -63,7 +72,7 @@ class ProjectDetailRemoteDataSourceImpl
       // Simulate removing a participant from a project in remote source
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -77,7 +86,7 @@ class ProjectDetailRemoteDataSourceImpl
       // Simulate updating a participant's role in a project in remote source
       return Right(null);
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

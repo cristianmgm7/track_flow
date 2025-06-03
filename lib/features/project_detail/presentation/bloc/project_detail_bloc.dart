@@ -11,7 +11,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
   ProjectDetailBloc({required this.addCollaboratorUseCase})
     : super(ProjectDetailsInitial()) {
     on<ProjectDetailsStarted>(_onProjectDetailsStarted);
-    on<ParticipantAdded>(_onParticipantAdded);
+    // on<ParticipantAdded>(_onParticipantAdded);
     on<ParticipantRemoved>(_onParticipantRemoved);
     on<ParticipantRoleChanged>(_onParticipantRoleChanged);
     on<ProjectParticipantsUpdated>(_onProjectParticipantsUpdated);
@@ -27,45 +27,47 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     // emit(ProjectDetailsLoaded(...));
   }
 
-  Future<void> _onParticipantAdded(
-    ParticipantAdded event,
-    Emitter<ProjectDetailState> emit,
-  ) async {
-    emit(ProjectDetailsUpdatingParticipant());
-    final result = await addCollaboratorUseCase(
-      AddCollaboratorParams(projectId: event.projectId, userId: event.userId),
-    );
+  // Future<void> _onParticipantAdded(
+  //   ParticipantAdded event,
+  //   Emitter<ProjectDetailState> emit,
+  // ) async {
+  //   emit(ProjectDetailsUpdatingParticipant());
+  //   final result = await addCollaboratorUseCase(
+  //     AddCollaboratorParams(
+  //       projectId:
+  //       userId: event.userId,
+  //     ),
+  //   );
 
-    result.fold(
-      (failure) => emit(ProjectDetailsError(failure)),
-      (_) => emit(ProjectDetailsParticipantUpdated()),
-    );
-  }
+  //   result.fold(
+  //     (failure) => emit(ProjectDetailsError(failure)),
+  //     (_) => emit(ProjectDetailsParticipantUpdated()),
+  //   );
+}
 
-  Future<void> _onParticipantRemoved(
-    ParticipantRemoved event,
-    Emitter<ProjectDetailState> emit,
-  ) async {
-    emit(ProjectDetailsUpdatingParticipant());
-    // Logic to remove participant goes here
-    // For now, we'll just emit a participant updated state
-    emit(ProjectDetailsParticipantUpdated());
-  }
+Future<void> _onParticipantRemoved(
+  ParticipantRemoved event,
+  Emitter<ProjectDetailState> emit,
+) async {
+  emit(ProjectDetailsUpdatingParticipant());
+  // Logic to remove participant goes here
+  // For now, we'll just emit a participant updated state
+  emit(ProjectDetailsParticipantUpdated());
+}
 
-  Future<void> _onParticipantRoleChanged(
-    ParticipantRoleChanged event,
-    Emitter<ProjectDetailState> emit,
-  ) async {
-    emit(ProjectDetailsUpdatingParticipant());
-    // Logic to change participant role goes here
-    // For now, we'll just emit a participant updated state
-    emit(ProjectDetailsParticipantUpdated());
-  }
+Future<void> _onParticipantRoleChanged(
+  ParticipantRoleChanged event,
+  Emitter<ProjectDetailState> emit,
+) async {
+  emit(ProjectDetailsUpdatingParticipant());
+  // Logic to change participant role goes here
+  // For now, we'll just emit a participant updated state
+  emit(ProjectDetailsParticipantUpdated());
+}
 
-  Future<void> _onProjectParticipantsUpdated(
-    ProjectParticipantsUpdated event,
-    Emitter<ProjectDetailState> emit,
-  ) async {
-    emit(ProjectDetailsLiveUpdated(event.updatedList));
-  }
+Future<void> _onProjectParticipantsUpdated(
+  ProjectParticipantsUpdated event,
+  Emitter<ProjectDetailState> emit,
+) async {
+  emit(ProjectDetailsLiveUpdated(event.updatedList));
 }

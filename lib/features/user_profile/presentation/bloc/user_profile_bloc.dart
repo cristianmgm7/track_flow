@@ -40,5 +40,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       (failure) => emit(UserProfileError()),
       (_) => emit(UserProfileSaved()),
     );
+    add(LoadUserProfile());
   }
 }

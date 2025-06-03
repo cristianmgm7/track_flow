@@ -5,7 +5,7 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
-import 'package:trackflow/features/settings/presentation/widgets/profile_information.dart';
+import 'package:trackflow/features/user_profile/presentation/profile_information.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_events.dart';

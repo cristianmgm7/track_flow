@@ -19,4 +19,7 @@ class AppRoutes {
 
   // Helper method to generate project details route with ID
   static String projectDetailsWithId(String id) => '/projectdetails/$id';
+
+  // User profile routes
+  static const String userProfile = '/userprofile';
 }

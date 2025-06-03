@@ -40,10 +40,17 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   }
 
   @override
-  Future<void> updateProfile(UserProfileDTO profile) async {
-    await _firestore
-        .collection(UserProfileDTO.collection)
-        .doc(profile.id)
-        .update(profile.toJson());
+  Future<Either<Failure, void>> updateProfile(UserProfileDTO profile) async {
+    try {
+      await _firestore
+          .collection(UserProfileDTO.collection)
+          .doc(profile.id)
+          .update(profile.toJson());
+      return right(null);
+    } on FirebaseException catch (e) {
+      return left(ServerFailure(e.message ?? 'An error occurred'));
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
   }
 }

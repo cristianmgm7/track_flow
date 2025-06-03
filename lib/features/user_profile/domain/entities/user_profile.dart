@@ -1,5 +1,15 @@
 import 'package:trackflow/core/entities/unique_id.dart';
 
+enum CreativeRole {
+  producer,
+  composer,
+  mixingEngineer,
+  masteringEngineer,
+  vocalist,
+  instrumentalist,
+  other,
+}
+
 class UserProfile {
   final UserId id;
   final String name;
@@ -7,6 +17,7 @@ class UserProfile {
   final String avatarUrl;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final CreativeRole? creativeRole;
 
   const UserProfile({
     required this.id,
@@ -15,6 +26,7 @@ class UserProfile {
     required this.avatarUrl,
     required this.createdAt,
     this.updatedAt,
+    this.creativeRole,
   });
 
   UserProfile copyWith({
@@ -24,6 +36,7 @@ class UserProfile {
     String? avatarUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
+    CreativeRole? creativeRole,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -32,6 +45,7 @@ class UserProfile {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      creativeRole: creativeRole ?? this.creativeRole,
     );
   }
 }

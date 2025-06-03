@@ -55,6 +55,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'avatarUrl': user.photoURL ?? '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
+        'creativeRole': 'Artist',
       });
     }
   }
@@ -97,6 +98,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = cred.user;
       if (user != null) {
         await _cacheUserId(user);
+        await _createUserProfileIfNotExists(user);
       }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign in'));
@@ -111,6 +113,10 @@ class AuthRepositoryImpl implements AuthRepository {
     String email,
     String password,
   ) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _createUserProfileIfNotExists(user);
+    }
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
@@ -139,6 +145,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, domain.User>> signInWithGoogle() async {
     try {
       final isConnected = await _networkInfo.isConnected;
+      final user = _auth.currentUser;
       if (!isConnected) {
         return left(
           AuthenticationFailure(
@@ -157,10 +164,9 @@ class AuthRepositoryImpl implements AuthRepository {
         idToken: googleAuth.idToken,
       );
       final cred = await _auth.signInWithCredential(credential);
-      final user = cred.user;
       if (user != null) {
-        await _createUserProfileIfNotExists(user);
         await _cacheUserId(user);
+        await _createUserProfileIfNotExists(user);
       }
       if (user == null)
         return left(
