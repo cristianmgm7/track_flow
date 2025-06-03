@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/add_participand_dialog.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_alert_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
@@ -27,6 +28,15 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               // Handle the participant ID
             },
           ),
+    );
+  }
+
+  void _deleteProject(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder:
+          (context) =>
+              DeleteProjectDialog(onDeleteProject: () {}, project: project),
     );
   }
 
@@ -63,6 +73,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 case 'Update Participants':
                   // Trigger ProjectParticipantsUpdated event
                   // context.read<ProjectDetailBloc>().add(ProjectParticipantsUpdated(updatedList));
+                  break;
+                case 'Delete Project':
+                  _deleteProject(context, widget.project);
                   break;
               }
             },
