@@ -69,10 +69,12 @@ class ProfileInformation extends StatelessWidget {
               children: [
                 Text("User ID", style: Theme.of(context).textTheme.bodyMedium),
                 SizedBox(width: 8),
-                Expanded(
+                SizedBox(
+                  width: 150, // Fixed width for the User ID display
                   child: Text(
                     profile.id.value,
                     style: Theme.of(context).textTheme.bodyMedium,
+                    overflow: TextOverflow.ellipsis, // Hide overflow text
                   ),
                 ),
                 IconButton(

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/add_participand_dialog.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/change_rol_dialog.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_alert_dialog.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/remove_participand_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
@@ -17,6 +22,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    context.read<ProjectDetailBloc>().add(
+      ProjectDetailsStarted(widget.project.id),
+    );
   }
 
   void _addParticipant(BuildContext context) {
@@ -27,6 +35,24 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             onAddParticipant: (participantId) {
               // Handle the participant ID
             },
+          ),
+    );
+  }
+
+  void _removeParticipant(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder: (context) => RemoveParticipantDialog(onRemoveParticipant: () {}),
+    );
+  }
+
+  void _changeRole(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => ChangeRoleDialog(
+            userProfile: project.collaborators.first,
+            onRoleChanged: (userProfile) {},
           ),
     );
   }
@@ -45,9 +71,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     return Scaffold(
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'Project Details',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          widget.project.name.value.fold((l) => '', (r) => r),
+          style: const TextStyle(color: Colors.white),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -63,12 +89,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   _addParticipant(context);
                   break;
                 case 'Remove Participant':
-                  // Trigger ParticipantRemoved event
-                  // context.read<ProjectDetailBloc>().add(ParticipantRemoved(userId));
+                  _removeParticipant(context, widget.project);
                   break;
                 case 'Change Role':
-                  // Trigger ParticipantRoleChanged event
-                  // context.read<ProjectDetailBloc>().add(ParticipantRoleChanged(userId, newRole));
+                  _changeRole(context, widget.project);
                   break;
                 case 'Update Participants':
                   // Trigger ProjectParticipantsUpdated event
@@ -85,6 +109,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 'Remove Participant',
                 'Change Role',
                 'Update Participants',
+                'Delete Project',
               }.map((String choice) {
                 return PopupMenuItem<String>(
                   value: choice,

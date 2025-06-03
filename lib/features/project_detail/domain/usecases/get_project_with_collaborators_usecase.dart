@@ -1,19 +1,10 @@
 import 'package:dartz/dartz.dart';
-import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/project_detail/domain/entities/project_with_collaborators.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-
-class GetProjectWithCollaboratorsParams extends Equatable {
-  final ProjectId projectId;
-
-  const GetProjectWithCollaboratorsParams({required this.projectId});
-
-  @override
-  List<Object?> get props => [projectId];
-}
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @lazySingleton
 class GetProjectWithCollaboratorsUseCase {
@@ -21,9 +12,35 @@ class GetProjectWithCollaboratorsUseCase {
 
   GetProjectWithCollaboratorsUseCase(this._repository);
 
-  Future<Either<Failure, Project>> call(
-    GetProjectWithCollaboratorsParams params,
+  Future<Either<Failure, ProjectWithCollaborators>> call(
+    ProjectId projectId,
   ) async {
-    return await _repository.getProjectById(params.projectId);
+    try {
+      final projectResult = await _repository.getProjectById(projectId);
+      return projectResult.fold((failure) => Left(failure), (project) async {
+        final participantsResult =
+            await _repository.observeProjectParticipants(projectId).first;
+        return participantsResult.fold((failure) => Left(failure), (
+          userIds,
+        ) async {
+          // Assuming a method to fetch user profiles from user IDs
+          final userProfiles = await _fetchUserProfiles(userIds);
+          return Right(
+            ProjectWithCollaborators(
+              project: project,
+              collaborators: userProfiles,
+            ),
+          );
+        });
+      });
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<List<UserProfile>> _fetchUserProfiles(List<UserId> userIds) async {
+    // Placeholder for fetching user profiles from user IDs
+    // This should be replaced with actual implementation
+    return [];
   }
 }
