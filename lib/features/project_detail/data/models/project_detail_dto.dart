@@ -4,6 +4,7 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ProjectDetailDTO {
   final String id;
@@ -40,6 +41,7 @@ class ProjectDetailDTO {
                   email: '',
                   avatarUrl: '',
                   createdAt: DateTime.now(),
+                  creativeRole: CreativeRole.producer,
                 ),
               )
               .toList(),
