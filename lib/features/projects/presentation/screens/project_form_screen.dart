@@ -7,7 +7,7 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
+import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 
 class ProjectFormScreen extends StatefulWidget {
   const ProjectFormScreen({super.key});

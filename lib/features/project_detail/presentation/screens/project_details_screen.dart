@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/add_participand_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:share_plus/share_plus.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -12,9 +13,6 @@ class ProjectDetailsScreen extends StatefulWidget {
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
-  // 0 = Tasks, 1 = Comments
-  final int _selectedTab = 0;
-
   @override
   void initState() {
     super.initState();
@@ -40,6 +38,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         title: const Text(
           'Project Details',
           style: TextStyle(color: Colors.white),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            context.go(AppRoutes.projects);
+          },
         ),
         actions: [
           PopupMenuButton<String>(

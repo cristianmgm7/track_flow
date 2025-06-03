@@ -7,15 +7,15 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 
-class JoinAsCollaboratorScreen extends StatefulWidget {
-  const JoinAsCollaboratorScreen({super.key});
+class JoinAsCollaboratorDialog extends StatefulWidget {
+  const JoinAsCollaboratorDialog({super.key});
 
   @override
-  State<JoinAsCollaboratorScreen> createState() =>
-      _JoinAsCollaboratorScreenState();
+  State<JoinAsCollaboratorDialog> createState() =>
+      _JoinAsCollaboratorDialogState();
 }
 
-class _JoinAsCollaboratorScreenState extends State<JoinAsCollaboratorScreen> {
+class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _projectIdController;
 
@@ -58,19 +58,14 @@ class _JoinAsCollaboratorScreenState extends State<JoinAsCollaboratorScreen> {
           );
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Join Project'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ),
-        body: BlocBuilder<ProjectsBloc, ProjectsState>(
+      child: AlertDialog(
+        title: const Text('Join Project'),
+        content: BlocBuilder<ProjectsBloc, ProjectsState>(
           builder: (context, state) {
             return Form(
               key: _formKey,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   TextFormField(
                     controller: _projectIdController,
@@ -102,6 +97,12 @@ class _JoinAsCollaboratorScreenState extends State<JoinAsCollaboratorScreen> {
             );
           },
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
       ),
     );
   }

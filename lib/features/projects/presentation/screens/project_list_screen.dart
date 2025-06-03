@@ -6,7 +6,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
-import 'package:trackflow/features/projects/presentation/screens/join_as_collaborator_screen.dart';
+import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
@@ -32,9 +32,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   void _showJoinProjectDialog(BuildContext context) {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      builder: (context) => JoinAsCollaboratorScreen(),
+      builder: (context) => JoinAsCollaboratorDialog(),
     );
   }
 
