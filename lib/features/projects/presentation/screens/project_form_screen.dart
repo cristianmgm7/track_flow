@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
@@ -10,7 +12,11 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_state.da
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 
 class ProjectFormScreen extends StatefulWidget {
-  const ProjectFormScreen({super.key});
+  final Project? project;
+  final bool isEditing;
+
+  const ProjectFormScreen({super.key, this.project})
+    : isEditing = project != null;
 
   @override
   State<ProjectFormScreen> createState() => _ProjectFormScreenState();
@@ -24,8 +30,12 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController();
-    _descriptionController = TextEditingController();
+    _titleController = TextEditingController(
+      text: widget.project?.name.value.fold((l) => '', (r) => r),
+    );
+    _descriptionController = TextEditingController(
+      text: widget.project?.description.value.fold((l) => '', (r) => r),
+    );
   }
 
   @override
@@ -35,14 +45,23 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     super.dispose();
   }
 
-  Future<void> _saveProject() async {
+  Future<void> _saveProjectOrEditProject() async {
     if (!_formKey.currentState!.validate()) return;
 
     final name = ProjectName(_titleController.text);
     final description = ProjectDescription(_descriptionController.text);
 
-    final params = CreateProjectParams(name: name, description: description);
-    context.read<ProjectsBloc>().add(CreateProjectRequested(params));
+    if (widget.isEditing) {
+      final updatedProject = widget.project!.copyWith(
+        name: name,
+        description: description,
+      );
+      context.read<ProjectsBloc>().add(UpdateProjectRequested(updatedProject));
+    } else {
+      final params = CreateProjectParams(name: name, description: description);
+      context.read<ProjectsBloc>().add(CreateProjectRequested(params));
+    }
+    context.pop();
   }
 
   @override
@@ -64,7 +83,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.message}'),
+              content: Text('Error: \\${state.message}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -72,7 +91,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('New Project'),
+          title: Text(widget.isEditing ? 'Edit Project' : 'New Project'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -113,7 +132,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: isLoading ? null : _saveProject,
+                    onPressed: isLoading ? null : _saveProjectOrEditProject,
                     child:
                         isLoading
                             ? const SizedBox(
@@ -121,7 +140,11 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                               height: 24,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                            : const Text('Create Project'),
+                            : Text(
+                              widget.isEditing
+                                  ? 'Edit Project'
+                                  : 'Create Project',
+                            ),
                   ),
                 ],
               ),

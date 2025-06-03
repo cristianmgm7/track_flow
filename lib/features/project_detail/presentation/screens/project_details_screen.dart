@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/add_participand_dialog.dart';
-import 'package:trackflow/features/project_detail/presentation/widgets/change_rol_dialog.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_alert_dialog.dart';
-import 'package:trackflow/features/project_detail/presentation/widgets/remove_participand_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -67,6 +63,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     Share.share('Check out this project: $shareableLink');
   }
 
+  void _updateProject(BuildContext context, Project project) {
+    showDialog(
+      context: context,
+      builder: (context) => ProjectFormScreen(project: project),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,6 +108,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   // Trigger ProjectParticipantsUpdated event
                   // context.read<ProjectDetailBloc>().add(ProjectParticipantsUpdated(updatedList));
                   break;
+                case 'Update Project':
+                  _updateProject(context, widget.project);
+                  break;
                 case 'Delete Project':
                   _deleteProject(context, widget.project);
                   break;
@@ -116,6 +122,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 'Remove Participant',
                 'Change Role',
                 'Update Participants',
+                'Update Project',
                 'Delete Project',
               }.map((String choice) {
                 return PopupMenuItem<String>(
