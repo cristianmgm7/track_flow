@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
 
@@ -13,13 +13,6 @@ class ProfileInformation extends StatelessWidget {
       context: context,
       builder: (context) => EditProfileDialog(profile: profile),
     );
-  }
-
-  void _copyUserId(BuildContext context, String userId) {
-    Clipboard.setData(ClipboardData(text: userId));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('User ID copied to clipboard')));
   }
 
   @override
@@ -78,8 +71,8 @@ class ProfileInformation extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.copy, size: 20),
-                  onPressed: () => _copyUserId(context, profile.id.value),
+                  icon: Icon(Icons.share, size: 20),
+                  onPressed: () => Share.share(profile.id.value),
                 ),
               ],
             ),
