@@ -9,6 +9,7 @@ class UserProfileDTO {
   final String avatarUrl;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final CreativeRole creativeRole;
 
   UserProfileDTO({
     required this.id,
@@ -17,6 +18,7 @@ class UserProfileDTO {
     required this.avatarUrl,
     required this.createdAt,
     this.updatedAt,
+    required this.creativeRole,
   });
 
   static const String collection = 'user_profile';
@@ -29,6 +31,7 @@ class UserProfileDTO {
       avatarUrl: userProfile.avatarUrl,
       createdAt: userProfile.createdAt,
       updatedAt: userProfile.updatedAt,
+      creativeRole: userProfile.creativeRole!,
     );
   }
 
@@ -40,6 +43,7 @@ class UserProfileDTO {
       avatarUrl: avatarUrl,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      creativeRole: creativeRole,
     );
   }
 
@@ -59,6 +63,7 @@ class UserProfileDTO {
                   ? (json['updatedAt'] as Timestamp).toDate()
                   : DateTime.parse(json['updatedAt'] as String)
               : null,
+      creativeRole: CreativeRole.values.byName(json['creativeRole'] as String),
     );
   }
 
@@ -70,6 +75,7 @@ class UserProfileDTO {
       'avatarUrl': avatarUrl,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'creativeRole': creativeRole.name,
     };
   }
 }
