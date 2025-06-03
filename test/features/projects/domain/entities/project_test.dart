@@ -16,7 +16,7 @@ void main() {
 
     test('should create a valid Project', () {
       final project = Project(
-        id: id,
+        id: ProjectId(id.value),
         ownerId: ownerId,
         name: name,
         description: description,
@@ -33,7 +33,7 @@ void main() {
 
     test('copyWith should update fields correctly', () {
       final project = Project(
-        id: id,
+        id: ProjectId(id.value),
         ownerId: ownerId,
         name: name,
         description: description,
@@ -48,7 +48,7 @@ void main() {
       final newUpdatedAt = DateTime(2024, 6, 2, 10, 0, 0);
 
       final updated = project.copyWith(
-        id: newId,
+        id: ProjectId(newId.value),
         ownerId: newOwnerId,
         name: newName,
         description: newDescription,

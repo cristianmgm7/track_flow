@@ -45,6 +45,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         title: const Text('My Projects'),
         actions: [
           PopupMenuButton<String>(
+            icon: const Icon(Icons.add),
             onSelected: (value) {
               if (value == 'create') {
                 _openProjectFormScreen();

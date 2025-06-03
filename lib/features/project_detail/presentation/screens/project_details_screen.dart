@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
@@ -19,14 +20,6 @@ class ProjectDetailsScreen extends StatefulWidget {
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<ProjectDetailBloc>().add(
-      ProjectDetailsStarted(widget.project.id),
-    );
-  }
-
   void _addParticipant(BuildContext context) {
     showDialog(
       context: context,
@@ -40,21 +33,23 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   }
 
   void _removeParticipant(BuildContext context, Project project) {
-    showDialog(
-      context: context,
-      builder: (context) => RemoveParticipantDialog(onRemoveParticipant: () {}),
-    );
+    // showDialog(
+    //   context: context,
+    //   builder: (context) => RemoveParticipantDialog(
+    //     onRemoveParticipant: () {},
+    //   ),
+    // );
   }
 
   void _changeRole(BuildContext context, Project project) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => ChangeRoleDialog(
-            userProfile: project.collaborators.first,
-            onRoleChanged: (userProfile) {},
-          ),
-    );
+    // showDialog(
+    //   context: context,
+    //   builder:
+    //       (context) => ChangeRoleDialog(
+    //         //userProfile: project.collaborators.first,
+    //         onRoleChanged: (userProfile) {},
+    //       ),
+    // );
   }
 
   void _deleteProject(BuildContext context, Project project) {
@@ -64,6 +59,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           (context) =>
               DeleteProjectDialog(onDeleteProject: () {}, project: project),
     );
+  }
+
+  void _shareProject(BuildContext context, Project project) {
+    final projectId = widget.project.id;
+    final shareableLink = 'https://example.com/project/$projectId';
+    Share.share('Check out this project: $shareableLink');
   }
 
   @override
@@ -82,6 +83,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.link, color: Colors.white),
+            onPressed: () {
+              _shareProject(context, widget.project);
+            },
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               switch (value) {
