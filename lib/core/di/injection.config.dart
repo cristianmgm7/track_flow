@@ -59,6 +59,22 @@ import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_lin
     as _i741;
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart'
     as _i253;
+import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart'
+    as _i93;
+import 'package:trackflow/features/manage_collaborators/data/repositories/manage_collaborators_repository_impl.dart'
+    as _i1050;
+import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart'
+    as _i1063;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
+    as _i398;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart'
+    as _i933;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
+    as _i151;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
+    as _i81;
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart'
+    as _i438;
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart'
     as _i508;
 import 'package:trackflow/features/project_detail/data/datasource/project_detail_remote_datasource.dart'
@@ -67,14 +83,10 @@ import 'package:trackflow/features/project_detail/data/repositories/project_deta
     as _i167;
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart'
     as _i703;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
-    as _i532;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_collaborators_usecase.dart'
-    as _i724;
 import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart'
-    as _i562;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
-    as _i440;
+    as _i650;
+import 'package:trackflow/features/project_detail/domain/usecases/load_project_details_usecase.dart'
+    as _i853;
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart'
     as _i376;
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart'
@@ -113,12 +125,16 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
     as _i218;
 
 extension GetItInjectableX on _i174.GetIt {
-  // initializes the registration of main-scope dependencies inside of GetIt
+// initializes the registration of main-scope dependencies inside of GetIt
   Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
   }) async {
-    final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    final gh = _i526.GetItHelper(
+      this,
+      environment,
+      environmentFilter,
+    );
     final appModule = _$AppModule();
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => appModule.prefs,
@@ -128,211 +144,179 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i559.DynamicLinkService>(() => _i559.DynamicLinkService());
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
     gh.lazySingleton<_i974.FirebaseFirestore>(
-      () => appModule.firebaseFirestore,
-    );
+        () => appModule.firebaseFirestore);
     gh.lazySingleton<_i116.GoogleSignIn>(() => appModule.googleSignIn);
     gh.lazySingleton<_i973.InternetConnectionChecker>(
-      () => appModule.internetConnectionChecker,
-    );
+        () => appModule.internetConnectionChecker);
     gh.lazySingleton<_i979.Box<Map<dynamic, dynamic>>>(
-      () => appModule.projectsBox,
-    );
-    gh.lazySingleton<_i703.ProjectRepository>(
-      () => _i167.ProjectDetailRepositoryImpl(),
-    );
+        () => appModule.projectsBox);
     gh.lazySingleton<_i1010.MagicLinkLocalDataSource>(
-      () => _i1010.MagicLinkLocalDataSourceImpl(),
-    );
-    gh.lazySingleton<_i724.GetProjectWithCollaboratorsUseCase>(
-      () => _i724.GetProjectWithCollaboratorsUseCase(
-        gh<_i703.ProjectRepository>(),
-      ),
-    );
-    gh.lazySingleton<_i440.UpdateCollaboratorRoleUseCase>(
-      () => _i440.UpdateCollaboratorRoleUseCase(gh<_i703.ProjectRepository>()),
-    );
-    gh.lazySingleton<_i562.RemoveCollaboratorFromProjectUseCase>(
-      () => _i562.RemoveCollaboratorFromProjectUseCase(
-        gh<_i703.ProjectRepository>(),
-      ),
-    );
-    gh.lazySingleton<_i532.AddCollaboratorToProjectUseCase>(
-      () =>
-          _i532.AddCollaboratorToProjectUseCase(gh<_i703.ProjectRepository>()),
-    );
+        () => _i1010.MagicLinkLocalDataSourceImpl());
+    gh.lazySingleton<_i509.ProjectDetailRemoteDataSource>(() =>
+        _i509.ProjectDetailRemoteDatasourceImpl(
+            firestore: gh<_i974.FirebaseFirestore>()));
     gh.lazySingleton<_i952.NetworkInfo>(
-      () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()),
-    );
-    gh.lazySingleton<_i104.AuthRepository>(
-      () => _i447.AuthRepositoryImpl(
-        auth: gh<_i59.FirebaseAuth>(),
-        googleSignIn: gh<_i116.GoogleSignIn>(),
-        prefs: gh<_i460.SharedPreferences>(),
-        networkInfo: gh<_i952.NetworkInfo>(),
-        firestore: gh<_i974.FirebaseFirestore>(),
-      ),
-    );
+        () => _i952.NetworkInfoImpl(gh<_i973.InternetConnectionChecker>()));
+    gh.lazySingleton<_i104.AuthRepository>(() => _i447.AuthRepositoryImpl(
+          auth: gh<_i59.FirebaseAuth>(),
+          googleSignIn: gh<_i116.GoogleSignIn>(),
+          prefs: gh<_i460.SharedPreferences>(),
+          networkInfo: gh<_i952.NetworkInfo>(),
+          firestore: gh<_i974.FirebaseFirestore>(),
+        ));
     gh.lazySingleton<_i383.SessionStorage>(
-      () => _i383.SessionStorage(prefs: gh<_i460.SharedPreferences>()),
-    );
-    gh.lazySingleton<_i442.MagicLinkRemoteDataSource>(
-      () => _i442.MagicLinkRemoteDataSourceImpl(
-        firestore: gh<_i974.FirebaseFirestore>(),
-      ),
-    );
-    gh.lazySingleton<_i102.ProjectRemoteDataSource>(
-      () => _i102.ProjectsRemoteDatasSourceImpl(
-        firestore: gh<_i974.FirebaseFirestore>(),
-      ),
-    );
-    gh.lazySingleton<_i334.ProjectsLocalDataSource>(
-      () => _i334.ProjectsLocalDataSourceImpl(
-        box: gh<_i979.Box<Map<dynamic, dynamic>>>(),
-      ),
-    );
-    gh.lazySingleton<_i509.ProjectDetailRemoteDataSource>(
-      () => _i509.ProjectDetailRemoteDataSourceImpl(
-        firestore: gh<_i974.FirebaseFirestore>(),
-      ),
-    );
-    gh.lazySingleton<_i744.UserProfileRemoteDataSource>(
-      () =>
-          _i744.UserProfileRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()),
-    );
-    gh.factory<_i524.MagicLinkRepository>(
-      () => _i133.MagicLinkRepositoryImp(gh<_i442.MagicLinkRemoteDataSource>()),
-    );
+        () => _i383.SessionStorage(prefs: gh<_i460.SharedPreferences>()));
+    gh.lazySingleton<_i703.ProjectRepository>(() => _i167.ProjectRepositoryImpl(
+          remoteDataSource: gh<_i509.ProjectDetailRemoteDataSource>(),
+          networkInfo: gh<_i952.NetworkInfo>(),
+        ));
+    gh.lazySingleton<_i442.MagicLinkRemoteDataSource>(() =>
+        _i442.MagicLinkRemoteDataSourceImpl(
+            firestore: gh<_i974.FirebaseFirestore>()));
+    gh.lazySingleton<_i102.ProjectRemoteDataSource>(() =>
+        _i102.ProjectsRemoteDatasSourceImpl(
+            firestore: gh<_i974.FirebaseFirestore>()));
+    gh.lazySingleton<_i334.ProjectsLocalDataSource>(() =>
+        _i334.ProjectsLocalDataSourceImpl(
+            box: gh<_i979.Box<Map<dynamic, dynamic>>>()));
+    gh.lazySingleton<_i744.UserProfileRemoteDataSource>(() =>
+        _i744.UserProfileRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()));
+    gh.factory<_i524.MagicLinkRepository>(() =>
+        _i133.MagicLinkRepositoryImp(gh<_i442.MagicLinkRemoteDataSource>()));
+    gh.lazySingleton<_i650.LeaveProjectUseCase>(() => _i650.LeaveProjectUseCase(
+          gh<_i703.ProjectRepository>(),
+          gh<_i383.SessionStorage>(),
+        ));
+    gh.lazySingleton<_i853.LoadProjectDetailUseCase>(
+        () => _i853.LoadProjectDetailUseCase(gh<_i703.ProjectRepository>()));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
-      () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()),
-    );
+        () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i836.GetAuthStateUseCase>(
-      () => _i836.GetAuthStateUseCase(gh<_i104.AuthRepository>()),
-    );
+        () => _i836.GetAuthStateUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i442.OnboardingUseCase>(
-      () => _i442.OnboardingUseCase(gh<_i104.AuthRepository>()),
-    );
+        () => _i442.OnboardingUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i843.SignInUseCase>(
-      () => _i843.SignInUseCase(gh<_i104.AuthRepository>()),
-    );
+        () => _i843.SignInUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i490.SignUpUseCase>(
-      () => _i490.SignUpUseCase(gh<_i104.AuthRepository>()),
-    );
+        () => _i490.SignUpUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i488.SignOutUseCase>(
-      () => _i488.SignOutUseCase(gh<_i104.AuthRepository>()),
-    );
+        () => _i488.SignOutUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i661.ConsumeMagicLinkUseCase>(
-      () => _i661.ConsumeMagicLinkUseCase(gh<_i524.MagicLinkRepository>()),
-    );
+        () => _i661.ConsumeMagicLinkUseCase(gh<_i524.MagicLinkRepository>()));
     gh.lazySingleton<_i741.ValidateMagicLinkUseCase>(
-      () => _i741.ValidateMagicLinkUseCase(gh<_i524.MagicLinkRepository>()),
-    );
-    gh.lazySingleton<_i1050.GetMagicLinkStatusUseCase>(
-      () => _i1050.GetMagicLinkStatusUseCase(gh<_i524.MagicLinkRepository>()),
-    );
+        () => _i741.ValidateMagicLinkUseCase(gh<_i524.MagicLinkRepository>()));
+    gh.lazySingleton<_i1050.GetMagicLinkStatusUseCase>(() =>
+        _i1050.GetMagicLinkStatusUseCase(gh<_i524.MagicLinkRepository>()));
     gh.lazySingleton<_i856.ResendMagicLinkUseCase>(
-      () => _i856.ResendMagicLinkUseCase(gh<_i524.MagicLinkRepository>()),
-    );
+        () => _i856.ResendMagicLinkUseCase(gh<_i524.MagicLinkRepository>()));
     gh.lazySingleton<_i179.GenerateMagicLinkUseCase>(
-      () => _i179.GenerateMagicLinkUseCase(
-        gh<_i524.MagicLinkRepository>(),
-        gh<_i104.AuthRepository>(),
-      ),
-    );
+        () => _i179.GenerateMagicLinkUseCase(
+              gh<_i524.MagicLinkRepository>(),
+              gh<_i104.AuthRepository>(),
+            ));
     gh.lazySingleton<_i1022.ProjectsRepository>(
-      () => _i553.ProjectsRepositoryImpl(
-        remoteDataSource: gh<_i102.ProjectRemoteDataSource>(),
-        localDataSource: gh<_i334.ProjectsLocalDataSource>(),
-        networkInfo: gh<_i952.NetworkInfo>(),
-      ),
-    );
+        () => _i553.ProjectsRepositoryImpl(
+              remoteDataSource: gh<_i102.ProjectRemoteDataSource>(),
+              localDataSource: gh<_i334.ProjectsLocalDataSource>(),
+              networkInfo: gh<_i952.NetworkInfo>(),
+            ));
     gh.lazySingleton<_i461.WatchAllProjectsUseCase>(
-      () => _i461.WatchAllProjectsUseCase(
-        gh<_i1022.ProjectsRepository>(),
-        gh<_i104.AuthRepository>(),
-      ),
-    );
-    gh.lazySingleton<_i594.CreateProjectUseCase>(
-      () => _i594.CreateProjectUseCase(
-        gh<_i1022.ProjectsRepository>(),
-        gh<_i104.AuthRepository>(),
-      ),
-    );
+        () => _i461.WatchAllProjectsUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i104.AuthRepository>(),
+            ));
     gh.lazySingleton<_i532.UpdateProjectUseCase>(
-      () => _i532.UpdateProjectUseCase(
-        gh<_i1022.ProjectsRepository>(),
-        gh<_i104.AuthRepository>(),
-      ),
-    );
+        () => _i532.UpdateProjectUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i104.AuthRepository>(),
+            ));
     gh.lazySingleton<_i183.JoinProjectWithIdUseCase>(
-      () => _i183.JoinProjectWithIdUseCase(
-        gh<_i1022.ProjectsRepository>(),
-        gh<_i104.AuthRepository>(),
-      ),
-    );
-    gh.lazySingleton<_i839.UserProfileRepository>(
-      () => _i416.UserProfileRepositoryImpl(
-        gh<_i744.UserProfileRemoteDataSource>(),
-      ),
-    );
-    gh.factory<_i340.AuthBloc>(
-      () => _i340.AuthBloc(
-        signIn: gh<_i843.SignInUseCase>(),
-        signUp: gh<_i490.SignUpUseCase>(),
-        signOut: gh<_i488.SignOutUseCase>(),
-        googleSignIn: gh<_i690.GoogleSignInUseCase>(),
-        getAuthState: gh<_i836.GetAuthStateUseCase>(),
-        onboarding: gh<_i442.OnboardingUseCase>(),
-      ),
-    );
-    gh.factory<_i120.GetUserProfileUseCase>(
-      () => _i120.GetUserProfileUseCase(
-        gh<_i839.UserProfileRepository>(),
-        gh<_i383.SessionStorage>(),
-      ),
-    );
+        () => _i183.JoinProjectWithIdUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i104.AuthRepository>(),
+            ));
+    gh.lazySingleton<_i93.ManageCollaboratorsRemoteDataSource>(() =>
+        _i93.ManageCollaboratorsRemoteDataSourceImpl(
+          userProfileRemoteDataSource: gh<_i744.UserProfileRemoteDataSource>(),
+          firestore: gh<_i974.FirebaseFirestore>(),
+        ));
+    gh.lazySingleton<_i839.UserProfileRepository>(() =>
+        _i416.UserProfileRepositoryImpl(
+            gh<_i744.UserProfileRemoteDataSource>()));
+    gh.factory<_i376.ProjectDetailBloc>(() => _i376.ProjectDetailBloc(
+          loadProjectDetails: gh<_i853.LoadProjectDetailUseCase>(),
+          leaveProjectUseCase: gh<_i650.LeaveProjectUseCase>(),
+        ));
+    gh.factory<_i340.AuthBloc>(() => _i340.AuthBloc(
+          signIn: gh<_i843.SignInUseCase>(),
+          signUp: gh<_i490.SignUpUseCase>(),
+          signOut: gh<_i488.SignOutUseCase>(),
+          googleSignIn: gh<_i690.GoogleSignInUseCase>(),
+          getAuthState: gh<_i836.GetAuthStateUseCase>(),
+          onboarding: gh<_i442.OnboardingUseCase>(),
+        ));
+    gh.lazySingleton<_i1063.ManageCollaboratorsRepository>(
+        () => _i1050.ManageCollaboratorsRepositoryImpl(
+              remoteDataSource: gh<_i93.ManageCollaboratorsRemoteDataSource>(),
+              networkInfo: gh<_i952.NetworkInfo>(),
+            ));
+    gh.lazySingleton<_i594.CreateProjectUseCase>(
+        () => _i594.CreateProjectUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.factory<_i120.GetUserProfileUseCase>(() => _i120.GetUserProfileUseCase(
+          gh<_i839.UserProfileRepository>(),
+          gh<_i383.SessionStorage>(),
+        ));
     gh.factory<_i435.UpdateUserProfileUseCase>(
-      () => _i435.UpdateUserProfileUseCase(
-        gh<_i839.UserProfileRepository>(),
-        gh<_i383.SessionStorage>(),
-      ),
-    );
-    gh.factory<_i218.UserProfileBloc>(
-      () => _i218.UserProfileBloc(
-        getUserProfileUseCase: gh<_i120.GetUserProfileUseCase>(),
-        updateUserProfileUseCase: gh<_i435.UpdateUserProfileUseCase>(),
-      ),
-    );
+        () => _i435.UpdateUserProfileUseCase(
+              gh<_i839.UserProfileRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.factory<_i218.UserProfileBloc>(() => _i218.UserProfileBloc(
+          getUserProfileUseCase: gh<_i120.GetUserProfileUseCase>(),
+          updateUserProfileUseCase: gh<_i435.UpdateUserProfileUseCase>(),
+        ));
     gh.lazySingleton<_i740.AddCollaboratorUseCase>(
-      () => _i740.AddCollaboratorUseCase(gh<_i1022.ProjectsRepository>()),
-    );
+        () => _i740.AddCollaboratorUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i1043.DeleteProjectUseCase>(
-      () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()),
-    );
-    gh.factory<_i376.ProjectDetailBloc>(
-      () => _i376.ProjectDetailBloc(
-        addCollaboratorUseCase: gh<_i740.AddCollaboratorUseCase>(),
-      ),
-    );
-    gh.factory<_i253.MagicLinkBloc>(
-      () => _i253.MagicLinkBloc(
-        generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
-        validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),
-        consumeMagicLink: gh<_i661.ConsumeMagicLinkUseCase>(),
-        resendMagicLink: gh<_i856.ResendMagicLinkUseCase>(),
-        getMagicLinkStatus: gh<_i1050.GetMagicLinkStatusUseCase>(),
-        addCollaboratorUseCase: gh<_i740.AddCollaboratorUseCase>(),
-        authRepository: gh<_i104.AuthRepository>(),
-      ),
-    );
-    gh.factory<_i534.ProjectsBloc>(
-      () => _i534.ProjectsBloc(
-        createProject: gh<_i594.CreateProjectUseCase>(),
-        updateProject: gh<_i532.UpdateProjectUseCase>(),
-        deleteProject: gh<_i1043.DeleteProjectUseCase>(),
-        watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
-        joinProjectWithId: gh<_i183.JoinProjectWithIdUseCase>(),
-      ),
-    );
+        () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()));
+    gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(() =>
+        _i398.AddCollaboratorToProjectUseCase(
+            gh<_i1063.ManageCollaboratorsRepository>()));
+    gh.lazySingleton<_i81.UpdateCollaboratorRoleUseCase>(() =>
+        _i81.UpdateCollaboratorRoleUseCase(
+            gh<_i1063.ManageCollaboratorsRepository>()));
+    gh.lazySingleton<_i933.LoadUserProfileCollaboratorsUseCase>(() =>
+        _i933.LoadUserProfileCollaboratorsUseCase(
+            gh<_i1063.ManageCollaboratorsRepository>()));
+    gh.lazySingleton<_i151.RemoveCollaboratorUseCase>(() =>
+        _i151.RemoveCollaboratorUseCase(
+            gh<_i1063.ManageCollaboratorsRepository>()));
+    gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
+          generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
+          validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),
+          consumeMagicLink: gh<_i661.ConsumeMagicLinkUseCase>(),
+          resendMagicLink: gh<_i856.ResendMagicLinkUseCase>(),
+          getMagicLinkStatus: gh<_i1050.GetMagicLinkStatusUseCase>(),
+          addCollaboratorUseCase: gh<_i740.AddCollaboratorUseCase>(),
+          authRepository: gh<_i104.AuthRepository>(),
+        ));
+    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
+          createProject: gh<_i594.CreateProjectUseCase>(),
+          updateProject: gh<_i532.UpdateProjectUseCase>(),
+          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
+          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
+          joinProjectWithId: gh<_i183.JoinProjectWithIdUseCase>(),
+        ));
+    gh.factory<_i438.ManageCollaboratorsBloc>(
+        () => _i438.ManageCollaboratorsBloc(
+              loadUserProfileCollaboratorsUseCase:
+                  gh<_i933.LoadUserProfileCollaboratorsUseCase>(),
+              updateCollaboratorRoleUseCase:
+                  gh<_i81.UpdateCollaboratorRoleUseCase>(),
+            ));
     return this;
   }
 }
