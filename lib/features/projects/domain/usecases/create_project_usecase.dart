@@ -10,7 +10,6 @@ import 'package:trackflow/features/projects/domain/entities/project_name.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 
 @immutable
 class CreateProjectParams extends Equatable {

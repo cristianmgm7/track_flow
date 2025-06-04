@@ -30,7 +30,7 @@ class LoadUserProfileCollaboratorsUseCase {
   Future<Either<Failure, List<UserProfile>>> call(
     LoadCollaboratorsParams params,
   ) async {
-    return await _repository.getUserProfileCollaborators(
+    return await _repository.getProjectCollaborators(
       params.projectId,
       params.collaborators,
     );
