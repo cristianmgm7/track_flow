@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'manage_collabolators_event.dart';
 import 'manage_collabolators_state.dart';
 
+@injectable
 class ManageCollaboratorsBloc
     extends Bloc<ManageCollaboratorsEvent, ManageCollaboratorsState> {
   final LoadUserProfileCollaboratorsUseCase loadUserProfileCollaboratorsUseCase;
@@ -24,9 +26,9 @@ class ManageCollaboratorsBloc
   ) async {
     emit(ManageCollaboratorsLoading());
     final result = await loadUserProfileCollaboratorsUseCase(
-      LoadCollaboratorsParams(
-        projectId: event.projectId,
-        collaborators: event.collaborators.map((e) => e.id).toList(),
+      ProjectWithCollaborators(
+        projectId: event.projectWithCollaborators.projectId,
+        collaborators: event.projectWithCollaborators.collaborators,
       ),
     );
     result.fold(

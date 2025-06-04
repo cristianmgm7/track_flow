@@ -1,7 +1,5 @@
 import 'package:trackflow/core/entities/project_actions.dart';
-
-import '../value_objects/user_role.dart';
-import '../value_objects/project_action.dart';
+import 'package:trackflow/core/entities/user_role.dart';
 
 class PermissionPolicy {
   static bool can(UserRole role, ProjectAction action) {
@@ -48,5 +46,6 @@ class PermissionPolicy {
           ProjectAction.uploadFiles => false,
         };
     }
+    return false; // Default return value if no case matches
   }
 }

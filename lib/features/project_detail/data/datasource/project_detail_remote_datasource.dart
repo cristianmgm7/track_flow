@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/project_detail/data/models/project_detail_dto.dart';
+import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ProjectDetailRemoteDataSource {
@@ -29,13 +29,13 @@ class ProjectDetailRemoteDatasourceImpl
     try {
       final doc =
           await _firestore
-              .collection(ProjectDetailDTO.collection)
+              .collection(ProjectDTO.collection)
               .doc(projectId.value)
               .get();
       if (!doc.exists) {
         return left(DatabaseFailure('Project not found'));
       }
-      final project = ProjectDetailDTO.fromJson(doc.data()!).toDomain();
+      final project = ProjectDTO.fromJson(doc.data()!).toDomain();
       return right(project);
     } catch (e) {
       return left(UnexpectedFailure(e.toString()));
@@ -49,7 +49,7 @@ class ProjectDetailRemoteDatasourceImpl
   }) async {
     try {
       await _firestore
-          .collection(ProjectDetailDTO.collection)
+          .collection(ProjectDTO.collection)
           .doc(projectId.value)
           .update({
             'collaborators': FieldValue.arrayRemove([userId.value]),
