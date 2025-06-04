@@ -31,7 +31,7 @@ class UserProfileDTO {
       avatarUrl: userProfile.avatarUrl,
       createdAt: userProfile.createdAt,
       updatedAt: userProfile.updatedAt,
-      creativeRole: userProfile.creativeRole!,
+      creativeRole: userProfile.creativeRole ?? CreativeRole.other,
     );
   }
 

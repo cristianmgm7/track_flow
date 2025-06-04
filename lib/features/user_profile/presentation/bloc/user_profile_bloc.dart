@@ -23,7 +23,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
-    final result = await getUserProfileUseCase();
+    final result = await getUserProfileUseCase.call();
     result.fold(
       (failure) => emit(UserProfileError()),
       (profile) => emit(UserProfileLoaded(profile)),

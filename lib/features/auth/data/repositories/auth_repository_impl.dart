@@ -10,6 +10,7 @@ import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -55,7 +56,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'avatarUrl': user.photoURL ?? '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
-        'creativeRole': 'Artist',
+        'creativeRole': CreativeRole.other.name,
       });
     }
   }
