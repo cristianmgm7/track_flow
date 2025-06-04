@@ -1,4 +1,5 @@
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/entities/user_role.dart';
 
 enum CreativeRole {
   producer,
@@ -18,6 +19,7 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final CreativeRole? creativeRole;
+  final UserRole? role;
 
   const UserProfile({
     required this.id,
@@ -27,6 +29,7 @@ class UserProfile {
     required this.createdAt,
     this.updatedAt,
     this.creativeRole,
+    this.role,
   });
 
   UserProfile copyWith({
@@ -37,6 +40,7 @@ class UserProfile {
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
+    UserRole? role,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -46,6 +50,7 @@ class UserProfile {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       creativeRole: creativeRole ?? this.creativeRole,
+      role: role ?? this.role,
     );
   }
 }
