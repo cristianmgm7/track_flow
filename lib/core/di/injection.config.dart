@@ -67,13 +67,13 @@ import 'package:trackflow/features/project_detail/data/repositories/project_deta
     as _i167;
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart'
     as _i703;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collabolator_usecase.dart'
+import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
     as _i532;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_collaborators_usecase.dart'
     as _i724;
 import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart'
     as _i562;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colabolator_role_usecase.dart'
+import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
     as _i440;
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart'
     as _i376;

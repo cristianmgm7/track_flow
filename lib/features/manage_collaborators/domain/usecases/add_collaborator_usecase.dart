@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 
 class AddCollaboratorToProjectParams extends Equatable {
   final ProjectId projectId;
@@ -20,7 +20,7 @@ class AddCollaboratorToProjectParams extends Equatable {
 
 @lazySingleton
 class AddCollaboratorToProjectUseCase {
-  final ProjectRepository _repository;
+  final ManageCollaboratorsRepository _repository;
 
   AddCollaboratorToProjectUseCase(this._repository);
 

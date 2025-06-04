@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
 class UpdateCollaboratorRoleParams extends Equatable {
@@ -23,7 +24,7 @@ class UpdateCollaboratorRoleParams extends Equatable {
 
 @lazySingleton
 class UpdateCollaboratorRoleUseCase {
-  final ProjectRepository _repository;
+  final ManageCollaboratorsRepository _repository;
 
   UpdateCollaboratorRoleUseCase(this._repository);
 
