@@ -5,17 +5,17 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/project_detail/domain/usecases/load_project_details_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart';
 
 class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
-  final LoadProjectDetail loadProjectDetails;
+  final LoadProjectDetailUseCase loadProjectDetails;
+  final LeaveProjectUseCase leaveProjectUseCase;
 
   ProjectDetailBloc({
-    required this.updateCollaboratorRoleUseCase,
     required this.loadProjectDetails,
+    required this.leaveProjectUseCase,
   }) : super(ProjectDetailsInitial()) {
     on<LoadProjectDetails>(_onLoadProjectDetails);
     on<LeaveProject>(_onLeaveProject);
@@ -46,10 +46,12 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
     Emitter<ProjectDetailsState> emit,
   ) async {
     emit(ProjectDetailsLoading());
-    final Either<Failure, void> failureOrSuccess = await projectRepository
-        .removeParticipant(
-          event.projectId,
-          UserId.fromUniqueString('currentUserId'),
+    final Either<Failure, void> failureOrSuccess = await leaveProjectUseCase
+        .call(
+          LeaveProjectParams(
+            projectId: event.projectId,
+            userId: UserId.fromUniqueString('currentUserId'),
+          ),
         );
 
     failureOrSuccess.fold(

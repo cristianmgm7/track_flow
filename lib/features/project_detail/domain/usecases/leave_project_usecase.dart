@@ -3,30 +3,31 @@ import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
-class RemoveCollaboratorFromProjectParams extends Equatable {
+class LeaveProjectParams extends Equatable {
   final ProjectId projectId;
   final UserId userId;
 
-  const RemoveCollaboratorFromProjectParams({
-    required this.projectId,
-    required this.userId,
-  });
+  const LeaveProjectParams({required this.projectId, required this.userId});
 
   @override
   List<Object?> get props => [projectId, userId];
 }
 
 @lazySingleton
-class RemoveCollaboratorFromProjectUseCase {
+class LeaveProjectUseCase {
   final ProjectRepository _repository;
+  final SessionStorage _sessionStorage;
 
-  RemoveCollaboratorFromProjectUseCase(this._repository);
+  LeaveProjectUseCase(this._repository, this._sessionStorage);
 
-  Future<Either<Failure, void>> call(
-    RemoveCollaboratorFromProjectParams params,
-  ) async {
-    return await _repository.removeParticipant(params.projectId, params.userId);
+  Future<Either<Failure, void>> call(LeaveProjectParams params) async {
+    final userId = await _sessionStorage.getUserId();
+    return await _repository.leaveProject(
+      projectId: params.projectId,
+      userId: UserId.fromUniqueString(userId!),
+    );
   }
 }

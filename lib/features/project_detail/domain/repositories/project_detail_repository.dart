@@ -4,7 +4,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ProjectRepository {
-  Future<Either<Failure, Project>> fetchProjectById(ProjectId projectId);
+  Future<Either<Failure, Project>> fetchProjectDetails(ProjectId projectId);
 
   Future<Either<Failure, Unit>> leaveProject({
     required ProjectId projectId,
