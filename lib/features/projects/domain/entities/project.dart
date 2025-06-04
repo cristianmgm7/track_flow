@@ -1,8 +1,7 @@
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/features/projects/domain/entities/project_description.dart';
 import 'package:trackflow/features/projects/domain/entities/project_name.dart';
-
-enum UserRole { owner, admin, member, viewer }
 
 class Project {
   final ProjectId id;
@@ -33,6 +32,7 @@ class Project {
     DateTime? createdAt,
     DateTime? updatedAt,
     List<UserId>? collaborators,
+    Map<UserId, UserRole>? roles,
   }) {
     return Project(
       id: id ?? this.id,
@@ -42,6 +42,7 @@ class Project {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
+      roles: roles ?? this.roles,
     );
   }
 }
