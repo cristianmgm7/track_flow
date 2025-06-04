@@ -9,7 +9,7 @@ abstract class ManageCollaboratorsRepository {
     ProjectId projectId,
     List<UserId> collaborators,
   );
-  Future<Either<Failure, void>> addCollaborator(
+  Future<Either<Failure, void>> addCollaboratorWithUserId(
     ProjectId projectId,
     UserId collaboratorId,
   );

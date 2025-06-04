@@ -117,10 +117,11 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       await _localDataSource.cacheProject(projectDTO);
 
       // Agregar el colaborador
-      final addCollaboratorResult = await _remoteDataSource.addCollaborator(
-        projectId: projectId.value,
-        userId: userId.value,
-      );
+      final addCollaboratorResult = await _remoteDataSource
+          .addCollaboratorWithIdProject(
+            projectId: projectId.value,
+            userId: userId.value,
+          );
       return addCollaboratorResult.fold(
         (failure) => Left(failure),
         (_) => Right(project),

@@ -7,15 +7,15 @@ import 'package:trackflow/features/manage_collaborators/domain/repositories/mana
 
 class AddCollaboratorToProjectParams extends Equatable {
   final ProjectId projectId;
-  final UserId userId;
+  final UserId collaboratorId;
 
   const AddCollaboratorToProjectParams({
     required this.projectId,
-    required this.userId,
+    required this.collaboratorId,
   });
 
   @override
-  List<Object?> get props => [projectId, userId];
+  List<Object?> get props => [projectId, collaboratorId];
 }
 
 @lazySingleton
@@ -27,6 +27,9 @@ class AddCollaboratorToProjectUseCase {
   Future<Either<Failure, void>> call(
     AddCollaboratorToProjectParams params,
   ) async {
-    return await _repository.addParticipant(params.projectId, params.userId);
+    return await _repository.addCollaboratorWithUserId(
+      params.projectId,
+      params.collaboratorId,
+    );
   }
 }

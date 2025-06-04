@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -13,7 +14,7 @@ abstract class ManageCollaboratorsRemoteDataSource {
     ProjectId projectId,
     List<UserId> collaborators,
   );
-  Future<Either<Failure, void>> addCollaborator(
+  Future<Either<Failure, void>> addCollaboratorWithUserId(
     ProjectId projectId,
     UserId userId,
   );
@@ -65,21 +66,73 @@ class ManageCollaboratorsRemoteDataSourceImpl
   }
 
   @override
-  Future<Either<Failure, void>> addCollaborator(
+  Future<Either<Failure, void>> addCollaboratorWithUserId(
     ProjectId projectId,
-    UserId userId,
-  ) {
-    // TODO: implement addCollaborator
-    throw UnimplementedError();
+    UserId collaboratorId,
+  ) async {
+    try {
+      final projectRef = firestore
+          .collection(ProjectDTO.collection)
+          .doc(projectId.value);
+
+      await firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(projectRef);
+        if (!snapshot.exists) {
+          throw Exception("Project not found");
+        }
+
+        final projectDTO = ProjectDTO.fromFirestore(snapshot);
+        final updatedCollaborators = [
+          ...projectDTO.collaborators,
+          collaboratorId.value,
+        ];
+
+        final updatedProjectDTO = projectDTO.copyWith(
+          collaborators: updatedCollaborators,
+        );
+
+        transaction.update(projectRef, updatedProjectDTO.toFirestore());
+      });
+
+      return right(null);
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
   }
 
   @override
   Future<Either<Failure, void>> removeCollaborator(
     ProjectId projectId,
-    UserId userId,
-  ) {
-    // TODO: implement removeCollaborator
-    throw UnimplementedError();
+    UserId collaboratorId,
+  ) async {
+    try {
+      final projectRef = firestore
+          .collection(ProjectDTO.collection)
+          .doc(projectId.value);
+
+      await firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(projectRef);
+        if (!snapshot.exists) {
+          throw Exception("Project not found");
+        }
+
+        final projectDTO = ProjectDTO.fromFirestore(snapshot);
+        final updatedCollaborators =
+            projectDTO.collaborators
+                .where((id) => id != collaboratorId.value)
+                .toList();
+
+        final updatedProjectDTO = projectDTO.copyWith(
+          collaborators: updatedCollaborators,
+        );
+
+        transaction.update(projectRef, updatedProjectDTO.toFirestore());
+      });
+
+      return right(null);
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
   }
 
   @override
