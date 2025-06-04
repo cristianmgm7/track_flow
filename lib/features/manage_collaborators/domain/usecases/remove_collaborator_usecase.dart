@@ -1,15 +1,23 @@
 import 'package:dartz/dartz.dart';
+import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
-class RemoveCollaboratorParams {
+@immutable
+class RemoveCollaboratorParams extends Equatable {
   final ProjectId projectId;
-  final UserId userId;
+  final UserId collaboratorId;
 
-  RemoveCollaboratorParams({required this.projectId, required this.userId});
+  const RemoveCollaboratorParams({
+    required this.projectId,
+    required this.collaboratorId,
+  });
+
+  @override
+  List<Object?> get props => [projectId, collaboratorId];
 }
 
 @lazySingleton
@@ -19,6 +27,9 @@ class RemoveCollaboratorUseCase {
   RemoveCollaboratorUseCase(this._repository);
 
   Future<Either<Failure, void>> call(RemoveCollaboratorParams params) async {
-    return await _repository.removeParticipant(params.projectId, params.userId);
+    return await _repository.removeCollaborator(
+      params.projectId,
+      params.collaboratorId,
+    );
   }
 }

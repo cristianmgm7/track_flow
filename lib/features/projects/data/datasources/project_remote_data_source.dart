@@ -19,7 +19,7 @@ abstract class ProjectRemoteDataSource {
 
   Future<Either<Failure, Project>> getProjectById(String id);
 
-  Future<Either<Failure, Unit>> addCollaborator({
+  Future<Either<Failure, Unit>> addCollaboratorWithIdProject({
     required String projectId,
     required String userId,
   });
@@ -150,7 +150,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> addCollaborator({
+  Future<Either<Failure, Unit>> addCollaboratorWithIdProject({
     required String projectId,
     required String userId,
   }) async {

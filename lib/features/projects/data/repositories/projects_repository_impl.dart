@@ -91,7 +91,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    return await _remoteDataSource.addCollaborator(
+    return await _remoteDataSource.addCollaboratorWithIdProject(
       projectId: projectId.value,
       userId: userId.value,
     );
