@@ -57,7 +57,10 @@ class ProjectDTO {
     ownerId: json['ownerId'] as String,
     name: json['name'] as String,
     description: json['description'] as String,
-    createdAt: DateTime.parse(json['createdAt'] as String),
+    createdAt:
+        json['createdAt'] is Timestamp
+            ? (json['createdAt'] as Timestamp).toDate()
+            : DateTime.parse(json['createdAt'] as String),
     collaborators:
         (json['collaborators'] as List<dynamic>?)
             ?.map((e) => e as String)

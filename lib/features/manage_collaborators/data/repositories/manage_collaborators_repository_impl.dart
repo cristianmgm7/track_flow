@@ -24,6 +24,10 @@ class ManageCollaboratorsRepositoryImpl
     ProjectId projectId,
     List<UserId> collaborators,
   ) async {
+    final hasConnected = await networkInfo.isConnected;
+    if (!hasConnected) {
+      return left(DatabaseFailure('No internet connection'));
+    }
     return await remoteDataSource.getProjectCollaborators(
       projectId,
       collaborators,

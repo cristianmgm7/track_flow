@@ -5,8 +5,9 @@ import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/add_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
   final Project? project;
@@ -32,15 +33,26 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   }
 
   void _addCollaborator(BuildContext context) {
-    // Logic to add collaborator
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AddCollaboratorDialog(projectId: widget.project!.id);
+      },
+    );
   }
 
-  void _removeCollaborator(BuildContext context) {
-    // Logic to remove collaborator
+  void _removeCollaborator(BuildContext context, UserId userId) {
+    context.read<ManageCollaboratorsBloc>().add(RemoveCollaborator(userId));
   }
 
-  void _updateCollaborator(BuildContext context) {
-    // Logic to update collaborator
+  void _updateCollaborator(
+    BuildContext context,
+    UserId userId,
+    UserRole newRole,
+  ) {
+    context.read<ManageCollaboratorsBloc>().add(
+      UpdateCollaboratorRole(userId: userId, newRole: newRole),
+    );
   }
 
   @override
@@ -55,42 +67,45 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                 case 'add_collaborator':
                   _addCollaborator(context);
                   break;
-                case 'remove_collaborator':
-                  _removeCollaborator(context);
-                  break;
-                case 'update_collaborator':
-                  _updateCollaborator(context);
-                  break;
               }
             },
             itemBuilder:
                 (context) => [
-                  PopupMenuItem(child: Text('Add Collaborator'), onTap: () {}),
+                  PopupMenuItem(
+                    value: 'add_collaborator',
+                    child: Text('Add Collaborator'),
+                  ),
                 ],
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: 1,
-        itemBuilder: (context, index) {
-          final userProfile = UserProfile(
-            id: UserId.fromUniqueString('123'),
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            avatarUrl: 'https://example.com/avatar.png',
-            createdAt: DateTime.now(),
-            role: UserRole.admin,
-          );
-          return ListTile(
-            title: Text(userProfile.name),
-            subtitle: Text(userProfile.email),
-            trailing: IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: () {
-                // Logic to remove collaborator
+      body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
+        builder: (context, state) {
+          if (state is ManageCollaboratorsLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is ManageCollaboratorsLoaded) {
+            return ListView.builder(
+              itemCount: state.collaborators.length,
+              itemBuilder: (context, index) {
+                final userProfile = state.collaborators[index];
+                return ListTile(
+                  title: Text(userProfile.name),
+                  subtitle: Text(userProfile.email),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () {
+                      _removeCollaborator(context, userProfile.id);
+                    },
+                  ),
+                );
               },
-            ),
-          );
+            );
+          } else if (state is ManageCollaboratorsError) {
+            return Center(
+              child: Text(state.message, style: TextStyle(color: Colors.red)),
+            );
+          }
+          return const Center(child: Text('No collaborators available'));
         },
       ),
     );

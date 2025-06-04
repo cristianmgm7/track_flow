@@ -310,13 +310,14 @@ extension GetItInjectableX on _i174.GetIt {
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
           joinProjectWithId: gh<_i183.JoinProjectWithIdUseCase>(),
         ));
-    gh.factory<_i438.ManageCollaboratorsBloc>(
-        () => _i438.ManageCollaboratorsBloc(
-              loadUserProfileCollaboratorsUseCase:
-                  gh<_i933.LoadUserProfileCollaboratorsUseCase>(),
-              updateCollaboratorRoleUseCase:
-                  gh<_i81.UpdateCollaboratorRoleUseCase>(),
-            ));
+    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
+        _i438.ManageCollaboratorsBloc(
+          loadUserProfileCollaboratorsUseCase:
+              gh<_i933.LoadUserProfileCollaboratorsUseCase>(),
+          updateCollaboratorRoleUseCase:
+              gh<_i81.UpdateCollaboratorRoleUseCase>(),
+          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
+        ));
     return this;
   }
 }

@@ -10,9 +10,14 @@ class LoadCollaborators extends ManageCollaboratorsEvent {
 }
 
 class AddCollaborator extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
   final UserId collaboratorId;
   final UserRole role;
-  AddCollaborator({required this.collaboratorId, required this.role});
+  AddCollaborator({
+    required this.projectId,
+    required this.collaboratorId,
+    required this.role,
+  });
 }
 
 class UpdateCollaboratorRole extends ManageCollaboratorsEvent {

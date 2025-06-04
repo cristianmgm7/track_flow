@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'manage_collabolators_event.dart';
@@ -11,15 +12,17 @@ class ManageCollaboratorsBloc
     extends Bloc<ManageCollaboratorsEvent, ManageCollaboratorsState> {
   final LoadUserProfileCollaboratorsUseCase loadUserProfileCollaboratorsUseCase;
   final UpdateCollaboratorRoleUseCase updateCollaboratorRoleUseCase;
+  final AddCollaboratorToProjectUseCase addCollaboratorUseCase;
 
   ManageCollaboratorsBloc({
     required this.loadUserProfileCollaboratorsUseCase,
     required this.updateCollaboratorRoleUseCase,
+    required this.addCollaboratorUseCase,
   }) : super(ManageCollaboratorsInitial()) {
+    on<AddCollaborator>(_onAddCollaborator);
     on<LoadCollaborators>(_onLoadCollaborators);
     on<UpdateCollaboratorRole>(_onUpdateCollaboratorRole);
   }
-
   Future<void> _onLoadCollaborators(
     LoadCollaborators event,
     Emitter<ManageCollaboratorsState> emit,
@@ -40,6 +43,26 @@ class ManageCollaboratorsBloc
           roles: {for (var c in collaborators) c.id: c.role!},
         ),
       ),
+    );
+  }
+
+  void _onAddCollaborator(
+    AddCollaborator event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) async {
+    emit(ManageCollaboratorsLoading());
+    final result = await addCollaboratorUseCase.call(
+      AddCollaboratorToProjectParams(
+        projectId: event.projectId,
+        collaboratorId: event.collaboratorId,
+      ),
+    );
+    result.fold(
+      (failure) =>
+          emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+      (_) {
+        emit(CollaboratorActionSuccess());
+      },
     );
   }
 
