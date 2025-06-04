@@ -5,18 +5,19 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ManageCollaboratorsRepository {
-  Future<Either<Failure, List<UserProfile>>> getProjectParticipants(
+  Future<Either<Failure, List<UserProfile>>> getUserProfileCollaborators(
     ProjectId projectId,
+    List<UserId> collaborators,
   );
-  Future<Either<Failure, void>> addParticipant(
-    ProjectId projectId,
-    UserId userId,
-  );
-  Future<Either<Failure, void>> removeParticipant(
+  Future<Either<Failure, void>> addCollaborator(
     ProjectId projectId,
     UserId userId,
   );
-  Future<Either<Failure, void>> updateParticipantRole(
+  Future<Either<Failure, void>> removeCollaborator(
+    ProjectId projectId,
+    UserId userId,
+  );
+  Future<Either<Failure, void>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
     UserRole role,

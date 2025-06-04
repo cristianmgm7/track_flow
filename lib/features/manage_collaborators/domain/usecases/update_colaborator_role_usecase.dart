@@ -5,7 +5,6 @@ import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
 class UpdateCollaboratorRoleParams extends Equatable {
   final ProjectId projectId;
@@ -31,7 +30,7 @@ class UpdateCollaboratorRoleUseCase {
   Future<Either<Failure, void>> call(
     UpdateCollaboratorRoleParams params,
   ) async {
-    return await _repository.updateParticipantRole(
+    return await _repository.updateCollaboratorRole(
       params.projectId,
       params.userId,
       params.role,
