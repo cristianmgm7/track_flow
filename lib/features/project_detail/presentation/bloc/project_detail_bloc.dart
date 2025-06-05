@@ -2,16 +2,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/project_detail/domain/usecases/load_project_details_usecase.dart';
+import 'package:trackflow/features/project_detail/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:dartz/dartz.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @injectable
 class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
-  final LoadProjectDetailUseCase loadProjectDetails;
+  final LoadUserProfileCollaboratorsUseCase loadProjectDetails;
   final LeaveProjectUseCase leaveProjectUseCase;
 
   ProjectDetailBloc({
@@ -27,12 +27,20 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
     Emitter<ProjectDetailsState> emit,
   ) async {
     emit(ProjectDetailsLoading());
-    final Either<Failure, Project> failureOrProject = await loadProjectDetails
-        .call(event.projectId);
+    final Either<Failure, List<UserProfile>> failureOrProject =
+        await loadProjectDetails.call(
+          ProjectWithCollaborators(project: event.project),
+        );
 
     failureOrProject.fold(
       (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectDetailsLoaded(project: project)),
+      (project) => emit(
+        ProjectDetailsLoaded(
+          collaborators: project,
+          roles: event.project.roles,
+          members: event.project.members,
+        ),
+      ),
     );
   }
 

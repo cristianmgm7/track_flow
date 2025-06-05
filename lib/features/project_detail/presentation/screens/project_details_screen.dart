@@ -20,9 +20,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectDetailBloc>().add(
-      LoadProjectDetails(widget.project.id),
-    );
+    context.read<ProjectDetailBloc>().add(LoadProjectDetails(widget.project));
   }
 
   void _shareProject(BuildContext context, Project project) {
@@ -55,7 +53,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   );
                 } else if (state is ProjectDetailsLoaded) {
                   return Text(
-                    state.project.name.value.fold((l) => '', (r) => r),
+                    widget.project.name.value.fold((l) => '', (r) => r),
                     style: const TextStyle(color: Colors.white),
                   );
                 } else {
@@ -79,9 +77,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               PopupMenuButton<String>(
                 onSelected: (value) {
                   switch (value) {
-                    case 'manage_collaborator':
-                      _manageCollaborator(context);
-                      break;
                     case 'leave_project':
                       _leaveProject(context);
                       break;
@@ -106,7 +101,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     ? const CircularProgressIndicator()
                     : state is ProjectDetailsLoaded
                     ? Text(
-                      'Project: ${state.project.name.value.fold((l) => '', (r) => r)}',
+                      'Project: ${widget.project.name.value.fold((l) => '', (r) => r)}',
                       style: const TextStyle(fontSize: 24, color: Colors.grey),
                     )
                     : state is ProjectDetailsError

@@ -14,10 +14,6 @@ abstract class ProjectRemoteDataSource {
 
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
 
-  Future<Either<Failure, List<Project>>> getAllProjects();
-
-  Future<Either<Failure, Project>> getProjectById(String id);
-
   Stream<List<Project>> watchProjectsByUser(UserId userId);
 }
 
@@ -108,40 +104,6 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
           'An unexpected error occurred while deleting the project',
         ),
       );
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<Project>>> getAllProjects() async {
-    try {
-      final querySnapshot =
-          await _firestore.collection(ProjectDTO.collection).get();
-      final projects =
-          querySnapshot.docs
-              .map((doc) => ProjectDTO.fromFirestore(doc).toDomain())
-              .toList();
-      return Right(projects);
-    } on FirebaseException catch (e) {
-      return Left(DatabaseFailure('Failed to fetch projects: \\${e.message}'));
-    } catch (e) {
-      return Left(UnexpectedFailure('An unexpected error occurred'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Project>> getProjectById(String id) async {
-    try {
-      final doc =
-          await _firestore.collection(ProjectDTO.collection).doc(id).get();
-      if (!doc.exists) {
-        return Left(DatabaseFailure('Project not found'));
-      }
-      final project = ProjectDTO.fromFirestore(doc).toDomain();
-      return Right(project);
-    } on FirebaseException catch (e) {
-      return Left(DatabaseFailure('Failed to fetch project: ${e.message}'));
-    } catch (e) {
-      return Left(UnexpectedFailure('An unexpected error occurred'));
     }
   }
 
