@@ -46,31 +46,6 @@ class ManageCollaboratorsRemoteDataSourceImpl
   });
 
   @override
-  Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    ProjectId projectId,
-    List<UserId> collaborators,
-  ) async {
-    try {
-      final ids = collaborators.map((e) => e.value).toList();
-
-      final snapshot =
-          await firestore
-              .collection(UserProfileDTO.collection)
-              .where(FieldPath.documentId, whereIn: ids)
-              .get();
-
-      final userProfiles =
-          snapshot.docs
-              .map((doc) => UserProfileDTO.fromJson(doc.data()).toDomain())
-              .toList();
-
-      return right(userProfiles);
-    } catch (e) {
-      return left(UnexpectedFailure(e.toString()));
-    }
-  }
-
-  @override
   Future<Either<Failure, void>> addCollaboratorWithId(
     ProjectId projectId,
     UserId collaboratorId,

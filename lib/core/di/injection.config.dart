@@ -70,7 +70,7 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/add_coll
     as _i398;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart'
     as _i391;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart'
+import 'package:trackflow/features/project_detail/domain/usecases/load_user_profile_collaborators_usecase.dart'
     as _i933;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
     as _i151;

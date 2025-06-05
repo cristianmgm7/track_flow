@@ -7,10 +7,16 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/add_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
   final Project? project;
-  const ManageCollaboratorsScreen({super.key, required this.project});
+  final List<UserProfile> collaborators;
+  const ManageCollaboratorsScreen({
+    super.key,
+    required this.project,
+    required this.collaborators,
+  });
 
   @override
   State<ManageCollaboratorsScreen> createState() =>
@@ -21,21 +27,14 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ManageCollaboratorsBloc>().add(
-      LoadCollaborators(project: widget.project!),
-    );
   }
 
   void _addCollaborator(BuildContext context) {
-    final project = widget.project!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AddCollaboratorDialog(projectId: widget.project!.id);
       },
-    );
-    context.read<ManageCollaboratorsBloc>().add(
-      LoadCollaborators(project: widget.project!),
     );
   }
 
@@ -79,26 +78,32 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
       ),
       body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
         builder: (context, state) {
-          if (state is ManageCollaboratorsLoading) {
+          if (state is ProjectDetailsLoading) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is ManageCollaboratorsLoaded) {
+          } else if (state is ProjectDetailsLoaded) {
             return ListView.builder(
               itemCount: state.collaborators.length,
               itemBuilder: (context, index) {
                 final userProfile = state.collaborators[index];
-                return ListTile(
-                  title: Text(userProfile.name),
-                  subtitle: Text(userProfile.email),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
-                    onPressed: () {
-                      _removeCollaborator(context, userProfile.id);
-                    },
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 16.0,
+                  ),
+                  child: ListTile(
+                    title: Text(userProfile.name),
+                    subtitle: Text(userProfile.email),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: () {
+                        _removeCollaborator(context, userProfile.id);
+                      },
+                    ),
                   ),
                 );
               },
             );
-          } else if (state is ManageCollaboratorsError) {
+          } else if (state is ProjectDetailsError) {
             return Center(
               child: Text(state.message, style: TextStyle(color: Colors.red)),
             );

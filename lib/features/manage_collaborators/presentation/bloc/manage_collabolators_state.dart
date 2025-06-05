@@ -8,11 +8,12 @@ abstract class ManageCollaboratorsState extends Equatable {
 
 class ManageCollaboratorsInitial extends ManageCollaboratorsState {}
 
-class ManageCollaboratorsLoading extends ManageCollaboratorsState {}
-
 class ManageCollaboratorsError extends ManageCollaboratorsState {
   final String message;
   ManageCollaboratorsError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }
 
 class CollaboratorActionSuccess extends ManageCollaboratorsState {}

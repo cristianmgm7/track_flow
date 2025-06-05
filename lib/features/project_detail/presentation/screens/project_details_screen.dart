@@ -7,6 +7,7 @@ import 'package:trackflow/features/project_detail/presentation/bloc/project_deta
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -29,8 +30,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     Share.share('Check out this project: $shareableLink');
   }
 
-  void _manageCollaborator(BuildContext context) {
-    context.go(AppRoutes.manageCollaborators, extra: widget.project);
+  void _manageCollaborator(
+    BuildContext context,
+    UserProfile userProfile,
+    Project project,
+  ) {
+    context.go(AppRoutes.manageCollaborators, extra: project);
   }
 
   void _leaveProject(BuildContext context) {
@@ -100,9 +105,29 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 state is ProjectDetailsLoading
                     ? const CircularProgressIndicator()
                     : state is ProjectDetailsLoaded
-                    ? Text(
-                      'Project: ${widget.project.name.value.fold((l) => '', (r) => r)}',
-                      style: const TextStyle(fontSize: 24, color: Colors.grey),
+                    ? Container(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children:
+                            state.collaborators.map((userProfile) {
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 8.0,
+                                ),
+                                child: ListTile(
+                                  title: Text(userProfile.name),
+                                  subtitle: Text(userProfile.email),
+                                  onTap: () {
+                                    _manageCollaborator(
+                                      context,
+                                      userProfile,
+                                      widget.project,
+                                    );
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                      ),
                     )
                     : state is ProjectDetailsError
                     ? Text(

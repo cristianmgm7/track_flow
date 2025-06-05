@@ -18,16 +18,16 @@ class LeaveProjectParams extends Equatable {
 
 @lazySingleton
 class LeaveProjectUseCase {
-  final ProjectRepository _repository;
+  final ProjectDetailRepository _repository;
   final SessionStorage _sessionStorage;
 
   LeaveProjectUseCase(this._repository, this._sessionStorage);
 
   Future<Either<Failure, void>> call(LeaveProjectParams params) async {
-    final userId = await _sessionStorage.getUserId();
+    final userId = _sessionStorage.getUserId();
     return await _repository.leaveProject(
       projectId: params.projectId,
-      userId: UserId.fromUniqueString(userId!),
+      userId: UserId.fromUniqueString(userId ?? ''),
     );
   }
 }

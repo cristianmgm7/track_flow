@@ -11,34 +11,34 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 
 @injectable
 class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
-  final LoadUserProfileCollaboratorsUseCase loadProjectDetails;
+  final LoadUserProfileCollaboratorsUseCase getUserProfileCollaborators;
   final LeaveProjectUseCase leaveProjectUseCase;
 
   ProjectDetailBloc({
-    required this.loadProjectDetails,
+    required this.getUserProfileCollaborators,
     required this.leaveProjectUseCase,
   }) : super(ProjectDetailsInitial()) {
-    on<LoadProjectDetails>(_onLoadProjectDetails);
+    on<LoadProjectDetails>(_onLoadUserProfileCollaborators);
     on<LeaveProject>(_onLeaveProject);
   }
 
-  Future<void> _onLoadProjectDetails(
+  Future<void> _onLoadUserProfileCollaborators(
     LoadProjectDetails event,
     Emitter<ProjectDetailsState> emit,
   ) async {
     emit(ProjectDetailsLoading());
     final Either<Failure, List<UserProfile>> failureOrProject =
-        await loadProjectDetails.call(
+        await getUserProfileCollaborators.call(
           ProjectWithCollaborators(project: event.project),
         );
 
     failureOrProject.fold(
       (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (project) => emit(
+      (collaborators) => emit(
         ProjectDetailsLoaded(
-          collaborators: project,
-          roles: event.project.roles,
-          members: event.project.members,
+          collaborators: collaborators,
+          roles: {},
+          members: {},
         ),
       ),
     );
