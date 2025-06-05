@@ -1,9 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'manage_collabolators_event.dart';
 import 'manage_collabolators_state.dart';
 
@@ -23,6 +25,8 @@ class ManageCollaboratorsBloc
     on<LoadCollaborators>(_onLoadCollaborators);
     on<UpdateCollaboratorRole>(_onUpdateCollaboratorRole);
   }
+
+  UserRole get defaultUserRole => UserRole.viewer;
   Future<void> _onLoadCollaborators(
     LoadCollaborators event,
     Emitter<ManageCollaboratorsState> emit,
@@ -34,12 +38,19 @@ class ManageCollaboratorsBloc
     result.fold(
       (failure) =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (collaborators) => emit(
-        ManageCollaboratorsLoaded(
-          collaborators: collaborators,
-          roles: {for (var c in collaborators) c.id: c.role!},
-        ),
-      ),
+      (collaborators) {
+        final filteredCollaborators =
+            collaborators.whereType<UserProfile>().toList();
+        emit(
+          ManageCollaboratorsLoaded(
+            collaborators: filteredCollaborators,
+            roles: {
+              for (var c in filteredCollaborators)
+                c.id: c.role ?? defaultUserRole,
+            },
+          ),
+        );
+      },
     );
   }
 

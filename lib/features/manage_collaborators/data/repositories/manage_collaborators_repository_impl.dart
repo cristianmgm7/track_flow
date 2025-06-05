@@ -5,6 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart';
@@ -24,16 +25,15 @@ class ManageCollaboratorsRepositoryImpl
 
   @override
   Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    ProjectId projectId,
-    List<UserId> collaborators,
+    Project project,
   ) async {
     final hasConnected = await networkInfo.isConnected;
     if (!hasConnected) {
       return left(DatabaseFailure('No internet connection'));
     }
     return await remoteDataSource.getProjectCollaborators(
-      projectId,
-      collaborators,
+      project.id,
+      project.collaborators,
     );
   }
 

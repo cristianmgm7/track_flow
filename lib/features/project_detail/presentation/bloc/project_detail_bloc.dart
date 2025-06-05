@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/project_detail/domain/usecases/load_project_details_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
@@ -33,13 +32,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
 
     failureOrProject.fold(
       (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (project) => emit(
-        ProjectDetailsLoaded(
-          project: project,
-          currentUserRole: UserRole.member, // Example role, adjust as needed
-          participants: [], // Example participants, adjust as needed
-        ),
-      ),
+      (project) => emit(ProjectDetailsLoaded(project: project)),
     );
   }
 

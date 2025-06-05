@@ -27,11 +27,15 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   }
 
   void _addCollaborator(BuildContext context) {
+    final project = widget.project!;
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AddCollaboratorDialog(projectId: widget.project!.id);
       },
+    );
+    context.read<ManageCollaboratorsBloc>().add(
+      LoadCollaborators(project: widget.project!),
     );
   }
 
