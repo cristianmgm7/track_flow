@@ -8,16 +8,9 @@ abstract class ProjectsRepository {
   Future<Either<Failure, Unit>> updateProject(Project project);
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
 
-  /// Streams all projects.
-  Stream<Either<Failure, List<Project>>> watchAllProjects(UserId ownerId);
+  /// Streams local projects.
+  Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId);
 
-  Future<Either<Failure, Unit>> addCollaborator({
-    required UniqueId projectId,
-    required UserId userId,
-  });
-
-  Future<Either<Failure, Project>> joinProjectWithId({
-    required UniqueId projectId,
-    required UserId userId,
-  });
+  /// Streams remote projects.
+  Stream<Either<Failure, List<Project>>> watchRemoteProjects(UserId userId);
 }
