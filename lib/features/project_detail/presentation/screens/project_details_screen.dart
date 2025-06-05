@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
@@ -26,7 +27,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   void _shareProject(BuildContext context, Project project) {
     final projectId = widget.project.id;
-    final projectCollaborators = widget.project.collaborators;
     final shareableLink = 'https://example.com/project/$projectId';
     Share.share('Check out this project: $shareableLink');
   }
@@ -41,56 +41,86 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          widget.project.name.value.fold((l) => '', (r) => r),
-          style: const TextStyle(color: Colors.white),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            context.go(AppRoutes.projects);
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.link, color: Colors.white),
-            onPressed: () {
-              _shareProject(context, widget.project);
-            },
+    return BlocBuilder<ProjectDetailBloc, ProjectDetailsState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: Builder(
+              builder: (_) {
+                if (state is ProjectDetailsLoading) {
+                  return const Text(
+                    'Loading...',
+                    style: TextStyle(color: Colors.white),
+                  );
+                } else if (state is ProjectDetailsLoaded) {
+                  return Text(
+                    state.project.name.value.fold((l) => '', (r) => r),
+                    style: const TextStyle(color: Colors.white),
+                  );
+                } else {
+                  return const Text('', style: TextStyle(color: Colors.white));
+                }
+              },
+            ),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                context.go(AppRoutes.projects);
+              },
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.link, color: Colors.white),
+                onPressed: () {
+                  _shareProject(context, widget.project);
+                },
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  switch (value) {
+                    case 'manage_collaborator':
+                      _manageCollaborator(context);
+                      break;
+                    case 'leave_project':
+                      _leaveProject(context);
+                      break;
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return {'manage_collaborator', 'leave_project'}.map((
+                    String choice,
+                  ) {
+                    return PopupMenuItem<String>(
+                      value: choice,
+                      child: Text(choice),
+                    );
+                  }).toList();
+                },
+              ),
+            ],
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'manage_collaborator':
-                  _manageCollaborator(context);
-                  break;
-                case 'leave_project':
-                  _leaveProject(context);
-                  break;
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return {'manage_collaborator', 'leave_project'}.map((
-                String choice,
-              ) {
-                return PopupMenuItem<String>(
-                  value: choice,
-                  child: Text(choice),
-                );
-              }).toList();
-            },
+          body: Center(
+            child:
+                state is ProjectDetailsLoading
+                    ? const CircularProgressIndicator()
+                    : state is ProjectDetailsLoaded
+                    ? Text(
+                      'Project: ${state.project.name.value.fold((l) => '', (r) => r)}',
+                      style: const TextStyle(fontSize: 24, color: Colors.grey),
+                    )
+                    : state is ProjectDetailsError
+                    ? Text(
+                      'Error: ${state.message}',
+                      style: const TextStyle(fontSize: 24, color: Colors.red),
+                    )
+                    : const Text(
+                      'Project Details Screen',
+                      style: TextStyle(fontSize: 24, color: Colors.grey),
+                    ),
           ),
-        ],
-      ),
-      body: const Center(
-        child: Text(
-          'Project Details Screen',
-          style: TextStyle(fontSize: 24, color: Colors.grey),
-        ),
-      ),
+        );
+      },
     );
   }
 }
