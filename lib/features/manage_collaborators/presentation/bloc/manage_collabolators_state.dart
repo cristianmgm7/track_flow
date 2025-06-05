@@ -1,8 +1,13 @@
+import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
-abstract class ManageCollaboratorsState {}
+abstract class ManageCollaboratorsState extends Equatable {
+  @override
+  List<Object?> get props => [];
+}
 
 class ManageCollaboratorsInitial extends ManageCollaboratorsState {}
 
@@ -21,3 +26,31 @@ class ManageCollaboratorsError extends ManageCollaboratorsState {
 }
 
 class CollaboratorActionSuccess extends ManageCollaboratorsState {}
+
+/// Add Participant
+class ParticipantAdded extends ManageCollaboratorsState {
+  final String participantId;
+
+  ParticipantAdded(this.participantId);
+
+  @override
+  List<Object?> get props => [participantId];
+}
+
+class JoinProjectSuccess extends ManageCollaboratorsState {
+  final Project project;
+
+  JoinProjectSuccess(this.project);
+
+  @override
+  List<Object?> get props => [project];
+}
+
+class JoinProjectFailure extends ManageCollaboratorsState {
+  final String error;
+
+  JoinProjectFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}

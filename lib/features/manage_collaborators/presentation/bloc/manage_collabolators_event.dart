@@ -32,3 +32,8 @@ class RemoveCollaborator extends ManageCollaboratorsEvent {
   final UserId userId;
   RemoveCollaborator(this.userId);
 }
+
+class JoinProjectWithIdRequested extends ManageCollaboratorsEvent {
+  final UniqueId projectId;
+  JoinProjectWithIdRequested(this.projectId);
+}

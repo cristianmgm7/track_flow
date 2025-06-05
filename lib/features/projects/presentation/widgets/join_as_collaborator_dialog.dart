@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 
 class JoinAsCollaboratorDialog extends StatefulWidget {
@@ -34,12 +35,14 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
   void _joinProject() {
     if (!_formKey.currentState!.validate()) return;
     final projectId = UniqueId.fromString(_projectIdController.text);
-    context.read<ProjectsBloc>().add(JoinProjectWithIdRequested(projectId));
+    context.read<ManageCollaboratorsBloc>().add(
+      JoinProjectWithIdRequested(projectId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProjectsBloc, ProjectsState>(
+    return BlocListener<ManageCollaboratorsBloc, ManageCollaboratorsState>(
       listener: (context, state) {
         if (state is JoinProjectSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -49,7 +52,7 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
             ),
           );
           context.go(AppRoutes.projectDetails, extra: state.project);
-        } else if (state is ProjectsError) {
+        } else if (state is ManageCollaboratorsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}'),
@@ -60,7 +63,7 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
       },
       child: AlertDialog(
         title: const Text('Join Project'),
-        content: BlocBuilder<ProjectsBloc, ProjectsState>(
+        content: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
           builder: (context, state) {
             return Form(
               key: _formKey,
