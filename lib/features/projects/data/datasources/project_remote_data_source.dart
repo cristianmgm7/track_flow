@@ -19,6 +19,8 @@ abstract class ProjectRemoteDataSource {
 
   Future<Either<Failure, Project>> getProjectById(String id);
 
+  Stream<List<Project>> watchProjectsByUser(UserId userId);
+
   Future<Either<Failure, Unit>> addCollaboratorWithIdProject({
     required String projectId,
     required String userId,
@@ -182,5 +184,18 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         ),
       );
     }
+  }
+
+  @override
+  Stream<List<Project>> watchProjectsByUser(UserId userId) {
+    return _firestore
+        .collection(ProjectDTO.collection)
+        .where('collaborators', arrayContains: userId.value)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => ProjectDTO.fromFirestore(doc).toDomain())
+              .toList();
+        });
   }
 }
