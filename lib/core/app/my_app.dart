@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/constants/theme.dart';
+import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:trackflow/features/onboarding/domain/repositories/onboarding_repository.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
+import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
+import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
-import 'package:trackflow/features/projects/domain/usecases/project_usecases.dart';
-import 'package:trackflow/core/services/service_locator.dart';
-import 'package:trackflow/features/auth/domain/usecases/auth_usecases.dart';
-import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/services/dynamic_link_service.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -23,29 +24,21 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create:
-              (context) =>
-                  AuthBloc(sl<AuthUseCases>())..add(AuthCheckRequested()),
+          create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
         ),
-        BlocProvider<ProjectsBloc>(
-          create:
-              (context) => ProjectsBloc(
-                sl<ProjectUseCases>(),
-                sl<WatchAllProjectsUseCase>(),
-              ),
+        BlocProvider<UserProfileBloc>(
+          create: (context) => sl<UserProfileBloc>(),
         ),
-        BlocProvider<OnboardingBloc>(
-          create:
-              (context) =>
-                  OnboardingBloc(sl<OnboardingRepository>())
-                    ..add(OnboardingCheckRequested()),
+        BlocProvider<NavigationCubit>(
+          create: (context) => sl<NavigationCubit>(),
         ),
-        BlocProvider<AppFlowCubit>(
-          create:
-              (context) => AppFlowCubit(
-                authRepository: sl(),
-                onboardingRepository: sl(),
-              ),
+        BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
+        BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
+        BlocProvider<ProjectDetailBloc>(
+          create: (context) => sl<ProjectDetailBloc>(),
+        ),
+        BlocProvider<ManageCollaboratorsBloc>(
+          create: (context) => sl<ManageCollaboratorsBloc>(),
         ),
       ],
       child: _App(),
@@ -53,16 +46,41 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _App extends StatelessWidget {
+class _App extends StatefulWidget {
   _App() {
     debugPrint('App constructor called');
   }
+  @override
+  State<_App> createState() => _AppState();
+}
+
+class _AppState extends State<_App> {
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _router = AppRouter.router(context.read<AuthBloc>());
+
+    // Escuchar el dynamic link
+    final dynamicLinkService = sl<DynamicLinkService>();
+    dynamicLinkService.magicLinkToken.addListener(() {
+      final token = dynamicLinkService.magicLinkToken.value;
+      if (token != null && token.isNotEmpty) {
+        // Navegar a la pantalla de manejo del magic link (ajusta la ruta cuando la tengas)
+        _router.go(AppRoutes.magicLink);
+        // Limpiar el token después de manejarlo
+        dynamicLinkService.magicLinkToken.value = null;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'TrackFlow',
       theme: AppTheme.theme,
-      routerConfig: AppRouter.router(context),
+      routerConfig: _router,
     );
   }
 }

@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
+import 'package:injectable/injectable.dart';
 import '../models/project_dto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-abstract class ProjectLocalDataSource {
+abstract class ProjectsLocalDataSource {
   Future<void> cacheProject(ProjectDTO project);
 
   Future<ProjectDTO?> getCachedProject(UniqueId id);
@@ -11,20 +13,22 @@ abstract class ProjectLocalDataSource {
 
   Future<List<ProjectDTO>> getAllProjects();
 
-  Stream<List<ProjectDTO>> watchAllProjects();
+  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId);
 }
 
-class HiveProjectLocalDataSource implements ProjectLocalDataSource {
-  static const String _boxName = 'projects';
-  late final Box<Map<String, dynamic>> _box;
+@LazySingleton(as: ProjectsLocalDataSource)
+class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
+  late final Box<Map> _box;
 
-  HiveProjectLocalDataSource({Box<Map<String, dynamic>>? box}) {
-    _box = box ?? Hive.box<Map<String, dynamic>>(_boxName);
+  ProjectsLocalDataSourceImpl({required Box<Map> box}) {
+    _box = box;
   }
 
   @override
   Future<void> cacheProject(ProjectDTO project) async {
     await _box.put(project.id, project.toMap());
+    debugPrint('Project cached: \\${project.id}');
+    printBoxContents();
   }
 
   @override
@@ -44,11 +48,41 @@ class HiveProjectLocalDataSource implements ProjectLocalDataSource {
 
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values.map((e) => ProjectDTO.fromMap(e)).toList();
+    return _box.values
+        .whereType<Map>() // only maps
+        .map((e) => ProjectDTO.fromMap(Map<String, dynamic>.from(e)))
+        .toList();
   }
 
   @override
-  Stream<List<ProjectDTO>> watchAllProjects() {
-    return _box.watch().asyncMap((_) => getAllProjects());
+  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
+    // Emitir el estado actual filtrado al suscribirse
+    debugPrint('Watching all projects');
+    yield (await getAllProjects())
+        .where(
+          (dto) =>
+              dto.ownerId == ownerId.value ||
+              dto.collaborators.contains(ownerId.value),
+        )
+        .toList();
+
+    // Luego escuchar los cambios y filtrar también
+    yield* _box.watch().asyncMap((_) async {
+      final all = await getAllProjects();
+      return all
+          .where(
+            (dto) =>
+                dto.ownerId == ownerId.value ||
+                dto.collaborators.contains(ownerId.value),
+          )
+          .toList();
+    });
+  }
+
+  void printBoxContents() {
+    debugPrint('Contenido de la base de datos Hive:');
+    for (var key in _box.keys) {
+      debugPrint('Clave: $key, Valor: ${_box.get(key)}');
+    }
   }
 }

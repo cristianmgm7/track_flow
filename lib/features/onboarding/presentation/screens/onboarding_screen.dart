@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
-import 'package:trackflow/core/app/app_flow_cubit.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<OnboardingBloc, OnboardingState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is OnboardingChecked && state.hasCompletedOnboarding) {
           context.go(AppRoutes.auth);
@@ -22,7 +22,7 @@ class OnboardingScreen extends StatelessWidget {
           ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
-      child: BlocBuilder<OnboardingBloc, OnboardingState>(
+      child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is OnboardingLoading) {
             return const Scaffold(
@@ -78,10 +78,12 @@ class OnboardingScreen extends StatelessWidget {
 
           return IntroductionScreen(
             pages: pages,
-            onDone: () => context.read<AppFlowCubit>().onboardingCompleted(),
+            onDone:
+                () => context.read<AuthBloc>().add(OnboardingMarkCompleted()),
             showSkipButton: true,
             skip: const Text("Skip"),
-            onSkip: () => context.read<AppFlowCubit>().onboardingCompleted(),
+            onSkip:
+                () => context.read<AuthBloc>().add(OnboardingMarkCompleted()),
             next: const Icon(Icons.arrow_forward),
             done: const Text(
               "Get Started",

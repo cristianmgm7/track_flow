@@ -26,4 +26,19 @@ abstract class AuthRepository {
 
   // is logged in
   Future<bool> isLoggedIn();
+
+  /// mark onboarding as completed
+  Future<bool> onboardingCompleted();
+
+  /// mark welcome screen as completed
+  Future<void> welcomeScreenSeenCompleted();
+
+  /// Check if user has seen welcome screen
+  Future<bool> checkWelcomeScreenSeen();
+
+  /// check if onboarding is completed
+  Future<bool> checkOnboardingCompleted();
+
+  /// get the signed in user id
+  Future<Either<Failure, String>> getSignedInUserId();
 }

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import '../../domain/entities/project.dart';
@@ -7,30 +8,34 @@ import '../models/project_dto.dart';
 
 /// Abstract class defining the contract for remote project operations.
 abstract class ProjectRemoteDataSource {
-  Future<Either<Failure, Unit>> createProject(Project project);
+  Future<Either<Failure, Project>> createProject(Project project);
 
   Future<Either<Failure, Unit>> updateProject(Project project);
 
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
 
-  Future<Either<Failure, List<Project>>> getAllProjects();
-
-  Future<Either<Failure, Project>> getProjectById(String id);
+  Stream<List<Project>> watchProjectsByUser(UserId userId);
 }
 
-/// Implementation of [ProjectRemoteDataSource] using Firestore.
-class FirestoreProjectDataSource implements ProjectRemoteDataSource {
+@LazySingleton(as: ProjectRemoteDataSource)
+class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   final FirebaseFirestore _firestore;
 
-  FirestoreProjectDataSource({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  ProjectsRemoteDatasSourceImpl({required FirebaseFirestore firestore})
+    : _firestore = firestore;
 
   @override
-  Future<Either<Failure, Unit>> createProject(Project project) async {
+  Future<Either<Failure, Project>> createProject(Project project) async {
     final dto = ProjectDTO.fromDomain(project);
     try {
-      await _firestore.collection(ProjectDTO.collection).add(dto.toFirestore());
-      return Right(unit);
+      final docRef = await _firestore
+          .collection(ProjectDTO.collection)
+          .add(dto.toFirestore());
+      final projectWithId = project.copyWith(
+        id: ProjectId.fromUniqueString(docRef.id),
+      );
+      await docRef.update({'id': docRef.id});
+      return Right(projectWithId);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -39,7 +44,7 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
           ),
         );
       }
-      return Left(DatabaseFailure('Failed to create project: \\${e.message}'));
+      return Left(DatabaseFailure('Failed to create project: ${e.message}'));
     } catch (e) {
       return Left(
         UnexpectedFailure(
@@ -103,36 +108,15 @@ class FirestoreProjectDataSource implements ProjectRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, List<Project>>> getAllProjects() async {
-    try {
-      final querySnapshot =
-          await _firestore.collection(ProjectDTO.collection).get();
-      final projects =
-          querySnapshot.docs
+  Stream<List<Project>> watchProjectsByUser(UserId userId) {
+    return _firestore
+        .collection(ProjectDTO.collection)
+        .where('collaborators', arrayContains: userId.value)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
               .map((doc) => ProjectDTO.fromFirestore(doc).toDomain())
               .toList();
-      return Right(projects);
-    } on FirebaseException catch (e) {
-      return Left(DatabaseFailure('Failed to fetch projects: \\${e.message}'));
-    } catch (e) {
-      return Left(UnexpectedFailure('An unexpected error occurred'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Project>> getProjectById(String id) async {
-    try {
-      final doc =
-          await _firestore.collection(ProjectDTO.collection).doc(id).get();
-      if (!doc.exists) {
-        return Left(DatabaseFailure('Project not found'));
-      }
-      final project = ProjectDTO.fromFirestore(doc).toDomain();
-      return Right(project);
-    } on FirebaseException catch (e) {
-      return Left(DatabaseFailure('Failed to fetch project: ${e.message}'));
-    } catch (e) {
-      return Left(UnexpectedFailure('An unexpected error occurred'));
-    }
+        });
   }
 }

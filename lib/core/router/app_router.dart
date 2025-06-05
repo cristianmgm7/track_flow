@@ -1,42 +1,51 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
-import 'package:trackflow/features/home/presentation/pages/dashboard.dart';
+import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
+import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
+import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/app/app_flow_cubit.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 
-class AppRouter {
-  static GoRouter router(BuildContext context) {
-    final appFlowCubit = context.watch<AppFlowCubit>();
+final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'shell',
+);
 
+class AppRouter {
+  static GoRouter router(AuthBloc authBloc) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: AppRoutes.splash,
-      refreshListenable: GoRouterRefreshStream(appFlowCubit.stream),
+      initialLocation: AppRoutes.dashboard,
+      refreshListenable: GoRouterRefreshStream(authBloc.stream),
       redirect: (context, state) {
-        final status = appFlowCubit.state;
-        switch (status) {
-          case AppStatus.unknown:
-            return AppRoutes.splash;
-          case AppStatus.onboarding:
-            return AppRoutes.onboarding;
-          case AppStatus.unauthenticated:
-            return AppRoutes.welcome;
-          case AppStatus.authenticated:
-            return AppRoutes.dashboard;
+        final authState = authBloc.state;
+        if (authState is AuthInitial) return AppRoutes.splash;
+        if (authState is OnboardingInitial) return AppRoutes.onboarding;
+        if (authState is WelcomeScreenInitial) return AppRoutes.welcome;
+        if (authState is AuthUnauthenticated) return AppRoutes.auth;
+        if (authState is AuthAuthenticated &&
+            (state.matchedLocation == AppRoutes.splash ||
+                state.matchedLocation == AppRoutes.onboarding ||
+                state.matchedLocation == AppRoutes.auth ||
+                state.matchedLocation == AppRoutes.welcome)) {
+          return AppRoutes.dashboard;
         }
+        return null;
       },
       routes: [
         GoRoute(
@@ -55,23 +64,51 @@ class AppRouter {
           path: AppRoutes.auth,
           builder: (context, state) => const AuthScreen(),
         ),
+        GoRoute(
+          path: AppRoutes.magicLink,
+          builder:
+              (context, state) => MagicLinkHandlerScreen(
+                token: state.pathParameters['token'] ?? '',
+              ),
+        ),
         ShellRoute(
-          builder: (context, state, child) => DashboardScreen(child: child),
+          navigatorKey: _shellNavigatorKey,
+          builder: (context, state, child) => MainScaffold(child: child),
           routes: [
             GoRoute(
               path: AppRoutes.dashboard,
-              builder: (context, state) => ProjectListScreen(),
+              builder: (context, state) => const DashboardScreen(),
             ),
             GoRoute(
-              path: AppRoutes.newProject,
-              builder: (context, state) => ProjectFormScreen(),
+              path: AppRoutes.projects,
+              builder: (context, state) => const ProjectListScreen(),
+            ),
+            GoRoute(
+              path: AppRoutes.notifications,
+              builder:
+                  (context, state) => const Scaffold(
+                    body: Center(
+                      child: Text("Notifications"),
+                    ), // TODO: Add notifications screen
+                  ),
+            ),
+            GoRoute(
+              path: AppRoutes.settings,
+              builder: (context, state) => const SettingsScreen(),
             ),
             GoRoute(
               path: AppRoutes.projectDetails,
-              builder: (context, state) {
-                final projectId = state.pathParameters['id']!;
-                return ProjectDetailsScreen(projectId: projectId);
-              },
+              builder:
+                  (context, state) =>
+                      ProjectDetailsScreen(project: state.extra as Project),
+            ),
+            GoRoute(
+              path: AppRoutes.manageCollaborators,
+              builder:
+                  (context, state) => ManageCollaboratorsScreen(
+                    project: state.extra as Project,
+                    collaborators: state.extra as List<UserProfile>,
+                  ),
             ),
           ],
         ),
@@ -91,6 +128,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
     );
   }
   late final StreamSubscription<dynamic> _subscription;
+
   @override
   void dispose() {
     _subscription.cancel();

@@ -1,3 +1,4 @@
+install! 'cocoapods'
 # Uncomment this line to define a global platform for your project
 platform :ios, '13.0'
 
@@ -35,6 +36,9 @@ end
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
+
+  # pod 'BoringSSL-GRPC',
+  #   :path => '~/Library/Caches/CocoaPods/GitHub/boringssl-standalone'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do

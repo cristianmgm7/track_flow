@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
@@ -9,49 +10,45 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-/// A repository that implements offline-first with sync capabilities.
-///
-/// This repository:
-/// 1. Always writes to local storage first
-/// 2. Syncs with Firestore when online
-/// 3. Reads from local storage for immediate access
-/// 4. Periodically syncs with Firestore in the background
+@LazySingleton(as: ProjectsRepository)
 class ProjectsRepositoryImpl implements ProjectsRepository {
+  final ProjectRemoteDataSource _remoteDataSource;
+  final ProjectsLocalDataSource _localDataSource;
+  final NetworkInfo _networkInfo;
+
   ProjectsRepositoryImpl({
     required ProjectRemoteDataSource remoteDataSource,
-    required ProjectLocalDataSource localDataSource,
+    required ProjectsLocalDataSource localDataSource,
     required NetworkInfo networkInfo,
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
        _networkInfo = networkInfo;
 
-  final ProjectRemoteDataSource _remoteDataSource;
-  final ProjectLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
-
   @override
-  Future<Either<Failure, Unit>> createProject(Project project) async {
-    final dto = ProjectDTO.fromDomain(project);
+  Future<Either<Failure, Project>> createProject(Project project) async {
     final hasConnected = await _networkInfo.isConnected;
-    if (hasConnected) {
-      try {
-        await _remoteDataSource.createProject(project);
-        await _localDataSource.cacheProject(dto);
-        return Right(unit);
-      } catch (e) {
-        return Left(
-          DatabaseFailure('Failed to create project: \\${e.toString()}'),
-        );
-      }
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
     }
-    return Right(unit);
+
+    try {
+      final result = await _remoteDataSource.createProject(project);
+      return result.fold((failure) => Left(failure), (projectWithId) async {
+        final dto = ProjectDTO.fromDomain(projectWithId);
+        await _localDataSource.cacheProject(dto);
+        return Right(projectWithId);
+      });
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to create project: ${e.toString()}'));
+    }
   }
 
   @override
   Future<Either<Failure, Unit>> updateProject(Project project) async {
     try {
-      //final dto = ProjectDTO.fromDomain(project);
       await _remoteDataSource.updateProject(project);
+      final dto = ProjectDTO.fromDomain(project);
+      await _localDataSource.cacheProject(dto);
       return Right(unit);
     } catch (e) {
       return Left(
@@ -64,29 +61,31 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   Future<Either<Failure, Unit>> deleteProject(UniqueId id) async {
     try {
       await _remoteDataSource.deleteProject(id);
+      await _localDataSource.removeCachedProject(id);
       return Right(unit);
     } catch (e) {
-      return Left(
-        DatabaseFailure('Failed to delete project: \\${e.toString()}'),
-      );
+      return Left(DatabaseFailure('Failed to delete project: ${e.toString()}'));
     }
   }
 
+  // watching projects stream
   @override
-  Future<Either<Failure, List<Project>>> getAllProjects() async {
-    return _remoteDataSource.getAllProjects();
+  Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId) {
+    return _localDataSource
+        .watchAllProjects(ownerId)
+        .map(
+          (projects) =>
+              Right(projects.map((project) => project.toDomain()).toList()),
+        );
   }
 
   @override
-  Future<Either<Failure, Project>> getProjectById(String id) async {
-    return _remoteDataSource.getProjectById(id);
-  }
-
-  @override
-  Stream<Either<Failure, List<Project>>> watchAllProjects() {
-    return _localDataSource.watchAllProjects().map(
-      (projects) =>
-          Right(projects.map((project) => project.toDomain()).toList()),
-    );
+  Stream<Either<Failure, List<Project>>> watchRemoteProjects(UserId userId) {
+    return _remoteDataSource
+        .watchProjectsByUser(userId)
+        .map<Either<Failure, List<Project>>>((projects) => Right(projects))
+        .handleError((error) {
+          return Left(DatabaseFailure('Remote sync error'));
+        });
   }
 }

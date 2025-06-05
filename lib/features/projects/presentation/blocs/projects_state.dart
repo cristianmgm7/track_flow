@@ -3,7 +3,6 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ProjectsState extends Equatable {
   const ProjectsState();
-
   @override
   List<Object?> get props => [];
 }
@@ -19,6 +18,15 @@ class ProjectOperationSuccess extends ProjectsState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class ProjectCreatedSuccess extends ProjectsState {
+  final Project project;
+
+  const ProjectCreatedSuccess(this.project);
+
+  @override
+  List<Object?> get props => [project];
 }
 
 class ProjectsError extends ProjectsState {

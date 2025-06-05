@@ -1,0 +1,15 @@
+{
+    "$schema": "https://context7.com/schema/context7.json",
+    "projectTitle": "Trackflow",
+    "description": "Trackflow is a platform for tracking and managing your projects.",
+    "folders": ["/Users/cristianmurillo/development/trackflow/lib"],
+    "excludeFolders": [],
+    "excludeFiles": [],
+    "rules": ["Use Upstash Redis as a database", "Use single region set up"],
+    "previousVersions": [
+      {
+        "tag": "v1.2.1",
+        "title": "version 1.2.1"
+      }
+    ]
+  }

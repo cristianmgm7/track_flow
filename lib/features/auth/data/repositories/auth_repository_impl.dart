@@ -1,46 +1,85 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/core/sync/project_sync_service.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
+@LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
-  final FirebaseAuth? _auth;
-  final GoogleSignIn? _googleSignIn;
+  final FirebaseAuth _auth;
+  final GoogleSignIn _googleSignIn;
   final SharedPreferences _prefs;
-  bool _isOfflineMode = false;
+  final NetworkInfo _networkInfo;
+  final FirebaseFirestore _firestore;
+  final ProjectSyncService _projectSyncService;
 
   AuthRepositoryImpl({
-    FirebaseAuth? auth,
-    GoogleSignIn? googleSignIn,
+    required FirebaseAuth auth,
+    required GoogleSignIn googleSignIn,
     required SharedPreferences prefs,
+    required NetworkInfo networkInfo,
+    required FirebaseFirestore firestore,
+    required ProjectSyncService projectSyncService,
   }) : _auth = auth,
        _googleSignIn = googleSignIn,
-       _prefs = prefs {
-    try {
-      if (_auth == null) {
-        _isOfflineMode = true;
-        debugPrint('Running in offline mode - Auth services not available');
-      }
-    } catch (e) {
-      _isOfflineMode = true;
-      debugPrint('Error initializing auth services: $e');
+       _prefs = prefs,
+       _networkInfo = networkInfo,
+       _firestore = firestore,
+       _projectSyncService = projectSyncService;
+
+  Future<void> _cacheUserId(User user) async {
+    final userId = user.uid;
+    await SessionStorage(prefs: _prefs).saveUserId(userId);
+  }
+
+  // user
+  @override
+  Future<Either<Failure, String>> getSignedInUserId() async {
+    final user = _auth.currentUser;
+    if (user == null) return left(AuthenticationFailure('No user found'));
+    return right(user.uid);
+  }
+
+  Future<void> _createUserProfileIfNotExists(User user) async {
+    final userRef = _firestore.collection('user_profile').doc(user.uid);
+    final existing = await userRef.get();
+    if (!existing.exists) {
+      await userRef.set({
+        'id': user.uid,
+        'name': user.displayName ?? '',
+        'email': user.email ?? '',
+        'avatarUrl': user.photoURL ?? '',
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+        'creativeRole': CreativeRole.other.name,
+      });
     }
   }
 
   @override
-  Stream<domain.User?> get authState {
-    if (_isOfflineMode) {
+  Stream<domain.User?> get authState async* {
+    final isConnected = await _networkInfo.isConnected;
+    if (!isConnected) {
       final hasStoredCredentials = _prefs.getBool('has_credentials') ?? false;
-      if (!hasStoredCredentials) return Stream.value(null);
+      if (!hasStoredCredentials) {
+        yield null;
+        return;
+      }
       final email = _prefs.getString('offline_email') ?? '';
-      return Stream.value(domain.User(id: 'offline', email: email));
+      yield domain.User(id: 'offline', email: email);
+      return;
     }
-    return _auth!.authStateChanges().map((user) {
+    yield* _auth.authStateChanges().map((user) {
       if (user == null) return null;
       return AuthDto.fromFirebase(user).toDomain();
     });
@@ -52,16 +91,22 @@ class AuthRepositoryImpl implements AuthRepository {
     String password,
   ) async {
     try {
-      if (_isOfflineMode) {
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
         await _prefs.setBool('has_credentials', true);
         await _prefs.setString('offline_email', email);
         return right(domain.User(id: 'offline', email: email));
       }
-      final cred = await _auth!.signInWithEmailAndPassword(
+      final cred = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       final user = cred.user;
+      if (user != null) {
+        await _cacheUserId(user);
+        await _createUserProfileIfNotExists(user);
+        _projectSyncService.start(UserId.fromUniqueString(user.uid));
+      }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign in'));
       return right(AuthDto.fromFirebase(user).toDomain());
@@ -75,17 +120,27 @@ class AuthRepositoryImpl implements AuthRepository {
     String email,
     String password,
   ) async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _createUserProfileIfNotExists(user);
+    }
     try {
-      if (_isOfflineMode) {
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
         await _prefs.setBool('has_credentials', true);
         await _prefs.setString('offline_email', email);
         return right(domain.User(id: 'offline', email: email));
       }
-      final cred = await _auth!.createUserWithEmailAndPassword(
+      final cred = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       final user = cred.user;
+      if (user != null) {
+        await _createUserProfileIfNotExists(user);
+        await _cacheUserId(user);
+        _projectSyncService.start(UserId.fromUniqueString(user.uid));
+      }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign up'));
       return right(AuthDto.fromFirebase(user).toDomain());
@@ -97,14 +152,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, domain.User>> signInWithGoogle() async {
     try {
-      if (_isOfflineMode) {
+      final isConnected = await _networkInfo.isConnected;
+      final user = _auth.currentUser;
+      if (!isConnected) {
         return left(
           AuthenticationFailure(
             'Google sign in is not available in offline mode',
           ),
         );
       }
-      final GoogleSignInAccount? googleUser = await _googleSignIn!.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return left(AuthenticationFailure('Google sign in was cancelled'));
       }
@@ -114,8 +171,12 @@ class AuthRepositoryImpl implements AuthRepository {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      final cred = await _auth!.signInWithCredential(credential);
-      final user = cred.user;
+      final cred = await _auth.signInWithCredential(credential);
+      if (user != null) {
+        await _cacheUserId(user);
+        await _createUserProfileIfNotExists(user);
+        _projectSyncService.start(UserId.fromUniqueString(user.uid));
+      }
       if (user == null)
         return left(
           AuthenticationFailure('No user found after Google sign in'),
@@ -128,16 +189,43 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signOut() async {
-    if (_isOfflineMode) {
+    final isConnected = await _networkInfo.isConnected;
+    if (!isConnected) {
       await _prefs.setBool('has_credentials', false);
       await _prefs.remove('offline_email');
       return;
     }
-    await Future.wait([_auth!.signOut(), _googleSignIn!.signOut()]);
+    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    _projectSyncService.stop();
   }
 
   @override
   Future<bool> isLoggedIn() async {
-    return _auth!.currentUser != null;
+    final isConnected = await _networkInfo.isConnected;
+    if (!isConnected) {
+      return _prefs.getBool('has_credentials') ?? false;
+    }
+    return _auth.currentUser != null;
+  }
+
+  // onboarding
+  @override
+  Future<bool> onboardingCompleted() async {
+    return _prefs.setBool('onboardingCompleted', true);
+  }
+
+  @override
+  Future<void> welcomeScreenSeenCompleted() async {
+    await _prefs.setBool('welcomeScreenSeenCompleted', true);
+  }
+
+  @override
+  Future<bool> checkWelcomeScreenSeen() async {
+    return _prefs.getBool('welcomeScreenSeenCompleted') ?? false;
+  }
+
+  @override
+  Future<bool> checkOnboardingCompleted() async {
+    return _prefs.getBool('onboardingCompleted') ?? false;
   }
 }

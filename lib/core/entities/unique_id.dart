@@ -10,6 +10,10 @@ class UniqueId extends ValueObject<String> {
   }
 
   const UniqueId._(super.value);
+
+  static UniqueId fromString(String projectId) {
+    return UniqueId.fromUniqueString(projectId);
+  }
 }
 
 class UserId extends UniqueId {
@@ -21,4 +25,15 @@ class UserId extends UniqueId {
   }
 
   const UserId._(super.value) : super._();
+}
+
+class ProjectId extends UniqueId {
+  factory ProjectId() => ProjectId._(const Uuid().v4());
+
+  factory ProjectId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return ProjectId._(input);
+  }
+
+  const ProjectId._(super.value) : super._();
 }

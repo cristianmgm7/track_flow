@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
+import 'package:trackflow/features/projects/presentation/widgets/project_form_screen.dart';
+import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
@@ -27,7 +29,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       isScrollControlled: true,
       builder: (context) => ProjectFormScreen(),
     );
-    context.read<ProjectsBloc>().add(StartWatchingProjects());
+  }
+
+  void _showJoinProjectDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => JoinAsCollaboratorDialog(),
+    );
   }
 
   @override
@@ -36,23 +44,35 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       appBar: AppBar(
         title: const Text('My Projects'),
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.add),
-            onPressed: () => _openProjectFormScreen(),
+            onSelected: (value) {
+              if (value == 'create') {
+                _openProjectFormScreen();
+              } else if (value == 'join') {
+                _showJoinProjectDialog(context);
+              }
+            },
+            itemBuilder:
+                (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'create',
+                    child: Text('Crear Proyecto'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'join',
+                    child: Text('Unirse a Proyecto con ID'),
+                  ),
+                ],
           ),
         ],
       ),
-      body: BlocConsumer<ProjectsBloc, ProjectsState>(
-        listener: (context, state) {
-          if (state is ProjectsError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${state.message}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
+      body: BlocBuilder<ProjectsBloc, ProjectsState>(
+        buildWhen:
+            (previous, current) =>
+                current is! ProjectOperationSuccess &&
+                current is! ProjectsError &&
+                current is! ProjectsLoading,
         builder: (context, state) {
           if (state is ProjectsLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -82,7 +102,8 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 return ProjectCard(
                   project: project,
                   onTap:
-                      () => context.push('/projectdetails/${project.id.value}'),
+                      () =>
+                          context.go(AppRoutes.projectDetails, extra: project),
                 );
               },
             );
