@@ -28,11 +28,8 @@ class ManageCollaboratorsBloc
     Emitter<ManageCollaboratorsState> emit,
   ) async {
     emit(ManageCollaboratorsLoading());
-    final result = await loadUserProfileCollaboratorsUseCase(
-      ProjectWithCollaborators(
-        projectId: event.projectWithCollaborators.projectId,
-        collaborators: event.projectWithCollaborators.collaborators,
-      ),
+    final result = await loadUserProfileCollaboratorsUseCase.call(
+      ProjectWithCollaborators(project: event.project),
     );
     result.fold(
       (failure) =>

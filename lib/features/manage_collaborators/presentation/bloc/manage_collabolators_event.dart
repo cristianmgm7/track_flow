@@ -1,12 +1,12 @@
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/entities/user_role.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ManageCollaboratorsEvent {}
 
 class LoadCollaborators extends ManageCollaboratorsEvent {
-  final ProjectWithCollaborators projectWithCollaborators;
-  LoadCollaborators({required this.projectWithCollaborators});
+  final Project project;
+  LoadCollaborators({required this.project});
 }
 
 class AddCollaborator extends ManageCollaboratorsEvent {

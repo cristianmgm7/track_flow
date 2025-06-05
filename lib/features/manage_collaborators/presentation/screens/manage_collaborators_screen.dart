@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/entities/user_role.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
@@ -23,12 +22,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   void initState() {
     super.initState();
     context.read<ManageCollaboratorsBloc>().add(
-      LoadCollaborators(
-        projectWithCollaborators: ProjectWithCollaborators(
-          projectId: widget.project!.id,
-          collaborators: [],
-        ),
-      ),
+      LoadCollaborators(project: widget.project!),
     );
   }
 
