@@ -5,7 +5,6 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart';
 

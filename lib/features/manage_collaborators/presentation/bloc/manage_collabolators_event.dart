@@ -19,20 +19,26 @@ class AddCollaborator extends ManageCollaboratorsEvent {
 }
 
 class UpdateCollaboratorRole extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
   final UserId userId;
   final UserRole newRole;
-  UpdateCollaboratorRole({required this.userId, required this.newRole});
+  UpdateCollaboratorRole({
+    required this.projectId,
+    required this.userId,
+    required this.newRole,
+  });
 
   @override
-  List<Object?> get props => [userId, newRole];
+  List<Object?> get props => [projectId, userId, newRole];
 }
 
 class RemoveCollaborator extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
   final UserId userId;
-  RemoveCollaborator(this.userId);
+  RemoveCollaborator({required this.projectId, required this.userId});
 
   @override
-  List<Object?> get props => [userId];
+  List<Object?> get props => [projectId, userId];
 }
 
 class JoinProjectWithIdRequested extends ManageCollaboratorsEvent {

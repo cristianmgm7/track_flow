@@ -16,16 +16,32 @@ class ManageCollaboratorsError extends ManageCollaboratorsState {
   List<Object?> get props => [message];
 }
 
-class CollaboratorActionSuccess extends ManageCollaboratorsState {}
+class AddCollaboratorSuccess extends ManageCollaboratorsState {
+  final String collaboratorId;
 
-/// Add Participant
-class ParticipantAdded extends ManageCollaboratorsState {
-  final String participantId;
-
-  ParticipantAdded(this.participantId);
+  AddCollaboratorSuccess(this.collaboratorId);
 
   @override
-  List<Object?> get props => [participantId];
+  List<Object?> get props => [collaboratorId];
+}
+
+class UpdateCollaboratorRoleSuccess extends ManageCollaboratorsState {
+  final String collaboratorId;
+  final String newRole;
+
+  UpdateCollaboratorRoleSuccess(this.collaboratorId, this.newRole);
+
+  @override
+  List<Object?> get props => [collaboratorId, newRole];
+}
+
+class RemoveCollaboratorSuccess extends ManageCollaboratorsState {
+  final String collaboratorId;
+
+  RemoveCollaboratorSuccess(this.collaboratorId);
+
+  @override
+  List<Object?> get props => [collaboratorId];
 }
 
 class JoinProjectSuccess extends ManageCollaboratorsState {

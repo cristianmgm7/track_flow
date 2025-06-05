@@ -7,14 +7,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
-import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ManageCollaboratorsRemoteDataSource {
-  Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    ProjectId projectId,
-    List<UserId> collaborators,
-  );
   Future<Either<Failure, void>> addCollaboratorWithId(
     ProjectId projectId,
     UserId userId,

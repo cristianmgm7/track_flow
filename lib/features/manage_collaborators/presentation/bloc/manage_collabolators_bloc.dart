@@ -1,23 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
-import 'package:trackflow/features/project_detail/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'manage_collabolators_event.dart';
 import 'manage_collabolators_state.dart';
 
 @injectable
 class ManageCollaboratorsBloc
     extends Bloc<ManageCollaboratorsEvent, ManageCollaboratorsState> {
-  final LoadUserProfileCollaboratorsUseCase loadUserProfileCollaboratorsUseCase;
   final UpdateCollaboratorRoleUseCase updateCollaboratorRoleUseCase;
   final AddCollaboratorToProjectUseCase addCollaboratorUseCase;
 
   ManageCollaboratorsBloc({
-    required this.loadUserProfileCollaboratorsUseCase,
     required this.updateCollaboratorRoleUseCase,
     required this.addCollaboratorUseCase,
   }) : super(ManageCollaboratorsInitial()) {
@@ -25,11 +20,11 @@ class ManageCollaboratorsBloc
     on<UpdateCollaboratorRole>(_onUpdateCollaboratorRole);
   }
 
-  void _onAddCollaborator(
+  Future<void> _onAddCollaborator(
     AddCollaborator event,
     Emitter<ManageCollaboratorsState> emit,
   ) async {
-    emit(ManageCollaboratorsLoading());
+    emit(ManageCollaboratorsInitial());
     final result = await addCollaboratorUseCase.call(
       AddCollaboratorToProjectParams(
         projectId: event.projectId,
@@ -39,9 +34,7 @@ class ManageCollaboratorsBloc
     result.fold(
       (failure) =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (_) {
-        emit(CollaboratorActionSuccess());
-      },
+      (_) => emit(AddCollaboratorSuccess(event.collaboratorId.value)),
     );
   }
 
@@ -49,7 +42,6 @@ class ManageCollaboratorsBloc
     UpdateCollaboratorRole event,
     Emitter<ManageCollaboratorsState> emit,
   ) async {
-    emit(ManageCollaboratorsLoading());
     final result = await updateCollaboratorRoleUseCase(
       UpdateCollaboratorRoleParams(
         projectId: event.projectId,
@@ -60,7 +52,12 @@ class ManageCollaboratorsBloc
     result.fold(
       (failure) =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (_) => emit(CollaboratorActionSuccess()),
+      (_) => emit(
+        UpdateCollaboratorRoleSuccess(
+          event.projectId.value,
+          event.userId.value,
+        ),
+      ),
     );
   }
 

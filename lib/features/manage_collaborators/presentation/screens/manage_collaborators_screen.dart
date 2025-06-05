@@ -39,7 +39,9 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   }
 
   void _removeCollaborator(BuildContext context, UserId userId) {
-    context.read<ManageCollaboratorsBloc>().add(RemoveCollaborator(userId));
+    context.read<ManageCollaboratorsBloc>().add(
+      RemoveCollaborator(projectId: widget.project!.id, userId: userId),
+    );
   }
 
   void _updateCollaborator(
@@ -48,7 +50,11 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     UserRole newRole,
   ) {
     context.read<ManageCollaboratorsBloc>().add(
-      UpdateCollaboratorRole(userId: userId, newRole: newRole),
+      UpdateCollaboratorRole(
+        projectId: widget.project!.id,
+        userId: userId,
+        newRole: newRole,
+      ),
     );
   }
 
@@ -78,13 +84,20 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
       ),
       body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
         builder: (context, state) {
-          if (state is ProjectDetailsLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is ProjectDetailsLoaded) {
+          if (state is ManageCollaboratorsInitial) {
+            return const Center(child: Text('No collaborators available'));
+          } else if (state is ManageCollaboratorsError) {
+            return Center(
+              child: Text(state.message, style: TextStyle(color: Colors.red)),
+            );
+          } else if (state is AddCollaboratorSuccess ||
+              state is UpdateCollaboratorRoleSuccess ||
+              state is RemoveCollaboratorSuccess ||
+              state is JoinProjectSuccess) {
             return ListView.builder(
-              itemCount: state.collaborators.length,
+              itemCount: widget.collaborators.length,
               itemBuilder: (context, index) {
-                final userProfile = state.collaborators[index];
+                final userProfile = widget.collaborators[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     vertical: 8.0,
@@ -103,12 +116,8 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                 );
               },
             );
-          } else if (state is ProjectDetailsError) {
-            return Center(
-              child: Text(state.message, style: TextStyle(color: Colors.red)),
-            );
           }
-          return const Center(child: Text('No collaborators available'));
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );

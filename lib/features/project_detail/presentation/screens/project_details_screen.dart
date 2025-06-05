@@ -26,6 +26,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   void _shareProject(BuildContext context, Project project) {
     final projectId = widget.project.id;
+    final colaborators = widget.project.collaborators;
     final shareableLink = 'https://example.com/project/$projectId';
     Share.share('Check out this project: $shareableLink');
   }
