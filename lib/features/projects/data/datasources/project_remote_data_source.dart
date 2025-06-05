@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -20,11 +19,6 @@ abstract class ProjectRemoteDataSource {
   Future<Either<Failure, Project>> getProjectById(String id);
 
   Stream<List<Project>> watchProjectsByUser(UserId userId);
-
-  Future<Either<Failure, Unit>> addCollaboratorWithIdProject({
-    required String projectId,
-    required String userId,
-  });
 }
 
 @LazySingleton(as: ProjectRemoteDataSource)
@@ -148,41 +142,6 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       return Left(DatabaseFailure('Failed to fetch project: ${e.message}'));
     } catch (e) {
       return Left(UnexpectedFailure('An unexpected error occurred'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, Unit>> addCollaboratorWithIdProject({
-    required String projectId,
-    required String userId,
-  }) async {
-    try {
-      final docRef = _firestore
-          .collection(ProjectDTO.collection)
-          .doc(projectId);
-      await docRef.update({
-        'collaborators': FieldValue.arrayUnion([userId]),
-      });
-      debugPrint('Collaborator added: $userId');
-      return Right(unit);
-    } on FirebaseException catch (e) {
-      if (e.code == 'permission-denied') {
-        return Left(
-          AuthenticationFailure(
-            'You don\'t have permission to update this project',
-          ),
-        );
-      }
-      if (e.code == 'not-found') {
-        return Left(DatabaseFailure('Project not found'));
-      }
-      return Left(DatabaseFailure('Failed to add collaborator: ${e.message}'));
-    } catch (e) {
-      return Left(
-        UnexpectedFailure(
-          'An unexpected error occurred while adding collaborator',
-        ),
-      );
     }
   }
 

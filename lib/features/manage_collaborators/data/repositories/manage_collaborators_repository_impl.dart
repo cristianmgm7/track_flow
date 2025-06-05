@@ -4,6 +4,7 @@ import 'package:trackflow/core/entities/user_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart';
@@ -13,10 +14,12 @@ class ManageCollaboratorsRepositoryImpl
     implements ManageCollaboratorsRepository {
   final ManageCollaboratorsRemoteDataSource remoteDataSource;
   final NetworkInfo networkInfo;
+  final ProjectRemoteDataSource projectRemoteDataSource;
 
   ManageCollaboratorsRepositoryImpl({
     required this.remoteDataSource,
     required this.networkInfo,
+    required this.projectRemoteDataSource,
   });
 
   @override
@@ -43,9 +46,24 @@ class ManageCollaboratorsRepositoryImpl
     if (!hasConnected) {
       return left(DatabaseFailure('No internet connection'));
     }
-    return await remoteDataSource.addCollaboratorWithUserId(
+    return await remoteDataSource.addCollaboratorWithId(
       projectId,
       collaboratorId,
+    );
+  }
+
+  @override
+  Future<Either<Failure, void>> joinProjectWithId(
+    ProjectId projectId,
+    UserId userId,
+  ) async {
+    final hasConnected = await networkInfo.isConnected;
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
+    }
+    return await remoteDataSource.selfJoinProjectWithProjectId(
+      projectId: projectId.value,
+      userId: userId.value,
     );
   }
 

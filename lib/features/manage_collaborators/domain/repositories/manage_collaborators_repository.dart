@@ -13,6 +13,12 @@ abstract class ManageCollaboratorsRepository {
     ProjectId projectId,
     UserId collaboratorId,
   );
+
+  Future<Either<Failure, void>> joinProjectWithId(
+    ProjectId projectId,
+    UserId userId,
+  );
+
   Future<Either<Failure, void>> removeCollaborator(
     ProjectId projectId,
     UserId collaboratorId,
