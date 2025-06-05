@@ -16,7 +16,7 @@ import 'package:trackflow/features/projects/presentation/screens/project_list_sc
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
-import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -107,6 +107,7 @@ class AppRouter {
               builder:
                   (context, state) => ManageCollaboratorsScreen(
                     project: state.extra as Project,
+                    collaborators: state.extra as List<UserProfile>,
                   ),
             ),
           ],

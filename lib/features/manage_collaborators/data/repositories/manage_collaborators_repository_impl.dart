@@ -6,19 +6,18 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart';
 
 @LazySingleton(as: ManageCollaboratorsRepository)
 class ManageCollaboratorsRepositoryImpl
     implements ManageCollaboratorsRepository {
-  final ManageCollaboratorsRemoteDataSource remoteDataSource;
+  final ManageCollaboratorsRemoteDataSource remoteDataSourceManageCollaborators;
   final NetworkInfo networkInfo;
   final ProjectRemoteDataSource projectRemoteDataSource;
 
   ManageCollaboratorsRepositoryImpl({
-    required this.remoteDataSource,
+    required this.remoteDataSourceManageCollaborators,
     required this.networkInfo,
     required this.projectRemoteDataSource,
   });
@@ -32,7 +31,7 @@ class ManageCollaboratorsRepositoryImpl
     if (!hasConnected) {
       return left(DatabaseFailure('No internet connection'));
     }
-    return await remoteDataSource.addCollaboratorWithId(
+    return await remoteDataSourceManageCollaborators.addCollaboratorWithId(
       projectId,
       collaboratorId,
     );
@@ -47,10 +46,11 @@ class ManageCollaboratorsRepositoryImpl
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    return await remoteDataSource.selfJoinProjectWithProjectId(
-      projectId: projectId.value,
-      userId: userId.value,
-    );
+    return await remoteDataSourceManageCollaborators
+        .selfJoinProjectWithProjectId(
+          projectId: projectId.value,
+          userId: userId.value,
+        );
   }
 
   @override
@@ -62,7 +62,10 @@ class ManageCollaboratorsRepositoryImpl
     if (!hasConnected) {
       return left(DatabaseFailure('No internet connection'));
     }
-    return await remoteDataSource.removeCollaborator(projectId, collaboratorId);
+    return await remoteDataSourceManageCollaborators.removeCollaborator(
+      projectId,
+      collaboratorId,
+    );
   }
 
   @override
@@ -71,7 +74,7 @@ class ManageCollaboratorsRepositoryImpl
     UserId collaboratorId,
     UserRole role,
   ) async {
-    return await remoteDataSource.updateCollaboratorRole(
+    return await remoteDataSourceManageCollaborators.updateCollaboratorRole(
       projectId,
       collaboratorId,
       role,
