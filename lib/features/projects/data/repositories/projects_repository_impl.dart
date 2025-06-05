@@ -27,23 +27,20 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Project>> createProject(Project project) async {
     final hasConnected = await _networkInfo.isConnected;
-    if (hasConnected) {
-      try {
-        final result = await _remoteDataSource.createProject(project);
-        return await result.fold((failure) => Left(failure), (
-          projectWithId,
-        ) async {
-          final dto = ProjectDTO.fromDomain(projectWithId);
-          await _localDataSource.cacheProject(dto);
-          return Right(projectWithId);
-        });
-      } catch (e) {
-        return Left(
-          DatabaseFailure('Failed to create project: ${e.toString()}'),
-        );
-      }
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
     }
-    return Left(DatabaseFailure('No internet connection'));
+
+    try {
+      final result = await _remoteDataSource.createProject(project);
+      return result.fold((failure) => Left(failure), (projectWithId) async {
+        final dto = ProjectDTO.fromDomain(projectWithId);
+        await _localDataSource.cacheProject(dto);
+        return Right(projectWithId);
+      });
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to create project: ${e.toString()}'));
+    }
   }
 
   @override
@@ -73,7 +70,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
   // watching projects stream
   @override
-  Stream<Either<Failure, List<Project>>> watchAllProjects(UserId ownerId) {
+  Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId) {
     return _localDataSource
         .watchAllProjects(ownerId)
         .map(
@@ -83,48 +80,12 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> addCollaborator({
-    required UniqueId projectId,
-    required UserId userId,
-  }) async {
-    final hasConnected = await _networkInfo.isConnected;
-    if (!hasConnected) {
-      return Left(DatabaseFailure('No internet connection'));
-    }
-    return await _remoteDataSource.addCollaborator(
-      projectId: projectId.value,
-      userId: userId.value,
-    );
-  }
-
-  @override
-  Future<Either<Failure, Project>> joinProjectWithId({
-    required UniqueId projectId,
-    required UserId userId,
-  }) async {
-    final hasConnected = await _networkInfo.isConnected;
-    if (!hasConnected) {
-      return Left(DatabaseFailure('No internet connection'));
-    }
-
-    // Obtener el proyecto remoto
-    final projectOrFailure = await _remoteDataSource.getProjectById(
-      projectId.value,
-    );
-
-    return projectOrFailure.fold((failure) => Left(failure), (project) async {
-      final projectDTO = ProjectDTO.fromDomain(project);
-      await _localDataSource.cacheProject(projectDTO);
-
-      // Agregar el colaborador
-      final addCollaboratorResult = await _remoteDataSource.addCollaborator(
-        projectId: projectId.value,
-        userId: userId.value,
-      );
-      return addCollaboratorResult.fold(
-        (failure) => Left(failure),
-        (_) => Right(project),
-      );
-    });
+  Stream<Either<Failure, List<Project>>> watchRemoteProjects(UserId userId) {
+    return _remoteDataSource
+        .watchProjectsByUser(userId)
+        .map<Either<Failure, List<Project>>>((projects) => Right(projects))
+        .handleError((error) {
+          return Left(DatabaseFailure('Remote sync error'));
+        });
   }
 }

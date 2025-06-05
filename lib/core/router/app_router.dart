@@ -6,6 +6,7 @@ import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart'
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
 import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -14,8 +15,8 @@ import 'package:trackflow/features/project_detail/presentation/screens/project_d
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/settings/presentation/screens/seetings_screen.dart';
-import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
+import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -100,6 +101,14 @@ class AppRouter {
               builder:
                   (context, state) =>
                       ProjectDetailsScreen(project: state.extra as Project),
+            ),
+            GoRoute(
+              path: AppRoutes.manageCollaborators,
+              builder:
+                  (context, state) => ManageCollaboratorsScreen(
+                    project: state.extra as Project,
+                    collaborators: state.extra as List<UserProfile>,
+                  ),
             ),
           ],
         ),

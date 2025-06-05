@@ -11,7 +11,7 @@ class SessionStorage {
     await _prefs.setString('user_id', userId);
   }
 
-  Future<String?> getUserId() async {
+  String? getUserId() {
     return _prefs.getString('user_id');
   }
 

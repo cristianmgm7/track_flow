@@ -1,73 +1,70 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/project_detail/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
-import 'package:trackflow/features/projects/domain/usecases/add_collaborator_usecase.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @injectable
-class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
-  final AddCollaboratorUseCase addCollaboratorUseCase;
+class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
+  final LoadUserProfileCollaboratorsUseCase getUserProfileCollaborators;
+  final LeaveProjectUseCase leaveProjectUseCase;
 
-  ProjectDetailBloc({required this.addCollaboratorUseCase})
-    : super(ProjectDetailsInitial()) {
-    on<ProjectDetailsStarted>(_onProjectDetailsStarted);
-    // on<ParticipantAdded>(_onParticipantAdded);
-    on<ParticipantRemoved>(_onParticipantRemoved);
-    on<ParticipantRoleChanged>(_onParticipantRoleChanged);
-    on<ProjectParticipantsUpdated>(_onProjectParticipantsUpdated);
+  ProjectDetailBloc({
+    required this.getUserProfileCollaborators,
+    required this.leaveProjectUseCase,
+  }) : super(ProjectDetailsInitial()) {
+    on<LoadProjectDetails>(_onLoadUserProfileCollaborators);
+    on<LeaveProject>(_onLeaveProject);
   }
 
-  Future<void> _onProjectDetailsStarted(
-    ProjectDetailsStarted event,
-    Emitter<ProjectDetailState> emit,
+  Future<void> _onLoadUserProfileCollaborators(
+    LoadProjectDetails event,
+    Emitter<ProjectDetailsState> emit,
   ) async {
     emit(ProjectDetailsLoading());
-    // Logic to load project details goes here
-    // For now, we'll just emit a loaded state with dummy data
-    // emit(ProjectDetailsLoaded(...));
+    final Either<Failure, List<UserProfile>> failureOrProject =
+        await getUserProfileCollaborators.call(
+          ProjectWithCollaborators(project: event.project),
+        );
+
+    failureOrProject.fold(
+      (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
+      (collaborators) => emit(
+        ProjectDetailsLoaded(
+          collaborators: collaborators,
+          roles: {},
+          members: {},
+        ),
+      ),
+    );
   }
 
-  // Future<void> _onParticipantAdded(
-  //   ParticipantAdded event,
-  //   Emitter<ProjectDetailState> emit,
-  // ) async {
-  //   emit(ProjectDetailsUpdatingParticipant());
-  //   final result = await addCollaboratorUseCase(
-  //     AddCollaboratorParams(
-  //       projectId:
-  //       userId: event.userId,
-  //     ),
-  //   );
+  Future<void> _onLeaveProject(
+    LeaveProject event,
+    Emitter<ProjectDetailsState> emit,
+  ) async {
+    emit(ProjectDetailsLoading());
+    final Either<Failure, void> failureOrSuccess = await leaveProjectUseCase
+        .call(
+          LeaveProjectParams(
+            projectId: event.projectId,
+            userId: UserId.fromUniqueString('currentUserId'),
+          ),
+        );
 
-  //   result.fold(
-  //     (failure) => emit(ProjectDetailsError(failure)),
-  //     (_) => emit(ProjectDetailsParticipantUpdated()),
-  //   );
-}
+    failureOrSuccess.fold(
+      (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
+      (_) => emit(ProjectLeaveSuccess()),
+    );
+  }
 
-Future<void> _onParticipantRemoved(
-  ParticipantRemoved event,
-  Emitter<ProjectDetailState> emit,
-) async {
-  emit(ProjectDetailsUpdatingParticipant());
-  // Logic to remove participant goes here
-  // For now, we'll just emit a participant updated state
-  emit(ProjectDetailsParticipantUpdated());
-}
-
-Future<void> _onParticipantRoleChanged(
-  ParticipantRoleChanged event,
-  Emitter<ProjectDetailState> emit,
-) async {
-  emit(ProjectDetailsUpdatingParticipant());
-  // Logic to change participant role goes here
-  // For now, we'll just emit a participant updated state
-  emit(ProjectDetailsParticipantUpdated());
-}
-
-Future<void> _onProjectParticipantsUpdated(
-  ProjectParticipantsUpdated event,
-  Emitter<ProjectDetailState> emit,
-) async {
-  emit(ProjectDetailsLiveUpdated(event.updatedList));
+  String _mapFailureToMessage(Failure failure) {
+    // Map different types of failures to user-friendly messages
+    return failure.toString();
+  }
 }

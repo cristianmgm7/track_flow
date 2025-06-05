@@ -5,7 +5,7 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_form_screen.dart';
+import 'package:trackflow/features/projects/presentation/widgets/project_form_screen.dart';
 import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 

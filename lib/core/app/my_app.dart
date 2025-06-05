@@ -6,8 +6,10 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
@@ -32,6 +34,12 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
         BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
+        BlocProvider<ProjectDetailBloc>(
+          create: (context) => sl<ProjectDetailBloc>(),
+        ),
+        BlocProvider<ManageCollaboratorsBloc>(
+          create: (context) => sl<ManageCollaboratorsBloc>(),
+        ),
       ],
       child: _App(),
     );

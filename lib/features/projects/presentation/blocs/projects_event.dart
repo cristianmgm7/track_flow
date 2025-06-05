@@ -58,10 +58,3 @@ class ProjectsUpdated extends ProjectsEvent {
   @override
   List<Object?> get props => [projects];
 }
-
-class JoinProjectWithIdRequested extends ProjectsEvent {
-  final UniqueId projectId;
-  const JoinProjectWithIdRequested(this.projectId);
-  @override
-  List<Object?> get props => [projectId];
-}

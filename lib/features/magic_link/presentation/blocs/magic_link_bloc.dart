@@ -5,7 +5,7 @@ import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_lin
 import 'package:trackflow/features/magic_link/domain/usecases/consume_magic_link_use_case.dart';
 import 'package:trackflow/features/magic_link/domain/usecases/resend_magic_link_use_case.dart';
 import 'package:trackflow/features/magic_link/domain/usecases/get_magic_link_status_use_case.dart';
-import 'package:trackflow/features/projects/domain/usecases/add_collaborator_usecase.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'magic_link_events.dart';
@@ -19,7 +19,7 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
   final ConsumeMagicLinkUseCase consumeMagicLink;
   final ResendMagicLinkUseCase resendMagicLink;
   final GetMagicLinkStatusUseCase getMagicLinkStatus;
-  final AddCollaboratorUseCase addCollaboratorUseCase;
+  final JoinProjectWithIdUseCase joinProjectWithId;
   final AuthRepository authRepository;
 
   MagicLinkBloc({
@@ -28,7 +28,7 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
     required this.consumeMagicLink,
     required this.resendMagicLink,
     required this.getMagicLinkStatus,
-    required this.addCollaboratorUseCase,
+    required this.joinProjectWithId,
     required this.authRepository,
   }) : super(MagicLinkInitial()) {
     on<MagicLinkRequested>(_onMagicLinkRequested);
@@ -153,10 +153,9 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
       return;
     }
     // 4. Agregar usuario al proyecto
-    final addResult = await addCollaboratorUseCase(
-      AddCollaboratorParams(
-        projectId: UniqueId.fromUniqueString(magicLink.projectId),
-        userId: UserId.fromUniqueString(userId),
+    final addResult = await joinProjectWithId(
+      JoinProjectWithIdParams(
+        projectId: ProjectId.fromUniqueString(magicLink.projectId),
       ),
     );
     if (addResult.isLeft()) {

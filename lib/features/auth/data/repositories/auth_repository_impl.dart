@@ -4,12 +4,15 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/core/sync/project_sync_service.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -18,6 +21,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final SharedPreferences _prefs;
   final NetworkInfo _networkInfo;
   final FirebaseFirestore _firestore;
+  final ProjectSyncService _projectSyncService;
 
   AuthRepositoryImpl({
     required FirebaseAuth auth,
@@ -25,11 +29,13 @@ class AuthRepositoryImpl implements AuthRepository {
     required SharedPreferences prefs,
     required NetworkInfo networkInfo,
     required FirebaseFirestore firestore,
+    required ProjectSyncService projectSyncService,
   }) : _auth = auth,
        _googleSignIn = googleSignIn,
        _prefs = prefs,
        _networkInfo = networkInfo,
-       _firestore = firestore;
+       _firestore = firestore,
+       _projectSyncService = projectSyncService;
 
   Future<void> _cacheUserId(User user) async {
     final userId = user.uid;
@@ -55,7 +61,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'avatarUrl': user.photoURL ?? '',
         'createdAt': DateTime.now(),
         'updatedAt': DateTime.now(),
-        'creativeRole': 'Artist',
+        'creativeRole': CreativeRole.other.name,
       });
     }
   }
@@ -99,6 +105,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user != null) {
         await _cacheUserId(user);
         await _createUserProfileIfNotExists(user);
+        _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign in'));
@@ -132,6 +139,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user != null) {
         await _createUserProfileIfNotExists(user);
         await _cacheUserId(user);
+        _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null)
         return left(AuthenticationFailure('No user found after sign up'));
@@ -167,6 +175,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user != null) {
         await _cacheUserId(user);
         await _createUserProfileIfNotExists(user);
+        _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null)
         return left(
@@ -187,6 +196,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return;
     }
     await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    _projectSyncService.stop();
   }
 
   @override
