@@ -19,7 +19,7 @@ class WatchAllProjectsUseCase {
       userIdString,
     ) {
       final userId = UserId.fromUniqueString(userIdString);
-      return _repository.watchLocalProjects(userId);
+      return _repository.watchRemoteProjects(userId);
     });
   }
 }
