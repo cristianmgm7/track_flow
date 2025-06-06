@@ -3,9 +3,9 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ProjectDetailsEvent {}
 
-class LoadProjectDetails extends ProjectDetailsEvent {
+class LoadUserProfiles extends ProjectDetailsEvent {
   final Project project;
-  LoadProjectDetails(this.project);
+  LoadUserProfiles(this.project);
 }
 
 class LeaveProject extends ProjectDetailsEvent {

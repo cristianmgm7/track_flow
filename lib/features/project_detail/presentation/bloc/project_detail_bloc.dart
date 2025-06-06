@@ -18,12 +18,12 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
     required this.getUserProfileCollaborators,
     required this.leaveProjectUseCase,
   }) : super(ProjectDetailsInitial()) {
-    on<LoadProjectDetails>(_onLoadUserProfileCollaborators);
+    on<LoadUserProfiles>(_onLoadUserProfileCollaborators);
     on<LeaveProject>(_onLeaveProject);
   }
 
   Future<void> _onLoadUserProfileCollaborators(
-    LoadProjectDetails event,
+    LoadUserProfiles event,
     Emitter<ProjectDetailsState> emit,
   ) async {
     emit(ProjectDetailsLoading());
@@ -34,13 +34,8 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
 
     failureOrProject.fold(
       (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (collaborators) => emit(
-        ProjectDetailsLoaded(
-          collaborators: collaborators,
-          roles: {},
-          members: {},
-        ),
-      ),
+      (collaborators) =>
+          emit(ProjectDetailsLoaded(collaborators: collaborators)),
     );
   }
 
