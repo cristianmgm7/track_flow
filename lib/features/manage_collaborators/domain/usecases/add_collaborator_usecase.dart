@@ -5,6 +5,10 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 class AddCollaboratorToProjectParams extends Equatable {
   final ProjectId projectId;
@@ -30,16 +34,13 @@ class AddCollaboratorToProjectUseCase {
     AddCollaboratorToProjectParams params,
   ) async {
     final userId = _sessionService.getUserId();
-    if (userId == null) {
-      return left(ServerFailure('No user found'));
-    }
+    if (userId == null) return left(ServerFailure('No user found'));
 
-    // Fetch the project
-    final projectOrFailure = await _repository.getProjectById(params.projectId);
-    return projectOrFailure.fold((failure) => left(failure), (project) {
-      // Check if the current user has permission to add a collaborator
+    // Obtener el proyecto del repositorio
+    final projectResult = await _repository.getProjectById(params.projectId);
+    return projectResult.fold((failure) => left(failure), (project) {
       final currentUserCollaborator = project.collaborators.firstWhere(
-        (collaborator) => collaborator.userId == userId,
+        (collaborator) => collaborator.userId.value == userId,
         orElse: () => throw UserNotCollaboratorException(),
       );
 
@@ -49,13 +50,11 @@ class AddCollaboratorToProjectUseCase {
         return left(ProjectPermissionException());
       }
 
-      // Create a new collaborator
       final newCollaborator = ProjectCollaborator.create(
         userId: params.collaboratorId,
-        role: ProjectRole.viewer, // Default role, can be adjusted
+        role: ProjectRole.viewer,
       );
 
-      // Add the collaborator to the project
       try {
         project.addCollaborator(newCollaborator);
         return _repository.updateProject(project);

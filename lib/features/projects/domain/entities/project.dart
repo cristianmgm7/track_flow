@@ -95,20 +95,29 @@ class Project extends AggregateRoot<ProjectId> {
     }
   }
 
-  void removeCollaborator(ProjectCollaborator collaborator) {
-    if (collaborators.contains(collaborator)) {
-      collaborators.remove(collaborator);
+  void removeCollaborator(UserId userId) {
+    if (collaborators.any((collaborator) => collaborator.userId == userId)) {
+      collaborators.removeWhere(
+        (collaborator) => collaborator.userId == userId,
+      );
     } else {
-      throw Exception('Collaborator does not exist');
+      throw CollaboratorNotFoundException();
     }
   }
 
-  void updateCollaboratorRole(
-    ProjectCollaborator collaborator,
-    ProjectRole role,
-  ) {
+  void updateCollaboratorRole(UserId userId, ProjectRole role) {
+    final collaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == userId,
+      orElse: () => throw CollaboratorNotFoundException(),
+    );
+
     if (collaborators.contains(collaborator)) {
-      final updatedCollaborator = collaborator.copyWith(role: role);
+      final updatedCollaborator = ProjectCollaborator.rebuild(
+        id: collaborator.id,
+        userId: collaborator.userId,
+        role: role,
+        specificPermissions: collaborator.specificPermissions,
+      );
       collaborators.remove(collaborator);
       collaborators.add(updatedCollaborator);
     } else {

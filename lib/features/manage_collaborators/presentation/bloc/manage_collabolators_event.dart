@@ -7,15 +7,10 @@ abstract class ManageCollaboratorsEvent extends Equatable {}
 class AddCollaborator extends ManageCollaboratorsEvent {
   final ProjectId projectId;
   final UserId collaboratorId;
-  final ProjectRole role;
-  AddCollaborator({
-    required this.projectId,
-    required this.collaboratorId,
-    required this.role,
-  });
+  AddCollaborator({required this.projectId, required this.collaboratorId});
 
   @override
-  List<Object?> get props => [projectId, collaboratorId, role];
+  List<Object?> get props => [projectId, collaboratorId];
 }
 
 class UpdateCollaboratorRole extends ManageCollaboratorsEvent {

@@ -20,3 +20,7 @@ class ProjectValidationException extends ProjectException {
 class UserNotCollaboratorException extends ProjectException {
   const UserNotCollaboratorException() : super('User is not a collaborator');
 }
+
+class CollaboratorNotFoundException extends ProjectException {
+  const CollaboratorNotFoundException() : super('Collaborator not found');
+}

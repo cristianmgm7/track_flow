@@ -4,28 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 
 abstract class ManageCollaboratorsRemoteDataSource {
-  Future<Either<Failure, void>> addCollaboratorWithId(
-    ProjectId projectId,
-    UserId userId,
-  );
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
   Future<Either<Failure, void>> selfJoinProjectWithProjectId({
     required String projectId,
     required String userId,
   });
-  Future<Either<Failure, void>> removeCollaborator(
-    ProjectId projectId,
-    UserId userId,
-  );
-  Future<Either<Failure, void>> updateCollaboratorRole(
-    ProjectId projectId,
-    UserId userId,
-    ProjectRole role,
-  );
+
+  Future<Either<Failure, Project>> updateProject(Project project);
 }
 
 @LazySingleton(as: ManageCollaboratorsRemoteDataSource)
@@ -40,78 +30,17 @@ class ManageCollaboratorsRemoteDataSourceImpl
   });
 
   @override
-  Future<Either<Failure, void>> addCollaboratorWithId(
-    ProjectId projectId,
-    UserId collaboratorId,
-  ) async {
-    try {
-      final projectRef = firestore
-          .collection(ProjectDTO.collection)
-          .doc(projectId.value);
-
-      await firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(projectRef);
-        if (!snapshot.exists) {
-          throw Exception("Project not found");
-        }
-
-        final projectDTO = ProjectDTO.fromFirestore(snapshot);
-        final updatedCollaborators = [
-          ...projectDTO.collaborators,
-          {
-            'id': collaboratorId.value,
-            'userId': collaboratorId.value,
-            'role': ProjectRole.owner.value.toString(),
-            'specificPermissions': [],
-          },
-        ];
-
-        final updatedProjectDTO = projectDTO.copyWith(
-          collaborators: updatedCollaborators,
-        );
-
-        transaction.update(projectRef, updatedProjectDTO.toFirestore());
-      });
-
-      return right(null);
-    } catch (e) {
-      return left(UnexpectedFailure(e.toString()));
-    }
-  }
-
-  @override
-  Future<Either<Failure, void>> removeCollaborator(
-    ProjectId projectId,
-    UserId collaboratorId,
-  ) async {
-    try {
-      final projectRef = firestore
-          .collection(ProjectDTO.collection)
-          .doc(projectId.value);
-
-      await firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(projectRef);
-        if (!snapshot.exists) {
-          throw Exception("Project not found");
-        }
-
-        final projectDTO = ProjectDTO.fromFirestore(snapshot);
-        final updatedCollaborators =
-            projectDTO.collaborators
-                .where((id) => id != collaboratorId.value)
-                .toList();
-
-        final updatedProjectDTO = projectDTO.copyWith(
-          collaborators: updatedCollaborators,
-        );
-
-        transaction.update(projectRef, updatedProjectDTO.toFirestore());
-      });
-
-      return right(null);
-    } catch (e) {
-      return left(UnexpectedFailure(e.toString()));
-    }
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
+    return await firestore
+        .collection(ProjectDTO.collection)
+        .doc(projectId.value)
+        .get()
+        .then((value) {
+          if (value.exists) {
+            return right(ProjectDTO.fromFirestore(value).toDomain());
+          }
+          return left(DatabaseFailure('Project not found'));
+        });
   }
 
   @override
@@ -148,41 +77,18 @@ class ManageCollaboratorsRemoteDataSourceImpl
   }
 
   @override
-  Future<Either<Failure, void>> updateCollaboratorRole(
-    ProjectId projectId,
-    UserId userId,
-    ProjectRole role,
-  ) async {
+  Future<Either<Failure, Project>> updateProject(Project project) async {
     try {
-      final projectRef = firestore
+      final projectDto = ProjectDTO.fromDomain(project);
+      await firestore
           .collection(ProjectDTO.collection)
-          .doc(projectId.value);
-
-      await firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(projectRef);
-        if (!snapshot.exists) {
-          throw Exception("Project not found");
-        }
-
-        final projectDTO = ProjectDTO.fromFirestore(snapshot);
-        final updatedCollaborators =
-            projectDTO.collaborators.map((collaborator) {
-              if (collaborator == userId.value) {
-                return collaborator;
-              }
-              return collaborator;
-            }).toList();
-
-        final updatedProjectDTO = projectDTO.copyWith(
-          collaborators: updatedCollaborators,
-        );
-
-        transaction.update(projectRef, updatedProjectDTO.toFirestore());
-      });
-
-      return right(null);
+          .doc(project.id.value)
+          .update(projectDto.toJson());
+      return right(project);
+    } on FirebaseException catch (e) {
+      return left(DatabaseFailure('Failed to update project: ${e.message}'));
     } catch (e) {
-      return left(UnexpectedFailure(e.toString()));
+      return left(UnexpectedFailure('Unexpected error updating project'));
     }
   }
 }

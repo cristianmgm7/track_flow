@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
 
 class AddCollaboratorDialog extends StatelessWidget {
-  final ProjectId projectId;
+  final Project project;
 
-  const AddCollaboratorDialog({super.key, required this.projectId});
+  const AddCollaboratorDialog({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {
@@ -30,14 +30,10 @@ class AddCollaboratorDialog extends StatelessWidget {
         TextButton(
           child: const Text('Add'),
           onPressed: () {
-            final collaboratorId = UserId.fromUniqueString(
-              userIdController.text,
-            );
             context.read<ManageCollaboratorsBloc>().add(
               AddCollaborator(
-                projectId: projectId,
-                collaboratorId: collaboratorId,
-                role: ProjectRole.editor,
+                projectId: project.id,
+                collaboratorId: UserId.fromUniqueString(userIdController.text),
               ),
             );
             Navigator.of(context).pop();
