@@ -58,7 +58,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   );
                 } else if (state is ProjectDetailsLoaded) {
                   return Text(
-                    widget.project.name.value.fold((l) => '', (r) => r),
+                    state.project.name.value.fold((l) => '', (r) => r),
                     style: const TextStyle(color: Colors.white),
                   );
                 } else {
@@ -120,7 +120,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 ),
                 CollaboratorsList(
                   state: state,
-                  project: widget.project,
+                  project:
+                      state is ProjectDetailsLoaded
+                          ? state.project
+                          : widget.project,
                   manageCollaborator: _manageCollaborator,
                 ),
               ],

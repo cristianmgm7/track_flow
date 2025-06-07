@@ -34,8 +34,12 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
 
     failureOrProject.fold(
       (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (collaborators) =>
-          emit(ProjectDetailsLoaded(collaborators: collaborators)),
+      (collaborators) => emit(
+        ProjectDetailsLoaded(
+          project: event.project,
+          collaborators: collaborators,
+        ),
+      ),
     );
   }
 

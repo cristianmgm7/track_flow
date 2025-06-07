@@ -84,8 +84,9 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     return _remoteDataSource
         .watchProjectsByUser(userId)
         .map<Either<Failure, List<Project>>>((projects) => Right(projects))
-        .handleError((error) {
-          return Left(DatabaseFailure('Remote sync error'));
-        });
+        .handleError(
+          (error) =>
+              Left(DatabaseFailure('Remote sync error: ${error.toString()}')),
+        );
   }
 }
