@@ -1,9 +1,11 @@
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/core/domain/aggregate_root.dart';
+import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 
 class Project extends AggregateRoot<ProjectId> {
   @override
@@ -55,8 +57,13 @@ class Project extends AggregateRoot<ProjectId> {
     ProjectName? newName,
     ProjectDescription? newDescription,
   }) {
-    if (requester != ownerId) {
-      throw Exception('Only the owner can update the project');
+    final requesterCollaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == requester,
+      orElse: () => throw ProjectNotFoundException(),
+    );
+
+    if (!requesterCollaborator.hasPermission(ProjectPermission.editProject)) {
+      throw ProjectPermissionException();
     }
 
     return copyWith(
@@ -67,8 +74,13 @@ class Project extends AggregateRoot<ProjectId> {
   }
 
   Project deleteProject({required UserId requester}) {
-    if (requester != ownerId) {
-      throw Exception('Only the owner can delete the project');
+    final requesterCollaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == requester,
+      orElse: () => throw ProjectNotFoundException(),
+    );
+
+    if (!requesterCollaborator.hasPermission(ProjectPermission.deleteProject)) {
+      throw ProjectPermissionException();
     }
 
     return copyWith(updatedAt: DateTime.now(), isDeleted: true);
