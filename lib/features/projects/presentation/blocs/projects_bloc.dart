@@ -67,7 +67,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await deleteProject(event.projectId);
+    final result = await deleteProject.call(event.project);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (_) =>

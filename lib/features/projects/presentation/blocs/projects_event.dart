@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class ProjectsEvent extends Equatable {
   const ProjectsEvent();
@@ -27,10 +26,11 @@ class UpdateProjectRequested extends ProjectsEvent {
 }
 
 class DeleteProjectRequested extends ProjectsEvent {
-  final UniqueId projectId;
-  const DeleteProjectRequested(this.projectId);
+  final Project project;
+  const DeleteProjectRequested(this.project);
+
   @override
-  List<Object?> get props => [projectId];
+  List<Object?> get props => [project];
 }
 
 class GetProjectByIdRequested extends ProjectsEvent {
