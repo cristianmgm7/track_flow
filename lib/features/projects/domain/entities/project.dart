@@ -1,8 +1,9 @@
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/entities/user_creative_role.dart';
-import 'package:trackflow/core/entities/user_role.dart';
-import 'package:trackflow/features/projects/domain/entities/project_description.dart';
-import 'package:trackflow/features/projects/domain/entities/project_name.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 
 class Project {
   final ProjectId id;
@@ -11,9 +12,7 @@ class Project {
   final ProjectDescription description;
   final DateTime createdAt;
   final DateTime? updatedAt;
-  final List<UserId> collaborators;
-  final Map<UserId, UserRole> roles;
-  final Map<UserId, UserCreativeRole> members;
+  final List<ProjectCollaborator> collaborators;
 
   const Project({
     required this.id,
@@ -23,8 +22,6 @@ class Project {
     required this.createdAt,
     this.updatedAt,
     this.collaborators = const [],
-    this.roles = const {},
-    this.members = const {},
   });
 
   Project copyWith({
@@ -34,9 +31,7 @@ class Project {
     ProjectDescription? description,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<UserId>? collaborators,
-    Map<UserId, UserRole>? roles,
-    Map<UserId, UserCreativeRole>? members,
+    List<ProjectCollaborator>? collaborators,
   }) {
     return Project(
       id: id ?? this.id,
@@ -46,8 +41,38 @@ class Project {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
-      roles: roles ?? this.roles,
-      members: members ?? this.members,
     );
+  }
+
+  void addCollaborator(ProjectCollaborator collaborator) {
+    if (!collaborators.contains(collaborator)) {
+      collaborators.add(collaborator);
+    } else {
+      throw Exception('Collaborator already exists');
+    }
+  }
+
+  void removeCollaborator(ProjectCollaborator collaborator) {
+    if (collaborators.contains(collaborator)) {
+      collaborators.remove(collaborator);
+    } else {
+      throw Exception('Collaborator does not exist');
+    }
+  }
+
+  void assignRole(ProjectCollaborator collaborator, ProjectRole role) {
+    if (collaborators.contains(collaborator)) {
+      collaborator.role = role;
+    } else {
+      throw Exception('Collaborator does not exist');
+    }
+  }
+
+  void removeRole(ProjectCollaborator collaborator) {
+    if (collaborators.contains(collaborator)) {
+      collaborator.role = ProjectRole.viewer;
+    } else {
+      throw Exception('Role does not exist for this collaborator');
+    }
   }
 }
