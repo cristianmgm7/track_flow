@@ -59,7 +59,7 @@ class Project extends AggregateRoot<ProjectId> {
   }) {
     final requesterCollaborator = collaborators.firstWhere(
       (collaborator) => collaborator.userId == requester,
-      orElse: () => throw ProjectNotFoundException(),
+      orElse: () => throw UserNotCollaboratorException(),
     );
 
     if (!requesterCollaborator.hasPermission(ProjectPermission.editProject)) {
