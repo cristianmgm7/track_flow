@@ -265,6 +265,16 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i1063.ManageCollaboratorsRepository>(),
               gh<_i383.SessionStorage>(),
             ));
+    gh.lazySingleton<_i81.UpdateCollaboratorRoleUseCase>(
+        () => _i81.UpdateCollaboratorRoleUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i151.RemoveCollaboratorUseCase>(
+        () => _i151.RemoveCollaboratorUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
     gh.lazySingleton<_i391.JoinProjectWithIdUseCase>(
         () => _i391.JoinProjectWithIdUseCase(
               gh<_i1063.ManageCollaboratorsRepository>(),
@@ -276,12 +286,6 @@ extension GetItInjectableX on _i174.GetIt {
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
         ));
-    gh.lazySingleton<_i81.UpdateCollaboratorRoleUseCase>(() =>
-        _i81.UpdateCollaboratorRoleUseCase(
-            gh<_i1063.ManageCollaboratorsRepository>()));
-    gh.lazySingleton<_i151.RemoveCollaboratorUseCase>(() =>
-        _i151.RemoveCollaboratorUseCase(
-            gh<_i1063.ManageCollaboratorsRepository>()));
     gh.factory<_i438.ManageCollaboratorsBloc>(() =>
         _i438.ManageCollaboratorsBloc(
           updateCollaboratorRoleUseCase:

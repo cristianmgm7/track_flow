@@ -18,6 +18,7 @@ class ProjectDTO {
     required this.createdAt,
     this.updatedAt,
     this.collaborators = const [], // userId, role
+    this.collaboratorsIds = const [],
   });
 
   final String id;
@@ -26,6 +27,7 @@ class ProjectDTO {
   final String description;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final List<String> collaboratorsIds;
   final List<Map<String, dynamic>> collaborators; // userId, role
 
   static const String collection = 'projects';
@@ -49,6 +51,7 @@ class ProjectDTO {
               },
             )
             .toList(),
+    collaboratorsIds: project.collaborators.map((c) => c.userId.value).toList(),
   );
 
   Project toDomain() => Project(
@@ -85,6 +88,7 @@ class ProjectDTO {
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
     'collaborators': collaborators,
+    'collaboratorIds': collaboratorsIds,
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -106,6 +110,11 @@ class ProjectDTO {
             ?.map((e) => e as Map<String, dynamic>)
             .toList() ??
         [],
+    collaboratorsIds:
+        (json['collaboratorIds'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        [],
   );
 
   /// Creates a ProjectDTO from a Firestore document.
@@ -123,6 +132,11 @@ class ProjectDTO {
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
+      collaboratorsIds:
+          (data['collaboratorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -136,6 +150,7 @@ class ProjectDTO {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       'collaborators': collaborators,
+      'collaboratorIds': collaboratorsIds,
     };
   }
 
@@ -148,6 +163,7 @@ class ProjectDTO {
     DateTime? createdAt,
     DateTime? updatedAt,
     List<Map<String, dynamic>>? collaborators,
+    List<String>? collaboratorsIds,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -157,6 +173,7 @@ class ProjectDTO {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
+      collaboratorsIds: collaboratorsIds ?? this.collaboratorsIds,
     );
   }
 
@@ -188,6 +205,11 @@ class ProjectDTO {
               ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
+      collaboratorsIds:
+          (data['collaboratorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
     );
   }
 
@@ -201,6 +223,7 @@ class ProjectDTO {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'collaborators': collaborators,
+      'collaboratorIds': collaboratorsIds,
     };
   }
 
@@ -214,7 +237,8 @@ class ProjectDTO {
         other.description == description &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        listEquals(other.collaborators, collaborators);
+        listEquals(other.collaborators, collaborators) &&
+        listEquals(other.collaboratorsIds, collaboratorsIds);
   }
 
   @override
@@ -225,5 +249,6 @@ class ProjectDTO {
       description.hashCode ^
       createdAt.hashCode ^
       updatedAt.hashCode ^
-      collaborators.hashCode;
+      collaborators.hashCode ^
+      collaboratorsIds.hashCode;
 }

@@ -111,7 +111,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   Stream<List<Project>> watchProjectsByUser(UserId userId) {
     return _firestore
         .collection(ProjectDTO.collection)
-        .where('collaborators', arrayContains: userId.value)
+        .where('collaboratorIds', arrayContains: userId.value)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
