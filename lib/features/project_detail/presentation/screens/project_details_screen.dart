@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
@@ -34,9 +35,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     BuildContext context,
     ProjectDetailsState state,
     Project project,
-  ) {
-    context.go(AppRoutes.manageCollaborators, extra: project);
-  }
+  ) {}
 
   void _leaveProject(BuildContext context) {
     context.read<ProjectDetailBloc>().add(LeaveProject(widget.project.id));
@@ -46,6 +45,20 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<ProjectDetailBloc, ProjectDetailsState>(
       builder: (context, state) {
+        if (state is ProjectDetailsLoaded) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => ManageCollaboratorsScreen(
+                      project: state.params.project,
+                      collaborators: state.params.collaborators,
+                    ),
+              ),
+            );
+          });
+        }
         return Scaffold(
           appBar: AppBar(
             iconTheme: const IconThemeData(color: Colors.white),
@@ -58,7 +71,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   );
                 } else if (state is ProjectDetailsLoaded) {
                   return Text(
-                    state.project.name.value.fold((l) => '', (r) => r),
+                    state.params.project.name.value.fold((l) => '', (r) => r),
                     style: const TextStyle(color: Colors.white),
                   );
                 } else {
@@ -122,7 +135,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   state: state,
                   project:
                       state is ProjectDetailsLoaded
-                          ? state.project
+                          ? state.params.project
                           : widget.project,
                   manageCollaborator: _manageCollaborator,
                 ),

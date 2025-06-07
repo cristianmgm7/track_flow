@@ -1,5 +1,4 @@
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/models/manage_colaborators_params.dart';
 
 abstract class ProjectDetailsState {}
 
@@ -8,10 +7,9 @@ class ProjectDetailsInitial extends ProjectDetailsState {}
 class ProjectDetailsLoading extends ProjectDetailsState {}
 
 class ProjectDetailsLoaded extends ProjectDetailsState {
-  final List<UserProfile> collaborators;
-  final Project project;
+  final ManageCollaboratorsParams params;
 
-  ProjectDetailsLoaded({required this.collaborators, required this.project});
+  ProjectDetailsLoaded({required this.params});
 }
 
 class ProjectDetailsError extends ProjectDetailsState {
