@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
@@ -9,7 +9,7 @@ import 'package:trackflow/features/manage_collaborators/domain/repositories/mana
 class UpdateCollaboratorRoleParams extends Equatable {
   final ProjectId projectId;
   final UserId userId;
-  final UserRole role;
+  final ProjectRole role;
 
   const UpdateCollaboratorRoleParams({
     required this.projectId,

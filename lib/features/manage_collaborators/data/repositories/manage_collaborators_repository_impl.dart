@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
@@ -71,7 +71,7 @@ class ManageCollaboratorsRepositoryImpl
   Future<Either<Failure, void>> updateCollaboratorRole(
     ProjectId projectId,
     UserId collaboratorId,
-    UserRole role,
+    ProjectRole role,
   ) async {
     return await remoteDataSourceManageCollaborators.updateCollaboratorRole(
       projectId,

@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/projects/domain/entities/project_name.dart';
-import 'package:trackflow/features/projects/domain/entities/project_description.dart';
-import 'package:trackflow/core/entities/user_role.dart';
-import 'package:trackflow/core/entities/user_creative_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 class ProjectDTO {
   const ProjectDTO({
@@ -39,13 +39,11 @@ class ProjectDTO {
     description: project.description.value.fold((l) => '', (r) => r),
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
-    collaborators: project.collaborators.map((u) => u.value).toList(),
-    roles: project.roles.map(
-      (key, value) => MapEntry(key.value, value.toString()),
-    ),
-    members: project.members.map(
-      (key, value) => MapEntry(key.value, value.toString()),
-    ),
+    collaborators: project.collaborators.map((c) => c.userId.value).toList(),
+    roles: {
+      for (var c in project.collaborators)
+        c.userId.value: c.role.value.toString(),
+    },
   );
 
   Project toDomain() => Project(
@@ -56,17 +54,13 @@ class ProjectDTO {
     createdAt: createdAt,
     updatedAt: updatedAt,
     collaborators:
-        collaborators.map((id) => UserId.fromUniqueString(id)).toList(),
-    roles: roles.map(
-      (key, value) =>
-          MapEntry(UserId.fromUniqueString(key), UserRole.fromString(value)),
-    ),
-    members: members.map(
-      (key, value) => MapEntry(
-        UserId.fromUniqueString(key),
-        UserCreativeRole.fromString(value),
-      ),
-    ),
+        collaborators.map((id) {
+          final role = roles[id] ?? '';
+          return ProjectCollaborator.create(
+            userId: UserId.fromUniqueString(id),
+            role: ProjectRole.fromString(role),
+          );
+        }).toList(),
   );
 
   Map<String, dynamic> toJson() => {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
@@ -47,7 +47,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   void _updateCollaborator(
     BuildContext context,
     UserId userId,
-    UserRole newRole,
+    ProjectRole newRole,
   ) {
     context.read<ManageCollaboratorsBloc>().add(
       UpdateCollaboratorRole(

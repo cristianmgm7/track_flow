@@ -1,5 +1,5 @@
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 enum CreativeRole {
   producer,

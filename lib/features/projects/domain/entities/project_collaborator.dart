@@ -49,6 +49,7 @@ class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
         return true;
       case ProjectRoleType.admin:
         return [
+          ProjectPermission.editProject,
           ProjectPermission.addCollaborator,
           ProjectPermission.removeCollaborator,
           ProjectPermission.updateCollaboratorRole,

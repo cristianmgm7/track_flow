@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trackflow/features/projects/domain/entities/project_name.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/core/error/value_failure.dart';
 
 void main() {

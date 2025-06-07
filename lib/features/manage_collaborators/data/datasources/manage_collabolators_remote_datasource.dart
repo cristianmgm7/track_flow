@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 
@@ -24,7 +24,7 @@ abstract class ManageCollaboratorsRemoteDataSource {
   Future<Either<Failure, void>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
-    UserRole role,
+    ProjectRole role,
   );
 }
 
@@ -146,7 +146,7 @@ class ManageCollaboratorsRemoteDataSourceImpl
   Future<Either<Failure, void>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
-    UserRole role,
+    ProjectRole role,
   ) async {
     try {
       final projectRef = firestore

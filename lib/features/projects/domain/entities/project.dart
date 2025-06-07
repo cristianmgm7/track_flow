@@ -1,11 +1,12 @@
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_creative_role.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
+import 'package:trackflow/core/domain/aggregate_root.dart';
 
-class Project {
+class Project extends AggregateRoot<ProjectId> {
+  @override
   final ProjectId id;
   final UserId ownerId;
   final ProjectName name;
@@ -13,16 +14,19 @@ class Project {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final List<ProjectCollaborator> collaborators;
+  final bool isDeleted;
 
   const Project({
-    required this.id,
+    required ProjectId id,
     required this.ownerId,
     required this.name,
     required this.description,
     required this.createdAt,
     this.updatedAt,
     this.collaborators = const [],
-  });
+    this.isDeleted = false,
+  }) : id = id,
+       super(id);
 
   Project copyWith({
     ProjectId? id,
@@ -32,6 +36,7 @@ class Project {
     DateTime? createdAt,
     DateTime? updatedAt,
     List<ProjectCollaborator>? collaborators,
+    bool? isDeleted,
   }) {
     return Project(
       id: id ?? this.id,
@@ -41,7 +46,32 @@ class Project {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  Project updateProject({
+    required UserId requester,
+    ProjectName? newName,
+    ProjectDescription? newDescription,
+  }) {
+    if (requester != ownerId) {
+      throw Exception('Only the owner can update the project');
+    }
+
+    return copyWith(
+      name: newName ?? name,
+      description: newDescription ?? description,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  Project deleteProject({required UserId requester}) {
+    if (requester != ownerId) {
+      throw Exception('Only the owner can delete the project');
+    }
+
+    return copyWith(updatedAt: DateTime.now(), isDeleted: true);
   }
 
   void addCollaborator(ProjectCollaborator collaborator) {
@@ -60,19 +90,16 @@ class Project {
     }
   }
 
-  void assignRole(ProjectCollaborator collaborator, ProjectRole role) {
+  void updateCollaboratorRole(
+    ProjectCollaborator collaborator,
+    ProjectRole role,
+  ) {
     if (collaborators.contains(collaborator)) {
-      collaborator.role = role;
+      final updatedCollaborator = collaborator.copyWith(role: role);
+      collaborators.remove(collaborator);
+      collaborators.add(updatedCollaborator);
     } else {
       throw Exception('Collaborator does not exist');
-    }
-  }
-
-  void removeRole(ProjectCollaborator collaborator) {
-    if (collaborators.contains(collaborator)) {
-      collaborator.role = ProjectRole.viewer;
-    } else {
-      throw Exception('Role does not exist for this collaborator');
     }
   }
 }
