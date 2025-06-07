@@ -32,7 +32,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AddCollaboratorDialog(projectId: widget.project!.id);
+        return AddCollaboratorDialog(project: widget.project!);
       },
     );
   }

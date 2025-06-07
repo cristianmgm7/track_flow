@@ -121,7 +121,7 @@ class Project extends AggregateRoot<ProjectId> {
       collaborators.remove(collaborator);
       collaborators.add(updatedCollaborator);
     } else {
-      throw Exception('Collaborator does not exist');
+      throw CollaboratorNotFoundException();
     }
   }
 }

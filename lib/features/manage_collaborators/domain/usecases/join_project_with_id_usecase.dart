@@ -5,9 +5,11 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 class JoinProjectWithIdParams extends Equatable {
-  final UniqueId projectId;
+  final ProjectId projectId;
 
   const JoinProjectWithIdParams({required this.projectId});
 
@@ -23,10 +25,31 @@ class JoinProjectWithIdUseCase {
   JoinProjectWithIdUseCase(this._projectsRepository, this._sessionRepository);
 
   Future<Either<Failure, void>> call(JoinProjectWithIdParams params) async {
-    final userId = await _sessionRepository.getUserId();
-    return _projectsRepository.joinProjectWithId(
-      ProjectId.fromUniqueString(params.projectId.value),
-      UserId.fromUniqueString(userId!),
+    final userId = _sessionRepository.getUserId();
+    if (userId == null) return left(ServerFailure('No user found'));
+
+    final projectResult = await _projectsRepository.getProjectById(
+      params.projectId,
     );
+    return projectResult.fold((failure) => left(failure), (project) {
+      final alreadyExists = project.collaborators.any(
+        (c) => c.userId.value == userId,
+      );
+      if (alreadyExists) {
+        return left(ServerFailure('User is already a collaborator.'));
+      }
+
+      final newCollaborator = ProjectCollaborator.create(
+        userId: UserId.fromUniqueString(userId),
+        role: ProjectRole.viewer,
+      );
+
+      try {
+        project.addCollaborator(newCollaborator);
+        return _projectsRepository.updateProject(project);
+      } catch (e) {
+        return left(ServerFailure('Failed to join project: ${e.toString()}'));
+      }
+    });
   }
 }
