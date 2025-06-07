@@ -58,7 +58,12 @@ class ManageCollaboratorsRemoteDataSourceImpl
         final projectDTO = ProjectDTO.fromFirestore(snapshot);
         final updatedCollaborators = [
           ...projectDTO.collaborators,
-          collaboratorId.value,
+          {
+            'id': collaboratorId.value,
+            'userId': collaboratorId.value,
+            'role': ProjectRole.owner.value.toString(),
+            'specificPermissions': [],
+          },
         ];
 
         final updatedProjectDTO = projectDTO.copyWith(

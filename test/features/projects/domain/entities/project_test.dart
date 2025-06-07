@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_collaborator_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -69,6 +71,63 @@ void main() {
 
       expect(deletedProject.isDeleted, isTrue);
       expect(deletedProject.updatedAt, isNotNull);
+    });
+
+    test(
+      'should throw exception if a non-collaborator tries to update project',
+      () {
+        final project = Project(
+          id: ProjectId.fromUniqueString(id.value),
+          ownerId: ownerId,
+          name: name,
+          description: description,
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+        );
+
+        final intruder = UserId.fromUniqueString('intruder-id');
+
+        expect(
+          () => project.updateProject(
+            requester: intruder,
+            newName: ProjectName('Intruder Name'),
+            newDescription: ProjectDescription('Should not be allowed.'),
+          ),
+          throwsA(isA<UserNotCollaboratorException>()),
+        );
+      },
+    );
+  });
+
+  group('ProjectCollaborator', () {
+    final id = UniqueId();
+    final ownerId = UserId.fromUniqueString('user-123');
+    final name = ProjectName('Test Project');
+    final description = ProjectDescription('A test project description.');
+    final createdAt = DateTime(2024, 5, 17, 12, 0, 0);
+    final updatedAt = DateTime(2024, 5, 18, 12, 0, 0);
+
+    test('should throw exception if a viewer tries to delete a project', () {
+      final project = Project(
+        id: ProjectId.fromUniqueString(id.value),
+        ownerId: ownerId,
+        name: name,
+        description: description,
+        createdAt: createdAt,
+        updatedAt: updatedAt,
+      );
+
+      final viewer = ProjectCollaborator.create(
+        userId: UserId.fromUniqueString('viewer-id'),
+        role: ProjectRole.viewer,
+      );
+
+      project.addCollaborator(viewer);
+
+      expect(
+        () => project.deleteProject(requester: viewer.userId),
+        throwsA(isA<ProjectPermissionException>()),
+      );
     });
   });
 }

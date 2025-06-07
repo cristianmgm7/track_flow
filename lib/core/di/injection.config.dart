@@ -203,8 +203,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i839.UserProfileRepository>(() =>
         _i416.UserProfileRepositoryImpl(
             gh<_i744.UserProfileRemoteDataSource>()));
+    gh.lazySingleton<_i1043.DeleteProjectUseCase>(
+        () => _i1043.DeleteProjectUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
     gh.lazySingleton<_i594.CreateProjectUseCase>(
         () => _i594.CreateProjectUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i532.UpdateProjectUseCase>(
+        () => _i532.UpdateProjectUseCase(
               gh<_i1022.ProjectsRepository>(),
               gh<_i383.SessionStorage>(),
             ));
@@ -242,8 +252,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i1022.ProjectsRepository>(),
               gh<_i383.SessionStorage>(),
             ));
-    gh.lazySingleton<_i1043.DeleteProjectUseCase>(
-        () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i104.AuthRepository>(() => _i447.AuthRepositoryImpl(
           auth: gh<_i59.FirebaseAuth>(),
           googleSignIn: gh<_i116.GoogleSignIn>(),
@@ -252,11 +260,6 @@ extension GetItInjectableX on _i174.GetIt {
           firestore: gh<_i974.FirebaseFirestore>(),
           projectSyncService: gh<_i1071.ProjectSyncService>(),
         ));
-    gh.lazySingleton<_i532.UpdateProjectUseCase>(
-        () => _i532.UpdateProjectUseCase(
-              gh<_i1022.ProjectsRepository>(),
-              gh<_i104.AuthRepository>(),
-            ));
     gh.lazySingleton<_i391.JoinProjectWithIdUseCase>(
         () => _i391.JoinProjectWithIdUseCase(
               gh<_i1063.ManageCollaboratorsRepository>(),

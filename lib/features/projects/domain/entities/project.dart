@@ -18,16 +18,17 @@ class Project extends AggregateRoot<ProjectId> {
   final List<ProjectCollaborator> collaborators;
   final bool isDeleted;
 
-  const Project({
+  Project({
     required ProjectId id,
     required this.ownerId,
     required this.name,
     required this.description,
     required this.createdAt,
     this.updatedAt,
-    this.collaborators = const [],
+    List<ProjectCollaborator>? collaborators,
     this.isDeleted = false,
   }) : id = id,
+       collaborators = collaborators ?? [],
        super(id);
 
   Project copyWith({
