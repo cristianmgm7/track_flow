@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_collaborator_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 class ProjectDTO {
@@ -15,9 +17,7 @@ class ProjectDTO {
     required this.description,
     required this.createdAt,
     this.updatedAt,
-    this.collaborators = const [],
-    this.roles = const {},
-    this.members = const {},
+    this.collaborators = const [], // userId, role
   });
 
   final String id;
@@ -26,9 +26,7 @@ class ProjectDTO {
   final String description;
   final DateTime createdAt;
   final DateTime? updatedAt;
-  final List<String> collaborators;
-  final Map<String, String> roles;
-  final Map<String, String> members;
+  final List<Map<String, dynamic>> collaborators; // userId, role
 
   static const String collection = 'projects';
 
@@ -39,11 +37,18 @@ class ProjectDTO {
     description: project.description.value.fold((l) => '', (r) => r),
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
-    collaborators: project.collaborators.map((c) => c.userId.value).toList(),
-    roles: {
-      for (var c in project.collaborators)
-        c.userId.value: c.role.value.toString(),
-    },
+    collaborators:
+        project.collaborators
+            .map(
+              (c) => {
+                'id': c.id.value,
+                'userId': c.userId.value,
+                'role': c.role.value.toString(),
+                'specificPermissions':
+                    c.specificPermissions.map((p) => p.name).toList(),
+              },
+            )
+            .toList(),
   );
 
   Project toDomain() => Project(
@@ -54,11 +59,20 @@ class ProjectDTO {
     createdAt: createdAt,
     updatedAt: updatedAt,
     collaborators:
-        collaborators.map((id) {
-          final role = roles[id] ?? '';
-          return ProjectCollaborator.create(
-            userId: UserId.fromUniqueString(id),
-            role: ProjectRole.fromString(role),
+        collaborators.map((data) {
+          return ProjectCollaborator.rebuild(
+            id: ProjectCollaboratorId.fromUniqueString(data['id']),
+            userId: UserId.fromUniqueString(data['userId']),
+            role: ProjectRole.fromString(data['role']),
+            specificPermissions:
+                (data['specificPermissions'] as List<dynamic>?)
+                    ?.map(
+                      (e) => ProjectPermission.values.firstWhere(
+                        (p) => p.name == e,
+                      ),
+                    )
+                    .toList() ??
+                [],
           );
         }).toList(),
   );
@@ -71,8 +85,6 @@ class ProjectDTO {
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
     'collaborators': collaborators,
-    'roles': roles,
-    'members': members,
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -91,19 +103,9 @@ class ProjectDTO {
             : DateTime.tryParse(json['updatedAt'] as String? ?? ''),
     collaborators:
         (json['collaborators'] as List<dynamic>?)
-            ?.map((e) => e as String)
+            ?.map((e) => e as Map<String, dynamic>)
             .toList() ??
         [],
-    roles:
-        (json['roles'] as Map<String, dynamic>?)?.map(
-          (key, value) => MapEntry(key, value as String),
-        ) ??
-        {},
-    members:
-        (json['members'] as Map<String, dynamic>?)?.map(
-          (key, value) => MapEntry(key, value as String),
-        ) ??
-        {},
   );
 
   /// Creates a ProjectDTO from a Firestore document.
@@ -118,19 +120,9 @@ class ProjectDTO {
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       collaborators:
           (data['collaborators'] as List<dynamic>?)
-              ?.map((e) => e as String)
+              ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
-      roles:
-          (data['roles'] as Map<String, dynamic>?)?.map(
-            (key, value) => MapEntry(key, value as String),
-          ) ??
-          {},
-      members:
-          (data['members'] as Map<String, dynamic>?)?.map(
-            (key, value) => MapEntry(key, value as String),
-          ) ??
-          {},
     );
   }
 
@@ -144,8 +136,6 @@ class ProjectDTO {
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       'collaborators': collaborators,
-      'roles': roles,
-      'members': members,
     };
   }
 
@@ -157,9 +147,7 @@ class ProjectDTO {
     String? description,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<String>? collaborators,
-    Map<String, String>? roles,
-    Map<String, String>? members,
+    List<Map<String, dynamic>>? collaborators,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -169,8 +157,6 @@ class ProjectDTO {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
-      roles: roles ?? this.roles,
-      members: members ?? this.members,
     );
   }
 
@@ -199,19 +185,9 @@ class ProjectDTO {
       updatedAt: updatedAt,
       collaborators:
           (data['collaborators'] as List<dynamic>?)
-              ?.map((e) => e as String)
+              ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           [],
-      roles:
-          (data['roles'] as Map<String, dynamic>?)?.map(
-            (key, value) => MapEntry(key, value as String),
-          ) ??
-          {},
-      members:
-          (data['members'] as Map<String, dynamic>?)?.map(
-            (key, value) => MapEntry(key, value as String),
-          ) ??
-          {},
     );
   }
 
@@ -225,8 +201,6 @@ class ProjectDTO {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'collaborators': collaborators,
-      'roles': roles,
-      'members': members,
     };
   }
 
@@ -240,9 +214,7 @@ class ProjectDTO {
         other.description == description &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        listEquals(other.collaborators, collaborators) &&
-        mapEquals(other.roles, roles) &&
-        mapEquals(other.members, members);
+        listEquals(other.collaborators, collaborators);
   }
 
   @override
@@ -253,7 +225,5 @@ class ProjectDTO {
       description.hashCode ^
       createdAt.hashCode ^
       updatedAt.hashCode ^
-      collaborators.hashCode ^
-      roles.hashCode ^
-      members.hashCode;
+      collaborators.hashCode;
 }

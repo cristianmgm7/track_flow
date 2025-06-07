@@ -28,6 +28,19 @@ class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
       specificPermissions: [],
     );
   }
+  factory ProjectCollaborator.rebuild({
+    required ProjectCollaboratorId id,
+    required UserId userId,
+    required ProjectRole role,
+    required List<ProjectPermission> specificPermissions,
+  }) {
+    return ProjectCollaborator._(
+      id: id,
+      userId: userId,
+      role: role,
+      specificPermissions: specificPermissions,
+    );
+  }
 
   ProjectCollaborator copyWith({
     ProjectRole? role,
