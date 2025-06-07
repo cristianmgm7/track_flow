@@ -35,7 +35,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     BuildContext context,
     ProjectDetailsState state,
     Project project,
-  ) {}
+  ) {
+    if (state is ProjectDetailsLoaded) {
+      context.go(AppRoutes.manageCollaborators, extra: state.params);
+    }
+  }
 
   void _leaveProject(BuildContext context) {
     context.read<ProjectDetailBloc>().add(LeaveProject(widget.project.id));
@@ -45,20 +49,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<ProjectDetailBloc, ProjectDetailsState>(
       builder: (context, state) {
-        if (state is ProjectDetailsLoaded) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => ManageCollaboratorsScreen(
-                      project: state.params.project,
-                      collaborators: state.params.collaborators,
-                    ),
-              ),
-            );
-          });
-        }
         return Scaffold(
           appBar: AppBar(
             iconTheme: const IconThemeData(color: Colors.white),
