@@ -7,7 +7,7 @@ import 'package:trackflow/features/projects/domain/value_objects/project_role.da
 // project collaborator entity
 class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
   final UserId userId;
-  final ProjectRole role;
+  ProjectRole role;
   final List<ProjectPermission> specificPermissions;
 
   ProjectCollaborator._({
@@ -26,6 +26,18 @@ class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
       userId: userId,
       role: role,
       specificPermissions: [],
+    );
+  }
+
+  ProjectCollaborator copyWith({
+    ProjectRole? role,
+    List<ProjectPermission>? specificPermissions,
+  }) {
+    return ProjectCollaborator._(
+      id: id,
+      userId: userId,
+      role: role ?? this.role,
+      specificPermissions: specificPermissions ?? this.specificPermissions,
     );
   }
 
