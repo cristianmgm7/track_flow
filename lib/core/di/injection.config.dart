@@ -260,6 +260,11 @@ extension GetItInjectableX on _i174.GetIt {
           firestore: gh<_i974.FirebaseFirestore>(),
           projectSyncService: gh<_i1071.ProjectSyncService>(),
         ));
+    gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(
+        () => _i398.AddCollaboratorToProjectUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
     gh.lazySingleton<_i391.JoinProjectWithIdUseCase>(
         () => _i391.JoinProjectWithIdUseCase(
               gh<_i1063.ManageCollaboratorsRepository>(),
@@ -271,9 +276,6 @@ extension GetItInjectableX on _i174.GetIt {
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
         ));
-    gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(() =>
-        _i398.AddCollaboratorToProjectUseCase(
-            gh<_i1063.ManageCollaboratorsRepository>()));
     gh.lazySingleton<_i81.UpdateCollaboratorRoleUseCase>(() =>
         _i81.UpdateCollaboratorRoleUseCase(
             gh<_i1063.ManageCollaboratorsRepository>()));
