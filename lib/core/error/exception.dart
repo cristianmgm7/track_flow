@@ -1,9 +1,10 @@
-abstract class AppException implements Exception {
-  final String message;
-  final String? code;
+import 'package:equatable/equatable.dart';
 
-  AppException(this.message, {this.code});
+abstract class AppException extends Equatable {
+  final String message;
+
+  const AppException(this.message);
 
   @override
-  String toString() => 'AppException: $message';
+  List<Object?> get props => [message];
 }
