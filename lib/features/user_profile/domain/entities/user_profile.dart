@@ -19,7 +19,7 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final CreativeRole? creativeRole;
-  final UserRole? role;
+  final ProjectRole? role;
 
   const UserProfile({
     required this.id,
@@ -40,7 +40,7 @@ class UserProfile {
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
-    UserRole? role,
+    ProjectRole? role,
   }) {
     return UserProfile(
       id: id ?? this.id,

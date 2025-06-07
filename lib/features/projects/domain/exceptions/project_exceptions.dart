@@ -16,3 +16,7 @@ class ProjectPermissionException extends ProjectException {
 class ProjectValidationException extends ProjectException {
   const ProjectValidationException(super.message);
 }
+
+class UserNotCollaboratorException extends ProjectException {
+  const UserNotCollaboratorException() : super('User is not a collaborator');
+}

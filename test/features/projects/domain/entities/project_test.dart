@@ -3,6 +3,9 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+
 // Assuming UserId is defined somewhere in your codebase
 
 void main() {
@@ -14,54 +17,58 @@ void main() {
     final createdAt = DateTime(2024, 5, 17, 12, 0, 0);
     final updatedAt = DateTime(2024, 5, 18, 12, 0, 0);
 
-    test('should create a valid Project', () {
+    test('should update project correctly', () {
       final project = Project(
-        id: ProjectId(id.value),
+        id: ProjectId.fromUniqueString(id.value),
         ownerId: ownerId,
         name: name,
         description: description,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
-      expect(project.id, id);
-      expect(project.ownerId, ownerId);
-      expect(project.name, name);
-      expect(project.description, description);
-      expect(project.createdAt, createdAt);
-      expect(project.updatedAt, updatedAt);
+
+      final collaborator = ProjectCollaborator.create(
+        userId: ownerId,
+        role: ProjectRole.owner,
+      );
+
+      project.addCollaborator(collaborator);
+
+      final newName = ProjectName('Updated Project Name');
+      final newDescription = ProjectDescription('Updated project description.');
+
+      final updatedProject = project.updateProject(
+        requester: ownerId,
+        newName: newName,
+        newDescription: newDescription,
+      );
+
+      expect(updatedProject.name, newName);
+      expect(updatedProject.description, newDescription);
+      expect(updatedProject.updatedAt, isNotNull);
     });
 
-    test('copyWith should update fields correctly', () {
+    test('should delete project correctly', () {
       final project = Project(
-        id: ProjectId(id.value),
+        id: ProjectId.fromUniqueString(id.value),
         ownerId: ownerId,
         name: name,
         description: description,
         createdAt: createdAt,
         updatedAt: updatedAt,
       );
-      final newId = UniqueId();
-      final newOwnerId = UserId.fromUniqueString('user-456');
-      final newName = ProjectName('New Name');
-      final newDescription = ProjectDescription('New description.');
-      final newCreatedAt = DateTime(2024, 6, 1, 10, 0, 0);
-      final newUpdatedAt = DateTime(2024, 6, 2, 10, 0, 0);
 
-      final updated = project.copyWith(
-        id: ProjectId(newId.value),
-        ownerId: newOwnerId,
-        name: newName,
-        description: newDescription,
-        createdAt: newCreatedAt,
-        updatedAt: newUpdatedAt,
+      final collaborator = ProjectCollaborator.create(
+        userId: ownerId,
+        role: ProjectRole.owner,
       );
 
-      expect(updated.id, newId);
-      expect(updated.ownerId, newOwnerId);
-      expect(updated.name, newName);
-      expect(updated.description, newDescription);
-      expect(updated.createdAt, newCreatedAt);
-      expect(updated.updatedAt, newUpdatedAt);
+      project.addCollaborator(collaborator);
+
+      final deletedProject = project.deleteProject(requester: ownerId);
+
+      expect(deletedProject.isDeleted, isTrue);
+      expect(deletedProject.updatedAt, isNotNull);
     });
   });
 }

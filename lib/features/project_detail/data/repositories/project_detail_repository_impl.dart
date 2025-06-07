@@ -26,7 +26,10 @@ class ProjectDetailRepositoryImpl implements ProjectDetailRepository {
       return left(DatabaseFailure('No internet connection'));
     }
     final failureOrUserProfiles = await remoteDataSource
-        .getProjectCollaborators(project.id, project.collaborators);
+        .getProjectCollaborators(
+          project.id,
+          project.collaborators.map((c) => c.userId).toList(),
+        );
     return failureOrUserProfiles.fold(
       (failure) => Left(failure),
       (userProfiles) => Right(userProfiles),
