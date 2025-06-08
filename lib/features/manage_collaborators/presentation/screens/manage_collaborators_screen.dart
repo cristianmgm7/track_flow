@@ -9,8 +9,9 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
-  final Project? project;
-  final List<UserProfile> collaborators;
+  final Project? project; // recive full project with collaborators
+  final List<UserProfile>
+  collaborators; // recive user profiles of collaborators
   const ManageCollaboratorsScreen({
     super.key,
     required this.project,
@@ -23,11 +24,6 @@ class ManageCollaboratorsScreen extends StatefulWidget {
 }
 
 class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   void _addCollaborator(BuildContext context) {
     showDialog(
       context: context,
@@ -69,40 +65,34 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
       ),
       body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
         builder: (context, state) {
-          if (state is ManageCollaboratorsInitial) {
-            return const Center(child: Text('No collaborators available'));
-          } else if (state is ManageCollaboratorsError) {
+          if (state is ManageCollaboratorsError) {
             return Center(
               child: Text(state.message, style: TextStyle(color: Colors.red)),
             );
-          } else if (state is AddCollaboratorSuccess ||
-              state is UpdateCollaboratorRoleSuccess ||
-              state is RemoveCollaboratorSuccess ||
-              state is JoinProjectSuccess) {
-            return ListView.builder(
-              itemCount: widget.collaborators.length,
-              itemBuilder: (context, index) {
-                final userProfile = widget.collaborators[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 8.0,
-                    horizontal: 16.0,
-                  ),
-                  child: ListTile(
-                    title: Text(userProfile.name),
-                    subtitle: Text(userProfile.email),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.remove_circle_outline),
-                      onPressed: () {
-                        _removeCollaborator(context, userProfile.id);
-                      },
-                    ),
-                  ),
-                );
-              },
-            );
           }
-          return const Center(child: CircularProgressIndicator());
+
+          return ListView.builder(
+            itemCount: widget.collaborators.length,
+            itemBuilder: (context, index) {
+              final userProfile = widget.collaborators[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 8.0,
+                  horizontal: 16.0,
+                ),
+                child: ListTile(
+                  title: Text(userProfile.name),
+                  subtitle: Text(userProfile.email),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () {
+                      _removeCollaborator(context, userProfile.id);
+                    },
+                  ),
+                ),
+              );
+            },
+          );
         },
       ),
     );

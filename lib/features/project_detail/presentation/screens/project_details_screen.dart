@@ -11,7 +11,7 @@ import 'package:trackflow/features/project_detail/presentation/components/colabo
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
-  final Project project;
+  final Project project; // recive full project with collaborators
   const ProjectDetailsScreen({super.key, required this.project});
 
   @override
@@ -22,7 +22,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectDetailBloc>().add(LoadUserProfiles(widget.project));
+    context.read<ProjectDetailBloc>().add(
+      LoadUserProfiles(widget.project),
+    ); // to load user profiles of collaborators
   }
 
   void _shareProject(BuildContext context, Project project) {
@@ -37,7 +39,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     Project project,
   ) {
     if (state is ProjectDetailsLoaded) {
-      context.go(AppRoutes.manageCollaborators, extra: state.params);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => ManageCollaboratorsScreen(
+                project: state.params.project,
+                collaborators: state.params.collaborators,
+              ),
+        ),
+      );
     }
   }
 

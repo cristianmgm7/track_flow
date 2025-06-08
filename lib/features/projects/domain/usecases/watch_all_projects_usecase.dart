@@ -18,6 +18,14 @@ class WatchAllProjectsUseCase {
     if (userId == null) {
       return Stream.value(left(ServerFailure('No user found')));
     }
-    return _repository.watchRemoteProjects(UserId.fromUniqueString(userId));
+    final stream = _repository.watchRemoteProjects(
+      UserId.fromUniqueString(userId),
+    );
+    return stream.map(
+      (either) => either.fold(
+        (failure) => left(failure),
+        (projects) => right(projects),
+      ),
+    );
   }
 }

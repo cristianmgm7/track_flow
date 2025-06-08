@@ -5,6 +5,7 @@ import 'package:trackflow/features/projects/domain/value_objects/project_permiss
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 // project collaborator entity
+
 class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
   final UserId userId;
   ProjectRole role;

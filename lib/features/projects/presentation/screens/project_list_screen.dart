@@ -20,7 +20,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectsBloc>().add(StartWatchingProjects());
+    context.read<ProjectsBloc>().add(
+      StartWatchingProjects(),
+    ); // to listen to all projects where the user is a collaborator
   }
 
   void _openProjectFormScreen() {
