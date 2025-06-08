@@ -43,10 +43,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         context,
         MaterialPageRoute(
           builder:
-              (context) => ManageCollaboratorsScreen(
-                project: state.params.project,
-                collaborators: state.params.collaborators,
-              ),
+              (context) =>
+                  ManageCollaboratorsScreen(projectId: widget.project.id),
         ),
       );
     }

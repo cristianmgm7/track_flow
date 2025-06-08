@@ -68,6 +68,8 @@ import 'package:trackflow/features/manage_collaborators/domain/repositories/mana
     as _i1063;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
     as _i398;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_user_profiles.dart'
+    as _i40;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart'
     as _i391;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
@@ -260,6 +262,11 @@ extension GetItInjectableX on _i174.GetIt {
           firestore: gh<_i974.FirebaseFirestore>(),
           projectSyncService: gh<_i1071.ProjectSyncService>(),
         ));
+    gh.lazySingleton<_i40.GetProjectWithUserProfilesUseCase>(
+        () => _i40.GetProjectWithUserProfilesUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i703.ProjectDetailRepository>(),
+            ));
     gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(
         () => _i398.AddCollaboratorToProjectUseCase(
               gh<_i1063.ManageCollaboratorsRepository>(),
@@ -286,12 +293,6 @@ extension GetItInjectableX on _i174.GetIt {
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
         ));
-    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
-        _i438.ManageCollaboratorsBloc(
-          updateCollaboratorRoleUseCase:
-              gh<_i81.UpdateCollaboratorRoleUseCase>(),
-          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
-        ));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
         () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i836.GetAuthStateUseCase>(
@@ -309,6 +310,14 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i524.MagicLinkRepository>(),
               gh<_i104.AuthRepository>(),
             ));
+    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
+        _i438.ManageCollaboratorsBloc(
+          updateCollaboratorRoleUseCase:
+              gh<_i81.UpdateCollaboratorRoleUseCase>(),
+          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
+          getProjectWithUserProfilesUseCase:
+              gh<_i40.GetProjectWithUserProfilesUseCase>(),
+        ));
     gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
           generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),

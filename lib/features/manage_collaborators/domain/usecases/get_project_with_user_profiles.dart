@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
@@ -12,6 +13,7 @@ class GetProjectWithUserProfilesParams {
   GetProjectWithUserProfilesParams({required this.projectId});
 }
 
+@lazySingleton
 class GetProjectWithUserProfilesUseCase {
   final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final ProjectDetailRepository _repositoryProjectDetail;

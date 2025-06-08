@@ -120,13 +120,27 @@ class ProjectDTO {
   /// Creates a ProjectDTO from a Firestore document.
   factory ProjectDTO.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final createdAtRaw = data['createdAt'];
+    final createdAt =
+        createdAtRaw is Timestamp
+            ? createdAtRaw.toDate()
+            : createdAtRaw is DateTime
+            ? createdAtRaw
+            : DateTime.tryParse(createdAtRaw.toString()) ?? DateTime.now();
+    final updatedAtRaw = data['updatedAt'];
+    final updatedAt =
+        updatedAtRaw is Timestamp
+            ? updatedAtRaw.toDate()
+            : updatedAtRaw is DateTime
+            ? updatedAtRaw
+            : DateTime.tryParse(updatedAtRaw.toString());
     return ProjectDTO(
       id: data['id'] as String? ?? '',
       ownerId: data['ownerId'] as String? ?? '',
       name: data['name'] as String? ?? '',
       description: (data['description'] as String?) ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      createdAt: createdAt,
+      updatedAt: updatedAt,
       collaborators:
           (data['collaborators'] as List<dynamic>?)
               ?.map((e) => e as Map<String, dynamic>)

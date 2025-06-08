@@ -4,6 +4,14 @@ import 'package:trackflow/features/projects/domain/value_objects/project_role.da
 
 abstract class ManageCollaboratorsEvent extends Equatable {}
 
+class GetProjectWithUserProfiles extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
+  GetProjectWithUserProfiles({required this.projectId});
+
+  @override
+  List<Object?> get props => [projectId];
+}
+
 class AddCollaborator extends ManageCollaboratorsEvent {
   final ProjectId projectId;
   final UserId collaboratorId;

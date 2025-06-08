@@ -30,8 +30,13 @@ import 'package:trackflow/features/projects/domain/entities/project.dart'
 // ignore_for_file: subtype_of_sealed_class
 
 class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
-  _FakeEither_0(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeEither_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
 }
 
 /// A class which mocks [ManageCollaboratorsRepository].
@@ -45,18 +50,21 @@ class CustomMockManageCollaboratorsRepository extends _i1.Mock
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> getProjectById(
-    _i7.ProjectId? projectId,
-  ) =>
+          _i7.ProjectId? projectId) =>
       (super.noSuchMethod(
-            Invocation.method(#getProjectById, [projectId]),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
-              _FakeEither_0<_i5.Failure, _i6.Project>(
-                this,
-                Invocation.method(#getProjectById, [projectId]),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
+        Invocation.method(
+          #getProjectById,
+          [projectId],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
+            _FakeEither_0<_i5.Failure, _i6.Project>(
+          this,
+          Invocation.method(
+            #getProjectById,
+            [projectId],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, void>> joinProjectWithId(
@@ -64,30 +72,43 @@ class CustomMockManageCollaboratorsRepository extends _i1.Mock
     _i7.UserId? userId,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#joinProjectWithId, [projectId, userId]),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
-              _FakeEither_0<_i5.Failure, void>(
-                this,
-                Invocation.method(#joinProjectWithId, [projectId, userId]),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, void>>);
+        Invocation.method(
+          #joinProjectWithId,
+          [
+            projectId,
+            userId,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+            _FakeEither_0<_i5.Failure, void>(
+          this,
+          Invocation.method(
+            #joinProjectWithId,
+            [
+              projectId,
+              userId,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, void>> updateProject(
-    _i6.Project? project,
-  ) =>
+          _i6.Project? project) =>
       (super.noSuchMethod(
-            Invocation.method(#updateProject, [project]),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
-              _FakeEither_0<_i5.Failure, void>(
-                this,
-                Invocation.method(#updateProject, [project]),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, void>>);
+        Invocation.method(
+          #updateProject,
+          [project],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+            _FakeEither_0<_i5.Failure, void>(
+          this,
+          Invocation.method(
+            #updateProject,
+            [project],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
 }
 
 /// A class which mocks [SessionStorage].
@@ -99,20 +120,22 @@ class CustomMockSessionStorage extends _i1.Mock implements _i8.SessionStorage {
   }
 
   @override
-  _i4.Future<void> saveUserId(String? userId) =>
-      (super.noSuchMethod(
-            Invocation.method(#saveUserId, [userId]),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  _i4.Future<void> saveUserId(String? userId) => (super.noSuchMethod(
+        Invocation.method(
+          #saveUserId,
+          [userId],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i4.Future<void> clearUserId() =>
-      (super.noSuchMethod(
-            Invocation.method(#clearUserId, []),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+  _i4.Future<void> clearUserId() => (super.noSuchMethod(
+        Invocation.method(
+          #clearUserId,
+          [],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 }
