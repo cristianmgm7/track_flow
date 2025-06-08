@@ -68,6 +68,8 @@ import 'package:trackflow/features/manage_collaborators/domain/repositories/mana
     as _i1063;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
     as _i398;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_user_profiles.dart'
+    as _i40;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart'
     as _i391;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
@@ -203,8 +205,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i839.UserProfileRepository>(() =>
         _i416.UserProfileRepositoryImpl(
             gh<_i744.UserProfileRemoteDataSource>()));
+    gh.lazySingleton<_i1043.DeleteProjectUseCase>(
+        () => _i1043.DeleteProjectUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
     gh.lazySingleton<_i594.CreateProjectUseCase>(
         () => _i594.CreateProjectUseCase(
+              gh<_i1022.ProjectsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i532.UpdateProjectUseCase>(
+        () => _i532.UpdateProjectUseCase(
               gh<_i1022.ProjectsRepository>(),
               gh<_i383.SessionStorage>(),
             ));
@@ -242,8 +254,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i1022.ProjectsRepository>(),
               gh<_i383.SessionStorage>(),
             ));
-    gh.lazySingleton<_i1043.DeleteProjectUseCase>(
-        () => _i1043.DeleteProjectUseCase(gh<_i1022.ProjectsRepository>()));
     gh.lazySingleton<_i104.AuthRepository>(() => _i447.AuthRepositoryImpl(
           auth: gh<_i59.FirebaseAuth>(),
           googleSignIn: gh<_i116.GoogleSignIn>(),
@@ -252,10 +262,25 @@ extension GetItInjectableX on _i174.GetIt {
           firestore: gh<_i974.FirebaseFirestore>(),
           projectSyncService: gh<_i1071.ProjectSyncService>(),
         ));
-    gh.lazySingleton<_i532.UpdateProjectUseCase>(
-        () => _i532.UpdateProjectUseCase(
-              gh<_i1022.ProjectsRepository>(),
-              gh<_i104.AuthRepository>(),
+    gh.lazySingleton<_i40.GetProjectWithUserProfilesUseCase>(
+        () => _i40.GetProjectWithUserProfilesUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i703.ProjectDetailRepository>(),
+            ));
+    gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(
+        () => _i398.AddCollaboratorToProjectUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i81.UpdateCollaboratorRoleUseCase>(
+        () => _i81.UpdateCollaboratorRoleUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i383.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i151.RemoveCollaboratorUseCase>(
+        () => _i151.RemoveCollaboratorUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i383.SessionStorage>(),
             ));
     gh.lazySingleton<_i391.JoinProjectWithIdUseCase>(
         () => _i391.JoinProjectWithIdUseCase(
@@ -267,21 +292,6 @@ extension GetItInjectableX on _i174.GetIt {
           updateProject: gh<_i532.UpdateProjectUseCase>(),
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
-        ));
-    gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(() =>
-        _i398.AddCollaboratorToProjectUseCase(
-            gh<_i1063.ManageCollaboratorsRepository>()));
-    gh.lazySingleton<_i81.UpdateCollaboratorRoleUseCase>(() =>
-        _i81.UpdateCollaboratorRoleUseCase(
-            gh<_i1063.ManageCollaboratorsRepository>()));
-    gh.lazySingleton<_i151.RemoveCollaboratorUseCase>(() =>
-        _i151.RemoveCollaboratorUseCase(
-            gh<_i1063.ManageCollaboratorsRepository>()));
-    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
-        _i438.ManageCollaboratorsBloc(
-          updateCollaboratorRoleUseCase:
-              gh<_i81.UpdateCollaboratorRoleUseCase>(),
-          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
         ));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
         () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
@@ -300,6 +310,14 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i524.MagicLinkRepository>(),
               gh<_i104.AuthRepository>(),
             ));
+    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
+        _i438.ManageCollaboratorsBloc(
+          updateCollaboratorRoleUseCase:
+              gh<_i81.UpdateCollaboratorRoleUseCase>(),
+          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
+          getProjectWithUserProfilesUseCase:
+              gh<_i40.GetProjectWithUserProfilesUseCase>(),
+        ));
     gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
           generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),

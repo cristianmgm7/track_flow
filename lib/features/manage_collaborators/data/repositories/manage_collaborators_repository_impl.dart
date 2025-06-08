@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
@@ -22,18 +22,12 @@ class ManageCollaboratorsRepositoryImpl
   });
 
   @override
-  Future<Either<Failure, void>> addCollaboratorWithUserId(
-    ProjectId projectId,
-    UserId collaboratorId,
-  ) async {
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
     final hasConnected = await networkInfo.isConnected;
     if (!hasConnected) {
       return left(DatabaseFailure('No internet connection'));
     }
-    return await remoteDataSourceManageCollaborators.addCollaboratorWithId(
-      projectId,
-      collaboratorId,
-    );
+    return await remoteDataSourceManageCollaborators.getProjectById(projectId);
   }
 
   @override
@@ -53,30 +47,11 @@ class ManageCollaboratorsRepositoryImpl
   }
 
   @override
-  Future<Either<Failure, void>> removeCollaborator(
-    ProjectId projectId,
-    UserId collaboratorId,
-  ) async {
+  Future<Either<Failure, Project>> updateProject(Project project) async {
     final hasConnected = await networkInfo.isConnected;
     if (!hasConnected) {
       return left(DatabaseFailure('No internet connection'));
     }
-    return await remoteDataSourceManageCollaborators.removeCollaborator(
-      projectId,
-      collaboratorId,
-    );
-  }
-
-  @override
-  Future<Either<Failure, void>> updateCollaboratorRole(
-    ProjectId projectId,
-    UserId collaboratorId,
-    UserRole role,
-  ) async {
-    return await remoteDataSourceManageCollaborators.updateCollaboratorRole(
-      projectId,
-      collaboratorId,
-      role,
-    );
+    return await remoteDataSourceManageCollaborators.updateProject(project);
   }
 }

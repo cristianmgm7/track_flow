@@ -1,27 +1,30 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 abstract class ManageCollaboratorsEvent extends Equatable {}
+
+class GetProjectWithUserProfiles extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
+  GetProjectWithUserProfiles({required this.projectId});
+
+  @override
+  List<Object?> get props => [projectId];
+}
 
 class AddCollaborator extends ManageCollaboratorsEvent {
   final ProjectId projectId;
   final UserId collaboratorId;
-  final UserRole role;
-  AddCollaborator({
-    required this.projectId,
-    required this.collaboratorId,
-    required this.role,
-  });
+  AddCollaborator({required this.projectId, required this.collaboratorId});
 
   @override
-  List<Object?> get props => [projectId, collaboratorId, role];
+  List<Object?> get props => [projectId, collaboratorId];
 }
 
 class UpdateCollaboratorRole extends ManageCollaboratorsEvent {
   final ProjectId projectId;
   final UserId userId;
-  final UserRole newRole;
+  final ProjectRole newRole;
   UpdateCollaboratorRole({
     required this.projectId,
     required this.userId,

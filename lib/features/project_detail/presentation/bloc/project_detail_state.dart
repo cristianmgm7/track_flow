@@ -1,7 +1,4 @@
-import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_creative_role.dart';
-import 'package:trackflow/core/entities/user_role.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/models/manage_colaborators_params.dart';
 
 abstract class ProjectDetailsState {}
 
@@ -10,15 +7,9 @@ class ProjectDetailsInitial extends ProjectDetailsState {}
 class ProjectDetailsLoading extends ProjectDetailsState {}
 
 class ProjectDetailsLoaded extends ProjectDetailsState {
-  final List<UserProfile> collaborators;
-  final Map<UserId, UserRole> roles;
-  final Map<UserId, UserCreativeRole> members;
+  final ManageCollaboratorsParams params;
 
-  ProjectDetailsLoaded({
-    required this.collaborators,
-    required this.roles,
-    required this.members,
-  });
+  ProjectDetailsLoaded({required this.params});
 }
 
 class ProjectDetailsError extends ProjectDetailsState {

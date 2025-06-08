@@ -1,5 +1,5 @@
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 enum CreativeRole {
   producer,
@@ -19,7 +19,7 @@ class UserProfile {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final CreativeRole? creativeRole;
-  final UserRole? role;
+  final ProjectRole? role;
 
   const UserProfile({
     required this.id,
@@ -40,7 +40,7 @@ class UserProfile {
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
-    UserRole? role,
+    ProjectRole? role,
   }) {
     return UserProfile(
       id: id ?? this.id,

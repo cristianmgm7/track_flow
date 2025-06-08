@@ -5,6 +5,9 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 
 @immutable
 class RemoveCollaboratorParams extends Equatable {
@@ -23,13 +26,35 @@ class RemoveCollaboratorParams extends Equatable {
 @lazySingleton
 class RemoveCollaboratorUseCase {
   final ManageCollaboratorsRepository _repository;
+  final SessionStorage _sessionService;
 
-  RemoveCollaboratorUseCase(this._repository);
+  RemoveCollaboratorUseCase(this._repository, this._sessionService);
 
   Future<Either<Failure, void>> call(RemoveCollaboratorParams params) async {
-    return await _repository.removeCollaborator(
-      params.projectId,
-      params.collaboratorId,
-    );
+    final userId = _sessionService.getUserId();
+    if (userId == null) return left(ServerFailure('No user found'));
+
+    final projectResult = await _repository.getProjectById(params.projectId);
+    return projectResult.fold((failure) => left(failure), (project) {
+      final currentUserCollaborator = project.collaborators.firstWhere(
+        (collaborator) => collaborator.userId.value == userId,
+        orElse: () => throw UserNotCollaboratorException(),
+      );
+
+      if (!currentUserCollaborator.hasPermission(
+        ProjectPermission.removeCollaborator,
+      )) {
+        return left(ProjectPermissionException());
+      }
+
+      try {
+        project.removeCollaborator(params.collaboratorId);
+        return _repository.updateProject(project);
+      } on CollaboratorNotFoundException catch (e) {
+        return left(ServerFailure(e.toString()));
+      } catch (e) {
+        return left(ServerFailure(e.toString()));
+      }
+    });
   }
 }

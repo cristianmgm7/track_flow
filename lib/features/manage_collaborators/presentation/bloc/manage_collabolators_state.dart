@@ -1,5 +1,7 @@
+import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ManageCollaboratorsState extends Equatable {
   @override
@@ -7,6 +9,19 @@ abstract class ManageCollaboratorsState extends Equatable {
 }
 
 class ManageCollaboratorsInitial extends ManageCollaboratorsState {}
+
+class ManageCollaboratorsLoading extends ManageCollaboratorsState {
+  @override
+  List<Object?> get props => [];
+}
+
+class ManageCollaboratorsLoaded extends ManageCollaboratorsState {
+  final Tuple2<Project, List<UserProfile>> projectWithUserProfiles;
+  ManageCollaboratorsLoaded(this.projectWithUserProfiles);
+
+  @override
+  List<Object?> get props => [projectWithUserProfiles];
+}
 
 class ManageCollaboratorsError extends ManageCollaboratorsState {
   final String message;

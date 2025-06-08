@@ -1,31 +1,35 @@
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/entities/user_creative_role.dart';
-import 'package:trackflow/core/entities/user_role.dart';
-import 'package:trackflow/features/projects/domain/entities/project_description.dart';
-import 'package:trackflow/features/projects/domain/entities/project_name.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
+import 'package:trackflow/core/domain/aggregate_root.dart';
+import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 
-class Project {
+class Project extends AggregateRoot<ProjectId> {
+  @override
   final ProjectId id;
   final UserId ownerId;
   final ProjectName name;
   final ProjectDescription description;
   final DateTime createdAt;
   final DateTime? updatedAt;
-  final List<UserId> collaborators;
-  final Map<UserId, UserRole> roles;
-  final Map<UserId, UserCreativeRole> members;
+  final List<ProjectCollaborator> collaborators;
+  final bool isDeleted;
 
-  const Project({
-    required this.id,
+  Project({
+    required ProjectId id,
     required this.ownerId,
     required this.name,
     required this.description,
     required this.createdAt,
     this.updatedAt,
-    this.collaborators = const [],
-    this.roles = const {},
-    this.members = const {},
-  });
+    List<ProjectCollaborator>? collaborators,
+    this.isDeleted = false,
+  }) : id = id,
+       collaborators = collaborators ?? [],
+       super(id);
 
   Project copyWith({
     ProjectId? id,
@@ -34,9 +38,8 @@ class Project {
     ProjectDescription? description,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<UserId>? collaborators,
-    Map<UserId, UserRole>? roles,
-    Map<UserId, UserCreativeRole>? members,
+    List<ProjectCollaborator>? collaborators,
+    bool? isDeleted,
   }) {
     return Project(
       id: id ?? this.id,
@@ -46,8 +49,79 @@ class Project {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
-      roles: roles ?? this.roles,
-      members: members ?? this.members,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
+  }
+
+  Project updateProject({
+    required UserId requester,
+    ProjectName? newName,
+    ProjectDescription? newDescription,
+  }) {
+    final requesterCollaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == requester,
+      orElse: () => throw UserNotCollaboratorException(),
+    );
+
+    if (!requesterCollaborator.hasPermission(ProjectPermission.editProject)) {
+      throw ProjectPermissionException();
+    }
+
+    return copyWith(
+      name: newName ?? name,
+      description: newDescription ?? description,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  Project deleteProject({required UserId requester}) {
+    final requesterCollaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == requester,
+      orElse: () => throw ProjectNotFoundException(),
+    );
+
+    if (!requesterCollaborator.hasPermission(ProjectPermission.deleteProject)) {
+      throw ProjectPermissionException();
+    }
+
+    return copyWith(updatedAt: DateTime.now(), isDeleted: true);
+  }
+
+  void addCollaborator(ProjectCollaborator collaborator) {
+    if (!collaborators.contains(collaborator)) {
+      collaborators.add(collaborator);
+    } else {
+      throw Exception('Collaborator already exists');
+    }
+  }
+
+  void removeCollaborator(UserId userId) {
+    if (collaborators.any((collaborator) => collaborator.userId == userId)) {
+      collaborators.removeWhere(
+        (collaborator) => collaborator.userId == userId,
+      );
+    } else {
+      throw CollaboratorNotFoundException();
+    }
+  }
+
+  void updateCollaboratorRole(UserId userId, ProjectRole role) {
+    final collaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == userId,
+      orElse: () => throw CollaboratorNotFoundException(),
+    );
+
+    if (collaborators.contains(collaborator)) {
+      final updatedCollaborator = ProjectCollaborator.rebuild(
+        id: collaborator.id,
+        userId: collaborator.userId,
+        role: role,
+        specificPermissions: collaborator.specificPermissions,
+      );
+      collaborators.remove(collaborator);
+      collaborators.add(updatedCollaborator);
+    } else {
+      throw CollaboratorNotFoundException();
+    }
   }
 }

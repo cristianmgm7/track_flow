@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
@@ -10,7 +11,7 @@ import 'package:trackflow/features/project_detail/presentation/components/colabo
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
-  final Project project;
+  final Project project; // recive full project with collaborators
   const ProjectDetailsScreen({super.key, required this.project});
 
   @override
@@ -21,7 +22,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectDetailBloc>().add(LoadUserProfiles(widget.project));
+    context.read<ProjectDetailBloc>().add(
+      LoadUserProfiles(widget.project),
+    ); // to load user profiles of collaborators
   }
 
   void _shareProject(BuildContext context, Project project) {
@@ -35,7 +38,16 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     ProjectDetailsState state,
     Project project,
   ) {
-    context.go(AppRoutes.manageCollaborators, extra: project);
+    if (state is ProjectDetailsLoaded) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) =>
+                  ManageCollaboratorsScreen(projectId: widget.project.id),
+        ),
+      );
+    }
   }
 
   void _leaveProject(BuildContext context) {
@@ -58,7 +70,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   );
                 } else if (state is ProjectDetailsLoaded) {
                   return Text(
-                    widget.project.name.value.fold((l) => '', (r) => r),
+                    state.params.project.name.value.fold((l) => '', (r) => r),
                     style: const TextStyle(color: Colors.white),
                   );
                 } else {
@@ -120,7 +132,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 ),
                 CollaboratorsList(
                   state: state,
-                  project: widget.project,
+                  project:
+                      state is ProjectDetailsLoaded
+                          ? state.params.project
+                          : widget.project,
                   manageCollaborator: _manageCollaborator,
                 ),
               ],

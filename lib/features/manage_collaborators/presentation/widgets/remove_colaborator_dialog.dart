@@ -4,39 +4,39 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
 
-class AddCollaboratorDialog extends StatelessWidget {
+class RemoveCollaboratorDialog extends StatelessWidget {
   final ProjectId projectId;
+  final String collaboratorId;
 
-  const AddCollaboratorDialog({super.key, required this.projectId});
+  const RemoveCollaboratorDialog({
+    super.key,
+    required this.projectId,
+    required this.collaboratorId,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController userIdController = TextEditingController();
-
     return AlertDialog(
-      title: const Text('Add Collaborator'),
-      content: TextField(
-        controller: userIdController,
-        decoration: const InputDecoration(hintText: "Enter User ID"),
+      title: const Text('Confirm Removal'),
+      content: Text(
+        'Are you sure you want to remove collaborator $collaboratorId?',
       ),
       actions: <Widget>[
         TextButton(
+          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
         ),
         TextButton(
-          child: const Text('Add'),
           onPressed: () {
             context.read<ManageCollaboratorsBloc>().add(
-              AddCollaborator(
+              RemoveCollaborator(
                 projectId: projectId,
-                collaboratorId: UserId.fromUniqueString(userIdController.text),
+                userId: UserId.fromUniqueString(collaboratorId),
               ),
             );
             Navigator.of(context).pop();
           },
+          child: const Text('Yes'),
         ),
       ],
     );

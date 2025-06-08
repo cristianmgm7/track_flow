@@ -32,9 +32,7 @@ class DeleteProjectDialog extends StatelessWidget {
           onPressed: () {
             onDeleteProject();
             Navigator.of(context).pop();
-            context.read<ProjectsBloc>().add(
-              DeleteProjectRequested(project.id),
-            );
+            context.read<ProjectsBloc>().add(DeleteProjectRequested(project));
             context.go(AppRoutes.projects);
           },
           style: ElevatedButton.styleFrom(

@@ -13,8 +13,19 @@ class WatchAllProjectsUseCase {
 
   WatchAllProjectsUseCase(this._repository, this._sessionManager);
 
-  Stream<Either<Failure, List<Project>>> call() async* {
+  Stream<Either<Failure, List<Project>>> call() {
     final userId = _sessionManager.getUserId();
-    yield* _repository.watchRemoteProjects(UserId.fromUniqueString(userId!));
+    if (userId == null) {
+      return Stream.value(left(ServerFailure('No user found')));
+    }
+    final stream = _repository.watchRemoteProjects(
+      UserId.fromUniqueString(userId),
+    );
+    return stream.map(
+      (either) => either.fold(
+        (failure) => left(failure),
+        (projects) => right(projects),
+      ),
+    );
   }
 }

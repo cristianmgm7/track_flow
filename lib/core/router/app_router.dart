@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
@@ -106,8 +107,7 @@ class AppRouter {
               path: AppRoutes.manageCollaborators,
               builder:
                   (context, state) => ManageCollaboratorsScreen(
-                    project: state.extra as Project,
-                    collaborators: state.extra as List<UserProfile>,
+                    projectId: state.extra as ProjectId,
                   ),
             ),
           ],

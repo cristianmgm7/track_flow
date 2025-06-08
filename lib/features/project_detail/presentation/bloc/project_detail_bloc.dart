@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/models/manage_colaborators_params.dart';
 import 'package:trackflow/features/project_detail/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
@@ -34,8 +35,14 @@ class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
 
     failureOrProject.fold(
       (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (collaborators) =>
-          emit(ProjectDetailsLoaded(collaborators: collaborators)),
+      (collaborators) => emit(
+        ProjectDetailsLoaded(
+          params: ManageCollaboratorsParams(
+            project: event.project,
+            collaborators: collaborators,
+          ),
+        ),
+      ),
     );
   }
 

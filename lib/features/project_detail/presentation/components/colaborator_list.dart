@@ -37,10 +37,15 @@ class _CollaboratorsListState extends State<CollaboratorsList> {
             physics: NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16.0),
             itemCount:
-                (widget.state as ProjectDetailsLoaded).collaborators.length,
+                (widget.state as ProjectDetailsLoaded)
+                    .params
+                    .collaborators
+                    .length,
             itemBuilder: (context, index) {
               final userProfile =
-                  (widget.state as ProjectDetailsLoaded).collaborators[index];
+                  (widget.state as ProjectDetailsLoaded)
+                      .params
+                      .collaborators[index];
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ListTile(
