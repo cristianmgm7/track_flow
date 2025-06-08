@@ -35,7 +35,13 @@ class RemoveCollaboratorUseCase {
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repository.getProjectById(params.projectId);
-    return projectResult.fold((failure) => left(failure), (project) {
+    return projectResult.fold((failure) => left(failure), (project) async {
+      // Debug print: list all collaborator userIds and the session userId
+      debugPrint('Colaboradores en el proyecto:');
+      for (final c in project.collaborators) {
+        debugPrint('userId: \\${c.userId.value}');
+      }
+      debugPrint('Buscando userId de sesión: \\$userId');
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
         orElse: () => throw UserNotCollaboratorException(),
@@ -48,8 +54,10 @@ class RemoveCollaboratorUseCase {
       }
 
       try {
-        project.removeCollaborator(params.collaboratorId);
-        return _repository.updateProject(project);
+        final updatedProject = project.removeCollaborator(
+          params.collaboratorId,
+        );
+        return await _repository.updateProject(updatedProject);
       } on CollaboratorNotFoundException catch (e) {
         return left(ServerFailure(e.toString()));
       } catch (e) {
