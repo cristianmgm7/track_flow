@@ -293,6 +293,15 @@ extension GetItInjectableX on _i174.GetIt {
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
         ));
+    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
+        _i438.ManageCollaboratorsBloc(
+          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
+          updateCollaboratorRoleUseCase:
+              gh<_i81.UpdateCollaboratorRoleUseCase>(),
+          getProjectWithUserProfilesUseCase:
+              gh<_i40.GetProjectWithUserProfilesUseCase>(),
+          removeCollaboratorUseCase: gh<_i151.RemoveCollaboratorUseCase>(),
+        ));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
         () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
     gh.lazySingleton<_i836.GetAuthStateUseCase>(
@@ -310,14 +319,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i524.MagicLinkRepository>(),
               gh<_i104.AuthRepository>(),
             ));
-    gh.factory<_i438.ManageCollaboratorsBloc>(() =>
-        _i438.ManageCollaboratorsBloc(
-          updateCollaboratorRoleUseCase:
-              gh<_i81.UpdateCollaboratorRoleUseCase>(),
-          addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
-          getProjectWithUserProfilesUseCase:
-              gh<_i40.GetProjectWithUserProfilesUseCase>(),
-        ));
     gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
           generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),

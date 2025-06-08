@@ -35,13 +35,18 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     );
   }
 
-  void _removeCollaborator(BuildContext context, UserId userId) {
+  void _removeCollaborator(
+    BuildContext context,
+    UserId userId,
+    String collaboratorName,
+  ) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return RemoveCollaboratorDialog(
           projectId: widget.projectId,
           collaboratorId: userId.value,
+          collaboratorName: collaboratorName,
         );
       },
     );
@@ -69,8 +74,11 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                         trailing: IconButton(
                           icon: const Icon(Icons.remove_circle),
                           onPressed:
-                              () =>
-                                  _removeCollaborator(context, collaborator.id),
+                              () => _removeCollaborator(
+                                context,
+                                collaborator.id,
+                                collaborator.name,
+                              ),
                         ),
                       );
                     },

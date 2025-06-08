@@ -95,14 +95,20 @@ class Project extends AggregateRoot<ProjectId> {
     }
   }
 
-  void removeCollaborator(UserId userId) {
-    if (collaborators.any((collaborator) => collaborator.userId == userId)) {
-      collaborators.removeWhere(
-        (collaborator) => collaborator.userId == userId,
-      );
-    } else {
+  Project removeCollaborator(UserId userId) {
+    if (userId == ownerId) {
+      throw Exception('No se puede eliminar al owner del proyecto');
+    }
+    if (!collaborators.any((collaborator) => collaborator.userId == userId)) {
       throw CollaboratorNotFoundException();
     }
+    final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
+      ..removeWhere((collaborator) => collaborator.userId == userId);
+
+    return copyWith(
+      collaborators: updatedCollaborators,
+      updatedAt: DateTime.now(),
+    );
   }
 
   void updateCollaboratorRole(UserId userId, ProjectRole role) {
