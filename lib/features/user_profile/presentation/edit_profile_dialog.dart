@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_events.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 
 class EditProfileDialog extends StatefulWidget {
   final UserProfile profile;

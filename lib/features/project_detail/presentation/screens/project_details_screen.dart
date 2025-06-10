@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
-
-import 'package:trackflow/features/audio_track/presentation/widgets/tracks_tab.dart';
+import 'package:trackflow/features/audio_track/presentation/screens/tracks_tab.dart';
 import 'package:trackflow/features/audio_comment/presentation/widgets/comments_tab.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';

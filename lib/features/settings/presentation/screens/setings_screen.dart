@@ -8,7 +8,7 @@ import 'package:trackflow/features/settings/presentation/widgets/preferences.dar
 import 'package:trackflow/features/user_profile/presentation/profile_information.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_events.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
 class SettingsScreen extends StatefulWidget {
