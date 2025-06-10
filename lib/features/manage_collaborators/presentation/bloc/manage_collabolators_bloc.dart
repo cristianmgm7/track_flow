@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_user_profiles.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'manage_collabolators_event.dart';
 import 'manage_collabolators_state.dart';
@@ -13,16 +14,19 @@ class ManageCollaboratorsBloc
   final UpdateCollaboratorRoleUseCase updateCollaboratorRoleUseCase;
   final AddCollaboratorToProjectUseCase addCollaboratorUseCase;
   final GetProjectWithUserProfilesUseCase getProjectWithUserProfilesUseCase;
+  final RemoveCollaboratorUseCase removeCollaboratorUseCase;
 
   ManageCollaboratorsBloc({
-    required this.updateCollaboratorRoleUseCase,
     required this.addCollaboratorUseCase,
+    required this.updateCollaboratorRoleUseCase,
     required this.getProjectWithUserProfilesUseCase,
+    required this.removeCollaboratorUseCase,
   }) : super(ManageCollaboratorsInitial()) {
     on<AddCollaborator>(_onAddCollaborator);
     on<UpdateCollaboratorRole>(_onUpdateCollaboratorRole);
     on<JoinProjectWithIdRequested>(_onJoinProjectWithIdRequested);
     on<GetProjectWithUserProfiles>(_onGetProjectWithUserProfiles);
+    on<RemoveCollaborator>(_onRemoveCollaborator);
   }
 
   Future<void> _onGetProjectWithUserProfiles(
@@ -32,10 +36,10 @@ class ManageCollaboratorsBloc
     final result = await getProjectWithUserProfilesUseCase.call(
       GetProjectWithUserProfilesParams(projectId: event.projectId),
     );
-    result.fold(
-      (failure) =>
+    await result.fold(
+      (failure) async =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (projectWithUserProfiles) =>
+      (projectWithUserProfiles) async =>
           emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
     );
   }
@@ -59,10 +63,37 @@ class ManageCollaboratorsBloc
         final updatedResult = await getProjectWithUserProfilesUseCase.call(
           GetProjectWithUserProfilesParams(projectId: event.projectId),
         );
-        updatedResult.fold(
-          (failure) =>
+        await updatedResult.fold(
+          (failure) async =>
               emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-          (projectWithUserProfiles) =>
+          (projectWithUserProfiles) async =>
+              emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
+        );
+      },
+    );
+  }
+
+  Future<void> _onRemoveCollaborator(
+    RemoveCollaborator event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) async {
+    final result = await removeCollaboratorUseCase.call(
+      RemoveCollaboratorParams(
+        projectId: event.projectId,
+        collaboratorId: event.userId,
+      ),
+    );
+    await result.fold(
+      (failure) async =>
+          emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+      (_) async {
+        final updatedResult = await getProjectWithUserProfilesUseCase.call(
+          GetProjectWithUserProfilesParams(projectId: event.projectId),
+        );
+        await updatedResult.fold(
+          (failure) async =>
+              emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+          (projectWithUserProfiles) async =>
               emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
         );
       },
@@ -80,10 +111,10 @@ class ManageCollaboratorsBloc
         role: event.newRole,
       ),
     );
-    result.fold(
-      (failure) =>
+    await result.fold(
+      (failure) async =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (_) => emit(
+      (_) async => emit(
         UpdateCollaboratorRoleSuccess(
           event.projectId.value,
           event.userId.value,

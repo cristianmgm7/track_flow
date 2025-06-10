@@ -2,6 +2,11 @@ import 'package:trackflow/core/error/failures.dart';
 
 class ProjectException extends Failure {
   const ProjectException(super.message);
+
+  @override
+  String toString() {
+    return 'ProjectException: $message';
+  }
 }
 
 class ProjectNotFoundException extends ProjectException {
@@ -11,6 +16,11 @@ class ProjectNotFoundException extends ProjectException {
 class ProjectPermissionException extends ProjectException {
   const ProjectPermissionException()
     : super('Insufficient permissions for project operation');
+
+  @override
+  String toString() {
+    return 'ProjectPermissionException: $message';
+  }
 }
 
 class ProjectValidationException extends ProjectException {

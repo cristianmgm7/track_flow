@@ -87,25 +87,36 @@ class Project extends AggregateRoot<ProjectId> {
     return copyWith(updatedAt: DateTime.now(), isDeleted: true);
   }
 
-  void addCollaborator(ProjectCollaborator collaborator) {
+  Project addCollaborator(ProjectCollaborator collaborator) {
     if (!collaborators.contains(collaborator)) {
-      collaborators.add(collaborator);
+      final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
+        ..add(collaborator);
+      return copyWith(
+        collaborators: updatedCollaborators,
+        updatedAt: DateTime.now(),
+      );
     } else {
       throw Exception('Collaborator already exists');
     }
   }
 
-  void removeCollaborator(UserId userId) {
-    if (collaborators.any((collaborator) => collaborator.userId == userId)) {
-      collaborators.removeWhere(
-        (collaborator) => collaborator.userId == userId,
-      );
-    } else {
+  Project removeCollaborator(UserId userId) {
+    if (userId == ownerId) {
+      throw Exception('No se puede eliminar al owner del proyecto');
+    }
+    if (!collaborators.any((collaborator) => collaborator.userId == userId)) {
       throw CollaboratorNotFoundException();
     }
+    final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
+      ..removeWhere((collaborator) => collaborator.userId == userId);
+
+    return copyWith(
+      collaborators: updatedCollaborators,
+      updatedAt: DateTime.now(),
+    );
   }
 
-  void updateCollaboratorRole(UserId userId, ProjectRole role) {
+  Project updateCollaboratorRole(UserId userId, ProjectRole role) {
     final collaborator = collaborators.firstWhere(
       (collaborator) => collaborator.userId == userId,
       orElse: () => throw CollaboratorNotFoundException(),
@@ -118,8 +129,14 @@ class Project extends AggregateRoot<ProjectId> {
         role: role,
         specificPermissions: collaborator.specificPermissions,
       );
-      collaborators.remove(collaborator);
-      collaborators.add(updatedCollaborator);
+      final updatedCollaborators =
+          List<ProjectCollaborator>.from(collaborators)
+            ..removeWhere((collaborator) => collaborator.userId == userId)
+            ..add(updatedCollaborator);
+      return copyWith(
+        collaborators: updatedCollaborators,
+        updatedAt: DateTime.now(),
+      );
     } else {
       throw CollaboratorNotFoundException();
     }

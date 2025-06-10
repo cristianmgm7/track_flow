@@ -7,11 +7,13 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 class RemoveCollaboratorDialog extends StatelessWidget {
   final ProjectId projectId;
   final String collaboratorId;
+  final String collaboratorName;
 
   const RemoveCollaboratorDialog({
     super.key,
     required this.projectId,
     required this.collaboratorId,
+    required this.collaboratorName,
   });
 
   @override
@@ -19,7 +21,7 @@ class RemoveCollaboratorDialog extends StatelessWidget {
     return AlertDialog(
       title: const Text('Confirm Removal'),
       content: Text(
-        'Are you sure you want to remove collaborator $collaboratorId?',
+        'Are you sure you want to remove collaborator $collaboratorName?',
       ),
       actions: <Widget>[
         TextButton(

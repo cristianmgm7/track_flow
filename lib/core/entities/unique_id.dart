@@ -14,6 +14,16 @@ class UniqueId extends ValueObject<String> {
   static UniqueId fromString(String projectId) {
     return UniqueId.fromUniqueString(projectId);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is UniqueId &&
+          runtimeType == other.runtimeType &&
+          value == other.value;
+
+  @override
+  int get hashCode => value.hashCode;
 }
 
 class UserId extends UniqueId {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
@@ -35,10 +36,12 @@ class RemoveCollaboratorUseCase {
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repository.getProjectById(params.projectId);
-    return projectResult.fold((failure) => left(failure), (project) {
+    return projectResult.fold((failure) => left(failure), (project) async {
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
-        orElse: () => throw UserNotCollaboratorException(),
+        orElse:
+            () =>
+                throw ManageCollaboratorException('User is not a collaborator'),
       );
 
       if (!currentUserCollaborator.hasPermission(
@@ -48,10 +51,12 @@ class RemoveCollaboratorUseCase {
       }
 
       try {
-        project.removeCollaborator(params.collaboratorId);
-        return _repository.updateProject(project);
+        final updatedProject = project.removeCollaborator(
+          params.collaboratorId,
+        );
+        return await _repository.updateProject(updatedProject);
       } on CollaboratorNotFoundException catch (e) {
-        return left(ServerFailure(e.toString()));
+        return left(ManageCollaboratorException(e.toString()));
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }
