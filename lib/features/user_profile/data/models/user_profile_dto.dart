@@ -37,7 +37,7 @@ class UserProfileDTO {
 
   UserProfile toDomain() {
     return UserProfile(
-      id: UserId(),
+      id: UserId.fromUniqueString(id),
       name: name,
       email: email,
       avatarUrl: avatarUrl,

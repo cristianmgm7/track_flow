@@ -36,10 +36,10 @@ class ManageCollaboratorsBloc
     final result = await getProjectWithUserProfilesUseCase.call(
       GetProjectWithUserProfilesParams(projectId: event.projectId),
     );
-    result.fold(
-      (failure) =>
+    await result.fold(
+      (failure) async =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (projectWithUserProfiles) =>
+      (projectWithUserProfiles) async =>
           emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
     );
   }
@@ -63,10 +63,10 @@ class ManageCollaboratorsBloc
         final updatedResult = await getProjectWithUserProfilesUseCase.call(
           GetProjectWithUserProfilesParams(projectId: event.projectId),
         );
-        updatedResult.fold(
-          (failure) =>
+        await updatedResult.fold(
+          (failure) async =>
               emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-          (projectWithUserProfiles) =>
+          (projectWithUserProfiles) async =>
               emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
         );
       },
@@ -83,17 +83,17 @@ class ManageCollaboratorsBloc
         collaboratorId: event.userId,
       ),
     );
-    result.fold(
-      (failure) =>
+    await result.fold(
+      (failure) async =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
       (_) async {
         final updatedResult = await getProjectWithUserProfilesUseCase.call(
           GetProjectWithUserProfilesParams(projectId: event.projectId),
         );
-        updatedResult.fold(
-          (failure) =>
+        await updatedResult.fold(
+          (failure) async =>
               emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-          (projectWithUserProfiles) =>
+          (projectWithUserProfiles) async =>
               emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
         );
       },
@@ -111,10 +111,10 @@ class ManageCollaboratorsBloc
         role: event.newRole,
       ),
     );
-    result.fold(
-      (failure) =>
+    await result.fold(
+      (failure) async =>
           emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
-      (_) => emit(
+      (_) async => emit(
         UpdateCollaboratorRoleSuccess(
           event.projectId.value,
           event.userId.value,
