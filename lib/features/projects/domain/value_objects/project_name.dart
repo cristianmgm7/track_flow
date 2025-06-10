@@ -17,4 +17,9 @@ class ProjectName {
   }
 
   const ProjectName._(this.value);
+
+  @override
+  String toString() {
+    return value.fold((l) => l.toString(), (r) => r);
+  }
 }
