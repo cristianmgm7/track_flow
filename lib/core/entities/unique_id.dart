@@ -47,3 +47,25 @@ class ProjectId extends UniqueId {
 
   const ProjectId._(super.value) : super._();
 }
+
+class AudioTrackId extends UniqueId {
+  factory AudioTrackId() => AudioTrackId._(const Uuid().v4());
+
+  factory AudioTrackId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return AudioTrackId._(input);
+  }
+
+  const AudioTrackId._(super.value) : super._();
+}
+
+class AudioCommentId extends UniqueId {
+  factory AudioCommentId() => AudioCommentId._(const Uuid().v4());
+
+  factory AudioCommentId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return AudioCommentId._(input);
+  }
+
+  const AudioCommentId._(super.value) : super._();
+}
