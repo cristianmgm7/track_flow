@@ -3,6 +3,8 @@ import 'package:trackflow/core/constants/theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
@@ -39,6 +41,10 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ManageCollaboratorsBloc>(
           create: (context) => sl<ManageCollaboratorsBloc>(),
+        ),
+        BlocProvider<AudioTrackBloc>(create: (context) => sl<AudioTrackBloc>()),
+        BlocProvider<AudioCommentBloc>(
+          create: (context) => sl<AudioCommentBloc>(),
         ),
       ],
       child: _App(),

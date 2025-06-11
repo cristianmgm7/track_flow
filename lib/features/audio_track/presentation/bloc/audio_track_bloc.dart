@@ -60,14 +60,15 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   ) async {
     emit(AudioTrackLoading());
     final result = await uploadAudioTrackUseCase(
-      file: event.file,
-      name: event.name,
-      duration: event.duration,
-      projectIds: event.projectIds,
-      uploadedBy: event.uploadedBy,
+      UploadAudioTrackParams(
+        file: event.file,
+        name: event.name,
+        duration: event.duration,
+        projectIds: event.projectIds,
+      ),
     );
     result.fold(
-      (failure) => emit(AudioTrackError(message: 'Failed to upload track')),
+      (failure) => emit(AudioTrackError(message: failure.message)),
       (_) => emit(AudioTrackUploadSuccess()),
     );
   }

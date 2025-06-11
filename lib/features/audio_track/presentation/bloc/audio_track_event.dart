@@ -24,18 +24,16 @@ class UploadAudioTrackEvent extends AudioTrackEvent {
   final String name;
   final Duration duration;
   final List<String> projectIds;
-  final String uploadedBy;
 
   const UploadAudioTrackEvent({
     required this.file,
     required this.name,
     required this.duration,
     required this.projectIds,
-    required this.uploadedBy,
   });
 
   @override
-  List<Object> get props => [file, name, duration, projectIds, uploadedBy];
+  List<Object> get props => [file, name, duration, projectIds];
 }
 
 class DeleteAudioTrackEvent extends AudioTrackEvent {
