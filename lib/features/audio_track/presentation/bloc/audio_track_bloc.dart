@@ -42,18 +42,6 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     }
   }
 
-  Future<void> _onDeleteAudioTrack(
-    DeleteAudioTrackEvent event,
-    Emitter<AudioTrackState> emit,
-  ) async {
-    emit(AudioTrackLoading());
-    final result = await deleteAudioTrack(event.trackId.value);
-    result.fold(
-      (failure) => emit(AudioTrackError(message: 'Failed to delete track')),
-      (_) => emit(AudioTrackDeleteSuccess()),
-    );
-  }
-
   Future<void> _onUploadAudioTrack(
     UploadAudioTrackEvent event,
     Emitter<AudioTrackState> emit,
@@ -70,6 +58,23 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     result.fold(
       (failure) => emit(AudioTrackError(message: failure.message)),
       (_) => emit(AudioTrackUploadSuccess()),
+    );
+  }
+
+  Future<void> _onDeleteAudioTrack(
+    DeleteAudioTrackEvent event,
+    Emitter<AudioTrackState> emit,
+  ) async {
+    emit(AudioTrackLoading());
+    final result = await deleteAudioTrack(
+      DeleteAudioTrackParams(
+        trackId: event.trackId,
+        projectId: event.projectId,
+      ),
+    );
+    result.fold(
+      (failure) => emit(AudioTrackError(message: 'Failed to delete track')),
+      (_) => emit(AudioTrackDeleteSuccess()),
     );
   }
 }

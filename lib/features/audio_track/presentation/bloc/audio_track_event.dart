@@ -11,7 +11,7 @@ abstract class AudioTrackEvent extends Equatable {
 }
 
 class WatchAudioTracksByProjectEvent extends AudioTrackEvent {
-  final String projectId;
+  final ProjectId projectId;
 
   const WatchAudioTracksByProjectEvent({required this.projectId});
 
@@ -38,9 +38,10 @@ class UploadAudioTrackEvent extends AudioTrackEvent {
 
 class DeleteAudioTrackEvent extends AudioTrackEvent {
   final AudioTrackId trackId;
+  final ProjectId projectId;
 
-  const DeleteAudioTrackEvent({required this.trackId});
+  const DeleteAudioTrackEvent({required this.trackId, required this.projectId});
 
   @override
-  List<Object> get props => [trackId];
+  List<Object> get props => [trackId, projectId];
 }

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -13,7 +14,9 @@ abstract class AudioTrackRemoteDataSource {
     required AudioTrack track,
   });
 
-  Stream<List<AudioTrack>> watchTracksByProject(String projectId);
+  Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
+    ProjectId projectId,
+  );
 
   Future<void> deleteTrack(String trackId);
 }
@@ -24,6 +27,25 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   final FirebaseStorage _storage;
 
   AudioTrackRemoteDataSourceImpl(this._firestore, this._storage);
+
+  @override
+  Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
+    ProjectId projectId,
+  ) {
+    return _firestore
+        .collection(AudioTrackDTO.collection)
+        .where('projectId', isEqualTo: projectId.value)
+        .snapshots()
+        .map((snapshot) {
+          return Right(
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return AudioTrackDTO.fromJson(data).toDomain();
+            }).toList(),
+          );
+        });
+  }
 
   @override
   Future<Either<Failure, Unit>> uploadAudioTrack({
@@ -46,27 +68,12 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   }
 
   @override
-  Stream<List<AudioTrack>> watchTracksByProject(String projectId) {
-    return _firestore
-        .collection('audio_tracks')
-        .where('projectIds', arrayContains: projectId)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return AudioTrackDTO.fromJson(data).toDomain();
-          }).toList();
-        });
-  }
-
-  @override
-  Future<void> deleteTrack(String trackId) async {
+  Future<Either<Failure, Unit>> deleteTrack(String trackId) async {
     final docRef = _firestore.collection('audio_tracks').doc(trackId);
     final doc = await docRef.get();
 
     if (!doc.exists) {
-      throw Exception('Track not found');
+      return Left(ServerFailure('Track not found'));
     }
 
     final trackData = doc.data() as Map<String, dynamic>;
@@ -78,10 +85,10 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       await storageRef.delete();
     } catch (e) {
       // Log error but continue with Firestore deletion
-      print('Error deleting file from storage: $e');
     }
 
     // Delete from Firestore
     await docRef.delete();
+    return const Right(unit);
   }
 }

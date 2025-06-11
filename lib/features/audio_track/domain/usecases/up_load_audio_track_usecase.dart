@@ -9,28 +9,28 @@ import 'package:trackflow/features/audio_track/domain/services/project_track_ser
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
 class UploadAudioTrackParams {
+  final ProjectId projectId;
   final File file;
   final String name;
   final Duration duration;
-  final ProjectId projectId;
 
   UploadAudioTrackParams({
+    required this.projectId,
     required this.file,
     required this.name,
     required this.duration,
-    required this.projectId,
   });
 }
 
 @lazySingleton
 class UploadAudioTrackUseCase {
   final ProjectTrackService projectTrackService;
-  final ProjectDetailRepository repositoryProjectDetail;
+  final ProjectDetailRepository projectDetailRepository;
   final SessionStorage sessionStorage;
 
   UploadAudioTrackUseCase(
     this.projectTrackService,
-    this.repositoryProjectDetail,
+    this.projectDetailRepository,
     this.sessionStorage,
   );
 
@@ -39,7 +39,7 @@ class UploadAudioTrackUseCase {
     if (userId == null) {
       return Left(ServerFailure('User not found'));
     }
-    final project = await repositoryProjectDetail.getProjectById(
+    final project = await projectDetailRepository.getProjectById(
       params.projectId,
     );
     return project.fold((failure) => Left(failure), (project) async {

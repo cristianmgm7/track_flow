@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
@@ -14,7 +16,13 @@ class ProjectTrackService {
 
   ProjectTrackService(this.trackRepository);
 
-  Future<AudioTrack> addTrackToProject({
+  Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
+    ProjectId projectId,
+  ) {
+    return trackRepository.watchTracksByProject(projectId);
+  }
+
+  Future<Either<Failure, Unit>> addTrackToProject({
     required Project project,
     required UserId requester,
     required String name,
@@ -27,7 +35,7 @@ class ProjectTrackService {
     );
 
     if (!collaborator.hasPermission(ProjectPermission.addTrack)) {
-      throw ProjectPermissionException();
+      return Left(ProjectPermissionException());
     }
 
     final track = AudioTrack.create(
@@ -38,14 +46,17 @@ class ProjectTrackService {
       uploadedBy: requester,
     );
 
-    await trackRepository.uploadAudioTrack(file: File(url), track: track);
-    return track;
+    final result = await trackRepository.uploadAudioTrack(
+      file: File(url),
+      track: track,
+    );
+    return result.fold((failure) => Left(failure), (_) => Right(unit));
   }
 
-  Future<void> deleteTrack({
+  Future<Either<Failure, Unit>> deleteTrack({
     required Project project,
     required UserId requester,
-    required AudioTrack track,
+    required AudioTrackId trackId,
   }) async {
     final collaborator = project.collaborators.firstWhere(
       (c) => c.userId == requester,
@@ -53,9 +64,10 @@ class ProjectTrackService {
     );
 
     if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
-      throw ProjectPermissionException();
+      return Left(ProjectPermissionException());
     }
 
-    await trackRepository.deleteTrack(track.id.value);
+    final result = await trackRepository.deleteTrack(trackId.value);
+    return result;
   }
 }

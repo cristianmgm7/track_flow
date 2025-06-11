@@ -23,7 +23,7 @@ class _TracksTabState extends State<TracksTab> {
   void initState() {
     super.initState();
     context.read<AudioTrackBloc>().add(
-      WatchAudioTracksByProjectEvent(projectId: widget.projectId.value),
+      WatchAudioTracksByProjectEvent(projectId: widget.projectId),
     );
   }
 
@@ -66,7 +66,7 @@ class _TracksTabState extends State<TracksTab> {
           );
           // Refresh the list
           context.read<AudioTrackBloc>().add(
-            WatchAudioTracksByProjectEvent(projectId: widget.projectId.value),
+            WatchAudioTracksByProjectEvent(projectId: widget.projectId),
           );
         } else if (state is AudioTrackError) {
           ScaffoldMessenger.of(
