@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 abstract class AudioTrackRemoteDataSource {
+  Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id);
   Future<void> uploadAudioTrack({
     required File file,
     required AudioTrack track,
@@ -27,6 +28,29 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   final FirebaseStorage _storage;
 
   AudioTrackRemoteDataSourceImpl(this._firestore, this._storage);
+
+  @override
+  Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
+    try {
+      final doc =
+          await _firestore
+              .collection(AudioTrackDTO.collection)
+              .doc(id.value)
+              .get();
+
+      if (!doc.exists) {
+        return Left(ServerFailure('Track not found'));
+      }
+
+      final data = doc.data()!;
+      data['id'] = doc.id;
+
+      final track = AudioTrackDTO.fromJson(data).toDomain();
+      return Right(track);
+    } catch (e) {
+      return Left(ServerFailure('Error fetching track: $e'));
+    }
+  }
 
   @override
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(

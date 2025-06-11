@@ -14,6 +14,16 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   AudioTrackRepositoryImpl(this.remoteDataSource);
 
   @override
+  Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
+    try {
+      final track = await remoteDataSource.getTrackById(id);
+      return track.fold((failure) => Left(failure), (track) => Right(track));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
   ) {

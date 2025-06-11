@@ -5,6 +5,8 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'dart:io';
 
 abstract class AudioTrackRepository {
+  Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id);
+
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
   );

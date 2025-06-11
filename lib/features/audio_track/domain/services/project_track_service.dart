@@ -58,16 +58,16 @@ class ProjectTrackService {
     required UserId requester,
     required AudioTrackId trackId,
   }) async {
-    final collaborator = project.collaborators.firstWhere(
-      (c) => c.userId == requester,
-      orElse: () => throw UserNotCollaboratorException(),
-    );
-
-    if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
-      return Left(ProjectPermissionException());
-    }
-
-    final result = await trackRepository.deleteTrack(trackId.value);
-    return result;
+    final trackResult = await trackRepository.getTrackById(trackId);
+    return trackResult.fold((failure) => Left(failure), (track) async {
+      final collaborator = project.collaborators.firstWhere(
+        (c) => c.userId == requester,
+        orElse: () => throw UserNotCollaboratorException(),
+      );
+      if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
+        return Left(ProjectPermissionException());
+      }
+      return await trackRepository.deleteTrack(track.id.value);
+    });
   }
 }

@@ -5,7 +5,6 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 
 class GetProjectWithUserProfilesParams {
   final ProjectId projectId;
