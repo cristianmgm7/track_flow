@@ -3,10 +3,10 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 class AudioTrackDTO {
-  final String id;
+  final AudioTrackId id;
   final String name;
   final String url;
-  final int durationMs;
+  final int duration;
   final ProjectId projectId;
   final UserId uploadedBy;
   final DateTime? createdAt;
@@ -15,7 +15,7 @@ class AudioTrackDTO {
     required this.id,
     required this.name,
     required this.url,
-    required this.durationMs,
+    required this.duration,
     required this.projectId,
     required this.uploadedBy,
     this.createdAt,
@@ -25,17 +25,16 @@ class AudioTrackDTO {
 
   factory AudioTrackDTO.fromJson(Map<String, dynamic> json) {
     return AudioTrackDTO(
-      id: json['id'] as String,
+      id: AudioTrackId.fromUniqueString(json['id'] as String),
       name: json['name'] as String,
       url: json['url'] as String,
-      durationMs: json['duration'] as int,
+      duration: json['duration'] as int,
       projectId: ProjectId.fromUniqueString(json['projectId'] as String),
       uploadedBy: UserId.fromUniqueString(json['uploadedBy'] as String),
       createdAt:
           json['createdAt'] is Timestamp
               ? (json['createdAt'] as Timestamp).toDate()
-              : DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-                  DateTime.now(),
+              : null,
     );
   }
 
@@ -44,7 +43,7 @@ class AudioTrackDTO {
       'id': id,
       'name': name,
       'url': url,
-      'duration': durationMs,
+      'duration': duration,
       'projectId': projectId.value,
       'uploadedBy': uploadedBy.value,
       'createdAt': createdAt,
@@ -53,13 +52,25 @@ class AudioTrackDTO {
 
   AudioTrack toDomain() {
     return AudioTrack(
-      id: AudioTrackId.fromUniqueString(id),
+      id: id,
       name: name,
       url: url,
-      duration: Duration(milliseconds: durationMs),
+      duration: Duration(milliseconds: duration),
       projectId: projectId,
       uploadedBy: uploadedBy,
       createdAt: createdAt ?? DateTime.now(),
+    );
+  }
+
+  static AudioTrackDTO fromDomain(AudioTrack track, {String? url}) {
+    return AudioTrackDTO(
+      projectId: track.projectId,
+      uploadedBy: track.uploadedBy,
+      id: track.id,
+      name: track.name,
+      url: url ?? track.url,
+      duration: track.duration.inMilliseconds,
+      createdAt: track.createdAt,
     );
   }
 }

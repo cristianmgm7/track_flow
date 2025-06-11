@@ -4,7 +4,7 @@ import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_track/data/models/audio_track_model.dart';
+import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 abstract class AudioTrackRemoteDataSource {
@@ -36,19 +36,12 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     final uploadTask = await storageRef.putFile(file);
     final downloadUrl = await uploadTask.ref.getDownloadURL();
 
-    final trackDTO = AudioTrackDTO(
-      id: track.id.value,
-      name: track.name,
-      url: downloadUrl,
-      durationMs: track.duration.inMilliseconds,
-      projectId: track.projectId,
-      uploadedBy: track.uploadedBy,
-      createdAt: DateTime.now(),
-    );
+    final trackDTO = AudioTrackDTO.fromDomain(track, url: downloadUrl);
 
     await _firestore
         .collection(AudioTrackDTO.collection)
-        .add(trackDTO.toJson());
+        .doc(track.id.value)
+        .set(trackDTO.toJson());
     return const Right(unit);
   }
 
