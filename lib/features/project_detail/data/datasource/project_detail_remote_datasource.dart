@@ -4,10 +4,13 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ProjectDetailRemoteDataSource {
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
+
   Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
     ProjectId projectId,
     List<UserId> collaborators,
@@ -26,6 +29,20 @@ class ProjectDetailRemoteDatasourceImpl
 
   ProjectDetailRemoteDatasourceImpl({required FirebaseFirestore firestore})
     : _firestore = firestore;
+
+  @override
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
+    return await _firestore
+        .collection(ProjectDTO.collection)
+        .doc(projectId.value)
+        .get()
+        .then((value) {
+          if (value.exists) {
+            return right(ProjectDTO.fromFirestore(value).toDomain());
+          }
+          return left(DatabaseFailure('Project not found'));
+        });
+  }
 
   @override
   Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(

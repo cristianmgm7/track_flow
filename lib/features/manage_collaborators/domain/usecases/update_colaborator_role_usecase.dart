@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -26,10 +27,15 @@ class UpdateCollaboratorRoleParams extends Equatable {
 
 @lazySingleton
 class UpdateCollaboratorRoleUseCase {
-  final ManageCollaboratorsRepository _repository;
+  final ProjectDetailRepository _repositoryProjectDetail;
+  final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final SessionStorage _sessionService;
 
-  UpdateCollaboratorRoleUseCase(this._repository, this._sessionService);
+  UpdateCollaboratorRoleUseCase(
+    this._repositoryProjectDetail,
+    this._repositoryManageCollaborators,
+    this._sessionService,
+  );
 
   Future<Either<Failure, void>> call(
     UpdateCollaboratorRoleParams params,
@@ -37,7 +43,9 @@ class UpdateCollaboratorRoleUseCase {
     final userId = _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
-    final projectResult = await _repository.getProjectById(params.projectId);
+    final projectResult = await _repositoryProjectDetail.getProjectById(
+      params.projectId,
+    );
     return projectResult.fold((failure) => left(failure), (project) {
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
@@ -56,7 +64,7 @@ class UpdateCollaboratorRoleUseCase {
 
       try {
         project.updateCollaboratorRole(params.userId, params.role);
-        return _repository.updateProject(project);
+        return _repositoryManageCollaborators.updateProject(project);
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }

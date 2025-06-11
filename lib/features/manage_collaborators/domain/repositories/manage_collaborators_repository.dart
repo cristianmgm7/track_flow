@@ -4,8 +4,6 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/error/failures.dart';
 
 abstract class ManageCollaboratorsRepository {
-  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
-
   Future<Either<Failure, void>> joinProjectWithId(
     ProjectId projectId,
     UserId userId,

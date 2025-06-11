@@ -6,10 +6,7 @@ import 'dart:io';
 abstract class AudioTrackRepository {
   Future<Either<Failure, Unit>> uploadAudioTrack({
     required File file,
-    required String name,
-    required Duration duration,
-    required List<String> projectIds,
-    required String uploadedBy,
+    required AudioTrack track,
   });
 
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(

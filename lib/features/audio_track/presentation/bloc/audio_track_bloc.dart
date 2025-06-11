@@ -64,7 +64,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
         file: event.file,
         name: event.name,
         duration: event.duration,
-        projectIds: event.projectIds,
+        projectId: event.projectId,
       ),
     );
     result.fold(

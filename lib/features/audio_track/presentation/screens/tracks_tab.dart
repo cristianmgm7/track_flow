@@ -8,9 +8,10 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 class TracksTab extends StatefulWidget {
-  final String projectId;
+  final ProjectId projectId;
   const TracksTab({super.key, required this.projectId});
 
   @override
@@ -22,7 +23,7 @@ class _TracksTabState extends State<TracksTab> {
   void initState() {
     super.initState();
     context.read<AudioTrackBloc>().add(
-      WatchAudioTracksByProjectEvent(projectId: widget.projectId),
+      WatchAudioTracksByProjectEvent(projectId: widget.projectId.value),
     );
   }
 
@@ -46,7 +47,7 @@ class _TracksTabState extends State<TracksTab> {
             file: file,
             name: name,
             duration: duration,
-            projectIds: [widget.projectId],
+            projectId: widget.projectId,
           ),
         );
       } finally {
@@ -65,7 +66,7 @@ class _TracksTabState extends State<TracksTab> {
           );
           // Refresh the list
           context.read<AudioTrackBloc>().add(
-            WatchAudioTracksByProjectEvent(projectId: widget.projectId),
+            WatchAudioTracksByProjectEvent(projectId: widget.projectId.value),
           );
         } else if (state is AudioTrackError) {
           ScaffoldMessenger.of(

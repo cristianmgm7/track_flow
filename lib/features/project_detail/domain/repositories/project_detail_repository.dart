@@ -5,6 +5,7 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ProjectDetailRepository {
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
   Future<Either<Failure, List<UserProfile>>> getUserProfileCollaborators(
     Project project,
   );

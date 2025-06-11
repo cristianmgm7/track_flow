@@ -21,6 +21,8 @@ class AudioTrackDTO {
     this.createdAt,
   });
 
+  static const String collection = 'audio_tracks';
+
   factory AudioTrackDTO.fromJson(Map<String, dynamic> json) {
     return AudioTrackDTO(
       id: json['id'] as String,

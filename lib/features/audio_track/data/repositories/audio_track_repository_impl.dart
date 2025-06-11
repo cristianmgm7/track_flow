@@ -15,19 +15,10 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   @override
   Future<Either<Failure, Unit>> uploadAudioTrack({
     required File file,
-    required String name,
-    required Duration duration,
-    required List<String> projectIds,
-    required String uploadedBy,
+    required AudioTrack track,
   }) async {
     try {
-      await remoteDataSource.uploadAudioTrack(
-        file: file,
-        name: name,
-        duration: duration,
-        projectIds: projectIds,
-        uploadedBy: uploadedBy,
-      );
+      await remoteDataSource.uploadAudioTrack(file: file, track: track);
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

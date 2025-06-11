@@ -34,7 +34,7 @@ class ProjectDetailScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            TracksTab(projectId: project.id.value),
+            TracksTab(projectId: project.id),
             CommentsTab(projectId: project.id.value),
             ManageCollaboratorsScreen(projectId: project.id),
           ],

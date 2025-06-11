@@ -22,15 +22,6 @@ class ManageCollaboratorsRepositoryImpl
   });
 
   @override
-  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
-    final hasConnected = await networkInfo.isConnected;
-    if (!hasConnected) {
-      return left(DatabaseFailure('No internet connection'));
-    }
-    return await remoteDataSourceManageCollaborators.getProjectById(projectId);
-  }
-
-  @override
   Future<Either<Failure, void>> joinProjectWithId(
     ProjectId projectId,
     UserId userId,

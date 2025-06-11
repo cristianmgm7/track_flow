@@ -2,42 +2,55 @@ import 'dart:io';
 
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
+import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart';
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
 class UploadAudioTrackParams {
   final File file;
   final String name;
   final Duration duration;
-  final List<String> projectIds;
+  final ProjectId projectId;
 
   UploadAudioTrackParams({
     required this.file,
     required this.name,
     required this.duration,
-    required this.projectIds,
+    required this.projectId,
   });
 }
 
 @lazySingleton
 class UploadAudioTrackUseCase {
-  final AudioTrackRepository repository;
+  final ProjectTrackService projectTrackService;
+  final ProjectDetailRepository repositoryProjectDetail;
   final SessionStorage sessionStorage;
 
-  UploadAudioTrackUseCase(this.repository, this.sessionStorage);
+  UploadAudioTrackUseCase(
+    this.projectTrackService,
+    this.repositoryProjectDetail,
+    this.sessionStorage,
+  );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
     final userId = sessionStorage.getUserId();
     if (userId == null) {
       return Left(ServerFailure('User not found'));
     }
-    return repository.uploadAudioTrack(
-      file: params.file,
-      name: params.name,
-      duration: params.duration,
-      projectIds: params.projectIds,
-      uploadedBy: userId,
+    final project = await repositoryProjectDetail.getProjectById(
+      params.projectId,
     );
+    return project.fold((failure) => Left(failure), (project) async {
+      await projectTrackService.addTrackToProject(
+        project: project,
+        requester: UserId.fromUniqueString(userId),
+        name: params.name,
+        url: params.file.path,
+        duration: params.duration,
+      );
+      return Right(unit);
+    });
   }
 }

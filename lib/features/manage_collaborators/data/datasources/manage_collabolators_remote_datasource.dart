@@ -9,7 +9,6 @@ import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 
 abstract class ManageCollaboratorsRemoteDataSource {
-  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
   Future<Either<Failure, void>> selfJoinProjectWithProjectId({
     required String projectId,
     required String userId,
@@ -28,21 +27,6 @@ class ManageCollaboratorsRemoteDataSourceImpl
     required this.userProfileRemoteDataSource,
     required this.firestore,
   });
-
-  @override
-  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
-    return await firestore
-        .collection(ProjectDTO.collection)
-        .doc(projectId.value)
-        .get()
-        .then((value) {
-          if (value.exists) {
-            return right(ProjectDTO.fromFirestore(value).toDomain());
-          }
-          return left(DatabaseFailure('Project not found'));
-        });
-  }
-
   @override
   Future<Either<Failure, void>> selfJoinProjectWithProjectId({
     required String projectId,

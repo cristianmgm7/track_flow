@@ -7,6 +7,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 
@@ -26,16 +27,23 @@ class RemoveCollaboratorParams extends Equatable {
 
 @lazySingleton
 class RemoveCollaboratorUseCase {
-  final ManageCollaboratorsRepository _repository;
+  final ProjectDetailRepository _repositoryProjectDetail;
+  final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final SessionStorage _sessionService;
 
-  RemoveCollaboratorUseCase(this._repository, this._sessionService);
+  RemoveCollaboratorUseCase(
+    this._repositoryProjectDetail,
+    this._repositoryManageCollaborators,
+    this._sessionService,
+  );
 
   Future<Either<Failure, void>> call(RemoveCollaboratorParams params) async {
     final userId = _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
-    final projectResult = await _repository.getProjectById(params.projectId);
+    final projectResult = await _repositoryProjectDetail.getProjectById(
+      params.projectId,
+    );
     return projectResult.fold((failure) => left(failure), (project) async {
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
@@ -54,7 +62,9 @@ class RemoveCollaboratorUseCase {
         final updatedProject = project.removeCollaborator(
           params.collaboratorId,
         );
-        return await _repository.updateProject(updatedProject);
+        return await _repositoryManageCollaborators.updateProject(
+          updatedProject,
+        );
       } on CollaboratorNotFoundException catch (e) {
         return left(ManageCollaboratorException(e.toString()));
       } catch (e) {

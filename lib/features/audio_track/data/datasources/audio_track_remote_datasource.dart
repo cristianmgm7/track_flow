@@ -1,17 +1,16 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_model.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 abstract class AudioTrackRemoteDataSource {
   Future<void> uploadAudioTrack({
     required File file,
-    required String name,
-    required Duration duration,
-    required List<String> projectIds,
-    required String uploadedBy,
+    required AudioTrack track,
   });
 
   Stream<List<AudioTrack>> watchTracksByProject(String projectId);
@@ -27,30 +26,30 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   AudioTrackRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<void> uploadAudioTrack({
+  Future<Either<Failure, Unit>> uploadAudioTrack({
     required File file,
-    required String name,
-    required Duration duration,
-    required List<String> projectIds,
-    required String uploadedBy,
+    required AudioTrack track,
   }) async {
     final storageRef = _storage.ref().child(
-      'audio_tracks/${DateTime.now().millisecondsSinceEpoch}_$name',
+      '${AudioTrackDTO.collection}/${DateTime.now().millisecondsSinceEpoch}_${track.name}',
     );
     final uploadTask = await storageRef.putFile(file);
     final downloadUrl = await uploadTask.ref.getDownloadURL();
 
     final trackDTO = AudioTrackDTO(
-      id: '', // Will be set by Firestore
-      name: name,
+      id: track.id.value,
+      name: track.name,
       url: downloadUrl,
-      durationMs: duration.inMilliseconds,
-      projectIds: projectIds,
-      uploadedBy: uploadedBy,
+      durationMs: track.duration.inMilliseconds,
+      projectIds: [track.projectId.value],
+      uploadedBy: track.uploadedBy.value,
       createdAt: DateTime.now(),
     );
 
-    await _firestore.collection('audio_tracks').add(trackDTO.toJson());
+    await _firestore
+        .collection(AudioTrackDTO.collection)
+        .add(trackDTO.toJson());
+    return const Right(unit);
   }
 
   @override

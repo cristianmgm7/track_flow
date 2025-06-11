@@ -15,18 +15,14 @@ class GetProjectWithUserProfilesParams {
 
 @lazySingleton
 class GetProjectWithUserProfilesUseCase {
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final ProjectDetailRepository _repositoryProjectDetail;
 
-  GetProjectWithUserProfilesUseCase(
-    this._repositoryManageCollaborators,
-    this._repositoryProjectDetail,
-  );
+  GetProjectWithUserProfilesUseCase(this._repositoryProjectDetail);
 
   Future<Either<Failure, Tuple2<Project, List<UserProfile>>>> call(
     GetProjectWithUserProfilesParams params,
   ) async {
-    final projectResult = await _repositoryManageCollaborators.getProjectById(
+    final projectResult = await _repositoryProjectDetail.getProjectById(
       params.projectId,
     );
     return projectResult.fold((failure) => left(failure), (project) async {

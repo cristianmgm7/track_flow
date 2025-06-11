@@ -18,6 +18,15 @@ class ProjectDetailRepositoryImpl implements ProjectDetailRepository {
     required this.networkInfo,
   });
   @override
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
+    final hasConnected = await networkInfo.isConnected;
+    if (!hasConnected) {
+      return left(DatabaseFailure('No internet connection'));
+    }
+    return await remoteDataSource.getProjectById(projectId);
+  }
+
+  @override
   Future<Either<Failure, List<UserProfile>>> getUserProfileCollaborators(
     Project project,
   ) async {

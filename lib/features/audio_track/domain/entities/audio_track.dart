@@ -20,19 +20,22 @@ class AudioTrack extends Equatable {
     required this.createdAt,
   });
 
-  @override
-  List<Object> get props => [
-    id,
-    name,
-    url,
-    duration,
-    projectId,
-    uploadedBy,
-    createdAt,
-  ];
-
-  bool belongsToProject(ProjectId projectId) {
-    return this.projectId == projectId;
+  factory AudioTrack.create({
+    required String name,
+    required String url,
+    required Duration duration,
+    required ProjectId projectId,
+    required UserId uploadedBy,
+  }) {
+    return AudioTrack(
+      id: AudioTrackId(),
+      name: name,
+      url: url,
+      duration: duration,
+      projectId: projectId,
+      uploadedBy: uploadedBy,
+      createdAt: DateTime.now(),
+    );
   }
 
   AudioTrack copyWith({
@@ -53,5 +56,20 @@ class AudioTrack extends Equatable {
       uploadedBy: uploadedBy ?? this.uploadedBy,
       createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  @override
+  List<Object> get props => [
+    id,
+    name,
+    url,
+    duration,
+    projectId,
+    uploadedBy,
+    createdAt,
+  ];
+
+  bool belongsToProject(ProjectId projectId) {
+    return this.projectId == projectId;
   }
 }
