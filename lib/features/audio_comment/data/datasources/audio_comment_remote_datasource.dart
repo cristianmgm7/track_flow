@@ -15,9 +15,8 @@ abstract class AudioCommentRemoteDataSource {
 class FirebaseAudioCommentRemoteDataSource
     implements AudioCommentRemoteDataSource {
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
 
-  FirebaseAudioCommentRemoteDataSource(this._firestore, this._storage);
+  FirebaseAudioCommentRemoteDataSource(this._firestore);
 
   @override
   Future<void> addComment(AudioComment comment) async {

@@ -56,6 +56,11 @@ dependencies:
   injectable: ^2.3.2
   share_plus: ^7.2.1
   firebase_dynamic_links: ^6.1.5
+  just_audio: ^0.9.36
+  audio_session: ^0.1.16
+  audio_service: ^0.18.10
+  record: ^5.0.0
+  audio_waveforms: ^1.0.0
 
 dev_dependencies:
   flutter_test:

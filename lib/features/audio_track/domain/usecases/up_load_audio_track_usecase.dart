@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 
@@ -20,6 +21,7 @@ class UploadAudioTrackParams {
   });
 }
 
+@lazySingleton
 class UploadAudioTrackUseCase {
   final AudioTrackRepository repository;
 
