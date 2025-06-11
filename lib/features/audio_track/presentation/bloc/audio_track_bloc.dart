@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_track_usecase.dart';
@@ -11,6 +16,8 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   final WatchAudioTracksByProject watchAudioTracksByProject;
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
+
+  StreamSubscription<Either<Failure, List<AudioTrack>>>? _trackSubscription;
 
   AudioTrackBloc({
     required this.watchAudioTracksByProject,
@@ -26,20 +33,16 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     WatchAudioTracksByProjectEvent event,
     Emitter<AudioTrackState> emit,
   ) async {
+    await _trackSubscription?.cancel();
     emit(AudioTrackLoading());
-    try {
-      final stream = watchAudioTracksByProject(event.projectId);
-      await emit.forEach(
-        stream,
-        onData:
-            (data) => data.fold(
-              (failure) => AudioTrackError(message: 'Failed to load tracks'),
-              (tracks) => AudioTrackLoaded(tracks: tracks),
-            ),
+
+    final stream = watchAudioTracksByProject(event.projectId);
+    _trackSubscription = stream.listen((data) {
+      data.fold(
+        (failure) => emit(AudioTrackError(message: 'Failed to load tracks')),
+        (tracks) => emit(AudioTrackLoaded(tracks: tracks)),
       );
-    } catch (e) {
-      emit(AudioTrackError(message: 'An error occurred'));
-    }
+    });
   }
 
   Future<void> _onUploadAudioTrack(
@@ -76,5 +79,11 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
       (failure) => emit(AudioTrackError(message: 'Failed to delete track')),
       (_) => emit(AudioTrackDeleteSuccess()),
     );
+  }
+
+  @override
+  Future<void> close() {
+    _trackSubscription?.cancel();
+    return super.close();
   }
 }

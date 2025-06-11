@@ -3,7 +3,6 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';

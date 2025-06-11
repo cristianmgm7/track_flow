@@ -64,10 +64,6 @@ class _TracksTabState extends State<TracksTab> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Audio uploaded successfully!')),
           );
-          // Refresh the list
-          context.read<AudioTrackBloc>().add(
-            WatchAudioTracksByProjectEvent(projectId: widget.projectId),
-          );
         } else if (state is AudioTrackError) {
           ScaffoldMessenger.of(
             context,
@@ -111,10 +107,7 @@ class _TracksTabState extends State<TracksTab> {
                                 child: ElevatedButton.icon(
                                   icon: Icon(Icons.upload_file),
                                   label: Text('Upload Audio'),
-                                  onPressed:
-                                      state is AudioTrackLoading
-                                          ? null
-                                          : () => _pickAndUploadAudio(context),
+                                  onPressed: () => _pickAndUploadAudio(context),
                                 ),
                               ),
                             );
