@@ -69,7 +69,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
 
   @override
   Future<Either<Failure, Unit>> deleteTrack(String trackId) async {
-    final docRef = _firestore.collection('audio_tracks').doc(trackId);
+    final docRef = _firestore.collection(AudioTrackDTO.collection).doc(trackId);
     final doc = await docRef.get();
 
     if (!doc.exists) {
@@ -79,15 +79,13 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     final trackData = doc.data() as Map<String, dynamic>;
     final trackDTO = AudioTrackDTO.fromJson({...trackData, 'id': doc.id});
 
-    // Delete from storage
     try {
       final storageRef = _storage.refFromURL(trackDTO.url);
       await storageRef.delete();
     } catch (e) {
-      // Log error but continue with Firestore deletion
+      return Left(ServerFailure('Error deleting file from storage: $e'));
     }
 
-    // Delete from Firestore
     await docRef.delete();
     return const Right(unit);
   }
