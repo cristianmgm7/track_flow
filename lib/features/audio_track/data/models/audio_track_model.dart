@@ -7,8 +7,8 @@ class AudioTrackDTO {
   final String name;
   final String url;
   final int durationMs;
-  final List<String> projectIds;
-  final String uploadedBy;
+  final ProjectId projectId;
+  final UserId uploadedBy;
   final DateTime? createdAt;
 
   const AudioTrackDTO({
@@ -16,7 +16,7 @@ class AudioTrackDTO {
     required this.name,
     required this.url,
     required this.durationMs,
-    required this.projectIds,
+    required this.projectId,
     required this.uploadedBy,
     this.createdAt,
   });
@@ -29,8 +29,8 @@ class AudioTrackDTO {
       name: json['name'] as String,
       url: json['url'] as String,
       durationMs: json['duration'] as int,
-      projectIds: List<String>.from(json['projectIds'] as List),
-      uploadedBy: json['uploadedBy'] as String,
+      projectId: ProjectId.fromUniqueString(json['projectId'] as String),
+      uploadedBy: UserId.fromUniqueString(json['uploadedBy'] as String),
       createdAt:
           json['createdAt'] is Timestamp
               ? (json['createdAt'] as Timestamp).toDate()
@@ -45,8 +45,8 @@ class AudioTrackDTO {
       'name': name,
       'url': url,
       'duration': durationMs,
-      'projectIds': projectIds,
-      'uploadedBy': uploadedBy,
+      'projectId': projectId.value,
+      'uploadedBy': uploadedBy.value,
       'createdAt': createdAt,
     };
   }
@@ -57,8 +57,8 @@ class AudioTrackDTO {
       name: name,
       url: url,
       duration: Duration(milliseconds: durationMs),
-      projectId: ProjectId.fromUniqueString(projectIds.first),
-      uploadedBy: UserId.fromUniqueString(uploadedBy),
+      projectId: projectId,
+      uploadedBy: uploadedBy,
       createdAt: createdAt ?? DateTime.now(),
     );
   }

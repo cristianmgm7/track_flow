@@ -41,8 +41,8 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       name: track.name,
       url: downloadUrl,
       durationMs: track.duration.inMilliseconds,
-      projectIds: [track.projectId.value],
-      uploadedBy: track.uploadedBy.value,
+      projectId: track.projectId,
+      uploadedBy: track.uploadedBy,
       createdAt: DateTime.now(),
     );
 
