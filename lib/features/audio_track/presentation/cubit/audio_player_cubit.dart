@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -9,6 +10,7 @@ class AudioPlayerCubit extends Cubit<AudioPlayerState> {
   AudioPlayerCubit() : super(AudioPlayerInitial());
 
   Future<void> play(String url) async {
+    debugPrint('play: $url');
     try {
       await _player.setUrl(url);
       await _player.play();
