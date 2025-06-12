@@ -107,8 +107,9 @@ class AuthRepositoryImpl implements AuthRepository {
         await _createUserProfileIfNotExists(user);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
-      if (user == null)
+      if (user == null) {
         return left(AuthenticationFailure('No user found after sign in'));
+      }
       return right(AuthDto.fromFirebase(user).toDomain());
     } catch (e) {
       return left(AuthenticationFailure(e.toString()));

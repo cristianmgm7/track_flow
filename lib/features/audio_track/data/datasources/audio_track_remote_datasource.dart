@@ -76,19 +76,23 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     required File file,
     required AudioTrack track,
   }) async {
-    final storageRef = _storage.ref().child(
-      '${AudioTrackDTO.collection}/${DateTime.now().millisecondsSinceEpoch}_${track.name}',
-    );
-    final uploadTask = await storageRef.putFile(file);
-    final downloadUrl = await uploadTask.ref.getDownloadURL();
+    try {
+      final storageRef = _storage.ref().child(
+        '${AudioTrackDTO.collection}/${DateTime.now().millisecondsSinceEpoch}_${track.name}',
+      );
+      final uploadTask = await storageRef.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
 
-    final trackDTO = AudioTrackDTO.fromDomain(track, url: downloadUrl);
+      final trackDTO = AudioTrackDTO.fromDomain(track, url: downloadUrl);
 
-    await _firestore
-        .collection(AudioTrackDTO.collection)
-        .doc(track.id.value)
-        .set(trackDTO.toJson());
-    return const Right(unit);
+      await _firestore
+          .collection(AudioTrackDTO.collection)
+          .add(trackDTO.toJson());
+      return const Right(unit);
+    } catch (e, stack) {
+      print('Error uploading audio track: $e\n$stack');
+      return Left(ServerFailure('Error uploading audio track: $e'));
+    }
   }
 
   @override
