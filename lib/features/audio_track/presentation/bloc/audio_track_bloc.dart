@@ -36,13 +36,15 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     await _trackSubscription?.cancel();
     emit(AudioTrackLoading());
 
-    final stream = watchAudioTracksByProject(event.projectId);
-    _trackSubscription = stream.listen((data) {
-      data.fold(
-        (failure) => emit(AudioTrackError(message: 'Failed to load tracks')),
-        (tracks) => emit(AudioTrackLoaded(tracks: tracks)),
-      );
-    });
+    await emit.forEach<Either<Failure, List<AudioTrack>>>(
+      watchAudioTracksByProject(event.projectId),
+      onData:
+          (data) => data.fold(
+            (failure) => AudioTrackError(message: 'Failed to load tracks'),
+            (tracks) => AudioTrackLoaded(tracks: tracks),
+          ),
+      onError: (_, __) => AudioTrackError(message: 'Stream error'),
+    );
   }
 
   Future<void> _onUploadAudioTrack(

@@ -75,5 +75,11 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Esta app necesita acceso a tu biblioteca de fotos para seleccionar archivos de audio.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Esta app necesita acceso al micrófono para grabar o reproducir audio.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Esta app necesita acceso a tus archivos para seleccionar audio.</string>
 </dict>
 </plist>

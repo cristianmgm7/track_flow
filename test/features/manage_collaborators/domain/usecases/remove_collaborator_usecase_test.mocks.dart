@@ -7,13 +7,13 @@ import 'dart:async' as _i4;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:trackflow/core/entities/unique_id.dart' as _i7;
+import 'package:trackflow/core/entities/unique_id.dart' as _i6;
 import 'package:trackflow/core/error/failures.dart' as _i5;
 import 'package:trackflow/core/session/session_storage.dart' as _i8;
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart'
     as _i3;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
-    as _i6;
+    as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -49,27 +49,9 @@ class CustomMockManageCollaboratorsRepository extends _i1.Mock
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.Project>> getProjectById(
-          _i7.ProjectId? projectId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getProjectById,
-          [projectId],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>.value(
-            _FakeEither_0<_i5.Failure, _i6.Project>(
-          this,
-          Invocation.method(
-            #getProjectById,
-            [projectId],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.Project>>);
-
-  @override
   _i4.Future<_i2.Either<_i5.Failure, void>> joinProjectWithId(
-    _i7.ProjectId? projectId,
-    _i7.UserId? userId,
+    _i6.ProjectId? projectId,
+    _i6.UserId? userId,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -94,7 +76,7 @@ class CustomMockManageCollaboratorsRepository extends _i1.Mock
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, void>> updateProject(
-          _i6.Project? project) =>
+          _i7.Project? project) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateProject,

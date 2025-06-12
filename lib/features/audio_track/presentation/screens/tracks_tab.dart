@@ -28,31 +28,45 @@ class _TracksTabState extends State<TracksTab> {
   }
 
   Future<void> _pickAndUploadAudio(BuildContext context) async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'wav', 'aac', 'm4a'],
-    );
-    if (result != null && result.files.single.path != null) {
-      final file = File(result.files.single.path!);
-      final name = result.files.single.name;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'wav', 'aac', 'm4a'],
+      );
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final name = result.files.single.name;
 
-      // Get duration using just_audio
-      final player = AudioPlayer();
-      try {
-        await player.setFilePath(file.path);
-        final duration = player.duration ?? Duration.zero;
+        final player = AudioPlayer();
+        try {
+          // Add a timeout to avoid hanging forever
+          await player
+              .setFilePath(file.path)
+              .timeout(
+                Duration(seconds: 10),
+                onTimeout: () {
+                  throw Exception('Audio loading timed out');
+                },
+              );
+          final duration = player.duration ?? Duration.zero;
 
-        context.read<AudioTrackBloc>().add(
-          UploadAudioTrackEvent(
-            file: file,
-            name: name,
-            duration: duration,
-            projectId: widget.projectId,
-          ),
-        );
-      } finally {
-        await player.dispose();
+          context.read<AudioTrackBloc>().add(
+            UploadAudioTrackEvent(
+              file: file,
+              name: name,
+              duration: duration,
+              projectId: widget.projectId,
+            ),
+          );
+        } finally {
+          await player.dispose();
+        }
       }
+    } catch (e) {
+      print('Error picking or loading audio: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick or load audio: $e')),
+      );
     }
   }
 
@@ -72,49 +86,89 @@ class _TracksTabState extends State<TracksTab> {
       },
       builder: (context, state) {
         List<AudioTrack> tracks = [];
+        bool isLoading = false;
+        String? errorMessage;
+
+        if (state is AudioTrackLoading) {
+          isLoading = true;
+        }
         if (state is AudioTrackLoaded) {
           tracks = state.tracks;
         }
+        if (state is AudioTrackError) {
+          errorMessage = state.message;
+        }
 
-        return Column(
-          children: [
-            Expanded(
-              child:
-                  state is AudioTrackLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : ListView.builder(
-                        itemCount: tracks.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index < tracks.length) {
-                            final track = tracks[index];
-                            return ListTile(
-                              title: Text(track.name),
-                              subtitle: Text(
-                                'Duration: ${track.duration.inSeconds}s',
-                              ),
-                              trailing: Icon(Icons.audiotrack),
-                              onTap: () {
-                                // TODO: Play audio or show details
-                              },
-                            );
-                          } else {
-                            // Upload button at the end
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16.0,
-                              ),
-                              child: Center(
-                                child: ElevatedButton.icon(
-                                  icon: Icon(Icons.upload_file),
-                                  label: Text('Upload Audio'),
-                                  onPressed: () => _pickAndUploadAudio(context),
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                      ),
+        if (isLoading && tracks.isEmpty) {
+          // Show loading indicator only if no data yet
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (errorMessage != null && tracks.isEmpty) {
+          // Show error message if no data
+          return Center(child: Text(errorMessage));
+        }
+
+        if (tracks.isEmpty) {
+          // Show empty state with upload button
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('No tracks found.'),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.upload_file),
+                  label: Text('Upload Audio'),
+                  onPressed:
+                      isLoading ? null : () => _pickAndUploadAudio(context),
+                ),
+              ],
             ),
+          );
+        }
+
+        // Show list with optional loading overlay
+        return Stack(
+          children: [
+            ListView.builder(
+              itemCount: tracks.length + 1,
+              itemBuilder: (context, index) {
+                if (index < tracks.length) {
+                  final track = tracks[index];
+                  return ListTile(
+                    title: Text(track.name),
+                    subtitle: Text('Duration: ${track.duration.inSeconds}s'),
+                    trailing: Icon(Icons.audiotrack),
+                    onTap: () {
+                      // TODO: Play audio or show details
+                    },
+                  );
+                } else {
+                  // Upload button at the end
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Center(
+                      child: ElevatedButton.icon(
+                        icon: Icon(Icons.upload_file),
+                        label: Text('Upload Audio'),
+                        onPressed:
+                            isLoading
+                                ? null
+                                : () => _pickAndUploadAudio(context),
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+            if (isLoading)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.1),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
           ],
         );
       },

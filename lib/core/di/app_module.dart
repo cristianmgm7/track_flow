@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
@@ -9,6 +10,9 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 
 @module
 abstract class AppModule {
+  @lazySingleton
+  FirebaseStorage get firebaseStorage => FirebaseStorage.instance;
+
   @lazySingleton
   FirebaseAuth get firebaseAuth => FirebaseAuth.instance;
 
