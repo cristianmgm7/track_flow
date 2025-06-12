@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_track/presentation/cubit/audio_player_cubit.dart';
 import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
 
 class TracksTab extends StatefulWidget {
@@ -20,6 +21,8 @@ class TracksTab extends StatefulWidget {
 }
 
 class _TracksTabState extends State<TracksTab> {
+  int? _previousCount;
+
   @override
   void initState() {
     super.initState();
@@ -60,10 +63,13 @@ class _TracksTabState extends State<TracksTab> {
   Widget build(BuildContext context) {
     return BlocConsumer<AudioTrackBloc, AudioTrackState>(
       listener: (context, state) {
-        if (state is AudioTrackUploadSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Audio uploaded successfully!')),
-          );
+        if (state is AudioTrackLoaded) {
+          if (_previousCount != null && state.tracks.length > _previousCount!) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Audio uploaded successfully!')),
+            );
+          }
+          _previousCount = state.tracks.length;
         } else if (state is AudioTrackError) {
           ScaffoldMessenger.of(
             context,
@@ -127,7 +133,7 @@ class _TracksTabState extends State<TracksTab> {
                     subtitle: Text('Duration: ${track.duration.inSeconds}s'),
                     trailing: Icon(Icons.audiotrack),
                     onTap: () {
-                      // TODO: Play audio or show details
+                      context.read<AudioPlayerCubit>().play(track.url);
                     },
                   );
                 } else {

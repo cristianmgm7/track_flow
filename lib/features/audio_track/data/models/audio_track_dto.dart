@@ -40,7 +40,7 @@ class AudioTrackDTO {
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'id': id.value,
       'name': name,
       'url': url,
       'duration': duration,

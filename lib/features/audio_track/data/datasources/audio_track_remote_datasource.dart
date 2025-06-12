@@ -89,8 +89,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
           .collection(AudioTrackDTO.collection)
           .add(trackDTO.toJson());
       return const Right(unit);
-    } catch (e, stack) {
-      print('Error uploading audio track: $e\n$stack');
+    } catch (e) {
       return Left(ServerFailure('Error uploading audio track: $e'));
     }
   }
