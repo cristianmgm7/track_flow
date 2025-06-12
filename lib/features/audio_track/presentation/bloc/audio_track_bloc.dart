@@ -52,7 +52,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     Emitter<AudioTrackState> emit,
   ) async {
     emit(AudioTrackLoading());
-    final result = await uploadAudioTrackUseCase(
+    final result = await uploadAudioTrackUseCase.call(
       UploadAudioTrackParams(
         file: event.file,
         name: event.name,

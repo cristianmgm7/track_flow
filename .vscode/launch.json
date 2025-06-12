@@ -13,6 +13,14 @@
             "deviceId": "00008030-00010C31110A802E"
         },
         {
+            "name": "track_flow (android)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554"
+        },
+        {
             "name": "track_flow (iPhoneX cris)",
             "request": "launch",
             "type": "dart",

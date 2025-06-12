@@ -4,11 +4,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
+// import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
 
 class TracksTab extends StatefulWidget {
   final ProjectId projectId;
@@ -34,39 +36,24 @@ class _TracksTabState extends State<TracksTab> {
         allowedExtensions: ['mp3', 'wav', 'aac', 'm4a'],
       );
       if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
         final name = result.files.single.name;
+        final filePath = result.files.single.path!;
 
-        final player = AudioPlayer();
-        try {
-          // Add a timeout to avoid hanging forever
-          await player
-              .setFilePath(file.path)
-              .timeout(
-                Duration(seconds: 10),
-                onTimeout: () {
-                  throw Exception('Audio loading timed out');
-                },
-              );
-          final duration = player.duration ?? Duration.zero;
+        final duration = await AudioUtils.getAudioDuration(filePath);
 
-          context.read<AudioTrackBloc>().add(
-            UploadAudioTrackEvent(
-              file: file,
-              name: name,
-              duration: duration,
-              projectId: widget.projectId,
-            ),
-          );
-        } finally {
-          await player.dispose();
-        }
+        context.read<AudioTrackBloc>().add(
+          UploadAudioTrackEvent(
+            file: File(filePath),
+            name: name,
+            duration: duration,
+            projectId: widget.projectId,
+          ),
+        );
       }
     } catch (e) {
-      print('Error picking or loading audio: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick or load audio: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
