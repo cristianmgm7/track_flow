@@ -2,21 +2,49 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
+import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/audio_comment/domain/services/project_comment_service.dart';
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 
 class DeleteAudioCommentParams {
   final AudioCommentId commentId;
+  final ProjectId projectId;
+  final AudioTrackId trackId;
 
-  DeleteAudioCommentParams({required this.commentId});
+  DeleteAudioCommentParams({
+    required this.commentId,
+    required this.projectId,
+    required this.trackId,
+  });
 }
 
 @lazySingleton
 class DeleteAudioCommentUseCase {
-  final AudioCommentRepository repository;
+  final ProjectCommentService projectCommentService;
+  final ProjectDetailRepository projectDetailRepository;
+  final SessionStorage sessionStorage;
 
-  DeleteAudioCommentUseCase(this.repository);
+  DeleteAudioCommentUseCase(
+    this.projectCommentService,
+    this.projectDetailRepository,
+    this.sessionStorage,
+  );
 
-  Future<Either<Failure, Unit>> call(DeleteAudioCommentParams params) {
-    return repository.deleteComment(params.commentId.value);
+  Future<Either<Failure, Unit>> call(DeleteAudioCommentParams params) async {
+    final userId = sessionStorage.getUserId();
+    if (userId == null) {
+      return Left(ServerFailure('User not found'));
+    }
+    final project = await projectDetailRepository.getProjectById(
+      params.projectId,
+    );
+    return project.fold((failure) => Left(failure), (project) async {
+      return await projectCommentService.deleteComment(
+        project: project,
+        requester: UserId.fromUniqueString(userId),
+        commentId: params.commentId,
+        trackId: params.trackId,
+      );
+    });
   }
 }
