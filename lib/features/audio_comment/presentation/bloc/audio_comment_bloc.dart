@@ -28,7 +28,11 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   ) async {
     emit(AddingAudioCommentState(isAdding: true));
     final result = await addAudioCommentUseCase.call(
-      AddAudioCommentParams(comment: event.comment),
+      AddAudioCommentParams(
+        projectId: event.projectId,
+        trackId: event.trackId,
+        content: event.content,
+      ),
     );
     result.fold(
       (failure) =>
@@ -43,7 +47,11 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   ) async {
     emit(RemovingAudioCommentState(isRemoving: true));
     final result = await deleteAudioCommentUseCase(
-      DeleteAudioCommentParams(commentId: event.commentId),
+      DeleteAudioCommentParams(
+        projectId: event.projectId,
+        trackId: event.trackId,
+        commentId: event.commentId,
+      ),
     );
     result.fold(
       (failure) =>

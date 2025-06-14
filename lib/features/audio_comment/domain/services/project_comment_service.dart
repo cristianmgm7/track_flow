@@ -17,7 +17,7 @@ class ProjectCommentService {
   Stream<Either<Failure, List<AudioComment>>> watchCommentsByTrack(
     AudioTrackId trackId,
   ) {
-    return commentRepository.watchCommentsByTrack(trackId.value);
+    return commentRepository.watchCommentsByTrack(trackId);
   }
 
   Future<Either<Failure, Unit>> addComment({

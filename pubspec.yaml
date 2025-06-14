@@ -60,8 +60,9 @@ dependencies:
   audio_session: ^0.1.16
   audio_service: ^0.18.10
   record: ^5.0.0
-  audio_waveforms: ^1.0.0
+  audio_waveforms: ^1.0.5
   file_picker: ^10.1.9
+  flutter_slidable: ^3.0.0
 
 dev_dependencies:
   flutter_test:

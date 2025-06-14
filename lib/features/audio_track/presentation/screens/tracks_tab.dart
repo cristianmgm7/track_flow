@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 // import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
@@ -14,7 +15,8 @@ import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
 
 class TracksTab extends StatefulWidget {
   final ProjectId projectId;
-  const TracksTab({super.key, required this.projectId});
+  final void Function(AudioTrack track)? onCommentTrack;
+  const TracksTab({super.key, required this.projectId, this.onCommentTrack});
 
   @override
   State<TracksTab> createState() => _TracksTabState();
@@ -84,15 +86,34 @@ class _TracksTabState extends State<TracksTab> {
                   itemBuilder: (context, index) {
                     if (index < tracks.length) {
                       final track = tracks[index];
-                      return ListTile(
-                        title: Text(track.name),
-                        subtitle: Text(
-                          'Duration: ${track.duration.inSeconds}s',
+                      return Slidable(
+                        key: ValueKey(track.id),
+                        endActionPane: ActionPane(
+                          motion: const DrawerMotion(),
+                          children: [
+                            SlidableAction(
+                              onPressed: (_) {
+                                if (widget.onCommentTrack != null) {
+                                  widget.onCommentTrack!(track);
+                                }
+                              },
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              icon: Icons.comment,
+                              label: 'Comment',
+                            ),
+                          ],
                         ),
-                        trailing: Icon(Icons.audiotrack),
-                        onTap: () {
-                          context.read<AudioPlayerCubit>().play(track);
-                        },
+                        child: ListTile(
+                          title: Text(track.name),
+                          subtitle: Text(
+                            'Duration: ${track.duration.inSeconds}s',
+                          ),
+                          trailing: Icon(Icons.audiotrack),
+                          onTap: () {
+                            context.read<AudioPlayerCubit>().play(track);
+                          },
+                        ),
                       );
                     } else {
                       return Padding(
