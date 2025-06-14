@@ -61,109 +61,89 @@ class _TracksTabState extends State<TracksTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AudioTrackBloc, AudioTrackState>(
-      listener: (context, state) {
-        if (state is AudioTrackLoaded) {
-          if (_previousCount != null && state.tracks.length > _previousCount!) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Audio uploaded successfully!')),
-            );
-          }
-          _previousCount = state.tracks.length;
-        } else if (state is AudioTrackError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
-        }
-      },
-      builder: (context, state) {
-        List<AudioTrack> tracks = [];
-        bool isLoading = false;
-        String? errorMessage;
+    return Column(
+      children: [
+        Expanded(
+          child: BlocBuilder<AudioTrackBloc, AudioTrackState>(
+            buildWhen:
+                (previous, current) =>
+                    current is AudioTrackLoaded || current is AudioTrackLoading,
+            builder: (context, state) {
+              if (state is AudioTrackLoading) {
+                return Center(child: CircularProgressIndicator());
+              }
 
-        if (state is AudioTrackLoading) {
-          isLoading = true;
-        }
-        if (state is AudioTrackLoaded) {
-          tracks = state.tracks;
-        }
-        if (state is AudioTrackError) {
-          errorMessage = state.message;
-        }
-
-        if (isLoading && tracks.isEmpty) {
-          // Show loading indicator only if no data yet
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (errorMessage != null && tracks.isEmpty) {
-          // Show error message if no data
-          return Center(child: Text(errorMessage));
-        }
-
-        if (tracks.isEmpty) {
-          // Show empty state with upload button
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('No tracks found.'),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.upload_file),
-                  label: Text('Upload Audio'),
-                  onPressed:
-                      isLoading ? null : () => _pickAndUploadAudio(context),
-                ),
-              ],
-            ),
-          );
-        }
-
-        // Show list with optional loading overlay
-        return Stack(
-          children: [
-            ListView.builder(
-              itemCount: tracks.length + 1,
-              itemBuilder: (context, index) {
-                if (index < tracks.length) {
-                  final track = tracks[index];
-                  return ListTile(
-                    title: Text(track.name),
-                    subtitle: Text('Duration: ${track.duration.inSeconds}s'),
-                    trailing: Icon(Icons.audiotrack),
-                    onTap: () {
-                      context.read<AudioPlayerCubit>().play(track.url);
-                    },
-                  );
-                } else {
-                  // Upload button at the end
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Center(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.upload_file),
-                        label: Text('Upload Audio'),
-                        onPressed:
-                            isLoading
-                                ? null
-                                : () => _pickAndUploadAudio(context),
-                      ),
-                    ),
-                  );
+              if (state is AudioTrackLoaded) {
+                final tracks = state.tracks;
+                if (tracks.isEmpty) {
+                  return _emptyState(context);
                 }
-              },
-            ),
-            if (isLoading)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black.withOpacity(0.1),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
-          ],
-        );
-      },
+
+                return ListView.builder(
+                  itemCount: tracks.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index < tracks.length) {
+                      final track = tracks[index];
+                      return ListTile(
+                        title: Text(track.name),
+                        subtitle: Text(
+                          'Duration: ${track.duration.inSeconds}s',
+                        ),
+                        trailing: Icon(Icons.audiotrack),
+                        onTap: () {
+                          context.read<AudioPlayerCubit>().play(track.url);
+                        },
+                      );
+                    } else {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Center(child: _uploadButton(context)),
+                      );
+                    }
+                  },
+                );
+              }
+
+              return Center(child: Text('Something went wrong or no data.'));
+            },
+          ),
+        ),
+        BlocListener<AudioTrackBloc, AudioTrackState>(
+          listener: (context, state) {
+            if (state is AudioTrackError) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
+            } else if (state is AudioTrackUploadSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Audio uploaded successfully!')),
+              );
+            }
+          },
+          child: SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  Widget _emptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('No tracks found.'),
+          const SizedBox(height: 16),
+          _uploadButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _uploadButton(BuildContext context) {
+    return ElevatedButton.icon(
+      icon: Icon(Icons.upload_file),
+      label: Text('Upload Audio'),
+      onPressed: () => _pickAndUploadAudio(context),
     );
   }
 }
