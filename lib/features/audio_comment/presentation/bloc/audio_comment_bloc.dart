@@ -5,6 +5,10 @@ import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_com
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comement_usecase.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
+import 'dart:async';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 
 @injectable
 class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
@@ -12,14 +16,42 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   final WatchCommentsByTrackUseCase watchCommentsByTrackUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
 
+  StreamSubscription<Either<Failure, List<AudioComment>>>?
+  _commentsSubscription;
+
   AudioCommentBloc({
-    required this.addAudioCommentUseCase,
     required this.watchCommentsByTrackUseCase,
+    required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
   }) : super(WatchingAudioCommentsState(comments: [])) {
+    on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
-    on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
+  }
+
+  void _onWatchCommentsByTrack(
+    WatchCommentsByTrackEvent event,
+    Emitter<AudioCommentState> emit,
+  ) async {
+    await _commentsSubscription?.cancel();
+    emit(WatchingAudioCommentsState(comments: [], isLoading: true));
+
+    _commentsSubscription = watchCommentsByTrackUseCase
+        .call(WatchCommentsByTrackParams(trackId: event.trackId))
+        .listen((either) {
+          either.fold(
+            (failure) => emit(
+              WatchingAudioCommentsState(
+                comments: [],
+                isLoading: false,
+                failure: failure,
+              ),
+            ),
+            (comments) => emit(
+              WatchingAudioCommentsState(comments: comments, isLoading: false),
+            ),
+          );
+        });
   }
 
   void _onAddAudioComment(
@@ -60,13 +92,9 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     );
   }
 
-  void _onWatchCommentsByTrack(
-    WatchCommentsByTrackEvent event,
-    Emitter<AudioCommentState> emit,
-  ) async {
-    emit(WatchingAudioCommentsState(comments: [], isLoading: true));
-    final result = watchCommentsByTrackUseCase.call(
-      WatchCommentsByTrackParams(trackId: event.trackId),
-    );
+  @override
+  Future<void> close() {
+    _commentsSubscription?.cancel();
+    return super.close();
   }
 }

@@ -21,7 +21,7 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  AudioTrackId? _selectedTrackId;
+  AudioTrack? _selectedTrack;
 
   @override
   void initState() {
@@ -31,7 +31,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   void _goToCommentsTab(AudioTrack track) {
     setState(() {
-      _selectedTrackId = track.id;
+      _selectedTrack = track;
     });
     _tabController.animateTo(1); // Comments tab index
   }
@@ -75,8 +75,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                   projectId: widget.project.id,
                   onCommentTrack: _goToCommentsTab,
                 ),
-                _selectedTrackId != null
-                    ? CommentsTab(widget.project.id, _selectedTrackId!)
+                _selectedTrack != null
+                    ? CommentsTab(widget.project.id, _selectedTrack!)
                     : Center(child: Text('Select a track to comment on.')),
                 ManageCollaboratorsScreen(projectId: widget.project.id),
               ],
