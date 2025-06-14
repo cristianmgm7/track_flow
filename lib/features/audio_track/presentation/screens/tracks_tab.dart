@@ -91,7 +91,7 @@ class _TracksTabState extends State<TracksTab> {
                         ),
                         trailing: Icon(Icons.audiotrack),
                         onTap: () {
-                          context.read<AudioPlayerCubit>().play(track.url);
+                          context.read<AudioPlayerCubit>().play(track);
                         },
                       );
                     } else {

@@ -1,27 +1,27 @@
 part of 'audio_player_cubit.dart';
 
 abstract class AudioPlayerState {
-  final String url;
-  AudioPlayerState(this.url);
+  final AudioTrack track;
+  AudioPlayerState(this.track);
 }
 
 class AudioPlayerInitial extends AudioPlayerState {
-  AudioPlayerInitial() : super('');
+  AudioPlayerInitial(super.track);
 }
 
 class AudioPlayerPlaying extends AudioPlayerState {
-  AudioPlayerPlaying(super.url);
+  AudioPlayerPlaying(super.track);
 }
 
 class AudioPlayerPaused extends AudioPlayerState {
-  AudioPlayerPaused() : super('');
+  AudioPlayerPaused(super.track);
 }
 
 class AudioPlayerStopped extends AudioPlayerState {
-  AudioPlayerStopped() : super('');
+  AudioPlayerStopped(super.track);
 }
 
 class AudioPlayerError extends AudioPlayerState {
   final String message;
-  AudioPlayerError(this.message) : super('');
+  AudioPlayerError(this.message, super.track);
 }
