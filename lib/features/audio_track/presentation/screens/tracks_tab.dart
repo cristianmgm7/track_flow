@@ -10,9 +10,12 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_track/presentation/cubit/audio_player_cubit.dart';
 import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
-import 'package:trackflow/features/audio_track/presentation/widgets/mini_audio_player.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/mini_audio_player.dart';
+import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
+import 'package:trackflow/features/project_detail/aplication/playback_source.dart';
+import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
+import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
 
 class TracksTab extends StatefulWidget {
   final ProjectId projectId;
@@ -62,100 +65,106 @@ class _TracksTabState extends State<TracksTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => AudioPlayerCubit(),
-      child: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                child: BlocBuilder<AudioTrackBloc, AudioTrackState>(
-                  buildWhen:
-                      (previous, current) =>
-                          current is AudioTrackLoaded ||
-                          current is AudioTrackLoading,
-                  builder: (context, state) {
-                    if (state is AudioTrackLoading) {
-                      return Center(child: CircularProgressIndicator());
+    return Stack(
+      children: [
+        Column(
+          children: [
+            Expanded(
+              child: BlocBuilder<AudioTrackBloc, AudioTrackState>(
+                buildWhen:
+                    (previous, current) =>
+                        current is AudioTrackLoaded ||
+                        current is AudioTrackLoading,
+                builder: (context, state) {
+                  if (state is AudioTrackLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state is AudioTrackLoaded) {
+                    final tracks = state.tracks;
+                    if (tracks.isEmpty) {
+                      return _emptyState(context);
                     }
 
-                    if (state is AudioTrackLoaded) {
-                      final tracks = state.tracks;
-                      if (tracks.isEmpty) {
-                        return _emptyState(context);
-                      }
-
-                      return ListView.builder(
-                        itemCount: tracks.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index < tracks.length) {
-                            final track = tracks[index];
-                            return Slidable(
-                              key: ValueKey(track.id),
-                              endActionPane: ActionPane(
-                                motion: const DrawerMotion(),
-                                children: [
-                                  SlidableAction(
-                                    onPressed: (_) {
-                                      if (widget.onCommentTrack != null) {
-                                        widget.onCommentTrack!(track);
-                                      }
-                                    },
-                                    backgroundColor: Colors.blue,
-                                    foregroundColor: Colors.white,
-                                    icon: Icons.comment,
-                                    label: 'Comment',
-                                  ),
-                                ],
-                              ),
-                              child: ListTile(
-                                title: Text(track.name),
-                                subtitle: Text(
-                                  'Duration: ${track.duration.inSeconds}s',
+                    return ListView.builder(
+                      itemCount: tracks.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index < tracks.length) {
+                          final track = tracks[index];
+                          return Slidable(
+                            key: ValueKey(track.id),
+                            endActionPane: ActionPane(
+                              motion: const DrawerMotion(),
+                              children: [
+                                SlidableAction(
+                                  onPressed: (_) {
+                                    if (widget.onCommentTrack != null) {
+                                      widget.onCommentTrack!(track);
+                                    }
+                                  },
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.comment,
+                                  label: 'Comment',
                                 ),
-                                trailing: Icon(Icons.audiotrack),
-                                onTap: () {
-                                  context.read<AudioPlayerCubit>().play(track);
-                                },
+                              ],
+                            ),
+                            child: ListTile(
+                              title: Text(track.name),
+                              subtitle: Text(
+                                'Duration: ${track.duration.inSeconds}s',
                               ),
-                            );
-                          } else {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16.0,
-                              ),
-                              child: Center(child: _uploadButton(context)),
-                            );
-                          }
-                        },
-                      );
-                    }
-
-                    return Center(
-                      child: Text('Something went wrong or no data.'),
-                    );
-                  },
-                ),
-              ),
-              BlocListener<AudioTrackBloc, AudioTrackState>(
-                listener: (context, state) {
-                  if (state is AudioTrackError) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(state.message)));
-                  } else if (state is AudioTrackUploadSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Audio uploaded successfully!')),
+                              trailing: Icon(Icons.audiotrack),
+                              onTap: () {
+                                final audioPlayerBloc =
+                                    context.read<AudioPlayerBloc>();
+                                audioPlayerBloc.add(
+                                  PlayAudioRequested(
+                                    source: PlaybackSource(
+                                      type: PlaybackSourceType.track,
+                                      track: track,
+                                    ),
+                                    visualContext:
+                                        PlayerVisualContext.miniPlayer,
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        } else {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                            child: Center(child: _uploadButton(context)),
+                          );
+                        }
+                      },
                     );
                   }
+
+                  return Center(
+                    child: Text('Something went wrong or no data.'),
+                  );
                 },
-                child: SizedBox.shrink(),
               ),
-            ],
-          ),
-          Align(alignment: Alignment.bottomCenter, child: MiniAudioPlayer()),
-        ],
-      ),
+            ),
+            BlocListener<AudioTrackBloc, AudioTrackState>(
+              listener: (context, state) {
+                if (state is AudioTrackError) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(state.message)));
+                } else if (state is AudioTrackUploadSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Audio uploaded successfully!')),
+                  );
+                }
+              },
+              child: SizedBox.shrink(),
+            ),
+          ],
+        ),
+        Align(alignment: Alignment.bottomCenter, child: MiniAudioPlayer()),
+      ],
     );
   }
 
