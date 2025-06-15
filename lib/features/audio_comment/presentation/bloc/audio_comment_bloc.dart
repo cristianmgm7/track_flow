@@ -66,7 +66,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     );
   }
 
-  Future<void> _onWatchCommentsByTrack(
+  void _onWatchCommentsByTrack(
     WatchCommentsByTrackEvent event,
     Emitter<AudioCommentState> emit,
   ) async {
