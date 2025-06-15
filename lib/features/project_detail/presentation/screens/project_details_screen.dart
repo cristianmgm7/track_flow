@@ -9,6 +9,10 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/mini_audio_player.dart';
+import 'package:trackflow/features/audio_comment/presentation/widgets/comment_audio_player.dart';
+import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
+import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -38,6 +42,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
 
   void _handleTabChange() {
+    final audioPlayerBloc = context.read<AudioPlayerBloc>();
+    if (_tabController.index == 1) {
+      // Comments tab
+      audioPlayerBloc.add(
+        ChangeVisualContext(PlayerVisualContext.commentPlayer),
+      );
+    } else {
+      // Tracks o Team tab
+      audioPlayerBloc.add(ChangeVisualContext(PlayerVisualContext.miniPlayer));
+    }
     if (_tabController.index == 1 && _selectedTrack == null) {
       // Comments tab selected, but no track selected
       // The BlocBuilder in build will handle setting the track
@@ -67,12 +81,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         appBar: AppBar(
           title: Text(widget.project.name.toString()),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                // TODO: Go to project settings
-              },
-            ),
+            IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
           ],
           bottom: TabBar(
             controller: _tabController,
@@ -83,59 +92,85 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             ],
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
+        body: Stack(
           children: [
-            TracksTab(
-              projectId: widget.project.id,
-              onCommentTrack: _goToCommentsTab,
-            ),
-            // --- Comments Tab ---
-            Builder(
-              builder: (context) {
-                // Only auto-select if on Comments tab and no track is selected
-                if (_tabController.index == 1 && _selectedTrack == null) {
-                  return BlocBuilder<AudioTrackBloc, AudioTrackState>(
-                    builder: (context, state) {
-                      if (state is AudioTrackLoaded &&
-                          state.tracks.isNotEmpty) {
-                        // Select the most recent (last) track
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (_selectedTrack == null) {
-                            setState(() {
-                              _selectedTrack = state.tracks.last;
+            TabBarView(
+              controller: _tabController,
+              children: [
+                TracksTab(
+                  projectId: widget.project.id,
+                  onCommentTrack: _goToCommentsTab,
+                ),
+                // --- Comments Tab ---
+                Builder(
+                  builder: (context) {
+                    // Only auto-select if on Comments tab and no track is selected
+                    if (_tabController.index == 1 && _selectedTrack == null) {
+                      return BlocBuilder<AudioTrackBloc, AudioTrackState>(
+                        builder: (context, state) {
+                          if (state is AudioTrackLoaded &&
+                              state.tracks.isNotEmpty) {
+                            // Select the most recent (last) track
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (_selectedTrack == null) {
+                                setState(() {
+                                  _selectedTrack = state.tracks.last;
+                                });
+                              }
                             });
+                            // Show a loading indicator while setState triggers rebuild
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          } else if (state is AudioTrackLoading) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          } else if (state is AudioTrackLoaded &&
+                              state.tracks.isEmpty) {
+                            return const Center(
+                              child: Text('No tracks available.'),
+                            );
+                          } else {
+                            return const Center(
+                              child: Text('Select a track to comment on.'),
+                            );
                           }
-                        });
-                        // Show a loading indicator while setState triggers rebuild
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is AudioTrackLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (state is AudioTrackLoaded &&
-                          state.tracks.isEmpty) {
-                        return const Center(
-                          child: Text('No tracks available.'),
-                        );
-                      } else {
-                        return const Center(
-                          child: Text('Select a track to comment on.'),
-                        );
-                      }
-                    },
-                  );
+                        },
+                      );
+                    }
+                    // If a track is selected, show CommentsTab
+                    if (_selectedTrack != null) {
+                      return CommentsTab(widget.project.id, _selectedTrack!);
+                    }
+                    // Fallback
+                    return const Center(
+                      child: Text('Select a track to comment on.'),
+                    );
+                  },
+                ),
+                // --- Team Tab ---
+                ManageCollaboratorsScreen(projectId: widget.project.id),
+              ],
+            ),
+            // Reproductor global reactivo
+            BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+              buildWhen:
+                  (prev, curr) => prev.visualContext != curr.visualContext,
+              builder: (context, state) {
+                Widget? player;
+                if (state.visualContext == PlayerVisualContext.miniPlayer) {
+                  player = MiniAudioPlayer(state: state);
+                } else if (state.visualContext ==
+                    PlayerVisualContext.commentPlayer) {
+                  player = CommentAudioPlayer(state: state);
                 }
-                // If a track is selected, show CommentsTab
-                if (_selectedTrack != null) {
-                  return CommentsTab(widget.project.id, _selectedTrack!);
-                }
-                // Fallback
-                return const Center(
-                  child: Text('Select a track to comment on.'),
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: player ?? const SizedBox.shrink(),
                 );
               },
             ),
-            // --- Team Tab ---
-            ManageCollaboratorsScreen(projectId: widget.project.id),
           ],
         ),
       ),

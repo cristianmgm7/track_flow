@@ -7,7 +7,8 @@ import 'package:just_audio/just_audio.dart';
 import 'dart:async';
 
 class MiniAudioPlayer extends StatefulWidget {
-  const MiniAudioPlayer({super.key});
+  final AudioPlayerState state;
+  const MiniAudioPlayer({super.key, required this.state});
 
   @override
   State<MiniAudioPlayer> createState() => _MiniAudioPlayerState();
@@ -48,98 +49,89 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-      builder: (context, state) {
-        if (state is AudioPlayerPlaying || state is AudioPlayerPaused) {
-          final trackName = state.source.track.name;
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            height: 100,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: const Color.fromRGBO(175, 99, 99, 0.867),
-            child: Stack(
+    final state = widget.state;
+    if (state is AudioPlayerPlaying || state is AudioPlayerPaused) {
+      final trackName = state.source.track.name;
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        height: 100,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: const Color.fromRGBO(175, 99, 99, 0.867),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            trackName,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            state is AudioPlayerPlaying
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            if (state is AudioPlayerPlaying) {
-                              context.read<AudioPlayerBloc>().add(
-                                PauseAudioRequested(),
-                              );
-                            } else {
-                              context.read<AudioPlayerBloc>().add(
-                                ResumeAudioRequested(),
-                              );
-                            }
-                          },
-                        ),
-                      ],
+                    Expanded(
+                      child: Text(
+                        trackName,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white),
+                      ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _formatDuration(_position),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(
-                          _formatDuration(_duration),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    IconButton(
+                      icon: Icon(
+                        state is AudioPlayerPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        if (state is AudioPlayerPlaying) {
+                          context.read<AudioPlayerBloc>().add(
+                            PauseAudioRequested(),
+                          );
+                        } else {
+                          context.read<AudioPlayerBloc>().add(
+                            ResumeAudioRequested(),
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Slider(
-                    value: _position.inMilliseconds.toDouble().clamp(
-                      0.0,
-                      _duration.inMilliseconds.toDouble(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDuration(_position),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
-                    max:
-                        _duration.inMilliseconds.toDouble() > 0
-                            ? _duration.inMilliseconds.toDouble()
-                            : 1,
-                    onChanged: (value) {
-                      _player?.seek(Duration(milliseconds: value.toInt()));
-                    },
-                    activeColor: Colors.greenAccent,
-                    inactiveColor: Colors.white24,
-                  ),
+                    Text(
+                      _formatDuration(_duration),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
                 ),
               ],
             ),
-          );
-        }
-        return const SizedBox.shrink();
-      },
-    );
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Slider(
+                value: _position.inMilliseconds.toDouble().clamp(
+                  0.0,
+                  _duration.inMilliseconds.toDouble(),
+                ),
+                max:
+                    _duration.inMilliseconds.toDouble() > 0
+                        ? _duration.inMilliseconds.toDouble()
+                        : 1,
+                onChanged: (value) {
+                  _player?.seek(Duration(milliseconds: value.toInt()));
+                },
+                activeColor: Colors.greenAccent,
+                inactiveColor: Colors.white24,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   String _formatDuration(Duration d) {
