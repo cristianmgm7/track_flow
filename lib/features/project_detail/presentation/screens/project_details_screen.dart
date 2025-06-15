@@ -4,6 +4,10 @@ import 'package:trackflow/features/audio_comment/presentation/widgets/comments_t
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -23,6 +27,21 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    // Always start watching tracks for this project
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AudioTrackBloc>().add(
+        WatchAudioTracksByProjectEvent(projectId: widget.project.id),
+      );
+    });
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (_tabController.index == 1 && _selectedTrack == null) {
+      // Comments tab selected, but no track selected
+      // The BlocBuilder in build will handle setting the track
+      setState(() {}); // Trigger rebuild
+    }
   }
 
   void _goToCommentsTab(AudioTrack track) {
@@ -34,6 +53,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -67,9 +87,46 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
             projectId: widget.project.id,
             onCommentTrack: _goToCommentsTab,
           ),
-          _selectedTrack != null
-              ? CommentsTab(widget.project.id, _selectedTrack!)
-              : Center(child: Text('Select a track to comment on.')),
+          // --- Comments Tab ---
+          Builder(
+            builder: (context) {
+              // Only auto-select if on Comments tab and no track is selected
+              if (_tabController.index == 1 && _selectedTrack == null) {
+                return BlocBuilder<AudioTrackBloc, AudioTrackState>(
+                  builder: (context, state) {
+                    if (state is AudioTrackLoaded && state.tracks.isNotEmpty) {
+                      // Select the most recent (last) track
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_selectedTrack == null) {
+                          setState(() {
+                            _selectedTrack = state.tracks.last;
+                          });
+                        }
+                      });
+                      // Show a loading indicator while setState triggers rebuild
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is AudioTrackLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is AudioTrackLoaded &&
+                        state.tracks.isEmpty) {
+                      return const Center(child: Text('No tracks available.'));
+                    } else {
+                      return const Center(
+                        child: Text('Select a track to comment on.'),
+                      );
+                    }
+                  },
+                );
+              }
+              // If a track is selected, show CommentsTab
+              if (_selectedTrack != null) {
+                return CommentsTab(widget.project.id, _selectedTrack!);
+              }
+              // Fallback
+              return const Center(child: Text('Select a track to comment on.'));
+            },
+          ),
+          // --- Team Tab ---
           ManageCollaboratorsScreen(projectId: widget.project.id),
         ],
       ),
