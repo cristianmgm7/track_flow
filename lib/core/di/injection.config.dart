@@ -117,6 +117,8 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
     as _i438;
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart'
     as _i508;
+import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart'
+    as _i858;
 import 'package:trackflow/features/project_detail/data/datasource/project_detail_remote_datasource.dart'
     as _i509;
 import 'package:trackflow/features/project_detail/data/repositories/project_detail_repository_impl.dart'
@@ -177,6 +179,7 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
+    gh.factory<_i858.AudioPlayerBloc>(() => _i858.AudioPlayerBloc());
     gh.singleton<_i559.DynamicLinkService>(() => _i559.DynamicLinkService());
     gh.lazySingleton<_i457.FirebaseStorage>(() => appModule.firebaseStorage);
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
@@ -369,11 +372,6 @@ extension GetItInjectableX on _i174.GetIt {
           deleteProject: gh<_i1043.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
         ));
-    gh.factory<_i257.AudioCommentBloc>(() => _i257.AudioCommentBloc(
-          addAudioCommentUseCase: gh<_i900.AddAudioCommentUseCase>(),
-          watchCommentsByTrackUseCase: gh<_i38.WatchCommentsByTrackUseCase>(),
-          deleteAudioCommentUseCase: gh<_i747.DeleteAudioCommentUseCase>(),
-        ));
     gh.lazySingleton<_i398.AddCollaboratorToProjectUseCase>(
         () => _i398.AddCollaboratorToProjectUseCase(
               gh<_i703.ProjectDetailRepository>(),
@@ -409,6 +407,11 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i524.MagicLinkRepository>(),
               gh<_i104.AuthRepository>(),
             ));
+    gh.factory<_i257.AudioCommentBloc>(() => _i257.AudioCommentBloc(
+          watchCommentsByTrackUseCase: gh<_i38.WatchCommentsByTrackUseCase>(),
+          addAudioCommentUseCase: gh<_i900.AddAudioCommentUseCase>(),
+          deleteAudioCommentUseCase: gh<_i747.DeleteAudioCommentUseCase>(),
+        ));
     gh.factory<_i253.MagicLinkBloc>(() => _i253.MagicLinkBloc(
           generateMagicLink: gh<_i179.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i741.ValidateMagicLinkUseCase>(),

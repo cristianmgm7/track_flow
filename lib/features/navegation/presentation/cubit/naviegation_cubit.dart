@@ -13,4 +13,6 @@ class NavigationCubit extends Cubit<AppTab> {
   void onChange(Change<AppTab> change) {
     super.onChange(change);
   }
+
+  void reset() => emit(AppTab.dashboard);
 }

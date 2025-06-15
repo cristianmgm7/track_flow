@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 
+@injectable
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   final AudioPlayer _player = AudioPlayer();
   AudioPlayer get player => _player;
@@ -19,9 +21,9 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     PlayAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
+    emit(AudioPlayerLoading(event.source, event.visualContext));
     await _player.setUrl(event.source.track.url);
     await _player.play();
-
     emit(AudioPlayerPlaying(event.source, event.visualContext));
   }
 
@@ -67,4 +69,8 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     _player.dispose();
     return super.close();
   }
+}
+
+Duration getCurrentPosition(AudioPlayerBloc bloc) {
+  return bloc.player.position;
 }

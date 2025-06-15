@@ -17,6 +17,10 @@ import 'package:trackflow/features/projects/presentation/screens/project_list_sc
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
+import 'package:get_it/get_it.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -99,8 +103,10 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.projectDetails,
               builder:
-                  (context, state) =>
-                      ProjectDetailScreen(project: state.extra as Project),
+                  (context, state) => BlocProvider<AudioPlayerBloc>(
+                    create: (context) => sl<AudioPlayerBloc>(),
+                    child: ProjectDetailScreen(project: state.extra as Project),
+                  ),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,

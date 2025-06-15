@@ -58,3 +58,18 @@ class AudioPlayerPaused extends AudioPlayerActiveState {
     );
   }
 }
+
+class AudioPlayerLoading extends AudioPlayerActiveState {
+  AudioPlayerLoading(super.source, super.visualContext);
+
+  @override
+  AudioPlayerActiveState copyWith({
+    PlaybackSource? source,
+    PlayerVisualContext? visualContext,
+  }) {
+    return AudioPlayerLoading(
+      source ?? this.source,
+      visualContext ?? this.visualContext,
+    );
+  }
+}

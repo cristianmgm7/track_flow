@@ -1,5 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
+import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 
 class SignOut extends StatelessWidget {
   const SignOut({super.key});
@@ -42,7 +46,8 @@ class SignOut extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
-                FirebaseAuth.instance.signOut();
+                context.read<AuthBloc>().add(AuthSignOutRequested());
+                context.read<NavigationCubit>().reset();
               },
               child: Text("Sign Out"),
             ),

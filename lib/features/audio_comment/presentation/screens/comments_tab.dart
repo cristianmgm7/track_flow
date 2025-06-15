@@ -5,11 +5,6 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
-import 'package:trackflow/features/project_detail/aplication/playback_source.dart';
-import '../widgets/comment_audio_player.dart';
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
 
 class CommentsTab extends StatefulWidget {
   final ProjectId projectId;
@@ -28,16 +23,6 @@ class _CommentsTabState extends State<CommentsTab> {
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
     );
-    // Despacha evento para reproducir el track en modo commentPlayer
-    context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(
-        source: PlaybackSource(
-          type: PlaybackSourceType.track,
-          track: widget.track,
-        ),
-        visualContext: PlayerVisualContext.commentPlayer,
-      ),
-    );
   }
 
   void addComment() {
@@ -50,9 +35,7 @@ class _CommentsTabState extends State<CommentsTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Reproductor global para comentarios
-        const CommentAudioPlayer(),
-        const Divider(),
+        const SizedBox(height: 200),
         // Comments list
         Expanded(
           child: BlocBuilder<AudioCommentBloc, AudioCommentState>(

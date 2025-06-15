@@ -50,6 +50,15 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
+    if (state is AudioPlayerLoading) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        height: 100,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: const Color.fromRGBO(175, 99, 99, 0.867),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
     if (state is AudioPlayerPlaying || state is AudioPlayerPaused) {
       final trackName = state.source.track.name;
       return Container(

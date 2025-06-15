@@ -27,6 +27,37 @@ class CommentAudioPlayer extends StatelessWidget {
                 trackName,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 16),
+              Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  Container(
+                    height: 60,
+                    color: Colors.grey[300],
+                    alignment: Alignment.center,
+                    child: const Text("Waveform placeholder"),
+                  ),
+                  Positioned(
+                    right: 8,
+                    child: FloatingActionButton(
+                      mini: true,
+                      heroTag: 'add-comment',
+                      child: const Icon(Icons.add),
+                      onPressed: () {
+                        // Trigger custom logic to add a comment at current audio position
+                        final bloc = context.read<AudioPlayerBloc>();
+                        final currentState = bloc.state;
+                        if (currentState is AudioPlayerPlaying ||
+                            currentState is AudioPlayerPaused) {
+                          final currentPosition = getCurrentPosition(bloc);
+                          // dispatch an event or show a comment input dialog
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
