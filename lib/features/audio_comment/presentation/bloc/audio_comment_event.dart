@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 
 abstract class AudioCommentEvent extends Equatable {
   @override
@@ -35,4 +38,12 @@ class WatchCommentsByTrackEvent extends AudioCommentEvent {
 
   @override
   List<Object?> get props => [trackId];
+}
+
+class AudioCommentsUpdated extends AudioCommentEvent {
+  final Either<Failure, List<AudioComment>> comments;
+  AudioCommentsUpdated(this.comments);
+
+  @override
+  List<Object?> get props => [comments];
 }

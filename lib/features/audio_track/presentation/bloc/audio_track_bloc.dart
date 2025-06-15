@@ -27,24 +27,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     on<WatchAudioTracksByProjectEvent>(_onWatchAudioTracksByProject);
     on<DeleteAudioTrackEvent>(_onDeleteAudioTrack);
     on<UploadAudioTrackEvent>(_onUploadAudioTrack);
-  }
-
-  Future<void> _onWatchAudioTracksByProject(
-    WatchAudioTracksByProjectEvent event,
-    Emitter<AudioTrackState> emit,
-  ) async {
-    await _trackSubscription?.cancel();
-    emit(AudioTrackLoading());
-
-    await emit.forEach<Either<Failure, List<AudioTrack>>>(
-      watchAudioTracksByProject(event.projectId),
-      onData:
-          (data) => data.fold(
-            (failure) => AudioTrackError(message: 'Failed to load tracks'),
-            (tracks) => AudioTrackLoaded(tracks: tracks),
-          ),
-      onError: (_, __) => AudioTrackError(message: 'Stream error'),
-    );
+    on<AudioTracksUpdated>(_onAudioTracksUpdated);
   }
 
   Future<void> _onUploadAudioTrack(
@@ -80,6 +63,30 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     result.fold(
       (failure) => emit(AudioTrackError(message: 'Failed to delete track')),
       (_) => emit(AudioTrackDeleteSuccess()),
+    );
+  }
+
+  Future<void> _onWatchAudioTracksByProject(
+    WatchAudioTracksByProjectEvent event,
+    Emitter<AudioTrackState> emit,
+  ) async {
+    await _trackSubscription?.cancel();
+    emit(AudioTrackLoading());
+
+    _trackSubscription = watchAudioTracksByProject(event.projectId).listen((
+      either,
+    ) {
+      add(AudioTracksUpdated(either));
+    });
+  }
+
+  void _onAudioTracksUpdated(
+    AudioTracksUpdated event,
+    Emitter<AudioTrackState> emit,
+  ) {
+    event.tracks.fold(
+      (failure) => emit(AudioTrackError(message: 'Failed to load tracks')),
+      (tracks) => emit(AudioTrackLoaded(tracks: tracks)),
     );
   }
 

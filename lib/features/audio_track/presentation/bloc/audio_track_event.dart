@@ -2,6 +2,9 @@ import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 abstract class AudioTrackEvent extends Equatable {
   const AudioTrackEvent();
@@ -44,4 +47,12 @@ class DeleteAudioTrackEvent extends AudioTrackEvent {
 
   @override
   List<Object> get props => [trackId, projectId];
+}
+
+class AudioTracksUpdated extends AudioTrackEvent {
+  final Either<Failure, List<AudioTrack>> tracks;
+  const AudioTracksUpdated(this.tracks);
+
+  @override
+  List<Object> get props => [tracks];
 }

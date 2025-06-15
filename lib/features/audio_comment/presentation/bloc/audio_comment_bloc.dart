@@ -27,23 +27,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
-  }
-
-  Future<void> _onWatchCommentsByTrack(
-    WatchCommentsByTrackEvent event,
-    Emitter<AudioCommentState> emit,
-  ) async {
-    await _commentsSubscription?.cancel();
-    emit(AudioCommentLoading());
-
-    _commentsSubscription = watchCommentsByTrackUseCase
-        .call(WatchCommentsByTrackParams(trackId: event.trackId))
-        .listen((either) {
-          either.fold(
-            (failure) => emit(AudioCommentError(failure.message)),
-            (comments) => emit(AudioCommentsLoaded(comments)),
-          );
-        });
+    on<AudioCommentsUpdated>(_onAudioCommentsUpdated);
   }
 
   Future<void> _onAddAudioComment(
@@ -79,6 +63,30 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     result.fold(
       (failure) => emit(AudioCommentError(failure.message)),
       (_) => emit(AudioCommentOperationSuccess('Comment deleted successfully')),
+    );
+  }
+
+  Future<void> _onWatchCommentsByTrack(
+    WatchCommentsByTrackEvent event,
+    Emitter<AudioCommentState> emit,
+  ) async {
+    await _commentsSubscription?.cancel();
+    emit(AudioCommentLoading());
+
+    _commentsSubscription = watchCommentsByTrackUseCase
+        .call(WatchCommentsByTrackParams(trackId: event.trackId))
+        .listen((either) {
+          add(AudioCommentsUpdated(either));
+        });
+  }
+
+  void _onAudioCommentsUpdated(
+    AudioCommentsUpdated event,
+    Emitter<AudioCommentState> emit,
+  ) {
+    event.comments.fold(
+      (failure) => emit(AudioCommentError(failure.message)),
+      (comments) => emit(AudioCommentsLoaded(comments)),
     );
   }
 
