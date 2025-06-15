@@ -10,7 +10,6 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
-    debugPrint('DashboardScreen build called');
     return const Scaffold(body: Center(child: Text('Dashboard')));
   }
 }

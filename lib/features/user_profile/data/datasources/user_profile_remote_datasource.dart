@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
@@ -25,7 +24,6 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
               .collection(UserProfileDTO.collection)
               .doc(userId)
               .get();
-      debugPrint(query.data().toString());
 
       if (!query.exists) {
         return left(DatabaseFailure('User profile not found for ID: $userId'));

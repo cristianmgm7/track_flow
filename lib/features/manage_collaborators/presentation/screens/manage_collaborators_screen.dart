@@ -62,11 +62,6 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ManageCollaboratorsLoaded) {
             final collaborators = state.projectWithUserProfiles.value2;
-            // Debug: imprime los IDs de los colaboradores
-            debugPrint('Colaboradores en la UI:');
-            for (final c in collaborators) {
-              debugPrint('userId: \\${c.id}');
-            }
             return Column(
               children: [
                 Expanded(

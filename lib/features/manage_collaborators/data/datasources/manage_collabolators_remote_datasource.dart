@@ -36,7 +36,6 @@ class ManageCollaboratorsRemoteDataSourceImpl
       await docRef.update({
         'collaborators': FieldValue.arrayUnion([userId]),
       });
-      debugPrint('Collaborator added: $userId');
       return right(null);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {

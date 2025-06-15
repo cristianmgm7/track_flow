@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_collaborator_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/core/entities/unique_id.dart';

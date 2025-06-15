@@ -27,8 +27,6 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<void> cacheProject(ProjectDTO project) async {
     await _box.put(project.id, project.toMap());
-    debugPrint('Project cached: \\${project.id}');
-    printBoxContents();
   }
 
   @override
@@ -56,8 +54,6 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
 
   @override
   Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
-    // Emitir el estado actual filtrado al suscribirse
-    debugPrint('Watching all projects');
     yield (await getAllProjects())
         .where(
           (dto) =>
@@ -77,12 +73,5 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
           )
           .toList();
     });
-  }
-
-  void printBoxContents() {
-    debugPrint('Contenido de la base de datos Hive:');
-    for (var key in _box.keys) {
-      debugPrint('Clave: $key, Valor: ${_box.get(key)}');
-    }
   }
 }

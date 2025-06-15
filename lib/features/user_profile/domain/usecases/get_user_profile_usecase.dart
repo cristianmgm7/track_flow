@@ -14,7 +14,7 @@ class GetUserProfileUseCase {
   GetUserProfileUseCase(this.repository, this.sessionStorage);
 
   Future<Either<Failure, UserProfile>> call() async {
-    final userId = await sessionStorage.getUserId();
+    final userId = sessionStorage.getUserId();
     if (userId == null) {
       return left(UnexpectedFailure('User not found'));
     }
