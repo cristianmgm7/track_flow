@@ -70,15 +70,13 @@ class _CommentsTabState extends State<CommentsTab> {
         Expanded(
           child: BlocBuilder<AudioCommentBloc, AudioCommentState>(
             builder: (context, state) {
-              if (state is WatchingAudioCommentsState) {
-                if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state.failure != null) {
-                  return Center(
-                    child: Text('Error: \\${state.failure!.message}'),
-                  );
-                }
+              if (state is AudioCommentLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is AudioCommentError) {
+                return Center(child: Text('Error: \\${state.message}'));
+              }
+              if (state is AudioCommentsLoaded) {
                 if (state.comments.isEmpty) {
                   return const Center(child: Text('No comments yet.'));
                 }
@@ -94,26 +92,11 @@ class _CommentsTabState extends State<CommentsTab> {
                   },
                 );
               }
-              if (state is AddingAudioCommentState && state.isAdding) {
-                return const Center(child: CircularProgressIndicator());
+              if (state is AudioCommentOperationSuccess) {
+                // Optionally show a success message, or just reload comments
+                return Center(child: Text(state.message));
               }
-              if (state is AddingAudioCommentState && state.failure != null) {
-                return Center(
-                  child: Text(
-                    'Failed to add comment: \\${state.failure!.message}',
-                  ),
-                );
-              }
-              if (state is RemovingAudioCommentState && state.isRemoving) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (state is RemovingAudioCommentState && state.failure != null) {
-                return Center(
-                  child: Text(
-                    'Failed to remove comment: \\${state.failure!.message}',
-                  ),
-                );
-              }
+              // Covers AudioCommentInitial and any unknown state
               return const Center(child: Text('Unable to load comments.'));
             },
           ),

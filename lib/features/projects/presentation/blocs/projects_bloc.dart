@@ -32,8 +32,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
-    on<ProjectsUpdated>(_onProjectsUpdated);
     on<StartWatchingProjects>(_onStartWatchingProjects);
+    on<ProjectsUpdated>(_onProjectsUpdated);
   }
 
   Future<void> _onCreateProjectRequested(

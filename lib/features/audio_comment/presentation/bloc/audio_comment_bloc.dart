@@ -23,42 +23,34 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     required this.watchCommentsByTrackUseCase,
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
-  }) : super(WatchingAudioCommentsState(comments: [])) {
+  }) : super(AudioCommentInitial()) {
     on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
   }
 
-  void _onWatchCommentsByTrack(
+  Future<void> _onWatchCommentsByTrack(
     WatchCommentsByTrackEvent event,
     Emitter<AudioCommentState> emit,
   ) async {
     await _commentsSubscription?.cancel();
-    emit(WatchingAudioCommentsState(comments: [], isLoading: true));
+    emit(AudioCommentLoading());
 
     _commentsSubscription = watchCommentsByTrackUseCase
         .call(WatchCommentsByTrackParams(trackId: event.trackId))
         .listen((either) {
           either.fold(
-            (failure) => emit(
-              WatchingAudioCommentsState(
-                comments: [],
-                isLoading: false,
-                failure: failure,
-              ),
-            ),
-            (comments) => emit(
-              WatchingAudioCommentsState(comments: comments, isLoading: false),
-            ),
+            (failure) => emit(AudioCommentError(failure.message)),
+            (comments) => emit(AudioCommentsLoaded(comments)),
           );
         });
   }
 
-  void _onAddAudioComment(
+  Future<void> _onAddAudioComment(
     AddAudioCommentEvent event,
     Emitter<AudioCommentState> emit,
   ) async {
-    emit(AddingAudioCommentState(isAdding: true));
+    emit(AudioCommentLoading());
     final result = await addAudioCommentUseCase.call(
       AddAudioCommentParams(
         projectId: event.projectId,
@@ -67,17 +59,16 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
       ),
     );
     result.fold(
-      (failure) =>
-          emit(AddingAudioCommentState(isAdding: false, failure: failure)),
-      (_) => emit(AddingAudioCommentState(isAdding: false)),
+      (failure) => emit(AudioCommentError(failure.message)),
+      (_) => emit(AudioCommentOperationSuccess('Comment added successfully')),
     );
   }
 
-  void _onDeleteAudioComment(
+  Future<void> _onDeleteAudioComment(
     DeleteAudioCommentEvent event,
     Emitter<AudioCommentState> emit,
   ) async {
-    emit(RemovingAudioCommentState(isRemoving: true));
+    emit(AudioCommentLoading());
     final result = await deleteAudioCommentUseCase(
       DeleteAudioCommentParams(
         projectId: event.projectId,
@@ -86,9 +77,8 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
       ),
     );
     result.fold(
-      (failure) =>
-          emit(RemovingAudioCommentState(isRemoving: false, failure: failure)),
-      (_) => emit(RemovingAudioCommentState(isRemoving: false)),
+      (failure) => emit(AudioCommentError(failure.message)),
+      (_) => emit(AudioCommentOperationSuccess('Comment deleted successfully')),
     );
   }
 
