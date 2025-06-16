@@ -29,6 +29,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   AudioTrack? _selectedTrack;
   late TracksTab _tracksTab;
   late ManageCollaboratorsScreen _teamTab;
+  FabContextCubit? _fabCubit;
 
   @override
   void initState() {
@@ -43,6 +44,12 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _notifyFabContext();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fabCubit ??= context.read<FabContextCubit>();
   }
 
   void _handleTabChange() {
@@ -61,16 +68,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
 
   void _notifyFabContext() {
-    final fabCubit = context.read<FabContextCubit>();
     switch (_tabController.index) {
       case 0:
-        fabCubit.setProjectDetailTracks(() {
+        _fabCubit?.setProjectDetailTracks(() {
           // Llama al método de TracksTab para subir audio
           _tracksTab.pickAndUploadAudio(context);
         });
         break;
       case 1:
-        fabCubit.setProjectDetailComments(() {
+        _fabCubit?.setProjectDetailComments(() {
           if (_selectedTrack != null) {
             showDialog(
               context: context,
@@ -112,7 +118,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         });
         break;
       case 2:
-        fabCubit.setProjectDetailTeam(() {
+        _fabCubit?.setProjectDetailTeam(() {
           // Llama al método de ManageCollaboratorsScreen para añadir colaborador
           _teamTab.addCollaborator(context);
         });
@@ -131,8 +137,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void dispose() {
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
-    // Oculta el FAB al salir
-    context.read<FabContextCubit>().hide();
+    // Usar la referencia guardada
+    _fabCubit?.hide();
     super.dispose();
   }
 

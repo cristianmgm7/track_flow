@@ -18,6 +18,8 @@ class ProjectListScreen extends StatefulWidget {
 }
 
 class _ProjectListScreenState extends State<ProjectListScreen> {
+  FabContextCubit? _fabCubit;
+
   @override
   void initState() {
     super.initState();
@@ -26,9 +28,13 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fabCubit ??= context.read<FabContextCubit>();
+  }
+
+  @override
   void dispose() {
-    // hide the fab when the screen is disposed
-    context.read<FabContextCubit>().hide();
     super.dispose();
   }
 

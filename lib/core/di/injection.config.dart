@@ -117,6 +117,8 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
     as _i438;
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart'
     as _i508;
+import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart'
+    as _i242;
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart'
     as _i858;
 import 'package:trackflow/features/project_detail/data/datasource/project_detail_remote_datasource.dart'
@@ -180,6 +182,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
     gh.factory<_i858.AudioPlayerBloc>(() => _i858.AudioPlayerBloc());
+    gh.factory<_i242.FabContextCubit>(() => _i242.FabContextCubit());
     gh.singleton<_i559.DynamicLinkService>(() => _i559.DynamicLinkService());
     gh.lazySingleton<_i457.FirebaseStorage>(() => appModule.firebaseStorage);
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
