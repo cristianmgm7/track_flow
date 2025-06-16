@@ -5,6 +5,9 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
+import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
+import 'package:trackflow/features/audio_comment/presentation/widgets/comment_audio_player.dart';
 
 class CommentsTab extends StatefulWidget {
   final ProjectId projectId;
@@ -35,7 +38,14 @@ class _CommentsTabState extends State<CommentsTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 200),
+        BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+          builder: (context, state) {
+            if (state.visualContext == PlayerVisualContext.commentPlayer) {
+              return CommentAudioPlayer(state: state);
+            }
+            return const SizedBox.shrink();
+          },
+        ),
         // Comments list
         Expanded(
           child: BlocBuilder<AudioCommentBloc, AudioCommentState>(

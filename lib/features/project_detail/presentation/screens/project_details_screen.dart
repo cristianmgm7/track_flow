@@ -144,28 +144,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
               ManageCollaboratorsScreen(projectId: widget.project.id),
             ],
           ),
-          // Reproductor global reactivo
-          BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-            buildWhen: (prev, curr) => prev.visualContext != curr.visualContext,
-            builder: (context, state) {
-              Widget? player;
-              Alignment alignment = Alignment.bottomCenter;
-
-              if (state.visualContext == PlayerVisualContext.miniPlayer) {
-                player = MiniAudioPlayer(state: state);
-                alignment = Alignment.bottomCenter;
-              } else if (state.visualContext ==
-                  PlayerVisualContext.commentPlayer) {
-                player = CommentAudioPlayer(state: state);
-                alignment = Alignment.topCenter;
-              }
-
-              return Align(
-                alignment: alignment,
-                child: player ?? const SizedBox.shrink(),
-              );
-            },
-          ),
         ],
       ),
     );
