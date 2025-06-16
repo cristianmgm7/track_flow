@@ -6,7 +6,7 @@ import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.da
 import 'package:trackflow/features/project_detail/presentation/widgets/mini_audio_player.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
-import 'package:trackflow/features/audio_comment/presentation/widgets/comment_audio_player.dart';
+import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
 
 import 'package:trackflow/core/router/app_routes.dart';
 
@@ -28,7 +28,10 @@ class MainScaffold extends StatelessWidget {
               if (state.visualContext == PlayerVisualContext.miniPlayer) {
                 return Align(
                   alignment: Alignment.bottomCenter,
-                  child: MiniAudioPlayer(state: state),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 80.0),
+                    child: MiniAudioPlayer(state: state),
+                  ),
                 );
               }
               return const SizedBox.shrink();
@@ -36,38 +39,115 @@ class MainScaffold extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: AppTab.values.indexOf(currentTab),
-        onTap: (index) {
-          final tab = AppTab.values[index];
-          context.read<AudioPlayerBloc>().add(
-            ChangeVisualContext(PlayerVisualContext.miniPlayer),
-          );
-          context.read<NavigationCubit>().setTab(tab);
-          switch (tab) {
-            case AppTab.dashboard:
-              context.go(AppRoutes.dashboard);
-              break;
-            case AppTab.projects:
-              context.go(AppRoutes.projects);
-              break;
-            case AppTab.notifications:
-              context.go(AppRoutes.notifications);
-              break;
-            case AppTab.settings:
-              context.go(AppRoutes.settings);
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Projects'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Settings'),
-        ],
+      bottomNavigationBar: BottomAppBar(
+        // Sin notch, el FAB será un botón de barra de navegación
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.home),
+                    onPressed: () {
+                      context.read<NavigationCubit>().setTab(AppTab.dashboard);
+                      context.read<AudioPlayerBloc>().add(
+                        ChangeVisualContext(PlayerVisualContext.miniPlayer),
+                      );
+                      context.go(AppRoutes.dashboard);
+                    },
+                    color:
+                        currentTab == AppTab.dashboard
+                            ? Theme.of(context).primaryColor
+                            : null,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.folder),
+                    onPressed: () {
+                      context.read<NavigationCubit>().setTab(AppTab.projects);
+                      context.read<AudioPlayerBloc>().add(
+                        ChangeVisualContext(PlayerVisualContext.miniPlayer),
+                      );
+                      context.go(AppRoutes.projects);
+                    },
+                    color:
+                        currentTab == AppTab.projects
+                            ? Theme.of(context).primaryColor
+                            : null,
+                  ),
+                ],
+              ),
+            ),
+            // FAB como botón de barra de navegación
+            BlocBuilder<FabContextCubit, FabContextState>(
+              builder: (context, fabState) {
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  transitionBuilder:
+                      (child, animation) =>
+                          ScaleTransition(scale: animation, child: child),
+                  child:
+                      fabState.visible
+                          ? Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            child: SizedBox(
+                              height: 56,
+                              width: 56,
+                              child: FloatingActionButton(
+                                key: ValueKey(fabState.icon),
+                                heroTag: 'main-fab',
+                                onPressed: fabState.onPressed,
+                                tooltip: fabState.tooltip,
+                                child: Icon(fabState.icon),
+                              ),
+                            ),
+                          )
+                          : const SizedBox(width: 56),
+                );
+              },
+            ),
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {
+                      context.read<NavigationCubit>().setTab(
+                        AppTab.notifications,
+                      );
+                      context.read<AudioPlayerBloc>().add(
+                        ChangeVisualContext(PlayerVisualContext.miniPlayer),
+                      );
+                      context.go(AppRoutes.notifications);
+                    },
+                    color:
+                        currentTab == AppTab.notifications
+                            ? Theme.of(context).primaryColor
+                            : null,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.person),
+                    onPressed: () {
+                      context.read<NavigationCubit>().setTab(AppTab.settings);
+                      context.read<AudioPlayerBloc>().add(
+                        ChangeVisualContext(PlayerVisualContext.miniPlayer),
+                      );
+                      context.go(AppRoutes.settings);
+                    },
+                    color:
+                        currentTab == AppTab.settings
+                            ? Theme.of(context).primaryColor
+                            : null,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

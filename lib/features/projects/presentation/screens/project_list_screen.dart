@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
@@ -20,9 +21,15 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectsBloc>().add(
-      StartWatchingProjects(),
-    ); // to listen to all projects where the user is a collaborator
+    context.read<ProjectsBloc>().add(StartWatchingProjects());
+    context.read<FabContextCubit>().setProjects(_openProjectFormScreen);
+  }
+
+  @override
+  void dispose() {
+    // hide the fab when the screen is disposed
+    context.read<FabContextCubit>().hide();
+    super.dispose();
   }
 
   void _openProjectFormScreen() {

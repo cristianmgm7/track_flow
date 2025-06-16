@@ -10,6 +10,7 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_eve
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
+import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
 import 'package:trackflow/features/project_detail/aplication/playback_source.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
@@ -22,6 +23,14 @@ class TracksTab extends StatefulWidget {
 
   @override
   State<TracksTab> createState() => _TracksTabState();
+
+  // Expose the method for parent widgets
+  Future<void> pickAndUploadAudio(BuildContext context) async {
+    final state = context.findAncestorStateOfType<_TracksTabState>();
+    if (state != null) {
+      await state.pickAndUploadAudio(context);
+    }
+  }
 }
 
 class _TracksTabState extends State<TracksTab> {
@@ -31,9 +40,12 @@ class _TracksTabState extends State<TracksTab> {
     context.read<AudioTrackBloc>().add(
       WatchAudioTracksByProjectEvent(projectId: widget.projectId),
     );
+    context.read<FabContextCubit>().setProjectDetailTracks(() {
+      pickAndUploadAudio(context);
+    });
   }
 
-  Future<void> _pickAndUploadAudio(BuildContext context) async {
+  Future<void> pickAndUploadAudio(BuildContext context) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -177,7 +189,7 @@ class _TracksTabState extends State<TracksTab> {
     return ElevatedButton.icon(
       icon: Icon(Icons.upload_file),
       label: Text('Upload Audio'),
-      onPressed: () => _pickAndUploadAudio(context),
+      onPressed: () => pickAndUploadAudio(context),
     );
   }
 }

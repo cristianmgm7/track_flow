@@ -12,6 +12,15 @@ class ManageCollaboratorsScreen extends StatefulWidget {
 
   const ManageCollaboratorsScreen({super.key, required this.projectId});
 
+  // Exponer el método para el FAB global
+  void addCollaborator(BuildContext context) {
+    final state =
+        context.findAncestorStateOfType<_ManageCollaboratorsScreenState>();
+    if (state != null) {
+      state.addCollaborator(context);
+    }
+  }
+
   @override
   State<ManageCollaboratorsScreen> createState() =>
       _ManageCollaboratorsScreenState();
@@ -26,7 +35,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     );
   }
 
-  void _addCollaborator(BuildContext context) {
+  void addCollaborator(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -83,10 +92,6 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                       );
                     },
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _addCollaborator(context),
                 ),
               ],
             );

@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/features/audio_track/presentation/screens/tracks_tab.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/comments_tab.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
+import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
-import 'package:trackflow/features/project_detail/presentation/widgets/mini_audio_player.dart';
-import 'package:trackflow/features/audio_comment/presentation/widgets/comment_audio_player.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -26,30 +27,100 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   AudioTrack? _selectedTrack;
+  late TracksTab _tracksTab;
+  late ManageCollaboratorsScreen _teamTab;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChange);
+    _tracksTab = TracksTab(
+      projectId: widget.project.id,
+      onCommentTrack: _goToCommentsTab,
+    );
+    _teamTab = ManageCollaboratorsScreen(projectId: widget.project.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notifyFabContext();
+    });
   }
 
   void _handleTabChange() {
     final audioPlayerBloc = context.read<AudioPlayerBloc>();
     if (_tabController.index == 1) {
-      // Comments tab
       audioPlayerBloc.add(
         ChangeVisualContext(PlayerVisualContext.commentPlayer),
       );
     } else {
-      // Tracks o Team tab
       audioPlayerBloc.add(ChangeVisualContext(PlayerVisualContext.miniPlayer));
     }
     if (_tabController.index == 1 && _selectedTrack == null) {
-      // Comments tab selected, but no track selected
-      // The BlocBuilder in build will handle setting the track
       setState(() {}); // Trigger rebuild
     }
+    _notifyFabContext();
+  }
+
+  void _notifyFabContext() {
+    final fabCubit = context.read<FabContextCubit>();
+    switch (_tabController.index) {
+      case 0:
+        fabCubit.setProjectDetailTracks(() {
+          // Llama al método de TracksTab para subir audio
+          _tracksTab.pickAndUploadAudio(context);
+        });
+        break;
+      case 1:
+        fabCubit.setProjectDetailComments(() {
+          // Mostrar diálogo para añadir comentario
+          _showAddCommentDialog(context);
+        });
+        break;
+      case 2:
+        fabCubit.setProjectDetailTeam(() {
+          // Llama al método de ManageCollaboratorsScreen para añadir colaborador
+          _teamTab.addCollaborator(context);
+        });
+        break;
+    }
+  }
+
+  void _showAddCommentDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Agregar comentario'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Escribe tu comentario',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_selectedTrack != null && controller.text.isNotEmpty) {
+                  context.read<AudioCommentBloc>().add(
+                    AddAudioCommentEvent(
+                      widget.project.id,
+                      _selectedTrack!.id,
+                      controller.text,
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Agregar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _goToCommentsTab(AudioTrack track) {
@@ -63,6 +134,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void dispose() {
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
+    // Oculta el FAB al salir
+    context.read<FabContextCubit>().hide();
     super.dispose();
   }
 
@@ -88,10 +161,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           TabBarView(
             controller: _tabController,
             children: [
-              TracksTab(
-                projectId: widget.project.id,
-                onCommentTrack: _goToCommentsTab,
-              ),
+              _tracksTab,
               // --- Comments Tab ---
               Builder(
                 builder: (context) {
@@ -141,7 +211,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
                 },
               ),
               // --- Team Tab ---
-              ManageCollaboratorsScreen(projectId: widget.project.id),
+              _teamTab,
             ],
           ),
         ],
