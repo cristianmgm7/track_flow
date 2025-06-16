@@ -50,6 +50,7 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
+    print('[MiniAudioPlayer] build: estado actual = \\${state.runtimeType}');
     if (state is AudioPlayerLoading) {
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),

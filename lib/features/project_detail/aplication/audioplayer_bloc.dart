@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart';
@@ -15,6 +16,20 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     on<ResumeAudioRequested>(_onResumeAudioRequested);
     on<StopAudioRequested>(_onStopAudioRequested);
     on<ChangeVisualContext>(_onChangeVisualContext);
+  }
+
+  @override
+  void onEvent(AudioPlayerEvent event) {
+    super.onEvent(event);
+    print('[AudioPlayerBloc] Evento recibido: \\${event.runtimeType}');
+  }
+
+  @override
+  void onTransition(Transition<AudioPlayerEvent, AudioPlayerState> transition) {
+    super.onTransition(transition);
+    print(
+      '[AudioPlayerBloc] Nuevo estado: \\${transition.nextState.runtimeType}',
+    );
   }
 
   Future<void> _onPlayAudioRequested(

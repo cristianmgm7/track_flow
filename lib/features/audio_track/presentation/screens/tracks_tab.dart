@@ -111,6 +111,9 @@ class _TracksTabState extends State<TracksTab> {
                           ),
                           trailing: Icon(Icons.audiotrack),
                           onTap: () {
+                            print(
+                              '[TracksTab] onTap: enviando PlayAudioRequested',
+                            );
                             final audioPlayerBloc =
                                 context.read<AudioPlayerBloc>();
                             audioPlayerBloc.add(

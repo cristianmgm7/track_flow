@@ -103,10 +103,8 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.projectDetails,
               builder:
-                  (context, state) => BlocProvider<AudioPlayerBloc>(
-                    create: (context) => sl<AudioPlayerBloc>(),
-                    child: ProjectDetailScreen(project: state.extra as Project),
-                  ),
+                  (context, state) =>
+                      ProjectDetailScreen(project: state.extra as Project),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,

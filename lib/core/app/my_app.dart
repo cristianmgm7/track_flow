@@ -47,6 +47,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<AudioCommentBloc>(
           create: (context) => sl<AudioCommentBloc>(),
         ),
+        BlocProvider<AudioPlayerBloc>(
+          create: (context) => sl<AudioPlayerBloc>(),
+        ),
       ],
       child: _App(),
     );
