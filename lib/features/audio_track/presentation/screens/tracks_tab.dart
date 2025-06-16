@@ -76,10 +76,10 @@ class _TracksTabState extends State<TracksTab> {
                           PlayAudioRequested(
                             source: PlaybackSource(
                               type: PlaybackSourceType.track,
-                              track: track,
-                              collaborator: uploader,
                             ),
                             visualContext: PlayerVisualContext.miniPlayer,
+                            track: track,
+                            collaborator: uploader,
                           ),
                         );
                       },
