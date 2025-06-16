@@ -71,8 +71,44 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         break;
       case 1:
         fabCubit.setProjectDetailComments(() {
-          // Mostrar diálogo para añadir comentario
-          _showAddCommentDialog(context);
+          if (_selectedTrack != null) {
+            showDialog(
+              context: context,
+              builder: (context) {
+                final controller = TextEditingController();
+                return AlertDialog(
+                  title: const Text('Agregar comentario'),
+                  content: TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe tu comentario',
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (controller.text.isNotEmpty) {
+                          context.read<AudioCommentBloc>().add(
+                            AddAudioCommentEvent(
+                              widget.project.id,
+                              _selectedTrack!.id,
+                              controller.text,
+                            ),
+                          );
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: const Text('Agregar'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
         });
         break;
       case 2:
@@ -82,45 +118,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         });
         break;
     }
-  }
-
-  void _showAddCommentDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final controller = TextEditingController();
-        return AlertDialog(
-          title: const Text('Agregar comentario'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: 'Escribe tu comentario',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (_selectedTrack != null && controller.text.isNotEmpty) {
-                  context.read<AudioCommentBloc>().add(
-                    AddAudioCommentEvent(
-                      widget.project.id,
-                      _selectedTrack!.id,
-                      controller.text,
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('Agregar'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _goToCommentsTab(AudioTrack track) {

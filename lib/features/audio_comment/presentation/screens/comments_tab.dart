@@ -14,6 +14,14 @@ class CommentsTab extends StatefulWidget {
   final AudioTrack track;
   const CommentsTab(this.projectId, this.track, {super.key});
 
+  // Expose the method for parent widgets
+  void addComment(BuildContext context) {
+    final state = context.findAncestorStateOfType<_CommentsTabState>();
+    if (state != null) {
+      state.addComment(context);
+    }
+  }
+
   @override
   State<CommentsTab> createState() => _CommentsTabState();
 }
@@ -28,9 +36,42 @@ class _CommentsTabState extends State<CommentsTab> {
     );
   }
 
-  void addComment() {
-    context.read<AudioCommentBloc>().add(
-      AddAudioCommentEvent(widget.projectId, widget.track.id, 'Test comment'),
+  void addComment(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController();
+        return AlertDialog(
+          title: const Text('Agregar comentario'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Escribe tu comentario',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.isNotEmpty) {
+                  context.read<AudioCommentBloc>().add(
+                    AddAudioCommentEvent(
+                      widget.projectId,
+                      widget.track.id,
+                      controller.text,
+                    ),
+                  );
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Agregar'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -90,7 +131,7 @@ class _CommentsTabState extends State<CommentsTab> {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.add_comment),
                   label: const Text('Add Comment'),
-                  onPressed: () => addComment(),
+                  onPressed: () => addComment(context),
                 ),
               ),
             ],
