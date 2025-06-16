@@ -24,7 +24,7 @@ class TrackComponent extends StatelessWidget {
     final durationStr = _formatDuration(track.duration);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 5.0, vertical: 5.0),
       child: Card(
         color: Theme.of(context).colorScheme.surface.withOpacity(0.97),
         elevation: 2,

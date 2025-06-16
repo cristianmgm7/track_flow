@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart';
@@ -21,15 +20,11 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   @override
   void onEvent(AudioPlayerEvent event) {
     super.onEvent(event);
-    print('[AudioPlayerBloc] Evento recibido: \\${event.runtimeType}');
   }
 
   @override
   void onTransition(Transition<AudioPlayerEvent, AudioPlayerState> transition) {
     super.onTransition(transition);
-    print(
-      '[AudioPlayerBloc] Nuevo estado: \\${transition.nextState.runtimeType}',
-    );
   }
 
   Future<void> _onPlayAudioRequested(
@@ -47,7 +42,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     await _player.pause();
-    emit(AudioPlayerPaused(state.source, state.visualContext));
+    emit(AudioPlayerPaused(state.source!, state.visualContext));
   }
 
   Future<void> _onResumeAudioRequested(
@@ -55,7 +50,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     await _player.play();
-    emit(AudioPlayerPlaying(state.source, state.visualContext));
+    emit(AudioPlayerPlaying(state.source!, state.visualContext));
   }
 
   Future<void> _onStopAudioRequested(

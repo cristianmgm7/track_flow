@@ -30,7 +30,11 @@ class MainScaffold extends StatelessWidget {
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 80.0),
-                    child: MiniAudioPlayer(state: state),
+                    child: MiniAudioPlayer(
+                      state: state,
+                      track: state.source.track,
+                      collaborator: state.source.collaborator,
+                    ),
                   ),
                 );
               }
@@ -40,10 +44,10 @@ class MainScaffold extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+        padding: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
           color: const Color.fromARGB(95, 255, 255, 255),
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -60,6 +64,7 @@ class MainScaffold extends StatelessWidget {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
+                  // --- Home Button ---
                   IconButton(
                     icon: const Icon(Icons.home),
                     onPressed: () {
@@ -75,6 +80,7 @@ class MainScaffold extends StatelessWidget {
                             ? Theme.of(context).primaryColor
                             : Colors.grey[400],
                   ),
+                  // --- Projects Button ---
                   IconButton(
                     icon: const Icon(Icons.folder),
                     onPressed: () {
@@ -105,6 +111,7 @@ class MainScaffold extends StatelessWidget {
                       ),
                     ),
                   ],
+                  // --- Notifications Button ---
                   IconButton(
                     icon: const Icon(Icons.notifications),
                     onPressed: () {
@@ -122,6 +129,7 @@ class MainScaffold extends StatelessWidget {
                             ? Theme.of(context).primaryColor
                             : Colors.grey[400],
                   ),
+                  // --- Settings Button ---
                   IconButton(
                     icon: const Icon(Icons.person),
                     onPressed: () {

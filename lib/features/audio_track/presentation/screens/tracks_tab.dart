@@ -66,14 +66,6 @@ class _TracksTabState extends State<TracksTab> {
                     final track = tracks[index];
                     final uploader = widget.collaborators.firstWhere(
                       (u) => u.id == track.uploadedBy,
-                      orElse:
-                          () => UserProfile(
-                            id: track.uploadedBy,
-                            name: '',
-                            email: '',
-                            avatarUrl: '',
-                            createdAt: DateTime.now(),
-                          ),
                     );
                     return TrackComponent(
                       track: track,
@@ -85,6 +77,7 @@ class _TracksTabState extends State<TracksTab> {
                             source: PlaybackSource(
                               type: PlaybackSourceType.track,
                               track: track,
+                              collaborator: uploader,
                             ),
                             visualContext: PlayerVisualContext.miniPlayer,
                           ),

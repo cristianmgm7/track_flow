@@ -139,8 +139,6 @@ class MagicLinkBloc extends Bloc<MagicLinkEvent, MagicLinkState> {
       );
       return;
     }
-    final userId = userIdOrFailure.getOrElse(() => '');
-    // 3. Consumir el magic link
     final consumeResult = await consumeMagicLink(
       ConsumeMagicLinkParams(token: event.token),
     );
