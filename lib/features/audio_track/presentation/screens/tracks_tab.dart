@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-// import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
@@ -13,6 +11,7 @@ import 'package:trackflow/features/project_detail/aplication/playback_source.dar
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 
 class TracksTab extends StatefulWidget {
   final ProjectId projectId;
@@ -65,44 +64,36 @@ class _TracksTabState extends State<TracksTab> {
                   itemCount: tracks.length,
                   itemBuilder: (context, index) {
                     final track = tracks[index];
-                    return Slidable(
-                      key: ValueKey(track.id),
-                      endActionPane: ActionPane(
-                        motion: const DrawerMotion(),
-                        children: [
-                          SlidableAction(
-                            onPressed: (_) {
-                              if (widget.onCommentTrack != null) {
-                                widget.onCommentTrack!(track);
-                              }
-                            },
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            icon: Icons.comment,
-                            label: 'Comment',
+                    final uploader = widget.collaborators.firstWhere(
+                      (u) => u.id == track.uploadedBy,
+                      orElse:
+                          () => UserProfile(
+                            id: track.uploadedBy,
+                            name: '',
+                            email: '',
+                            avatarUrl: '',
+                            createdAt: DateTime.now(),
                           ),
-                        ],
-                      ),
-                      child: ListTile(
-                        title: Text(track.name),
-                        subtitle: Text(
-                          'Duration: ${track.duration.inSeconds}s',
-                        ),
-                        trailing: Icon(Icons.audiotrack),
-                        onTap: () {
-                          final audioPlayerBloc =
-                              context.read<AudioPlayerBloc>();
-                          audioPlayerBloc.add(
-                            PlayAudioRequested(
-                              source: PlaybackSource(
-                                type: PlaybackSourceType.track,
-                                track: track,
-                              ),
-                              visualContext: PlayerVisualContext.miniPlayer,
+                    );
+                    return TrackComponent(
+                      track: track,
+                      uploader: uploader,
+                      onPlay: () {
+                        final audioPlayerBloc = context.read<AudioPlayerBloc>();
+                        audioPlayerBloc.add(
+                          PlayAudioRequested(
+                            source: PlaybackSource(
+                              type: PlaybackSourceType.track,
+                              track: track,
                             ),
-                          );
-                        },
-                      ),
+                            visualContext: PlayerVisualContext.miniPlayer,
+                          ),
+                        );
+                      },
+                      onComment:
+                          widget.onCommentTrack != null
+                              ? () => widget.onCommentTrack!(track)
+                              : null,
                     );
                   },
                 );

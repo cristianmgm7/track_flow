@@ -7,8 +7,9 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
-import 'package:trackflow/features/audio_comment/presentation/widgets/comment_audio_player.dart';
+import 'package:trackflow/features/audio_comment/presentation/component/comment_audio_player.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_comment/presentation/component/comment_component.dart';
 
 class CommentsTab extends StatefulWidget {
   final ProjectId projectId;
@@ -75,36 +76,9 @@ class _CommentsTabState extends State<CommentsTab> {
                             createdAt: DateTime.now(),
                           ),
                     );
-                    return ListTile(
-                      leading:
-                          collaborator != null
-                              ? CircleAvatar(
-                                backgroundImage:
-                                    collaborator.avatarUrl != null
-                                        ? NetworkImage(collaborator.avatarUrl)
-                                        : null,
-                                child:
-                                    collaborator.avatarUrl == null
-                                        ? Text(
-                                          collaborator.name.isNotEmpty
-                                              ? collaborator.name.substring(
-                                                0,
-                                                1,
-                                              )
-                                              : '?',
-                                        )
-                                        : null,
-                              )
-                              : CircleAvatar(
-                                child: Text(
-                                  comment.createdBy.value.substring(0, 1),
-                                ),
-                              ),
-                      title: Text(comment.content),
-                      subtitle: Text(
-                        'By: '
-                        '${collaborator.name.isNotEmpty ? collaborator.name : comment.createdBy.value}',
-                      ),
+                    return CommentComponent(
+                      comment: comment,
+                      collaborator: collaborator,
                     );
                   },
                 );
@@ -116,21 +90,6 @@ class _CommentsTabState extends State<CommentsTab> {
               // Covers AudioCommentInitial and any unknown state
               return const Center(child: Text('Unable to load comments.'));
             },
-          ),
-        ),
-        // Add Comment Button
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add_comment),
-                  label: const Text('Add Comment'),
-                  onPressed: () {},
-                ),
-              ),
-            ],
           ),
         ),
       ],

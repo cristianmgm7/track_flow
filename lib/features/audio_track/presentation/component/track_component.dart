@@ -1,0 +1,153 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+
+class TrackComponent extends StatelessWidget {
+  final AudioTrack track;
+  final UserProfile uploader;
+  final VoidCallback? onPlay;
+  final VoidCallback? onComment;
+
+  const TrackComponent({
+    super.key,
+    required this.track,
+    required this.uploader,
+    this.onPlay,
+    this.onComment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
+    final createdAtStr = dateFormat.format(track.createdAt);
+    final durationStr = _formatDuration(track.duration);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      child: Card(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.97),
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Play button
+              Material(
+                color: Colors.blueAccent,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: onPlay,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            track.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          durationStr,
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundImage:
+                              uploader.avatarUrl.isNotEmpty
+                                  ? NetworkImage(uploader.avatarUrl)
+                                  : null,
+                          child:
+                              uploader.avatarUrl.isEmpty
+                                  ? Text(
+                                    uploader.name.isNotEmpty
+                                        ? uploader.name.substring(0, 1)
+                                        : '?',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                  : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            uploader.name.isNotEmpty
+                                ? uploader.name
+                                : 'Unknown',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          createdAtStr,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (onComment != null) ...[
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.comment, color: Colors.blueAccent),
+                  onPressed: onComment,
+                  tooltip: 'Comment',
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(d.inMinutes.remainder(60));
+    final seconds = twoDigits(d.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+}
