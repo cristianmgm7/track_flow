@@ -8,11 +8,18 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/audio_comment/presentation/widgets/comment_audio_player.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class CommentsTab extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
-  const CommentsTab(this.projectId, this.track, {super.key});
+  final List<UserProfile> collaborators;
+  const CommentsTab(
+    this.projectId,
+    this.track,
+    this.collaborators, {
+    super.key,
+  });
   @override
   State<CommentsTab> createState() => _CommentsTabState();
 }
@@ -57,10 +64,47 @@ class _CommentsTabState extends State<CommentsTab> {
                   itemCount: state.comments.length,
                   itemBuilder: (context, index) {
                     final comment = state.comments[index];
+                    final collaborator = widget.collaborators.firstWhere(
+                      (u) => u.id == comment.createdBy,
+                      orElse:
+                          () => UserProfile(
+                            id: comment.createdBy,
+                            name: '',
+                            email: '',
+                            avatarUrl: '',
+                            createdAt: DateTime.now(),
+                          ),
+                    );
                     return ListTile(
-                      leading: const Icon(Icons.comment),
+                      leading:
+                          collaborator != null
+                              ? CircleAvatar(
+                                backgroundImage:
+                                    collaborator.avatarUrl != null
+                                        ? NetworkImage(collaborator.avatarUrl)
+                                        : null,
+                                child:
+                                    collaborator.avatarUrl == null
+                                        ? Text(
+                                          collaborator.name.isNotEmpty
+                                              ? collaborator.name.substring(
+                                                0,
+                                                1,
+                                              )
+                                              : '?',
+                                        )
+                                        : null,
+                              )
+                              : CircleAvatar(
+                                child: Text(
+                                  comment.createdBy.value.substring(0, 1),
+                                ),
+                              ),
                       title: Text(comment.content),
-                      subtitle: Text('By: \\${comment.createdBy.value}'),
+                      subtitle: Text(
+                        'By: '
+                        '${collaborator.name.isNotEmpty ? collaborator.name : comment.createdBy.value}',
+                      ),
                     );
                   },
                 );

@@ -8,38 +8,35 @@ import 'package:trackflow/features/project_detail/presentation/bloc/project_deta
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @injectable
 class ProjectDetailBloc extends Bloc<ProjectDetailsEvent, ProjectDetailsState> {
-  final LoadUserProfileCollaboratorsUseCase getUserProfileCollaborators;
+  final LoadUserProfileCollaboratorsUseCase getProjectWithUserProfilesUseCase;
   final LeaveProjectUseCase leaveProjectUseCase;
 
   ProjectDetailBloc({
-    required this.getUserProfileCollaborators,
+    required this.getProjectWithUserProfilesUseCase,
     required this.leaveProjectUseCase,
   }) : super(ProjectDetailsInitial()) {
-    on<LoadUserProfiles>(_onLoadUserProfileCollaborators);
+    on<LoadUserProfiles>(_onGetProjectWithUserProfiles);
     on<LeaveProject>(_onLeaveProject);
   }
 
-  Future<void> _onLoadUserProfileCollaborators(
+  Future<void> _onGetProjectWithUserProfiles(
     LoadUserProfiles event,
     Emitter<ProjectDetailsState> emit,
   ) async {
-    emit(ProjectDetailsLoading());
-    final Either<Failure, List<UserProfile>> failureOrProject =
-        await getUserProfileCollaborators.call(
-          ProjectWithCollaborators(project: event.project),
-        );
-
-    failureOrProject.fold(
-      (failure) => emit(ProjectDetailsError(_mapFailureToMessage(failure))),
-      (collaborators) => emit(
+    final result = await getProjectWithUserProfilesUseCase.call(
+      ProjectWithCollaborators(project: event.project),
+    );
+    await result.fold(
+      (failure) async =>
+          emit(ProjectDetailsError(_mapFailureToMessage(failure))),
+      (projectWithUserProfiles) async => emit(
         ProjectDetailsLoaded(
           params: ManageCollaboratorsParams(
-            project: event.project,
-            collaborators: collaborators,
+            projectId: event.project.id,
+            collaborators: projectWithUserProfiles,
           ),
         ),
       ),

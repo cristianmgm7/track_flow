@@ -12,11 +12,18 @@ import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.da
 import 'package:trackflow/features/project_detail/aplication/playback_source.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class TracksTab extends StatefulWidget {
   final ProjectId projectId;
+  final List<UserProfile> collaborators;
   final void Function(AudioTrack track)? onCommentTrack;
-  const TracksTab({super.key, required this.projectId, this.onCommentTrack});
+  const TracksTab({
+    super.key,
+    required this.projectId,
+    required this.collaborators,
+    this.onCommentTrack,
+  });
 
   @override
   State<TracksTab> createState() => _TracksTabState();

@@ -277,6 +277,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i839.UserProfileRepository>(() =>
         _i416.UserProfileRepositoryImpl(
             gh<_i744.UserProfileRemoteDataSource>()));
+    gh.factory<_i376.ProjectDetailBloc>(() => _i376.ProjectDetailBloc(
+          getProjectWithUserProfilesUseCase:
+              gh<_i147.LoadUserProfileCollaboratorsUseCase>(),
+          leaveProjectUseCase: gh<_i650.LeaveProjectUseCase>(),
+        ));
     gh.lazySingleton<_i881.WatchAudioTracksByProject>(() =>
         _i881.WatchAudioTracksByProject(gh<_i864.AudioTrackRepository>()));
     gh.lazySingleton<_i134.ProjectCommentService>(
@@ -308,11 +313,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i218.UserProfileBloc>(() => _i218.UserProfileBloc(
           getUserProfileUseCase: gh<_i120.GetUserProfileUseCase>(),
           updateUserProfileUseCase: gh<_i435.UpdateUserProfileUseCase>(),
-        ));
-    gh.factory<_i376.ProjectDetailBloc>(() => _i376.ProjectDetailBloc(
-          getUserProfileCollaborators:
-              gh<_i147.LoadUserProfileCollaboratorsUseCase>(),
-          leaveProjectUseCase: gh<_i650.LeaveProjectUseCase>(),
         ));
     gh.factory<_i1071.ProjectSyncService>(() => _i1071.ProjectSyncService(
           repository: gh<_i1022.ProjectsRepository>(),

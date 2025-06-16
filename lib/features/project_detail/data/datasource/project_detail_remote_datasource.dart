@@ -12,8 +12,7 @@ abstract class ProjectDetailRemoteDataSource {
   Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
 
   Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    ProjectId projectId,
-    List<UserId> collaborators,
+    Project project,
   );
 
   Future<Either<Failure, Unit>> leaveProject({
@@ -46,11 +45,10 @@ class ProjectDetailRemoteDatasourceImpl
 
   @override
   Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    ProjectId projectId,
-    List<UserId> collaborators,
+    Project project,
   ) async {
     try {
-      final ids = collaborators.map((e) => e.value).toList();
+      final ids = project.collaborators.map((e) => e.userId.value).toList();
 
       final snapshot =
           await _firestore
