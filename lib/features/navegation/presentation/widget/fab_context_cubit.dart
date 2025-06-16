@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:injectable/injectable.dart';
 
 // Enum para los posibles contextos del FAB
 enum FabContext {
@@ -42,6 +43,7 @@ class FabContextState {
   }
 }
 
+@injectable
 class FabContextCubit extends Cubit<FabContextState> {
   FabContextCubit()
     : super(

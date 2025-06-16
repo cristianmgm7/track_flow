@@ -40,7 +40,6 @@ class MainScaffold extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: BottomAppBar(
-        // Sin notch, el FAB será un botón de barra de navegación
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
