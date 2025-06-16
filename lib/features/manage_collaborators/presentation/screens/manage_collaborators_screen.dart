@@ -4,22 +4,12 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/widgets/add_collaborator_dialog.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/remove_colaborator_dialog.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
   final ProjectId projectId; // receive only the project ID
 
   const ManageCollaboratorsScreen({super.key, required this.projectId});
-
-  // Exponer el método para el FAB global
-  void addCollaborator(BuildContext context) {
-    final state =
-        context.findAncestorStateOfType<_ManageCollaboratorsScreenState>();
-    if (state != null) {
-      state.addCollaborator(context);
-    }
-  }
 
   @override
   State<ManageCollaboratorsScreen> createState() =>
@@ -32,15 +22,6 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     super.initState();
     context.read<ManageCollaboratorsBloc>().add(
       GetProjectWithUserProfiles(projectId: widget.projectId),
-    );
-  }
-
-  void addCollaborator(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AddCollaboratorDialog(projectId: widget.projectId);
-      },
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/screens/tracks_tab.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/comments_tab.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
@@ -13,6 +14,10 @@ import 'package:trackflow/features/project_detail/aplication/audio_player_state.
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
+import 'dart:io';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/add_collaborator_dialog.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -70,57 +75,14 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
   void _notifyFabContext() {
     switch (_tabController.index) {
       case 0:
-        _fabCubit?.setProjectDetailTracks(() {
-          // Llama al método de TracksTab para subir audio
-          _tracksTab.pickAndUploadAudio(context);
-        });
+        _fabCubit?.setProjectDetailTracks(_onAddTrack);
         break;
       case 1:
-        _fabCubit?.setProjectDetailComments(() {
-          if (_selectedTrack != null) {
-            showDialog(
-              context: context,
-              builder: (context) {
-                final controller = TextEditingController();
-                return AlertDialog(
-                  title: const Text('Agregar comentario'),
-                  content: TextField(
-                    controller: controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Escribe tu comentario',
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Cancelar'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (controller.text.isNotEmpty) {
-                          context.read<AudioCommentBloc>().add(
-                            AddAudioCommentEvent(
-                              widget.project.id,
-                              _selectedTrack!.id,
-                              controller.text,
-                            ),
-                          );
-                          Navigator.of(context).pop();
-                        }
-                      },
-                      child: const Text('Agregar'),
-                    ),
-                  ],
-                );
-              },
-            );
-          }
-        });
+        _fabCubit?.setProjectDetailComments(_onAddComment);
         break;
       case 2:
         _fabCubit?.setProjectDetailTeam(() {
-          // Llama al método de ManageCollaboratorsScreen para añadir colaborador
-          _teamTab.addCollaborator(context);
+          _onAddCollaborator();
         });
         break;
     }
@@ -131,6 +93,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
       _selectedTrack = track;
     });
     _tabController.animateTo(1); // Comments tab index
+  }
+
+  void _onAddCollaborator() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AddCollaboratorDialog(projectId: widget.project.id);
+      },
+    );
   }
 
   @override
@@ -220,5 +191,67 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _onAddTrack() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'aac', 'm4a'],
+    );
+    if (result != null && result.files.single.path != null) {
+      final name = result.files.single.name;
+      final filePath = result.files.single.path!;
+      final duration = await AudioUtils.getAudioDuration(filePath);
+
+      context.read<AudioTrackBloc>().add(
+        UploadAudioTrackEvent(
+          file: File(filePath),
+          name: name,
+          duration: duration,
+          projectId: widget.project.id,
+        ),
+      );
+    }
+  }
+
+  void _onAddComment() {
+    if (_selectedTrack != null) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          final controller = TextEditingController();
+          return AlertDialog(
+            title: const Text('Agregar comentario'),
+            content: TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                hintText: 'Escribe tu comentario',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (controller.text.isNotEmpty) {
+                    context.read<AudioCommentBloc>().add(
+                      AddAudioCommentEvent(
+                        widget.project.id,
+                        _selectedTrack!.id,
+                        controller.text,
+                      ),
+                    );
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Agregar'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }

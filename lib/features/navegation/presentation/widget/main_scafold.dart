@@ -39,17 +39,31 @@ class MainScaffold extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(95, 255, 255, 255),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+          child: BlocBuilder<FabContextCubit, FabContextState>(
+            builder: (context, fabState) {
+              final fabVisible = fabState.visible;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.home),
                     onPressed: () {
+                      context.read<FabContextCubit>().hide();
                       context.read<NavigationCubit>().setTab(AppTab.dashboard);
                       context.read<AudioPlayerBloc>().add(
                         ChangeVisualContext(PlayerVisualContext.miniPlayer),
@@ -59,7 +73,7 @@ class MainScaffold extends StatelessWidget {
                     color:
                         currentTab == AppTab.dashboard
                             ? Theme.of(context).primaryColor
-                            : null,
+                            : Colors.grey[400],
                   ),
                   IconButton(
                     icon: const Icon(Icons.folder),
@@ -73,48 +87,28 @@ class MainScaffold extends StatelessWidget {
                     color:
                         currentTab == AppTab.projects
                             ? Theme.of(context).primaryColor
-                            : null,
+                            : Colors.grey[400],
                   ),
-                ],
-              ),
-            ),
-            // FAB como botón de barra de navegación
-            BlocBuilder<FabContextCubit, FabContextState>(
-              builder: (context, fabState) {
-                return AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  transitionBuilder:
-                      (child, animation) =>
-                          ScaleTransition(scale: animation, child: child),
-                  child:
-                      fabState.visible
-                          ? Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
-                            child: SizedBox(
-                              height: 56,
-                              width: 56,
-                              child: FloatingActionButton(
-                                key: ValueKey(fabState.icon),
-                                heroTag: 'main-fab',
-                                onPressed: fabState.onPressed,
-                                tooltip: fabState.tooltip,
-                                child: Icon(fabState.icon),
-                              ),
-                            ),
-                          )
-                          : const SizedBox(width: 56),
-                );
-              },
-            ),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
+                  if (fabVisible) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: SizedBox(
+                        height: 56,
+                        width: 56,
+                        child: FloatingActionButton(
+                          key: ValueKey(fabState.icon),
+                          heroTag: 'main-fab',
+                          onPressed: fabState.onPressed,
+                          tooltip: fabState.tooltip,
+                          child: Icon(fabState.icon),
+                        ),
+                      ),
+                    ),
+                  ],
                   IconButton(
                     icon: const Icon(Icons.notifications),
                     onPressed: () {
+                      context.read<FabContextCubit>().hide();
                       context.read<NavigationCubit>().setTab(
                         AppTab.notifications,
                       );
@@ -126,11 +120,12 @@ class MainScaffold extends StatelessWidget {
                     color:
                         currentTab == AppTab.notifications
                             ? Theme.of(context).primaryColor
-                            : null,
+                            : Colors.grey[400],
                   ),
                   IconButton(
                     icon: const Icon(Icons.person),
                     onPressed: () {
+                      context.read<FabContextCubit>().hide();
                       context.read<NavigationCubit>().setTab(AppTab.settings);
                       context.read<AudioPlayerBloc>().add(
                         ChangeVisualContext(PlayerVisualContext.miniPlayer),
@@ -140,12 +135,12 @@ class MainScaffold extends StatelessWidget {
                     color:
                         currentTab == AppTab.settings
                             ? Theme.of(context).primaryColor
-                            : null,
+                            : Colors.grey[400],
                   ),
                 ],
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );

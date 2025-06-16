@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -9,7 +7,6 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
 import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
 import 'package:trackflow/features/project_detail/aplication/playback_source.dart';
@@ -23,14 +20,6 @@ class TracksTab extends StatefulWidget {
 
   @override
   State<TracksTab> createState() => _TracksTabState();
-
-  // Expose the method for parent widgets
-  Future<void> pickAndUploadAudio(BuildContext context) async {
-    final state = context.findAncestorStateOfType<_TracksTabState>();
-    if (state != null) {
-      await state.pickAndUploadAudio(context);
-    }
-  }
 }
 
 class _TracksTabState extends State<TracksTab> {
@@ -41,36 +30,8 @@ class _TracksTabState extends State<TracksTab> {
       WatchAudioTracksByProjectEvent(projectId: widget.projectId),
     );
     context.read<FabContextCubit>().setProjectDetailTracks(() {
-      pickAndUploadAudio(context);
+      // pickAndUploadAudio(context);
     });
-  }
-
-  Future<void> pickAndUploadAudio(BuildContext context) async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['mp3', 'wav', 'aac', 'm4a'],
-      );
-      if (result != null && result.files.single.path != null) {
-        final name = result.files.single.name;
-        final filePath = result.files.single.path!;
-
-        final duration = await AudioUtils.getAudioDuration(filePath);
-
-        context.read<AudioTrackBloc>().add(
-          UploadAudioTrackEvent(
-            file: File(filePath),
-            name: name,
-            duration: duration,
-            projectId: widget.projectId,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
   }
 
   @override
@@ -94,58 +55,48 @@ class _TracksTabState extends State<TracksTab> {
                 }
 
                 return ListView.builder(
-                  itemCount: tracks.length + 1,
+                  itemCount: tracks.length,
                   itemBuilder: (context, index) {
-                    if (index < tracks.length) {
-                      final track = tracks[index];
-                      return Slidable(
-                        key: ValueKey(track.id),
-                        endActionPane: ActionPane(
-                          motion: const DrawerMotion(),
-                          children: [
-                            SlidableAction(
-                              onPressed: (_) {
-                                if (widget.onCommentTrack != null) {
-                                  widget.onCommentTrack!(track);
-                                }
-                              },
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              icon: Icons.comment,
-                              label: 'Comment',
-                            ),
-                          ],
-                        ),
-                        child: ListTile(
-                          title: Text(track.name),
-                          subtitle: Text(
-                            'Duration: ${track.duration.inSeconds}s',
+                    final track = tracks[index];
+                    return Slidable(
+                      key: ValueKey(track.id),
+                      endActionPane: ActionPane(
+                        motion: const DrawerMotion(),
+                        children: [
+                          SlidableAction(
+                            onPressed: (_) {
+                              if (widget.onCommentTrack != null) {
+                                widget.onCommentTrack!(track);
+                              }
+                            },
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            icon: Icons.comment,
+                            label: 'Comment',
                           ),
-                          trailing: Icon(Icons.audiotrack),
-                          onTap: () {
-                            print(
-                              '[TracksTab] onTap: enviando PlayAudioRequested',
-                            );
-                            final audioPlayerBloc =
-                                context.read<AudioPlayerBloc>();
-                            audioPlayerBloc.add(
-                              PlayAudioRequested(
-                                source: PlaybackSource(
-                                  type: PlaybackSourceType.track,
-                                  track: track,
-                                ),
-                                visualContext: PlayerVisualContext.miniPlayer,
-                              ),
-                            );
-                          },
+                        ],
+                      ),
+                      child: ListTile(
+                        title: Text(track.name),
+                        subtitle: Text(
+                          'Duration: ${track.duration.inSeconds}s',
                         ),
-                      );
-                    } else {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Center(child: _uploadButton(context)),
-                      );
-                    }
+                        trailing: Icon(Icons.audiotrack),
+                        onTap: () {
+                          final audioPlayerBloc =
+                              context.read<AudioPlayerBloc>();
+                          audioPlayerBloc.add(
+                            PlayAudioRequested(
+                              source: PlaybackSource(
+                                type: PlaybackSourceType.track,
+                                track: track,
+                              ),
+                              visualContext: PlayerVisualContext.miniPlayer,
+                            ),
+                          );
+                        },
+                      ),
+                    );
                   },
                 );
               }
@@ -176,20 +127,8 @@ class _TracksTabState extends State<TracksTab> {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('No tracks found.'),
-          const SizedBox(height: 16),
-          _uploadButton(context),
-        ],
+        children: [Text('No tracks found.')],
       ),
-    );
-  }
-
-  Widget _uploadButton(BuildContext context) {
-    return ElevatedButton.icon(
-      icon: Icon(Icons.upload_file),
-      label: Text('Upload Audio'),
-      onPressed: () => pickAndUploadAudio(context),
     );
   }
 }
