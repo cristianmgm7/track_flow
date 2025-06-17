@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:trackflow/features/audio_cache/audio_cache_cubit.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
@@ -50,7 +53,7 @@ class _TracksTabState extends State<TracksTab> {
                     current is AudioTrackLoaded || current is AudioTrackLoading,
             builder: (context, state) {
               if (state is AudioTrackLoading) {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
 
               if (state is AudioTrackLoaded) {
@@ -91,7 +94,9 @@ class _TracksTabState extends State<TracksTab> {
                 );
               }
 
-              return Center(child: Text('Something went wrong or no data.'));
+              return const Center(
+                child: Text('Something went wrong or no data.'),
+              );
             },
           ),
         ),
@@ -103,18 +108,18 @@ class _TracksTabState extends State<TracksTab> {
               ).showSnackBar(SnackBar(content: Text(state.message)));
             } else if (state is AudioTrackUploadSuccess) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Audio uploaded successfully!')),
+                const SnackBar(content: Text('Audio uploaded successfully!')),
               );
             }
           },
-          child: SizedBox.shrink(),
+          child: const SizedBox.shrink(),
         ),
       ],
     );
   }
 
   Widget _emptyState(BuildContext context) {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [Text('No tracks found.')],
