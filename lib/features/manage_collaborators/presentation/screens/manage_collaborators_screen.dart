@@ -46,7 +46,6 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Collaborators')),
       body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
         builder: (context, state) {
           if (state is ManageCollaboratorsLoading) {
