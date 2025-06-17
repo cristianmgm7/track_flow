@@ -43,7 +43,6 @@ class MainScaffold extends StatelessWidget {
         ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
           color: const Color.fromARGB(95, 255, 255, 255),
           borderRadius: BorderRadius.circular(10),

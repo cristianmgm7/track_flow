@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class EditProfileDialog extends StatefulWidget {
   final UserProfile profile;
@@ -19,6 +21,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   late String _email;
   late String _avatarUrl;
   CreativeRole? _creativeRole;
+  File? _avatarFile;
 
   @override
   void initState() {
@@ -27,6 +30,21 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     _email = widget.profile.email;
     _avatarUrl = widget.profile.avatarUrl;
     _creativeRole = widget.profile.creativeRole;
+    if (_avatarUrl.isNotEmpty && Uri.tryParse(_avatarUrl)?.isAbsolute == true) {
+      // No cargar File si es URL remota
+      _avatarFile = null;
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _avatarFile = File(pickedFile.path);
+        _avatarUrl = pickedFile.path;
+      });
+    }
   }
 
   void _updateProfile() {
@@ -55,6 +73,26 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              GestureDetector(
+                onTap: _pickImage,
+                child: CircleAvatar(
+                  radius: 40,
+                  backgroundImage:
+                      _avatarFile != null
+                          ? FileImage(_avatarFile!)
+                          : (_avatarUrl.isNotEmpty &&
+                              Uri.tryParse(_avatarUrl)?.isAbsolute == true)
+                          ? NetworkImage(_avatarUrl) as ImageProvider
+                          : null,
+                  child:
+                      (_avatarFile == null &&
+                              (_avatarUrl.isEmpty ||
+                                  Uri.tryParse(_avatarUrl)?.isAbsolute != true))
+                          ? Icon(Icons.person, size: 40)
+                          : null,
+                ),
+              ),
+              SizedBox(height: 12),
               TextFormField(
                 initialValue: _name,
                 decoration: InputDecoration(labelText: 'Name'),
@@ -76,11 +114,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                   return null;
                 },
                 onSaved: (value) => _email = value ?? '',
-              ),
-              TextFormField(
-                initialValue: _avatarUrl,
-                decoration: InputDecoration(labelText: 'Avatar URL'),
-                onSaved: (value) => _avatarUrl = value ?? '',
               ),
               DropdownButtonFormField<CreativeRole>(
                 value: _creativeRole,

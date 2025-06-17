@@ -236,8 +236,10 @@ extension GetItInjectableX on _i174.GetIt {
       ),
     );
     gh.lazySingleton<_i744.UserProfileRemoteDataSource>(
-      () =>
-          _i744.UserProfileRemoteDataSourceImpl(gh<_i974.FirebaseFirestore>()),
+      () => _i744.UserProfileRemoteDataSourceImpl(
+        gh<_i974.FirebaseFirestore>(),
+        gh<_i457.FirebaseStorage>(),
+      ),
     );
     gh.lazySingleton<_i703.ProjectDetailRepository>(
       () => _i167.ProjectDetailRepositoryImpl(

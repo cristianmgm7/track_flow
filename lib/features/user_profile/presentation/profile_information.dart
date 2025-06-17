@@ -17,48 +17,51 @@ class ProfileInformation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider? avatarProvider;
+    if (profile.avatarUrl.isNotEmpty) {
+      if (Uri.tryParse(profile.avatarUrl)?.isAbsolute == true) {
+        avatarProvider = NetworkImage(profile.avatarUrl);
+      } else {
+        avatarProvider = AssetImage(profile.avatarUrl);
+      }
+    }
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.person,
-                  size: 24,
-                  color: Theme.of(context).primaryColor,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  "Profile Information",
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              "Manage your personal information",
-              style: Theme.of(context).textTheme.bodyMedium,
+            Center(
+              child: CircleAvatar(
+                radius: 48,
+                backgroundImage: avatarProvider,
+                child:
+                    avatarProvider == null
+                        ? Icon(Icons.person, size: 48)
+                        : null,
+              ),
             ),
             SizedBox(height: 16),
-            Text("Name", style: Theme.of(context).textTheme.bodyMedium),
-            Text(profile.name, style: Theme.of(context).textTheme.bodyMedium),
-            SizedBox(height: 8),
-            Text("Email", style: Theme.of(context).textTheme.bodyMedium),
-            Text(profile.email, style: Theme.of(context).textTheme.bodyMedium),
-            SizedBox(height: 8),
             Text(
-              "Creative Role",
-              style: Theme.of(context).textTheme.bodyMedium,
+              profile.name,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
             ),
+            SizedBox(height: 4),
+            Text(
+              profile.email,
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
             Text(
               profile.creativeRole?.name ?? 'N/A',
               style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: 16),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text("User ID", style: Theme.of(context).textTheme.bodyMedium),
                 SizedBox(width: 8),

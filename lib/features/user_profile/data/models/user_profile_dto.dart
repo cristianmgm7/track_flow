@@ -78,4 +78,24 @@ class UserProfileDTO {
       'creativeRole': creativeRole.name,
     };
   }
+
+  UserProfileDTO copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? avatarUrl,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    CreativeRole? creativeRole,
+  }) {
+    return UserProfileDTO(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      creativeRole: creativeRole ?? this.creativeRole,
+    );
+  }
 }
