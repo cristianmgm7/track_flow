@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/constants/theme.dart';
+import 'package:trackflow/core/theme/theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
