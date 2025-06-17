@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_cache/audio_cache_icon.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_cache/audio_cache_cubit.dart';
+import 'package:trackflow/features/audio_cache/audio_cache_state.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
+import 'package:get_it/get_it.dart';
 
 class TrackComponent extends StatelessWidget {
   final AudioTrack track;
@@ -34,26 +40,41 @@ class TrackComponent extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Play button
-              Material(
-                color: Colors.blueAccent,
-                borderRadius: BorderRadius.circular(8),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: onPlay,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 28,
+              BlocProvider<AudioCacheCubit>(
+                create:
+                    (context) =>
+                        AudioCacheCubit(GetIt.I.get<GetCachedAudioPath>()),
+                child: Row(
+                  children: [
+                    BlocBuilder<AudioCacheCubit, AudioCacheState>(
+                      builder: (context, state) {
+                        final isReady = state is AudioCacheDownloaded;
+                        return Material(
+                          color: isReady ? Colors.blueAccent : Colors.grey,
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: isReady ? onPlay : null,
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.play_arrow,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    AudioCacheIcon(remoteUrl: track.url),
+                    const SizedBox(width: 8),
+                  ],
                 ),
               ),
-              const SizedBox(width: 16),
               // Info
               Expanded(
                 child: Column(
