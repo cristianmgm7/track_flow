@@ -187,6 +187,10 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     final appModule = _$AppModule();
+    await gh.factoryAsync<_i497.Directory>(
+      () => appModule.cacheDir,
+      preResolve: true,
+    );
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => appModule.prefs,
       preResolve: true,

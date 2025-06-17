@@ -44,39 +44,42 @@ class TrackComponent extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    BlocBuilder<AudioCacheCubit, AudioCacheState>(
-                      builder: (context, state) {
-                        final isReady = state is AudioCacheDownloaded;
-                        return Material(
-                          color: isReady ? Colors.blueAccent : Colors.grey,
-                          borderRadius: BorderRadius.circular(8),
-                          child: InkWell(
+                // Controls section
+                SizedBox(
+                  width: 100, // Fixed width for controls
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      BlocBuilder<AudioCacheCubit, AudioCacheState>(
+                        builder: (context, state) {
+                          final isReady = state is AudioCacheDownloaded;
+                          return Material(
+                            color: isReady ? Colors.blueAccent : Colors.grey,
                             borderRadius: BorderRadius.circular(8),
-                            onTap: isReady ? onPlay : null,
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.play_arrow,
-                                color: Colors.white,
-                                size: 28,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: isReady ? onPlay : null,
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    AudioCacheIcon(remoteUrl: track.url),
-                    const SizedBox(width: 8),
-                  ],
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      AudioCacheIcon(remoteUrl: track.url),
+                    ],
+                  ),
                 ),
-
-                const SizedBox(width: 16),
-                // Info
+                const SizedBox(width: 12),
+                // Info section
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,6 +97,7 @@ class TrackComponent extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             durationStr,
                             style: TextStyle(
@@ -138,7 +142,6 @@ class TrackComponent extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
                           Text(
                             createdAtStr,
                             style: TextStyle(
@@ -151,14 +154,18 @@ class TrackComponent extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onComment != null) ...[
-                  const SizedBox(width: 12),
+                // Comment button
+                if (onComment != null)
                   IconButton(
                     icon: const Icon(Icons.comment, color: Colors.blueAccent),
                     onPressed: onComment,
                     tooltip: 'Comment',
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    padding: EdgeInsets.zero,
                   ),
-                ],
               ],
             ),
           ),
