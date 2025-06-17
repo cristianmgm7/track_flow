@@ -31,10 +31,24 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     PlayAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    emit(AudioPlayerLoading(event.source, event.visualContext));
-    await _player.setUrl(event.source.track.url);
+    emit(
+      AudioPlayerLoading(
+        event.source,
+        event.visualContext,
+        event.track,
+        event.collaborator,
+      ),
+    );
+    await _player.setUrl(event.track.url);
     await _player.play();
-    emit(AudioPlayerPlaying(event.source, event.visualContext));
+    emit(
+      AudioPlayerPlaying(
+        event.source,
+        event.visualContext,
+        event.track,
+        event.collaborator,
+      ),
+    );
   }
 
   Future<void> _onPauseAudioRequested(
@@ -42,7 +56,12 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     await _player.pause();
-    emit(AudioPlayerPaused(state.source!, state.visualContext));
+    if (state is AudioPlayerActiveState) {
+      final s = state as AudioPlayerActiveState;
+      emit(
+        AudioPlayerPaused(s.source, s.visualContext, s.track, s.collaborator),
+      );
+    }
   }
 
   Future<void> _onResumeAudioRequested(
@@ -50,7 +69,12 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     await _player.play();
-    emit(AudioPlayerPlaying(state.source!, state.visualContext));
+    if (state is AudioPlayerActiveState) {
+      final s = state as AudioPlayerActiveState;
+      emit(
+        AudioPlayerPlaying(s.source, s.visualContext, s.track, s.collaborator),
+      );
+    }
   }
 
   Future<void> _onStopAudioRequested(

@@ -7,7 +7,6 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_sta
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
-import 'package:trackflow/features/project_detail/aplication/playback_source.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';

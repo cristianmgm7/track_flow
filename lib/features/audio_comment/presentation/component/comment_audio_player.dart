@@ -12,7 +12,7 @@ class CommentAudioPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state is AudioPlayerPlaying || state is AudioPlayerPaused) {
       if (state.visualContext == PlayerVisualContext.commentPlayer) {
-        final trackName = state.source.track.name;
+        //final trackName = state.track.name;
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           padding: const EdgeInsets.all(16),
@@ -23,10 +23,7 @@ class CommentAudioPlayer extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                trackName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              Text('', style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Stack(
                 alignment: Alignment.centerRight,

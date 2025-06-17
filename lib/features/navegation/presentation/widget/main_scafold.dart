@@ -25,15 +25,16 @@ class MainScaffold extends StatelessWidget {
           child,
           BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
             builder: (context, state) {
-              if (state.visualContext == PlayerVisualContext.miniPlayer) {
+              if (state.visualContext == PlayerVisualContext.miniPlayer &&
+                  state is AudioPlayerActiveState) {
                 return Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 80.0),
                     child: MiniAudioPlayer(
                       state: state,
-                      track: state.source.track,
-                      collaborator: state.source.collaborator,
+                      track: state.track,
+                      collaborator: state.collaborator,
                     ),
                   ),
                 );
