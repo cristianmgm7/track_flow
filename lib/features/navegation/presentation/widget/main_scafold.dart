@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit_state.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/mini_audio_player.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
 import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
-import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
+import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart';
 
 import 'package:trackflow/core/router/app_routes.dart';
 
@@ -29,13 +30,10 @@ class MainScaffold extends StatelessWidget {
                   state is AudioPlayerActiveState) {
                 return Align(
                   alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 80.0),
-                    child: MiniAudioPlayer(
-                      state: state,
-                      track: state.track,
-                      collaborator: state.collaborator,
-                    ),
+                  child: MiniAudioPlayer(
+                    state: state,
+                    track: state.track,
+                    collaborator: state.collaborator,
                   ),
                 );
               }

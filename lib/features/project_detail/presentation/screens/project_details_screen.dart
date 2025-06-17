@@ -3,7 +3,7 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_eve
 import 'package:trackflow/features/audio_track/presentation/screens/tracks_tab.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/comments_tab.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
-import 'package:trackflow/features/navegation/presentation/widget/fab_context_cubit.dart';
+import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
