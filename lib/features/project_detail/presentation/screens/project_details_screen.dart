@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
-import 'package:trackflow/features/audio_track/presentation/screens/tracks_tab.dart';
+import 'package:trackflow/features/audio_track/presentation/screens/tracks.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
-import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -24,25 +23,10 @@ class ProjectDetailScreen extends StatefulWidget {
 }
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
-  FabContextCubit? _fabCubit;
-
   @override
   void initState() {
     super.initState();
     context.read<ProjectDetailBloc>().add(LoadUserProfiles(widget.project));
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _notifyFabContext();
-    });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _fabCubit ??= context.read<FabContextCubit>();
-  }
-
-  void _notifyFabContext() {
-    _fabCubit?.setProjectDetailTracks(_onAddTrack);
   }
 
   void _navigateToTeam() {
@@ -52,12 +36,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       builder:
           (context) => ManageCollaboratorsScreen(projectId: widget.project.id),
     );
-  }
-
-  @override
-  void dispose() {
-    _fabCubit?.hide();
-    super.dispose();
   }
 
   @override
@@ -82,7 +60,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
               ],
             ),
-            body: TracksTab(
+            body: AudioTracksList(
               projectId: widget.project.id,
               collaborators: collaborators,
               onCommentTrack: (track) {

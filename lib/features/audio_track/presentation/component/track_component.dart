@@ -23,6 +23,15 @@ class TrackComponent extends StatelessWidget {
     this.onComment,
   });
 
+  void _actions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Column(children: [Text('Actions')]);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
@@ -154,18 +163,16 @@ class TrackComponent extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Comment button
-                if (onComment != null)
-                  IconButton(
-                    icon: const Icon(Icons.comment, color: Colors.blueAccent),
-                    onPressed: onComment,
-                    tooltip: 'Comment',
-                    constraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
-                    ),
-                    padding: EdgeInsets.zero,
+                IconButton(
+                  icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
+                  onPressed: () => _actions(context),
+                  tooltip: 'Actions',
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
                   ),
+                  padding: EdgeInsets.zero,
+                ),
               ],
             ),
           ),

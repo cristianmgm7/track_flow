@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
-import 'package:trackflow/features/audio_cache/audio_cache_cubit.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
@@ -15,11 +12,11 @@ import 'package:trackflow/features/project_detail/aplication/audio_player_event.
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 
-class TracksTab extends StatefulWidget {
+class AudioTracksList extends StatefulWidget {
   final ProjectId projectId;
   final List<UserProfile> collaborators;
   final void Function(AudioTrack track)? onCommentTrack;
-  const TracksTab({
+  const AudioTracksList({
     super.key,
     required this.projectId,
     required this.collaborators,
@@ -27,10 +24,10 @@ class TracksTab extends StatefulWidget {
   });
 
   @override
-  State<TracksTab> createState() => _TracksTabState();
+  State<AudioTracksList> createState() => _TracksTabState();
 }
 
-class _TracksTabState extends State<TracksTab> {
+class _TracksTabState extends State<AudioTracksList> {
   @override
   void initState() {
     super.initState();
