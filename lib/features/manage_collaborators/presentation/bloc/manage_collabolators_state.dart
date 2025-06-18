@@ -76,3 +76,8 @@ class JoinProjectFailure extends ManageCollaboratorsState {
   @override
   List<Object?> get props => [error];
 }
+
+class ManageCollaboratorsLeaveSuccess extends ManageCollaboratorsState {
+  @override
+  List<Object?> get props => [];
+}

@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
@@ -24,13 +24,15 @@ class ProjectWithCollaborators extends Equatable {
 
 @lazySingleton
 class LoadUserProfileCollaboratorsUseCase {
-  final ProjectDetailRepository _repository;
+  final ManageCollaboratorsRepository _repositoryManageCollaborators;
 
-  LoadUserProfileCollaboratorsUseCase(this._repository);
+  LoadUserProfileCollaboratorsUseCase(this._repositoryManageCollaborators);
 
   Future<Either<Failure, List<UserProfile>>> call(
     ProjectWithCollaborators params,
   ) async {
-    return await _repository.getUserProfileCollaborators(params.project);
+    return await _repositoryManageCollaborators.getUserProfileCollaborators(
+      params.project,
+    );
   }
 }

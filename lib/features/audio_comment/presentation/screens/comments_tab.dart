@@ -5,8 +5,8 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 import 'package:trackflow/features/audio_comment/presentation/component/comment_audio_player.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_comment/presentation/component/comment_component.dart';

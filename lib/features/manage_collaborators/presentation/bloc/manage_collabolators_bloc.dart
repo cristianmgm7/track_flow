@@ -1,8 +1,11 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_user_profiles.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'manage_collabolators_event.dart';
@@ -15,18 +18,22 @@ class ManageCollaboratorsBloc
   final AddCollaboratorToProjectUseCase addCollaboratorUseCase;
   final GetProjectWithUserProfilesUseCase getProjectWithUserProfilesUseCase;
   final RemoveCollaboratorUseCase removeCollaboratorUseCase;
+  final LeaveProjectUseCase leaveProjectUseCase;
 
   ManageCollaboratorsBloc({
     required this.addCollaboratorUseCase,
     required this.updateCollaboratorRoleUseCase,
     required this.getProjectWithUserProfilesUseCase,
     required this.removeCollaboratorUseCase,
+    required this.leaveProjectUseCase,
   }) : super(ManageCollaboratorsInitial()) {
     on<AddCollaborator>(_onAddCollaborator);
     on<UpdateCollaboratorRole>(_onUpdateCollaboratorRole);
     on<JoinProjectWithIdRequested>(_onJoinProjectWithIdRequested);
     on<GetProjectWithUserProfiles>(_onGetProjectWithUserProfiles);
     on<RemoveCollaborator>(_onRemoveCollaborator);
+    on<LeaveProject>(_onLeaveProject);
+    on<LoadUserProfiles>(_onLoadUserProfiles);
   }
 
   Future<void> _onGetProjectWithUserProfiles(
@@ -37,8 +44,7 @@ class ManageCollaboratorsBloc
       GetProjectWithUserProfilesParams(projectId: event.projectId),
     );
     await result.fold(
-      (failure) async =>
-          emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+      (failure) async => emit(ManageCollaboratorsError(failure.toString())),
       (projectWithUserProfiles) async =>
           emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
     );
@@ -57,15 +63,14 @@ class ManageCollaboratorsBloc
     );
     await result.fold(
       (failure) async {
-        emit(ManageCollaboratorsError(_mapFailureToMessage(failure)));
+        emit(ManageCollaboratorsError(failure.toString()));
       },
       (_) async {
         final updatedResult = await getProjectWithUserProfilesUseCase.call(
           GetProjectWithUserProfilesParams(projectId: event.projectId),
         );
         await updatedResult.fold(
-          (failure) async =>
-              emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+          (failure) async => emit(ManageCollaboratorsError(failure.toString())),
           (projectWithUserProfiles) async =>
               emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
         );
@@ -84,15 +89,13 @@ class ManageCollaboratorsBloc
       ),
     );
     await result.fold(
-      (failure) async =>
-          emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+      (failure) async => emit(ManageCollaboratorsError(failure.toString())),
       (_) async {
         final updatedResult = await getProjectWithUserProfilesUseCase.call(
           GetProjectWithUserProfilesParams(projectId: event.projectId),
         );
         await updatedResult.fold(
-          (failure) async =>
-              emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+          (failure) async => emit(ManageCollaboratorsError(failure.toString())),
           (projectWithUserProfiles) async =>
               emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
         );
@@ -112,8 +115,7 @@ class ManageCollaboratorsBloc
       ),
     );
     await result.fold(
-      (failure) async =>
-          emit(ManageCollaboratorsError(_mapFailureToMessage(failure))),
+      (failure) async => emit(ManageCollaboratorsError(failure.toString())),
       (_) async => emit(
         UpdateCollaboratorRoleSuccess(
           event.projectId.value,
@@ -139,8 +141,36 @@ class ManageCollaboratorsBloc
     // emit(ManageCollaboratorsError('Error message'));
   }
 
-  String _mapFailureToMessage(Failure failure) {
-    // You can expand this method to handle different types of failures
-    return failure is ServerFailure ? 'Server Failure' : 'Unexpected Error';
+  Future<void> _onLoadUserProfiles(
+    LoadUserProfiles event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) async {
+    final result = await getProjectWithUserProfilesUseCase.call(
+      GetProjectWithUserProfilesParams(projectId: event.project.id),
+    );
+    await result.fold(
+      (failure) async => emit(ManageCollaboratorsError(failure.toString())),
+      (projectWithUserProfiles) async =>
+          emit(ManageCollaboratorsLoaded(projectWithUserProfiles)),
+    );
+  }
+
+  Future<void> _onLeaveProject(
+    LeaveProject event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) async {
+    emit(ManageCollaboratorsLoading());
+    final Either<Failure, void> failureOrSuccess = await leaveProjectUseCase
+        .call(
+          LeaveProjectParams(
+            projectId: event.projectId,
+            userId: UserId.fromUniqueString('currentUserId'),
+          ),
+        );
+
+    failureOrSuccess.fold(
+      (failure) => emit(ManageCollaboratorsError(failure.toString())),
+      (_) => emit(ManageCollaboratorsLeaveSuccess()),
+    );
   }
 }

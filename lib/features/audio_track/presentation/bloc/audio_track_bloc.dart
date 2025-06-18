@@ -13,7 +13,7 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_sta
 
 @injectable
 class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
-  final WatchAudioTracksByProject watchAudioTracksByProject;
+  final WatchTracksByProjectIdUseCase watchAudioTracksByProject;
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
 
@@ -73,9 +73,9 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     await _trackSubscription?.cancel();
     emit(AudioTrackLoading());
 
-    _trackSubscription = watchAudioTracksByProject(event.projectId).listen((
-      either,
-    ) {
+    _trackSubscription = watchAudioTracksByProject(
+      WatchTracksByProjectIdParams(projectId: event.projectId),
+    ).listen((either) {
       add(AudioTracksUpdated(either));
     });
   }

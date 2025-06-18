@@ -6,9 +6,9 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_eve
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart';
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 

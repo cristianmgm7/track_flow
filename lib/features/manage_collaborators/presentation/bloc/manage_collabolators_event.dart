@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 abstract class ManageCollaboratorsEvent extends Equatable {}
@@ -47,6 +48,22 @@ class RemoveCollaborator extends ManageCollaboratorsEvent {
 class JoinProjectWithIdRequested extends ManageCollaboratorsEvent {
   final UniqueId projectId;
   JoinProjectWithIdRequested(this.projectId);
+
+  @override
+  List<Object?> get props => [projectId];
+}
+
+class LoadUserProfiles extends ManageCollaboratorsEvent {
+  final Project project;
+  LoadUserProfiles(this.project);
+
+  @override
+  List<Object?> get props => [project];
+}
+
+class LeaveProject extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
+  LeaveProject(this.projectId);
 
   @override
   List<Object?> get props => [projectId];

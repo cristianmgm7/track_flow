@@ -7,6 +7,7 @@ import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @LazySingleton(as: ManageCollaboratorsRepository)
 class ManageCollaboratorsRepositoryImpl
@@ -44,5 +45,39 @@ class ManageCollaboratorsRepositoryImpl
       return left(DatabaseFailure('No internet connection'));
     }
     return await remoteDataSourceManageCollaborators.updateProject(project);
+  }
+
+  @override
+  Future<Either<Failure, List<UserProfile>>> getUserProfileCollaborators(
+    Project project,
+  ) async {
+    final hasConnected = await networkInfo.isConnected;
+    if (!hasConnected) {
+      return left(DatabaseFailure('No internet connection'));
+    }
+    final failureOrUserProfiles = await remoteDataSourceManageCollaborators
+        .getProjectCollaborators(project);
+    return failureOrUserProfiles.fold(
+      (failure) => Left(failure),
+      (userProfiles) => Right(userProfiles),
+    );
+  }
+
+  @override
+  Future<Either<Failure, Unit>> leaveProject({
+    required ProjectId projectId,
+    required UserId userId,
+  }) async {
+    final hasConnected = await networkInfo.isConnected;
+    if (hasConnected) {
+      final failureOrUnit = await remoteDataSourceManageCollaborators
+          .leaveProject(projectId: projectId, userId: userId);
+      return failureOrUnit.fold(
+        (failure) => Left(failure),
+        (unit) => Right(unit),
+      );
+    } else {
+      return Left(DatabaseFailure('No internet connection'));
+    }
   }
 }

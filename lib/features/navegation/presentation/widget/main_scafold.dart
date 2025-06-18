@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/widget/audio_player_sheet.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 
 class MainScaffold extends StatelessWidget {

@@ -1,98 +1,239 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
-import 'package:trackflow/features/audio_track/presentation/screens/tracks.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:trackflow/features/audio_track/utils/audio_utils.dart';
-import 'dart:io';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
-import 'package:go_router/go_router.dart';
 
-class ProjectDetailScreen extends StatefulWidget {
-  final Project project;
+class ProjectDetailsScreen extends StatefulWidget {
+  final String projectId;
 
-  const ProjectDetailScreen({super.key, required this.project});
+  const ProjectDetailsScreen({super.key, required this.projectId});
 
   @override
-  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+  State<ProjectDetailsScreen> createState() => _ProjectDetailsScreenState();
 }
 
-class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectDetailBloc>().add(LoadUserProfiles(widget.project));
-  }
-
-  void _navigateToTeam() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder:
-          (context) => ManageCollaboratorsScreen(projectId: widget.project.id),
-    );
+    context.read<ProjectDetailBloc>().add(LoadProjectDetail(widget.projectId));
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ProjectDetailBloc, ProjectDetailsState>(
-      builder: (context, state) {
-        if (state is ProjectDetailsLoaded) {
-          final collaborators = state.params.collaborators;
-          return Scaffold(
-            appBar: AppBar(
-              title: Text(widget.project.name.toString()),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.group),
-                  onPressed: _navigateToTeam,
-                  tooltip: 'Team',
+    return Scaffold(
+      appBar: AppBar(title: const Text('Project Details')),
+      body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+        builder: (context, state) {
+          if (state.isLoadingProject && state.project == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state.projectError != null && state.project == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Error loading project: ${state.projectError}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<ProjectDetailBloc>().add(
+                        LoadProjectDetail(widget.projectId),
+                      );
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final project = state.project;
+          if (project == null) {
+            return const Center(child: Text('No project found'));
+          }
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Project Header
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          project.name.value.fold(
+                            (failure) => 'Error loading project name',
+                            (value) => value,
+                          ),
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          project.description.value.fold(
+                            (failure) => 'Error loading project description',
+                            (value) => value,
+                          ),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Created: ${project.createdAt.toString().split(' ')[0]}',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {},
-                  tooltip: 'Settings',
-                ),
+                const SizedBox(height: 24),
+
+                // Tracks Section
+                _buildTracksSection(state),
+                const SizedBox(height: 24),
+
+                // Collaborators Section
+                _buildCollaboratorsSection(state),
               ],
             ),
-            body: AudioTracksList(
-              projectId: widget.project.id,
-              collaborators: collaborators,
-              onCommentTrack: (track) {
-                // Navigate to comments view for this track
-                context.push('/comments', extra: track);
-              },
-            ),
           );
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
+        },
+      ),
     );
   }
 
-  Future<void> _onAddTrack() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'wav', 'aac', 'm4a'],
-    );
-    if (result != null && result.files.single.path != null) {
-      final name = result.files.single.name;
-      final filePath = result.files.single.path!;
-      final duration = await AudioUtils.getAudioDuration(filePath);
-
-      context.read<AudioTrackBloc>().add(
-        UploadAudioTrackEvent(
-          file: File(filePath),
-          name: name,
-          duration: duration,
-          projectId: widget.project.id,
+  Widget _buildTracksSection(ProjectDetailState state) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.music_note),
+                const SizedBox(width: 8),
+                Text(
+                  'Audio Tracks (${state.tracks.length})',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (state.isLoadingTracks) ...[
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+              ],
+            ),
+            if (state.tracksError != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Error loading tracks: ${state.tracksError}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
+            if (state.tracks.isEmpty &&
+                !state.isLoadingTracks &&
+                state.tracksError == null) ...[
+              const SizedBox(height: 16),
+              const Text('No tracks found'),
+            ],
+            if (state.tracks.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              ...state.tracks.map(
+                (track) => TrackComponent(
+                  track: track,
+                  uploader: state.collaborators.firstWhere(
+                    (collaborator) => collaborator.id == track.uploadedBy,
+                  ),
+                  onPlay: () {
+                    // TODO: Implement track playback
+                  },
+                ),
+              ),
+            ],
+          ],
         ),
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildCollaboratorsSection(ProjectDetailState state) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.people),
+                const SizedBox(width: 8),
+                Text(
+                  'Collaborators (${state.collaborators.length})',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                if (state.isLoadingCollaborators) ...[
+                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ],
+              ],
+            ),
+            if (state.collaboratorsError != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Error loading collaborators: ${state.collaboratorsError}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
+            if (state.collaborators.isEmpty &&
+                !state.isLoadingCollaborators &&
+                state.collaboratorsError == null) ...[
+              const SizedBox(height: 16),
+              const Text('No collaborators found'),
+            ],
+            if (state.collaborators.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              ...state.collaborators.map(
+                (collaborator) => ListTile(
+                  leading: CircleAvatar(
+                    child: Text(
+                      collaborator.name.isNotEmpty
+                          ? collaborator.name[0].toUpperCase()
+                          : '?',
+                    ),
+                  ),
+                  title: Text(collaborator.name),
+                  subtitle: Text(collaborator.email),
+                  trailing: const Icon(Icons.more_vert),
+                  onTap: () {
+                    // TODO: Implement collaborator actions
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

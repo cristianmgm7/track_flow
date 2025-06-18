@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 // --- NUEVO ENUM Y WIDGET ---
