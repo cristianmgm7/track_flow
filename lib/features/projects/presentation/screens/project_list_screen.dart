@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/presentation/widgets/adaptive_action_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/widgets/project_form_screen.dart';
-import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
 
 class ProjectListScreen extends StatefulWidget {
@@ -29,17 +28,35 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   void _openProjectFormScreen() {
-    showModalBottomSheet(
+    showTrackFlowActionSheet(
       context: context,
-      isScrollControlled: true,
-      builder: (context) => ProjectFormScreen(),
-    );
-  }
-
-  void _showJoinProjectDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => JoinAsCollaboratorDialog(),
+      title: 'Create something new',
+      actions: [
+        TrackFlowActionItem(
+          icon: Icons.playlist_add,
+          title: 'Playlist',
+          subtitle: 'Build a playlist with songs, or episodes',
+          onTap: () {
+            // lógica
+          },
+        ),
+        TrackFlowActionItem(
+          icon: Icons.group,
+          title: 'Collaborative Playlist',
+          subtitle: 'Invite friends and create something together',
+          onTap: () {
+            // lógica
+          },
+        ),
+        TrackFlowActionItem(
+          icon: Icons.merge,
+          title: 'Blend',
+          subtitle: 'Combine tastes in a shared playlist with friends',
+          onTap: () {
+            // lógica
+          },
+        ),
+      ],
     );
   }
 
@@ -49,26 +66,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       appBar: AppBar(
         title: const Text('My Projects'),
         actions: [
-          PopupMenuButton<String>(
+          IconButton(
+            onPressed: _openProjectFormScreen,
             icon: const Icon(Icons.add),
-            onSelected: (value) {
-              if (value == 'create') {
-                _openProjectFormScreen();
-              } else if (value == 'join') {
-                _showJoinProjectDialog(context);
-              }
-            },
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'create',
-                    child: Text('Crear Proyecto'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'join',
-                    child: Text('Unirse a Proyecto con ID'),
-                  ),
-                ],
           ),
         ],
       ),
