@@ -100,7 +100,7 @@ class AppRouter {
               path: AppRoutes.projectDetails,
               builder:
                   (context, state) =>
-                      ProjectDetailScreen(project: state.extra as Project),
+                      ProjectDetailsScreen(projectId: state.extra as String),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,

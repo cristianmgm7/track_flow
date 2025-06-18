@@ -76,7 +76,9 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
           );
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (_) => ProjectDetailScreen(project: state.project),
+              builder:
+                  (_) =>
+                      ProjectDetailsScreen(projectId: state.project.id.value),
             ),
           );
         } else if (state is ProjectsError) {

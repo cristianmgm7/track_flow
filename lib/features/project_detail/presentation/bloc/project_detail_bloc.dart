@@ -6,14 +6,11 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/models/manage_colaborators_params.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/features/project_detail/domain/usecases/get_project_by_id_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:dartz/dartz.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart';
 
 @injectable
 class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
