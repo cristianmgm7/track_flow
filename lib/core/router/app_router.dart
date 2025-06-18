@@ -11,7 +11,6 @@ import 'package:trackflow/features/manage_collaborators/presentation/screens/man
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
@@ -100,7 +99,7 @@ class AppRouter {
               path: AppRoutes.projectDetails,
               builder:
                   (context, state) =>
-                      ProjectDetailsScreen(projectId: state.extra as String),
+                      ProjectDetailsScreen(projectId: state.extra as ProjectId),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,

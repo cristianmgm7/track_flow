@@ -5,7 +5,6 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart';
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
@@ -34,9 +33,6 @@ class _TracksTabState extends State<AudioTracksList> {
     context.read<AudioTrackBloc>().add(
       WatchAudioTracksByProjectEvent(projectId: widget.projectId),
     );
-    context.read<FabContextCubit>().setProjectDetailTracks(() {
-      // pickAndUploadAudio(context);
-    });
   }
 
   @override

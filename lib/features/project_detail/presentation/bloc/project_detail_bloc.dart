@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart';
@@ -46,9 +45,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     );
 
     // Load Project
-    final projectResult = await getProjectById(
-      ProjectId.fromUniqueString(event.projectId),
-    );
+    final projectResult = await getProjectById(event.projectId);
     projectResult.fold(
       (failure) => emit(
         state.copyWith(isLoadingProject: false, projectError: failure.message),
@@ -84,11 +81,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     // Subscribe to Tracks Stream
     await tracksSubscription?.cancel();
     tracksSubscription = watchTracksByProjectId
-        .call(
-          WatchTracksByProjectIdParams(
-            projectId: ProjectId.fromUniqueString(event.projectId),
-          ),
-        )
+        .call(WatchTracksByProjectIdParams(projectId: event.projectId))
         .listen(
           (tracks) => add(
             TracksUpdated(
