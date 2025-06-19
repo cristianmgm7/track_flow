@@ -18,6 +18,7 @@ class AudioPlayerScreen extends StatelessWidget {
         final track = state.track;
         final collaborator = state.collaborator;
         final isPlaying = state is AudioPlayerPlaying;
+        final player = context.read<AudioPlayerBloc>().player;
         return Container(
           color: Colors.black,
           child: SafeArea(
@@ -76,26 +77,43 @@ class AudioPlayerScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        LinearProgressIndicator(
-                          value: 0.3, // Reemplazar con progreso real
-                          backgroundColor: Colors.grey[800],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(context).primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              '0:00', // Reemplazar con tiempo actual
-                              style: TextStyle(color: Colors.grey[400]),
-                            ),
-                            Text(
-                              '3:45', // Reemplazar con duración
-                              style: TextStyle(color: Colors.grey[400]),
-                            ),
-                          ],
+                        StreamBuilder<Duration>(
+                          stream: player.positionStream,
+                          builder: (context, snapshot) {
+                            final position = snapshot.data ?? Duration.zero;
+                            final duration = player.duration ?? Duration.zero;
+                            final progress =
+                                (duration.inMilliseconds > 0)
+                                    ? position.inMilliseconds /
+                                        duration.inMilliseconds
+                                    : 0.0;
+                            return Column(
+                              children: [
+                                LinearProgressIndicator(
+                                  value: progress,
+                                  backgroundColor: Colors.grey[800],
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _formatDuration(position),
+                                      style: TextStyle(color: Colors.grey[400]),
+                                    ),
+                                    Text(
+                                      _formatDuration(duration),
+                                      style: TextStyle(color: Colors.grey[400]),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 24),
                         Row(
@@ -168,5 +186,12 @@ class AudioPlayerScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(d.inMinutes.remainder(60));
+    final seconds = twoDigits(d.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 }
