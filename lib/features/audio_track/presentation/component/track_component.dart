@@ -61,7 +61,7 @@ class TrackComponent extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(8),
-                              onTap: isReady ? onPlay : null,
+                              onTap: isReady ? () => _playTrack(context) : null,
                               child: Container(
                                 width: 44,
                                 height: 44,
@@ -159,17 +159,7 @@ class TrackComponent extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
-                  onPressed:
-                      () => context.read<AudioPlayerBloc>().add(
-                        PlayAudioRequested(
-                          source: PlaybackSource(
-                            type: PlaybackSourceType.track,
-                          ),
-                          visualContext: PlayerVisualContext.miniPlayer,
-                          track: track,
-                          collaborator: uploader,
-                        ),
-                      ),
+                  onPressed: () => _playTrack(context),
                   tooltip: 'Actions',
                   constraints: const BoxConstraints(
                     minWidth: 40,
@@ -190,5 +180,16 @@ class TrackComponent extends StatelessWidget {
     final minutes = twoDigits(d.inMinutes.remainder(60));
     final seconds = twoDigits(d.inSeconds.remainder(60));
     return '$minutes:$seconds';
+  }
+
+  void _playTrack(BuildContext context) {
+    context.read<AudioPlayerBloc>().add(
+      PlayAudioRequested(
+        source: PlaybackSource(type: PlaybackSourceType.track),
+        visualContext: PlayerVisualContext.miniPlayer,
+        track: track,
+        collaborator: uploader,
+      ),
+    );
   }
 }
