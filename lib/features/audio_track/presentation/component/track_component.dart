@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_track/presentation/widgets/track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_cache/audio_cache_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,6 +27,31 @@ class TrackComponent extends StatelessWidget {
     this.onPlay,
     this.onComment,
   });
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(d.inMinutes.remainder(60));
+    final seconds = twoDigits(d.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
+  void _playTrack(BuildContext context) {
+    context.read<AudioPlayerBloc>().add(
+      PlayAudioRequested(
+        source: PlaybackSource(type: PlaybackSourceType.track),
+        visualContext: PlayerVisualContext.miniPlayer,
+        track: track,
+        collaborator: uploader,
+      ),
+    );
+  }
+
+  void _openTrackActionsSheet(BuildContext context) {
+    showTrackFlowActionSheet(
+      context: context,
+      actions: TrackActions.forTrack(context, track, [uploader]),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +186,7 @@ class TrackComponent extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
-                  onPressed: () => _playTrack(context),
+                  onPressed: () => _openTrackActionsSheet(context),
                   tooltip: 'Actions',
                   constraints: const BoxConstraints(
                     minWidth: 40,
@@ -171,24 +198,6 @@ class TrackComponent extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(d.inMinutes.remainder(60));
-    final seconds = twoDigits(d.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
-
-  void _playTrack(BuildContext context) {
-    context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(
-        source: PlaybackSource(type: PlaybackSourceType.track),
-        visualContext: PlayerVisualContext.miniPlayer,
-        track: track,
-        collaborator: uploader,
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
@@ -69,6 +70,18 @@ class AppRouter {
               (context, state) => MagicLinkHandlerScreen(
                 token: state.pathParameters['token'] ?? '',
               ),
+        ),
+        GoRoute(
+          path: AppRoutes.audioComments,
+          builder: (context, state) {
+            // Puedes pasar los argumentos por extra o queryParams
+            final args = state.extra as AudioCommentsScreenArgs;
+            return AudioCommentsScreen(
+              projectId: args.projectId,
+              track: args.track,
+              collaborators: args.collaborators,
+            );
+          },
         ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
