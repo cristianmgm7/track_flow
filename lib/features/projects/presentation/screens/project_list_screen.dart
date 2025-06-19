@@ -7,6 +7,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
+import 'package:trackflow/features/projects/presentation/widgets/project_list_actions_sheet.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});
@@ -31,32 +32,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     showTrackFlowActionSheet(
       context: context,
       title: 'Create something new',
-      actions: [
-        TrackFlowActionItem(
-          icon: Icons.playlist_add,
-          title: 'Playlist',
-          subtitle: 'Build a playlist with songs, or episodes',
-          onTap: () {
-            // lógica
-          },
-        ),
-        TrackFlowActionItem(
-          icon: Icons.group,
-          title: 'Collaborative Playlist',
-          subtitle: 'Invite friends and create something together',
-          onTap: () {
-            // lógica
-          },
-        ),
-        TrackFlowActionItem(
-          icon: Icons.merge,
-          title: 'Blend',
-          subtitle: 'Combine tastes in a shared playlist with friends',
-          onTap: () {
-            // lógica
-          },
-        ),
-      ],
+      actions: ProjectActions.onProjectList(context),
     );
   }
 
