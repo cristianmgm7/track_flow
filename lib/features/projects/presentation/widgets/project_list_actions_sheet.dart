@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart';
 import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
+import 'package:trackflow/features/projects/presentation/widgets/project_form_bottomsheet.dart';
 
 class ProjectActions {
   static List<TrackFlowActionItem> onProjectList(BuildContext context) => [
@@ -8,6 +9,7 @@ class ProjectActions {
       icon: Icons.add,
       title: 'Create Project',
       subtitle: 'Start a new project from scratch',
+      onTap: () => ProjectFormBottomSheet(),
     ),
 
     TrackFlowActionItem(

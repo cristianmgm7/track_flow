@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 
 double _initialSize(int itemCount) {
   if (itemCount <= 3) return 0.3;
@@ -85,7 +86,7 @@ class _TrackFlowActionSheetContent extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: Dimensions.space8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
