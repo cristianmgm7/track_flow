@@ -5,15 +5,25 @@ import 'package:trackflow/features/audio_player/presentation/screens/audio_track
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import '../widgets/mini_audioplayer.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 // different player views
 enum PlayerViewMode { mini, expanded }
 
 class AudioPlayerSheet extends StatelessWidget {
   final PlayerViewMode mode;
-  const AudioPlayerSheet({super.key, required this.mode});
+  final ProjectId projectId;
+  final List<UserProfile> collaborators;
+  const AudioPlayerSheet({
+    super.key,
+    required this.mode,
+    required this.projectId,
+    required this.collaborators,
+  });
 
-  void _showExpandedPlayer(BuildContext context) {
+  void _showExpandedPlayer(BuildContext context, AudioTrack track) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -29,7 +39,18 @@ class AudioPlayerSheet extends StatelessWidget {
             builder: (context, scrollController) {
               return BlocProvider.value(
                 value: context.read<AudioPlayerBloc>(),
-                child: AudioPlayerScreen(scrollController: scrollController),
+                child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+                  builder: (context, state) {
+                    if (state is! AudioPlayerActiveState)
+                      return const SizedBox.shrink();
+                    return AudioPlayerScreen(
+                      scrollController: scrollController,
+                      projectId: projectId,
+                      track: state.track,
+                      collaborators: collaborators,
+                    );
+                  },
+                ),
               );
             },
           ),
@@ -42,9 +63,16 @@ class AudioPlayerSheet extends StatelessWidget {
       builder: (context, state) {
         if (state is! AudioPlayerActiveState) return const SizedBox.shrink();
         if (mode == PlayerViewMode.mini) {
-          return MiniAudioPlayer(onExpand: () => _showExpandedPlayer(context));
+          return MiniAudioPlayer(
+            onExpand: () => _showExpandedPlayer(context, state.track),
+          );
         } else {
-          return AudioPlayerScreen(scrollController: null);
+          return AudioPlayerScreen(
+            scrollController: null,
+            projectId: projectId,
+            track: state.track,
+            collaborators: collaborators,
+          );
         }
       },
     );

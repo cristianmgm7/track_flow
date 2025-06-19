@@ -25,7 +25,11 @@ class MainScaffold extends StatelessWidget {
             builder: (context, state) {
               if (state is AudioPlayerActiveState &&
                   state.visualContext == PlayerVisualContext.miniPlayer) {
-                return const AudioPlayerSheet(mode: PlayerViewMode.mini);
+                return AudioPlayerSheet(
+                  mode: PlayerViewMode.mini,
+                  projectId: state.track.projectId,
+                  collaborators: [state.collaborator],
+                );
               }
               return const SizedBox.shrink();
             },
