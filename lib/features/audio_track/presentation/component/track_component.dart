@@ -48,6 +48,7 @@ class TrackComponent extends StatelessWidget {
 
   void _openTrackActionsSheet(BuildContext context) {
     showTrackFlowActionSheet(
+      title: track.name,
       context: context,
       actions: TrackActions.forTrack(context, track, [uploader]),
     );

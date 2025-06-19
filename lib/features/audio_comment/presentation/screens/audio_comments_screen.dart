@@ -7,9 +7,10 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
-import 'package:trackflow/features/audio_comment/presentation/component/comment_audio_player.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_waveform_component.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_comment/presentation/component/audio_comment_component.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_comments_component.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_input_comment_component.dart';
 
 class AudioCommentsScreenArgs {
   final ProjectId projectId;
@@ -58,14 +59,7 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
         child: Column(
           children: [
             // Onda de audio o reproductor de comentario
-            BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-              builder: (context, state) {
-                if (state.visualContext == PlayerVisualContext.commentPlayer) {
-                  return CommentAudioPlayer(state: state);
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+            const AudioCommentWaveform(),
             // Lista de comentarios
             Expanded(
               child: BlocBuilder<AudioCommentBloc, AudioCommentState>(
@@ -82,34 +76,9 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
                     );
                   }
                   if (state is AudioCommentsLoaded) {
-                    if (state.comments.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No comments yet.',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      );
-                    }
-                    return ListView.builder(
-                      itemCount: state.comments.length,
-                      itemBuilder: (context, index) {
-                        final comment = state.comments[index];
-                        final collaborator = widget.collaborators.firstWhere(
-                          (u) => u.id == comment.createdBy,
-                          orElse:
-                              () => UserProfile(
-                                id: comment.createdBy,
-                                name: '',
-                                email: '',
-                                avatarUrl: '',
-                                createdAt: DateTime.now(),
-                              ),
-                        );
-                        return CommentComponent(
-                          comment: comment,
-                          collaborator: collaborator,
-                        );
-                      },
+                    return AudioCommentCommentsList(
+                      comments: state.comments,
+                      collaborators: widget.collaborators,
                     );
                   }
                   if (state is AudioCommentOperationSuccess) {
@@ -130,29 +99,12 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
               ),
             ),
             // Input para nuevo comentario (sticky abajo)
-            Container(
-              color: Colors.grey[900],
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Escribe un comentario...',
-                        hintStyle: TextStyle(color: Colors.grey),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send, color: Colors.blueAccent),
-                    onPressed: () {
-                      // TODO: enviar comentario
-                    },
-                  ),
-                ],
-              ),
+            AudioCommentInputComment(
+              onSend: (text) {
+                context.read<AudioCommentBloc>().add(
+                  AddAudioCommentEvent(widget.projectId, widget.track.id, text),
+                );
+              },
             ),
           ],
         ),
