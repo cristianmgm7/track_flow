@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/features/audio_player/presentation/screens/audio_player_screen.dart';
+import 'package:trackflow/features/audio_player/presentation/screens/audio_track_screen.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
-import '../components/mini_audioplayer.dart';
+import '../widgets/mini_audioplayer.dart';
 
-// --- NUEVO ENUM Y WIDGET ---
+// different player views
 enum PlayerViewMode { mini, expanded }
 
 class AudioPlayerSheet extends StatelessWidget {
