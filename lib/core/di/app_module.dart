@@ -15,6 +15,7 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 abstract class AppModule {
   @preResolve
   Future<Directory> get cacheDir async => await getTemporaryDirectory();
+
   @lazySingleton
   FirebaseStorage get firebaseStorage => FirebaseStorage.instance;
 

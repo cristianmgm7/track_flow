@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
@@ -42,6 +45,10 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
     // Start watching comments for this track
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
+    );
+    // Change visual context to comment player
+    context.read<AudioPlayerBloc>().add(
+      ChangeVisualContext(PlayerVisualContext.commentPlayer),
     );
   }
 

@@ -6,8 +6,6 @@ import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:trackflow/features/audio_cache/audio_cache_cubit.dart';
 import 'package:trackflow/features/audio_cache/audio_cache_state.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 

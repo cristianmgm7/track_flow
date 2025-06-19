@@ -6,7 +6,7 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_comment/presentation/component/audio_comment_component.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_comments_component.dart';
 
 class CommentsForAudioPlayer extends StatefulWidget {
   final ProjectId projectId;
