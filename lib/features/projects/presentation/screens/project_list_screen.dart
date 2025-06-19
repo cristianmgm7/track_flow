@@ -6,7 +6,7 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
+import 'package:trackflow/features/projects/presentation/components/project_component.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_list_actions_sheet.dart';
 
 class ProjectListScreen extends StatefulWidget {
