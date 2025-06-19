@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -22,15 +25,6 @@ class TrackComponent extends StatelessWidget {
     this.onPlay,
     this.onComment,
   });
-
-  void _actions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Column(children: [Text('Actions')]);
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +159,17 @@ class TrackComponent extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
-                  onPressed: () => _actions(context),
+                  onPressed:
+                      () => context.read<AudioPlayerBloc>().add(
+                        PlayAudioRequested(
+                          source: PlaybackSource(
+                            type: PlaybackSourceType.track,
+                          ),
+                          visualContext: PlayerVisualContext.miniPlayer,
+                          track: track,
+                          collaborator: uploader,
+                        ),
+                      ),
                   tooltip: 'Actions',
                   constraints: const BoxConstraints(
                     minWidth: 40,

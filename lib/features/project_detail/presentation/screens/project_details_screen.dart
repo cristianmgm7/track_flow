@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_header.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_tracks_component.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_collaborators_component.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/project_detail_actions_sheet.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final ProjectId projectId;
@@ -24,10 +26,26 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     context.read<ProjectDetailBloc>().add(LoadProjectDetail(widget.projectId));
   }
 
+  void _openProjectDetailActionsSheet() {
+    showTrackFlowActionSheet(
+      title: 'Project Actions',
+      context: context,
+      actions: ProjectDetailActions.forProject(context),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Project Details')),
+      appBar: AppBar(
+        title: const Text('Project Details'),
+        actions: [
+          IconButton(
+            onPressed: _openProjectDetailActionsSheet,
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
       body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
         builder: (context, state) {
           if (state.isLoadingProject && state.project == null) {

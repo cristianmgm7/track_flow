@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailActions {
-  static List<TrackFlowActionItem> forProject(
-    BuildContext context,
-    Project project,
-  ) => [
+  static List<TrackFlowActionItem> forProject(BuildContext context) => [
     TrackFlowActionItem(
       icon: Icons.upload_file,
       title: 'Upload Track',
