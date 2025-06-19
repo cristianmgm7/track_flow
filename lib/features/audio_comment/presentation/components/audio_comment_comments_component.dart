@@ -91,3 +91,40 @@ class CommentComponent extends StatelessWidget {
     );
   }
 }
+
+class AudioCommentCommentsList extends StatelessWidget {
+  final List<AudioComment> comments;
+  final List<UserProfile> collaborators;
+  const AudioCommentCommentsList({
+    super.key,
+    required this.comments,
+    required this.collaborators,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (comments.isEmpty) {
+      return const Center(
+        child: Text('No comments yet.', style: TextStyle(color: Colors.white)),
+      );
+    }
+    return ListView.builder(
+      itemCount: comments.length,
+      itemBuilder: (context, index) {
+        final comment = comments[index];
+        final collaborator = collaborators.firstWhere(
+          (u) => u.id == comment.createdBy,
+          orElse:
+              () => UserProfile(
+                id: comment.createdBy,
+                name: '',
+                email: '',
+                avatarUrl: '',
+                createdAt: DateTime.now(),
+              ),
+        );
+        return CommentComponent(comment: comment, collaborator: collaborator);
+      },
+    );
+  }
+}

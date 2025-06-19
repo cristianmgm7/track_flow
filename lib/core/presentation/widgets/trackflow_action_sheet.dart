@@ -60,7 +60,6 @@ class _TrackFlowActionSheetContent extends StatelessWidget {
   final ScrollController scrollController;
 
   const _TrackFlowActionSheetContent({
-    super.key,
     required this.actions,
     this.title,
     this.header,
