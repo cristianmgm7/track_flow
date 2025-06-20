@@ -9,11 +9,13 @@ import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/entities/unique_id.dart' as _i6;
 import 'package:trackflow/core/error/failures.dart' as _i5;
-import 'package:trackflow/core/session/session_storage.dart' as _i8;
+import 'package:trackflow/core/session/session_storage.dart' as _i9;
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart'
     as _i3;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i7;
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart'
+    as _i8;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -91,12 +93,58 @@ class CustomMockManageCollaboratorsRepository extends _i1.Mock
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, void>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, List<_i8.UserProfile>>>
+      getUserProfileCollaborators(_i7.Project? project) => (super.noSuchMethod(
+            Invocation.method(
+              #getUserProfileCollaborators,
+              [project],
+            ),
+            returnValue: _i4
+                .Future<_i2.Either<_i5.Failure, List<_i8.UserProfile>>>.value(
+                _FakeEither_0<_i5.Failure, List<_i8.UserProfile>>(
+              this,
+              Invocation.method(
+                #getUserProfileCollaborators,
+                [project],
+              ),
+            )),
+          ) as _i4.Future<_i2.Either<_i5.Failure, List<_i8.UserProfile>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> leaveProject({
+    required _i6.ProjectId? projectId,
+    required _i6.UserId? userId,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #leaveProject,
+          [],
+          {
+            #projectId: projectId,
+            #userId: userId,
+          },
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #leaveProject,
+            [],
+            {
+              #projectId: projectId,
+              #userId: userId,
+            },
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 }
 
 /// A class which mocks [SessionStorage].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class CustomMockSessionStorage extends _i1.Mock implements _i8.SessionStorage {
+class CustomMockSessionStorage extends _i1.Mock implements _i9.SessionStorage {
   CustomMockSessionStorage() {
     _i1.throwOnMissingStub(this);
   }

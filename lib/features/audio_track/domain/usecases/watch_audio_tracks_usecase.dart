@@ -5,19 +5,21 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 
-class WatchAudioTracksByProjectParams {
+class WatchTracksByProjectIdParams {
   final ProjectId projectId;
 
-  WatchAudioTracksByProjectParams({required this.projectId});
+  WatchTracksByProjectIdParams({required this.projectId});
 }
 
 @lazySingleton
-class WatchAudioTracksByProject {
+class WatchTracksByProjectIdUseCase {
   final AudioTrackRepository repository;
 
-  WatchAudioTracksByProject(this.repository);
+  WatchTracksByProjectIdUseCase(this.repository);
 
-  Stream<Either<Failure, List<AudioTrack>>> call(ProjectId projectId) {
-    return repository.watchTracksByProject(projectId);
+  Stream<Either<Failure, List<AudioTrack>>> call(
+    WatchTracksByProjectIdParams params,
+  ) {
+    return repository.watchTracksByProject(params.projectId);
   }
 }

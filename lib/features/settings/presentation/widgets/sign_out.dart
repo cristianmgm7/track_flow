@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 
 class SignOut extends StatelessWidget {
   const SignOut({super.key});

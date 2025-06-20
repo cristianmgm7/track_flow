@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
@@ -11,7 +12,6 @@ import 'package:trackflow/features/manage_collaborators/presentation/screens/man
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
@@ -71,6 +71,18 @@ class AppRouter {
                 token: state.pathParameters['token'] ?? '',
               ),
         ),
+        GoRoute(
+          path: AppRoutes.audioComments,
+          builder: (context, state) {
+            // Puedes pasar los argumentos por extra o queryParams
+            final args = state.extra as AudioCommentsScreenArgs;
+            return AudioCommentsScreen(
+              projectId: args.projectId,
+              track: args.track,
+              collaborators: args.collaborators,
+            );
+          },
+        ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) => MainScaffold(child: child),
@@ -100,7 +112,7 @@ class AppRouter {
               path: AppRoutes.projectDetails,
               builder:
                   (context, state) =>
-                      ProjectDetailScreen(project: state.extra as Project),
+                      ProjectDetailsScreen(projectId: state.extra as ProjectId),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,

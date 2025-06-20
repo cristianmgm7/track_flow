@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_event.dart';
-import 'package:trackflow/features/project_detail/aplication/audio_player_state.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 
 @injectable
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {

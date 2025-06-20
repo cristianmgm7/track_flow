@@ -1,14 +1,28 @@
+import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
-abstract class ProjectDetailsEvent {}
+abstract class ProjectDetailEvent extends Equatable {
+  const ProjectDetailEvent();
 
-class LoadUserProfiles extends ProjectDetailsEvent {
-  final Project project;
-  LoadUserProfiles(this.project);
+  @override
+  List<Object?> get props => [];
 }
 
-class LeaveProject extends ProjectDetailsEvent {
+class LoadProjectDetail extends ProjectDetailEvent {
   final ProjectId projectId;
-  LeaveProject(this.projectId);
+
+  const LoadProjectDetail(this.projectId);
+
+  @override
+  List<Object?> get props => [projectId];
+}
+
+class TracksUpdated extends ProjectDetailEvent {
+  final List<AudioTrack> tracks;
+
+  const TracksUpdated(this.tracks);
+
+  @override
+  List<Object?> get props => [tracks];
 }

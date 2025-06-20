@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/widgets/project_form_screen.dart';
-import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
-import 'package:trackflow/features/projects/presentation/widgets/project_card.dart';
+import 'package:trackflow/features/projects/presentation/components/project_component.dart';
+import 'package:trackflow/features/projects/presentation/widgets/project_list_actions_sheet.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});
@@ -18,19 +17,10 @@ class ProjectListScreen extends StatefulWidget {
 }
 
 class _ProjectListScreenState extends State<ProjectListScreen> {
-  FabContextCubit? _fabCubit;
-
   @override
   void initState() {
     super.initState();
     context.read<ProjectsBloc>().add(StartWatchingProjects());
-    context.read<FabContextCubit>().setProjects(_openProjectFormScreen);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _fabCubit ??= context.read<FabContextCubit>();
   }
 
   @override
@@ -39,17 +29,10 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   void _openProjectFormScreen() {
-    showModalBottomSheet(
+    showTrackFlowActionSheet(
       context: context,
-      isScrollControlled: true,
-      builder: (context) => ProjectFormScreen(),
-    );
-  }
-
-  void _showJoinProjectDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => JoinAsCollaboratorDialog(),
+      title: 'Create something new',
+      actions: ProjectActions.onProjectList(context),
     );
   }
 
@@ -59,26 +42,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       appBar: AppBar(
         title: const Text('My Projects'),
         actions: [
-          PopupMenuButton<String>(
+          IconButton(
+            onPressed: _openProjectFormScreen,
             icon: const Icon(Icons.add),
-            onSelected: (value) {
-              if (value == 'create') {
-                _openProjectFormScreen();
-              } else if (value == 'join') {
-                _showJoinProjectDialog(context);
-              }
-            },
-            itemBuilder:
-                (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'create',
-                    child: Text('Crear Proyecto'),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'join',
-                    child: Text('Unirse a Proyecto con ID'),
-                  ),
-                ],
           ),
         ],
       ),
@@ -117,8 +83,10 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 return ProjectCard(
                   project: project,
                   onTap:
-                      () =>
-                          context.go(AppRoutes.projectDetails, extra: project),
+                      () => context.go(
+                        AppRoutes.projectDetails,
+                        extra: project.id,
+                      ),
                 );
               },
             );

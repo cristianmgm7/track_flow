@@ -61,51 +61,51 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
           );
         }
       },
-      child: AlertDialog(
-        title: const Text('Join Project'),
-        content: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
-          builder: (context, state) {
-            return Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _projectIdController,
-                    decoration: const InputDecoration(
-                      labelText: 'Project ID',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a project ID';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: state is ProjectsLoading ? null : _joinProject,
-                    child:
-                        state is ProjectsLoading
-                            ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Text('Join Project'),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
+      child: BottomSheet(
+        backgroundColor: Colors.black,
+        onClosing: () => Navigator.of(context).pop(),
+        builder:
+            (context) =>
+                BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
+                  builder: (context, state) {
+                    return Form(
+                      key: _formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            controller: _projectIdController,
+                            decoration: const InputDecoration(
+                              labelText: 'Project ID',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a project ID';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed:
+                                state is ProjectsLoading ? null : _joinProject,
+                            child:
+                                state is ProjectsLoading
+                                    ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                    : const Text('Join Project'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
       ),
     );
   }

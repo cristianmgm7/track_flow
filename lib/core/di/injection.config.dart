@@ -22,6 +22,8 @@ import 'package:internet_connection_checker/internet_connection_checker.dart'
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:trackflow/core/di/app_module.dart' as _i850;
 import 'package:trackflow/core/network/network_info.dart' as _i952;
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart'
+    as _i254;
 import 'package:trackflow/core/services/dynamic_link_service.dart' as _i559;
 import 'package:trackflow/core/session/session_storage.dart' as _i383;
 import 'package:trackflow/core/sync/project_sync_service.dart' as _i1071;
@@ -120,28 +122,26 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/get_proj
     as _i40;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart'
     as _i391;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart'
+    as _i521;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart'
+    as _i933;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
     as _i151;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
     as _i81;
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart'
     as _i438;
-import 'package:trackflow/features/navegation/fab_cubit.dart/fab_cubit.dart'
-    as _i104;
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart'
     as _i508;
-import 'package:trackflow/features/project_detail/aplication/audioplayer_bloc.dart'
-    as _i858;
 import 'package:trackflow/features/project_detail/data/datasource/project_detail_remote_datasource.dart'
     as _i509;
 import 'package:trackflow/features/project_detail/data/repositories/project_detail_repository_impl.dart'
     as _i167;
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart'
     as _i703;
-import 'package:trackflow/features/project_detail/domain/usecases/leave_project_usecase.dart'
-    as _i650;
-import 'package:trackflow/features/project_detail/domain/usecases/load_user_profile_collaborators_usecase.dart'
-    as _i147;
+import 'package:trackflow/features/project_detail/domain/usecases/get_project_by_id_usecase.dart'
+    as _i263;
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart'
     as _i376;
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart'
@@ -195,9 +195,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.prefs,
       preResolve: true,
     );
-    gh.factory<_i104.FabContextCubit>(() => _i104.FabContextCubit());
     gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
-    gh.factory<_i858.AudioPlayerBloc>(() => _i858.AudioPlayerBloc());
+    gh.factory<_i254.AudioPlayerBloc>(() => _i254.AudioPlayerBloc());
     gh.singleton<_i559.DynamicLinkService>(() => _i559.DynamicLinkService());
     gh.lazySingleton<_i457.FirebaseStorage>(() => appModule.firebaseStorage);
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);
@@ -271,9 +270,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i991.AudioCommentRepository>(() =>
         _i337.AudioCommentRepositoryImpl(
             remoteDataSource: gh<_i966.AudioCommentRemoteDataSource>()));
-    gh.lazySingleton<_i40.GetProjectWithUserProfilesUseCase>(() =>
-        _i40.GetProjectWithUserProfilesUseCase(
-            gh<_i703.ProjectDetailRepository>()));
     gh.factory<_i120.GetUserProfileUseCase>(() => _i120.GetUserProfileUseCase(
           gh<_i839.UserProfileRepository>(),
           gh<_i383.SessionStorage>(),
@@ -312,13 +308,8 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.factory<_i721.AudioCacheCubit>(
         () => _i721.AudioCacheCubit(gh<_i443.GetCachedAudioPath>()));
-    gh.lazySingleton<_i650.LeaveProjectUseCase>(() => _i650.LeaveProjectUseCase(
-          gh<_i703.ProjectDetailRepository>(),
-          gh<_i383.SessionStorage>(),
-        ));
-    gh.lazySingleton<_i147.LoadUserProfileCollaboratorsUseCase>(() =>
-        _i147.LoadUserProfileCollaboratorsUseCase(
-            gh<_i703.ProjectDetailRepository>()));
+    gh.lazySingleton<_i263.GetProjectByIdUseCase>(
+        () => _i263.GetProjectByIdUseCase(gh<_i703.ProjectDetailRepository>()));
     gh.lazySingleton<_i1022.ProjectsRepository>(
         () => _i553.ProjectsRepositoryImpl(
               remoteDataSource: gh<_i102.ProjectRemoteDataSource>(),
@@ -327,20 +318,33 @@ extension GetItInjectableX on _i174.GetIt {
             ));
     gh.lazySingleton<_i394.ProjectTrackService>(
         () => _i394.ProjectTrackService(gh<_i864.AudioTrackRepository>()));
+    gh.lazySingleton<_i933.LoadUserProfileCollaboratorsUseCase>(() =>
+        _i933.LoadUserProfileCollaboratorsUseCase(
+            gh<_i1063.ManageCollaboratorsRepository>()));
+    gh.lazySingleton<_i40.GetProjectWithUserProfilesUseCase>(
+        () => _i40.GetProjectWithUserProfilesUseCase(
+              gh<_i1063.ManageCollaboratorsRepository>(),
+              gh<_i703.ProjectDetailRepository>(),
+            ));
     gh.lazySingleton<_i20.DeleteAudioTrack>(() => _i20.DeleteAudioTrack(
           gh<_i383.SessionStorage>(),
           gh<_i703.ProjectDetailRepository>(),
           gh<_i394.ProjectTrackService>(),
         ));
-    gh.factory<_i376.ProjectDetailBloc>(() => _i376.ProjectDetailBloc(
-          getProjectWithUserProfilesUseCase:
-              gh<_i147.LoadUserProfileCollaboratorsUseCase>(),
-          leaveProjectUseCase: gh<_i650.LeaveProjectUseCase>(),
-        ));
-    gh.lazySingleton<_i881.WatchAudioTracksByProject>(() =>
-        _i881.WatchAudioTracksByProject(gh<_i864.AudioTrackRepository>()));
+    gh.lazySingleton<_i881.WatchTracksByProjectIdUseCase>(() =>
+        _i881.WatchTracksByProjectIdUseCase(gh<_i864.AudioTrackRepository>()));
     gh.lazySingleton<_i134.ProjectCommentService>(
         () => _i134.ProjectCommentService(gh<_i991.AudioCommentRepository>()));
+    gh.factory<_i376.ProjectDetailBloc>(() => _i376.ProjectDetailBloc(
+          getProjectById: gh<_i263.GetProjectByIdUseCase>(),
+          watchTracksByProjectId: gh<_i881.WatchTracksByProjectIdUseCase>(),
+          loadUserProfileCollaborators:
+              gh<_i933.LoadUserProfileCollaboratorsUseCase>(),
+        ));
+    gh.lazySingleton<_i521.LeaveProjectUseCase>(() => _i521.LeaveProjectUseCase(
+          gh<_i1063.ManageCollaboratorsRepository>(),
+          gh<_i383.SessionStorage>(),
+        ));
     gh.lazySingleton<_i1043.DeleteProjectUseCase>(
         () => _i1043.DeleteProjectUseCase(
               gh<_i1022.ProjectsRepository>(),
@@ -397,6 +401,11 @@ extension GetItInjectableX on _i174.GetIt {
           firestore: gh<_i974.FirebaseFirestore>(),
           projectSyncService: gh<_i1071.ProjectSyncService>(),
         ));
+    gh.factory<_i719.AudioTrackBloc>(() => _i719.AudioTrackBloc(
+          watchAudioTracksByProject: gh<_i881.WatchTracksByProjectIdUseCase>(),
+          deleteAudioTrack: gh<_i20.DeleteAudioTrack>(),
+          uploadAudioTrackUseCase: gh<_i956.UploadAudioTrackUseCase>(),
+        ));
     gh.lazySingleton<_i900.AddAudioCommentUseCase>(
         () => _i900.AddAudioCommentUseCase(
               gh<_i134.ProjectCommentService>(),
@@ -409,19 +418,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i703.ProjectDetailRepository>(),
               gh<_i383.SessionStorage>(),
             ));
-    gh.lazySingleton<_i38.WatchCommentsByTrackUseCase>(() =>
-        _i38.WatchCommentsByTrackUseCase(gh<_i134.ProjectCommentService>()));
-    gh.factory<_i719.AudioTrackBloc>(() => _i719.AudioTrackBloc(
-          watchAudioTracksByProject: gh<_i881.WatchAudioTracksByProject>(),
-          deleteAudioTrack: gh<_i20.DeleteAudioTrack>(),
-          uploadAudioTrackUseCase: gh<_i956.UploadAudioTrackUseCase>(),
-        ));
-    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
-          createProject: gh<_i594.CreateProjectUseCase>(),
-          updateProject: gh<_i532.UpdateProjectUseCase>(),
-          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
-          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
-        ));
     gh.factory<_i438.ManageCollaboratorsBloc>(() =>
         _i438.ManageCollaboratorsBloc(
           addCollaboratorUseCase: gh<_i398.AddCollaboratorToProjectUseCase>(),
@@ -430,6 +426,15 @@ extension GetItInjectableX on _i174.GetIt {
           getProjectWithUserProfilesUseCase:
               gh<_i40.GetProjectWithUserProfilesUseCase>(),
           removeCollaboratorUseCase: gh<_i151.RemoveCollaboratorUseCase>(),
+          leaveProjectUseCase: gh<_i521.LeaveProjectUseCase>(),
+        ));
+    gh.lazySingleton<_i38.WatchCommentsByTrackUseCase>(() =>
+        _i38.WatchCommentsByTrackUseCase(gh<_i134.ProjectCommentService>()));
+    gh.factory<_i534.ProjectsBloc>(() => _i534.ProjectsBloc(
+          createProject: gh<_i594.CreateProjectUseCase>(),
+          updateProject: gh<_i532.UpdateProjectUseCase>(),
+          deleteProject: gh<_i1043.DeleteProjectUseCase>(),
+          watchAllProjects: gh<_i461.WatchAllProjectsUseCase>(),
         ));
     gh.lazySingleton<_i690.GoogleSignInUseCase>(
         () => _i690.GoogleSignInUseCase(gh<_i104.AuthRepository>()));
