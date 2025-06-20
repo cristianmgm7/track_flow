@@ -157,6 +157,8 @@ import 'package:trackflow/features/projects/data/datasources/project_local_data_
     as _i334;
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart'
     as _i102;
+import 'package:trackflow/features/projects/data/models/project_dto.dart'
+    as _i453;
 import 'package:trackflow/features/projects/data/repositories/projects_repository_impl.dart'
     as _i553;
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
@@ -222,8 +224,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i116.GoogleSignIn>(() => appModule.googleSignIn);
     gh.lazySingleton<_i973.InternetConnectionChecker>(
         () => appModule.internetConnectionChecker);
-    gh.lazySingleton<_i979.Box<Map<dynamic, dynamic>>>(
-        () => appModule.projectsBox);
+    gh.lazySingleton<_i979.Box<_i453.ProjectDTO>>(() => appModule.projectsBox);
     gh.lazySingleton<_i979.Box<_i137.AudioCommentDTO>>(
         () => appModule.audioCommentsBox);
     gh.lazySingleton<_i979.Box<_i1047.AudioTrackDTO>>(
@@ -270,9 +271,6 @@ extension GetItInjectableX on _i174.GetIt {
               gh<_i974.FirebaseFirestore>(),
               gh<_i457.FirebaseStorage>(),
             ));
-    gh.lazySingleton<_i334.ProjectsLocalDataSource>(() =>
-        _i334.ProjectsLocalDataSourceImpl(
-            box: gh<_i979.Box<Map<dynamic, dynamic>>>()));
     gh.lazySingleton<_i93.ManageCollaboratorsRemoteDataSource>(() =>
         _i93.ManageCollaboratorsRemoteDataSourceImpl(
           userProfileRemoteDataSource: gh<_i744.UserProfileRemoteDataSource>(),
@@ -289,6 +287,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i698.AudioCommentLocalDataSource>(() =>
         _i698.HiveAudioCommentLocalDataSource(
             gh<_i979.Box<_i137.AudioCommentDTO>>()));
+    gh.lazySingleton<_i334.ProjectsLocalDataSource>(() =>
+        _i334.ProjectsLocalDataSourceImpl(
+            box: gh<_i979.Box<_i453.ProjectDTO>>()));
     gh.factory<_i524.MagicLinkRepository>(() =>
         _i133.MagicLinkRepositoryImp(gh<_i442.MagicLinkRemoteDataSource>()));
     gh.lazySingleton<_i113.SyncProjectsUseCase>(() => _i113.SyncProjectsUseCase(
