@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
+import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 @module
 abstract class AppModule {
@@ -46,4 +47,8 @@ abstract class AppModule {
   @lazySingleton
   Box<AudioTrackDTO> get audioTracksBox =>
       Hive.box<AudioTrackDTO>('audioTracksBox');
+
+  @lazySingleton
+  Box<UserProfileDTO> get userProfilesBox =>
+      Hive.box<UserProfileDTO>('userProfilesBox');
 }

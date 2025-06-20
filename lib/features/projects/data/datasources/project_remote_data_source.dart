@@ -13,6 +13,8 @@ abstract class ProjectRemoteDataSource {
   Future<Either<Failure, Unit>> updateProject(Project project);
 
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
+
+  Future<Either<Failure, List<Project>>> getUserProjects(String userId);
 }
 
 @LazySingleton(as: ProjectRemoteDataSource)
@@ -102,6 +104,24 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
           'An unexpected error occurred while deleting the project',
         ),
       );
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Project>>> getUserProjects(String userId) async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection(ProjectDTO.collection)
+              .where('ownerId', isEqualTo: userId)
+              .get();
+      return Right(
+        snapshot.docs
+            .map((doc) => ProjectDTO.fromFirestore(doc).toDomain())
+            .toList(),
+      );
+    } catch (e) {
+      return Left(UnexpectedFailure('Failed to get user projects'));
     }
   }
 }

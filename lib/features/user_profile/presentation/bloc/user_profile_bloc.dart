@@ -1,18 +1,22 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/get_user_profile_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
 @injectable
 class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
-  final GetUserProfileUseCase getUserProfileUseCase;
   final UpdateUserProfileUseCase updateUserProfileUseCase;
+  final WatchUserProfileUseCase watchUserProfileUseCase;
+
+  StreamSubscription<UserProfile?>? _profileSubscription;
 
   UserProfileBloc({
-    required this.getUserProfileUseCase,
     required this.updateUserProfileUseCase,
+    required this.watchUserProfileUseCase,
   }) : super(UserProfileInitial()) {
     on<LoadUserProfile>(_onLoadUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
@@ -23,11 +27,14 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
-    final result = await getUserProfileUseCase.call();
-    result.fold(
-      (failure) => emit(UserProfileError()),
-      (profile) => emit(UserProfileLoaded(profile)),
-    );
+    await _profileSubscription?.cancel();
+    _profileSubscription = watchUserProfileUseCase.call().listen((profile) {
+      if (profile == null) {
+        emit(UserProfileError());
+      } else {
+        emit(UserProfileLoaded(profile));
+      }
+    });
   }
 
   Future<void> _onSaveUserProfile(
@@ -41,5 +48,11 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       (_) => emit(UserProfileSaved()),
     );
     add(LoadUserProfile());
+  }
+
+  @override
+  Future<void> close() {
+    _profileSubscription?.cancel();
+    return super.close();
   }
 }
