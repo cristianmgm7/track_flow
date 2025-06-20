@@ -17,25 +17,20 @@ abstract class ProjectsLocalDataSource {
 
 @LazySingleton(as: ProjectsLocalDataSource)
 class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
-  late final Box<Map> _box;
+  late final Box<ProjectDTO> _box;
 
-  ProjectsLocalDataSourceImpl({required Box<Map> box}) {
+  ProjectsLocalDataSourceImpl({required Box<ProjectDTO> box}) {
     _box = box;
   }
 
   @override
   Future<void> cacheProject(ProjectDTO project) async {
-    await _box.put(project.id, project.toMap());
+    await _box.put(project.id, project);
   }
 
   @override
   Future<ProjectDTO?> getCachedProject(UniqueId id) async {
-    final data = _box.get(id.value);
-    if (data == null) return null;
-    return ProjectDTO.fromMap({
-      'id': id.value,
-      ...Map<String, dynamic>.from(data),
-    });
+    return _box.get(id.value);
   }
 
   @override
@@ -45,10 +40,7 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
 
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values
-        .whereType<Map>() // only maps
-        .map((e) => ProjectDTO.fromMap(Map<String, dynamic>.from(e)))
-        .toList();
+    return _box.values.toList();
   }
 
   @override
@@ -61,7 +53,6 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
         )
         .toList();
 
-    // Luego escuchar los cambios y filtrar también
     yield* _box.watch().asyncMap((_) async {
       final all = await getAllProjects();
       return all

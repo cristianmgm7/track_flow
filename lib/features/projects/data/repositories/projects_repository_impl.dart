@@ -30,7 +30,6 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-
     try {
       final result = await _remoteDataSource.createProject(project);
       return result.fold((failure) => Left(failure), (projectWithId) async {
@@ -76,17 +75,6 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         .map(
           (projects) =>
               Right(projects.map((project) => project.toDomain()).toList()),
-        );
-  }
-
-  @override
-  Stream<Either<Failure, List<Project>>> watchRemoteProjects(UserId userId) {
-    return _remoteDataSource
-        .watchProjectsByUser(userId)
-        .map<Either<Failure, List<Project>>>((projects) => Right(projects))
-        .handleError(
-          (error) =>
-              Left(DatabaseFailure('Remote sync error: ${error.toString()}')),
         );
   }
 }
