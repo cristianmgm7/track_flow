@@ -13,8 +13,6 @@ abstract class ProjectRemoteDataSource {
   Future<Either<Failure, Unit>> updateProject(Project project);
 
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
-
-  Stream<List<Project>> watchProjectsByUser(UserId userId);
 }
 
 @LazySingleton(as: ProjectRemoteDataSource)
@@ -105,18 +103,5 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         ),
       );
     }
-  }
-
-  @override
-  Stream<List<Project>> watchProjectsByUser(UserId userId) {
-    return _firestore
-        .collection(ProjectDTO.collection)
-        .where('collaboratorIds', arrayContains: userId.value)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => ProjectDTO.fromFirestore(doc).toDomain())
-              .toList();
-        });
   }
 }
