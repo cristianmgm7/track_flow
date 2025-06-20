@@ -21,7 +21,7 @@ class ProjectSyncService {
        _localDataSource = localDataSource;
 
   void start(UserId userId) {
-    _subscription = _repository.watchRemoteProjects(userId).listen((either) {
+    _subscription = _repository.watchLocalProjects(userId).listen((either) {
       either.fold((failure) => debugPrint('Sync error: $failure'), (projects) {
         for (final project in projects) {
           _localDataSource.cacheProject(ProjectDTO.fromDomain(project));
