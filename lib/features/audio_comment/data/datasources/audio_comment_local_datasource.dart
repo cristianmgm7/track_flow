@@ -6,6 +6,7 @@ abstract class AudioCommentLocalDataSource {
   Future<void> cacheComment(AudioCommentDTO comment);
   Future<void> deleteCachedComment(String commentId);
   Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId);
+  Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId);
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
@@ -29,5 +30,14 @@ class HiveAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
     return _commentBox.values
         .where((comment) => comment.trackId == trackId)
         .toList();
+  }
+
+  @override
+  Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId) {
+    return _commentBox.watch().map((_) {
+      return _commentBox.values
+          .where((comment) => comment.trackId == trackId)
+          .toList();
+    });
   }
 }

@@ -7,13 +7,7 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 
 abstract class AudioCommentRemoteDataSource {
-  Future<Either<Failure, AudioComment>> getCommentById(
-    AudioCommentId commentId,
-  );
   Future<Either<Failure, Unit>> addComment(AudioComment comment);
-  Stream<Either<Failure, List<AudioComment>>> watchCommentsByTrack(
-    AudioTrackId trackId,
-  );
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
   Future<List<AudioCommentDTO>> getAllComments();
 }
@@ -24,22 +18,6 @@ class FirebaseAudioCommentRemoteDataSource
   final FirebaseFirestore _firestore;
 
   FirebaseAudioCommentRemoteDataSource(this._firestore);
-
-  @override
-  Future<Either<Failure, AudioComment>> getCommentById(
-    AudioCommentId commentId,
-  ) async {
-    try {
-      final snapshot =
-          await _firestore
-              .collection(AudioCommentDTO.collection)
-              .doc(commentId.value)
-              .get();
-      return Right(AudioCommentDTO.fromJson(snapshot.data()!).toDomain());
-    } catch (e) {
-      return Left(ServerFailure('Failed to get comment by id'));
-    }
-  }
 
   @override
   Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
@@ -53,30 +31,6 @@ class FirebaseAudioCommentRemoteDataSource
       return Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to add comment'));
-    }
-  }
-
-  @override
-  Stream<Either<Failure, List<AudioComment>>> watchCommentsByTrack(
-    AudioTrackId trackId,
-  ) {
-    try {
-      return _firestore
-          .collection(AudioCommentDTO.collection)
-          .where('trackId', isEqualTo: trackId.value)
-          .snapshots()
-          .map(
-            (snapshot) => Right(
-              snapshot.docs.map((doc) {
-                final data = doc.data();
-                return AudioCommentDTO.fromJson(data).toDomain();
-              }).toList(),
-            ),
-          );
-    } catch (e) {
-      return Stream.value(
-        Left(ServerFailure('Failed to watch comments by track')),
-      );
     }
   }
 
