@@ -15,6 +15,7 @@ abstract class AudioCommentRemoteDataSource {
     AudioTrackId trackId,
   );
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
+  Future<List<AudioCommentDTO>> getAllComments();
 }
 
 @LazySingleton(as: AudioCommentRemoteDataSource)
@@ -89,6 +90,20 @@ class FirebaseAudioCommentRemoteDataSource
       return Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to delete comment'));
+    }
+  }
+
+  @override
+  Future<List<AudioCommentDTO>> getAllComments() async {
+    try {
+      final snapshot =
+          await _firestore.collection(AudioCommentDTO.collection).get();
+      return snapshot.docs
+          .map((doc) => AudioCommentDTO.fromJson(doc.data()))
+          .toList();
+    } catch (e) {
+      // Puedes loggear el error si lo deseas
+      return [];
     }
   }
 }
