@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hive/hive.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
@@ -9,6 +10,7 @@ import 'package:trackflow/features/projects/domain/value_objects/project_descrip
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
+@HiveType(typeId: 1)
 class ProjectDTO {
   const ProjectDTO({
     required this.id,

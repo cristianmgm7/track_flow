@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:hive/hive.dart';
 
+@HiveType(typeId: 2)
 class UserProfileDTO {
   final String id;
   final String name;
