@@ -17,9 +17,9 @@ abstract class ProjectsLocalDataSource {
 
 @LazySingleton(as: ProjectsLocalDataSource)
 class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
-  final Box<Map> _box;
+  late final Box<Map> _box;
 
-  ProjectsLocalDataSourceImpl(this._box);
+  ProjectsLocalDataSourceImpl(@Named('projectsBox') this._box);
 
   @override
   Future<void> cacheProject(ProjectDTO project) async {

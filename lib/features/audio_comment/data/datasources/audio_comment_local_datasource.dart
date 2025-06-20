@@ -11,9 +11,9 @@ abstract class AudioCommentLocalDataSource {
 
 @LazySingleton(as: AudioCommentLocalDataSource)
 class HiveAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
-  final Box<Map> _commentBox;
+  late final Box<Map> _commentBox;
 
-  HiveAudioCommentLocalDataSource(this._commentBox);
+  HiveAudioCommentLocalDataSource(@Named('audioCommentsBox') this._commentBox);
 
   @override
   Future<void> cacheComment(AudioCommentDTO comment) async {

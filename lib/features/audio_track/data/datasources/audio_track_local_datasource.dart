@@ -11,8 +11,8 @@ abstract class AudioTrackLocalDataSource {
 
 @LazySingleton(as: AudioTrackLocalDataSource)
 class AudioTrackLocalDataSourceImpl implements AudioTrackLocalDataSource {
-  final Box<Map> _cache;
-  AudioTrackLocalDataSourceImpl(this._cache);
+  late final Box<Map> _cache;
+  AudioTrackLocalDataSourceImpl(@Named('audioTracksBox') this._cache);
 
   @override
   Future<void> cacheTrack(AudioTrackDTO track) async {

@@ -9,8 +9,8 @@ abstract class UserProfileLocalDataSource {
 
 @LazySingleton(as: UserProfileLocalDataSource)
 class UserProfileLocalDataSourceImpl implements UserProfileLocalDataSource {
-  final Box<Map> _box;
-  UserProfileLocalDataSourceImpl(this._box);
+  late final Box<Map> _box;
+  UserProfileLocalDataSourceImpl(@Named('userProfilesBox') this._box);
 
   @override
   Future<void> cacheUserProfile(UserProfileDTO profile) async {

@@ -13,7 +13,7 @@ void main() {
 
   setUp(() {
     mockBox = MockBox();
-    dataSource = ProjectsLocalDataSourceImpl(box: mockBox);
+    dataSource = ProjectsLocalDataSourceImpl(mockBox);
   });
 
   test('should return empty list when no projects are cached', () async {

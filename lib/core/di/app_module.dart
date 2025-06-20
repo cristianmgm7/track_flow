@@ -34,15 +34,19 @@ abstract class AppModule {
   InternetConnectionChecker get internetConnectionChecker =>
       InternetConnectionChecker();
 
+  @Named('projectsBox')
   @lazySingleton
   Box<Map> get projectsBox => Hive.box<Map>('projectsBox');
 
+  @Named('audioCommentsBox')
   @lazySingleton
   Box<Map> get audioCommentsBox => Hive.box<Map>('audioCommentsBox');
 
+  @Named('audioTracksBox')
   @lazySingleton
   Box<Map> get audioTracksBox => Hive.box<Map>('audioTracksBox');
 
+  @Named('userProfilesBox')
   @lazySingleton
   Box<Map> get userProfilesBox => Hive.box<Map>('userProfilesBox');
 }
