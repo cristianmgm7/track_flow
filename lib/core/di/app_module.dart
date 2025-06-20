@@ -9,10 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
-import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
-import 'package:trackflow/features/projects/data/models/project_dto.dart';
-import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 @module
 abstract class AppModule {
@@ -39,17 +35,14 @@ abstract class AppModule {
       InternetConnectionChecker();
 
   @lazySingleton
-  Box<ProjectDTO> get projectsBox => Hive.box<ProjectDTO>('projectsBox');
+  Box<Map> get projectsBox => Hive.box<Map>('projectsBox');
 
   @lazySingleton
-  Box<AudioCommentDTO> get audioCommentsBox =>
-      Hive.box<AudioCommentDTO>('audioCommentsBox');
+  Box<Map> get audioCommentsBox => Hive.box<Map>('audioCommentsBox');
 
   @lazySingleton
-  Box<AudioTrackDTO> get audioTracksBox =>
-      Hive.box<AudioTrackDTO>('audioTracksBox');
+  Box<Map> get audioTracksBox => Hive.box<Map>('audioTracksBox');
 
   @lazySingleton
-  Box<UserProfileDTO> get userProfilesBox =>
-      Hive.box<UserProfileDTO>('userProfilesBox');
+  Box<Map> get userProfilesBox => Hive.box<Map>('userProfilesBox');
 }

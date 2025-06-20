@@ -9,16 +9,22 @@ abstract class UserProfileLocalDataSource {
 
 @LazySingleton(as: UserProfileLocalDataSource)
 class UserProfileLocalDataSourceImpl implements UserProfileLocalDataSource {
-  final Box<UserProfileDTO> _box;
+  final Box<Map> _box;
   UserProfileLocalDataSourceImpl(this._box);
 
   @override
   Future<void> cacheUserProfile(UserProfileDTO profile) async {
-    await _box.put(profile.id, profile);
+    await _box.put(profile.id, profile.toJson());
   }
 
   @override
   Stream<UserProfileDTO?> watchUserProfile(String userId) {
-    return _box.watch(key: userId).map((_) => _box.get(userId));
+    return _box.watch(key: userId).map((_) {
+      final map = _box.get(userId);
+      if (map != null) {
+        return UserProfileDTO.fromJson(map.cast<String, dynamic>());
+      }
+      return null;
+    });
   }
 }

@@ -11,17 +11,21 @@ abstract class AudioTrackLocalDataSource {
 
 @LazySingleton(as: AudioTrackLocalDataSource)
 class AudioTrackLocalDataSourceImpl implements AudioTrackLocalDataSource {
-  final Box<AudioTrackDTO> _cache;
+  final Box<Map> _cache;
   AudioTrackLocalDataSourceImpl(this._cache);
 
   @override
   Future<void> cacheTrack(AudioTrackDTO track) async {
-    await _cache.put(track.id.value, track);
+    await _cache.put(track.id.value, track.toJson());
   }
 
   @override
   Future<AudioTrackDTO?> getTrackById(String id) async {
-    return _cache.get(id);
+    final map = _cache.get(id);
+    if (map != null) {
+      return AudioTrackDTO.fromJson(map.cast<String, dynamic>());
+    }
+    return null;
   }
 
   @override
@@ -33,7 +37,8 @@ class AudioTrackLocalDataSourceImpl implements AudioTrackLocalDataSource {
   Stream<List<AudioTrackDTO>> watchTracksByProject(String projectId) {
     return _cache.watch().map((_) {
       return _cache.values
-          .where((track) => track.projectId == projectId)
+          .map((map) => AudioTrackDTO.fromJson(map.cast<String, dynamic>()))
+          .where((track) => track.projectId.value == projectId)
           .toList();
     });
   }

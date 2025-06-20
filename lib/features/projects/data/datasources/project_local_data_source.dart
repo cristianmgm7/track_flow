@@ -17,20 +17,22 @@ abstract class ProjectsLocalDataSource {
 
 @LazySingleton(as: ProjectsLocalDataSource)
 class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
-  late final Box<ProjectDTO> _box;
+  final Box<Map> _box;
 
-  ProjectsLocalDataSourceImpl({required Box<ProjectDTO> box}) {
-    _box = box;
-  }
+  ProjectsLocalDataSourceImpl(this._box);
 
   @override
   Future<void> cacheProject(ProjectDTO project) async {
-    await _box.put(project.id, project);
+    await _box.put(project.id, project.toMap());
   }
 
   @override
   Future<ProjectDTO?> getCachedProject(UniqueId id) async {
-    return _box.get(id.value);
+    final map = _box.get(id.value);
+    if (map != null) {
+      return ProjectDTO.fromMap(map.cast<String, dynamic>());
+    }
+    return null;
   }
 
   @override
@@ -40,7 +42,9 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
 
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values.toList();
+    return _box.values
+        .map((map) => ProjectDTO.fromMap(map.cast<String, dynamic>()))
+        .toList();
   }
 
   @override
@@ -49,7 +53,7 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
         .where(
           (dto) =>
               dto.ownerId == ownerId.value ||
-              dto.collaborators.contains(ownerId.value),
+              dto.collaboratorIds.contains(ownerId.value),
         )
         .toList();
 
@@ -59,7 +63,7 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
           .where(
             (dto) =>
                 dto.ownerId == ownerId.value ||
-                dto.collaborators.contains(ownerId.value),
+                dto.collaboratorIds.contains(ownerId.value),
           )
           .toList();
     });

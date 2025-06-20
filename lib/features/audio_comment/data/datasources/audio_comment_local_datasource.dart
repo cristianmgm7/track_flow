@@ -11,13 +11,13 @@ abstract class AudioCommentLocalDataSource {
 
 @LazySingleton(as: AudioCommentLocalDataSource)
 class HiveAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
-  final Box<AudioCommentDTO> _commentBox;
+  final Box<Map> _commentBox;
 
   HiveAudioCommentLocalDataSource(this._commentBox);
 
   @override
   Future<void> cacheComment(AudioCommentDTO comment) async {
-    await _commentBox.put(comment.id, comment);
+    await _commentBox.put(comment.id, comment.toJson());
   }
 
   @override
@@ -28,6 +28,7 @@ class HiveAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   @override
   Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId) async {
     return _commentBox.values
+        .map((map) => AudioCommentDTO.fromJson(map.cast<String, dynamic>()))
         .where((comment) => comment.trackId == trackId)
         .toList();
   }
@@ -36,6 +37,7 @@ class HiveAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId) {
     return _commentBox.watch().map((_) {
       return _commentBox.values
+          .map((map) => AudioCommentDTO.fromJson(map.cast<String, dynamic>()))
           .where((comment) => comment.trackId == trackId)
           .toList();
     });
