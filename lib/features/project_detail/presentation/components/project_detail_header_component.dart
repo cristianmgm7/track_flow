@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
-class ProjectDetailHeader extends StatelessWidget {
+class ProjectDetailHeaderComponent extends StatelessWidget {
   final Project project;
-  const ProjectDetailHeader({super.key, required this.project});
+  const ProjectDetailHeaderComponent({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {

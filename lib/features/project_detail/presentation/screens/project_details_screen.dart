@@ -5,7 +5,7 @@ import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart'
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
-import 'package:trackflow/features/project_detail/presentation/components/project_detail_header.dart';
+import 'package:trackflow/features/project_detail/presentation/components/project_detail_header_component.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_tracks_component.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_collaborators_component.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/project_detail_actions_sheet.dart';
@@ -76,7 +76,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Project Header
-                ProjectDetailHeader(project: project),
+                ProjectDetailHeaderComponent(project: project),
                 // Tracks Section
                 ProjectDetailTracksSection(state: state, context: context),
                 // Collaborators Section

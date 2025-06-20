@@ -76,7 +76,8 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                               playerWaveStyle: PlayerWaveStyle(
                                 fixedWaveColor: Colors.blueAccent,
                                 liveWaveColor: Colors.blue,
-                                spacing: 2,
+                                spacing: 4,
+                                waveThickness: 2,
                                 showSeekLine: true,
                               ),
                             ),

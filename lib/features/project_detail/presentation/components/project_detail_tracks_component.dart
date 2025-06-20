@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 
@@ -22,13 +23,13 @@ class ProjectDetailTracksSection extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.music_note),
-                const SizedBox(width: 8),
+                const SizedBox(width: Dimensions.space4),
                 Text(
-                  'Audio Tracks ({state.tracks.length})',
+                  'Audio Tracks (${state.tracks.length})',
                   style: Theme.of(this.context).textTheme.titleMedium,
                 ),
                 if (state.isLoadingTracks) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Dimensions.space4),
                   const SizedBox(
                     width: 16,
                     height: 16,
@@ -38,7 +39,6 @@ class ProjectDetailTracksSection extends StatelessWidget {
               ],
             ),
             if (state.tracksError != null) ...[
-              const SizedBox(height: 8),
               Text(
                 'Error loading tracks: {state.tracksError}',
                 style: const TextStyle(color: Colors.red),
@@ -47,11 +47,10 @@ class ProjectDetailTracksSection extends StatelessWidget {
             if (state.tracks.isEmpty &&
                 !state.isLoadingTracks &&
                 state.tracksError == null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Dimensions.space16),
               const Text('No tracks found'),
             ],
             if (state.tracks.isNotEmpty) ...[
-              const SizedBox(height: 16),
               ...state.tracks.map(
                 (track) => TrackComponent(
                   track: track,

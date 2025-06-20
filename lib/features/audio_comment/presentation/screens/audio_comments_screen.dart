@@ -42,13 +42,29 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
   @override
   void initState() {
     super.initState();
-    // Start watching comments for this track
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
     );
-    // Change visual context to comment player
     context.read<AudioPlayerBloc>().add(
       ChangeVisualContext(PlayerVisualContext.commentPlayer),
+    );
+    final collaborator =
+        widget.collaborators.isNotEmpty
+            ? widget.collaborators.first
+            : UserProfile(
+              id: widget.track.uploadedBy,
+              name: '',
+              email: '',
+              avatarUrl: '',
+              createdAt: DateTime.now(),
+            );
+    context.read<AudioPlayerBloc>().add(
+      PlayAudioRequested(
+        source: PlaybackSource(type: PlaybackSourceType.track),
+        visualContext: PlayerVisualContext.commentPlayer,
+        track: widget.track,
+        collaborator: collaborator,
+      ),
     );
   }
 
