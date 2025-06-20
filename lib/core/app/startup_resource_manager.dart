@@ -1,17 +1,16 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/syn_audio_comment_usecase.dart';
+import 'package:trackflow/features/audio_track/domain/usecases/syn_audio_tracks_usecase.dart';
 
 @lazySingleton
 class StartupResourceManager {
   final SyncAudioCommentsUseCase syncAudioComments;
+  final SyncAudioTracksUseCase syncAudioTracks;
 
-  StartupResourceManager(this.syncAudioComments);
+  StartupResourceManager(this.syncAudioComments, this.syncAudioTracks);
 
   Future<void> initializeAppData() async {
-    await Future.wait([
-      syncAudioComments(),
-      // Agrega aquí otros módulos (ej: syncProjects(), syncUserProfiles(), etc.)
-    ]);
+    await Future.wait([syncAudioComments(), syncAudioTracks()]);
   }
 
   Future<void> refreshAppData() async {

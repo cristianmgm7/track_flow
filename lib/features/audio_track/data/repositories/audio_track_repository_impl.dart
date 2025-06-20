@@ -2,7 +2,10 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
+import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'dart:io';
@@ -10,14 +13,22 @@ import 'dart:io';
 @LazySingleton(as: AudioTrackRepository)
 class AudioTrackRepositoryImpl implements AudioTrackRepository {
   final AudioTrackRemoteDataSource remoteDataSource;
+  final AudioTrackLocalDataSource localDataSource;
+  final NetworkInfo networkInfo;
 
-  AudioTrackRepositoryImpl(this.remoteDataSource);
+  AudioTrackRepositoryImpl(
+    this.remoteDataSource,
+    this.localDataSource,
+    this.networkInfo,
+  );
 
   @override
   Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
     try {
-      final track = await remoteDataSource.getTrackById(id);
-      return track.fold((failure) => Left(failure), (track) => Right(track));
+      final track = await localDataSource.getTrackById(id.value);
+      return track != null
+          ? Right(track.toDomain())
+          : Left(ServerFailure('Track not found'));
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
@@ -27,14 +38,13 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
   ) {
-    return remoteDataSource
-        .watchTracksByProject(projectId)
-        .map(
-          (tracks) => tracks.fold(
-            (failure) => Left(failure),
-            (tracks) => Right(tracks),
-          ),
-        );
+    try {
+      return localDataSource
+          .watchTracksByProject(projectId.value)
+          .map((dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()));
+    } catch (e) {
+      return Stream.value(Left(ServerFailure('Failed to watch local tracks')));
+    }
   }
 
   @override
@@ -42,21 +52,35 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     required File file,
     required AudioTrack track,
   }) async {
-    try {
-      await remoteDataSource.uploadAudioTrack(file: file, track: track);
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.uploadAudioTrack(file: file, track: track);
+        await localDataSource.cacheTrack(
+          AudioTrackDTO.fromDomain(track),
+        ); // if I want to save local
+        return Right(unit);
+      } catch (e) {
+        return Left(ServerFailure(e.toString()));
+      }
+    } else {
+      // await localDataSource.cacheTrack(AudioTrackDTO.fromDomain(track)); // if I want to save local
+      return Left(ServerFailure('No network connection'));
     }
   }
 
   @override
   Future<Either<Failure, Unit>> deleteTrack(String trackId) async {
-    try {
-      await remoteDataSource.deleteTrack(trackId);
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure(e.toString()));
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.deleteTrack(trackId);
+        await localDataSource.deleteTrack(trackId);
+        return Right(unit);
+      } catch (e) {
+        return Left(ServerFailure(e.toString()));
+      }
+    } else {
+      // await localDataSource.deleteTrack(trackId); // if I want to delete local
+      return Left(ServerFailure('No network connection'));
     }
   }
 }
