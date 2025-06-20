@@ -5,10 +5,9 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'dart:io';
 
 abstract class UserProfileRemoteDataSource {
-  Future<Either<Failure, UserProfile>> getProfilesByIds(String userId);
+  Future<Either<Failure, UserProfile>> getProfileById(String userId);
   Future<void> updateProfile(UserProfileDTO profile);
 }
 
@@ -20,7 +19,7 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   UserProfileRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<Either<Failure, UserProfile>> getProfilesByIds(String userId) async {
+  Future<Either<Failure, UserProfile>> getProfileById(String userId) async {
     try {
       final query =
           await _firestore
@@ -67,7 +66,6 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   Future<String?> _uploadAvatar(String userId, String filePath) async {
     try {
       final ref = _storage.ref().child('avatars/$userId');
-      final uploadTask = await ref.putFile(File(filePath));
       return await ref.getDownloadURL();
     } catch (e) {
       return null;
