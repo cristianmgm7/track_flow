@@ -109,7 +109,7 @@ class ProjectDTO {
             : DateTime.tryParse(json['updatedAt'] as String? ?? ''),
     collaborators:
         (json['collaborators'] as List<dynamic>?)
-            ?.map((e) => e as Map<String, dynamic>)
+            ?.map((e) => (e as Map).cast<String, dynamic>())
             .toList() ??
         [],
     collaboratorIds:
@@ -145,7 +145,7 @@ class ProjectDTO {
       updatedAt: updatedAt,
       collaborators:
           (data['collaborators'] as List<dynamic>?)
-              ?.map((e) => e as Map<String, dynamic>)
+              ?.map((e) => (e as Map).cast<String, dynamic>())
               .toList() ??
           [],
       collaboratorIds:
@@ -218,7 +218,7 @@ class ProjectDTO {
       updatedAt: updatedAt,
       collaborators:
           (data['collaborators'] as List<dynamic>?)
-              ?.map((e) => e as Map<String, dynamic>)
+              ?.map((e) => (e as Map).cast<String, dynamic>())
               .toList() ??
           [],
       collaboratorIds:
