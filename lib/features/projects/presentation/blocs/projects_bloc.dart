@@ -33,7 +33,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<StartWatchingProjects>(_onStartWatchingProjects);
-    on<ProjectsUpdated>(_onProjectsUpdated);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -76,23 +75,25 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   }
 
   //Watching Projects stream
-  void _onStartWatchingProjects(
+  Future<void> _onStartWatchingProjects(
     StartWatchingProjects event,
     Emitter<ProjectsState> emit,
-  ) {
+  ) async {
     emit(ProjectsLoading());
-    _projectsSubscription?.cancel();
-    _projectsSubscription = watchAllProjects().listen((projects) {
-      return add(ProjectsUpdated(projects));
-    });
-  }
-
-  void _onProjectsUpdated(ProjectsUpdated event, Emitter<ProjectsState> emit) {
-    event.projects.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (projects) {
-        emit(ProjectsLoaded(projects));
+    await emit.onEach<Either<Failure, List<Project>>>(
+      watchAllProjects(),
+      onData: (eitherProjects) {
+        eitherProjects.fold(
+          (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+          (projects) => emit(ProjectsLoaded(projects)),
+        );
       },
+      onError:
+          (error, stackTrace) => emit(
+            ProjectsError(
+              _mapFailureToMessage(ServerFailure(error.toString())),
+            ),
+          ),
     );
   }
 
