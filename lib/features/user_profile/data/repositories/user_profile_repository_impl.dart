@@ -10,14 +10,17 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
-  final UserProfileRemoteDataSource _remoteDataSource;
-  final UserProfileLocalDataSource _localDataSource;
+  final UserProfileRemoteDataSource _userProfileRemoteDataSource;
+  final UserProfileLocalDataSource _userProfileLocalDataSource;
 
-  UserProfileRepositoryImpl(this._remoteDataSource, this._localDataSource);
+  UserProfileRepositoryImpl(
+    this._userProfileRemoteDataSource,
+    this._userProfileLocalDataSource,
+  );
 
   @override
   Stream<UserProfile?> watchUserProfile(UserId userId) {
-    return _localDataSource
+    return _userProfileLocalDataSource
         .watchUserProfile(userId.value)
         .map((dto) => dto?.toDomain());
   }
@@ -28,8 +31,8 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   ) async {
     try {
       final userProfileDTO = UserProfileDTO.fromDomain(userProfile);
-      await _remoteDataSource.updateProfile(userProfileDTO);
-      await _localDataSource.cacheUserProfile(userProfileDTO);
+      await _userProfileRemoteDataSource.updateProfile(userProfileDTO);
+      await _userProfileLocalDataSource.cacheUserProfile(userProfileDTO);
       return right(null);
     } catch (e) {
       return left(ServerFailure(e.toString()));

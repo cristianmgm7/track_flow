@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
+import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
+import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
@@ -36,12 +41,17 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
   }
 
   Future<void> _saveProject() async {
-    if (!_formKey.currentState!.validate()) return;
+    // if (!_formKey.currentState!.validate()) return;
 
-    final name = ProjectName(_titleController.text);
+    // final name = ProjectName(_titleController.text);
 
-    final params = CreateProjectParams(name: name);
-    context.read<ProjectsBloc>().add(CreateProjectRequested(params));
+    // final params = CreateProjectParams(name: name);
+    // context.read<ProjectsBloc>().add(CreateProjectRequested(params));
+
+    // // Stop audio playback before signing out
+    context.read<AudioPlayerBloc>().add(StopAudioRequested());
+    context.read<AuthBloc>().add(AuthSignOutRequested());
+    context.read<NavigationCubit>().reset();
   }
 
   @override

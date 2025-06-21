@@ -1,6 +1,9 @@
 import 'dart:async';
+
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
@@ -12,7 +15,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
 
-  StreamSubscription<UserProfile?>? _profileSubscription;
+  StreamSubscription<Either<Failure, UserProfile?>>? _profileSubscription;
 
   UserProfileBloc({
     required this.updateUserProfileUseCase,
@@ -29,12 +32,16 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   ) async {
     emit(UserProfileLoading());
     await _profileSubscription?.cancel();
-    _profileSubscription = watchUserProfileUseCase.call().listen((profile) {
-      if (profile == null) {
-        emit(UserProfileError());
-      } else {
-        emit(UserProfileLoaded(profile));
-      }
+    _profileSubscription = watchUserProfileUseCase.call().listen((
+      eitherProfile,
+    ) {
+      eitherProfile.fold((failure) => emit(UserProfileError()), (profile) {
+        if (profile != null) {
+          emit(UserProfileLoaded(profile));
+        } else {
+          emit(UserProfileError());
+        }
+      });
     });
   }
 

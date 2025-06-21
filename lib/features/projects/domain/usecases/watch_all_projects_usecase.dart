@@ -8,17 +8,17 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 
 @lazySingleton
 class WatchAllProjectsUseCase {
-  final ProjectsRepository _repository;
-  final SessionStorage _sessionManager;
+  final ProjectsRepository _projectsRepository;
+  final SessionStorage _sessionStorage;
 
-  WatchAllProjectsUseCase(this._repository, this._sessionManager);
+  WatchAllProjectsUseCase(this._projectsRepository, this._sessionStorage);
 
   Stream<Either<Failure, List<Project>>> call() {
-    final userId = _sessionManager.getUserId();
+    final userId = _sessionStorage.getUserId();
     if (userId == null) {
       return Stream.value(left(ServerFailure('No user found')));
     }
-    final stream = _repository.watchLocalProjects(
+    final stream = _projectsRepository.watchLocalProjects(
       UserId.fromUniqueString(userId),
     );
     return stream.map(

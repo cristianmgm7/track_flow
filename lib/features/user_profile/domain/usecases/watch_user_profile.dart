@@ -1,20 +1,26 @@
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 
 @lazySingleton
 class WatchUserProfileUseCase {
-  final UserProfileLocalDataSource local;
-  final SessionStorage sessionStorage;
+  final UserProfileRepository _userProfileRepository;
+  final SessionStorage _sessionStorage;
 
-  WatchUserProfileUseCase(this.local, this.sessionStorage);
+  WatchUserProfileUseCase(this._userProfileRepository, this._sessionStorage);
 
-  Stream<UserProfile?> call() {
-    final userId = sessionStorage.getUserId();
+  Stream<Either<Failure, UserProfile?>> call() {
+    final userId = _sessionStorage.getUserId();
     if (userId == null) {
-      return Stream.value(null);
+      return Stream.value(Left(ServerFailure('No user found')));
     }
-    return local.watchUserProfile(userId).map((dto) => dto?.toDomain());
+    final stream = _userProfileRepository.watchUserProfile(
+      UserId.fromUniqueString(userId),
+    );
+    return stream.map((profile) => right(profile));
   }
 }

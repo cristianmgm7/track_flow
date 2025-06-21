@@ -374,7 +374,7 @@ extension GetItInjectableX on _i1.GetIt {
         _i64.WatchTracksByProjectIdUseCase(gh<_i41.AudioTrackRepository>()));
     gh.lazySingleton<_i65.WatchUserProfileUseCase>(
         () => _i65.WatchUserProfileUseCase(
-              gh<_i27.UserProfileLocalDataSource>(),
+              gh<_i29.UserProfileRepository>(),
               gh<_i53.SessionStorage>(),
             ));
     gh.lazySingleton<_i66.AddAudioCommentUseCase>(

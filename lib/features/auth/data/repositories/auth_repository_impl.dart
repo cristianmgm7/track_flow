@@ -15,6 +15,7 @@ import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -55,7 +56,7 @@ class AuthRepositoryImpl implements AuthRepository {
     return right(user.uid);
   }
 
-  Future<void> _createUserProfileIfNotExists(User user) async {
+  Future<void> _createOrSyncUserProfile(User user) async {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
     final existing = await userRef.get();
     if (!existing.exists) {
@@ -79,6 +80,12 @@ class AuthRepositoryImpl implements AuthRepository {
             newProfile.creativeRole?.name ?? CreativeRole.other.name,
       });
       _userProfileBloc.add(CreateUserProfile(newProfile));
+    } else {
+      final data = existing.data();
+      if (data != null) {
+        final remoteProfile = UserProfileDTO.fromJson(data).toDomain();
+        _userProfileBloc.add(CreateUserProfile(remoteProfile));
+      }
     }
   }
 
@@ -120,7 +127,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = cred.user;
       if (user != null) {
         await _cacheUserId(user);
-        await _createUserProfileIfNotExists(user);
+        await _createOrSyncUserProfile(user);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null) {
@@ -139,7 +146,7 @@ class AuthRepositoryImpl implements AuthRepository {
   ) async {
     final user = _auth.currentUser;
     if (user != null) {
-      await _createUserProfileIfNotExists(user);
+      await _createOrSyncUserProfile(user);
     }
     try {
       final isConnected = await _networkInfo.isConnected;
@@ -154,7 +161,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final user = cred.user;
       if (user != null) {
-        await _createUserProfileIfNotExists(user);
+        await _createOrSyncUserProfile(user);
         await _cacheUserId(user);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
@@ -192,7 +199,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final cred = await _auth.signInWithCredential(credential);
       if (user != null) {
         await _cacheUserId(user);
-        await _createUserProfileIfNotExists(user);
+        await _createOrSyncUserProfile(user);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null) {
