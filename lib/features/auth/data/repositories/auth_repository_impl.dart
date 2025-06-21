@@ -13,6 +13,8 @@ import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -22,6 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final NetworkInfo _networkInfo;
   final FirebaseFirestore _firestore;
   final ProjectSyncService _projectSyncService;
+  final UserProfileBloc _userProfileBloc;
 
   AuthRepositoryImpl({
     required FirebaseAuth auth,
@@ -30,12 +33,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required NetworkInfo networkInfo,
     required FirebaseFirestore firestore,
     required ProjectSyncService projectSyncService,
+    required UserProfileBloc userProfileBloc,
   }) : _auth = auth,
        _googleSignIn = googleSignIn,
        _prefs = prefs,
        _networkInfo = networkInfo,
        _firestore = firestore,
-       _projectSyncService = projectSyncService;
+       _projectSyncService = projectSyncService,
+       _userProfileBloc = userProfileBloc;
 
   Future<void> _cacheUserId(User user) async {
     final userId = user.uid;
@@ -54,15 +59,26 @@ class AuthRepositoryImpl implements AuthRepository {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
     final existing = await userRef.get();
     if (!existing.exists) {
+      final newProfile = UserProfile(
+        id: UserId.fromUniqueString(user.uid),
+        name: user.displayName ?? '',
+        email: user.email ?? '',
+        avatarUrl: user.photoURL ?? '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        creativeRole: CreativeRole.other,
+      );
       await userRef.set({
-        'id': user.uid,
-        'name': user.displayName ?? '',
-        'email': user.email ?? '',
-        'avatarUrl': user.photoURL ?? '',
-        'createdAt': DateTime.now(),
-        'updatedAt': DateTime.now(),
-        'creativeRole': CreativeRole.other.name,
+        'id': newProfile.id.value,
+        'name': newProfile.name,
+        'email': newProfile.email,
+        'avatarUrl': newProfile.avatarUrl,
+        'createdAt': newProfile.createdAt,
+        'updatedAt': newProfile.updatedAt,
+        'creativeRole':
+            newProfile.creativeRole?.name ?? CreativeRole.other.name,
       });
+      _userProfileBloc.add(CreateUserProfile(newProfile));
     }
   }
 
