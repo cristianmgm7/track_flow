@@ -18,12 +18,13 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     required this.updateUserProfileUseCase,
     required this.watchUserProfileUseCase,
   }) : super(UserProfileInitial()) {
-    on<LoadUserProfile>(_onLoadUserProfile);
+    on<WatchUserProfile>(_onWatchUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
+    on<CreateUserProfile>(_onCreateUserProfile);
   }
 
-  Future<void> _onLoadUserProfile(
-    LoadUserProfile event,
+  Future<void> _onWatchUserProfile(
+    WatchUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
@@ -47,7 +48,20 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       (failure) => emit(UserProfileError()),
       (_) => emit(UserProfileSaved()),
     );
-    add(LoadUserProfile());
+    add(WatchUserProfile());
+  }
+
+  Future<void> _onCreateUserProfile(
+    CreateUserProfile event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    emit(UserProfileSaving());
+    final result = await updateUserProfileUseCase(event.profile);
+    result.fold(
+      (failure) => emit(UserProfileError()),
+      (_) => emit(UserProfileSaved()),
+    );
+    add(WatchUserProfile());
   }
 
   @override
