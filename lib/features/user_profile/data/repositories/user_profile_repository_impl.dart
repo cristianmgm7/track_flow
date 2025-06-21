@@ -19,10 +19,16 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   );
 
   @override
-  Stream<UserProfile?> watchUserProfile(UserId userId) {
-    return _userProfileLocalDataSource
-        .watchUserProfile(userId.value)
-        .map((dto) => dto?.toDomain());
+  Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId) async* {
+    try {
+      await for (final dto in _userProfileLocalDataSource.watchUserProfile(
+        userId.value,
+      )) {
+        yield Right(dto?.toDomain());
+      }
+    } catch (e) {
+      yield Left(ServerFailure(e.toString()));
+    }
   }
 
   @override

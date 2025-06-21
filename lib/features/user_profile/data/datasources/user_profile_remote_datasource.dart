@@ -54,7 +54,7 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
       await _firestore
           .collection(UserProfileDTO.collection)
           .doc(profile.id)
-          .update(profile.toJson());
+          .set(profile.toJson(), SetOptions(merge: true));
       return right(null);
     } on FirebaseException catch (e) {
       return left(ServerFailure(e.message ?? 'An error occurred'));

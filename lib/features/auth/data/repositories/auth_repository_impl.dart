@@ -12,9 +12,8 @@ import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 @LazySingleton(as: AuthRepository)
@@ -25,7 +24,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final NetworkInfo _networkInfo;
   final FirebaseFirestore _firestore;
   final ProjectSyncService _projectSyncService;
-  final UserProfileBloc _userProfileBloc;
+  final UserProfileLocalDataSource _userProfileLocalDataSource;
 
   AuthRepositoryImpl({
     required FirebaseAuth auth,
@@ -34,14 +33,14 @@ class AuthRepositoryImpl implements AuthRepository {
     required NetworkInfo networkInfo,
     required FirebaseFirestore firestore,
     required ProjectSyncService projectSyncService,
-    required UserProfileBloc userProfileBloc,
+    required UserProfileLocalDataSource userProfileLocalDataSource,
   }) : _auth = auth,
        _googleSignIn = googleSignIn,
        _prefs = prefs,
        _networkInfo = networkInfo,
        _firestore = firestore,
        _projectSyncService = projectSyncService,
-       _userProfileBloc = userProfileBloc;
+       _userProfileLocalDataSource = userProfileLocalDataSource;
 
   Future<void> _cacheUserId(User user) async {
     final userId = user.uid;
@@ -79,12 +78,14 @@ class AuthRepositoryImpl implements AuthRepository {
         'creativeRole':
             newProfile.creativeRole?.name ?? CreativeRole.other.name,
       });
-      _userProfileBloc.add(CreateUserProfile(newProfile));
+      await _userProfileLocalDataSource.cacheUserProfile(
+        UserProfileDTO.fromDomain(newProfile),
+      );
     } else {
       final data = existing.data();
       if (data != null) {
-        final remoteProfile = UserProfileDTO.fromJson(data).toDomain();
-        _userProfileBloc.add(CreateUserProfile(remoteProfile));
+        final remoteProfile = UserProfileDTO.fromJson(data);
+        await _userProfileLocalDataSource.cacheUserProfile(remoteProfile);
       }
     }
   }

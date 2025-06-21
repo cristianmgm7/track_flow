@@ -6,5 +6,5 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 abstract class UserProfileRepository {
   Future<Either<Failure, void>> updateUserProfile(UserProfile userProfile);
 
-  Stream<UserProfile?> watchUserProfile(UserId userId);
+  Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId);
 }

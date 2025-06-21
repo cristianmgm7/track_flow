@@ -20,7 +20,7 @@ import 'package:internet_connection_checker/internet_connection_checker.dart'
     as _i10;
 import 'package:isar/isar.dart' as _i11;
 import 'package:shared_preferences/shared_preferences.dart' as _i26;
-import 'package:trackflow/core/app/startup_resource_manager.dart' as _i80;
+import 'package:trackflow/core/app/startup_resource_manager.dart' as _i90;
 import 'package:trackflow/core/di/app_module.dart' as _i96;
 import 'package:trackflow/core/network/network_info.dart' as _i17;
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart'
@@ -50,13 +50,13 @@ import 'package:trackflow/features/audio_comment/domain/services/project_comment
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart'
     as _i66;
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comement_usecase.dart'
-    as _i70;
+    as _i72;
 import 'package:trackflow/features/audio_comment/domain/usecases/syn_audio_comment_usecase.dart'
     as _i54;
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_usecase.dart'
     as _i63;
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart'
-    as _i82;
+    as _i92;
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart'
     as _i39;
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart'
@@ -68,7 +68,7 @@ import 'package:trackflow/features/audio_track/domain/repositories/audio_track_r
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart'
     as _i52;
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart'
-    as _i71;
+    as _i73;
 import 'package:trackflow/features/audio_track/domain/usecases/syn_audio_tracks_usecase.dart'
     as _i55;
 import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_track_usecase.dart'
@@ -76,25 +76,25 @@ import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_tra
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart'
     as _i64;
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart'
-    as _i83;
-import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
-    as _i85;
-import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart'
-    as _i84;
-import 'package:trackflow/features/auth/domain/usecases/get_auth_state_usecase.dart'
-    as _i87;
-import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart'
-    as _i88;
-import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart'
-    as _i91;
-import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart'
-    as _i92;
-import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart'
     as _i93;
+import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.dart'
+    as _i70;
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart'
+    as _i69;
+import 'package:trackflow/features/auth/domain/usecases/get_auth_state_usecase.dart'
+    as _i76;
+import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart'
+    as _i78;
+import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart'
+    as _i83;
+import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart'
+    as _i87;
+import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart'
+    as _i88;
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart'
-    as _i94;
+    as _i89;
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart'
-    as _i95;
+    as _i94;
 import 'package:trackflow/features/magic_link/data/datasources/magic_link_local_data_source.dart'
     as _i12;
 import 'package:trackflow/features/magic_link/data/datasources/magic_link_remote_data_source.dart'
@@ -106,7 +106,7 @@ import 'package:trackflow/features/magic_link/domain/repositories/magic_link_rep
 import 'package:trackflow/features/magic_link/domain/usecases/consume_magic_link_use_case.dart'
     as _i43;
 import 'package:trackflow/features/magic_link/domain/usecases/generate_magic_link_use_case.dart'
-    as _i86;
+    as _i75;
 import 'package:trackflow/features/magic_link/domain/usecases/get_magic_link_status_use_case.dart'
     as _i45;
 import 'package:trackflow/features/magic_link/domain/usecases/resend_magic_link_use_case.dart'
@@ -114,7 +114,7 @@ import 'package:trackflow/features/magic_link/domain/usecases/resend_magic_link_
 import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_link_use_case.dart'
     as _i31;
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart'
-    as _i89;
+    as _i82;
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collabolators_remote_datasource.dart'
     as _i47;
 import 'package:trackflow/features/manage_collaborators/data/repositories/manage_collaborators_repository_impl.dart'
@@ -124,19 +124,19 @@ import 'package:trackflow/features/manage_collaborators/domain/repositories/mana
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
     as _i67;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/get_project_with_user_profiles.dart'
-    as _i73;
+    as _i77;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart'
-    as _i74;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart'
-    as _i75;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart'
-    as _i76;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
     as _i79;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart'
+    as _i80;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart'
+    as _i81;
+import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
+    as _i86;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
     as _i58;
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart'
-    as _i90;
+    as _i95;
 import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart'
     as _i16;
 import 'package:trackflow/features/project_detail/data/datasource/project_detail_remote_datasource.dart'
@@ -148,7 +148,7 @@ import 'package:trackflow/features/project_detail/domain/repositories/project_de
 import 'package:trackflow/features/project_detail/domain/usecases/get_project_by_id_usecase.dart'
     as _i46;
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart'
-    as _i77;
+    as _i84;
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart'
     as _i22;
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart'
@@ -158,9 +158,9 @@ import 'package:trackflow/features/projects/data/repositories/projects_repositor
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i23;
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart'
-    as _i69;
+    as _i71;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
-    as _i72;
+    as _i74;
 import 'package:trackflow/features/projects/domain/usecases/sync_projects_usecase.dart'
     as _i56;
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
@@ -168,7 +168,7 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart'
     as _i62;
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart'
-    as _i78;
+    as _i85;
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart'
     as _i27;
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart'
@@ -184,7 +184,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/update_user_prof
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart'
     as _i65;
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart'
-    as _i81;
+    as _i91;
 
 extension GetItInjectableX on _i1.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -391,133 +391,133 @@ extension GetItInjectableX on _i1.GetIt {
             ));
     gh.factory<_i68.AudioCacheCubit>(
         () => _i68.AudioCacheCubit(gh<_i44.GetCachedAudioPath>()));
-    gh.lazySingleton<_i69.CreateProjectUseCase>(() => _i69.CreateProjectUseCase(
-          gh<_i23.ProjectsRepository>(),
-          gh<_i53.SessionStorage>(),
-        ));
-    gh.lazySingleton<_i70.DeleteAudioCommentUseCase>(
-        () => _i70.DeleteAudioCommentUseCase(
-              gh<_i50.ProjectCommentService>(),
-              gh<_i19.ProjectDetailRepository>(),
-              gh<_i53.SessionStorage>(),
-            ));
-    gh.lazySingleton<_i71.DeleteAudioTrack>(() => _i71.DeleteAudioTrack(
-          gh<_i53.SessionStorage>(),
-          gh<_i19.ProjectDetailRepository>(),
-          gh<_i52.ProjectTrackService>(),
-        ));
-    gh.lazySingleton<_i72.DeleteProjectUseCase>(() => _i72.DeleteProjectUseCase(
-          gh<_i23.ProjectsRepository>(),
-          gh<_i53.SessionStorage>(),
-        ));
-    gh.lazySingleton<_i73.GetProjectWithUserProfilesUseCase>(
-        () => _i73.GetProjectWithUserProfilesUseCase(
-              gh<_i48.ManageCollaboratorsRepository>(),
-              gh<_i19.ProjectDetailRepository>(),
-            ));
-    gh.lazySingleton<_i74.JoinProjectWithIdUseCase>(
-        () => _i74.JoinProjectWithIdUseCase(
-              gh<_i19.ProjectDetailRepository>(),
-              gh<_i48.ManageCollaboratorsRepository>(),
-              gh<_i53.SessionStorage>(),
-            ));
-    gh.lazySingleton<_i75.LeaveProjectUseCase>(() => _i75.LeaveProjectUseCase(
-          gh<_i48.ManageCollaboratorsRepository>(),
-          gh<_i53.SessionStorage>(),
-        ));
-    gh.lazySingleton<_i76.LoadUserProfileCollaboratorsUseCase>(() =>
-        _i76.LoadUserProfileCollaboratorsUseCase(
-            gh<_i48.ManageCollaboratorsRepository>()));
-    gh.factory<_i77.ProjectDetailBloc>(() => _i77.ProjectDetailBloc(
-          getProjectById: gh<_i46.GetProjectByIdUseCase>(),
-          watchTracksByProjectId: gh<_i64.WatchTracksByProjectIdUseCase>(),
-          loadUserProfileCollaborators:
-              gh<_i76.LoadUserProfileCollaboratorsUseCase>(),
-        ));
-    gh.factory<_i78.ProjectsBloc>(() => _i78.ProjectsBloc(
-          createProject: gh<_i69.CreateProjectUseCase>(),
-          updateProject: gh<_i59.UpdateProjectUseCase>(),
-          deleteProject: gh<_i72.DeleteProjectUseCase>(),
-          watchAllProjects: gh<_i62.WatchAllProjectsUseCase>(),
-        ));
-    gh.lazySingleton<_i79.RemoveCollaboratorUseCase>(
-        () => _i79.RemoveCollaboratorUseCase(
-              gh<_i19.ProjectDetailRepository>(),
-              gh<_i48.ManageCollaboratorsRepository>(),
-              gh<_i53.SessionStorage>(),
-            ));
-    gh.lazySingleton<_i80.StartupResourceManager>(
-        () => _i80.StartupResourceManager(
-              gh<_i54.SyncAudioCommentsUseCase>(),
-              gh<_i55.SyncAudioTracksUseCase>(),
-              gh<_i56.SyncProjectsUseCase>(),
-              gh<_i57.SyncUserProfileUseCase>(),
-            ));
-    gh.factory<_i81.UserProfileBloc>(() => _i81.UserProfileBloc(
-          updateUserProfileUseCase: gh<_i60.UpdateUserProfileUseCase>(),
-          watchUserProfileUseCase: gh<_i65.WatchUserProfileUseCase>(),
-        ));
-    gh.factory<_i82.AudioCommentBloc>(() => _i82.AudioCommentBloc(
-          watchCommentsByTrackUseCase: gh<_i63.WatchCommentsByTrackUseCase>(),
-          addAudioCommentUseCase: gh<_i66.AddAudioCommentUseCase>(),
-          deleteAudioCommentUseCase: gh<_i70.DeleteAudioCommentUseCase>(),
-        ));
-    gh.factory<_i83.AudioTrackBloc>(() => _i83.AudioTrackBloc(
-          watchAudioTracksByProject: gh<_i64.WatchTracksByProjectIdUseCase>(),
-          deleteAudioTrack: gh<_i71.DeleteAudioTrack>(),
-          uploadAudioTrackUseCase: gh<_i61.UploadAudioTrackUseCase>(),
-        ));
-    gh.lazySingleton<_i84.AuthRepository>(() => _i85.AuthRepositoryImpl(
+    gh.lazySingleton<_i69.AuthRepository>(() => _i70.AuthRepositoryImpl(
           auth: gh<_i6.FirebaseAuth>(),
           googleSignIn: gh<_i9.GoogleSignIn>(),
           prefs: gh<_i26.SharedPreferences>(),
           networkInfo: gh<_i17.NetworkInfo>(),
           firestore: gh<_i7.FirebaseFirestore>(),
           projectSyncService: gh<_i51.ProjectSyncService>(),
-          userProfileBloc: gh<_i81.UserProfileBloc>(),
+          userProfileLocalDataSource: gh<_i27.UserProfileLocalDataSource>(),
         ));
-    gh.lazySingleton<_i86.GenerateMagicLinkUseCase>(
-        () => _i86.GenerateMagicLinkUseCase(
-              gh<_i14.MagicLinkRepository>(),
-              gh<_i84.AuthRepository>(),
+    gh.lazySingleton<_i71.CreateProjectUseCase>(() => _i71.CreateProjectUseCase(
+          gh<_i23.ProjectsRepository>(),
+          gh<_i53.SessionStorage>(),
+        ));
+    gh.lazySingleton<_i72.DeleteAudioCommentUseCase>(
+        () => _i72.DeleteAudioCommentUseCase(
+              gh<_i50.ProjectCommentService>(),
+              gh<_i19.ProjectDetailRepository>(),
+              gh<_i53.SessionStorage>(),
             ));
-    gh.lazySingleton<_i87.GetAuthStateUseCase>(
-        () => _i87.GetAuthStateUseCase(gh<_i84.AuthRepository>()));
-    gh.lazySingleton<_i88.GoogleSignInUseCase>(
-        () => _i88.GoogleSignInUseCase(gh<_i84.AuthRepository>()));
-    gh.factory<_i89.MagicLinkBloc>(() => _i89.MagicLinkBloc(
-          generateMagicLink: gh<_i86.GenerateMagicLinkUseCase>(),
+    gh.lazySingleton<_i73.DeleteAudioTrack>(() => _i73.DeleteAudioTrack(
+          gh<_i53.SessionStorage>(),
+          gh<_i19.ProjectDetailRepository>(),
+          gh<_i52.ProjectTrackService>(),
+        ));
+    gh.lazySingleton<_i74.DeleteProjectUseCase>(() => _i74.DeleteProjectUseCase(
+          gh<_i23.ProjectsRepository>(),
+          gh<_i53.SessionStorage>(),
+        ));
+    gh.lazySingleton<_i75.GenerateMagicLinkUseCase>(
+        () => _i75.GenerateMagicLinkUseCase(
+              gh<_i14.MagicLinkRepository>(),
+              gh<_i69.AuthRepository>(),
+            ));
+    gh.lazySingleton<_i76.GetAuthStateUseCase>(
+        () => _i76.GetAuthStateUseCase(gh<_i69.AuthRepository>()));
+    gh.lazySingleton<_i77.GetProjectWithUserProfilesUseCase>(
+        () => _i77.GetProjectWithUserProfilesUseCase(
+              gh<_i48.ManageCollaboratorsRepository>(),
+              gh<_i19.ProjectDetailRepository>(),
+            ));
+    gh.lazySingleton<_i78.GoogleSignInUseCase>(
+        () => _i78.GoogleSignInUseCase(gh<_i69.AuthRepository>()));
+    gh.lazySingleton<_i79.JoinProjectWithIdUseCase>(
+        () => _i79.JoinProjectWithIdUseCase(
+              gh<_i19.ProjectDetailRepository>(),
+              gh<_i48.ManageCollaboratorsRepository>(),
+              gh<_i53.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i80.LeaveProjectUseCase>(() => _i80.LeaveProjectUseCase(
+          gh<_i48.ManageCollaboratorsRepository>(),
+          gh<_i53.SessionStorage>(),
+        ));
+    gh.lazySingleton<_i81.LoadUserProfileCollaboratorsUseCase>(() =>
+        _i81.LoadUserProfileCollaboratorsUseCase(
+            gh<_i48.ManageCollaboratorsRepository>()));
+    gh.factory<_i82.MagicLinkBloc>(() => _i82.MagicLinkBloc(
+          generateMagicLink: gh<_i75.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i31.ValidateMagicLinkUseCase>(),
           consumeMagicLink: gh<_i43.ConsumeMagicLinkUseCase>(),
           resendMagicLink: gh<_i25.ResendMagicLinkUseCase>(),
           getMagicLinkStatus: gh<_i45.GetMagicLinkStatusUseCase>(),
-          joinProjectWithId: gh<_i74.JoinProjectWithIdUseCase>(),
-          authRepository: gh<_i84.AuthRepository>(),
+          joinProjectWithId: gh<_i79.JoinProjectWithIdUseCase>(),
+          authRepository: gh<_i69.AuthRepository>(),
         ));
-    gh.factory<_i90.ManageCollaboratorsBloc>(() => _i90.ManageCollaboratorsBloc(
+    gh.lazySingleton<_i83.OnboardingUseCase>(
+        () => _i83.OnboardingUseCase(gh<_i69.AuthRepository>()));
+    gh.factory<_i84.ProjectDetailBloc>(() => _i84.ProjectDetailBloc(
+          getProjectById: gh<_i46.GetProjectByIdUseCase>(),
+          watchTracksByProjectId: gh<_i64.WatchTracksByProjectIdUseCase>(),
+          loadUserProfileCollaborators:
+              gh<_i81.LoadUserProfileCollaboratorsUseCase>(),
+        ));
+    gh.factory<_i85.ProjectsBloc>(() => _i85.ProjectsBloc(
+          createProject: gh<_i71.CreateProjectUseCase>(),
+          updateProject: gh<_i59.UpdateProjectUseCase>(),
+          deleteProject: gh<_i74.DeleteProjectUseCase>(),
+          watchAllProjects: gh<_i62.WatchAllProjectsUseCase>(),
+        ));
+    gh.lazySingleton<_i86.RemoveCollaboratorUseCase>(
+        () => _i86.RemoveCollaboratorUseCase(
+              gh<_i19.ProjectDetailRepository>(),
+              gh<_i48.ManageCollaboratorsRepository>(),
+              gh<_i53.SessionStorage>(),
+            ));
+    gh.lazySingleton<_i87.SignInUseCase>(
+        () => _i87.SignInUseCase(gh<_i69.AuthRepository>()));
+    gh.lazySingleton<_i88.SignOutUseCase>(
+        () => _i88.SignOutUseCase(gh<_i69.AuthRepository>()));
+    gh.lazySingleton<_i89.SignUpUseCase>(
+        () => _i89.SignUpUseCase(gh<_i69.AuthRepository>()));
+    gh.lazySingleton<_i90.StartupResourceManager>(
+        () => _i90.StartupResourceManager(
+              gh<_i54.SyncAudioCommentsUseCase>(),
+              gh<_i55.SyncAudioTracksUseCase>(),
+              gh<_i56.SyncProjectsUseCase>(),
+              gh<_i57.SyncUserProfileUseCase>(),
+            ));
+    gh.factory<_i91.UserProfileBloc>(() => _i91.UserProfileBloc(
+          updateUserProfileUseCase: gh<_i60.UpdateUserProfileUseCase>(),
+          watchUserProfileUseCase: gh<_i65.WatchUserProfileUseCase>(),
+        ));
+    gh.factory<_i92.AudioCommentBloc>(() => _i92.AudioCommentBloc(
+          watchCommentsByTrackUseCase: gh<_i63.WatchCommentsByTrackUseCase>(),
+          addAudioCommentUseCase: gh<_i66.AddAudioCommentUseCase>(),
+          deleteAudioCommentUseCase: gh<_i72.DeleteAudioCommentUseCase>(),
+        ));
+    gh.factory<_i93.AudioTrackBloc>(() => _i93.AudioTrackBloc(
+          watchAudioTracksByProject: gh<_i64.WatchTracksByProjectIdUseCase>(),
+          deleteAudioTrack: gh<_i73.DeleteAudioTrack>(),
+          uploadAudioTrackUseCase: gh<_i61.UploadAudioTrackUseCase>(),
+        ));
+    gh.factory<_i94.AuthBloc>(() => _i94.AuthBloc(
+          signIn: gh<_i87.SignInUseCase>(),
+          signUp: gh<_i89.SignUpUseCase>(),
+          signOut: gh<_i88.SignOutUseCase>(),
+          googleSignIn: gh<_i78.GoogleSignInUseCase>(),
+          getAuthState: gh<_i76.GetAuthStateUseCase>(),
+          onboarding: gh<_i83.OnboardingUseCase>(),
+        ));
+    gh.factory<_i95.ManageCollaboratorsBloc>(() => _i95.ManageCollaboratorsBloc(
           addCollaboratorUseCase: gh<_i67.AddCollaboratorToProjectUseCase>(),
           updateCollaboratorRoleUseCase:
               gh<_i58.UpdateCollaboratorRoleUseCase>(),
           getProjectWithUserProfilesUseCase:
-              gh<_i73.GetProjectWithUserProfilesUseCase>(),
-          removeCollaboratorUseCase: gh<_i79.RemoveCollaboratorUseCase>(),
-          leaveProjectUseCase: gh<_i75.LeaveProjectUseCase>(),
-        ));
-    gh.lazySingleton<_i91.OnboardingUseCase>(
-        () => _i91.OnboardingUseCase(gh<_i84.AuthRepository>()));
-    gh.lazySingleton<_i92.SignInUseCase>(
-        () => _i92.SignInUseCase(gh<_i84.AuthRepository>()));
-    gh.lazySingleton<_i93.SignOutUseCase>(
-        () => _i93.SignOutUseCase(gh<_i84.AuthRepository>()));
-    gh.lazySingleton<_i94.SignUpUseCase>(
-        () => _i94.SignUpUseCase(gh<_i84.AuthRepository>()));
-    gh.factory<_i95.AuthBloc>(() => _i95.AuthBloc(
-          signIn: gh<_i92.SignInUseCase>(),
-          signUp: gh<_i94.SignUpUseCase>(),
-          signOut: gh<_i93.SignOutUseCase>(),
-          googleSignIn: gh<_i88.GoogleSignInUseCase>(),
-          getAuthState: gh<_i87.GetAuthStateUseCase>(),
-          onboarding: gh<_i91.OnboardingUseCase>(),
+              gh<_i77.GetProjectWithUserProfilesUseCase>(),
+          removeCollaboratorUseCase: gh<_i86.RemoveCollaboratorUseCase>(),
+          leaveProjectUseCase: gh<_i80.LeaveProjectUseCase>(),
         ));
     return this;
   }

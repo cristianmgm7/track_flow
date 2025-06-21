@@ -21,6 +21,9 @@ class WatchUserProfileUseCase {
     final stream = _userProfileRepository.watchUserProfile(
       UserId.fromUniqueString(userId),
     );
-    return stream.map((profile) => right(profile));
+    return stream.map(
+      (either) =>
+          either.fold((failure) => left(failure), (profile) => right(profile)),
+    );
   }
 }
