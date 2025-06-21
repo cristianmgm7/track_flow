@@ -8,7 +8,7 @@ Branch: feature/projects-crud
 	•	What does it do?
 Allows the user to create, view, edit, and delete personal music projects.
 	•	Goal:
-Provide the user with a clear system to organize and keep track of each idea or track they’re producing.
+Provide the user with a clear system to organize and keep track of each idea or track they're producing.
 	•	Value:
 This is the operational core of the app. A project groups tasks, ideas, notes, files, etc. Without it, the rest of the app lacks context.
 
@@ -16,7 +16,7 @@ This is the operational core of the app. A project groups tasks, ideas, notes, f
 
 2. Functional Requirements
 	•	Create new project (name, description, initial status)
-	•	View user’s project list
+	•	View user's project list
 	•	Edit an existing project
 	•	Delete a project
 	•	Show project details
@@ -31,7 +31,7 @@ This is the operational core of the app. A project groups tasks, ideas, notes, f
 	•	Requires internet connection (for Firestore)
 	•	Uses Firebase Firestore (collection: projects)
 	•	No external APIs used
-	•	Can be cached locally in the future (Isar/Hive)
+	•	Can be cached locally in the future (Isar)
 
 ⸻
 
@@ -101,8 +101,8 @@ match /projects/{projectId} {
 }
 
 Validations:
-	•	Don’t allow creation without title
-	•	Don’t allow editing projects from other users
+	•	Don't allow creation without title
+	•	Don't allow editing projects from other users
 
 ⸻
 
@@ -122,7 +122,7 @@ Validations:
 10. Scalability & Maintainability
 	•	Easy to scale:
 	•	Can add files, tasks, tags
-	•	Can evolve into “Workspaces” or “Collaborations”
+	•	Can evolve into "Workspaces" or "Collaborations"
 	•	Well-structured in modules
 	•	Business logic lives in decoupled use cases
 

@@ -1,5 +1,6 @@
-import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
 import '../models/project_dto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
@@ -17,55 +18,46 @@ abstract class ProjectsLocalDataSource {
 
 @LazySingleton(as: ProjectsLocalDataSource)
 class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
-  late final Box<Map> _box;
+  final Isar _isar;
 
-  ProjectsLocalDataSourceImpl(@Named('projectsBox') this._box);
+  ProjectsLocalDataSourceImpl(this._isar);
 
   @override
   Future<void> cacheProject(ProjectDTO project) async {
-    await _box.put(project.id, project.toMap());
+    final projectDoc = ProjectDocument.fromDTO(project);
+    await _isar.writeTxn(() async {
+      await _isar.projectDocuments.put(projectDoc);
+    });
   }
 
   @override
   Future<ProjectDTO?> getCachedProject(UniqueId id) async {
-    final map = _box.get(id.value);
-    if (map != null) {
-      return ProjectDTO.fromMap(map.cast<String, dynamic>());
-    }
-    return null;
+    final projectDoc = await _isar.projectDocuments.get(fastHash(id.value));
+    return projectDoc?.toDTO();
   }
 
   @override
   Future<void> removeCachedProject(UniqueId id) async {
-    await _box.delete(id.value);
+    await _isar.writeTxn(() async {
+      await _isar.projectDocuments.delete(fastHash(id.value));
+    });
   }
 
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values
-        .map((map) => ProjectDTO.fromMap(map.cast<String, dynamic>()))
-        .toList();
+    final projectDocs = await _isar.projectDocuments.where().findAll();
+    return projectDocs.map((doc) => doc.toDTO()).toList();
   }
 
   @override
-  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
-    yield (await getAllProjects())
-        .where(
-          (dto) =>
-              dto.ownerId == ownerId.value ||
-              dto.collaboratorIds.contains(ownerId.value),
-        )
-        .toList();
-
-    yield* _box.watch().asyncMap((_) async {
-      final all = await getAllProjects();
-      return all
-          .where(
-            (dto) =>
-                dto.ownerId == ownerId.value ||
-                dto.collaboratorIds.contains(ownerId.value),
-          )
-          .toList();
-    });
+  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) {
+    return _isar.projectDocuments
+        .where()
+        .filter()
+        .ownerIdEqualTo(ownerId.value)
+        .or()
+        .collaboratorIdsElementEqualTo(ownerId.value)
+        .watch(fireImmediately: true)
+        .map((docs) => docs.map((doc) => doc.toDTO()).toList());
   }
 }

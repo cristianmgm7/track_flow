@@ -1,5 +1,7 @@
-import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/features/audio_comment/data/models/audio_comment_document.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
 
 abstract class AudioCommentLocalDataSource {
@@ -10,36 +12,43 @@ abstract class AudioCommentLocalDataSource {
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
-class HiveAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
-  late final Box<Map> _commentBox;
+class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
+  final Isar _isar;
 
-  HiveAudioCommentLocalDataSource(@Named('audioCommentsBox') this._commentBox);
+  IsarAudioCommentLocalDataSource(this._isar);
 
   @override
   Future<void> cacheComment(AudioCommentDTO comment) async {
-    await _commentBox.put(comment.id, comment.toJson());
+    final commentDoc = AudioCommentDocument.fromDTO(comment);
+    await _isar.writeTxn(() async {
+      await _isar.audioCommentDocuments.put(commentDoc);
+    });
   }
 
   @override
   Future<void> deleteCachedComment(String commentId) async {
-    await _commentBox.delete(commentId);
+    await _isar.writeTxn(() async {
+      await _isar.audioCommentDocuments.delete(fastHash(commentId));
+    });
   }
 
   @override
   Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId) async {
-    return _commentBox.values
-        .map((map) => AudioCommentDTO.fromJson(map.cast<String, dynamic>()))
-        .where((comment) => comment.trackId == trackId)
-        .toList();
+    final commentDocs =
+        await _isar.audioCommentDocuments
+            .filter()
+            .trackIdEqualTo(trackId)
+            .findAll();
+    return commentDocs.map((doc) => doc.toDTO()).toList();
   }
 
   @override
   Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId) {
-    return _commentBox.watch().map((_) {
-      return _commentBox.values
-          .map((map) => AudioCommentDTO.fromJson(map.cast<String, dynamic>()))
-          .where((comment) => comment.trackId == trackId)
-          .toList();
-    });
+    return _isar.audioCommentDocuments
+        .where()
+        .filter()
+        .trackIdEqualTo(trackId)
+        .watch(fireImmediately: true)
+        .map((docs) => docs.map((doc) => doc.toDTO()).toList());
   }
 }

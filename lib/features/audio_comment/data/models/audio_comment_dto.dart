@@ -1,8 +1,6 @@
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:hive/hive.dart';
 
-@HiveType(typeId: 3)
 class AudioCommentDTO {
   final String id;
   final String projectId;

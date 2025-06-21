@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:hive/hive.dart';
 
-@HiveType(typeId: 4)
 class AudioTrackDTO {
   final AudioTrackId id;
   final String name;

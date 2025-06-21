@@ -1,5 +1,7 @@
-import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/features/audio_track/data/models/audio_track_document.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
 abstract class AudioTrackLocalDataSource {
@@ -10,36 +12,39 @@ abstract class AudioTrackLocalDataSource {
 }
 
 @LazySingleton(as: AudioTrackLocalDataSource)
-class AudioTrackLocalDataSourceImpl implements AudioTrackLocalDataSource {
-  late final Box<Map> _cache;
-  AudioTrackLocalDataSourceImpl(@Named('audioTracksBox') this._cache);
+class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
+  final Isar _isar;
+
+  IsarAudioTrackLocalDataSource(this._isar);
 
   @override
   Future<void> cacheTrack(AudioTrackDTO track) async {
-    await _cache.put(track.id.value, track.toJson());
+    final trackDoc = AudioTrackDocument.fromDTO(track);
+    await _isar.writeTxn(() async {
+      await _isar.audioTrackDocuments.put(trackDoc);
+    });
   }
 
   @override
   Future<AudioTrackDTO?> getTrackById(String id) async {
-    final map = _cache.get(id);
-    if (map != null) {
-      return AudioTrackDTO.fromJson(map.cast<String, dynamic>());
-    }
-    return null;
+    final trackDoc = await _isar.audioTrackDocuments.get(fastHash(id));
+    return trackDoc?.toDTO();
   }
 
   @override
   Future<void> deleteTrack(String id) async {
-    await _cache.delete(id);
+    await _isar.writeTxn(() async {
+      await _isar.audioTrackDocuments.delete(fastHash(id));
+    });
   }
 
   @override
   Stream<List<AudioTrackDTO>> watchTracksByProject(String projectId) {
-    return _cache.watch().map((_) {
-      return _cache.values
-          .map((map) => AudioTrackDTO.fromJson(map.cast<String, dynamic>()))
-          .where((track) => track.projectId.value == projectId)
-          .toList();
-    });
+    return _isar.audioTrackDocuments
+        .where()
+        .filter()
+        .projectIdEqualTo(projectId)
+        .watch(fireImmediately: true)
+        .map((docs) => docs.map((doc) => doc.toDTO()).toList());
   }
 }

@@ -1,5 +1,7 @@
-import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
+import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 abstract class UserProfileLocalDataSource {
@@ -8,23 +10,23 @@ abstract class UserProfileLocalDataSource {
 }
 
 @LazySingleton(as: UserProfileLocalDataSource)
-class UserProfileLocalDataSourceImpl implements UserProfileLocalDataSource {
-  late final Box<Map> _box;
-  UserProfileLocalDataSourceImpl(@Named('userProfilesBox') this._box);
+class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
+  final Isar _isar;
+
+  IsarUserProfileLocalDataSource(this._isar);
 
   @override
   Future<void> cacheUserProfile(UserProfileDTO profile) async {
-    await _box.put(profile.id, profile.toJson());
+    final profileDoc = UserProfileDocument.fromDTO(profile);
+    await _isar.writeTxn(() async {
+      await _isar.userProfileDocuments.put(profileDoc);
+    });
   }
 
   @override
   Stream<UserProfileDTO?> watchUserProfile(String userId) {
-    return _box.watch(key: userId).map((_) {
-      final map = _box.get(userId);
-      if (map != null) {
-        return UserProfileDTO.fromJson(map.cast<String, dynamic>());
-      }
-      return null;
-    });
+    return _isar.userProfileDocuments
+        .watchObject(fastHash(userId), fireImmediately: true)
+        .map((doc) => doc?.toDTO());
   }
 }
