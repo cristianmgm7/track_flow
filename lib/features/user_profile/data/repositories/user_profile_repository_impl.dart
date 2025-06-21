@@ -24,7 +24,15 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       await for (final dto in _userProfileLocalDataSource.watchUserProfile(
         userId.value,
       )) {
-        yield Right(dto?.toDomain());
+        try {
+          yield Right(dto?.toDomain());
+        } catch (e) {
+          yield Left(
+            ServerFailure(
+              'Failed to parse local user profile: ${e.toString()}',
+            ),
+          );
+        }
       }
     } catch (e) {
       yield Left(ServerFailure(e.toString()));

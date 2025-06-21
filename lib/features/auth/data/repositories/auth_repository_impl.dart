@@ -57,36 +57,39 @@ class AuthRepositoryImpl implements AuthRepository {
 
   Future<void> _createOrSyncUserProfile(User user) async {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
-    final existing = await userRef.get();
-    if (!existing.exists) {
-      final newProfile = UserProfile(
-        id: UserId.fromUniqueString(user.uid),
-        name: user.displayName ?? '',
-        email: user.email ?? '',
-        avatarUrl: user.photoURL ?? '',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        creativeRole: CreativeRole.other,
-      );
-      await userRef.set({
-        'id': newProfile.id.value,
-        'name': newProfile.name,
-        'email': newProfile.email,
-        'avatarUrl': newProfile.avatarUrl,
-        'createdAt': newProfile.createdAt,
-        'updatedAt': newProfile.updatedAt,
-        'creativeRole':
-            newProfile.creativeRole?.name ?? CreativeRole.other.name,
+
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final docSnapshot = await transaction.get(userRef);
+
+        if (!docSnapshot.exists) {
+          final newProfile = UserProfile(
+            id: UserId.fromUniqueString(user.uid),
+            name: user.displayName ?? 'No Name',
+            email: user.email ?? '',
+            avatarUrl: user.photoURL ?? '',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            creativeRole: CreativeRole.other,
+          );
+
+          transaction.set(
+            userRef,
+            UserProfileDTO.fromDomain(newProfile).toJson(),
+          );
+        }
       });
-      await _userProfileLocalDataSource.cacheUserProfile(
-        UserProfileDTO.fromDomain(newProfile),
-      );
-    } else {
-      final data = existing.data();
-      if (data != null) {
-        final remoteProfile = UserProfileDTO.fromJson(data);
-        await _userProfileLocalDataSource.cacheUserProfile(remoteProfile);
+
+      final finalDoc = await userRef.get();
+      if (finalDoc.exists) {
+        final data = finalDoc.data();
+        if (data != null) {
+          final remoteProfile = UserProfileDTO.fromJson(data);
+          await _userProfileLocalDataSource.cacheUserProfile(remoteProfile);
+        }
       }
+    } catch (e) {
+      throw Exception(e);
     }
   }
 
@@ -145,10 +148,6 @@ class AuthRepositoryImpl implements AuthRepository {
     String email,
     String password,
   ) async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      await _createOrSyncUserProfile(user);
-    }
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
@@ -179,7 +178,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, domain.User>> signInWithGoogle() async {
     try {
       final isConnected = await _networkInfo.isConnected;
-      final user = _auth.currentUser;
       if (!isConnected) {
         return left(
           AuthenticationFailure(
@@ -198,6 +196,7 @@ class AuthRepositoryImpl implements AuthRepository {
         idToken: googleAuth.idToken,
       );
       final cred = await _auth.signInWithCredential(credential);
+      final user = cred.user;
       if (user != null) {
         await _cacheUserId(user);
         await _createOrSyncUserProfile(user);

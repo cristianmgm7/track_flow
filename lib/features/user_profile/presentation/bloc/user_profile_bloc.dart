@@ -30,18 +30,19 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
-    await _profileSubscription?.cancel();
-    _profileSubscription = watchUserProfileUseCase.call().listen((
-      eitherProfile,
-    ) {
-      eitherProfile.fold((failure) => emit(UserProfileError()), (profile) {
-        if (profile != null) {
-          emit(UserProfileLoaded(profile));
-        } else {
-          emit(UserProfileError());
-        }
-      });
-    });
+    await emit.onEach<Either<Failure, UserProfile?>>(
+      watchUserProfileUseCase.call(),
+      onData: (eitherProfile) {
+        eitherProfile.fold((failure) => emit(UserProfileError()), (profile) {
+          if (profile != null) {
+            emit(UserProfileLoaded(profile));
+          } else {
+            emit(UserProfileError());
+          }
+        });
+      },
+      onError: (error, stackTrace) => emit(UserProfileError()),
+    );
   }
 
   Future<void> _onSaveUserProfile(
