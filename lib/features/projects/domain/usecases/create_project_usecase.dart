@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -8,36 +9,34 @@ import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
 @immutable
 class CreateProjectParams extends Equatable {
   final ProjectName name;
-  final ProjectDescription description;
 
-  const CreateProjectParams({required this.name, required this.description});
+  const CreateProjectParams({required this.name});
 
   @override
-  List<Object?> get props => [name, description];
+  List<Object?> get props => [name];
 }
 
 @lazySingleton
 class CreateProjectUseCase {
-  final ProjectsRepository _repository;
+  final ProjectsRepository _projectsRepository;
   final SessionStorage _sessionStorage;
 
-  CreateProjectUseCase(this._repository, this._sessionStorage);
+  CreateProjectUseCase(this._projectsRepository, this._sessionStorage);
 
   Future<Either<Failure, Project>> call(CreateProjectParams params) async {
     final userId = _sessionStorage.getUserId() ?? '';
-    return await _repository.createProject(
+    return await _projectsRepository.createProject(
       Project(
         id: ProjectId(),
         ownerId: UserId.fromUniqueString(userId),
         name: params.name,
-        description: params.description,
+        description: ProjectDescription.empty(),
         createdAt: DateTime.now(),
         collaborators: [
           ProjectCollaborator.create(

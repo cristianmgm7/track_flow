@@ -41,7 +41,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await createProject(event.params);
+    final result = await createProject.call(event.params);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (project) => emit(ProjectCreatedSuccess(project)),
