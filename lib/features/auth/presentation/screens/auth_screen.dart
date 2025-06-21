@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
@@ -80,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           textAlign: TextAlign.center,
                         ),
                         Card(
-                          color: const Color.fromARGB(198, 255, 255, 255),
+                          color: AppColors.grey600,
                           margin: EdgeInsets.all(16),
                           child: SingleChildScrollView(
                             child: Padding(
