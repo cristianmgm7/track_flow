@@ -3,6 +3,7 @@ import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_shee
 import 'package:trackflow/core/presentation/widgets/trackflow_form_botton_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_alert_dialog.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/edit_project_form.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/up_load_track_form.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailActions {
@@ -15,7 +16,11 @@ class ProjectDetailActions {
       title: 'Upload Track',
       subtitle: 'Add an audio file to this project',
       onTap: () {
-        // TODO: upload track logic
+        showTrackFlowFormSheet(
+          context: context,
+          title: 'Upload Track',
+          child: UploadTrackForm(project: project),
+        );
       },
     ),
     TrackFlowActionItem(

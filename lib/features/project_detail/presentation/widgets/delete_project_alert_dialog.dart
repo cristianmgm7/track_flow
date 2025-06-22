@@ -28,10 +28,21 @@ class DeleteProjectDialog extends StatelessWidget {
             context.read<ProjectsBloc>().add(DeleteProjectRequested(project));
             Navigator.of(context).pop();
             context.go(AppRoutes.projects);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Project deleted successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                Colors.red, // Set the button color to red for emphasis
+            foregroundColor: Colors.white,
+            backgroundColor: const Color.fromARGB(
+              255,
+              106,
+              21,
+              15,
+            ), // Set the button color to red for emphasis
           ),
           child: const Text('Delete'),
         ),
