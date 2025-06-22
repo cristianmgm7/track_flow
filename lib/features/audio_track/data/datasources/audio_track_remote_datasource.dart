@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
@@ -67,8 +68,12 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     List<String> projectIds,
   ) async {
     if (projectIds.isEmpty) {
+      debugPrint('getTracksByProjectIds: Received empty projectIds list.');
       return [];
     }
+    debugPrint(
+      'getTracksByProjectIds: Fetching tracks for projects: $projectIds',
+    );
 
     try {
       final List<Future<QuerySnapshot>> futures = [];
@@ -84,8 +89,14 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
 
       final List<QuerySnapshot> snapshots = await Future.wait(futures);
       final List<AudioTrackDTO> allTracks = [];
+      debugPrint(
+        'getTracksByProjectIds: Future.wait completed. Received ${snapshots.length} snapshots.',
+      );
 
       for (final snapshot in snapshots) {
+        debugPrint(
+          'getTracksByProjectIds: Snapshot has ${snapshot.docs.length} documents.',
+        );
         for (final doc in snapshot.docs) {
           final data = doc.data() as Map<String, dynamic>;
           data['id'] = doc.id;
@@ -93,8 +104,12 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
         }
       }
 
+      debugPrint(
+        'getTracksByProjectIds: Total tracks found: ${allTracks.length}',
+      );
       return allTracks;
     } catch (e) {
+      debugPrint('Error getting tracks by project ids: $e');
       return [];
     }
   }

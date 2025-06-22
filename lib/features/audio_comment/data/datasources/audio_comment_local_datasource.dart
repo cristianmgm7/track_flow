@@ -8,6 +8,9 @@ abstract class AudioCommentLocalDataSource {
   Future<void> cacheComment(AudioCommentDTO comment);
   Future<void> deleteCachedComment(String commentId);
   Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId);
+  Future<AudioCommentDTO?> getCommentById(String id);
+  Future<void> deleteComment(String id);
+  Future<void> deleteAllComments();
   Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId);
 }
 
@@ -40,6 +43,27 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
             .trackIdEqualTo(trackId)
             .findAll();
     return commentDocs.map((doc) => doc.toDTO()).toList();
+  }
+
+  @override
+  Future<AudioCommentDTO?> getCommentById(String id) async {
+    final commentDoc =
+        await _isar.audioCommentDocuments.filter().idEqualTo(id).findFirst();
+    return commentDoc?.toDTO();
+  }
+
+  @override
+  Future<void> deleteComment(String id) async {
+    await _isar.writeTxn(() async {
+      await _isar.audioCommentDocuments.delete(fastHash(id));
+    });
+  }
+
+  @override
+  Future<void> deleteAllComments() async {
+    await _isar.writeTxn(() async {
+      await _isar.audioCommentDocuments.clear();
+    });
   }
 
   @override
