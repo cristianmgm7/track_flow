@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'app_text_style.dart';
 
 class AppTheme {
   static ThemeData darkTheme = ThemeData(
@@ -9,6 +10,7 @@ class AppTheme {
     appBarTheme: const AppBarTheme(
       backgroundColor: AppColors.surface,
       foregroundColor: AppColors.textPrimary,
+      titleTextStyle: AppTextStyle.titleMedium,
     ),
     colorScheme: const ColorScheme.dark(
       surface: AppColors.surface,
@@ -18,10 +20,13 @@ class AppTheme {
     ),
     dividerColor: AppColors.border,
     textTheme: const TextTheme(
-      bodyLarge: TextStyle(color: AppColors.textPrimary, fontSize: 16),
-      bodyMedium: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-      titleLarge: TextStyle(color: AppColors.textPrimary, fontSize: 20),
-      titleSmall: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      bodyLarge: AppTextStyle.bodyLarge,
+      bodyMedium: AppTextStyle.bodyMedium,
+      bodySmall: AppTextStyle.bodySmall,
+      titleLarge: AppTextStyle.titleLarge,
+      titleMedium: AppTextStyle.titleMedium,
+      titleSmall: AppTextStyle.titleSmall,
+      labelLarge: AppTextStyle.labelLarge,
     ),
     cardColor: AppColors.surface,
     useMaterial3: true,

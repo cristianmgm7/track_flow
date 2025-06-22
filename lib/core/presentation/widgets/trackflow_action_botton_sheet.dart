@@ -112,6 +112,7 @@ class _TrackFlowActionSheetContent extends StatelessWidget {
             ),
           if (header != null)
             Padding(padding: const EdgeInsets.only(bottom: 12), child: header),
+          if (title != null || header != null) const Divider(height: 0.2),
           ...actions.map((item) {
             final isNavigable = item.childSheetBuilder != null;
             return ListTile(

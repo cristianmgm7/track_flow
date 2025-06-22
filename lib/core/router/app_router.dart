@@ -95,25 +95,6 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.projects,
               builder: (context, state) => const ProjectListScreen(),
-              routes: [
-                GoRoute(
-                  path: ':id', // Corresponds to /projects/:id
-                  builder: (context, state) {
-                    final project = state.extra as Project?;
-                    if (project == null) {
-                      // This can happen if the user navigates via URL directly
-                      // A robust solution would be to fetch the project by ID.
-                      // For now, we show an error.
-                      return const Scaffold(
-                        body: Center(
-                          child: Text('Error: Could not load project details.'),
-                        ),
-                      );
-                    }
-                    return ProjectDetailsScreen(project: project);
-                  },
-                ),
-              ],
             ),
             GoRoute(
               path: AppRoutes.notifications,
@@ -123,6 +104,12 @@ class AppRouter {
                       child: Text("Notifications"),
                     ), // TODO: Add notifications screen
                   ),
+            ),
+            GoRoute(
+              path: AppRoutes.projectDetails,
+              builder:
+                  (context, state) =>
+                      ProjectDetailsScreen(project: state.extra as Project),
             ),
             GoRoute(
               path: AppRoutes.settings,

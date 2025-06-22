@@ -68,12 +68,7 @@ class _TrackFlowFormSheetContent extends StatelessWidget {
             alignment: Alignment.topCenter,
             children: [
               if (title != null)
-                Text(
-                  title!,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                ),
+                Text(title!, style: theme.textTheme.titleLarge),
               Align(
                 alignment: Alignment.centerRight,
                 child: IconButton(
@@ -85,11 +80,9 @@ class _TrackFlowFormSheetContent extends StatelessWidget {
           ),
           const SizedBox(height: Dimensions.space24),
           Expanded(
-            child: Center(
-              child: SingleChildScrollView(
-                controller: scrollController,
-                child: child,
-              ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              child: child,
             ),
           ),
           const SizedBox(height: Dimensions.space32),
