@@ -330,6 +330,8 @@ extension GetItInjectableX on _i1.GetIt {
         () => _i55.SyncAudioTracksUseCase(
               gh<_i40.AudioTrackRemoteDataSource>(),
               gh<_i39.AudioTrackLocalDataSource>(),
+              gh<_i21.ProjectRemoteDataSource>(),
+              gh<_i53.SessionStorage>(),
             ));
     gh.lazySingleton<_i56.SyncProjectsUseCase>(() => _i56.SyncProjectsUseCase(
           gh<_i21.ProjectRemoteDataSource>(),

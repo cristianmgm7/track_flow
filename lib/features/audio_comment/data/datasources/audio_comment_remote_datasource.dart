@@ -5,11 +5,14 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 abstract class AudioCommentRemoteDataSource {
   Future<Either<Failure, Unit>> addComment(AudioComment comment);
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
-  Future<List<AudioCommentDTO>> getAllComments();
+  Future<List<AudioCommentDTO>> getCommentsByProjectIds(
+    List<String> projectIds,
+  );
 }
 
 @LazySingleton(as: AudioCommentRemoteDataSource)
@@ -48,15 +51,36 @@ class FirebaseAudioCommentRemoteDataSource
   }
 
   @override
-  Future<List<AudioCommentDTO>> getAllComments() async {
+  Future<List<AudioCommentDTO>> getCommentsByProjectIds(
+    List<String> projectIds,
+  ) async {
+    if (projectIds.isEmpty) {
+      return [];
+    }
     try {
-      final snapshot =
-          await _firestore.collection(AudioCommentDTO.collection).get();
-      return snapshot.docs
-          .map((doc) => AudioCommentDTO.fromJson(doc.data()))
-          .toList();
+      final List<Future<QuerySnapshot>> futures = [];
+      for (String projectId in projectIds) {
+        futures.add(
+          _firestore
+              .collection(ProjectDTO.collection)
+              .doc(projectId)
+              .collection(AudioCommentDTO.collection)
+              .get(),
+        );
+      }
+
+      final List<QuerySnapshot> snapshots = await Future.wait(futures);
+      final List<AudioCommentDTO> allComments = [];
+
+      for (final snapshot in snapshots) {
+        for (final doc in snapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          allComments.add(AudioCommentDTO.fromJson(data));
+        }
+      }
+      return allComments;
     } catch (e) {
-      // Puedes loggear el error si lo deseas
       return [];
     }
   }
