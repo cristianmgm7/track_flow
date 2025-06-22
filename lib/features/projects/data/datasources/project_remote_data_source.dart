@@ -114,18 +114,43 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   @override
   Future<Either<Failure, List<Project>>> getUserProjects(String userId) async {
     try {
-      final snapshot =
-          await _firestore
+      // Query for projects owned by the user
+      final ownedProjectsFuture =
+          _firestore
               .collection(ProjectDTO.collection)
               .where('ownerId', isEqualTo: userId)
               .get();
-      return Right(
-        snapshot.docs
-            .map((doc) => ProjectDTO.fromFirestore(doc).toDomain())
-            .toList(),
-      );
+
+      // Query for projects where the user is a collaborator
+      final collaboratorProjectsFuture =
+          _firestore
+              .collection(ProjectDTO.collection)
+              .where('collaboratorIds', arrayContains: userId)
+              .get();
+
+      final results = await Future.wait([
+        ownedProjectsFuture,
+        collaboratorProjectsFuture,
+      ]);
+
+      final ownedProjectsSnapshot = results[0];
+      final collaboratorProjectsSnapshot = results[1];
+
+      final allProjects = <String, Project>{};
+
+      for (var doc in ownedProjectsSnapshot.docs) {
+        final project = ProjectDTO.fromFirestore(doc).toDomain();
+        allProjects[project.id.value] = project;
+      }
+
+      for (var doc in collaboratorProjectsSnapshot.docs) {
+        final project = ProjectDTO.fromFirestore(doc).toDomain();
+        allProjects[project.id.value] = project;
+      }
+
+      return Right(allProjects.values.toList());
     } catch (e) {
-      return Left(UnexpectedFailure('Failed to get user projects'));
+      return Left(UnexpectedFailure('Failed to get user projects: $e'));
     }
   }
 }
