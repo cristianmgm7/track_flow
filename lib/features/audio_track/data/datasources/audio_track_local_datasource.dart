@@ -8,6 +8,7 @@ abstract class AudioTrackLocalDataSource {
   Future<void> cacheTrack(AudioTrackDTO track);
   Future<AudioTrackDTO?> getTrackById(String id);
   Future<void> deleteTrack(String id);
+  Future<void> deleteAllTracks();
   Stream<List<AudioTrackDTO>> watchTracksByProject(String projectId);
 }
 
@@ -35,6 +36,13 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   Future<void> deleteTrack(String id) async {
     await _isar.writeTxn(() async {
       await _isar.audioTrackDocuments.delete(fastHash(id));
+    });
+  }
+
+  @override
+  Future<void> deleteAllTracks() async {
+    await _isar.writeTxn(() async {
+      await _isar.audioTrackDocuments.clear();
     });
   }
 

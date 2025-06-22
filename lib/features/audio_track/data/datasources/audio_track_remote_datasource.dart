@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 abstract class AudioTrackRemoteDataSource {
   Future<void> uploadAudioTrack({
@@ -13,8 +14,8 @@ abstract class AudioTrackRemoteDataSource {
     required AudioTrack track,
   });
 
-  Future<void> deleteTrack(String trackId);
-  Future<List<AudioTrackDTO>> getAllTracks();
+  Future<void> deleteTrackFromProject(String trackId, String projectId);
+  Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
 }
 
 @LazySingleton(as: AudioTrackRemoteDataSource)
@@ -48,38 +49,51 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteTrack(String trackId) async {
-    final docRef = _firestore.collection(AudioTrackDTO.collection).doc(trackId);
-    final doc = await docRef.get();
-
-    if (!doc.exists) {
-      return Left(ServerFailure('Track not found'));
-    }
-
-    final trackData = doc.data() as Map<String, dynamic>;
-    final trackDTO = AudioTrackDTO.fromJson({...trackData, 'id': doc.id});
-
+  Future<void> deleteTrackFromProject(String trackId, String projectId) async {
     try {
-      final storageRef = _storage.refFromURL(trackDTO.url);
-      await storageRef.delete();
+      await _firestore
+          .collection(ProjectDTO.collection)
+          .doc(projectId)
+          .collection(AudioTrackDTO.collection)
+          .doc(trackId)
+          .delete();
     } catch (e) {
-      return Left(ServerFailure('Error deleting file from storage: $e'));
+      // Handle error
     }
-
-    await docRef.delete();
-    return const Right(unit);
   }
 
   @override
-  Future<List<AudioTrackDTO>> getAllTracks() async {
+  Future<List<AudioTrackDTO>> getTracksByProjectIds(
+    List<String> projectIds,
+  ) async {
+    if (projectIds.isEmpty) {
+      return [];
+    }
+
     try {
-      final snapshot =
-          await _firestore.collection(AudioTrackDTO.collection).get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = doc.id;
-        return AudioTrackDTO.fromJson(data);
-      }).toList();
+      final List<Future<QuerySnapshot>> futures = [];
+      for (String projectId in projectIds) {
+        futures.add(
+          _firestore
+              .collection(ProjectDTO.collection)
+              .doc(projectId)
+              .collection(AudioTrackDTO.collection)
+              .get(),
+        );
+      }
+
+      final List<QuerySnapshot> snapshots = await Future.wait(futures);
+      final List<AudioTrackDTO> allTracks = [];
+
+      for (final snapshot in snapshots) {
+        for (final doc in snapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          data['id'] = doc.id;
+          allTracks.add(AudioTrackDTO.fromJson(data));
+        }
+      }
+
+      return allTracks;
     } catch (e) {
       return [];
     }

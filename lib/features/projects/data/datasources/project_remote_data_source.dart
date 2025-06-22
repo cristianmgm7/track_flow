@@ -111,6 +111,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
     }
   }
 
+  /// Get all projects for a user.for offline first
   @override
   Future<Either<Failure, List<Project>>> getUserProjects(String userId) async {
     try {

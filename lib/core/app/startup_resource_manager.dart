@@ -6,9 +6,9 @@ import 'package:trackflow/features/user_profile/domain/usecases/sync_user_profil
 
 @lazySingleton
 class StartupResourceManager {
+  final SyncProjectsUseCase syncProjects;
   final SyncAudioCommentsUseCase syncAudioComments;
   final SyncAudioTracksUseCase syncAudioTracks;
-  final SyncProjectsUseCase syncProjects;
   final SyncUserProfileUseCase syncUserProfile;
 
   StartupResourceManager(

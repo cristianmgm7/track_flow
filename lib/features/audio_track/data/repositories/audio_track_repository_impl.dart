@@ -69,10 +69,13 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteTrack(String trackId) async {
+  Future<Either<Failure, Unit>> deleteTrack(
+    String trackId,
+    String projectId,
+  ) async {
     if (await networkInfo.isConnected) {
       try {
-        await remoteDataSource.deleteTrack(trackId);
+        await remoteDataSource.deleteTrackFromProject(trackId, projectId);
         await localDataSource.deleteTrack(trackId);
         return Right(unit);
       } catch (e) {
