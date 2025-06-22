@@ -84,7 +84,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                   project: project,
                   onTap:
                       () => context.push(
-                        '/projects/${project.id.value}',
+                        AppRoutes.projectDetails,
                         extra: project,
                       ),
                 );
