@@ -13,6 +13,7 @@ import 'package:trackflow/features/navegation/presentation/widget/main_scafold.d
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
@@ -94,6 +95,25 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.projects,
               builder: (context, state) => const ProjectListScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id', // Corresponds to /projects/:id
+                  builder: (context, state) {
+                    final project = state.extra as Project?;
+                    if (project == null) {
+                      // This can happen if the user navigates via URL directly
+                      // A robust solution would be to fetch the project by ID.
+                      // For now, we show an error.
+                      return const Scaffold(
+                        body: Center(
+                          child: Text('Error: Could not load project details.'),
+                        ),
+                      );
+                    }
+                    return ProjectDetailsScreen(project: project);
+                  },
+                ),
+              ],
             ),
             GoRoute(
               path: AppRoutes.notifications,
@@ -107,12 +127,6 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.settings,
               builder: (context, state) => const SettingsScreen(),
-            ),
-            GoRoute(
-              path: AppRoutes.projectDetails,
-              builder:
-                  (context, state) =>
-                      ProjectDetailsScreen(projectId: state.extra as ProjectId),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,

@@ -39,7 +39,11 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<void> removeCachedProject(UniqueId id) async {
     await _isar.writeTxn(() async {
-      await _isar.projectDocuments.delete(fastHash(id.value));
+      final projectDoc = await _isar.projectDocuments.get(fastHash(id.value));
+      if (projectDoc != null) {
+        projectDoc.isDeleted = true;
+        await _isar.projectDocuments.put(projectDoc);
+      }
     });
   }
 
@@ -54,9 +58,14 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
     return _isar.projectDocuments
         .where()
         .filter()
-        .ownerIdEqualTo(ownerId.value)
-        .or()
-        .collaboratorIdsElementEqualTo(ownerId.value)
+        .isDeletedEqualTo(false)
+        .and()
+        .group(
+          (q) => q
+              .ownerIdEqualTo(ownerId.value)
+              .or()
+              .collaboratorIdsElementEqualTo(ownerId.value),
+        )
         .watch(fireImmediately: true)
         .map((docs) => docs.map((doc) => doc.toDTO()).toList());
   }

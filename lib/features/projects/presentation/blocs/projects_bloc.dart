@@ -45,7 +45,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (project) => emit(ProjectCreatedSuccess(project)),
     );
-    add(StartWatchingProjects());
   }
 
   Future<void> _onUpdateProjectRequested(

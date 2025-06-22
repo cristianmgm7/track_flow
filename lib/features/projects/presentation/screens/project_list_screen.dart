@@ -83,9 +83,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 return ProjectCard(
                   project: project,
                   onTap:
-                      () => context.go(
-                        AppRoutes.projectDetails,
-                        extra: project.id,
+                      () => context.push(
+                        '/projects/${project.id.value}',
+                        extra: project,
                       ),
                 );
               },

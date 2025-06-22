@@ -43,18 +43,23 @@ const ProjectDocumentSchema = CollectionSchema(
       name: r'id',
       type: IsarType.string,
     ),
-    r'name': PropertySchema(
+    r'isDeleted': PropertySchema(
       id: 5,
+      name: r'isDeleted',
+      type: IsarType.bool,
+    ),
+    r'name': PropertySchema(
+      id: 6,
       name: r'name',
       type: IsarType.string,
     ),
     r'ownerId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'ownerId',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -75,6 +80,19 @@ const ProjectDocumentSchema = CollectionSchema(
           name: r'id',
           type: IndexType.hash,
           caseSensitive: true,
+        )
+      ],
+    ),
+    r'isDeleted': IndexSchema(
+      id: -786475870904832312,
+      name: r'isDeleted',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'isDeleted',
+          type: IndexType.value,
+          caseSensitive: false,
         )
       ],
     )
@@ -132,9 +150,10 @@ void _projectDocumentSerialize(
   writer.writeDateTime(offsets[2], object.createdAt);
   writer.writeString(offsets[3], object.description);
   writer.writeString(offsets[4], object.id);
-  writer.writeString(offsets[5], object.name);
-  writer.writeString(offsets[6], object.ownerId);
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeBool(offsets[5], object.isDeleted);
+  writer.writeString(offsets[6], object.name);
+  writer.writeString(offsets[7], object.ownerId);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 ProjectDocument _projectDocumentDeserialize(
@@ -155,9 +174,10 @@ ProjectDocument _projectDocumentDeserialize(
   object.createdAt = reader.readDateTime(offsets[2]);
   object.description = reader.readString(offsets[3]);
   object.id = reader.readString(offsets[4]);
-  object.name = reader.readString(offsets[5]);
-  object.ownerId = reader.readString(offsets[6]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[7]);
+  object.isDeleted = reader.readBool(offsets[5]);
+  object.name = reader.readString(offsets[6]);
+  object.ownerId = reader.readString(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -185,10 +205,12 @@ P _projectDocumentDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -266,6 +288,14 @@ extension ProjectDocumentQueryWhereSort
   QueryBuilder<ProjectDocument, ProjectDocument, QAfterWhere> anyIsarId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterWhere> anyIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'isDeleted'),
+      );
     });
   }
 }
@@ -379,6 +409,51 @@ extension ProjectDocumentQueryWhere
               indexName: r'id',
               lower: [],
               upper: [id],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterWhereClause>
+      isDeletedEqualTo(bool isDeleted) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'isDeleted',
+        value: [isDeleted],
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterWhereClause>
+      isDeletedNotEqualTo(bool isDeleted) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isDeleted',
+              lower: [],
+              upper: [isDeleted],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isDeleted',
+              lower: [isDeleted],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isDeleted',
+              lower: [isDeleted],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'isDeleted',
+              lower: [],
+              upper: [isDeleted],
               includeUpper: false,
             ));
       }
@@ -1033,6 +1108,16 @@ extension ProjectDocumentQueryFilter
   }
 
   QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      isDeletedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isDeleted',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
       isarIdEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1490,6 +1575,20 @@ extension ProjectDocumentQuerySortBy
     });
   }
 
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      sortByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      sortByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -1570,6 +1669,20 @@ extension ProjectDocumentQuerySortThenBy
   QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      thenByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      thenByIsDeletedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isDeleted', Sort.desc);
     });
   }
 
@@ -1657,6 +1770,13 @@ extension ProjectDocumentQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ProjectDocument, ProjectDocument, QDistinct>
+      distinctByIsDeleted() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isDeleted');
+    });
+  }
+
   QueryBuilder<ProjectDocument, ProjectDocument, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1718,6 +1838,12 @@ extension ProjectDocumentQueryProperty
   QueryBuilder<ProjectDocument, String, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<ProjectDocument, bool, QQueryOperations> isDeletedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isDeleted');
     });
   }
 

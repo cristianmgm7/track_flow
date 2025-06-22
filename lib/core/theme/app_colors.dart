@@ -5,9 +5,9 @@ class AppColors {
   static const Color surface = Color.fromARGB(255, 26, 26, 26); // Cards, modals
   static const Color primary = Color.fromARGB(
     255,
-    28,
-    60,
-    52,
+    93,
+    93,
+    219,
   ); // Verde ChatGPT (acento opcional)
   static const Color onPrimary = Colors.white;
   static const Color textPrimary = Color(0xFFEFEFEF); // Texto principal

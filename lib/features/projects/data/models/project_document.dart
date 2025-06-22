@@ -16,6 +16,8 @@ class ProjectDocument {
   DateTime? updatedAt;
   late List<String> collaboratorIds;
   late List<CollaboratorDocument> collaborators;
+  @Index()
+  bool isDeleted = false;
 
   ProjectDocument();
 
@@ -29,9 +31,8 @@ class ProjectDocument {
       ..updatedAt = dto.updatedAt
       ..collaboratorIds = dto.collaboratorIds
       ..collaborators =
-          dto.collaborators
-              .map((c) => CollaboratorDocument.fromMap(c))
-              .toList();
+          dto.collaborators.map((c) => CollaboratorDocument.fromMap(c)).toList()
+      ..isDeleted = dto.isDeleted;
   }
 
   ProjectDTO toDTO() {
@@ -44,6 +45,7 @@ class ProjectDocument {
       updatedAt: updatedAt,
       collaboratorIds: collaboratorIds,
       collaborators: collaborators.map((c) => c.toMap()).toList(),
+      isDeleted: isDeleted,
     );
   }
 }

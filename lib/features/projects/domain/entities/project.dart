@@ -7,6 +7,9 @@ import 'package:trackflow/features/projects/domain/value_objects/project_name.da
 import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 
+export 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
+export 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
+
 class Project extends AggregateRoot<ProjectId> {
   @override
   final ProjectId id;

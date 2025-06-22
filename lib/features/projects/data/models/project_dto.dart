@@ -19,6 +19,7 @@ class ProjectDTO {
     this.updatedAt,
     this.collaborators = const [], // userId, role
     this.collaboratorIds = const [],
+    this.isDeleted = false,
   });
 
   final String id;
@@ -29,6 +30,7 @@ class ProjectDTO {
   final DateTime? updatedAt;
   final List<String> collaboratorIds;
   final List<Map<String, dynamic>> collaborators; // userId, role
+  final bool isDeleted;
 
   static const String collection = 'projects';
 
@@ -52,6 +54,7 @@ class ProjectDTO {
             )
             .toList(),
     collaboratorIds: project.collaborators.map((c) => c.userId.value).toList(),
+    isDeleted: project.isDeleted,
   );
 
   Project toDomain() => Project(
@@ -78,6 +81,7 @@ class ProjectDTO {
                 [],
           );
         }).toList(),
+    isDeleted: isDeleted,
   );
 
   Map<String, dynamic> toJson() => {
@@ -89,6 +93,7 @@ class ProjectDTO {
     'updatedAt': updatedAt?.toIso8601String(),
     'collaborators': collaborators,
     'collaboratorIds': collaboratorIds,
+    'isDeleted': isDeleted,
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -115,6 +120,7 @@ class ProjectDTO {
             ?.map((e) => e as String)
             .toList() ??
         [],
+    isDeleted: json['isDeleted'] as bool? ?? false,
   );
 
   /// Creates a ProjectDTO from a Firestore document.
@@ -151,6 +157,7 @@ class ProjectDTO {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      isDeleted: data['isDeleted'] as bool? ?? false,
     );
   }
 
@@ -165,6 +172,7 @@ class ProjectDTO {
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       'collaborators': collaborators,
       'collaboratorIds': collaboratorIds,
+      'isDeleted': isDeleted,
     };
   }
 
@@ -178,6 +186,7 @@ class ProjectDTO {
     DateTime? updatedAt,
     List<Map<String, dynamic>>? collaborators,
     List<String>? collaboratorIds,
+    bool? isDeleted,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -188,6 +197,7 @@ class ProjectDTO {
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
       collaboratorIds: collaboratorIds ?? this.collaboratorIds,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -224,6 +234,7 @@ class ProjectDTO {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      isDeleted: data['isDeleted'] as bool? ?? false,
     );
   }
 
@@ -238,6 +249,7 @@ class ProjectDTO {
       'updatedAt': updatedAt?.toIso8601String(),
       'collaborators': collaborators,
       'collaboratorIds': collaboratorIds,
+      'isDeleted': isDeleted,
     };
   }
 
@@ -252,7 +264,8 @@ class ProjectDTO {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         listEquals(other.collaborators, collaborators) &&
-        listEquals(other.collaboratorIds, collaboratorIds);
+        listEquals(other.collaboratorIds, collaboratorIds) &&
+        other.isDeleted == isDeleted;
   }
 
   @override
@@ -264,5 +277,6 @@ class ProjectDTO {
       createdAt.hashCode ^
       updatedAt.hashCode ^
       collaborators.hashCode ^
-      collaboratorIds.hashCode;
+      collaboratorIds.hashCode ^
+      isDeleted.hashCode;
 }

@@ -1,6 +1,5 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -8,7 +7,6 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 

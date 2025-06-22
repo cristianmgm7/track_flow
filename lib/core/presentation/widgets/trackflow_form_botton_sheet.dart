@@ -65,7 +65,7 @@ class _TrackFlowFormSheetContent extends StatelessWidget {
         children: [
           const SizedBox(height: Dimensions.space12),
           Stack(
-            alignment: Alignment.center,
+            alignment: Alignment.topCenter,
             children: [
               if (title != null)
                 Text(

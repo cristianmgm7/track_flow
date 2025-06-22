@@ -7,14 +7,9 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 
 class DeleteProjectDialog extends StatelessWidget {
-  final VoidCallback onDeleteProject;
   final Project project;
 
-  const DeleteProjectDialog({
-    super.key,
-    required this.onDeleteProject,
-    required this.project,
-  });
+  const DeleteProjectDialog({super.key, required this.project});
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +25,8 @@ class DeleteProjectDialog extends StatelessWidget {
         ),
         ElevatedButton(
           onPressed: () {
-            onDeleteProject();
-            Navigator.of(context).pop();
             context.read<ProjectsBloc>().add(DeleteProjectRequested(project));
+            Navigator.of(context).pop();
             context.go(AppRoutes.projects);
           },
           style: ElevatedButton.styleFrom(
