@@ -42,7 +42,9 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
 
       await _firestore
           .collection(AudioTrackDTO.collection)
-          .add(trackDTO.toJson());
+          .doc(trackDTO.id.value)
+          .set(trackDTO.toJson());
+
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Error uploading audio track: $e'));
@@ -76,32 +78,29 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     );
 
     try {
-      final List<Future<QuerySnapshot>> futures = [];
-      for (String projectId in projectIds) {
-        futures.add(
-          _firestore
-              .collection(ProjectDTO.collection)
-              .doc(projectId)
-              .collection(AudioTrackDTO.collection)
-              .get(),
-        );
-      }
-
-      final List<QuerySnapshot> snapshots = await Future.wait(futures);
       final List<AudioTrackDTO> allTracks = [];
-      debugPrint(
-        'getTracksByProjectIds: Future.wait completed. Received ${snapshots.length} snapshots.',
-      );
-
-      for (final snapshot in snapshots) {
-        debugPrint(
-          'getTracksByProjectIds: Snapshot has ${snapshot.docs.length} documents.',
+      // Firestore 'whereIn' clause is limited to 30 elements.
+      // We process the projectIds in chunks of 10 to be safe.
+      for (var i = 0; i < projectIds.length; i += 10) {
+        final sublist = projectIds.sublist(
+          i,
+          i + 10 > projectIds.length ? projectIds.length : i + 10,
         );
-        for (final doc in snapshot.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          data['id'] = doc.id;
-          allTracks.add(AudioTrackDTO.fromJson(data));
-        }
+
+        final snapshot =
+            await _firestore
+                .collection(AudioTrackDTO.collection)
+                .where('projectId', whereIn: sublist)
+                .get();
+
+        final tracks =
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return AudioTrackDTO.fromJson(data);
+            }).toList();
+
+        allTracks.addAll(tracks);
       }
 
       debugPrint(

@@ -18,7 +18,7 @@ import 'package:trackflow/features/audio_cache/audio_cache_state.dart';
 
 class TrackComponent extends StatelessWidget {
   final AudioTrack track;
-  final UserProfile uploader;
+  final UserProfile? uploader;
   final VoidCallback? onPlay;
   final VoidCallback? onComment;
 
@@ -38,12 +38,13 @@ class TrackComponent extends StatelessWidget {
   }
 
   void _playTrack(BuildContext context) {
+    if (uploader == null) return;
     context.read<AudioPlayerBloc>().add(
       PlayAudioRequested(
         source: PlaybackSource(type: PlaybackSourceType.track),
         visualContext: PlayerVisualContext.miniPlayer,
         track: track,
-        collaborator: uploader,
+        collaborator: uploader!,
       ),
     );
   }
@@ -52,7 +53,11 @@ class TrackComponent extends StatelessWidget {
     showTrackFlowActionSheet(
       title: track.name,
       context: context,
-      actions: TrackActions.forTrack(context, track, [uploader]),
+      actions: TrackActions.forTrack(
+        context,
+        track,
+        uploader != null ? [uploader!] : [],
+      ),
     );
   }
 
@@ -84,12 +89,13 @@ class TrackComponent extends StatelessWidget {
                     BlocBuilder<AudioCacheCubit, AudioCacheState>(
                       builder: (context, state) {
                         final isReady = state is AudioCacheDownloaded;
+                        final canPlay = isReady && uploader != null;
                         return Material(
-                          color: isReady ? Colors.blueAccent : Colors.grey,
+                          color: canPlay ? Colors.blueAccent : Colors.grey,
                           borderRadius: BorderRadius.circular(8),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                            onTap: isReady ? () => _playTrack(context) : null,
+                            onTap: canPlay ? () => _playTrack(context) : null,
                             child: Container(
                               width: 44,
                               height: 44,
@@ -144,14 +150,16 @@ class TrackComponent extends StatelessWidget {
                         CircleAvatar(
                           radius: 14,
                           backgroundImage:
-                              uploader.avatarUrl.isNotEmpty
-                                  ? NetworkImage(uploader.avatarUrl)
+                              uploader?.avatarUrl != null &&
+                                      uploader!.avatarUrl.isNotEmpty
+                                  ? NetworkImage(uploader!.avatarUrl)
                                   : null,
                           child:
-                              uploader.avatarUrl.isEmpty
+                              uploader?.avatarUrl == null ||
+                                      uploader!.avatarUrl.isEmpty
                                   ? Text(
-                                    uploader.name.isNotEmpty
-                                        ? uploader.name.substring(0, 1)
+                                    uploader?.name.isNotEmpty ?? false
+                                        ? uploader!.name.substring(0, 1)
                                         : '?',
                                     style: const TextStyle(
                                       fontSize: 13,
@@ -163,9 +171,7 @@ class TrackComponent extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            uploader.name.isNotEmpty
-                                ? uploader.name
-                                : 'Unknown',
+                            uploader?.name ?? 'Unknown User',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
