@@ -5,12 +5,32 @@ import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
 
 abstract class AudioCommentLocalDataSource {
+  /// Caches or updates a comment locally in Isar.
+  /// Used in: SyncAudioCommentsUseCase, AudioCommentRepositoryImpl (for local persistence after remote sync or creation)
   Future<void> cacheComment(AudioCommentDTO comment);
+
+  /// Deletes a cached comment by its ID from Isar.
+  /// Used in: AudioCommentRepositoryImpl (for local deletion after remote deletion)
   Future<void> deleteCachedComment(String commentId);
+
+  /// Returns a list of cached comments for a given track (one-time fetch).
+  /// Used in: AudioCommentRepositoryImpl (for business logic or non-reactive UI)
   Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId);
+
+  /// Returns a single cached comment by its ID.
+  /// Used in: AudioCommentRepositoryImpl, ProjectCommentService (for detail/edit flows)
   Future<AudioCommentDTO?> getCommentById(String id);
+
+  /// Deletes a comment by its ID from Isar.
+  /// Used in: AudioCommentRepositoryImpl (for local deletion, alternative to deleteCachedComment)
   Future<void> deleteComment(String id);
+
+  /// Deletes all cached comments from Isar.
+  /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
   Future<void> deleteAllComments();
+
+  /// Watches and streams all comments for a given track (reactive, for UI updates).
+  /// Used in: UI (Bloc/Cubit/ViewModel) for offline-first, real-time comment updates
   Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId);
 }
 
