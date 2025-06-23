@@ -10,6 +10,7 @@ abstract class AudioTrackLocalDataSource {
   Future<void> deleteTrack(String id);
   Future<void> deleteAllTracks();
   Stream<List<AudioTrackDTO>> watchTracksByProject(String projectId);
+  Future<void> clearCache();
 }
 
 @LazySingleton(as: AudioTrackLocalDataSource)
@@ -54,5 +55,12 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
         .projectIdEqualTo(projectId)
         .watch(fireImmediately: true)
         .map((docs) => docs.map((doc) => doc.toDTO()).toList());
+  }
+
+  @override
+  Future<void> clearCache() async {
+    await _isar.writeTxn(() async {
+      await _isar.audioTrackDocuments.clear();
+    });
   }
 }

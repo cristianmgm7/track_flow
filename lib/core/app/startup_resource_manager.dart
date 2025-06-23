@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/audio_comment/domain/usecases/syn_audio_comment_usecase.dart';
+import 'package:trackflow/features/audio_comment/domain/usecases/sync_audio_comment_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/sync_audio_tracks_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/sync_projects_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/sync_user_frofile_collaborators.dart';

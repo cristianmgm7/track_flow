@@ -32,6 +32,10 @@ abstract class AudioCommentLocalDataSource {
   /// Watches and streams all comments for a given track (reactive, for UI updates).
   /// Used in: UI (Bloc/Cubit/ViewModel) for offline-first, real-time comment updates
   Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId);
+
+  /// Clears all cached comments from Isar.
+  /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
+  Future<void> clearCache();
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
@@ -94,5 +98,12 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
         .trackIdEqualTo(trackId)
         .watch(fireImmediately: true)
         .map((docs) => docs.map((doc) => doc.toDTO()).toList());
+  }
+
+  @override
+  Future<void> clearCache() async {
+    await _isar.writeTxn(() async {
+      await _isar.audioCommentDocuments.clear();
+    });
   }
 }
