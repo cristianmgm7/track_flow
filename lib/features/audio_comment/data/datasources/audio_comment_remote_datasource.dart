@@ -5,14 +5,11 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
-import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 abstract class AudioCommentRemoteDataSource {
   Future<Either<Failure, Unit>> addComment(AudioComment comment);
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
-  Future<List<AudioCommentDTO>> getCommentsByProjectIds(
-    List<String> projectIds,
-  );
+  Future<List<AudioCommentDTO>> getCommentsByTrackId(String audioTrackId);
 }
 
 @LazySingleton(as: AudioCommentRemoteDataSource)
@@ -51,35 +48,20 @@ class FirebaseAudioCommentRemoteDataSource
   }
 
   @override
-  Future<List<AudioCommentDTO>> getCommentsByProjectIds(
-    List<String> projectIds,
+  Future<List<AudioCommentDTO>> getCommentsByTrackId(
+    String audioTrackId,
   ) async {
-    if (projectIds.isEmpty) {
-      return [];
-    }
     try {
-      final List<Future<QuerySnapshot>> futures = [];
-      for (String projectId in projectIds) {
-        futures.add(
-          _firestore
-              .collection(ProjectDTO.collection)
-              .doc(projectId)
+      final snapshot =
+          await _firestore
               .collection(AudioCommentDTO.collection)
-              .get(),
-        );
-      }
-
-      final List<QuerySnapshot> snapshots = await Future.wait(futures);
-      final List<AudioCommentDTO> allComments = [];
-
-      for (final snapshot in snapshots) {
-        for (final doc in snapshot.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          data['id'] = doc.id;
-          allComments.add(AudioCommentDTO.fromJson(data));
-        }
-      }
-      return allComments;
+              .where('trackId', isEqualTo: audioTrackId)
+              .get();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return AudioCommentDTO.fromJson(data);
+      }).toList();
     } catch (e) {
       return [];
     }
