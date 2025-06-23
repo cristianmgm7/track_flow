@@ -8,7 +8,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 
 abstract class UserProfileRemoteDataSource {
   Future<Either<Failure, UserProfile>> getProfileById(String userId);
-  Future<void> updateProfile(UserProfileDTO profile);
+  Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile);
 
   /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)
   Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
@@ -45,7 +45,9 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, void>> updateProfile(UserProfileDTO profile) async {
+  Future<Either<Failure, UserProfileDTO>> updateProfile(
+    UserProfileDTO profile,
+  ) async {
     try {
       String avatarUrl = profile.avatarUrl;
       // Si el avatarUrl es una ruta local, sube la imagen
@@ -60,7 +62,7 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
           .collection(UserProfileDTO.collection)
           .doc(profile.id)
           .set(profile.toJson(), SetOptions(merge: true));
-      return right(null);
+      return right(profile);
     } on FirebaseException catch (e) {
       return left(ServerFailure(e.message ?? 'An error occurred'));
     } catch (e) {

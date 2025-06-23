@@ -48,9 +48,13 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   ) async {
     try {
       final userProfileDTO = UserProfileDTO.fromDomain(userProfile);
-      await _userProfileRemoteDataSource.updateProfile(userProfileDTO);
-      await _userProfileLocalDataSource.cacheUserProfile(userProfileDTO);
-      return right(null);
+      final result = await _userProfileRemoteDataSource.updateProfile(
+        userProfileDTO,
+      );
+      return await result.fold((failure) => left(failure), (updatedDTO) async {
+        await _userProfileLocalDataSource.cacheUserProfile(updatedDTO);
+        return right(null);
+      });
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }
@@ -66,10 +70,17 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   }
 
   @override
-  Stream<List<UserProfile>> watchUserProfilesByIds(List<String> userIds) {
+  Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
+    List<String> userIds,
+  ) {
     return _userProfileLocalDataSource
         .watchUserProfilesByIds(userIds)
-        .map((dtos) => dtos.map((e) => e.toDomain()).toList());
+        .map(
+          (either) => either.fold(
+            (failure) => Left(failure),
+            (dtos) => Right(dtos.map((e) => e.toDomain()).toList()),
+          ),
+        );
   }
 
   @override

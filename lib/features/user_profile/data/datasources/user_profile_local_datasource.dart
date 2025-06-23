@@ -54,13 +54,15 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
   Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(
     List<String> userIds,
   ) {
-    // Observa todos los cambios en la colección y filtra por los IDs dados
-    return _isar.userProfileDocuments.watchLazy().asyncMap((_) async {
-      final docs = await _isar.userProfileDocuments.getAllById(userIds);
-      return right<Failure, List<UserProfileDTO>>(
-        docs.whereType<UserProfileDocument>().map((e) => e.toDTO()).toList(),
-      );
-    });
+    return _isar.userProfileDocuments
+        .where()
+        .anyOf(userIds, (q, id) => q.idEqualTo(id))
+        .watch(fireImmediately: true)
+        .map((docs) {
+          return right<Failure, List<UserProfileDTO>>(
+            docs.map((e) => e.toDTO()).toList(),
+          );
+        });
   }
 
   @override

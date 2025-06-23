@@ -427,6 +427,7 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i19.ProjectDetailRepository>(),
               gh<_i52.ManageCollaboratorsRepository>(),
               gh<_i57.SessionStorage>(),
+              gh<_i29.UserProfileRepository>(),
             ));
     gh.factory<_i74.AudioCacheCubit>(
         () => _i74.AudioCacheCubit(gh<_i47.GetCachedAudioPath>()));
