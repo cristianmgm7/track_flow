@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ManageCollaboratorsState extends Equatable {
   @override
@@ -58,8 +59,11 @@ class RemoveCollaboratorSuccess extends ManageCollaboratorsState {
 }
 
 class JoinProjectSuccess extends ManageCollaboratorsState {
+  final Project project;
+  JoinProjectSuccess(this.project);
+
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [project];
 }
 
 class JoinProjectFailure extends ManageCollaboratorsState {

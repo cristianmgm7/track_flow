@@ -8,6 +8,7 @@ import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 
@@ -37,7 +38,7 @@ class RemoveCollaboratorUseCase {
     this._sessionService,
   );
 
-  Future<Either<Failure, void>> call(RemoveCollaboratorParams params) async {
+  Future<Either<Failure, Project>> call(RemoveCollaboratorParams params) async {
     final userId = _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
@@ -62,9 +63,10 @@ class RemoveCollaboratorUseCase {
         final updatedProject = project.removeCollaborator(
           params.collaboratorId,
         );
-        return await _repositoryManageCollaborators.updateProject(
+        final result = await _repositoryManageCollaborators.updateProject(
           updatedProject,
         );
+        return result;
       } on CollaboratorNotFoundException catch (e) {
         return left(ManageCollaboratorException(e.toString()));
       } catch (e) {

@@ -65,11 +65,8 @@ class ManageCollaboratorsBloc
     );
     result.fold(
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
-      (_) {
-        // Aquí deberías obtener el proyecto actualizado localmente
-        // y luego disparar WatchCollaborators con ese proyecto actualizado
-        // Por simplicidad, aquí se asume que event.project está actualizado
-        add(WatchCollaborators(project: event.project));
+      (project) {
+        add(WatchCollaborators(project: project));
       },
     );
   }
@@ -87,12 +84,8 @@ class ManageCollaboratorsBloc
     );
     result.fold(
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
-      (_) {
-        // Aquí deberías obtener el proyecto actualizado localmente
-        // y luego disparar WatchCollaborators con ese proyecto actualizado
-        add(
-          WatchCollaborators(project: /* proyecto actualizado */ event.project),
-        );
+      (project) {
+        add(WatchCollaborators(project: project));
       },
     );
   }
@@ -111,12 +104,8 @@ class ManageCollaboratorsBloc
     );
     result.fold(
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
-      (_) {
-        // Aquí deberías obtener el proyecto actualizado localmente
-        // y luego disparar WatchCollaborators con ese proyecto actualizado
-        add(
-          WatchCollaborators(project: /* proyecto actualizado */ event.project),
-        );
+      (project) {
+        add(WatchCollaborators(project: project));
       },
     );
   }
@@ -129,7 +118,7 @@ class ManageCollaboratorsBloc
     final result = await leaveProjectUseCase(
       LeaveProjectParams(
         projectId: event.projectId,
-        userId: /* current user id */ UserId.fromUniqueString('currentUserId'),
+        userId: UserId.fromUniqueString('currentUserId'),
       ),
     );
     result.fold(
