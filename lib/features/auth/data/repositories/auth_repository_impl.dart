@@ -14,6 +14,10 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/auth/data/data_sources/auth_local_datasource.dart';
 import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource.dart';
+import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
+import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
+import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -23,6 +27,9 @@ class AuthRepositoryImpl implements AuthRepository {
   final FirebaseFirestore _firestore;
   final ProjectSyncService _projectSyncService;
   final UserProfileLocalDataSource _userProfileLocalDataSource;
+  final ProjectsLocalDataSource _projectLocalDataSource;
+  final AudioTrackLocalDataSource _audioTrackLocalDataSource;
+  final AudioCommentLocalDataSource _audioCommentLocalDataSource;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
@@ -31,12 +38,18 @@ class AuthRepositoryImpl implements AuthRepository {
     required FirebaseFirestore firestore,
     required ProjectSyncService projectSyncService,
     required UserProfileLocalDataSource userProfileLocalDataSource,
+    required ProjectsLocalDataSource projectLocalDataSource,
+    required AudioTrackLocalDataSource audioTrackLocalDataSource,
+    required AudioCommentLocalDataSource audioCommentLocalDataSource,
   }) : _remote = remote,
        _local = local,
        _networkInfo = networkInfo,
        _firestore = firestore,
        _projectSyncService = projectSyncService,
-       _userProfileLocalDataSource = userProfileLocalDataSource;
+       _userProfileLocalDataSource = userProfileLocalDataSource,
+       _projectLocalDataSource = projectLocalDataSource,
+       _audioTrackLocalDataSource = audioTrackLocalDataSource,
+       _audioCommentLocalDataSource = audioCommentLocalDataSource;
 
   Future<void> _createOrSyncUserProfile(User user) async {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
@@ -68,7 +81,7 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
     } catch (e) {
-      throw Exception(e);
+      print(e);
     }
   }
 
@@ -176,6 +189,10 @@ class AuthRepositoryImpl implements AuthRepository {
     }
     await _remote.signOut();
     _projectSyncService.stop();
+    await _userProfileLocalDataSource.clearCache();
+    await _projectLocalDataSource.clearCache();
+    await _audioTrackLocalDataSource.clearCache();
+    await _audioCommentLocalDataSource.clearCache();
   }
 
   @override

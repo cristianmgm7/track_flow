@@ -9,7 +9,7 @@ abstract class ManageCollaboratorsRepository {
     UserId userId,
   );
 
-  Future<Either<Failure, void>> updateProject(Project project);
+  Future<Either<Failure, Project>> updateProject(Project project);
 
   Future<Either<Failure, Unit>> leaveProject({
     required ProjectId projectId,

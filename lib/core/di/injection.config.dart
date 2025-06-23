@@ -437,6 +437,9 @@ extension GetItInjectableX on _i1.GetIt {
           firestore: gh<_i7.FirebaseFirestore>(),
           projectSyncService: gh<_i55.ProjectSyncService>(),
           userProfileLocalDataSource: gh<_i27.UserProfileLocalDataSource>(),
+          projectLocalDataSource: gh<_i22.ProjectsLocalDataSource>(),
+          audioTrackLocalDataSource: gh<_i40.AudioTrackLocalDataSource>(),
+          audioCommentLocalDataSource: gh<_i36.AudioCommentLocalDataSource>(),
         ));
     gh.lazySingleton<_i77.CreateProjectUseCase>(() => _i77.CreateProjectUseCase(
           gh<_i23.ProjectsRepository>(),

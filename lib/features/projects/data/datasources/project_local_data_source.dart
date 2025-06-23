@@ -14,6 +14,8 @@ abstract class ProjectsLocalDataSource {
   Future<List<ProjectDTO>> getAllProjects();
 
   Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId);
+
+  Future<void> clearCache();
 }
 
 @LazySingleton(as: ProjectsLocalDataSource)
@@ -68,5 +70,12 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
         )
         .watch(fireImmediately: true)
         .map((docs) => docs.map((doc) => doc.toDTO()).toList());
+  }
+
+  @override
+  Future<void> clearCache() async {
+    await _isar.writeTxn(() async {
+      await _isar.projectDocuments.clear();
+    });
   }
 }

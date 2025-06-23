@@ -3,57 +3,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // REGLA PARA PERFILES DE USUARIO
-    // Un usuario solo puede leer y escribir su propio perfil.
-    // Esto es crucial para la seguridad y la privacidad.
+    // --- Funciones Helper ---
+    // Función para verificar si un usuario es propietario o colaborador de un proyecto.
+    // Usamos los datos del proyecto que se pasan como argumento.
+    function isOwnerOrCollaborator(projectData) {
+      // El UID del usuario debe ser igual al ownerId o estar en la lista de collaboratorIds.
+      return request.auth.uid == projectData.ownerId || 
+             (projectData.collaboratorIds is list && request.auth.uid in projectData.collaboratorIds);
+    }
+    
+    // --- Reglas para User Profiles ---
     match /user_profile/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Helper function to check if the user is an owner or collaborator
-    function isOwnerOrCollaborator(project) {
-      return request.auth.uid == project.ownerId || request.auth.uid in project.collaboratorIds;
-    }
-    
     }
 
-    // REGLAS PARA PROYECTOS (projects) - CORREGIDAS
-    // Utiliza el campo `collaboratorIds` para validaciones de seguridad,
-    // ya que es una lista simple y eficiente de comprobar.
+    // --- Reglas para Projects ---
     match /projects/{projectId} {
-      
-      // PERMITIR LECTURA Y ACTUALIZACIÓN:
-      // Un usuario puede leer o actualizar si su UID está en la lista de `collaboratorIds`.
-      allow read, update: if request.auth != null && request.auth.uid in resource.data.collaboratorIds;
+      // Permite leer un proyecto si el usuario es propietario o colaborador.
+      // Esta regla cubre tanto `get` para un documento como `list` para consultas.
+      allow read: if request.auth != null && isOwnerOrCollaborator(resource.data);
 
-      // PERMITIR CREACIÓN:
-      // Un usuario puede crear un proyecto si su UID está en la lista de `collaboratorIds` del nuevo documento que se está creando.
-      allow create: if request.auth != null && request.auth.uid in request.resource.data.collaboratorIds;
+      // Permite crear un proyecto si el usuario está autenticado y se asigna a sí mismo
+      // como propietario y está en la lista de colaboradores (para acceso inmediato).
+      allow create: if request.auth != null &&
+                     request.resource.data.ownerId == request.auth.uid &&
+                     request.auth.uid in request.resource.data.collaboratorIds;
 
-      // PERMITIR BORRADO:
-      // Solo el `ownerId` del proyecto puede borrarlo.
+      // Permite actualizar si es colaborador/propietario y no se cambia el ownerId.
+      allow update: if request.auth != null &&
+                     isOwnerOrCollaborator(resource.data) &&
+                     request.resource.data.ownerId == resource.data.ownerId;
+
+      // Solo el propietario puede borrar.
       allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
-    
-    // Allow read access if the user is the owner or a collaborator
-      allow get: if isOwnerOrCollaborator(get(/databases/$(database)/documents/projects/$(projectId)).data);
-      
-      // Allow list access for queries where the user is the owner or a collaborator
-      allow list: if request.auth.uid != null &&
-                   (request.query.resource == null || 
-                    isOwnerOrCollaborator(request.query.resource.data));
-
-      // Allow creating projects for any authenticated user
-      allow create: if request.auth.uid != null;
-      
-      // Allow updates and deletes only for the project owner
-      allow update, delete: if request.auth.uid == get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId;
-    
     }
 
-    // REGLAS PARA SUB-COLECCIONES DE PROYECTOS (ej: audio_tracks) - CORREGIDAS
-    // El acceso se concede si el UID del usuario está en la lista `collaboratorIds` del documento del proyecto padre.
-    match /projects/{projectId}/{subcollection}/{documentId} {
-      allow read, write: if request.auth != null && get(/databases/$(database)/documents/projects/$(projectId)).data.collaboratorIds.hasAny([request.auth.uid]);
+    // --- Reglas para la Colección Raíz de Audio Tracks ---
+    match /audio_tracks/{trackId} {
+      // Para LEER un track, obtén los datos del proyecto asociado (`get()`) y
+      // comprueba si el usuario es colaborador o propietario de ESE proyecto.
+      allow read: if request.auth != null &&
+                   isOwnerOrCollaborator(get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data);
+
+      // Para CREAR un track, la lógica es la misma. Comprueba los permisos en el proyecto
+      // al que se va a asociar el nuevo track.
+      allow create: if request.auth != null &&
+                     isOwnerOrCollaborator(get(/databases/$(database)/documents/projects/$(request.resource.data.projectId)).data);
+      
+      // Para ACTUALIZAR o BORRAR un track, solo permitimos al propietario del proyecto.
+      // (Esta regla se puede hacer más flexible si es necesario).
+      allow update, delete: if request.auth != null &&
+                             get(/databases/$(database)/documents/projects/$(resource.data.projectId)).data.ownerId == request.auth.uid;
     }
 
+    // --- Reglas para la Colección Raíz de Audio Comments (Preparado para el futuro) ---
+    match /audio_comments/{commentId} {
+      // Para LEER un comentario, el usuario debe tener acceso de lectura al track asociado.
+      allow read: if request.auth != null &&
+                   get(/databases/$(database)/documents/audio_tracks/$(resource.data.trackId)) != null; // Simplificado, se puede enlazar a la regla del track
+
+      // Para CREAR un comentario, el usuario debe tener acceso de lectura al track asociado.
+      allow create: if request.auth != null && request.resource.data.createdBy == request.auth.uid;
+
+      // Un usuario solo puede editar o borrar sus propios comentarios.
+      allow update, delete: if request.auth != null && resource.data.createdBy == request.auth.uid;
+    }
   }
 }

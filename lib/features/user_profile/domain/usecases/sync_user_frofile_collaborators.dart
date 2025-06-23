@@ -1,6 +1,8 @@
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 
+@lazySingleton
 class SyncUserProfileCollaboratorsUseCase {
   final ProjectsLocalDataSource projectsLocal;
   final UserProfileRepository userProfileRepo;

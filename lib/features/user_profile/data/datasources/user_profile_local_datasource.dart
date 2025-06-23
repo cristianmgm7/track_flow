@@ -13,6 +13,8 @@ abstract class UserProfileLocalDataSource {
 
   /// Observa múltiples perfiles de usuario por sus IDs (stream reactivo)
   Stream<List<UserProfileDTO>> watchUserProfilesByIds(List<String> userIds);
+
+  Future<void> clearCache();
 }
 
 @LazySingleton(as: UserProfileLocalDataSource)
@@ -53,6 +55,13 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
           .whereType<UserProfileDocument>()
           .map((e) => e.toDTO())
           .toList();
+    });
+  }
+
+  @override
+  Future<void> clearCache() async {
+    await _isar.writeTxn(() async {
+      await _isar.userProfileDocuments.clear();
     });
   }
 }
