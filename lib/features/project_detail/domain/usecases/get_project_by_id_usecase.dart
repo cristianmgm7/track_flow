@@ -7,11 +7,11 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 @lazySingleton
 class GetProjectByIdUseCase {
-  final ProjectDetailRepository _repository;
+  final ProjectDetailRepository _projectDetailRepository;
 
-  GetProjectByIdUseCase(this._repository);
+  GetProjectByIdUseCase(this._projectDetailRepository);
 
   Future<Either<Failure, Project>> call(ProjectId projectId) async {
-    return await _repository.getProjectById(projectId);
+    return await _projectDetailRepository.getProjectById(projectId);
   }
 }

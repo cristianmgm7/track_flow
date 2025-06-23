@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
@@ -12,10 +13,12 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 class UserProfileRepositoryImpl implements UserProfileRepository {
   final UserProfileRemoteDataSource _userProfileRemoteDataSource;
   final UserProfileLocalDataSource _userProfileLocalDataSource;
+  final NetworkInfo _networkInfo;
 
   UserProfileRepositoryImpl(
     this._userProfileRemoteDataSource,
     this._userProfileLocalDataSource,
+    this._networkInfo,
   );
 
   @override
@@ -51,5 +54,38 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Future<void> cacheUserProfiles(List<UserProfile> profiles) async {
+    for (final profile in profiles) {
+      await _userProfileLocalDataSource.cacheUserProfile(
+        UserProfileDTO.fromDomain(profile),
+      );
+    }
+  }
+
+  @override
+  Stream<List<UserProfile>> watchUserProfilesByIds(List<String> userIds) {
+    return _userProfileLocalDataSource
+        .watchUserProfilesByIds(userIds)
+        .map((dtos) => dtos.map((e) => e.toDomain()).toList());
+  }
+
+  @override
+  Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
+    List<String> userIds,
+  ) async {
+    final hasConnected = await _networkInfo.isConnected;
+    if (!hasConnected) {
+      return left(DatabaseFailure('No internet connection'));
+    }
+    final dtos = await _userProfileRemoteDataSource.getUserProfilesByIds(
+      userIds,
+    );
+    return dtos.fold(
+      (failure) => left(failure),
+      (dtos) => right(dtos.map((e) => e.toDomain()).toList()),
+    );
   }
 }

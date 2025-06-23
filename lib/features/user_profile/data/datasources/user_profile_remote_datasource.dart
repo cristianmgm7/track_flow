@@ -9,6 +9,11 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 abstract class UserProfileRemoteDataSource {
   Future<Either<Failure, UserProfile>> getProfileById(String userId);
   Future<void> updateProfile(UserProfileDTO profile);
+
+  /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)
+  Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
+    List<String> userIds,
+  );
 }
 
 @LazySingleton(as: UserProfileRemoteDataSource)
@@ -56,6 +61,32 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
           .doc(profile.id)
           .set(profile.toJson(), SetOptions(merge: true));
       return right(null);
+    } on FirebaseException catch (e) {
+      return left(ServerFailure(e.message ?? 'An error occurred'));
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
+    List<String> userIds,
+  ) async {
+    try {
+      // Firestore limita a 10 IDs por whereIn
+      final List<UserProfileDTO> result = [];
+      for (var i = 0; i < userIds.length; i += 10) {
+        final batch = userIds.skip(i).take(10).toList();
+        final query =
+            await _firestore
+                .collection(UserProfileDTO.collection)
+                .where('id', whereIn: batch)
+                .get();
+        result.addAll(
+          query.docs.map((doc) => UserProfileDTO.fromJson(doc.data())),
+        );
+      }
+      return right(result);
     } on FirebaseException catch (e) {
       return left(ServerFailure(e.message ?? 'An error occurred'));
     } catch (e) {

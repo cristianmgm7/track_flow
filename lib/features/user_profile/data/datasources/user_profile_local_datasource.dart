@@ -7,6 +7,12 @@ import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dar
 abstract class UserProfileLocalDataSource {
   Future<void> cacheUserProfile(UserProfileDTO profile);
   Stream<UserProfileDTO?> watchUserProfile(String userId);
+
+  /// Obtiene múltiples perfiles de usuario por sus IDs (one-shot)
+  Future<List<UserProfileDTO>> getUserProfilesByIds(List<String> userIds);
+
+  /// Observa múltiples perfiles de usuario por sus IDs (stream reactivo)
+  Stream<List<UserProfileDTO>> watchUserProfilesByIds(List<String> userIds);
 }
 
 @LazySingleton(as: UserProfileLocalDataSource)
@@ -28,5 +34,25 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
     return _isar.userProfileDocuments
         .watchObject(fastHash(userId), fireImmediately: true)
         .map((doc) => doc?.toDTO());
+  }
+
+  @override
+  Future<List<UserProfileDTO>> getUserProfilesByIds(
+    List<String> userIds,
+  ) async {
+    final docs = await _isar.userProfileDocuments.getAllById(userIds);
+    return docs.whereType<UserProfileDocument>().map((e) => e.toDTO()).toList();
+  }
+
+  @override
+  Stream<List<UserProfileDTO>> watchUserProfilesByIds(List<String> userIds) {
+    // Observa todos los cambios en la colección y filtra por los IDs dados
+    return _isar.userProfileDocuments.watchLazy().asyncMap((_) async {
+      final docs = await _isar.userProfileDocuments.getAllById(userIds);
+      return docs
+          .whereType<UserProfileDocument>()
+          .map((e) => e.toDTO())
+          .toList();
+    });
   }
 }
