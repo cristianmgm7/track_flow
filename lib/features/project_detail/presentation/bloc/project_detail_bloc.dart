@@ -52,6 +52,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
           (bundle) {
             emit(
               state.copyWith(
+                project: event.project,
                 tracks: bundle.tracks,
                 collaborators: bundle.collaborators,
                 isLoadingTracks: false,

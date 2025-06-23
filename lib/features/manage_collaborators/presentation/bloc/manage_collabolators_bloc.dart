@@ -42,16 +42,16 @@ class ManageCollaboratorsBloc
     WatchCollaborators event,
     Emitter<ManageCollaboratorsState> emit,
   ) async {
-    await _profilesSubscription?.cancel();
     final userIds = event.project.collaborators.map((c) => c.id.value).toList();
-    _profilesSubscription = watchUserProfilesUseCase(userIds).listen(
-      (either) {
+    await emit.onEach<Either<Failure, List<UserProfile>>>(
+      watchUserProfilesUseCase(userIds),
+      onData: (either) {
         either.fold(
           (failure) => emit(ManageCollaboratorsError(failure.toString())),
           (profiles) => emit(ManageCollaboratorsLoaded(profiles)),
         );
       },
-      onError: (error) {
+      onError: (error, stackTrace) {
         emit(ManageCollaboratorsError(error.toString()));
       },
     );
@@ -71,6 +71,7 @@ class ManageCollaboratorsBloc
     result.fold(
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
       (project) {
+        emit(AddCollaboratorSuccess(event.collaboratorId.value));
         add(WatchCollaborators(project: project));
       },
     );
