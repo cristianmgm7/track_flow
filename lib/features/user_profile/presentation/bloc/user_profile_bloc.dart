@@ -50,7 +50,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileSaving());
-    final result = await updateUserProfileUseCase(event.profile);
+    final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
       (failure) => emit(UserProfileError()),
       (_) => emit(UserProfileSaved()),

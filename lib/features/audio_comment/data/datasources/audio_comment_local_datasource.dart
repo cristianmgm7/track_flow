@@ -1,5 +1,7 @@
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
@@ -31,7 +33,9 @@ abstract class AudioCommentLocalDataSource {
 
   /// Watches and streams all comments for a given track (reactive, for UI updates).
   /// Used in: UI (Bloc/Cubit/ViewModel) for offline-first, real-time comment updates
-  Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId);
+  Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(
+    String trackId,
+  );
 
   /// Clears all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
@@ -91,13 +95,20 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Stream<List<AudioCommentDTO>> watchCommentsByTrack(String trackId) {
+  Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(
+    String trackId,
+  ) {
     return _isar.audioCommentDocuments
         .where()
         .filter()
         .trackIdEqualTo(trackId)
         .watch(fireImmediately: true)
-        .map((docs) => docs.map((doc) => doc.toDTO()).toList());
+        .map(
+          (docs) => right<Failure, List<AudioCommentDTO>>(
+            docs.map((doc) => doc.toDTO()).toList(),
+          ),
+        )
+        .handleError((e) => left(ServerFailure(e.toString())));
   }
 
   @override

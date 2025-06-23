@@ -17,7 +17,7 @@ import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
-import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
+import 'package:trackflow/core/session/session_storage.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
@@ -30,6 +30,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final ProjectsLocalDataSource _projectLocalDataSource;
   final AudioTrackLocalDataSource _audioTrackLocalDataSource;
   final AudioCommentLocalDataSource _audioCommentLocalDataSource;
+  final SessionStorage _sessionStorage;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
@@ -41,6 +42,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required ProjectsLocalDataSource projectLocalDataSource,
     required AudioTrackLocalDataSource audioTrackLocalDataSource,
     required AudioCommentLocalDataSource audioCommentLocalDataSource,
+    required SessionStorage sessionStorage,
   }) : _remote = remote,
        _local = local,
        _networkInfo = networkInfo,
@@ -49,7 +51,8 @@ class AuthRepositoryImpl implements AuthRepository {
        _userProfileLocalDataSource = userProfileLocalDataSource,
        _projectLocalDataSource = projectLocalDataSource,
        _audioTrackLocalDataSource = audioTrackLocalDataSource,
-       _audioCommentLocalDataSource = audioCommentLocalDataSource;
+       _audioCommentLocalDataSource = audioCommentLocalDataSource,
+       _sessionStorage = sessionStorage;
 
   Future<void> _createOrSyncUserProfile(User user) async {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
@@ -81,7 +84,7 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       }
     } catch (e) {
-      print(e);
+      throw Exception(e);
     }
   }
 
@@ -113,6 +116,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       final user = await _remote.signInWithEmailAndPassword(email, password);
       if (user != null) {
+        await _sessionStorage.saveUserId(user.uid);
         await _local.cacheUserId(user.uid);
         await _createOrSyncUserProfile(user);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
@@ -139,6 +143,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       final user = await _remote.signUpWithEmailAndPassword(email, password);
       if (user != null) {
+        await _sessionStorage.saveUserId(user.uid);
         await _createOrSyncUserProfile(user);
         await _local.cacheUserId(user.uid);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
@@ -165,6 +170,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       final user = await _remote.signInWithGoogle();
       if (user != null) {
+        await _sessionStorage.saveUserId(user.uid);
         await _local.cacheUserId(user.uid);
         await _createOrSyncUserProfile(user);
         _projectSyncService.start(UserId.fromUniqueString(user.uid));
@@ -185,6 +191,7 @@ class AuthRepositoryImpl implements AuthRepository {
     final isConnected = await _networkInfo.isConnected;
     if (!isConnected) {
       await _local.clearOfflineCredentials();
+      await _sessionStorage.clearUserId();
       return;
     }
     await _remote.signOut();
@@ -193,6 +200,7 @@ class AuthRepositoryImpl implements AuthRepository {
     await _projectLocalDataSource.clearCache();
     await _audioTrackLocalDataSource.clearCache();
     await _audioCommentLocalDataSource.clearCache();
+    await _sessionStorage.clearUserId();
   }
 
   @override

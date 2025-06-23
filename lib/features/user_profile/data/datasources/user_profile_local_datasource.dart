@@ -1,5 +1,7 @@
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
@@ -12,7 +14,9 @@ abstract class UserProfileLocalDataSource {
   Future<List<UserProfileDTO>> getUserProfilesByIds(List<String> userIds);
 
   /// Observa múltiples perfiles de usuario por sus IDs (stream reactivo)
-  Stream<List<UserProfileDTO>> watchUserProfilesByIds(List<String> userIds);
+  Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(
+    List<String> userIds,
+  );
 
   Future<void> clearCache();
 }
@@ -47,14 +51,15 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
   }
 
   @override
-  Stream<List<UserProfileDTO>> watchUserProfilesByIds(List<String> userIds) {
+  Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(
+    List<String> userIds,
+  ) {
     // Observa todos los cambios en la colección y filtra por los IDs dados
     return _isar.userProfileDocuments.watchLazy().asyncMap((_) async {
       final docs = await _isar.userProfileDocuments.getAllById(userIds);
-      return docs
-          .whereType<UserProfileDocument>()
-          .map((e) => e.toDTO())
-          .toList();
+      return right<Failure, List<UserProfileDTO>>(
+        docs.whereType<UserProfileDocument>().map((e) => e.toDTO()).toList(),
+      );
     });
   }
 

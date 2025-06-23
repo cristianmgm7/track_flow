@@ -40,7 +40,12 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     try {
       return _localDataSource
           .watchCommentsByTrack(trackId.value)
-          .map((dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()));
+          .map(
+            (either) => either.fold(
+              (failure) => Left(failure),
+              (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
+            ),
+          );
     } catch (e) {
       return Stream.value(
         Left(ServerFailure('Failed to watch local comments')),

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 abstract class ProjectDetailEvent extends Equatable {
   const ProjectDetailEvent();
@@ -10,16 +10,12 @@ abstract class ProjectDetailEvent extends Equatable {
 }
 
 class WatchProjectDetail extends ProjectDetailEvent {
-  final ProjectId projectId;
-  final List<UserId> collaboratorIds;
+  final Project project;
 
-  const WatchProjectDetail({
-    required this.projectId,
-    required this.collaboratorIds,
-  });
+  const WatchProjectDetail({required this.project});
 
   @override
-  List<Object?> get props => [projectId, collaboratorIds];
+  List<Object?> get props => [project];
 }
 
 class TracksUpdated extends ProjectDetailEvent {

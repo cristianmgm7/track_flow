@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart';
@@ -20,7 +22,7 @@ class ManageCollaboratorsBloc
   final LeaveProjectUseCase leaveProjectUseCase;
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
 
-  StreamSubscription<List<UserProfile>>? _profilesSubscription;
+  StreamSubscription<Either<Failure, List<UserProfile>>>? _profilesSubscription;
 
   ManageCollaboratorsBloc({
     required this.addCollaboratorUseCase,
@@ -43,8 +45,11 @@ class ManageCollaboratorsBloc
     await _profilesSubscription?.cancel();
     final userIds = event.project.collaborators.map((c) => c.id.value).toList();
     _profilesSubscription = watchUserProfilesUseCase(userIds).listen(
-      (profiles) {
-        emit(ManageCollaboratorsLoaded(profiles));
+      (either) {
+        either.fold(
+          (failure) => emit(ManageCollaboratorsError(failure.toString())),
+          (profiles) => emit(ManageCollaboratorsLoaded(profiles)),
+        );
       },
       onError: (error) {
         emit(ManageCollaboratorsError(error.toString()));

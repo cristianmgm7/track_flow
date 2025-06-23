@@ -6,6 +6,8 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_loca
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 
 class ProjectDetailBundle {
   final List<AudioTrack> tracks;
@@ -31,29 +33,59 @@ class WatchProjectDetailUseCase {
     this.commentsLocal,
   );
 
-  Stream<ProjectDetailBundle> call({
+  Stream<Either<Failure, ProjectDetailBundle>> call({
     required String projectId,
     required List<String> collaboratorIds,
   }) {
+    final tracks$ = tracksLocal
+        .watchTracksByProject(projectId)
+        .map(
+          (either) => either.fold<Either<Failure, List<AudioTrack>>>(
+            (failure) => left(failure),
+            (dtos) => right(dtos.map((dto) => dto.toDomain()).toList()),
+          ),
+        )
+        .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())));
+
+    final users$ = userProfilesLocal
+        .watchUserProfilesByIds(collaboratorIds)
+        .map(
+          (either) => either.fold<Either<Failure, List<UserProfile>>>(
+            (failure) => left(failure),
+            (dtos) => right(dtos.map((dto) => dto.toDomain()).toList()),
+          ),
+        )
+        .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())));
+
+    final comments$ = commentsLocal
+        .watchCommentsByTrack(projectId)
+        .map(
+          (either) => either.fold<Either<Failure, List<AudioComment>>>(
+            (failure) => left(failure),
+            (dtos) => right(dtos.map((dto) => dto.toDomain()).toList()),
+          ),
+        )
+        .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())));
+
     return Rx.combineLatest3<
-      List<AudioTrack>,
-      List<UserProfile>,
-      List<AudioComment>,
-      ProjectDetailBundle
+      Either<Failure, List<AudioTrack>>,
+      Either<Failure, List<UserProfile>>,
+      Either<Failure, List<AudioComment>>,
+      Either<Failure, ProjectDetailBundle>
     >(
-      tracksLocal
-          .watchTracksByProject(projectId)
-          .map((dtos) => dtos.map((dto) => dto.toDomain()).toList()),
-      userProfilesLocal
-          .watchUserProfilesByIds(collaboratorIds)
-          .map((dtos) => dtos.map((dto) => dto.toDomain()).toList()),
-      commentsLocal
-          .watchCommentsByTrack(projectId)
-          .map((dtos) => dtos.map((dto) => dto.toDomain()).toList()),
-      (tracks, collaborators, comments) => ProjectDetailBundle(
-        tracks: tracks,
-        collaborators: collaborators,
-        comments: comments,
+      tracks$,
+      users$,
+      comments$,
+      (
+        Either<Failure, List<AudioTrack>> tracks,
+        Either<Failure, List<UserProfile>> users,
+        Either<Failure, List<AudioComment>> comments,
+      ) => right(
+        ProjectDetailBundle(
+          tracks: tracks.getOrElse(() => []),
+          collaborators: users.getOrElse(() => []),
+          comments: comments.getOrElse(() => []),
+        ),
       ),
     );
   }

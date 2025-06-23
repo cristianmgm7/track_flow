@@ -54,7 +54,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     Emitter<AudioTrackState> emit,
   ) async {
     emit(AudioTrackLoading());
-    final result = await deleteAudioTrack(
+    final result = await deleteAudioTrack.call(
       DeleteAudioTrackParams(
         trackId: event.trackId,
         projectId: event.projectId,
@@ -73,11 +73,11 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     await _trackSubscription?.cancel();
     emit(AudioTrackLoading());
 
-    _trackSubscription = watchAudioTracksByProject(
-      WatchTracksByProjectIdParams(projectId: event.projectId),
-    ).listen((either) {
-      add(AudioTracksUpdated(either));
-    });
+    _trackSubscription = watchAudioTracksByProject
+        .call(WatchTracksByProjectIdParams(projectId: event.projectId))
+        .listen((either) {
+          add(AudioTracksUpdated(either));
+        });
   }
 
   void _onAudioTracksUpdated(

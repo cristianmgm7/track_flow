@@ -440,6 +440,7 @@ extension GetItInjectableX on _i1.GetIt {
           projectLocalDataSource: gh<_i22.ProjectsLocalDataSource>(),
           audioTrackLocalDataSource: gh<_i40.AudioTrackLocalDataSource>(),
           audioCommentLocalDataSource: gh<_i36.AudioCommentLocalDataSource>(),
+          sessionStorage: gh<_i57.SessionStorage>(),
         ));
     gh.lazySingleton<_i77.CreateProjectUseCase>(() => _i77.CreateProjectUseCase(
           gh<_i23.ProjectsRepository>(),

@@ -1,5 +1,7 @@
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
@@ -9,7 +11,9 @@ abstract class AudioTrackLocalDataSource {
   Future<AudioTrackDTO?> getTrackById(String id);
   Future<void> deleteTrack(String id);
   Future<void> deleteAllTracks();
-  Stream<List<AudioTrackDTO>> watchTracksByProject(String projectId);
+  Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
+    String projectId,
+  );
   Future<void> clearCache();
 }
 
@@ -48,13 +52,20 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Stream<List<AudioTrackDTO>> watchTracksByProject(String projectId) {
+  Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
+    String projectId,
+  ) {
     return _isar.audioTrackDocuments
         .where()
         .filter()
         .projectIdEqualTo(projectId)
         .watch(fireImmediately: true)
-        .map((docs) => docs.map((doc) => doc.toDTO()).toList());
+        .map(
+          (docs) => right<Failure, List<AudioTrackDTO>>(
+            docs.map((doc) => doc.toDTO()).toList(),
+          ),
+        )
+        .handleError((e) => left(ServerFailure(e.toString())));
   }
 
   @override

@@ -12,7 +12,9 @@ abstract class UserProfileRepository {
   Future<void> cacheUserProfiles(List<UserProfile> profiles);
 
   /// Watch a list of user profiles by their IDs (reactive, for offline-first UI)
-  Stream<List<UserProfile>> watchUserProfilesByIds(List<String> userIds);
+  Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
+    List<String> userIds,
+  );
 
   /// Get a list of user profiles by their IDs (one-time fetch)
   Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
