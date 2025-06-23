@@ -119,7 +119,7 @@ class AppRouter {
               path: AppRoutes.manageCollaborators,
               builder:
                   (context, state) => ManageCollaboratorsScreen(
-                    projectId: state.extra as ProjectId,
+                    project: state.extra as Project,
                   ),
             ),
           ],
