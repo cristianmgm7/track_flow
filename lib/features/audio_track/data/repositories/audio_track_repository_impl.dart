@@ -41,7 +41,12 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     try {
       return localDataSource
           .watchTracksByProject(projectId.value)
-          .map((dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()));
+          .map(
+            (either) => either.fold(
+              (failure) => Left(failure),
+              (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
+            ),
+          );
     } catch (e) {
       return Stream.value(Left(ServerFailure('Failed to watch local tracks')));
     }
@@ -54,16 +59,18 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }) async {
     if (await networkInfo.isConnected) {
       try {
-        await remoteDataSource.uploadAudioTrack(file: file, track: track);
-        await localDataSource.cacheTrack(
-          AudioTrackDTO.fromDomain(track),
-        ); // if I want to save local
-        return Right(unit);
+        final result = await remoteDataSource.uploadAudioTrack(
+          file: file,
+          track: track,
+        );
+        return await result.fold((failure) => Left(failure), (trackDTO) async {
+          await localDataSource.cacheTrack(trackDTO);
+          return Right(unit);
+        });
       } catch (e) {
         return Left(ServerFailure(e.toString()));
       }
     } else {
-      // await localDataSource.cacheTrack(AudioTrackDTO.fromDomain(track)); // if I want to save local
       return Left(ServerFailure('No network connection'));
     }
   }

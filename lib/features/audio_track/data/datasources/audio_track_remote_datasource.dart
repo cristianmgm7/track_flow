@@ -10,7 +10,7 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 abstract class AudioTrackRemoteDataSource {
-  Future<void> uploadAudioTrack({
+  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack({
     required File file,
     required AudioTrack track,
   });
@@ -27,7 +27,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   AudioTrackRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<Either<Failure, Unit>> uploadAudioTrack({
+  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack({
     required File file,
     required AudioTrack track,
   }) async {
@@ -45,7 +45,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
           .doc(trackDTO.id.value)
           .set(trackDTO.toJson());
 
-      return const Right(unit);
+      return Right(trackDTO);
     } catch (e) {
       return Left(ServerFailure('Error uploading audio track: $e'));
     }

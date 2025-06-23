@@ -72,21 +72,18 @@ class WatchProjectDetailUseCase {
       Either<Failure, List<UserProfile>>,
       Either<Failure, List<AudioComment>>,
       Either<Failure, ProjectDetailBundle>
-    >(
-      tracks$,
-      users$,
-      comments$,
-      (
-        Either<Failure, List<AudioTrack>> tracks,
-        Either<Failure, List<UserProfile>> users,
-        Either<Failure, List<AudioComment>> comments,
-      ) => right(
+    >(tracks$, users$, comments$, (
+      Either<Failure, List<AudioTrack>> tracks,
+      Either<Failure, List<UserProfile>> users,
+      Either<Failure, List<AudioComment>> comments,
+    ) {
+      return right(
         ProjectDetailBundle(
           tracks: tracks.getOrElse(() => []),
           collaborators: users.getOrElse(() => []),
           comments: comments.getOrElse(() => []),
         ),
-      ),
-    );
+      );
+    });
   }
 }
