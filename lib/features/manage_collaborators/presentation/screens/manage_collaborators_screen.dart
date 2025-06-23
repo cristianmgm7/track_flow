@@ -6,11 +6,12 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/components/collaborator_component.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/remove_colaborator_dialog.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
-  final ProjectId projectId;
+  final Project project;
 
-  const ManageCollaboratorsScreen({super.key, required this.projectId});
+  const ManageCollaboratorsScreen({super.key, required this.project});
 
   @override
   State<ManageCollaboratorsScreen> createState() =>
@@ -22,7 +23,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   void initState() {
     super.initState();
     context.read<ManageCollaboratorsBloc>().add(
-      GetProjectWithUserProfiles(projectId: widget.projectId),
+      WatchCollaborators(project: widget.project),
     );
   }
 
@@ -35,7 +36,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
       context: context,
       builder: (BuildContext context) {
         return RemoveCollaboratorDialog(
-          projectId: widget.projectId,
+          projectId: widget.project.id,
           collaboratorId: userId.value,
           collaboratorName: collaboratorName,
         );
@@ -51,17 +52,15 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
           if (state is ManageCollaboratorsLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ManageCollaboratorsLoaded) {
-            final project = state.projectWithUserProfiles.value1;
-            final collaborators = state.projectWithUserProfiles.value2;
+            final collaborators = state.userProfiles;
 
             return ListView.builder(
               itemCount: collaborators.length,
               itemBuilder: (context, index) {
                 final collaborator = collaborators[index];
                 // Find the collaborator's role from the project
-                final projectCollaborator = project.collaborators.firstWhere(
-                  (c) => c.userId == collaborator.id,
-                );
+                final projectCollaborator = widget.project.collaborators
+                    .firstWhere((c) => c.userId == collaborator.id);
 
                 return CollaboratorComponent(
                   name: collaborator.name,

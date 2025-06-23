@@ -9,13 +9,17 @@ abstract class ProjectDetailEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadProjectDetail extends ProjectDetailEvent {
+class WatchProjectDetail extends ProjectDetailEvent {
   final ProjectId projectId;
+  final List<UserId> collaboratorIds;
 
-  const LoadProjectDetail(this.projectId);
+  const WatchProjectDetail({
+    required this.projectId,
+    required this.collaboratorIds,
+  });
 
   @override
-  List<Object?> get props => [projectId];
+  List<Object?> get props => [projectId, collaboratorIds];
 }
 
 class TracksUpdated extends ProjectDetailEvent {
