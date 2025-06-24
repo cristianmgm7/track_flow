@@ -13,13 +13,13 @@ class WatchUserProfileUseCase {
 
   WatchUserProfileUseCase(this._userProfileRepository, this._sessionStorage);
 
-  Stream<Either<Failure, UserProfile?>> call() {
-    final userId = _sessionStorage.getUserId();
-    if (userId == null) {
+  Stream<Either<Failure, UserProfile?>> call([String? userId]) {
+    final id = userId ?? _sessionStorage.getUserId();
+    if (id == null) {
       return Stream.value(Left(ServerFailure('No user found')));
     }
     final stream = _userProfileRepository.watchUserProfile(
-      UserId.fromUniqueString(userId),
+      UserId.fromUniqueString(id),
     );
     return stream.map(
       (either) =>

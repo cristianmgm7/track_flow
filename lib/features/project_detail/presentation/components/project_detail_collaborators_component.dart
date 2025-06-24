@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 
 class ProjectDetailCollaboratorsComponent extends StatelessWidget {
@@ -14,6 +16,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 const Icon(Icons.people),
                 const SizedBox(width: 8),
@@ -29,6 +32,16 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ],
+                IconButton(
+                  alignment: Alignment.centerRight,
+                  onPressed: () {
+                    context.push(
+                      AppRoutes.manageCollaborators,
+                      extra: state.project,
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                ),
               ],
             ),
             if (state.collaboratorsError != null) ...[
@@ -59,7 +72,12 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                   subtitle: Text(collaborator.email),
                   trailing: const Icon(Icons.more_vert),
                   onTap: () {
-                    // TODO: Implement collaborator actions
+                    context.push(
+                      AppRoutes.artistProfile.replaceFirst(
+                        ':id',
+                        collaborator.id.value,
+                      ),
+                    );
                   },
                 ),
               ),
