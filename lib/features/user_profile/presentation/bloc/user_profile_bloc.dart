@@ -30,8 +30,12 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
+    final stream =
+        event.userId == null
+            ? watchUserProfileUseCase.call()
+            : watchUserProfileUseCase.call(event.userId!);
     await emit.onEach<Either<Failure, UserProfile?>>(
-      watchUserProfileUseCase.call(),
+      stream,
       onData: (eitherProfile) {
         eitherProfile.fold((failure) => emit(UserProfileError()), (profile) {
           if (profile != null) {
@@ -55,7 +59,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       (failure) => emit(UserProfileError()),
       (_) => emit(UserProfileSaved()),
     );
-    add(WatchUserProfile());
+    add(WatchUserProfile(userId: event.profile.id.value));
   }
 
   @override

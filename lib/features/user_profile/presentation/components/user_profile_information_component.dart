@@ -18,7 +18,7 @@ class _ProfileInformationState extends State<ProfileInformation> {
   @override
   void initState() {
     super.initState();
-    context.read<UserProfileBloc>().add(WatchUserProfile());
+    context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
   }
 
   void _onEditProfile(BuildContext context, UserProfile profile) {
