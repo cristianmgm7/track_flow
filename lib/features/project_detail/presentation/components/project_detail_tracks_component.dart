@@ -17,7 +17,7 @@ class ProjectDetailTracksComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 0.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -55,6 +55,7 @@ class ProjectDetailTracksComponent extends StatelessWidget {
               ...state.tracks.map(
                 (track) => TrackComponent(
                   track: track,
+                  projectId: state.project!.id,
                   uploader: state.collaborators.firstWhereOrNull(
                     (collaborator) => collaborator.id == track.uploadedBy,
                   ),

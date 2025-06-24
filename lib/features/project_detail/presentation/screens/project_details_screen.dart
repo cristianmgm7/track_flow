@@ -7,6 +7,8 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_tracks_component.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_collaborators_component.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -72,7 +74,22 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   context: context,
                 ),
                 // Tracks Section
-                ProjectDetailTracksComponent(state: state, context: context),
+                BlocListener<AudioTrackBloc, AudioTrackState>(
+                  listener: (context, state) {
+                    if (state is AudioTrackError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: ProjectDetailTracksComponent(
+                    state: state,
+                    context: context,
+                  ),
+                ),
                 // Collaborators Section
                 ProjectDetailCollaboratorsComponent(state: state),
               ],

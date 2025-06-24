@@ -15,6 +15,7 @@ abstract class AudioTrackLocalDataSource {
     String projectId,
   );
   Future<void> clearCache();
+  Future<void> updateTrackName(String trackId, String newName);
 }
 
 @LazySingleton(as: AudioTrackLocalDataSource)
@@ -72,6 +73,17 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   Future<void> clearCache() async {
     await _isar.writeTxn(() async {
       await _isar.audioTrackDocuments.clear();
+    });
+  }
+
+  @override
+  Future<void> updateTrackName(String trackId, String newName) async {
+    await _isar.writeTxn(() async {
+      final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
+      if (track != null) {
+        track.name = newName;
+        await _isar.audioTrackDocuments.put(track);
+      }
     });
   }
 }

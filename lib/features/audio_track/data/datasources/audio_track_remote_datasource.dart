@@ -17,6 +17,11 @@ abstract class AudioTrackRemoteDataSource {
 
   Future<void> deleteTrackFromProject(String trackId, String projectId);
   Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
+  Future<void> editTrackName({
+    required String trackId,
+    required String projectId,
+    required String newName,
+  });
 }
 
 @LazySingleton(as: AudioTrackRemoteDataSource)
@@ -111,6 +116,21 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     } catch (e) {
       debugPrint('Error getting tracks by project ids: $e');
       return [];
+    }
+  }
+
+  @override
+  Future<void> editTrackName({
+    required String trackId,
+    required String projectId,
+    required String newName,
+  }) async {
+    try {
+      await _firestore.collection('audio_tracks').doc(trackId).update({
+        'name': newName,
+      });
+    } catch (e) {
+      throw Exception('Error updating track name: $e');
     }
   }
 }

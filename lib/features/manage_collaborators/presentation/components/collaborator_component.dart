@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'dart:io';
 
 class CollaboratorComponent extends StatelessWidget {
   final String name;
@@ -34,7 +35,7 @@ class CollaboratorComponent extends StatelessWidget {
                     imageUrl.isNotEmpty
                         ? (imageUrl.startsWith('http')
                             ? NetworkImage(imageUrl)
-                            : AssetImage(imageUrl) as ImageProvider)
+                            : FileImage(File(imageUrl)) as ImageProvider)
                         : null,
                 radius: 24,
                 child: imageUrl.isEmpty ? const Icon(Icons.person) : null,

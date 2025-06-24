@@ -5,7 +5,6 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
-import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'dart:io';
@@ -90,6 +89,29 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       }
     } else {
       // await localDataSource.deleteTrack(trackId); // if I want to delete local
+      return Left(ServerFailure('No network connection'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> editTrackName({
+    required AudioTrackId trackId,
+    required ProjectId projectId,
+    required String newName,
+  }) async {
+    if (await networkInfo.isConnected) {
+      try {
+        await remoteDataSource.editTrackName(
+          trackId: trackId.value,
+          projectId: projectId.value,
+          newName: newName,
+        );
+        await localDataSource.updateTrackName(trackId.value, newName);
+        return Right(unit);
+      } catch (e) {
+        return Left(ServerFailure(e.toString()));
+      }
+    } else {
       return Left(ServerFailure('No network connection'));
     }
   }

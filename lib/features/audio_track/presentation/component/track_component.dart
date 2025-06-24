@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_sheet.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
@@ -21,6 +22,7 @@ class TrackComponent extends StatelessWidget {
   final UserProfile? uploader;
   final VoidCallback? onPlay;
   final VoidCallback? onComment;
+  final ProjectId projectId;
 
   const TrackComponent({
     super.key,
@@ -28,6 +30,7 @@ class TrackComponent extends StatelessWidget {
     required this.uploader,
     this.onPlay,
     this.onComment,
+    required this.projectId,
   });
 
   String _formatDuration(Duration d) {
@@ -55,6 +58,7 @@ class TrackComponent extends StatelessWidget {
       context: context,
       actions: TrackActions.forTrack(
         context,
+        projectId,
         track,
         uploader != null ? [uploader!] : [],
       ),
@@ -147,26 +151,12 @@ class TrackComponent extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundImage:
-                              uploader?.avatarUrl != null &&
-                                      uploader!.avatarUrl.isNotEmpty
-                                  ? NetworkImage(uploader!.avatarUrl)
-                                  : null,
-                          child:
-                              uploader?.avatarUrl == null ||
-                                      uploader!.avatarUrl.isEmpty
-                                  ? Text(
-                                    uploader?.name.isNotEmpty ?? false
-                                        ? uploader!.name.substring(0, 1)
-                                        : '?',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )
-                                  : null,
+                        Text(
+                          uploader?.name ?? 'Unknown User',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(

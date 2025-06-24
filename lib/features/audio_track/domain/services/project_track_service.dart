@@ -73,4 +73,16 @@ class ProjectTrackService {
       );
     });
   }
+
+  Future<Either<Failure, Unit>> editTrackName({
+    required AudioTrackId trackId,
+    required ProjectId projectId,
+    required String newName,
+  }) async {
+    return await trackRepository.editTrackName(
+      trackId: trackId,
+      projectId: projectId,
+      newName: newName,
+    );
+  }
 }

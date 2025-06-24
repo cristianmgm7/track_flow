@@ -33,3 +33,12 @@ class AudioTrackError extends AudioTrackState {
 class AudioTrackUploadSuccess extends AudioTrackState {}
 
 class AudioTrackDeleteSuccess extends AudioTrackState {}
+
+class AudioTrackEditSuccess extends AudioTrackState {}
+
+class AudioTrackEditError extends AudioTrackState {
+  final String message;
+  const AudioTrackEditError({required this.message});
+  @override
+  List<Object> get props => [message];
+}
