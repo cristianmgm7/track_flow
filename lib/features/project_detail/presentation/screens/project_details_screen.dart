@@ -21,7 +21,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    print('Entró al initState de ProjectDetailsScreen');
     context.read<ProjectDetailBloc>().add(
       WatchProjectDetail(project: widget.project),
     );
@@ -73,7 +72,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   context: context,
                 ),
                 // Tracks Section
-                ProjectDetailTracksSection(state: state, context: context),
+                ProjectDetailTracksComponent(state: state, context: context),
                 // Collaborators Section
                 ProjectDetailCollaboratorsComponent(state: state),
               ],

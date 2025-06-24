@@ -32,7 +32,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
 
   void _openCollaboratorActionsSheet(UserProfile collaborator) {
     showTrackFlowActionSheet(
-      title: 'Collaborator Actions',
+      title: collaborator.name,
       context: context,
       actions: CollaboratorActions.forCollaborator(
         context: context,
@@ -94,7 +94,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                   imageUrl: collaborator.avatarUrl,
                   role: projectCollaborator.role,
                   userId: collaborator.id,
-                  onRemove: () => _openCollaboratorActionsSheet(collaborator),
+                  onTap: () => _openCollaboratorActionsSheet(collaborator),
                 );
               },
             );

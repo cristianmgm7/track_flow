@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
@@ -39,8 +40,14 @@ class _ProfileInformationState extends State<ProfileInformation> {
           final profile = state.profile;
           ImageProvider? avatarProvider;
           if (profile.avatarUrl.isNotEmpty) {
-            if (Uri.tryParse(profile.avatarUrl)?.isAbsolute == true) {
+            if (profile.avatarUrl.startsWith('http')) {
               avatarProvider = NetworkImage(profile.avatarUrl);
+            } else if (profile.avatarUrl.startsWith('file://')) {
+              avatarProvider = FileImage(
+                File(Uri.parse(profile.avatarUrl).toFilePath()),
+              );
+            } else if (File(profile.avatarUrl).existsSync()) {
+              avatarProvider = FileImage(File(profile.avatarUrl));
             } else {
               avatarProvider = AssetImage(profile.avatarUrl);
             }
