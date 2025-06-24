@@ -11,7 +11,8 @@ import 'package:trackflow/features/projects/domain/entities/project_collaborator
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
+    as manage_collab_exc;
 
 class AddCollaboratorToProjectParams extends Equatable {
   final ProjectId projectId;
@@ -31,13 +32,11 @@ class AddCollaboratorToProjectUseCase {
   final ProjectDetailRepository _repositoryProjectDetail;
   final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final SessionStorage _sessionService;
-  final UserProfileRepository _userProfileRepository;
 
   AddCollaboratorToProjectUseCase(
     this._repositoryProjectDetail,
     this._repositoryManageCollaborators,
     this._sessionService,
-    this._userProfileRepository,
   );
 
   Future<Either<Failure, Project>> call(
@@ -72,17 +71,11 @@ class AddCollaboratorToProjectUseCase {
         final result = await _repositoryManageCollaborators.updateProject(
           updatedProject,
         );
-        // Si fue exitoso, descarga y cachea el perfil
-        if (result.isRight()) {
-          final profilesResult = await _userProfileRepository
-              .getUserProfilesByIds([params.collaboratorId.value]);
-          profilesResult.fold((failure) => null, (profiles) async {
-            if (profiles.isNotEmpty) {
-              await _userProfileRepository.cacheUserProfiles([profiles.first]);
-            }
-          });
-        }
         return result;
+      } on manage_collab_exc.CollaboratorAlreadyExistsException catch (e) {
+        return left(
+          manage_collab_exc.ManageCollaboratorException(e.toString()),
+        );
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }
