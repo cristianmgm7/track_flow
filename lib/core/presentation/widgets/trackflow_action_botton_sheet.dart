@@ -12,6 +12,7 @@ Future<void> showTrackFlowActionSheet({
   required List<TrackFlowActionItem> actions,
   Widget? header,
   String? title,
+  Widget? body,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -20,7 +21,7 @@ Future<void> showTrackFlowActionSheet({
     useRootNavigator: true,
     builder: (context) {
       return DraggableScrollableSheet(
-        initialChildSize: _initialSize(actions.length),
+        initialChildSize: body != null ? 0.6 : _initialSize(actions.length),
         minChildSize: 0.3,
         maxChildSize: 0.9,
         expand: false,
@@ -30,6 +31,7 @@ Future<void> showTrackFlowActionSheet({
             header: header,
             actions: actions,
             scrollController: scrollController,
+            body: body,
           );
         },
       );
@@ -58,12 +60,14 @@ class _TrackFlowActionSheetContent extends StatelessWidget {
   final String? title;
   final Widget? header;
   final ScrollController scrollController;
+  final Widget? body;
 
   const _TrackFlowActionSheetContent({
     required this.actions,
     this.title,
     this.header,
     required this.scrollController,
+    this.body,
   });
 
   void _handleTap(BuildContext context, TrackFlowActionItem item) {
@@ -83,6 +87,45 @@ class _TrackFlowActionSheetContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (body != null) {
+      return Container(
+        padding: const EdgeInsets.only(top: Dimensions.space8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Stack(
+              alignment: Alignment.topCenter,
+              children: [
+                if (title != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(title!, style: theme.textTheme.titleLarge),
+                  ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 0.2),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              child: body,
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.only(top: Dimensions.space8),

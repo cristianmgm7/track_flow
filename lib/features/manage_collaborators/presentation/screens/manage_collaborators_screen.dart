@@ -6,7 +6,6 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/components/collaborator_component.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/widgets/add_collaborator_dialog.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/manage_collaborators_actions.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/add_collaborator_form.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -63,7 +62,17 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
           ),
         ],
       ),
-      body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
+      body: BlocConsumer<ManageCollaboratorsBloc, ManageCollaboratorsState>(
+        listener: (context, state) {
+          if (state is ManageCollaboratorsError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is ManageCollaboratorsLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -89,9 +98,8 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                 );
               },
             );
-          } else if (state is ManageCollaboratorsError) {
-            return Center(child: Text(state.message));
           } else {
+            // Instead of showing the error, just show a fallback
             return const Center(child: Text('No data available'));
           }
         },

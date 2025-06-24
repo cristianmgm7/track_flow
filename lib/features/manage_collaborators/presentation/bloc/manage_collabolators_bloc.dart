@@ -13,6 +13,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'manage_collabolators_event.dart';
 import 'manage_collabolators_state.dart';
 import 'package:trackflow/features/manage_collaborators/domain/services/add_collaborator_and_sync_profile_service.dart';
+import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 
 @injectable
 class ManageCollaboratorsBloc
@@ -25,6 +26,7 @@ class ManageCollaboratorsBloc
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
 
   StreamSubscription<Either<Failure, List<UserProfile>>>? _profilesSubscription;
+  ManageCollaboratorsLoaded? _lastLoadedState;
 
   ManageCollaboratorsBloc({
     required this.addCollaboratorAndSyncProfileService,
@@ -51,12 +53,21 @@ class ManageCollaboratorsBloc
       onData: (either) {
         either.fold(
           (failure) => emit(ManageCollaboratorsError(failure.toString())),
-          (profiles) =>
-              emit(ManageCollaboratorsLoaded(event.project, profiles)),
+          (profiles) {
+            final loadedState = ManageCollaboratorsLoaded(
+              event.project,
+              profiles,
+            );
+            _lastLoadedState = loadedState;
+            emit(loadedState);
+          },
         );
       },
       onError: (error, stackTrace) {
         emit(ManageCollaboratorsError(error.toString()));
+        if (_lastLoadedState != null) {
+          emit(_lastLoadedState!);
+        }
       },
     );
   }
@@ -93,7 +104,18 @@ class ManageCollaboratorsBloc
       ),
     );
     result.fold(
-      (failure) => emit(ManageCollaboratorsError(failure.toString())),
+      (failure) {
+        String errorMessage;
+        if (failure is ProjectPermissionException) {
+          errorMessage = 'No tienes permiso para eliminar este colaborador.';
+        } else {
+          errorMessage = failure.toString();
+        }
+        emit(ManageCollaboratorsError(errorMessage));
+        if (_lastLoadedState != null) {
+          emit(_lastLoadedState!);
+        }
+      },
       (project) {
         add(WatchCollaborators(project: project));
       },
@@ -113,7 +135,19 @@ class ManageCollaboratorsBloc
       ),
     );
     result.fold(
-      (failure) => emit(ManageCollaboratorsError(failure.toString())),
+      (failure) {
+        String errorMessage;
+        if (failure is ProjectPermissionException) {
+          errorMessage =
+              'No tienes permiso para editar el rol de este colaborador.';
+        } else {
+          errorMessage = failure.toString();
+        }
+        emit(ManageCollaboratorsError(errorMessage));
+        if (_lastLoadedState != null) {
+          emit(_lastLoadedState!);
+        }
+      },
       (project) {
         add(WatchCollaborators(project: project));
       },
