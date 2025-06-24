@@ -13,7 +13,7 @@ class SyncUserProfileCollaboratorsUseCase {
     final projects = await projectsLocal.getAllProjects();
     final collaboratorIds =
         projects
-            .expand((p) => p.collaborators.map((c) => c['id'] as String))
+            .expand((p) => p.collaboratorIds.map((c) => c))
             .toSet()
             .toList();
     if (collaboratorIds.isEmpty) return;

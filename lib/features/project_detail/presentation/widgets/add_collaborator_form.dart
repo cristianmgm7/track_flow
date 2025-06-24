@@ -48,6 +48,7 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
             ),
           );
         } else if (state is ManageCollaboratorsError) {
+          Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}'),

@@ -45,7 +45,7 @@ class AddCollaboratorToProjectUseCase {
     final userId = _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
-    // Obtener el proyecto del repositorio
+    // getting project from repository
     final projectResult = await _repositoryProjectDetail.getProjectById(
       params.projectId,
     );
