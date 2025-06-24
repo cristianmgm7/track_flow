@@ -24,4 +24,7 @@ class AppRoutes {
 
   // Audio comment routes
   static const String audioComments = '/audio-comments';
+
+  // Profile routes
+  static const String artistProfile = '/artistprofile/:id';
 }

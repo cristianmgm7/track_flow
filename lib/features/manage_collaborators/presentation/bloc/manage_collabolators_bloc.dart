@@ -44,13 +44,15 @@ class ManageCollaboratorsBloc
     WatchCollaborators event,
     Emitter<ManageCollaboratorsState> emit,
   ) async {
-    final userIds = event.project.collaborators.map((c) => c.id.value).toList();
+    final userIds =
+        event.project.collaborators.map((c) => c.userId.value).toList();
     await emit.onEach<Either<Failure, List<UserProfile>>>(
       watchUserProfilesUseCase(userIds),
       onData: (either) {
         either.fold(
           (failure) => emit(ManageCollaboratorsError(failure.toString())),
-          (profiles) => emit(ManageCollaboratorsLoaded(profiles)),
+          (profiles) =>
+              emit(ManageCollaboratorsLoaded(event.project, profiles)),
         );
       },
       onError: (error, stackTrace) {
@@ -73,7 +75,7 @@ class ManageCollaboratorsBloc
     result.fold(
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
       (project) {
-        emit(AddCollaboratorSuccess(event.collaboratorId.value));
+        emit(AddCollaboratorSuccess(project));
         add(WatchCollaborators(project: project));
       },
     );
@@ -103,7 +105,7 @@ class ManageCollaboratorsBloc
     Emitter<ManageCollaboratorsState> emit,
   ) async {
     emit(ManageCollaboratorsLoading());
-    final result = await updateCollaboratorRoleUseCase(
+    final result = await updateCollaboratorRoleUseCase.call(
       UpdateCollaboratorRoleParams(
         projectId: event.projectId,
         userId: event.userId,

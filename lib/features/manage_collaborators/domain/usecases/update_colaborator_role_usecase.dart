@@ -64,9 +64,12 @@ class UpdateCollaboratorRoleUseCase {
       }
 
       try {
-        project.updateCollaboratorRole(params.userId, params.role);
+        final updatedProject = project.updateCollaboratorRole(
+          params.userId,
+          params.role,
+        );
         final result = await _repositoryManageCollaborators.updateProject(
-          project,
+          updatedProject,
         );
         return result;
       } catch (e) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
@@ -17,6 +18,7 @@ import 'package:trackflow/features/projects/presentation/screens/project_list_sc
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/user_profile_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -81,6 +83,19 @@ class AppRouter {
               track: args.track,
               collaborators: args.collaborators,
             );
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.manageCollaborators,
+          builder:
+              (context, state) =>
+                  ManageCollaboratorsScreen(project: state.extra as Project),
+        ),
+        GoRoute(
+          path: AppRoutes.artistProfile,
+          builder: (context, state) {
+            final userId = state.pathParameters['id']!;
+            return UserProfileScreen(userId: UserId.fromUniqueString(userId));
           },
         ),
         ShellRoute(

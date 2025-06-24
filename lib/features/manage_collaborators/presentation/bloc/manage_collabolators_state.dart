@@ -15,11 +15,12 @@ class ManageCollaboratorsLoading extends ManageCollaboratorsState {
 }
 
 class ManageCollaboratorsLoaded extends ManageCollaboratorsState {
+  final Project project;
   final List<UserProfile> userProfiles;
-  ManageCollaboratorsLoaded(this.userProfiles);
+  ManageCollaboratorsLoaded(this.project, this.userProfiles);
 
   @override
-  List<Object?> get props => [userProfiles];
+  List<Object?> get props => [project, userProfiles];
 }
 
 class ManageCollaboratorsError extends ManageCollaboratorsState {
@@ -31,31 +32,31 @@ class ManageCollaboratorsError extends ManageCollaboratorsState {
 }
 
 class AddCollaboratorSuccess extends ManageCollaboratorsState {
-  final String collaboratorId;
+  final Project project;
 
-  AddCollaboratorSuccess(this.collaboratorId);
+  AddCollaboratorSuccess(this.project);
 
   @override
-  List<Object?> get props => [collaboratorId];
+  List<Object?> get props => [project];
 }
 
 class UpdateCollaboratorRoleSuccess extends ManageCollaboratorsState {
-  final String collaboratorId;
+  final Project project;
   final String newRole;
 
-  UpdateCollaboratorRoleSuccess(this.collaboratorId, this.newRole);
+  UpdateCollaboratorRoleSuccess(this.project, this.newRole);
 
   @override
-  List<Object?> get props => [collaboratorId, newRole];
+  List<Object?> get props => [project, newRole];
 }
 
 class RemoveCollaboratorSuccess extends ManageCollaboratorsState {
-  final String collaboratorId;
+  final Project project;
 
-  RemoveCollaboratorSuccess(this.collaboratorId);
+  RemoveCollaboratorSuccess(this.project);
 
   @override
-  List<Object?> get props => [collaboratorId];
+  List<Object?> get props => [project];
 }
 
 class JoinProjectSuccess extends ManageCollaboratorsState {
