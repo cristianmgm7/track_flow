@@ -107,7 +107,8 @@ class ManageCollaboratorsBloc
       (failure) {
         String errorMessage;
         if (failure is ProjectPermissionException) {
-          errorMessage = 'No tienes permiso para eliminar este colaborador.';
+          errorMessage =
+              'you do not have permission to remove this collaborator.';
         } else {
           errorMessage = failure.toString();
         }
@@ -139,7 +140,7 @@ class ManageCollaboratorsBloc
         String errorMessage;
         if (failure is ProjectPermissionException) {
           errorMessage =
-              'No tienes permiso para editar el rol de este colaborador.';
+              'you do not have permission to edit the role of this collaborator.';
         } else {
           errorMessage = failure.toString();
         }

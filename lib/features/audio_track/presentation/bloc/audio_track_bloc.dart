@@ -8,7 +8,7 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_track_usecase.dart';
-import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track.dart';
+import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 

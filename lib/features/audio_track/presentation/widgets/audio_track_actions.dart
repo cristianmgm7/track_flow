@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_sheet.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_form_botton_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
+import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class TrackActions {
@@ -35,7 +37,11 @@ class TrackActions {
       title: 'Rename',
       subtitle: 'Change the track’s title',
       onTap: () {
-        // TODO: rename logic
+        showTrackFlowFormSheet(
+          context: context,
+          title: 'Rename Track',
+          child: RenameTrackForm(track: track),
+        );
       },
     ),
     TrackFlowActionItem(

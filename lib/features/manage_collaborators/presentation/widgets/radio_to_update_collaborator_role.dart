@@ -64,12 +64,12 @@ class _RadioToUpdateCollaboratorRoleState
   @override
   Widget build(BuildContext context) {
     final isChanged = selectedRole != widget.initialRole;
-    // Filtrar roles asignables (sin owner)
+    // Filter assignable roles (without owner)
     final assignableRoles = ProjectRoleType.values.where(
       (role) => role != ProjectRoleType.owner,
     );
 
-    // Si el usuario es owner, solo mostrar mensaje
+    // If the user is owner, only show message
     if (widget.initialRole == ProjectRoleType.owner) {
       return Padding(
         padding: const EdgeInsets.all(24.0),
@@ -79,7 +79,7 @@ class _RadioToUpdateCollaboratorRoleState
             Icon(Icons.lock, size: 48, color: Colors.grey),
             SizedBox(height: 16),
             Text(
-              'El rol de Owner no puede ser cambiado desde aquí.',
+              'the owner role cannot be changed from here.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),

@@ -10,7 +10,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/presentation/widgets/track_actions.dart';
+import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_cache/audio_cache_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

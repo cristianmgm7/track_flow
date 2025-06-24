@@ -84,6 +84,11 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                         ),
                       );
                     }
+                    if (state is AudioTrackEditSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Track edited successfully')),
+                      );
+                    }
                   },
                   child: ProjectDetailTracksComponent(
                     state: state,

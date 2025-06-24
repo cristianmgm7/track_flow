@@ -5,6 +5,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
+import 'dart:io';
 
 class UserProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -37,11 +38,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             final profile = state.profile;
             ImageProvider? avatarProvider;
             if (profile.avatarUrl.isNotEmpty) {
-              if (Uri.tryParse(profile.avatarUrl)?.isAbsolute == true) {
+              if (profile.avatarUrl.startsWith('http')) {
                 avatarProvider = NetworkImage(profile.avatarUrl);
               } else {
-                avatarProvider = AssetImage(profile.avatarUrl);
+                avatarProvider = FileImage(File(profile.avatarUrl));
               }
+            } else {
+              avatarProvider = null;
             }
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
