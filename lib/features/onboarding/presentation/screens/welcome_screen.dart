@@ -37,9 +37,7 @@ class WelcomeScreen extends StatelessWidget {
                   Text(
                     'The ultimate platform for artists, producers, and songwriters to collaborate on music projects.',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withOpacity(0.7),
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
                   ),

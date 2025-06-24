@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class UserProfileEvent extends Equatable {

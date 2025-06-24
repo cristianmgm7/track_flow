@@ -12,7 +12,7 @@ class EditProfileDialog extends StatefulWidget {
   const EditProfileDialog({super.key, required this.profile});
 
   @override
-  _EditProfileDialogState createState() => _EditProfileDialogState();
+  State<EditProfileDialog> createState() => _EditProfileDialogState();
 }
 
 class _EditProfileDialogState extends State<EditProfileDialog> {

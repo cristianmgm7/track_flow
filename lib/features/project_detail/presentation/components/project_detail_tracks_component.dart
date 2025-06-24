@@ -41,7 +41,7 @@ class ProjectDetailTracksComponent extends StatelessWidget {
             ),
             if (state.tracksError != null) ...[
               Text(
-                'Error loading tracks: {state.tracksError}',
+                'Error loading tracks: ${state.tracksError}',
                 style: const TextStyle(color: Colors.red),
               ),
             ],

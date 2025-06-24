@@ -114,9 +114,7 @@ class AppRouter {
               path: AppRoutes.notifications,
               builder:
                   (context, state) => const Scaffold(
-                    body: Center(
-                      child: Text("Notifications"),
-                    ), // TODO: Add notifications screen
+                    body: Center(child: Text("Notifications")),
                   ),
             ),
             GoRoute(
