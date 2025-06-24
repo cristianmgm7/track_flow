@@ -26,15 +26,20 @@ class CollaboratorActions {
       icon: Icons.edit,
       title: 'Edit Role',
       subtitle: "Change collaborator's role",
-      childSheetBuilder: (context) {
+      onTap: () {
         final projectCollaborator = project.collaborators.firstWhere(
           (c) => c.userId == collaborator.id,
         );
-        return RadioToUpdateCollaboratorRole(
-          projectId: project.id,
-          userId: collaborator.id,
-          initialRole: projectCollaborator.role.value,
-          onSave: (_) {},
+        showTrackFlowActionSheet(
+          context: context,
+          actions: const [],
+          title: 'Edit Role',
+          body: RadioToUpdateCollaboratorRole(
+            projectId: project.id,
+            userId: collaborator.id,
+            initialRole: projectCollaborator.role.value,
+            onSave: (_) {},
+          ),
         );
       },
     ),
