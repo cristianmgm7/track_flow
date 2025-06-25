@@ -6,11 +6,17 @@ abstract class UserProfileEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadUserProfile extends UserProfileEvent {
-  LoadUserProfile();
+class WatchUserProfile extends UserProfileEvent {
+  final String? userId;
+  WatchUserProfile({this.userId});
 }
 
 class SaveUserProfile extends UserProfileEvent {
   final UserProfile profile;
   SaveUserProfile(this.profile);
+}
+
+class CreateUserProfile extends UserProfileEvent {
+  final UserProfile profile;
+  CreateUserProfile(this.profile);
 }

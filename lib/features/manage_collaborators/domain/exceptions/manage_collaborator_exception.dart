@@ -12,3 +12,8 @@ class ManageCollaboratorException extends Failure {
 class UserNotCollaboratorException extends ManageCollaboratorException {
   const UserNotCollaboratorException() : super('User is not a collaborator');
 }
+
+class CollaboratorAlreadyExistsException extends ManageCollaboratorException {
+  const CollaboratorAlreadyExistsException()
+    : super('Collaborator already exists');
+}

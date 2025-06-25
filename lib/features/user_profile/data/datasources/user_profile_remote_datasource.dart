@@ -5,11 +5,15 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'dart:io';
 
 abstract class UserProfileRemoteDataSource {
-  Future<Either<Failure, UserProfile>> getProfilesByIds(String userId);
-  Future<void> updateProfile(UserProfileDTO profile);
+  Future<Either<Failure, UserProfile>> getProfileById(String userId);
+  Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile);
+
+  /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)
+  Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
+    List<String> userIds,
+  );
 }
 
 @LazySingleton(as: UserProfileRemoteDataSource)
@@ -20,7 +24,7 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   UserProfileRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<Either<Failure, UserProfile>> getProfilesByIds(String userId) async {
+  Future<Either<Failure, UserProfile>> getProfileById(String userId) async {
     try {
       final query =
           await _firestore
@@ -41,7 +45,9 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   }
 
   @override
-  Future<Either<Failure, void>> updateProfile(UserProfileDTO profile) async {
+  Future<Either<Failure, UserProfileDTO>> updateProfile(
+    UserProfileDTO profile,
+  ) async {
     try {
       String avatarUrl = profile.avatarUrl;
       // Si el avatarUrl es una ruta local, sube la imagen
@@ -55,8 +61,34 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
       await _firestore
           .collection(UserProfileDTO.collection)
           .doc(profile.id)
-          .update(profile.toJson());
-      return right(null);
+          .set(profile.toJson(), SetOptions(merge: true));
+      return right(profile);
+    } on FirebaseException catch (e) {
+      return left(ServerFailure(e.message ?? 'An error occurred'));
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
+    List<String> userIds,
+  ) async {
+    try {
+      // Firestore limita a 10 IDs por whereIn
+      final List<UserProfileDTO> result = [];
+      for (var i = 0; i < userIds.length; i += 10) {
+        final batch = userIds.skip(i).take(10).toList();
+        final query =
+            await _firestore
+                .collection(UserProfileDTO.collection)
+                .where('id', whereIn: batch)
+                .get();
+        result.addAll(
+          query.docs.map((doc) => UserProfileDTO.fromJson(doc.data())),
+        );
+      }
+      return right(result);
     } on FirebaseException catch (e) {
       return left(ServerFailure(e.message ?? 'An error occurred'));
     } catch (e) {
@@ -67,7 +99,6 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   Future<String?> _uploadAvatar(String userId, String filePath) async {
     try {
       final ref = _storage.ref().child('avatars/$userId');
-      final uploadTask = await ref.putFile(File(filePath));
       return await ref.getDownloadURL();
     } catch (e) {
       return null;

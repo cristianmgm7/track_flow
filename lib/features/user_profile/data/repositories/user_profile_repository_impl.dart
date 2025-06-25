@@ -2,6 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -9,23 +11,34 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
-  final UserProfileRemoteDataSource _remoteDataSource;
+  final UserProfileRemoteDataSource _userProfileRemoteDataSource;
+  final UserProfileLocalDataSource _userProfileLocalDataSource;
+  final NetworkInfo _networkInfo;
 
-  UserProfileRepositoryImpl(this._remoteDataSource);
+  UserProfileRepositoryImpl(
+    this._userProfileRemoteDataSource,
+    this._userProfileLocalDataSource,
+    this._networkInfo,
+  );
 
   @override
-  Future<Either<Failure, UserProfile>> getUserProfile(UserId userId) async {
+  Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId) async* {
     try {
-      final userProfiles = await _remoteDataSource.getProfilesByIds(
+      await for (final dto in _userProfileLocalDataSource.watchUserProfile(
         userId.value,
-      );
-      return await userProfiles.fold((failure) => left(failure), (
-        userProfile,
-      ) async {
-        return right(userProfile);
-      });
+      )) {
+        try {
+          yield Right(dto?.toDomain());
+        } catch (e) {
+          yield Left(
+            ServerFailure(
+              'Failed to parse local user profile: ${e.toString()}',
+            ),
+          );
+        }
+      }
     } catch (e) {
-      return left(ServerFailure(e.toString()));
+      yield Left(ServerFailure(e.toString()));
     }
   }
 
@@ -35,10 +48,55 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   ) async {
     try {
       final userProfileDTO = UserProfileDTO.fromDomain(userProfile);
-      await _remoteDataSource.updateProfile(userProfileDTO);
-      return right(null);
+      final result = await _userProfileRemoteDataSource.updateProfile(
+        userProfileDTO,
+      );
+      return await result.fold((failure) => left(failure), (updatedDTO) async {
+        await _userProfileLocalDataSource.cacheUserProfile(updatedDTO);
+        return right(null);
+      });
     } catch (e) {
       return left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Future<void> cacheUserProfiles(List<UserProfile> profiles) async {
+    for (final profile in profiles) {
+      await _userProfileLocalDataSource.cacheUserProfile(
+        UserProfileDTO.fromDomain(profile),
+      );
+    }
+  }
+
+  @override
+  Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
+    List<String> userIds,
+  ) {
+    return _userProfileLocalDataSource
+        .watchUserProfilesByIds(userIds)
+        .map(
+          (either) => either.fold(
+            (failure) => Left(failure),
+            (dtos) => Right(dtos.map((e) => e.toDomain()).toList()),
+          ),
+        );
+  }
+
+  @override
+  Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
+    List<String> userIds,
+  ) async {
+    final hasConnected = await _networkInfo.isConnected;
+    if (!hasConnected) {
+      return left(DatabaseFailure('No internet connection'));
+    }
+    final dtos = await _userProfileRemoteDataSource.getUserProfilesByIds(
+      userIds,
+    );
+    return dtos.fold(
+      (failure) => left(failure),
+      (dtos) => right(dtos.map((e) => e.toDomain()).toList()),
+    );
   }
 }

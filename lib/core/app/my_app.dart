@@ -17,6 +17,8 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/core/app/startup_resource_manager.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -51,7 +53,14 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<AudioPlayerBloc>(),
         ),
       ],
-      child: _App(),
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            sl<StartupResourceManager>().initializeAppData();
+          }
+        },
+        child: _App(),
+      ),
     );
   }
 }

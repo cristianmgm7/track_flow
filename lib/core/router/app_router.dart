@@ -13,10 +13,12 @@ import 'package:trackflow/features/navegation/presentation/widget/main_scafold.d
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/user_profile_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -83,6 +85,19 @@ class AppRouter {
             );
           },
         ),
+        GoRoute(
+          path: AppRoutes.manageCollaborators,
+          builder:
+              (context, state) =>
+                  ManageCollaboratorsScreen(project: state.extra as Project),
+        ),
+        GoRoute(
+          path: AppRoutes.artistProfile,
+          builder: (context, state) {
+            final userId = state.pathParameters['id']!;
+            return UserProfileScreen(userId: UserId.fromUniqueString(userId));
+          },
+        ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) => MainScaffold(child: child),
@@ -99,26 +114,24 @@ class AppRouter {
               path: AppRoutes.notifications,
               builder:
                   (context, state) => const Scaffold(
-                    body: Center(
-                      child: Text("Notifications"),
-                    ), // TODO: Add notifications screen
+                    body: Center(child: Text("Notifications")),
                   ),
+            ),
+            GoRoute(
+              path: AppRoutes.projectDetails,
+              builder:
+                  (context, state) =>
+                      ProjectDetailsScreen(project: state.extra as Project),
             ),
             GoRoute(
               path: AppRoutes.settings,
               builder: (context, state) => const SettingsScreen(),
             ),
             GoRoute(
-              path: AppRoutes.projectDetails,
-              builder:
-                  (context, state) =>
-                      ProjectDetailsScreen(projectId: state.extra as ProjectId),
-            ),
-            GoRoute(
               path: AppRoutes.manageCollaborators,
               builder:
                   (context, state) => ManageCollaboratorsScreen(
-                    projectId: state.extra as ProjectId,
+                    project: state.extra as Project,
                   ),
             ),
           ],

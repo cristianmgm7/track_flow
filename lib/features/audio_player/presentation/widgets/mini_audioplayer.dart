@@ -36,7 +36,7 @@ class MiniAudioPlayer extends StatelessWidget {
                   color: Colors.grey[900],
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Theme.of(context).colorScheme.surface,
                       blurRadius: 8,
                       offset: const Offset(0, -2),
                     ),

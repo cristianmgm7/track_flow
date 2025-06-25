@@ -1,5 +1,6 @@
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:equatable/equatable.dart';
 
 enum CreativeRole {
   producer,
@@ -11,7 +12,7 @@ enum CreativeRole {
   other,
 }
 
-class UserProfile {
+class UserProfile extends Equatable {
   final UserId id;
   final String name;
   final String email;
@@ -31,6 +32,18 @@ class UserProfile {
     this.creativeRole,
     this.role,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    name,
+    email,
+    avatarUrl,
+    createdAt,
+    updatedAt,
+    creativeRole,
+    role,
+  ];
 
   UserProfile copyWith({
     UserId? id,

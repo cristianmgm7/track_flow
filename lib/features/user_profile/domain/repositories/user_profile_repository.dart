@@ -4,26 +4,20 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class UserProfileRepository {
-  Future<Either<Failure, UserProfile>> getUserProfile(UserId userId);
   Future<Either<Failure, void>> updateUserProfile(UserProfile userProfile);
 
-  //   // fetch user by id
-  //         // remote.fetchUserById
-  //         // local.saveUserProfile
-  //   // watch my user profile
-  //         // loca.watchUserById
+  Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId);
 
-  //   //
+  /// Cache a list of user profiles locally (for offline-first, e.g. collaborators)
+  Future<void> cacheUserProfiles(List<UserProfile> profiles);
+
+  /// Watch a list of user profiles by their IDs (reactive, for offline-first UI)
+  Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
+    List<String> userIds,
+  );
+
+  /// Get a list of user profiles by their IDs (one-time fetch)
+  Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
+    List<String> userIds,
+  );
 }
-
-
-// StartupResourceManager
-
-//  initializeAppData(){
-//   // 1. fetch user profile
-//   // 2. fetch projects
-//   // 3. fetch contacts
-//  }
-
-
-//  refresh()

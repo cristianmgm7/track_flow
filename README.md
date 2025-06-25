@@ -16,7 +16,6 @@ TrackFlow is a modern, collaborative platform designed specifically for artists,
 
 - **Authentication**
 
-<<<<<<< HEAD
   - Email/Password authentication
   - Google Sign-In integration
   - Secure user management
@@ -161,7 +160,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <div align="center">
   Made with ❤️ by Cristian Murillo
 </div>
-=======
+
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
@@ -197,7 +196,7 @@ This project uses Clean Architecture and Domain-Driven Design (DDD) principles f
 2. **ProjectsBloc** calls the `CreateProjectUseCase` from the injected `ProjectUseCases` group.
 3. **CreateProjectUseCase** validates the project using `ProjectModel` and calls the repository contract.
 4. **SyncProjectRepository** implements the contract, using DTOs and data sources to persist the project.
-5. **Data Sources** handle local (Hive) and remote (Firestore) storage.
+5. **Data Sources** handle local (Isar) and remote (Firestore) storage.
 
 ---
 
@@ -205,4 +204,3 @@ This project uses Clean Architecture and Domain-Driven Design (DDD) principles f
 
 - Add more documentation as new features and improvements are made.
 - See the code for detailed comments and structure.
->>>>>>> develop

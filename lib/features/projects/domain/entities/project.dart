@@ -6,6 +6,11 @@ import 'package:trackflow/features/projects/domain/value_objects/project_descrip
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
+    as manage_collab_exc;
+
+export 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
+export 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 
 class Project extends AggregateRoot<ProjectId> {
   @override
@@ -88,16 +93,15 @@ class Project extends AggregateRoot<ProjectId> {
   }
 
   Project addCollaborator(ProjectCollaborator collaborator) {
-    if (!collaborators.contains(collaborator)) {
-      final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
-        ..add(collaborator);
-      return copyWith(
-        collaborators: updatedCollaborators,
-        updatedAt: DateTime.now(),
-      );
-    } else {
-      throw Exception('Collaborator already exists');
+    if (collaborators.any((c) => c.userId == collaborator.userId)) {
+      throw const manage_collab_exc.CollaboratorAlreadyExistsException();
     }
+    final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
+      ..add(collaborator);
+    return copyWith(
+      collaborators: updatedCollaborators,
+      updatedAt: DateTime.now(),
+    );
   }
 
   Project removeCollaborator(UserId userId) {

@@ -1,5 +1,6 @@
-import 'package:hive/hive.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
 import '../models/project_dto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
@@ -13,64 +14,68 @@ abstract class ProjectsLocalDataSource {
   Future<List<ProjectDTO>> getAllProjects();
 
   Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId);
+
+  Future<void> clearCache();
 }
 
 @LazySingleton(as: ProjectsLocalDataSource)
 class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
-  late final Box<Map> _box;
+  final Isar _isar;
 
-  ProjectsLocalDataSourceImpl({required Box<Map> box}) {
-    _box = box;
-  }
+  ProjectsLocalDataSourceImpl(this._isar);
 
   @override
   Future<void> cacheProject(ProjectDTO project) async {
-    await _box.put(project.id, project.toMap());
-  }
-
-  @override
-  Future<ProjectDTO?> getCachedProject(UniqueId id) async {
-    final data = _box.get(id.value);
-    if (data == null) return null;
-    return ProjectDTO.fromMap({
-      'id': id.value,
-      ...Map<String, dynamic>.from(data),
+    final projectDoc = ProjectDocument.fromDTO(project);
+    await _isar.writeTxn(() async {
+      await _isar.projectDocuments.put(projectDoc);
     });
   }
 
   @override
+  Future<ProjectDTO?> getCachedProject(UniqueId id) async {
+    final projectDoc = await _isar.projectDocuments.get(fastHash(id.value));
+    return projectDoc?.toDTO();
+  }
+
+  @override
   Future<void> removeCachedProject(UniqueId id) async {
-    await _box.delete(id.value);
+    await _isar.writeTxn(() async {
+      final projectDoc = await _isar.projectDocuments.get(fastHash(id.value));
+      if (projectDoc != null) {
+        projectDoc.isDeleted = true;
+        await _isar.projectDocuments.put(projectDoc);
+      }
+    });
   }
 
   @override
   Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values
-        .whereType<Map>() // only maps
-        .map((e) => ProjectDTO.fromMap(Map<String, dynamic>.from(e)))
-        .toList();
+    final projectDocs = await _isar.projectDocuments.where().findAll();
+    return projectDocs.map((doc) => doc.toDTO()).toList();
   }
 
   @override
-  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
-    yield (await getAllProjects())
-        .where(
-          (dto) =>
-              dto.ownerId == ownerId.value ||
-              dto.collaborators.contains(ownerId.value),
+  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) {
+    return _isar.projectDocuments
+        .where()
+        .filter()
+        .isDeletedEqualTo(false)
+        .and()
+        .group(
+          (q) => q
+              .ownerIdEqualTo(ownerId.value)
+              .or()
+              .collaboratorIdsElementEqualTo(ownerId.value),
         )
-        .toList();
+        .watch(fireImmediately: true)
+        .map((docs) => docs.map((doc) => doc.toDTO()).toList());
+  }
 
-    // Luego escuchar los cambios y filtrar también
-    yield* _box.watch().asyncMap((_) async {
-      final all = await getAllProjects();
-      return all
-          .where(
-            (dto) =>
-                dto.ownerId == ownerId.value ||
-                dto.collaborators.contains(ownerId.value),
-          )
-          .toList();
+  @override
+  Future<void> clearCache() async {
+    await _isar.writeTxn(() async {
+      await _isar.projectDocuments.clear();
     });
   }
 }

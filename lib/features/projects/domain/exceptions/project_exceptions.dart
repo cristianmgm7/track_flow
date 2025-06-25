@@ -15,7 +15,7 @@ class ProjectNotFoundException extends ProjectException {
 
 class ProjectPermissionException extends ProjectException {
   const ProjectPermissionException()
-    : super('Insufficient permissions this operation');
+    : super('Insufficient permissions forthis operation');
 
   @override
   String toString() {

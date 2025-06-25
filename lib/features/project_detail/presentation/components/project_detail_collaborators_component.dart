@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
+import 'dart:io';
 
 class ProjectDetailCollaboratorsComponent extends StatelessWidget {
   final ProjectDetailState state;
@@ -9,11 +12,12 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 0.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 const Icon(Icons.people),
                 const SizedBox(width: 8),
@@ -29,6 +33,16 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ],
+                IconButton(
+                  alignment: Alignment.centerRight,
+                  onPressed: () {
+                    context.push(
+                      AppRoutes.manageCollaborators,
+                      extra: state.project,
+                    );
+                  },
+                  icon: const Icon(Icons.add),
+                ),
               ],
             ),
             if (state.collaboratorsError != null) ...[
@@ -49,17 +63,32 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
               ...state.collaborators.map(
                 (collaborator) => ListTile(
                   leading: CircleAvatar(
-                    child: Text(
-                      collaborator.name.isNotEmpty
-                          ? collaborator.name[0].toUpperCase()
-                          : '?',
-                    ),
+                    backgroundImage:
+                        (collaborator.avatarUrl.isNotEmpty)
+                            ? (collaborator.avatarUrl.startsWith('http')
+                                ? NetworkImage(collaborator.avatarUrl)
+                                : FileImage(File(collaborator.avatarUrl))
+                                    as ImageProvider)
+                            : null,
+                    child:
+                        (collaborator.avatarUrl.isEmpty)
+                            ? Text(
+                              collaborator.name.isNotEmpty
+                                  ? collaborator.name[0].toUpperCase()
+                                  : '?',
+                            )
+                            : null,
                   ),
                   title: Text(collaborator.name),
                   subtitle: Text(collaborator.email),
                   trailing: const Icon(Icons.more_vert),
                   onTap: () {
-                    // TODO: Implement collaborator actions
+                    context.push(
+                      AppRoutes.artistProfile.replaceFirst(
+                        ':id',
+                        collaborator.id.value,
+                      ),
+                    );
                   },
                 ),
               ),

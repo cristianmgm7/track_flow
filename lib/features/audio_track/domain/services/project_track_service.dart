@@ -67,7 +67,22 @@ class ProjectTrackService {
       if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
         return Left(ProjectPermissionException());
       }
-      return await trackRepository.deleteTrack(track.id.value);
+      return await trackRepository.deleteTrack(
+        track.id.value,
+        project.id.value,
+      );
     });
+  }
+
+  Future<Either<Failure, Unit>> editTrackName({
+    required AudioTrackId trackId,
+    required ProjectId projectId,
+    required String newName,
+  }) async {
+    return await trackRepository.editTrackName(
+      trackId: trackId,
+      projectId: projectId,
+      newName: newName,
+    );
   }
 }

@@ -15,4 +15,8 @@ class ProjectDescription
   }
 
   const ProjectDescription._(super.value);
+
+  factory ProjectDescription.empty() {
+    return ProjectDescription._(right(''));
+  }
 }

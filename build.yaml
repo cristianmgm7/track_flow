@@ -1,0 +1,15 @@
+targets:
+  $default:
+    builders:
+      isar_generator:
+        generate_for:
+          - "lib/features/projects/data/models/project_document.dart"
+          - "lib/features/audio_comment/data/models/audio_comment_document.dart"
+          - "lib/features/audio_track/data/models/audio_track_document.dart"
+          - "lib/features/user_profile/data/models/user_profile_document.dart"
+      injectable_generator:injectable_builder:
+        generate_for:
+          - "lib/**.dart"
+      injectable_generator:injectable_config_builder:
+        generate_for:
+          - "lib/core/di/injection.dart" 

@@ -1,12 +1,13 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 
-class ProjectDetailTracksSection extends StatelessWidget {
+class ProjectDetailTracksComponent extends StatelessWidget {
   final ProjectDetailState state;
   final BuildContext context;
-  const ProjectDetailTracksSection({
+  const ProjectDetailTracksComponent({
     super.key,
     required this.state,
     required this.context,
@@ -16,7 +17,7 @@ class ProjectDetailTracksSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 0.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -40,7 +41,7 @@ class ProjectDetailTracksSection extends StatelessWidget {
             ),
             if (state.tracksError != null) ...[
               Text(
-                'Error loading tracks: {state.tracksError}',
+                'Error loading tracks: ${state.tracksError}',
                 style: const TextStyle(color: Colors.red),
               ),
             ],
@@ -54,7 +55,8 @@ class ProjectDetailTracksSection extends StatelessWidget {
               ...state.tracks.map(
                 (track) => TrackComponent(
                   track: track,
-                  uploader: state.collaborators.firstWhere(
+                  projectId: state.project!.id,
+                  uploader: state.collaborators.firstWhereOrNull(
                     (collaborator) => collaborator.id == track.uploadedBy,
                   ),
                   onPlay: () {

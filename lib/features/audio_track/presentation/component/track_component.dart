@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/core/presentation/widgets/trackflow_action_sheet.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_sheet.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
 import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
 import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
@@ -9,7 +10,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/presentation/widgets/track_actions.dart';
+import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_cache/audio_cache_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,9 +19,10 @@ import 'package:trackflow/features/audio_cache/audio_cache_state.dart';
 
 class TrackComponent extends StatelessWidget {
   final AudioTrack track;
-  final UserProfile uploader;
+  final UserProfile? uploader;
   final VoidCallback? onPlay;
   final VoidCallback? onComment;
+  final ProjectId projectId;
 
   const TrackComponent({
     super.key,
@@ -28,6 +30,7 @@ class TrackComponent extends StatelessWidget {
     required this.uploader,
     this.onPlay,
     this.onComment,
+    required this.projectId,
   });
 
   String _formatDuration(Duration d) {
@@ -38,12 +41,13 @@ class TrackComponent extends StatelessWidget {
   }
 
   void _playTrack(BuildContext context) {
+    if (uploader == null) return;
     context.read<AudioPlayerBloc>().add(
       PlayAudioRequested(
         source: PlaybackSource(type: PlaybackSourceType.track),
         visualContext: PlayerVisualContext.miniPlayer,
         track: track,
-        collaborator: uploader,
+        collaborator: uploader!,
       ),
     );
   }
@@ -52,7 +56,12 @@ class TrackComponent extends StatelessWidget {
     showTrackFlowActionSheet(
       title: track.name,
       context: context,
-      actions: TrackActions.forTrack(context, track, [uploader]),
+      actions: TrackActions.forTrack(
+        context,
+        projectId,
+        track,
+        uploader != null ? [uploader!] : [],
+      ),
     );
   }
 
@@ -84,12 +93,13 @@ class TrackComponent extends StatelessWidget {
                     BlocBuilder<AudioCacheCubit, AudioCacheState>(
                       builder: (context, state) {
                         final isReady = state is AudioCacheDownloaded;
+                        final canPlay = isReady && uploader != null;
                         return Material(
-                          color: isReady ? Colors.blueAccent : Colors.grey,
+                          color: canPlay ? Colors.blueAccent : Colors.grey,
                           borderRadius: BorderRadius.circular(8),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                            onTap: isReady ? () => _playTrack(context) : null,
+                            onTap: canPlay ? () => _playTrack(context) : null,
                             child: Container(
                               width: 44,
                               height: 44,
@@ -141,31 +151,17 @@ class TrackComponent extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        CircleAvatar(
-                          radius: 14,
-                          backgroundImage:
-                              uploader.avatarUrl.isNotEmpty
-                                  ? NetworkImage(uploader.avatarUrl)
-                                  : null,
-                          child:
-                              uploader.avatarUrl.isEmpty
-                                  ? Text(
-                                    uploader.name.isNotEmpty
-                                        ? uploader.name.substring(0, 1)
-                                        : '?',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  )
-                                  : null,
+                        Text(
+                          uploader?.name ?? 'Unknown User',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            uploader.name.isNotEmpty
-                                ? uploader.name
-                                : 'Unknown',
+                            uploader?.name ?? 'Unknown User',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,

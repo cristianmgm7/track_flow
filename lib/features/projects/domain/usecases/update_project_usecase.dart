@@ -6,8 +6,6 @@ import 'package:trackflow/features/projects/domain/exceptions/project_exceptions
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 
 @LazySingleton()
 class UpdateProjectUseCase {

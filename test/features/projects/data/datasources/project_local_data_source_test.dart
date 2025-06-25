@@ -1,45 +1,44 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
-import 'package:hive/hive.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
-import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'dart:io';
 
-class MockBox extends Mock implements Box<Map<String, dynamic>> {}
+import 'package:flutter_test/flutter_test.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
+import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 void main() {
   late ProjectsLocalDataSourceImpl dataSource;
-  late MockBox mockBox;
+  late Isar isar;
 
-  setUp(() {
-    mockBox = MockBox();
-    dataSource = ProjectsLocalDataSourceImpl(box: mockBox);
+  setUp(() async {
+    await Directory('test/db').create(recursive: true);
+    await Isar.initializeIsarCore(download: true);
+    isar = await Isar.open(
+      [ProjectDocumentSchema],
+      directory: 'test/db',
+      name: 'test_db',
+    );
+    dataSource = ProjectsLocalDataSourceImpl(isar);
   });
 
-  test('should return empty list when no projects are cached', () async {
-    when(mockBox.get(any)).thenReturn(null);
-
-    final result = await dataSource.getCachedProject(UniqueId());
-
-    expect(result, isNull);
+  tearDown(() async {
+    await isar.close(deleteFromDisk: true);
   });
 
-  test('should return ProjectDTO list when projects are cached', () async {
-    final now = DateTime.now();
-    final projectMap = {
-      'id1': {
-        'title': 'Test',
-        'description': 'Desc',
-        'userId': 'user1',
-        'status': 'draft',
-        'createdAt': now,
-      },
-    };
-    when(mockBox.get(any)).thenReturn(projectMap);
+  final tProjectDto = ProjectDTO(
+    id: '1',
+    ownerId: 'owner1',
+    name: 'Test Project',
+    description: 'Test Description',
+    createdAt: DateTime.now(),
+  );
 
-    final result = await dataSource.getCachedProject(UniqueId());
-
-    expect(result, isA<ProjectDTO?>());
-    expect(result?.id, UniqueId());
+  test('should cache a project document', () async {
+    // act
+    await dataSource.cacheProject(tProjectDto);
+    // assert
+    final projects = await isar.projectDocuments.where().findAll();
+    expect(projects.length, 1);
+    expect(projects.first.id, tProjectDto.id);
   });
 }

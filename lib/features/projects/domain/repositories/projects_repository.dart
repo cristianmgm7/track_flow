@@ -10,7 +10,4 @@ abstract class ProjectsRepository {
 
   /// Streams local projects.
   Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId);
-
-  /// Streams remote projects.
-  Stream<Either<Failure, List<Project>>> watchRemoteProjects(UserId userId);
 }

@@ -42,7 +42,7 @@ class MainScaffold extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.surface,
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
