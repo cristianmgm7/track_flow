@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_cubit.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
@@ -30,21 +33,14 @@ class PlaylistWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(playlist.name, style: Theme.of(context).textTheme.titleLarge),
-            if (showPlayAll)
-              ElevatedButton.icon(
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Play All'),
-                onPressed: () {
-                  context.read<AudioPlayerBloc>().add(
-                    PlayPlaylistRequested(playlist),
-                  );
-                },
-              ),
-          ],
+        ElevatedButton.icon(
+          icon: const Icon(Icons.play_arrow),
+          label: const Text('Play All'),
+          onPressed: () {
+            context.read<AudioPlayerBloc>().add(
+              PlayPlaylistRequested(playlist),
+            );
+          },
         ),
         const SizedBox(height: 8),
         ListView.separated(
@@ -61,7 +57,7 @@ class PlaylistWidget extends StatelessWidget {
                     state is AudioPlayerActiveState &&
                     state.track.id == track.id;
                 return Container(
-                  color: isCurrent ? Colors.blue.withValues(alpha: 0.08) : null,
+                  color: isCurrent ? Colors.blue.withOpacity(0.08) : null,
                   child: TrackComponent(
                     track: track,
                     uploader: uploader,
