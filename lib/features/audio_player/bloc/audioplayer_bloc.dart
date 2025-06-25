@@ -1,13 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
-import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 @injectable
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   final AudioPlayer _player = AudioPlayer();
   AudioPlayer get player => _player;
+
+  // Playback queue state
+  List<String> _queue = [];
+  int _currentIndex = 0;
+  Playlist? _currentPlaylist;
+
+  // TODO: Inyección de repositorio de tracks para obtener AudioTrack por id
+  // final AudioTrackRepository audioTrackRepository;
 
   AudioPlayerBloc() : super(AudioPlayerIdle()) {
     on<PlayAudioRequested>(_onPlayAudioRequested);
@@ -15,6 +25,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     on<ResumeAudioRequested>(_onResumeAudioRequested);
     on<StopAudioRequested>(_onStopAudioRequested);
     on<ChangeVisualContext>(_onChangeVisualContext);
+    on<PlayPlaylistRequested>(_onPlayPlaylistRequested);
   }
 
   @override
@@ -96,6 +107,57 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
         ),
       );
     }
+  }
+
+  Future<void> _onPlayPlaylistRequested(
+    PlayPlaylistRequested event,
+    Emitter<AudioPlayerState> emit,
+  ) async {
+    _queue = event.playlist.trackIds;
+    _currentIndex = event.startIndex;
+    _currentPlaylist = event.playlist;
+
+    // TODO: Obtener el AudioTrack real por id (aquí simulado)
+    final trackId = _queue[_currentIndex];
+    final track = await _getAudioTrackById(trackId); // Implementa este método
+    // TODO: Obtener el colaborador/uploader si es necesario
+    final collaborator = await _getCollaboratorForTrack(
+      track,
+    ); // Implementa este método
+
+    emit(
+      AudioPlayerLoading(
+        PlaybackSource(type: PlaybackSourceType.track),
+        PlayerVisualContext.miniPlayer,
+        track,
+        collaborator,
+      ),
+    );
+
+    await _player.setUrl(track.url);
+    await _player.play();
+
+    emit(
+      AudioPlayerPlaying(
+        PlaybackSource(type: PlaybackSourceType.track),
+        PlayerVisualContext.miniPlayer,
+        track,
+        collaborator,
+      ),
+    );
+  }
+
+  // Métodos simulados para obtener AudioTrack y colaborador
+  Future<AudioTrack> _getAudioTrackById(String id) async {
+    // TODO: Inyecta y usa tu repositorio real de tracks
+    throw UnimplementedError('Implementa la obtención de AudioTrack por id');
+  }
+
+  Future<dynamic> _getCollaboratorForTrack(AudioTrack track) async {
+    // TODO: Implementa la lógica para obtener el colaborador
+    throw UnimplementedError(
+      'Implementa la obtención de colaborador para el track',
+    );
   }
 
   @override

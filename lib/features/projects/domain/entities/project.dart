@@ -8,6 +8,8 @@ import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
     as manage_collab_exc;
+import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 export 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 export 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
@@ -144,5 +146,16 @@ class Project extends AggregateRoot<ProjectId> {
     } else {
       throw CollaboratorNotFoundException();
     }
+  }
+}
+
+extension ProjectPlaylist on Project {
+  Playlist toPlaylist(List<AudioTrack> tracks) {
+    return Playlist(
+      id: 'project_${id.value}',
+      name: name.value.getOrElse(() => 'Project Playlist'),
+      trackIds: tracks.map((t) => t.id.value).toList(),
+      playlistSource: PlaylistSource.project,
+    );
   }
 }
