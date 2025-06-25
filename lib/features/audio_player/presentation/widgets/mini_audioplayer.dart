@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/services/audio_player/audio_player_event.dart';
-import 'package:trackflow/core/services/audio_player/audio_player_state.dart';
-import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
 
 class MiniAudioPlayer extends StatelessWidget {
   final VoidCallback onExpand;
