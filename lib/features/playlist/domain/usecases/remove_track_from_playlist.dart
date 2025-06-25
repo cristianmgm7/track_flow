@@ -1,4 +1,3 @@
-import '../entities/playlist.dart';
 import '../repositories/playlist_repository.dart';
 
 class RemoveTrackFromPlaylist {
