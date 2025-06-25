@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class PlaylistWidget extends StatelessWidget {
   final Playlist playlist;
   final List<AudioTrack> tracks;
+  final Map<String, UserProfile>? collaboratorsByTrackId;
   final bool showPlayAll;
+  final String? projectId;
 
   const PlaylistWidget({
     super.key,
     required this.playlist,
     required this.tracks,
+    this.collaboratorsByTrackId,
     this.showPlayAll = true,
+    this.projectId,
   });
 
   @override
@@ -46,34 +54,27 @@ class PlaylistWidget extends StatelessWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final track = tracks[index];
-            return ListTile(
-              leading: Icon(Icons.music_note),
-              title: Text(track.name),
-              subtitle: Text(_formatDuration(track.duration)),
-              trailing: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-                builder: (context, state) {
-                  final isCurrent =
-                      state is AudioPlayerActiveState &&
-                      state.track.id == track.id;
-                  return isCurrent
-                      ? Icon(
-                        Icons.equalizer,
-                        color: Theme.of(context).primaryColor,
-                      )
-                      : null;
-                },
-              ),
-              onTap: () {
-                // Reproduce la playlist desde este track
-                final reordered = [
-                  ...tracks.sublist(index),
-                  ...tracks.sublist(0, index),
-                ];
-                final reorderedPlaylist = playlist.copyWith(
-                  trackIds: reordered.map((t) => t.id.value).toList(),
-                );
-                context.read<AudioPlayerBloc>().add(
-                  PlayPlaylistRequested(reorderedPlaylist),
+            final uploader = collaboratorsByTrackId?[track.id.value];
+            return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+              builder: (context, state) {
+                final isCurrent =
+                    state is AudioPlayerActiveState &&
+                    state.track.id == track.id;
+                return Container(
+                  color: isCurrent ? Colors.blue.withValues(alpha: 0.08) : null,
+                  child: TrackComponent(
+                    track: track,
+                    uploader: uploader,
+                    projectId:
+                        projectId != null
+                            ? ProjectId.fromUniqueString(projectId!)
+                            : track.projectId,
+                    onPlay: () {
+                      context.read<AudioPlayerBloc>().add(
+                        PlayPlaylistRequested(playlist, startIndex: index),
+                      );
+                    },
+                  ),
                 );
               },
             );
@@ -82,11 +83,4 @@ class PlaylistWidget extends StatelessWidget {
       ],
     );
   }
-}
-
-String _formatDuration(Duration d) {
-  String twoDigits(int n) => n.toString().padLeft(2, '0');
-  final minutes = twoDigits(d.inMinutes.remainder(60));
-  final seconds = twoDigits(d.inSeconds.remainder(60));
-  return '$minutes:$seconds';
 }
