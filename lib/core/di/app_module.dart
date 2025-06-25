@@ -11,8 +11,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_document.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_document.dart';
+import 'package:trackflow/features/playlist/data/models/playlist_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
+import 'package:trackflow/features/playlist/data/models/playlist_dto.dart';
 
 @module
 abstract class AppModule {
@@ -47,6 +49,7 @@ abstract class AppModule {
       AudioCommentDocumentSchema,
       AudioTrackDocumentSchema,
       UserProfileDocumentSchema,
+      PlaylistDocumentSchema,
     ], directory: dir.path);
     //}
     //return Future.value(Isar.getInstance());
