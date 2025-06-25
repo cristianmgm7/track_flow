@@ -1,8 +1,3 @@
-import 'package:isar/isar.dart';
-
-part 'playlist_dto.g.dart';
-
-@Collection()
 class PlaylistDto {
   final int id;
   final String name;

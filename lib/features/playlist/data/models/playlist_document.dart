@@ -1,13 +1,13 @@
 import 'package:isar/isar.dart';
 import 'package:trackflow/features/playlist/data/models/playlist_dto.dart';
-import 'package:trackflow/features/projects/data/models/project_document.dart';
+part 'playlist_document.g.dart';
 
-@Collection()
+@collection
 class PlaylistDocument {
-  Id get isarId => fastHash(id);
+  Id id = Isar.autoIncrement;
 
   @Index(unique: true)
-  late String id;
+  late String uuid;
 
   late String name;
   late List<String> trackIds;
@@ -17,7 +17,7 @@ class PlaylistDocument {
 
   factory PlaylistDocument.fromDTO(PlaylistDto dto) {
     return PlaylistDocument()
-      ..id = dto.id.toString()
+      ..uuid = dto.id.toString()
       ..name = dto.name
       ..trackIds = dto.trackIds
       ..playlistSource = dto.playlistSource;
@@ -25,7 +25,7 @@ class PlaylistDocument {
 
   PlaylistDto toDTO() {
     return PlaylistDto(
-      id: int.parse(id),
+      id: int.parse(uuid),
       name: name,
       trackIds: trackIds,
       playlistSource: playlistSource,

@@ -87,7 +87,8 @@ dev_dependencies:
   injectable_generator: ^2.1.2
 
 dependency_overrides:
-  analyzer: '6.0.0'
+  analyzer: ^6.2.0
+  dart_style: ^2.3.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
