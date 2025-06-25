@@ -4,7 +4,6 @@ import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
-import 'package:trackflow/core/sync/project_sync_service.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
@@ -25,7 +24,6 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDataSource _local;
   final NetworkInfo _networkInfo;
   final FirebaseFirestore _firestore;
-  final ProjectSyncService _projectSyncService;
   final UserProfileLocalDataSource _userProfileLocalDataSource;
   final ProjectsLocalDataSource _projectLocalDataSource;
   final AudioTrackLocalDataSource _audioTrackLocalDataSource;
@@ -37,7 +35,6 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthLocalDataSource local,
     required NetworkInfo networkInfo,
     required FirebaseFirestore firestore,
-    required ProjectSyncService projectSyncService,
     required UserProfileLocalDataSource userProfileLocalDataSource,
     required ProjectsLocalDataSource projectLocalDataSource,
     required AudioTrackLocalDataSource audioTrackLocalDataSource,
@@ -47,7 +44,6 @@ class AuthRepositoryImpl implements AuthRepository {
        _local = local,
        _networkInfo = networkInfo,
        _firestore = firestore,
-       _projectSyncService = projectSyncService,
        _userProfileLocalDataSource = userProfileLocalDataSource,
        _projectLocalDataSource = projectLocalDataSource,
        _audioTrackLocalDataSource = audioTrackLocalDataSource,
@@ -119,7 +115,6 @@ class AuthRepositoryImpl implements AuthRepository {
         await _sessionStorage.saveUserId(user.uid);
         await _local.cacheUserId(user.uid);
         await _createOrSyncUserProfile(user);
-        _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null) {
         return left(AuthenticationFailure('No user found after sign in'));
@@ -146,7 +141,6 @@ class AuthRepositoryImpl implements AuthRepository {
         await _sessionStorage.saveUserId(user.uid);
         await _createOrSyncUserProfile(user);
         await _local.cacheUserId(user.uid);
-        _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null) {
         return left(AuthenticationFailure('No user found after sign up'));
@@ -173,7 +167,6 @@ class AuthRepositoryImpl implements AuthRepository {
         await _sessionStorage.saveUserId(user.uid);
         await _local.cacheUserId(user.uid);
         await _createOrSyncUserProfile(user);
-        _projectSyncService.start(UserId.fromUniqueString(user.uid));
       }
       if (user == null) {
         return left(
@@ -195,7 +188,6 @@ class AuthRepositoryImpl implements AuthRepository {
       return;
     }
     await _remote.signOut();
-    _projectSyncService.stop();
     await _userProfileLocalDataSource.clearCache();
     await _projectLocalDataSource.clearCache();
     await _audioTrackLocalDataSource.clearCache();
