@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_player/domain/models/audio_source_enum.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
-import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/enhanced_download_manager.dart';
 
 class TrackStatusBadge extends StatefulWidget {
@@ -62,7 +63,8 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
   Widget build(BuildContext context) {
     return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
       builder: (context, playerState) {
-        final isCurrentTrack = playerState is AudioPlayerActiveState &&
+        final isCurrentTrack =
+            playerState is AudioPlayerActiveState &&
             playerState.track.id.value == widget.trackId;
         final isPlaying = playerState is AudioPlayerPlaying && isCurrentTrack;
         final isLoading = playerState is AudioPlayerLoading && isCurrentTrack;
@@ -160,11 +162,7 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
     required String text,
     bool isAnimated = false,
   }) {
-    Widget iconWidget = Icon(
-      icon,
-      size: widget.size,
-      color: color,
-    );
+    Widget iconWidget = Icon(icon, size: widget.size, color: color);
 
     if (isAnimated) {
       iconWidget = AnimatedRotation(

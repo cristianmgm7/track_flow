@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_usecase.dart';
-import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comement_usecase.dart';
+import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
 import 'dart:async';

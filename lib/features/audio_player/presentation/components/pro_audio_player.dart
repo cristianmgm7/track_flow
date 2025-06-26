@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/components/queue_display.dart';
 
 class ProAudioPlayer extends StatelessWidget {
@@ -40,10 +40,7 @@ class ProAudioPlayer extends StatelessWidget {
             if (player.currentQueue.length > 1)
               Text(
                 'Track ${player.currentIndex + 1} of ${player.currentQueue.length}',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey[400], fontSize: 14),
               ),
             const SizedBox(height: 16),
             // Progreso y tiempos
@@ -61,10 +58,13 @@ class ProAudioPlayer extends StatelessWidget {
                     GestureDetector(
                       onTapDown: (details) {
                         final box = context.findRenderObject() as RenderBox;
-                        final localPosition = box.globalToLocal(details.globalPosition);
+                        final localPosition = box.globalToLocal(
+                          details.globalPosition,
+                        );
                         final tapProgress = localPosition.dx / box.size.width;
                         final seekPosition = Duration(
-                          milliseconds: (tapProgress * duration.inMilliseconds).round(),
+                          milliseconds:
+                              (tapProgress * duration.inMilliseconds).round(),
                         );
                         context.read<AudioPlayerBloc>().add(
                           SeekToPositionRequested(seekPosition),
@@ -103,13 +103,14 @@ class ProAudioPlayer extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.skip_previous),
-                  onPressed: player.hasPrevious
-                      ? () {
-                          context.read<AudioPlayerBloc>().add(
-                            SkipToPreviousRequested(),
-                          );
-                        }
-                      : null,
+                  onPressed:
+                      player.hasPrevious
+                          ? () {
+                            context.read<AudioPlayerBloc>().add(
+                              SkipToPreviousRequested(),
+                            );
+                          }
+                          : null,
                   color: player.hasPrevious ? Colors.white : Colors.grey[600],
                   iconSize: 36,
                 ),
@@ -132,13 +133,14 @@ class ProAudioPlayer extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: player.hasNext
-                      ? () {
-                          context.read<AudioPlayerBloc>().add(
-                            SkipToNextRequested(),
-                          );
-                        }
-                      : null,
+                  onPressed:
+                      player.hasNext
+                          ? () {
+                            context.read<AudioPlayerBloc>().add(
+                              SkipToNextRequested(),
+                            );
+                          }
+                          : null,
                   color: player.hasNext ? Colors.white : Colors.grey[600],
                   iconSize: 36,
                 ),
@@ -156,9 +158,10 @@ class ProAudioPlayer extends StatelessWidget {
                       ToggleShuffleRequested(),
                     );
                   },
-                  color: player.queueMode == PlaybackQueueMode.shuffle
-                      ? Colors.blueAccent
-                      : Colors.grey[400],
+                  color:
+                      player.queueMode == PlaybackQueueMode.shuffle
+                          ? Colors.blueAccent
+                          : Colors.grey[400],
                 ),
                 IconButton(
                   icon: Icon(_getRepeatIcon(player.repeatMode)),
@@ -167,16 +170,18 @@ class ProAudioPlayer extends StatelessWidget {
                       ToggleRepeatModeRequested(),
                     );
                   },
-                  color: player.repeatMode != RepeatMode.none
-                      ? Colors.blueAccent
-                      : Colors.grey[400],
+                  color:
+                      player.repeatMode != RepeatMode.none
+                          ? Colors.blueAccent
+                          : Colors.grey[400],
                 ),
                 IconButton(
                   icon: const Icon(Icons.queue_music),
                   onPressed: () => showQueueDisplay(context),
-                  color: player.currentQueue.length > 1 
-                      ? Colors.white 
-                      : Colors.grey[400],
+                  color:
+                      player.currentQueue.length > 1
+                          ? Colors.white
+                          : Colors.grey[400],
                 ),
                 IconButton(
                   icon: const Icon(Icons.comment),

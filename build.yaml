@@ -9,9 +9,9 @@ targets:
           - "lib/features/user_profile/data/models/user_profile_document.dart"
           - "lib/features/playlist/data/models/playlist_document.dart"
           - "lib/features/playlist/data/models/test_collection.dart"
-      injectable_generator:injectable_builder:
+      injectable_generator|injectable_builder:
         generate_for:
           - "lib/**.dart"
-      injectable_generator:injectable_config_builder:
+      injectable_generator|injectable_config_builder:
         generate_for:
           - "lib/core/di/injection.dart" 

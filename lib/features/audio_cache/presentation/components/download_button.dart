@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/enhanced_download_manager.dart';
+import 'package:trackflow/features/audio_player/domain/models/audio_source_enum.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
 import 'package:trackflow/core/di/injection.dart';
 
@@ -16,7 +16,7 @@ class DownloadButton extends StatefulWidget {
   final VoidCallback? onDownloadCompleted;
 
   const DownloadButton({
-    Key? key,
+    super.key,
     required this.trackId,
     required this.trackUrl,
     required this.trackName,
@@ -26,7 +26,7 @@ class DownloadButton extends StatefulWidget {
     this.size = 24.0,
     this.onDownloadStarted,
     this.onDownloadCompleted,
-  }) : super(key: key);
+  });
 
   @override
   State<DownloadButton> createState() => _DownloadButtonState();
@@ -35,7 +35,7 @@ class DownloadButton extends StatefulWidget {
 class _DownloadButtonState extends State<DownloadButton> {
   late final EnhancedDownloadManager _downloadManager;
   late final AudioSourceResolver _audioSourceResolver;
-  
+
   DownloadStatus _currentStatus = DownloadStatus.notStarted;
   double _progress = 0.0;
   CacheStatus _cacheStatus = CacheStatus.notCached;
@@ -52,7 +52,7 @@ class _DownloadButtonState extends State<DownloadButton> {
   Future<void> _initializeStatus() async {
     _currentStatus = _downloadManager.getDownloadStatus(widget.trackId);
     _cacheStatus = await _audioSourceResolver.getCacheStatus(widget.trackUrl);
-    
+
     if (mounted) {
       setState(() {});
     }
@@ -66,10 +66,12 @@ class _DownloadButtonState extends State<DownloadButton> {
         setState(() {
           _currentStatus = newStatus;
         });
-        
-        if (newStatus == DownloadStatus.downloading && widget.onDownloadStarted != null) {
+
+        if (newStatus == DownloadStatus.downloading &&
+            widget.onDownloadStarted != null) {
           widget.onDownloadStarted!();
-        } else if (newStatus == DownloadStatus.completed && widget.onDownloadCompleted != null) {
+        } else if (newStatus == DownloadStatus.completed &&
+            widget.onDownloadCompleted != null) {
           widget.onDownloadCompleted!();
         }
       }
@@ -112,18 +114,12 @@ class _DownloadButtonState extends State<DownloadButton> {
       priority: widget.priority,
     );
 
-    result.fold(
-      (failure) => _showErrorSnackBar(failure.message),
-      (_) => null,
-    );
+    result.fold((failure) => _showErrorSnackBar(failure.message), (_) => null);
   }
 
   Future<void> _cancelDownload() async {
     final result = await _downloadManager.cancelDownload(widget.trackId);
-    result.fold(
-      (failure) => _showErrorSnackBar(failure.message),
-      (_) => null,
-    );
+    result.fold((failure) => _showErrorSnackBar(failure.message), (_) => null);
   }
 
   Future<void> _retryDownload() async {
@@ -165,7 +161,7 @@ class _DownloadButtonState extends State<DownloadButton> {
 
   Widget _buildIcon() {
     final color = widget.color ?? Theme.of(context).primaryColor;
-    
+
     switch (_currentStatus) {
       case DownloadStatus.notStarted:
       case DownloadStatus.cancelled:
@@ -174,14 +170,10 @@ class _DownloadButtonState extends State<DownloadButton> {
           color: color.withOpacity(0.7),
           size: widget.size,
         );
-        
+
       case DownloadStatus.queued:
-        return Icon(
-          Icons.schedule,
-          color: Colors.orange,
-          size: widget.size,
-        );
-        
+        return Icon(Icons.schedule, color: Colors.orange, size: widget.size);
+
       case DownloadStatus.downloading:
         return Stack(
           alignment: Alignment.center,
@@ -196,27 +188,19 @@ class _DownloadButtonState extends State<DownloadButton> {
                 backgroundColor: color.withOpacity(0.2),
               ),
             ),
-            Icon(
-              Icons.close,
-              color: color,
-              size: widget.size! * 0.6,
-            ),
+            Icon(Icons.close, color: color, size: widget.size! * 0.6),
           ],
         );
-        
+
       case DownloadStatus.completed:
         return Icon(
           Icons.download_done,
           color: Colors.green,
           size: widget.size,
         );
-        
+
       case DownloadStatus.failed:
-        return Icon(
-          Icons.refresh,
-          color: Colors.red,
-          size: widget.size,
-        );
+        return Icon(Icons.refresh, color: Colors.red, size: widget.size);
     }
   }
 }

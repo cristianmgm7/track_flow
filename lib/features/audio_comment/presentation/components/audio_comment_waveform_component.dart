@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_cubit.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_state.dart';

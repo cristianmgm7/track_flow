@@ -54,7 +54,7 @@ import 'package:trackflow/features/audio_comment/domain/services/project_comment
     as _i65;
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart'
     as _i87;
-import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comement_usecase.dart'
+import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart'
     as _i95;
 import 'package:trackflow/features/audio_comment/domain/usecases/sync_audio_comment_usecase.dart'
     as _i73;

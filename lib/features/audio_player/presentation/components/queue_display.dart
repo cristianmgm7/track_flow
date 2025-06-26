@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart';
 
 class QueueDisplay extends StatelessWidget {
@@ -16,10 +16,7 @@ class QueueDisplay extends StatelessWidget {
           return const Center(
             child: Text(
               'No queue available',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
           );
         }
@@ -65,10 +62,7 @@ class QueueDisplay extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${queue.length} tracks • Playing track ${currentIndex + 1}',
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey[400], fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   // Mode indicators
@@ -107,17 +101,20 @@ class QueueDisplay extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final trackId = queue[index];
                   final isCurrent = index == currentIndex;
-                  
+
                   return FutureBuilder<String>(
                     future: _getTrackName(trackId, context),
                     builder: (context, snapshot) {
                       final trackName = snapshot.data ?? 'Loading...';
-                      
+
                       return Container(
                         decoration: BoxDecoration(
-                          color: isCurrent
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : null,
+                          color:
+                              isCurrent
+                                  ? Theme.of(
+                                    context,
+                                  ).colorScheme.primaryContainer
+                                  : null,
                           border: Border(
                             bottom: BorderSide(
                               color: Colors.grey[800]!,
@@ -130,35 +127,41 @@ class QueueDisplay extends StatelessWidget {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: isCurrent
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey[700],
+                              color:
+                                  isCurrent
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey[700],
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Center(
-                              child: isCurrent
-                                  ? Icon(
-                                      state is AudioPlayerPlaying
-                                          ? Icons.volume_up
-                                          : Icons.pause,
-                                      color: Colors.white,
-                                      size: 16,
-                                    )
-                                  : Text(
-                                      '${index + 1}',
-                                      style: const TextStyle(
+                              child:
+                                  isCurrent
+                                      ? Icon(
+                                        state is AudioPlayerPlaying
+                                            ? Icons.volume_up
+                                            : Icons.pause,
                                         color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                        size: 16,
+                                      )
+                                      : Text(
+                                        '${index + 1}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
                             ),
                           ),
                           title: Text(
                             trackName,
                             style: TextStyle(
-                              color: isCurrent ? Colors.white : Colors.grey[300],
-                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                              color:
+                                  isCurrent ? Colors.white : Colors.grey[300],
+                              fontWeight:
+                                  isCurrent
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                             ),
                           ),
                           trailing: Row(
@@ -183,11 +186,12 @@ class QueueDisplay extends StatelessWidget {
                               ],
                             ],
                           ),
-                          onTap: isCurrent
-                              ? null
-                              : () {
-                                  // Same as above - would need SkipToIndexRequested event
-                                },
+                          onTap:
+                              isCurrent
+                                  ? null
+                                  : () {
+                                    // Same as above - would need SkipToIndexRequested event
+                                  },
                         ),
                       );
                     },
@@ -271,7 +275,7 @@ class QueueDisplay extends StatelessWidget {
       // final player = context.read<AudioPlayerBloc>();
       // final track = await player.getTrackById(trackId);
       // return track.name;
-      
+
       // For now, return a placeholder
       return 'Track $trackId';
     } catch (e) {
@@ -286,16 +290,17 @@ void showQueueDisplay(BuildContext context) {
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+    builder:
+        (context) => Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: const BoxDecoration(
+            color: Colors.black,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: const QueueDisplay(),
         ),
-      ),
-      child: const QueueDisplay(),
-    ),
   );
 }

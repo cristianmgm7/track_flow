@@ -1,18 +1,18 @@
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 
 /// Service for persisting and restoring playback state across app sessions
 abstract class PlaybackStatePersistence {
   /// Saves the current playback state to persistent storage
   Future<Either<Failure, Unit>> savePlaybackState(PersistedPlaybackState state);
-  
+
   /// Restores the playback state from persistent storage
   Future<Either<Failure, PersistedPlaybackState?>> restorePlaybackState();
-  
+
   /// Clears all persisted playback state
   Future<Either<Failure, Unit>> clearPlaybackState();
-  
+
   /// Saves only the position for the current track (for frequent updates)
   Future<Either<Failure, Unit>> savePosition(Duration position);
 }

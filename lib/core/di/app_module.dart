@@ -15,6 +15,8 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_document.
 import 'package:trackflow/features/playlist/data/models/playlist_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
+import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
+import 'package:trackflow/features/audio_player/infrastructure/playback_service_impl.dart';
 
 @module
 abstract class AppModule {
@@ -54,7 +56,6 @@ abstract class AppModule {
     //}
     //return Future.value(Isar.getInstance());
   }
-
 
   @lazySingleton
   Connectivity get connectivity => Connectivity();

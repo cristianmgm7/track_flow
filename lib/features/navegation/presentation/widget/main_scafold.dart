@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
-import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/screens/audio_player_sheet.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_cache/presentation/components/download_queue_widget.dart';
 
@@ -23,10 +23,7 @@ class MainScaffold extends StatelessWidget {
         children: [
           Expanded(child: child),
           // Download queue widget (only shows when there are active downloads)
-          const DownloadQueueWidget(
-            showHeader: false,
-            maxVisibleItems: 3,
-          ),
+          const DownloadQueueWidget(showHeader: false, maxVisibleItems: 3),
           BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
             builder: (context, state) {
               if (state is AudioPlayerActiveState &&
