@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_document.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_document.dart';
 import 'package:trackflow/features/playlist/data/models/playlist_document.dart';
@@ -58,4 +59,7 @@ abstract class AppModule {
 
   @lazySingleton
   PlaybackService providePlaybackService() => JustAudioPlaybackService();
+
+  @lazySingleton
+  Connectivity get connectivity => Connectivity();
 }

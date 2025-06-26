@@ -10,10 +10,11 @@ import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_icon.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_cubit.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_state.dart';
+import 'package:trackflow/features/audio_cache/presentation/components/download_button.dart';
+import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart';
 
 class TrackComponent extends StatefulWidget {
   final AudioTrack track;
@@ -169,9 +170,10 @@ class _TrackComponentState extends State<TrackComponent> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            AudioCacheIcon(
-                              remoteUrl: widget.track.url,
-                              autoLoad: false,
+                            TrackStatusBadge(
+                              trackUrl: widget.track.url,
+                              trackId: widget.track.id.value,
+                              size: 16,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -192,6 +194,15 @@ class _TrackComponentState extends State<TrackComponent> {
                   Text(
                     durationStr,
                     style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                  ),
+                  const SizedBox(width: 8),
+                  // Download button
+                  DownloadButton(
+                    trackId: widget.track.id.value,
+                    trackUrl: widget.track.url,
+                    trackName: widget.track.name,
+                    size: 20,
+                    color: Colors.blueAccent,
                   ),
                   IconButton(
                     icon: const Icon(Icons.more_vert, color: Colors.blueAccent),

@@ -3,21 +3,33 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_cache_repository.dart';
+import 'package:trackflow/features/audio_player/domain/services/offline_mode_service.dart';
 import 'dart:io';
 
 @Injectable(as: AudioSourceResolver)
 class AudioSourceResolverImpl implements AudioSourceResolver {
   final GetCachedAudioPath getCachedAudioPath;
+  final AudioCacheRepository audioCacheRepository;
+  final OfflineModeService offlineModeService;
   
   // Track background caching operations
   final Set<String> _backgroundCachingUrls = <String>{};
   
-  AudioSourceResolverImpl(this.getCachedAudioPath);
+  AudioSourceResolverImpl(
+    this.getCachedAudioPath, 
+    this.audioCacheRepository,
+    this.offlineModeService,
+  );
 
   @override
   Future<Either<Failure, String>> resolveAudioSource(String originalUrl) async {
     try {
-      // 1. First try cache
+      final offlineMode = await offlineModeService.getOfflineMode();
+      final isOfflineOnly = await offlineModeService.isOfflineOnlyModeEnabled();
+      final networkQuality = await offlineModeService.getNetworkQuality();
+      
+      // 1. Always check cache first (offline-first principle)
       final cacheResult = await validateCachedTrack(originalUrl);
       if (cacheResult.isRight()) {
         final cachedPath = cacheResult.getOrElse(() => null);
@@ -26,12 +38,86 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
         }
       }
       
-      // 2. Fallback to streaming URL and start background caching
-      await startBackgroundCaching(originalUrl);
-      return Right(originalUrl);
+      // 2. If offline-only mode is enabled, reject streaming
+      if (isOfflineOnly || networkQuality == NetworkQuality.offline) {
+        return Left(OfflineFailure('Track not available offline'));
+      }
+      
+      // 3. Apply offline mode strategy
+      switch (offlineMode) {
+        case OfflineMode.offlineOnly:
+          return Left(OfflineFailure('Offline-only mode: Track not cached'));
+          
+        case OfflineMode.offlineFirst:
+          // Try to start background caching, but allow streaming
+          if (_shouldAllowStreaming(networkQuality)) {
+            await startBackgroundCaching(originalUrl);
+            return Right(originalUrl);
+          } else {
+            return Left(NetworkFailure('Network quality insufficient for streaming'));
+          }
+          
+        case OfflineMode.onlineFirst:
+          // Prefer streaming if available
+          if (_shouldAllowStreaming(networkQuality)) {
+            // Start background caching for future offline use
+            await startBackgroundCaching(originalUrl);
+            return Right(originalUrl);
+          } else {
+            return Left(NetworkFailure('Network unavailable for streaming'));
+          }
+          
+        case OfflineMode.auto:
+          // Intelligent decision based on network quality
+          return _handleAutoMode(originalUrl, networkQuality);
+      }
       
     } catch (e) {
       return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  Future<Either<Failure, String>> _handleAutoMode(
+    String originalUrl, 
+    NetworkQuality networkQuality,
+  ) async {
+    switch (networkQuality) {
+      case NetworkQuality.excellent:
+      case NetworkQuality.good:
+        // Good connection: stream and cache in background
+        await startBackgroundCaching(originalUrl);
+        return Right(originalUrl);
+        
+      case NetworkQuality.limited:
+        // Limited connection: check bandwidth preference
+        final bandwidthPreference = await offlineModeService.getBandwidthPreference();
+        if (bandwidthPreference == BandwidthPreference.unlimited ||
+            bandwidthPreference == BandwidthPreference.wifi) {
+          await startBackgroundCaching(originalUrl);
+          return Right(originalUrl);
+        } else {
+          return Left(NetworkFailure('Bandwidth restrictions prevent streaming'));
+        }
+        
+      case NetworkQuality.poor:
+        // Poor connection: prefer cache-only
+        return Left(NetworkFailure('Network quality too poor for streaming'));
+        
+      case NetworkQuality.offline:
+        return Left(OfflineFailure('No network connection available'));
+    }
+  }
+
+  bool _shouldAllowStreaming(NetworkQuality networkQuality) {
+    switch (networkQuality) {
+      case NetworkQuality.excellent:
+      case NetworkQuality.good:
+        return true;
+      case NetworkQuality.limited:
+        return true; // Let bandwidth preference handle restriction
+      case NetworkQuality.poor:
+      case NetworkQuality.offline:
+        return false;
     }
   }
 
@@ -78,17 +164,47 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
       return; // Already caching
     }
     
+    // Check if network operation is allowed
+    final shouldAllowOperation = await _shouldAllowNetworkOperation(url);
+    if (!shouldAllowOperation) {
+      return;
+    }
+    
     _backgroundCachingUrls.add(url);
     
-    // Start background caching (implementation would depend on cache service)
+    // Start background caching using the existing audio cache system
     try {
-      // This would typically trigger the cache service to download the file
+      // This triggers the existing Firebase Storage download
       await getCachedAudioPath(url);
-      // In a real implementation, this would initiate async download
     } catch (e) {
       // Handle caching errors silently to not interrupt playback
     } finally {
       _backgroundCachingUrls.remove(url);
+    }
+  }
+
+  Future<bool> _shouldAllowNetworkOperation(String url) async {
+    final networkQuality = await offlineModeService.getNetworkQuality();
+    final bandwidthPreference = await offlineModeService.getBandwidthPreference();
+    final isOfflineOnly = await offlineModeService.isOfflineOnlyModeEnabled();
+    
+    // Block if offline-only mode
+    if (isOfflineOnly) return false;
+    
+    // Block if offline
+    if (networkQuality == NetworkQuality.offline) return false;
+    
+    // Check bandwidth restrictions
+    switch (bandwidthPreference) {
+      case BandwidthPreference.unlimited:
+        return true;
+      case BandwidthPreference.wifi:
+        return offlineModeService.currentConnectivity == ConnectivityStatus.online;
+      case BandwidthPreference.limited:
+        return networkQuality == NetworkQuality.excellent || 
+               networkQuality == NetworkQuality.good;
+      case BandwidthPreference.emergency:
+        return false; // No background operations in emergency mode
     }
   }
 
@@ -134,4 +250,12 @@ class CacheFailure extends Failure {
 
 class ServerFailure extends Failure {
   const ServerFailure(String message) : super(message);
+}
+
+class OfflineFailure extends Failure {
+  const OfflineFailure(String message) : super(message);
+}
+
+class NetworkFailure extends Failure {
+  const NetworkFailure(String message) : super(message);
 }

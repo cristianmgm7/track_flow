@@ -9,6 +9,8 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/enhanced_download_manager.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 class TrackActions {
   static List<TrackFlowActionItem> forTrack(
@@ -63,8 +65,37 @@ class TrackActions {
       icon: Icons.download,
       title: 'Download',
       subtitle: 'Save this track to your device',
-      onTap: () {
-        // TODO: download
+      onTap: () async {
+        Navigator.of(context).pop(); // Close the action sheet
+        
+        final downloadManager = sl<EnhancedDownloadManager>();
+        final result = await downloadManager.downloadTrack(
+          trackId: track.id.value,
+          trackUrl: track.url,
+          trackName: track.name,
+          priority: DownloadPriority.normal,
+        );
+        
+        result.fold(
+          (failure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Download failed: ${failure.message}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          },
+          (_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${track.name} added to download queue'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        );
       },
     ),
   ];

@@ -19,6 +19,9 @@ import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:provider/provider.dart';
+import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/enhanced_download_manager.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -26,40 +29,48 @@ class MyApp extends StatelessWidget {
   }
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
-        ),
-        BlocProvider<UserProfileBloc>(
-          create: (context) => sl<UserProfileBloc>(),
-        ),
-        BlocProvider<NavigationCubit>(
-          create: (context) => sl<NavigationCubit>(),
-        ),
-        BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
-        BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
-        BlocProvider<ProjectDetailBloc>(
-          create: (context) => sl<ProjectDetailBloc>(),
-        ),
-        BlocProvider<ManageCollaboratorsBloc>(
-          create: (context) => sl<ManageCollaboratorsBloc>(),
-        ),
-        BlocProvider<AudioTrackBloc>(create: (context) => sl<AudioTrackBloc>()),
-        BlocProvider<AudioCommentBloc>(
-          create: (context) => sl<AudioCommentBloc>(),
-        ),
-        BlocProvider<AudioPlayerBloc>(
-          create: (context) => sl<AudioPlayerBloc>(),
-        ),
+        Provider<AudioSourceResolver>(create: (_) => sl<AudioSourceResolver>()),
+        Provider<EnhancedDownloadManager>(create: (_) => sl<EnhancedDownloadManager>()),
       ],
-      child: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            sl<StartupResourceManager>().initializeAppData();
-          }
-        },
-        child: _App(),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>(
+            create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
+          ),
+          BlocProvider<UserProfileBloc>(
+            create: (context) => sl<UserProfileBloc>(),
+          ),
+          BlocProvider<NavigationCubit>(
+            create: (context) => sl<NavigationCubit>(),
+          ),
+          BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
+          BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
+          BlocProvider<ProjectDetailBloc>(
+            create: (context) => sl<ProjectDetailBloc>(),
+          ),
+          BlocProvider<ManageCollaboratorsBloc>(
+            create: (context) => sl<ManageCollaboratorsBloc>(),
+          ),
+          BlocProvider<AudioTrackBloc>(
+            create: (context) => sl<AudioTrackBloc>(),
+          ),
+          BlocProvider<AudioCommentBloc>(
+            create: (context) => sl<AudioCommentBloc>(),
+          ),
+          BlocProvider<AudioPlayerBloc>(
+            create: (context) => sl<AudioPlayerBloc>(),
+          ),
+        ],
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthAuthenticated) {
+              sl<StartupResourceManager>().initializeAppData();
+            }
+          },
+          child: _App(),
+        ),
       ),
     );
   }

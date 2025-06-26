@@ -7,6 +7,7 @@ import 'package:trackflow/features/audio_player/presentation/screens/audio_playe
 import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/audio_cache/presentation/components/download_queue_widget.dart';
 
 class MainScaffold extends StatelessWidget {
   final Widget child;
@@ -21,6 +22,11 @@ class MainScaffold extends StatelessWidget {
       body: Column(
         children: [
           Expanded(child: child),
+          // Download queue widget (only shows when there are active downloads)
+          const DownloadQueueWidget(
+            showHeader: false,
+            maxVisibleItems: 3,
+          ),
           BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
             builder: (context, state) {
               if (state is AudioPlayerActiveState &&
