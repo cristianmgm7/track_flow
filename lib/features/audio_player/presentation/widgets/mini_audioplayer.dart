@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart';
 
 class MiniAudioPlayer extends StatefulWidget {
   final VoidCallback onExpand;
@@ -50,18 +51,31 @@ class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.music_note,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                    Stack(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[800],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.music_note,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: TrackStatusBadge(
+                            trackUrl: track.url,
+                            trackId: track.id.value,
+                            size: 12,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 12),
                     Expanded(

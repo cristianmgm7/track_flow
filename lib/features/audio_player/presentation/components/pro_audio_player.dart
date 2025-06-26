@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/components/queue_display.dart';
 
 class ProAudioPlayer extends StatelessWidget {
   final ScrollController? scrollController;
@@ -34,7 +35,17 @@ class ProAudioPlayer extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            // Queue position display
+            if (player.currentQueue.length > 1)
+              Text(
+                'Track ${player.currentIndex + 1} of ${player.currentQueue.length}',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 14,
+                ),
+              ),
+            const SizedBox(height: 16),
             // Progreso y tiempos
             StreamBuilder<Duration>(
               stream: player.positionStream,
@@ -47,11 +58,24 @@ class ProAudioPlayer extends StatelessWidget {
                         : 0.0;
                 return Column(
                   children: [
-                    LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.grey[800],
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).primaryColor,
+                    GestureDetector(
+                      onTapDown: (details) {
+                        final box = context.findRenderObject() as RenderBox;
+                        final localPosition = box.globalToLocal(details.globalPosition);
+                        final tapProgress = localPosition.dx / box.size.width;
+                        final seekPosition = Duration(
+                          milliseconds: (tapProgress * duration.inMilliseconds).round(),
+                        );
+                        context.read<AudioPlayerBloc>().add(
+                          SeekToPositionRequested(seekPosition),
+                        );
+                      },
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.grey[800],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).primaryColor,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -79,8 +103,14 @@ class ProAudioPlayer extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.skip_previous),
-                  onPressed: () {},
-                  color: Colors.white,
+                  onPressed: player.hasPrevious
+                      ? () {
+                          context.read<AudioPlayerBloc>().add(
+                            SkipToPreviousRequested(),
+                          );
+                        }
+                      : null,
+                  color: player.hasPrevious ? Colors.white : Colors.grey[600],
                   iconSize: 36,
                 ),
                 FloatingActionButton(
@@ -102,8 +132,14 @@ class ProAudioPlayer extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: () {},
-                  color: Colors.white,
+                  onPressed: player.hasNext
+                      ? () {
+                          context.read<AudioPlayerBloc>().add(
+                            SkipToNextRequested(),
+                          );
+                        }
+                      : null,
+                  color: player.hasNext ? Colors.white : Colors.grey[600],
                   iconSize: 36,
                 ),
               ],
@@ -115,18 +151,32 @@ class ProAudioPlayer extends StatelessWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.shuffle),
-                  onPressed: () {},
-                  color: Colors.grey[400],
+                  onPressed: () {
+                    context.read<AudioPlayerBloc>().add(
+                      ToggleShuffleRequested(),
+                    );
+                  },
+                  color: player.queueMode == PlaybackQueueMode.shuffle
+                      ? Colors.blueAccent
+                      : Colors.grey[400],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.repeat),
-                  onPressed: () {},
-                  color: Colors.grey[400],
+                  icon: Icon(_getRepeatIcon(player.repeatMode)),
+                  onPressed: () {
+                    context.read<AudioPlayerBloc>().add(
+                      ToggleRepeatModeRequested(),
+                    );
+                  },
+                  color: player.repeatMode != RepeatMode.none
+                      ? Colors.blueAccent
+                      : Colors.grey[400],
                 ),
                 IconButton(
                   icon: const Icon(Icons.queue_music),
-                  onPressed: () {},
-                  color: Colors.grey[400],
+                  onPressed: () => showQueueDisplay(context),
+                  color: player.currentQueue.length > 1 
+                      ? Colors.white 
+                      : Colors.grey[400],
                 ),
                 IconButton(
                   icon: const Icon(Icons.comment),
@@ -147,4 +197,15 @@ String _formatDuration(Duration d) {
   final minutes = twoDigits(d.inMinutes.remainder(60));
   final seconds = twoDigits(d.inSeconds.remainder(60));
   return '$minutes:$seconds';
+}
+
+IconData _getRepeatIcon(RepeatMode mode) {
+  switch (mode) {
+    case RepeatMode.none:
+      return Icons.repeat;
+    case RepeatMode.single:
+      return Icons.repeat_one;
+    case RepeatMode.queue:
+      return Icons.repeat;
+  }
 }
