@@ -1,5 +1,5 @@
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 

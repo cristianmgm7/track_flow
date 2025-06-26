@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
@@ -73,7 +73,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     // Initialize single track queue
     _queue = [event.track.id.value];
     _currentIndex = 0;
-    
+
     emit(
       AudioPlayerLoading(
         event.source,
@@ -86,13 +86,15 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
         _queueMode,
       ),
     );
-    
-    final pathResult = await audioSourceResolver.resolveAudioSource(event.track.url);
+
+    final pathResult = await audioSourceResolver.resolveAudioSource(
+      event.track.url,
+    );
     final path = pathResult.getOrElse(() => event.track.url);
     await playbackService.play(url: path);
-    
+
     _startPositionSaveTimer();
-    
+
     emit(
       AudioPlayerPlaying(
         event.source,
@@ -105,7 +107,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
         _queueMode,
       ),
     );
-    
+
     _saveCurrentState();
   }
 
@@ -115,7 +117,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     await playbackService.pause();
     _stopPositionSaveTimer();
-    
+
     if (state is AudioPlayerActiveState) {
       final s = state as AudioPlayerActiveState;
       emit(
@@ -140,7 +142,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     await playbackService.resume();
     _startPositionSaveTimer();
-    
+
     if (state is AudioPlayerActiveState) {
       final s = state as AudioPlayerActiveState;
       emit(
@@ -233,10 +235,10 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     if (_queue.isEmpty) return;
-    
+
     final nextIndex = _getNextTrackIndex();
     if (nextIndex == -1) return; // No next track available
-    
+
     await _playTrackAtIndex(nextIndex, emit);
   }
 
@@ -245,10 +247,10 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     if (_queue.isEmpty) return;
-    
+
     final previousIndex = _getPreviousTrackIndex();
     if (previousIndex == -1) return; // No previous track available
-    
+
     await _playTrackAtIndex(previousIndex, emit);
   }
 
@@ -256,14 +258,15 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ToggleShuffleRequested event,
     Emitter<AudioPlayerState> emit,
   ) {
-    _queueMode = _queueMode == PlaybackQueueMode.normal 
-        ? PlaybackQueueMode.shuffle 
-        : PlaybackQueueMode.normal;
-    
+    _queueMode =
+        _queueMode == PlaybackQueueMode.normal
+            ? PlaybackQueueMode.shuffle
+            : PlaybackQueueMode.normal;
+
     if (_queueMode == PlaybackQueueMode.shuffle) {
       _generateShuffledQueue();
     }
-    
+
     _emitCurrentStateWithUpdatedMode(emit);
   }
 
@@ -282,7 +285,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
         _repeatMode = RepeatMode.none;
         break;
     }
-    
+
     _emitCurrentStateWithUpdatedMode(emit);
   }
 
@@ -295,7 +298,9 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
   // Helper methods
   Future<AudioTrack> _getAudioTrackById(String id) async {
-    final result = await audioTrackRepository.getTrackById(AudioTrackId.fromUniqueString(id));
+    final result = await audioTrackRepository.getTrackById(
+      AudioTrackId.fromUniqueString(id),
+    );
     return result.fold(
       (failure) => throw Exception('Failed to get track: $failure'),
       (track) => track,
@@ -303,52 +308,55 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   }
 
   Future<UserProfile> _getCollaboratorForTrack(AudioTrack track) async {
-    final result = await userProfileRepository.getUserProfilesByIds([track.uploadedBy.value]);
+    final result = await userProfileRepository.getUserProfilesByIds([
+      track.uploadedBy.value,
+    ]);
     return result.fold(
       (failure) => throw Exception('Failed to get collaborator: $failure'),
-      (profiles) => profiles.isNotEmpty 
-          ? profiles.first 
-          : throw Exception('Collaborator not found'),
+      (profiles) =>
+          profiles.isNotEmpty
+              ? profiles.first
+              : throw Exception('Collaborator not found'),
     );
   }
 
   void _generateShuffledQueue() {
     if (_queue.isEmpty) return;
-    
+
     _shuffledQueue = List.from(_queue);
     _shuffledQueue.shuffle(Random());
   }
 
-  List<String> get _currentQueue => 
+  List<String> get _currentQueue =>
       _queueMode == PlaybackQueueMode.shuffle ? _shuffledQueue : _queue;
 
   int _getNextTrackIndex() {
     if (_repeatMode == RepeatMode.single) {
       return _currentIndex; // Same track
     }
-    
+
     final queue = _currentQueue;
     final nextIndex = _currentIndex + 1;
-    
+
     if (nextIndex < queue.length) {
       return nextIndex;
     } else if (_repeatMode == RepeatMode.queue) {
       return 0; // Loop back to start
     }
-    
+
     return -1; // End of queue, no repeat
   }
 
   int _getPreviousTrackIndex() {
     final queue = _currentQueue;
     final previousIndex = _currentIndex - 1;
-    
+
     if (previousIndex >= 0) {
       return previousIndex;
     } else if (_repeatMode == RepeatMode.queue) {
       return queue.length - 1; // Loop to end
     }
-    
+
     return -1; // Beginning of queue
   }
 
@@ -357,17 +365,17 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     if (index < 0 || index >= _currentQueue.length) return;
-    
+
     _currentIndex = index;
     final trackId = _currentQueue[index];
-    
+
     try {
       final track = await _getAudioTrackById(trackId);
       final collaborator = await _getCollaboratorForTrack(track);
-      
+
       if (state is AudioPlayerActiveState) {
         final currentState = state as AudioPlayerActiveState;
-        
+
         emit(
           AudioPlayerLoading(
             currentState.source,
@@ -380,11 +388,13 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
             _queueMode,
           ),
         );
-        
-        final pathResult = await audioSourceResolver.resolveAudioSource(track.url);
+
+        final pathResult = await audioSourceResolver.resolveAudioSource(
+          track.url,
+        );
         final path = pathResult.getOrElse(() => track.url);
         await playbackService.play(url: path);
-        
+
         emit(
           AudioPlayerPlaying(
             currentState.source,
@@ -436,7 +446,9 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
           if (persistedState.currentTrackId != null) {
             try {
-              final track = await _getAudioTrackById(persistedState.currentTrackId!);
+              final track = await _getAudioTrackById(
+                persistedState.currentTrackId!,
+              );
               final collaborator = await _getCollaboratorForTrack(track);
 
               // Don't auto-play, just restore to paused state with position
@@ -494,22 +506,19 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
   void _startPositionSaveTimer() {
     _positionSaveTimer?.cancel();
-    _positionSaveTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) async {
-        if (state is AudioPlayerPlaying) {
-          // Save position every 5 seconds during playback
-          try {
-            final position = await positionStream.first.timeout(
-              const Duration(milliseconds: 100),
-            );
-            await playbackStatePersistence.savePosition(position);
-          } catch (e) {
-            // Ignore position save errors
-          }
+    _positionSaveTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      if (state is AudioPlayerPlaying) {
+        // Save position every 5 seconds during playback
+        try {
+          final position = await positionStream.first.timeout(
+            const Duration(milliseconds: 100),
+          );
+          await playbackStatePersistence.savePosition(position);
+        } catch (e) {
+          // Ignore position save errors
         }
-      },
-    );
+      }
+    });
   }
 
   void _stopPositionSaveTimer() {
@@ -526,7 +535,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
   Stream<Duration> get positionStream => playbackService.positionStream;
   Stream<Duration?> get durationStream => playbackService.durationStream;
-  
+
   // Public getters for current state
   List<String> get currentQueue => List.unmodifiable(_queue);
   int get currentIndex => _currentIndex;

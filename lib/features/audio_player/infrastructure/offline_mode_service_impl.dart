@@ -8,12 +8,15 @@ import 'package:trackflow/features/audio_player/domain/services/offline_mode_ser
 
 @Injectable(as: OfflineModeService)
 class OfflineModeServiceImpl implements OfflineModeService {
+  final Connectivity _connectivity;
+  final SharedPreferences _prefs;
+
+  // Shared preferences keys
   static const String _offlineModeKey = 'offline_mode';
   static const String _bandwidthPreferenceKey = 'bandwidth_preference';
   static const String _offlineOnlyKey = 'offline_only_mode';
   static const String _dataUsageKey = 'data_usage_stats';
 
-  final Connectivity _connectivity;
   late final StreamController<ConnectivityStatus> _connectivityController;
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
@@ -23,7 +26,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
       BandwidthPreference.unlimited;
   bool _offlineOnlyMode = false;
 
-  OfflineModeServiceImpl(this._connectivity) {
+  OfflineModeServiceImpl(this._connectivity, this._prefs) {
     _connectivityController = StreamController<ConnectivityStatus>.broadcast();
     _initializeService();
   }
@@ -35,7 +38,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
 
   Future<void> _loadPreferences() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
 
       final offlineModeIndex =
           prefs.getInt(_offlineModeKey) ?? OfflineMode.auto.index;
@@ -93,7 +96,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
   Future<void> setOfflineMode(OfflineMode mode) async {
     try {
       _currentOfflineMode = mode;
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       await prefs.setInt(_offlineModeKey, mode.index);
     } catch (e) {
       // Handle error gracefully
@@ -104,7 +107,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
   Future<void> enableOfflineOnlyMode() async {
     try {
       _offlineOnlyMode = true;
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       await prefs.setBool(_offlineOnlyKey, true);
     } catch (e) {
       // Handle error gracefully
@@ -115,7 +118,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
   Future<void> disableOfflineOnlyMode() async {
     try {
       _offlineOnlyMode = false;
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       await prefs.setBool(_offlineOnlyKey, false);
     } catch (e) {
       // Handle error gracefully
@@ -174,7 +177,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
   Future<void> setBandwidthPreference(BandwidthPreference preference) async {
     try {
       _currentBandwidthPreference = preference;
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       await prefs.setInt(_bandwidthPreferenceKey, preference.index);
     } catch (e) {
       // Handle error gracefully
@@ -224,7 +227,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
   @override
   Future<DataUsageStats> getDataUsageStats() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       final statsJson = prefs.getString(_dataUsageKey);
 
       if (statsJson != null) {
@@ -257,7 +260,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
   @override
   Future<void> resetDataUsageStats() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       await prefs.remove(_dataUsageKey);
     } catch (e) {
       // Handle error gracefully
@@ -289,7 +292,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
         dailyUsage: updatedDailyUsage,
       );
 
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
       await prefs.setString(
         _dataUsageKey,
         jsonEncode({
