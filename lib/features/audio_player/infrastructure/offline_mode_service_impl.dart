@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:trackflow/features/audio_player/domain/models/connectivity_models.dart.dart';
 import 'package:trackflow/features/audio_player/domain/services/offline_mode_service.dart';
 
 @Injectable(as: OfflineModeService)
@@ -15,10 +16,11 @@ class OfflineModeServiceImpl implements OfflineModeService {
   final Connectivity _connectivity;
   late final StreamController<ConnectivityStatus> _connectivityController;
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
-  
+
   ConnectivityStatus _currentStatus = ConnectivityStatus.unknown;
   OfflineMode _currentOfflineMode = OfflineMode.auto;
-  BandwidthPreference _currentBandwidthPreference = BandwidthPreference.unlimited;
+  BandwidthPreference _currentBandwidthPreference =
+      BandwidthPreference.unlimited;
   bool _offlineOnlyMode = false;
 
   OfflineModeServiceImpl(this._connectivity) {
@@ -34,13 +36,16 @@ class OfflineModeServiceImpl implements OfflineModeService {
   Future<void> _loadPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
-      final offlineModeIndex = prefs.getInt(_offlineModeKey) ?? OfflineMode.auto.index;
+
+      final offlineModeIndex =
+          prefs.getInt(_offlineModeKey) ?? OfflineMode.auto.index;
       _currentOfflineMode = OfflineMode.values[offlineModeIndex];
-      
-      final bandwidthIndex = prefs.getInt(_bandwidthPreferenceKey) ?? BandwidthPreference.unlimited.index;
+
+      final bandwidthIndex =
+          prefs.getInt(_bandwidthPreferenceKey) ??
+          BandwidthPreference.unlimited.index;
       _currentBandwidthPreference = BandwidthPreference.values[bandwidthIndex];
-      
+
       _offlineOnlyMode = prefs.getBool(_offlineOnlyKey) ?? false;
     } catch (e) {
       // Use defaults on error
@@ -53,26 +58,28 @@ class OfflineModeServiceImpl implements OfflineModeService {
     _connectivityController.add(_currentStatus);
 
     // Monitor connectivity changes
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      (ConnectivityResult result) async {
-        final newStatus = _mapConnectivityResult(result);
-        if (newStatus != _currentStatus) {
-          _currentStatus = newStatus;
-          _connectivityController.add(_currentStatus);
-        }
-      },
-    );
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      ConnectivityResult result,
+    ) async {
+      final newStatus = _mapConnectivityResult(result);
+      if (newStatus != _currentStatus) {
+        _currentStatus = newStatus;
+        _connectivityController.add(_currentStatus);
+      }
+    });
   }
 
   @override
-  Stream<ConnectivityStatus> get connectivityStream => _connectivityController.stream;
+  Stream<ConnectivityStatus> get connectivityStream =>
+      _connectivityController.stream;
 
   @override
   ConnectivityStatus get currentConnectivity => _currentStatus;
 
   @override
-  bool get isOnline => _currentStatus == ConnectivityStatus.online || 
-                      _currentStatus == ConnectivityStatus.limited;
+  bool get isOnline =>
+      _currentStatus == ConnectivityStatus.online ||
+      _currentStatus == ConnectivityStatus.limited;
 
   @override
   bool get isOffline => _currentStatus == ConnectivityStatus.offline;
@@ -127,7 +134,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
     }
 
     final connectivityResult = await _connectivity.checkConnectivity();
-    
+
     switch (connectivityResult) {
       case ConnectivityResult.wifi:
         return NetworkQuality.excellent;
@@ -150,7 +157,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
     // - Data plan limitations
     // - Current bandwidth
     // For now, we'll return a default based on bandwidth preference
-    
+
     switch (_currentBandwidthPreference) {
       case BandwidthPreference.unlimited:
         return NetworkQuality.good;
@@ -202,8 +209,8 @@ class OfflineModeServiceImpl implements OfflineModeService {
         return ConnectivityStatus.online;
       case ConnectivityResult.mobile:
         // Consider mobile as limited if bandwidth preference restricts it
-        return _currentBandwidthPreference == BandwidthPreference.wifi 
-            ? ConnectivityStatus.limited 
+        return _currentBandwidthPreference == BandwidthPreference.wifi
+            ? ConnectivityStatus.limited
             : ConnectivityStatus.online;
       case ConnectivityResult.bluetooth:
         return ConnectivityStatus.limited;
@@ -219,7 +226,7 @@ class OfflineModeServiceImpl implements OfflineModeService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final statsJson = prefs.getString(_dataUsageKey);
-      
+
       if (statsJson != null) {
         final statsMap = jsonDecode(statsJson) as Map<String, dynamic>;
         return DataUsageStats(
@@ -265,28 +272,35 @@ class OfflineModeServiceImpl implements OfflineModeService {
     try {
       final currentStats = await getDataUsageStats();
       final today = DateTime.now().toIso8601String().substring(0, 10);
-      
+
       final updatedDailyUsage = Map<String, int>.from(currentStats.dailyUsage);
-      updatedDailyUsage[today] = (updatedDailyUsage[today] ?? 0) + downloadedBytes + streamedBytes;
+      updatedDailyUsage[today] =
+          (updatedDailyUsage[today] ?? 0) + downloadedBytes + streamedBytes;
 
       final updatedStats = DataUsageStats(
-        totalBytesDownloaded: currentStats.totalBytesDownloaded + downloadedBytes,
+        totalBytesDownloaded:
+            currentStats.totalBytesDownloaded + downloadedBytes,
         totalBytesStreamed: currentStats.totalBytesStreamed + streamedBytes,
-        sessionsCount: currentStats.sessionsCount + (downloadedBytes > 0 || streamedBytes > 0 ? 1 : 0),
+        sessionsCount:
+            currentStats.sessionsCount +
+            (downloadedBytes > 0 || streamedBytes > 0 ? 1 : 0),
         periodStart: currentStats.periodStart,
         periodEnd: DateTime.now(),
         dailyUsage: updatedDailyUsage,
       );
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_dataUsageKey, jsonEncode({
-        'totalBytesDownloaded': updatedStats.totalBytesDownloaded,
-        'totalBytesStreamed': updatedStats.totalBytesStreamed,
-        'sessionsCount': updatedStats.sessionsCount,
-        'periodStart': updatedStats.periodStart.toIso8601String(),
-        'periodEnd': updatedStats.periodEnd.toIso8601String(),
-        'dailyUsage': updatedStats.dailyUsage,
-      }));
+      await prefs.setString(
+        _dataUsageKey,
+        jsonEncode({
+          'totalBytesDownloaded': updatedStats.totalBytesDownloaded,
+          'totalBytesStreamed': updatedStats.totalBytesStreamed,
+          'sessionsCount': updatedStats.sessionsCount,
+          'periodStart': updatedStats.periodStart.toIso8601String(),
+          'periodEnd': updatedStats.periodEnd.toIso8601String(),
+          'dailyUsage': updatedStats.dailyUsage,
+        }),
+      );
     } catch (e) {
       // Handle error gracefully
     }
@@ -309,8 +323,8 @@ class OfflineModeServiceImpl implements OfflineModeService {
         return true;
       case BandwidthPreference.wifi:
         final currentConnectivity = await _connectivity.checkConnectivity();
-        return _currentStatus == ConnectivityStatus.online && 
-               currentConnectivity == ConnectivityResult.wifi;
+        return _currentStatus == ConnectivityStatus.online &&
+            currentConnectivity == ConnectivityResult.wifi;
       case BandwidthPreference.limited:
         // Allow small operations, restrict large downloads
         return estimatedBytes < 10 * 1024 * 1024; // 10MB limit

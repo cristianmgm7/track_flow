@@ -1,7 +1,7 @@
 import 'package:just_audio/just_audio.dart' as ja;
 import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
 
-class JustAudioPlaybackService implements PlaybackService {
+class PlaybackServiceImpl implements PlaybackService {
   final ja.AudioPlayer _player = ja.AudioPlayer();
 
   @override
