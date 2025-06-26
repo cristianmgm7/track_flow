@@ -5,24 +5,36 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
-import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/play_audio_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/pause_audio_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/resume_audio_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/stop_audio_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/play_playlist_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/skip_to_next_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/skip_to_previous_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/toggle_shuffle_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/toggle_repeat_mode_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/seek_to_position_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/save_playback_state_usecase.dart';
+import 'package:trackflow/features/audio_player/domain/usecases/restore_playback_state_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_state_persistence.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'dart:async';
-import 'dart:math';
 
 @injectable
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   final PlaybackService playbackService;
-  final GetCachedAudioPath getCachedAudioPath;
-  final AudioTrackRepository audioTrackRepository;
-  final UserProfileRepository userProfileRepository;
-  final AudioSourceResolver audioSourceResolver;
-  final PlaybackStatePersistence playbackStatePersistence;
+  final PlayAudioUseCase _playAudioUseCase;
+  final PauseAudioUseCase _pauseAudioUseCase;
+  final ResumeAudioUseCase _resumeAudioUseCase;
+  final StopAudioUseCase _stopAudioUseCase;
+  final PlayPlaylistUseCase _playPlaylistUseCase;
+  final SkipToNextUseCase _skipToNextUseCase;
+  final SkipToPreviousUseCase _skipToPreviousUseCase;
+  final ToggleShuffleUseCase _toggleShuffleUseCase;
+  final ToggleRepeatModeUseCase _toggleRepeatModeUseCase;
+  final SeekToPositionUseCase _seekToPositionUseCase;
+  final SavePlaybackStateUseCase _savePlaybackStateUseCase;
+  final RestorePlaybackStateUseCase _restorePlaybackStateUseCase;
 
   // Playback queue state
   List<String> _queue = [];
@@ -35,11 +47,18 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
   AudioPlayerBloc(
     this.playbackService,
-    this.getCachedAudioPath,
-    this.audioTrackRepository,
-    this.userProfileRepository,
-    this.audioSourceResolver,
-    this.playbackStatePersistence,
+    this._playAudioUseCase,
+    this._pauseAudioUseCase,
+    this._resumeAudioUseCase,
+    this._stopAudioUseCase,
+    this._playPlaylistUseCase,
+    this._skipToNextUseCase,
+    this._skipToPreviousUseCase,
+    this._toggleShuffleUseCase,
+    this._toggleRepeatModeUseCase,
+    this._seekToPositionUseCase,
+    this._savePlaybackStateUseCase,
+    this._restorePlaybackStateUseCase,
   ) : super(const AudioPlayerIdle()) {
     on<PlayAudioRequested>(_onPlayAudioRequested);
     on<PauseAudioRequested>(_onPauseAudioRequested);
@@ -87,35 +106,35 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
       ),
     );
 
-    final pathResult = await audioSourceResolver.resolveAudioSource(
-      event.track.url,
+    final result = await _playAudioUseCase(event.track);
+    result.fold(
+      (failure) {
+        // Handle error - could emit error state
+      },
+      (playResult) {
+        _startPositionSaveTimer();
+        emit(
+          AudioPlayerPlaying(
+            event.source,
+            event.visualContext,
+            playResult.track,
+            playResult.collaborator,
+            _queue,
+            _currentIndex,
+            _repeatMode,
+            _queueMode,
+          ),
+        );
+        _saveCurrentState();
+      },
     );
-    final path = pathResult.getOrElse(() => event.track.url);
-    await playbackService.play(url: path);
-
-    _startPositionSaveTimer();
-
-    emit(
-      AudioPlayerPlaying(
-        event.source,
-        event.visualContext,
-        event.track,
-        event.collaborator,
-        _queue,
-        _currentIndex,
-        _repeatMode,
-        _queueMode,
-      ),
-    );
-
-    _saveCurrentState();
   }
 
   Future<void> _onPauseAudioRequested(
     PauseAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await playbackService.pause();
+    await _pauseAudioUseCase();
     _stopPositionSaveTimer();
 
     if (state is AudioPlayerActiveState) {
@@ -140,7 +159,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ResumeAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await playbackService.resume();
+    await _resumeAudioUseCase();
     _startPositionSaveTimer();
 
     if (state is AudioPlayerActiveState) {
@@ -164,11 +183,10 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     StopAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await playbackService.stop();
+    await _stopAudioUseCase();
     _stopPositionSaveTimer();
     _queue.clear();
     _currentIndex = 0;
-    await playbackStatePersistence.clearPlaybackState();
     emit(const AudioPlayerIdle());
   }
 
@@ -189,43 +207,49 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     PlayPlaylistRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    _queue = event.playlist.trackIds;
-    _currentIndex = event.startIndex;
     _currentPlaylist = event.playlist;
-    _generateShuffledQueue();
 
-    final trackId = _queue[_currentIndex];
-    final track = await _getAudioTrackById(trackId);
-    final collaborator = await _getCollaboratorForTrack(track);
-
-    emit(
-      AudioPlayerLoading(
-        const PlaybackSource(type: PlaybackSourceType.track),
-        PlayerVisualContext.miniPlayer,
-        track,
-        collaborator,
-        _queue,
-        _currentIndex,
-        _repeatMode,
-        _queueMode,
-      ),
+    final result = await _playPlaylistUseCase(
+      playlist: event.playlist,
+      startIndex: event.startIndex,
+      queueMode: _queueMode,
     );
 
-    final pathResult = await audioSourceResolver.resolveAudioSource(track.url);
-    final path = pathResult.getOrElse(() => track.url);
-    await playbackService.play(url: path);
+    result.fold(
+      (failure) {
+        // Handle error - could emit error state
+      },
+      (playlistResult) {
+        _queue = playlistResult.queue;
+        _currentIndex = playlistResult.currentIndex;
+        _shuffledQueue = playlistResult.shuffledQueue;
 
-    emit(
-      AudioPlayerPlaying(
-        const PlaybackSource(type: PlaybackSourceType.track),
-        PlayerVisualContext.miniPlayer,
-        track,
-        collaborator,
-        _queue,
-        _currentIndex,
-        _repeatMode,
-        _queueMode,
-      ),
+        emit(
+          AudioPlayerLoading(
+            const PlaybackSource(type: PlaybackSourceType.track),
+            PlayerVisualContext.miniPlayer,
+            playlistResult.track,
+            playlistResult.collaborator,
+            _queue,
+            _currentIndex,
+            _repeatMode,
+            _queueMode,
+          ),
+        );
+
+        emit(
+          AudioPlayerPlaying(
+            const PlaybackSource(type: PlaybackSourceType.track),
+            PlayerVisualContext.miniPlayer,
+            playlistResult.track,
+            playlistResult.collaborator,
+            _queue,
+            _currentIndex,
+            _repeatMode,
+            _queueMode,
+          ),
+        );
+      },
     );
   }
 
@@ -236,10 +260,25 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     if (_queue.isEmpty) return;
 
-    final nextIndex = _getNextTrackIndex();
-    if (nextIndex == -1) return; // No next track available
+    final result = await _skipToNextUseCase(
+      queue: _queue,
+      shuffledQueue: _shuffledQueue,
+      currentIndex: _currentIndex,
+      repeatMode: _repeatMode,
+      queueMode: _queueMode,
+    );
 
-    await _playTrackAtIndex(nextIndex, emit);
+    result.fold(
+      (failure) {
+        // Handle error
+      },
+      (skipResult) {
+        if (skipResult != null) {
+          _currentIndex = skipResult.newIndex;
+          _emitPlayingState(emit, skipResult.track, skipResult.collaborator);
+        }
+      },
+    );
   }
 
   Future<void> _onSkipToPreviousRequested(
@@ -248,24 +287,38 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     if (_queue.isEmpty) return;
 
-    final previousIndex = _getPreviousTrackIndex();
-    if (previousIndex == -1) return; // No previous track available
+    final result = await _skipToPreviousUseCase(
+      queue: _queue,
+      shuffledQueue: _shuffledQueue,
+      currentIndex: _currentIndex,
+      repeatMode: _repeatMode,
+      queueMode: _queueMode,
+    );
 
-    await _playTrackAtIndex(previousIndex, emit);
+    result.fold(
+      (failure) {
+        // Handle error
+      },
+      (skipResult) {
+        if (skipResult != null) {
+          _currentIndex = skipResult.newIndex;
+          _emitPlayingState(emit, skipResult.track, skipResult.collaborator);
+        }
+      },
+    );
   }
 
   void _onToggleShuffleRequested(
     ToggleShuffleRequested event,
     Emitter<AudioPlayerState> emit,
   ) {
-    _queueMode =
-        _queueMode == PlaybackQueueMode.normal
-            ? PlaybackQueueMode.shuffle
-            : PlaybackQueueMode.normal;
+    final result = _toggleShuffleUseCase(
+      currentMode: _queueMode,
+      queue: _queue,
+    );
 
-    if (_queueMode == PlaybackQueueMode.shuffle) {
-      _generateShuffledQueue();
-    }
+    _queueMode = result.newMode;
+    _shuffledQueue = result.shuffledQueue;
 
     _emitCurrentStateWithUpdatedMode(emit);
   }
@@ -274,18 +327,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ToggleRepeatModeRequested event,
     Emitter<AudioPlayerState> emit,
   ) {
-    switch (_repeatMode) {
-      case RepeatMode.none:
-        _repeatMode = RepeatMode.single;
-        break;
-      case RepeatMode.single:
-        _repeatMode = RepeatMode.queue;
-        break;
-      case RepeatMode.queue:
-        _repeatMode = RepeatMode.none;
-        break;
-    }
-
+    _repeatMode = _toggleRepeatModeUseCase(_repeatMode);
     _emitCurrentStateWithUpdatedMode(emit);
   }
 
@@ -293,124 +335,44 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SeekToPositionRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await playbackService.seek(event.position);
+    await _seekToPositionUseCase(event.position);
   }
 
   // Helper methods
-  Future<AudioTrack> _getAudioTrackById(String id) async {
-    final result = await audioTrackRepository.getTrackById(
-      AudioTrackId.fromUniqueString(id),
-    );
-    return result.fold(
-      (failure) => throw Exception('Failed to get track: $failure'),
-      (track) => track,
-    );
-  }
-
-  Future<UserProfile> _getCollaboratorForTrack(AudioTrack track) async {
-    final result = await userProfileRepository.getUserProfilesByIds([
-      track.uploadedBy.value,
-    ]);
-    return result.fold(
-      (failure) => throw Exception('Failed to get collaborator: $failure'),
-      (profiles) =>
-          profiles.isNotEmpty
-              ? profiles.first
-              : throw Exception('Collaborator not found'),
-    );
-  }
-
-  void _generateShuffledQueue() {
-    if (_queue.isEmpty) return;
-
-    _shuffledQueue = List.from(_queue);
-    _shuffledQueue.shuffle(Random());
+  void _emitPlayingState(
+    Emitter<AudioPlayerState> emit,
+    AudioTrack track,
+    UserProfile collaborator,
+  ) {
+    if (state is AudioPlayerActiveState) {
+      final currentState = state as AudioPlayerActiveState;
+      emit(
+        AudioPlayerPlaying(
+          currentState.source,
+          currentState.visualContext,
+          track,
+          collaborator,
+          _queue,
+          _currentIndex,
+          _repeatMode,
+          _queueMode,
+        ),
+      );
+    }
   }
 
   List<String> get _currentQueue =>
       _queueMode == PlaybackQueueMode.shuffle ? _shuffledQueue : _queue;
 
-  int _getNextTrackIndex() {
-    if (_repeatMode == RepeatMode.single) {
-      return _currentIndex; // Same track
-    }
-
-    final queue = _currentQueue;
-    final nextIndex = _currentIndex + 1;
-
-    if (nextIndex < queue.length) {
-      return nextIndex;
-    } else if (_repeatMode == RepeatMode.queue) {
-      return 0; // Loop back to start
-    }
-
-    return -1; // End of queue, no repeat
+  bool get hasNext {
+    if (_repeatMode == RepeatMode.single) return true;
+    if (_currentIndex + 1 < _currentQueue.length) return true;
+    return _repeatMode == RepeatMode.queue;
   }
 
-  int _getPreviousTrackIndex() {
-    final queue = _currentQueue;
-    final previousIndex = _currentIndex - 1;
-
-    if (previousIndex >= 0) {
-      return previousIndex;
-    } else if (_repeatMode == RepeatMode.queue) {
-      return queue.length - 1; // Loop to end
-    }
-
-    return -1; // Beginning of queue
-  }
-
-  Future<void> _playTrackAtIndex(
-    int index,
-    Emitter<AudioPlayerState> emit,
-  ) async {
-    if (index < 0 || index >= _currentQueue.length) return;
-
-    _currentIndex = index;
-    final trackId = _currentQueue[index];
-
-    try {
-      final track = await _getAudioTrackById(trackId);
-      final collaborator = await _getCollaboratorForTrack(track);
-
-      if (state is AudioPlayerActiveState) {
-        final currentState = state as AudioPlayerActiveState;
-
-        emit(
-          AudioPlayerLoading(
-            currentState.source,
-            currentState.visualContext,
-            track,
-            collaborator,
-            _queue,
-            _currentIndex,
-            _repeatMode,
-            _queueMode,
-          ),
-        );
-
-        final pathResult = await audioSourceResolver.resolveAudioSource(
-          track.url,
-        );
-        final path = pathResult.getOrElse(() => track.url);
-        await playbackService.play(url: path);
-
-        emit(
-          AudioPlayerPlaying(
-            currentState.source,
-            currentState.visualContext,
-            track,
-            collaborator,
-            _queue,
-            _currentIndex,
-            _repeatMode,
-            _queueMode,
-          ),
-        );
-      }
-    } catch (e) {
-      // Handle error - could emit error state or skip to next track
-    }
+  bool get hasPrevious {
+    if (_currentIndex > 0) return true;
+    return _repeatMode == RepeatMode.queue;
   }
 
   void _emitCurrentStateWithUpdatedMode(Emitter<AudioPlayerState> emit) {
@@ -433,46 +395,30 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     RestorePlaybackStateRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await playbackStatePersistence.restorePlaybackState();
+    final result = await _restorePlaybackStateUseCase();
     result.fold(
       (failure) => null, // Ignore restore failures
-      (persistedState) async {
-        if (persistedState != null && persistedState.queue.isNotEmpty) {
-          _queue = persistedState.queue;
-          _currentIndex = persistedState.currentIndex;
-          _repeatMode = persistedState.repeatMode;
-          _queueMode = persistedState.queueMode;
-          _generateShuffledQueue();
+      (restoreResult) {
+        if (restoreResult != null) {
+          _queue = restoreResult.queue;
+          _currentIndex = restoreResult.currentIndex;
+          _repeatMode = restoreResult.repeatMode;
+          _queueMode = restoreResult.queueMode;
+          _shuffledQueue = restoreResult.shuffledQueue;
 
-          if (persistedState.currentTrackId != null) {
-            try {
-              final track = await _getAudioTrackById(
-                persistedState.currentTrackId!,
-              );
-              final collaborator = await _getCollaboratorForTrack(track);
-
-              // Don't auto-play, just restore to paused state with position
-              emit(
-                AudioPlayerPaused(
-                  const PlaybackSource(type: PlaybackSourceType.track),
-                  PlayerVisualContext.miniPlayer,
-                  track,
-                  collaborator,
-                  _queue,
-                  _currentIndex,
-                  _repeatMode,
-                  _queueMode,
-                ),
-              );
-
-              // Optionally seek to last position when user resumes
-              if (persistedState.lastPosition > Duration.zero) {
-                await playbackService.seek(persistedState.lastPosition);
-              }
-            } catch (e) {
-              // Handle error - track might not exist anymore
-            }
-          }
+          // Don't auto-play, just restore to paused state
+          emit(
+            AudioPlayerPaused(
+              const PlaybackSource(type: PlaybackSourceType.track),
+              PlayerVisualContext.miniPlayer,
+              restoreResult.track,
+              restoreResult.collaborator,
+              _queue,
+              _currentIndex,
+              _repeatMode,
+              _queueMode,
+            ),
+          );
         }
       },
     );
@@ -488,19 +434,15 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   Future<void> _saveCurrentState() async {
     if (state is AudioPlayerActiveState) {
       final currentState = state as AudioPlayerActiveState;
-      final persistedState = PersistedPlaybackState(
-        currentTrackId: currentState.track.id.value,
+      await _savePlaybackStateUseCase(
+        currentTrack: currentState.track,
         queue: _queue,
         currentIndex: _currentIndex,
         repeatMode: _repeatMode,
         queueMode: _queueMode,
-        lastPosition: Duration.zero, // Could get from position stream
-        playlistId: _currentPlaylist?.id,
-        wasPlaying: state is AudioPlayerPlaying,
-        lastUpdated: DateTime.now(),
+        isPlaying: state is AudioPlayerPlaying,
+        currentPlaylist: _currentPlaylist,
       );
-
-      await playbackStatePersistence.savePlaybackState(persistedState);
     }
   }
 
@@ -513,7 +455,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
           final position = await positionStream.first.timeout(
             const Duration(milliseconds: 100),
           );
-          await playbackStatePersistence.savePosition(position);
+          await _savePlaybackStateUseCase.savePosition(position);
         } catch (e) {
           // Ignore position save errors
         }
@@ -541,8 +483,6 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   int get currentIndex => _currentIndex;
   RepeatMode get repeatMode => _repeatMode;
   PlaybackQueueMode get queueMode => _queueMode;
-  bool get hasNext => _getNextTrackIndex() != -1;
-  bool get hasPrevious => _getPreviousTrackIndex() != -1;
 }
 
 Duration getCurrentPosition(AudioPlayerBloc bloc) {
