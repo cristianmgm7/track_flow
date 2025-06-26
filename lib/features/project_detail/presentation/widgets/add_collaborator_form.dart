@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class AddCollaboratorForm extends StatefulWidget {

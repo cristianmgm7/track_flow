@@ -123,10 +123,10 @@ import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_lin
     as _i31;
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart'
     as _i87;
-import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_remote_datasource.dart'
-    as _i51;
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_local_datasource.dart'
     as _i50;
+import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_remote_datasource.dart'
+    as _i51;
 import 'package:trackflow/features/manage_collaborators/data/repositories/manage_collaborators_repository_impl.dart'
     as _i53;
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart'
