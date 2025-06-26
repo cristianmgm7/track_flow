@@ -6,6 +6,10 @@ enum PlayerVisualContext { miniPlayer, commentPlayer }
 
 enum PlaybackSourceType { track, comment }
 
+enum RepeatMode { none, single, queue }
+
+enum PlaybackQueueMode { normal, shuffle }
+
 class PlaybackSource {
   final PlaybackSourceType type;
 
@@ -28,22 +32,43 @@ abstract class AudioPlayerActiveState extends AudioPlayerState {
   final PlaybackSource source;
   final AudioTrack track;
   final UserProfile collaborator;
+  final List<String> queue;
+  final int currentIndex;
+  final RepeatMode repeatMode;
+  final PlaybackQueueMode queueMode;
 
   const AudioPlayerActiveState(
     this.source,
     PlayerVisualContext visualContext,
     this.track,
     this.collaborator,
+    this.queue,
+    this.currentIndex,
+    this.repeatMode,
+    this.queueMode,
   ) : super(visualContext);
 
   @override
-  List<Object?> get props => [source, visualContext, track, collaborator];
+  List<Object?> get props => [
+        source,
+        visualContext,
+        track,
+        collaborator,
+        queue,
+        currentIndex,
+        repeatMode,
+        queueMode,
+      ];
 
   AudioPlayerActiveState copyWith({
     PlaybackSource? source,
     PlayerVisualContext? visualContext,
     AudioTrack? track,
     UserProfile? collaborator,
+    List<String>? queue,
+    int? currentIndex,
+    RepeatMode? repeatMode,
+    PlaybackQueueMode? queueMode,
   });
 }
 
@@ -53,6 +78,10 @@ class AudioPlayerPlaying extends AudioPlayerActiveState {
     super.visualContext,
     super.track,
     super.collaborator,
+    super.queue,
+    super.currentIndex,
+    super.repeatMode,
+    super.queueMode,
   );
 
   @override
@@ -61,12 +90,20 @@ class AudioPlayerPlaying extends AudioPlayerActiveState {
     PlayerVisualContext? visualContext,
     AudioTrack? track,
     UserProfile? collaborator,
+    List<String>? queue,
+    int? currentIndex,
+    RepeatMode? repeatMode,
+    PlaybackQueueMode? queueMode,
   }) {
     return AudioPlayerPlaying(
       source ?? this.source,
       visualContext ?? this.visualContext,
       track ?? this.track,
       collaborator ?? this.collaborator,
+      queue ?? this.queue,
+      currentIndex ?? this.currentIndex,
+      repeatMode ?? this.repeatMode,
+      queueMode ?? this.queueMode,
     );
   }
 }
@@ -77,6 +114,10 @@ class AudioPlayerPaused extends AudioPlayerActiveState {
     super.visualContext,
     super.track,
     super.collaborator,
+    super.queue,
+    super.currentIndex,
+    super.repeatMode,
+    super.queueMode,
   );
 
   @override
@@ -85,12 +126,20 @@ class AudioPlayerPaused extends AudioPlayerActiveState {
     PlayerVisualContext? visualContext,
     AudioTrack? track,
     UserProfile? collaborator,
+    List<String>? queue,
+    int? currentIndex,
+    RepeatMode? repeatMode,
+    PlaybackQueueMode? queueMode,
   }) {
     return AudioPlayerPaused(
       source ?? this.source,
       visualContext ?? this.visualContext,
       track ?? this.track,
       collaborator ?? this.collaborator,
+      queue ?? this.queue,
+      currentIndex ?? this.currentIndex,
+      repeatMode ?? this.repeatMode,
+      queueMode ?? this.queueMode,
     );
   }
 }
@@ -101,6 +150,10 @@ class AudioPlayerLoading extends AudioPlayerActiveState {
     super.visualContext,
     super.track,
     super.collaborator,
+    super.queue,
+    super.currentIndex,
+    super.repeatMode,
+    super.queueMode,
   );
 
   @override
@@ -109,12 +162,20 @@ class AudioPlayerLoading extends AudioPlayerActiveState {
     PlayerVisualContext? visualContext,
     AudioTrack? track,
     UserProfile? collaborator,
+    List<String>? queue,
+    int? currentIndex,
+    RepeatMode? repeatMode,
+    PlaybackQueueMode? queueMode,
   }) {
     return AudioPlayerLoading(
       source ?? this.source,
       visualContext ?? this.visualContext,
       track ?? this.track,
       collaborator ?? this.collaborator,
+      queue ?? this.queue,
+      currentIndex ?? this.currentIndex,
+      repeatMode ?? this.repeatMode,
+      queueMode ?? this.queueMode,
     );
   }
 }

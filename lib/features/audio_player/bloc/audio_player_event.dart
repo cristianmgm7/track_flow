@@ -36,3 +36,20 @@ class PlayPlaylistRequested extends AudioPlayerEvent {
   final int startIndex;
   PlayPlaylistRequested(this.playlist, {this.startIndex = 0});
 }
+
+class SkipToNextRequested extends AudioPlayerEvent {}
+
+class SkipToPreviousRequested extends AudioPlayerEvent {}
+
+class ToggleShuffleRequested extends AudioPlayerEvent {}
+
+class ToggleRepeatModeRequested extends AudioPlayerEvent {}
+
+class SeekToPositionRequested extends AudioPlayerEvent {
+  final Duration position;
+  SeekToPositionRequested(this.position);
+}
+
+class RestorePlaybackStateRequested extends AudioPlayerEvent {}
+
+class SavePlaybackStateRequested extends AudioPlayerEvent {}
