@@ -7,6 +7,7 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:just_audio/just_audio.dart';
 
 class UploadTrackForm extends StatefulWidget {
   final Project project;
@@ -31,16 +32,29 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
     }
   }
 
-  void _submit() {
+  Future<Duration> _getAudioDuration(File file) async {
+    final player = AudioPlayer();
+    try {
+      await player.setFilePath(file.path);
+      return player.duration ?? Duration.zero;
+    } finally {
+      await player.dispose();
+    }
+  }
+
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       final filePath = _file?.path;
       if (filePath != null) {
+        final file = File(filePath);
+        final duration = await _getAudioDuration(file);
+
         context.read<AudioTrackBloc>().add(
           UploadAudioTrackEvent(
             name: _trackTitle!,
-            file: File(filePath),
-            duration: const Duration(seconds: 0),
+            file: file,
+            duration: duration,
             projectId: widget.project.id,
           ),
         );

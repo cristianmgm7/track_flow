@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_cubit.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
@@ -57,7 +54,10 @@ class PlaylistWidget extends StatelessWidget {
                     state is AudioPlayerActiveState &&
                     state.track.id == track.id;
                 return Container(
-                  color: isCurrent ? Colors.blue.withOpacity(0.08) : null,
+                  color:
+                      isCurrent
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : null,
                   child: TrackComponent(
                     track: track,
                     uploader: uploader,

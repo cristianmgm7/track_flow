@@ -5,7 +5,6 @@ import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_shee
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -99,8 +98,8 @@ class _TrackComponentState extends State<TrackComponent> {
           child: Card(
             color:
                 isCurrent
-                    ? AppColors.surface.withOpacity(0.95)
-                    : AppColors.surface,
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surface,
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(Dimensions.space4),

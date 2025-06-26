@@ -76,12 +76,10 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     List<String> projectIds,
   ) async {
     if (projectIds.isEmpty) {
-      debugPrint('getTracksByProjectIds: Received empty projectIds list.');
+      // Received empty projectIds list
       return [];
     }
-    debugPrint(
-      'getTracksByProjectIds: Fetching tracks for projects: $projectIds',
-    );
+    // Fetching tracks for projects: $projectIds
 
     try {
       final List<AudioTrackDTO> allTracks = [];
@@ -109,12 +107,10 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
         allTracks.addAll(tracks);
       }
 
-      debugPrint(
-        'getTracksByProjectIds: Total tracks found: ${allTracks.length}',
-      );
+      // Total tracks found: ${allTracks.length}
       return allTracks;
     } catch (e) {
-      debugPrint('Error getting tracks by project ids: $e');
+      // Error getting tracks by project ids: $e
       return [];
     }
   }

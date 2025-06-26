@@ -108,7 +108,7 @@ class Project extends AggregateRoot<ProjectId> {
 
   Project removeCollaborator(UserId userId) {
     if (userId == ownerId) {
-      throw Exception('No se puede eliminar al owner del proyecto');
+      throw Exception('Cannot remove the project owner');
     }
     if (!collaborators.any((collaborator) => collaborator.userId == userId)) {
       throw CollaboratorNotFoundException();

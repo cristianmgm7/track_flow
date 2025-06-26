@@ -10,8 +10,8 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_pr
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'manage_collabolators_event.dart';
-import 'manage_collabolators_state.dart';
+import 'manage_collaborators_event.dart';
+import 'manage_collaborators_state.dart';
 import 'package:trackflow/features/manage_collaborators/domain/services/add_collaborator_and_sync_profile_service.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 

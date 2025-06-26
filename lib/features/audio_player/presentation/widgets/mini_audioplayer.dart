@@ -4,11 +4,16 @@ import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
 
-class MiniAudioPlayer extends StatelessWidget {
+class MiniAudioPlayer extends StatefulWidget {
   final VoidCallback onExpand;
 
   const MiniAudioPlayer({super.key, required this.onExpand});
 
+  @override
+  State<MiniAudioPlayer> createState() => _MiniAudioPlayerState();
+}
+
+class _MiniAudioPlayerState extends State<MiniAudioPlayer> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
@@ -18,16 +23,16 @@ class MiniAudioPlayer extends StatelessWidget {
         final collaborator = state.collaborator;
         final isPlaying = state is AudioPlayerPlaying;
         final isLoading = state is AudioPlayerLoading;
-        final player = context.read<AudioPlayerBloc>().player;
+        final bloc = context.read<AudioPlayerBloc>();
 
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             GestureDetector(
-              onTap: onExpand,
+              onTap: widget.onExpand,
               onVerticalDragUpdate: (details) {
                 if (details.primaryDelta! < -10) {
-                  onExpand();
+                  widget.onExpand();
                 }
               },
               child: Container(
@@ -131,20 +136,27 @@ class MiniAudioPlayer extends StatelessWidget {
               ),
             ),
             // Barra de progreso delgada
-            StreamBuilder<Duration>(
-              stream: player.positionStream,
-              builder: (context, snapshot) {
-                final position = snapshot.data ?? Duration.zero;
-                final duration = player.duration ?? Duration.zero;
-                final progress =
-                    (duration.inMilliseconds > 0)
-                        ? position.inMilliseconds / duration.inMilliseconds
-                        : 0.0;
-                return LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 2,
-                  backgroundColor: Colors.grey[800],
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+            StreamBuilder<Duration?>(
+              stream: bloc.durationStream,
+              builder: (context, durationSnapshot) {
+                final duration = durationSnapshot.data ?? Duration.zero;
+                return StreamBuilder<Duration>(
+                  stream: bloc.positionStream,
+                  builder: (context, snapshot) {
+                    final position = snapshot.data ?? Duration.zero;
+                    final progress =
+                        (duration.inMilliseconds > 0)
+                            ? position.inMilliseconds / duration.inMilliseconds
+                            : 0.0;
+                    return LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 2,
+                      backgroundColor: Colors.grey[800],
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.blueAccent,
+                      ),
+                    );
+                  },
                 );
               },
             ),

@@ -14,7 +14,7 @@ class ProAudioPlayer extends StatelessWidget {
       builder: (context, state) {
         if (state is! AudioPlayerActiveState) return const SizedBox.shrink();
         final isPlaying = state is AudioPlayerPlaying;
-        final player = context.read<AudioPlayerBloc>().player;
+        final player = context.read<AudioPlayerBloc>();
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -40,7 +40,7 @@ class ProAudioPlayer extends StatelessWidget {
               stream: player.positionStream,
               builder: (context, snapshot) {
                 final position = snapshot.data ?? Duration.zero;
-                final duration = player.duration ?? Duration.zero;
+                final duration = state.track.duration;
                 final progress =
                     (duration.inMilliseconds > 0)
                         ? position.inMilliseconds / duration.inMilliseconds

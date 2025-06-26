@@ -8,8 +8,8 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
-import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_player/bloc/audioplayer_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
@@ -22,7 +22,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
-    debugPrint('MyApp constructor called');
+    // App constructor called
   }
   @override
   Widget build(BuildContext context) {

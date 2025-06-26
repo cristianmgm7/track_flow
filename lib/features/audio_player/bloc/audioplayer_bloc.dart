@@ -1,15 +1,16 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/bloc/audio_player_state.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 
 @injectable
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
-  final AudioPlayer _player = AudioPlayer();
-  AudioPlayer get player => _player;
+  final PlaybackService playbackService;
+  final GetCachedAudioPath getCachedAudioPath;
 
   // Playback queue state
   List<String> _queue = [];
@@ -19,7 +20,8 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   // TODO: Inyección de repositorio de tracks para obtener AudioTrack por id
   // final AudioTrackRepository audioTrackRepository;
 
-  AudioPlayerBloc() : super(AudioPlayerIdle()) {
+  AudioPlayerBloc(this.playbackService, this.getCachedAudioPath)
+    : super(AudioPlayerIdle()) {
     on<PlayAudioRequested>(_onPlayAudioRequested);
     on<PauseAudioRequested>(_onPauseAudioRequested);
     on<ResumeAudioRequested>(_onResumeAudioRequested);
@@ -50,8 +52,8 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
         event.collaborator,
       ),
     );
-    await _player.setUrl(event.track.url);
-    await _player.play();
+    final path = await getCachedAudioPath(event.track.url);
+    await playbackService.play(url: path);
     emit(
       AudioPlayerPlaying(
         event.source,
@@ -66,7 +68,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     PauseAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await _player.pause();
+    await playbackService.pause();
     if (state is AudioPlayerActiveState) {
       final s = state as AudioPlayerActiveState;
       emit(
@@ -79,7 +81,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ResumeAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await _player.play();
+    await playbackService.resume();
     if (state is AudioPlayerActiveState) {
       final s = state as AudioPlayerActiveState;
       emit(
@@ -92,7 +94,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     StopAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    await _player.stop();
+    await playbackService.stop();
     emit(AudioPlayerIdle());
   }
 
@@ -134,8 +136,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
       ),
     );
 
-    await _player.setUrl(track.url);
-    await _player.play();
+    await playbackService.play(url: track.url);
 
     emit(
       AudioPlayerPlaying(
@@ -162,11 +163,17 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
   @override
   Future<void> close() {
-    _player.dispose();
+    playbackService.dispose();
     return super.close();
   }
+
+  Stream<Duration> get positionStream => playbackService.positionStream;
+  Stream<Duration?> get durationStream => playbackService.durationStream;
 }
 
 Duration getCurrentPosition(AudioPlayerBloc bloc) {
-  return bloc.player.position;
+  // Suponiendo que playbackService tiene un getter para la posición actual
+  // Aquí podrías suscribirte al stream o exponer un método en la interfaz
+  // Por ahora, retornamos Duration.zero como placeholder
+  return Duration.zero;
 }
