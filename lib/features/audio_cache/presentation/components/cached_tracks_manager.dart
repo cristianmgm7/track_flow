@@ -7,10 +7,10 @@ class CachedTracksManager extends StatefulWidget {
   final int maxVisibleItems;
 
   const CachedTracksManager({
-    Key? key,
+    super.key,
     this.showHeader = true,
     this.maxVisibleItems = 10,
-  }) : super(key: key);
+  });
 
   @override
   State<CachedTracksManager> createState() => _CachedTracksManagerState();
@@ -38,7 +38,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
       });
 
       final tracks = await _storageService.getCachedTracks();
-      
+
       if (mounted) {
         setState(() {
           _cachedTracks = tracks;
@@ -64,7 +64,9 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
         _cachedTracks.sort((a, b) => b.cachedAt.compareTo(a.cachedAt));
         break;
       case 'fileSize':
-        _cachedTracks.sort((a, b) => b.fileSizeBytes.compareTo(a.fileSizeBytes));
+        _cachedTracks.sort(
+          (a, b) => b.fileSizeBytes.compareTo(a.fileSizeBytes),
+        );
         break;
       case 'name':
         _cachedTracks.sort((a, b) => a.trackName.compareTo(b.trackName));
@@ -118,7 +120,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
       try {
         final trackUrls = _selectedTracks.map((t) => t.trackUrl).toList();
         await _storageService.removeCachedTracks(trackUrls);
-        
+
         _showSuccessSnackBar('${_selectedTracks.length} tracks removed');
         _exitSelectionMode();
         await _loadCachedTracks();
@@ -161,20 +163,21 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
   Future<bool> _showConfirmDialog(String title, String message) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Confirm'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
     );
     return result ?? false;
   }
@@ -182,7 +185,8 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '${bytes}B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    if (bytes < 1024 * 1024 * 1024)
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)}GB';
   }
 
@@ -209,9 +213,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -248,7 +250,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _isSelectionMode 
+                    _isSelectionMode
                         ? '${_selectedTracks.length} selected'
                         : 'Cached Tracks (${_cachedTracks.length})',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -283,24 +285,25 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
                           _sortTracks();
                         });
                       },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'lastAccessed',
-                          child: Text('Sort by Last Accessed'),
-                        ),
-                        const PopupMenuItem(
-                          value: 'cachedAt',
-                          child: Text('Sort by Cached Date'),
-                        ),
-                        const PopupMenuItem(
-                          value: 'fileSize',
-                          child: Text('Sort by File Size'),
-                        ),
-                        const PopupMenuItem(
-                          value: 'name',
-                          child: Text('Sort by Name'),
-                        ),
-                      ],
+                      itemBuilder:
+                          (context) => [
+                            const PopupMenuItem(
+                              value: 'lastAccessed',
+                              child: Text('Sort by Last Accessed'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'cachedAt',
+                              child: Text('Sort by Cached Date'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'fileSize',
+                              child: Text('Sort by File Size'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'name',
+                              child: Text('Sort by Name'),
+                            ),
+                          ],
                       child: const Icon(Icons.sort),
                     ),
                 ],
@@ -345,7 +348,9 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
                 child: Text(
                   '+ ${_cachedTracks.length - widget.maxVisibleItems} more tracks...',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                 ),
               ),
@@ -358,7 +363,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
 
   Widget _buildTrackItem(CachedTrackInfo track, ThemeData theme) {
     final isSelected = _selectedTracks.contains(track);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -367,20 +372,19 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
         border: isSelected ? Border.all(color: theme.primaryColor) : null,
       ),
       child: ListTile(
-        leading: _isSelectionMode
-            ? Checkbox(
-                value: isSelected,
-                onChanged: (_) => _toggleSelection(track),
-              )
-            : Icon(
-                track.isCorrupted ? Icons.error : Icons.music_note,
-                color: track.isCorrupted ? Colors.red : theme.primaryColor,
-              ),
+        leading:
+            _isSelectionMode
+                ? Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => _toggleSelection(track),
+                )
+                : Icon(
+                  track.isCorrupted ? Icons.error : Icons.music_note,
+                  color: track.isCorrupted ? Colors.red : theme.primaryColor,
+                ),
         title: Text(
           track.trackName,
-          style: TextStyle(
-            color: track.isCorrupted ? Colors.red : null,
-          ),
+          style: TextStyle(color: track.isCorrupted ? Colors.red : null),
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Column(
@@ -390,18 +394,15 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
             Text('Last accessed: ${_formatDateTime(track.lastAccessed)}'),
           ],
         ),
-        trailing: _isSelectionMode
-            ? null
-            : IconButton(
-                onPressed: () => _enterSelectionMode(track),
-                icon: const Icon(Icons.more_vert),
-              ),
-        onTap: _isSelectionMode
-            ? () => _toggleSelection(track)
-            : null,
-        onLongPress: _isSelectionMode
-            ? null
-            : () => _enterSelectionMode(track),
+        trailing:
+            _isSelectionMode
+                ? null
+                : IconButton(
+                  onPressed: () => _enterSelectionMode(track),
+                  icon: const Icon(Icons.more_vert),
+                ),
+        onTap: _isSelectionMode ? () => _toggleSelection(track) : null,
+        onLongPress: _isSelectionMode ? null : () => _enterSelectionMode(track),
       ),
     );
   }
