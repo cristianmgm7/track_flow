@@ -8,9 +8,9 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bl
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_cache/presentation/components/batch_download_button.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/enhanced_download_manager.dart';
-import 'package:trackflow/features/audio_cache/domain/services/storage_management_service.dart';
+import 'package:trackflow/features/audio_cache/presentation/widgets/playlist_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/presentation/widgets/smart_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class PlaylistWidget extends StatelessWidget {
@@ -92,45 +92,16 @@ class PlaylistWidget extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // Download controls
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.download),
-                  onSelected: (value) async {
-                    if (value == 'download_all') {
-                      await _downloadAllTracks(context);
-                    } else if (value == 'clear_cache') {
-                      await _clearPlaylistCache(context);
-                    }
-                  },
-                  itemBuilder:
-                      (context) => [
-                        const PopupMenuItem(
-                          value: 'download_all',
-                          child: ListTile(
-                            leading: Icon(Icons.download),
-                            title: Text('Download All'),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'clear_cache',
-                          child: ListTile(
-                            leading: Icon(Icons.clear),
-                            title: Text('Clear Cache'),
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                        ),
-                      ],
+                // Simplified cache control for playlist
+                BlocProvider(
+                  create: (context) => sl<AudioCacheBloc>(),
+                  child: PlaylistCacheIcon(
+                    tracks: tracks,
+                    playlistName: playlist.name,
+                    size: 28.0,
+                  ),
                 ),
               ],
-            ),
-            // Download button component
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: BatchDownloadButton(
-                tracks: tracks,
-                buttonText: 'Download Playlist',
-              ),
             ),
             if (isPlayingFromThisPlaylist)
               Padding(
@@ -161,10 +132,6 @@ class PlaylistWidget extends StatelessWidget {
                     final isCurrent =
                         state is AudioPlayerActiveState &&
                         state.track.id == track.id;
-                    // Show all tracks as part of the playlist queue
-                    final isInCurrentQueue =
-                        isPlayingFromThisPlaylist &&
-                        player.currentQueue.contains(track.id.value);
 
                     return Container(
                       decoration: BoxDecoration(
@@ -177,7 +144,7 @@ class PlaylistWidget extends StatelessWidget {
                                 ? Border.all(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.primary.withOpacity(0.3),
+                                  ).colorScheme.primary.withValues(alpha: 0.3),
                                   width: 1,
                                 )
                                 : null,
@@ -228,6 +195,35 @@ class PlaylistWidget extends StatelessWidget {
                               },
                             ),
                           ),
+                          // Add Smart Cache Icon for individual track
+                          BlocProvider(
+                            create: (context) => sl<AudioCacheBloc>(),
+                            child: SmartCacheIcon(
+                              trackId: track.id.value,
+                              trackUrl: track.url,
+                              trackName: track.name,
+                              size: 20.0,
+                              onSuccess: (message) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(message),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              onError: (message) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(message),
+                                    backgroundColor: Colors.red,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                         ],
                       ),
                     );
@@ -290,101 +286,4 @@ class PlaylistWidget extends StatelessWidget {
     }
   }
 
-  Future<void> _downloadAllTracks(BuildContext context) async {
-    try {
-      final downloadManager = sl<EnhancedDownloadManager>();
-      final requests =
-          tracks
-              .map(
-                (track) => DownloadTaskRequest(
-                  trackId: track.id.value,
-                  trackUrl: track.url,
-                  trackName: track.name,
-                  priority: DownloadPriority.normal,
-                ),
-              )
-              .toList();
-
-      final result = await downloadManager.downloadTracks(requests);
-
-      if (context.mounted) {
-        result.fold(
-          (failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Download failed: ${failure.message}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          },
-          (_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Started downloading ${tracks.length} tracks'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Download error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _clearPlaylistCache(BuildContext context) async {
-    try {
-      final storageService = sl<StorageManagementService>();
-      final trackUrls = tracks.map((track) => track.url).toList();
-
-      // Show confirmation dialog
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Clear Playlist Cache'),
-              content: Text(
-                'This will remove ${tracks.length} cached tracks from this playlist. Are you sure?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('Clear'),
-                ),
-              ],
-            ),
-      );
-
-      if (confirmed == true && context.mounted) {
-        await storageService.removeCachedTracks(trackUrls);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Playlist cache cleared successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Clear cache error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
 }

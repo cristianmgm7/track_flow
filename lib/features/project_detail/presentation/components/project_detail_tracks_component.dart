@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
-import 'package:trackflow/features/audio_cache/presentation/components/batch_download_button.dart';
 
 class ProjectDetailTracksComponent extends StatelessWidget {
   final ProjectDetailState state;
@@ -40,16 +39,6 @@ class ProjectDetailTracksComponent extends StatelessWidget {
                 ],
               ],
             ),
-            if (state.tracks.isNotEmpty) ...[
-              const SizedBox(height: Dimensions.space8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: BatchDownloadButton(
-                  tracks: state.tracks,
-                  buttonText: 'Download All Tracks',
-                ),
-              ),
-            ],
             if (state.tracksError != null) ...[
               Text(
                 'Error loading tracks: ${state.tracksError}',

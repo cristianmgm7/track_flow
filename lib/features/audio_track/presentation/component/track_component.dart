@@ -6,14 +6,12 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_e
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_cubit.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_state.dart';
-import 'package:trackflow/features/audio_cache/presentation/components/download_button.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/presentation/widgets/smart_cache_icon.dart';
 import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart';
 
 class TrackComponent extends StatefulWidget {
@@ -37,21 +35,6 @@ class TrackComponent extends StatefulWidget {
 }
 
 class _TrackComponentState extends State<TrackComponent> {
-  late final AudioCacheCubit _cacheCubit;
-
-  @override
-  void initState() {
-    super.initState();
-    _cacheCubit = AudioCacheCubit(sl<GetCachedAudioPath>());
-    _cacheCubit.checkStatus(widget.track.url);
-  }
-
-  @override
-  void dispose() {
-    _cacheCubit.close();
-    super.dispose();
-  }
-
   String _formatDuration(Duration d) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(d.inMinutes.remainder(60));
@@ -94,9 +77,7 @@ class _TrackComponentState extends State<TrackComponent> {
             playerState is AudioPlayerActiveState &&
             playerState.track.id == widget.track.id;
         final isPlaying = isCurrent && playerState is AudioPlayerPlaying;
-        return BlocProvider<AudioCacheCubit>.value(
-          value: _cacheCubit,
-          child: Card(
+        return Card(
             color:
                 isCurrent
                     ? Theme.of(context).colorScheme.primaryContainer
@@ -111,47 +92,41 @@ class _TrackComponentState extends State<TrackComponent> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Play/Pause button
-                  BlocBuilder<AudioCacheCubit, AudioCacheState>(
-                    builder: (context, state) {
-                      final canPlay = widget.uploader != null;
-                      return Material(
-                        color: canPlay ? Colors.blueAccent : Colors.grey,
-                        borderRadius: BorderRadius.circular(8),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: canPlay ? () => _playTrack(context) : null,
-                          child: Container(
-                            width: 44,
-                            height: 44,
-                            alignment: Alignment.center,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child:
-                                  isCurrent
-                                      ? (isPlaying
-                                          ? const Icon(
-                                            Icons.pause,
-                                            color: Colors.white,
-                                            size: 28,
-                                            key: ValueKey('pause'),
-                                          )
-                                          : const Icon(
-                                            Icons.play_arrow,
-                                            color: Colors.white,
-                                            size: 28,
-                                            key: ValueKey('play'),
-                                          ))
-                                      : const Icon(
-                                        Icons.play_arrow,
-                                        color: Colors.white,
-                                        size: 28,
-                                        key: ValueKey('play'),
-                                      ),
-                            ),
-                          ),
+                  Material(
+                    color: widget.uploader != null ? Colors.blueAccent : Colors.grey,
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: widget.uploader != null ? () => _playTrack(context) : null,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: isCurrent
+                              ? (isPlaying
+                                  ? const Icon(
+                                      Icons.pause,
+                                      color: Colors.white,
+                                      size: 28,
+                                      key: ValueKey('pause'),
+                                    )
+                                  : const Icon(
+                                      Icons.play_arrow,
+                                      color: Colors.white,
+                                      size: 28,
+                                      key: ValueKey('play'),
+                                    ))
+                              : const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 28,
+                                  key: ValueKey('play'),
+                                ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   // Info principal (nombre y debajo: icono + colaborador)
@@ -196,13 +171,33 @@ class _TrackComponentState extends State<TrackComponent> {
                     style: TextStyle(color: Colors.grey[700], fontSize: 13),
                   ),
                   const SizedBox(width: 8),
-                  // Download button
-                  DownloadButton(
-                    trackId: widget.track.id.value,
-                    trackUrl: widget.track.url,
-                    trackName: widget.track.name,
-                    size: 20,
-                    color: Colors.blueAccent,
+                  // Smart Cache Icon with BLoC provider
+                  BlocProvider(
+                    create: (context) => sl<AudioCacheBloc>(),
+                    child: SmartCacheIcon(
+                      trackId: widget.track.id.value,
+                      trackUrl: widget.track.url,
+                      trackName: widget.track.name,
+                      size: 20.0,
+                      onSuccess: (message) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                            backgroundColor: Colors.green,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      onError: (message) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
