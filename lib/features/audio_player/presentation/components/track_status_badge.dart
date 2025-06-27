@@ -4,7 +4,8 @@ import 'package:trackflow/features/audio_player/domain/models/audio_source_enum.
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/enhanced_download_manager.dart';
+import 'package:trackflow/features/audio_cache/domain/services/download_management_service.dart';
+import 'package:provider/provider.dart';
 
 class TrackStatusBadge extends StatefulWidget {
   final String trackUrl;
@@ -47,7 +48,7 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
 
   void _checkDownloadStatus() {
     try {
-      final downloadManager = context.read<EnhancedDownloadManager>();
+      final downloadManager = Provider.of<DownloadManagementService>(context, listen: false);
       final status = downloadManager.getDownloadStatus(widget.trackId);
       if (mounted) {
         setState(() {
@@ -194,9 +195,9 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
       width: widget.size + 4,
       height: widget.size + 4,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(widget.size / 2 + 2),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Center(child: iconWidget),
     );

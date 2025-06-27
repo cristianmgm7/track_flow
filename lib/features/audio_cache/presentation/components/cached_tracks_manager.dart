@@ -312,9 +312,9 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -345,7 +345,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
                 child: Text(
                   '+ ${_cachedTracks.length - widget.maxVisibleItems} more tracks...',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -362,7 +362,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isSelected ? theme.primaryColor.withOpacity(0.1) : null,
+        color: isSelected ? theme.primaryColor.withValues(alpha: 0.1) : null,
         borderRadius: BorderRadius.circular(8),
         border: isSelected ? Border.all(color: theme.primaryColor) : null,
       ),

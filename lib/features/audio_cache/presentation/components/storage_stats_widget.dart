@@ -254,7 +254,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
                   value: stats.cacheUsagePercentage,
-                  backgroundColor: theme.primaryColor.withOpacity(0.2),
+                  backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     stats.isLowOnSpace ? Colors.red : theme.primaryColor,
                   ),
@@ -263,7 +263,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
                 Text(
                   '${(stats.cacheUsagePercentage * 100).toStringAsFixed(1)}% used',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -299,9 +299,9 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -350,7 +350,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.primaryColor.withOpacity(0.1),
+        color: theme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(

@@ -188,9 +188,9 @@ class _DownloadQueueWidgetState extends State<DownloadQueueWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         '$label: $count',
@@ -220,14 +220,14 @@ class _DownloadQueueWidgetState extends State<DownloadQueueWidget> {
         const SizedBox(height: 4),
         LinearProgressIndicator(
           value: progress,
-          backgroundColor: theme.primaryColor.withOpacity(0.2),
+          backgroundColor: theme.primaryColor.withValues(alpha: 0.2),
           valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
         ),
         const SizedBox(height: 4),
         Text(
           '${_queueInfo.completedCount} of ${_queueInfo.totalTasks} completed',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+            color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -267,7 +267,7 @@ class _DownloadQueueWidgetState extends State<DownloadQueueWidget> {
             child: Text(
               '+ ${_downloadStatuses.length - widget.maxVisibleItems} more...',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
               ),
             ),
           ),
