@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:dio/dio.dart';
 import 'package:crypto/crypto.dart';
 
 import '../../domain/entities/cached_audio.dart';
@@ -15,14 +14,13 @@ import '../datasources/cache_storage_local_data_source.dart';
 @LazySingleton(as: CacheStorageRepository)
 class CacheStorageRepositoryImpl implements CacheStorageRepository {
   final CacheStorageLocalDataSource _localDataSource;
-  final Dio _dio;
+  final HttpClient _httpClient;
   static const String _cacheSubDirectory = 'audio_cache';
 
   CacheStorageRepositoryImpl({
     required CacheStorageLocalDataSource localDataSource,
-    required Dio dio,
   }) : _localDataSource = localDataSource,
-       _dio = dio;
+       _httpClient = HttpClient();
 
   @override
   Future<Either<CacheFailure, CachedAudio>> downloadAndStoreAudio(
@@ -42,24 +40,34 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
             DownloadProgress.queued(trackId),
           );
 
-          final response = await _dio.download(
-            audioUrl,
-            filePath,
-            onReceiveProgress: (received, total) {
-              if (total > 0) {
-                final progress = DownloadProgress(
-                  trackId: trackId,
-                  state: DownloadState.downloading,
-                  downloadedBytes: received,
-                  totalBytes: total,
-                );
-                progressCallback?.call(progress);
-              }
-            },
-          );
+          // Download using HttpClient
+          final uri = Uri.parse(audioUrl);
+          final request = await _httpClient.getUrl(uri);
+          final response = await request.close();
 
           if (response.statusCode == 200) {
             final file = File(filePath);
+            final sink = file.openWrite();
+            
+            int downloadedBytes = 0;
+            final contentLength = response.contentLength;
+            
+            await for (final chunk in response) {
+              sink.add(chunk);
+              downloadedBytes += chunk.length;
+              
+              if (contentLength > 0) {
+                final progress = DownloadProgress(
+                  trackId: trackId,
+                  state: DownloadState.downloading,
+                  downloadedBytes: downloadedBytes,
+                  totalBytes: contentLength,
+                );
+                progressCallback?.call(progress);
+              }
+            }
+            
+            await sink.close();
             final fileSize = await file.length();
             final bytes = await file.readAsBytes();
             final checksum = sha1.convert(bytes).toString();
