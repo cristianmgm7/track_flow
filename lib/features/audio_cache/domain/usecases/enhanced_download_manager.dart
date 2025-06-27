@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_cache_repository.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path_usecase.dart';
 
 /// Enhanced download manager that builds on top of the existing audio cache system
 /// Adds batch downloads, queue management, and progress tracking
@@ -13,10 +13,11 @@ class EnhancedDownloadManager {
   final GetCachedAudioPath getCachedAudioPath;
 
   final Map<String, DownloadStatus> _downloadStatuses = {};
-  final Map<String, StreamController<DownloadProgressInfo>> _progressControllers = {};
-  final StreamController<Map<String, DownloadStatus>> _statusController = 
+  final Map<String, StreamController<DownloadProgressInfo>>
+  _progressControllers = {};
+  final StreamController<Map<String, DownloadStatus>> _statusController =
       StreamController<Map<String, DownloadStatus>>.broadcast();
-  
+
   final List<DownloadTask> _downloadQueue = [];
   bool _isProcessingQueue = false;
   static const int _maxConcurrentDownloads = 2;
@@ -49,8 +50,10 @@ class EnhancedDownloadManager {
       );
 
       _downloadQueue.add(task);
-      _downloadQueue.sort((a, b) => b.priority.index.compareTo(a.priority.index));
-      
+      _downloadQueue.sort(
+        (a, b) => b.priority.index.compareTo(a.priority.index),
+      );
+
       _downloadStatuses[trackId] = DownloadStatus.queued;
       _notifyStatusUpdate();
 
@@ -62,7 +65,9 @@ class EnhancedDownloadManager {
   }
 
   /// Downloads multiple tracks
-  Future<Either<Failure, Unit>> downloadTracks(List<DownloadTaskRequest> requests) async {
+  Future<Either<Failure, Unit>> downloadTracks(
+    List<DownloadTaskRequest> requests,
+  ) async {
     try {
       for (final request in requests) {
         await downloadTrack(
@@ -84,12 +89,14 @@ class EnhancedDownloadManager {
   }
 
   /// Stream of all download statuses
-  Stream<Map<String, DownloadStatus>> get downloadStatuses => _statusController.stream;
+  Stream<Map<String, DownloadStatus>> get downloadStatuses =>
+      _statusController.stream;
 
   /// Gets download progress for a specific track
   Stream<DownloadProgressInfo> getDownloadProgress(String trackId) {
     if (!_progressControllers.containsKey(trackId)) {
-      _progressControllers[trackId] = StreamController<DownloadProgressInfo>.broadcast();
+      _progressControllers[trackId] =
+          StreamController<DownloadProgressInfo>.broadcast();
     }
     return _progressControllers[trackId]!.stream;
   }
@@ -99,7 +106,7 @@ class EnhancedDownloadManager {
     try {
       // Remove from queue
       _downloadQueue.removeWhere((task) => task.trackId == trackId);
-      
+
       // Update status
       if (_downloadStatuses[trackId] == DownloadStatus.downloading ||
           _downloadStatuses[trackId] == DownloadStatus.queued) {
@@ -117,14 +124,14 @@ class EnhancedDownloadManager {
   Future<Either<Failure, Unit>> cancelAllDownloads() async {
     try {
       _downloadQueue.clear();
-      
+
       for (final trackId in _downloadStatuses.keys.toList()) {
         if (_downloadStatuses[trackId] == DownloadStatus.downloading ||
             _downloadStatuses[trackId] == DownloadStatus.queued) {
           _downloadStatuses[trackId] = DownloadStatus.cancelled;
         }
       }
-      
+
       _notifyStatusUpdate();
       return const Right(unit);
     } catch (e) {
@@ -135,10 +142,11 @@ class EnhancedDownloadManager {
   /// Retries failed downloads
   Future<Either<Failure, Unit>> retryFailedDownloads() async {
     try {
-      final failedTracks = _downloadStatuses.entries
-          .where((entry) => entry.value == DownloadStatus.failed)
-          .map((entry) => entry.key)
-          .toList();
+      final failedTracks =
+          _downloadStatuses.entries
+              .where((entry) => entry.value == DownloadStatus.failed)
+              .map((entry) => entry.key)
+              .toList();
 
       for (final trackId in failedTracks) {
         // Find the original task details (would need to store them)
@@ -155,10 +163,22 @@ class EnhancedDownloadManager {
 
   /// Gets queue information
   QueueInfo getQueueInfo() {
-    final queued = _downloadStatuses.values.where((status) => status == DownloadStatus.queued).length;
-    final downloading = _downloadStatuses.values.where((status) => status == DownloadStatus.downloading).length;
-    final completed = _downloadStatuses.values.where((status) => status == DownloadStatus.completed).length;
-    final failed = _downloadStatuses.values.where((status) => status == DownloadStatus.failed).length;
+    final queued =
+        _downloadStatuses.values
+            .where((status) => status == DownloadStatus.queued)
+            .length;
+    final downloading =
+        _downloadStatuses.values
+            .where((status) => status == DownloadStatus.downloading)
+            .length;
+    final completed =
+        _downloadStatuses.values
+            .where((status) => status == DownloadStatus.completed)
+            .length;
+    final failed =
+        _downloadStatuses.values
+            .where((status) => status == DownloadStatus.failed)
+            .length;
 
     return QueueInfo(
       queuedCount: queued,
@@ -196,9 +216,10 @@ class EnhancedDownloadManager {
     _startDownload(task);
 
     _isProcessingQueue = false;
-    
+
     // Continue processing if there are more tasks and slots available
-    if (_downloadQueue.isNotEmpty && _activeDownloads < _maxConcurrentDownloads) {
+    if (_downloadQueue.isNotEmpty &&
+        _activeDownloads < _maxConcurrentDownloads) {
       _processQueue();
     }
   }
@@ -213,35 +234,44 @@ class EnhancedDownloadManager {
       await audioCacheRepository.getCachedAudioPath(
         task.trackUrl,
         onProgress: (progress) {
-          _notifyProgressUpdate(task.trackId, DownloadProgressInfo(
-            trackId: task.trackId,
-            trackName: task.trackName,
-            progress: progress,
-            status: DownloadStatus.downloading,
-          ));
+          _notifyProgressUpdate(
+            task.trackId,
+            DownloadProgressInfo(
+              trackId: task.trackId,
+              trackName: task.trackName,
+              progress: progress,
+              status: DownloadStatus.downloading,
+            ),
+          );
         },
       );
 
       _downloadStatuses[task.trackId] = DownloadStatus.completed;
-      _notifyProgressUpdate(task.trackId, DownloadProgressInfo(
-        trackId: task.trackId,
-        trackName: task.trackName,
-        progress: 1.0,
-        status: DownloadStatus.completed,
-      ));
+      _notifyProgressUpdate(
+        task.trackId,
+        DownloadProgressInfo(
+          trackId: task.trackId,
+          trackName: task.trackName,
+          progress: 1.0,
+          status: DownloadStatus.completed,
+        ),
+      );
     } catch (e) {
       _downloadStatuses[task.trackId] = DownloadStatus.failed;
-      _notifyProgressUpdate(task.trackId, DownloadProgressInfo(
-        trackId: task.trackId,
-        trackName: task.trackName,
-        progress: 0.0,
-        status: DownloadStatus.failed,
-        errorMessage: e.toString(),
-      ));
+      _notifyProgressUpdate(
+        task.trackId,
+        DownloadProgressInfo(
+          trackId: task.trackId,
+          trackName: task.trackName,
+          progress: 0.0,
+          status: DownloadStatus.failed,
+          errorMessage: e.toString(),
+        ),
+      );
     } finally {
       _activeDownloads--;
       _notifyStatusUpdate();
-      
+
       // Continue processing queue
       _processQueue();
     }
@@ -336,13 +366,8 @@ enum DownloadStatus {
   cancelled,
 }
 
-enum DownloadPriority {
-  low,
-  normal,
-  high,
-  urgent,
-}
+enum DownloadPriority { low, normal, high, urgent }
 
 class CacheFailure extends Failure {
-  const CacheFailure(String message) : super(message);
+  const CacheFailure(super.message);
 }
