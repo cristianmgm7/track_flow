@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/features/audio_cache/domain/services/storage_management_service.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path_usecase.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_cache_repository.dart';
 
 @Injectable(as: StorageManagementService)

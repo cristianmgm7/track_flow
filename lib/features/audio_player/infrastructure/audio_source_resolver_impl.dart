@@ -4,7 +4,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_player/domain/models/audio_source_enum.dart';
 import 'package:trackflow/features/audio_player/domain/models/connectivity_models.dart.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path_usecase.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_cache_repository.dart';
 import 'package:trackflow/features/audio_player/domain/services/offline_mode_service.dart';
 import 'dart:io';

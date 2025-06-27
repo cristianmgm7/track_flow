@@ -1,19 +1,13 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_cache_repository.dart';
 
-@LazySingleton()
+@injectable
 class GetCachedAudioPath {
-  final AudioCacheRepository repository;
+  final AudioCacheRepository _repository;
 
-  GetCachedAudioPath(this.repository);
+  const GetCachedAudioPath(this._repository);
 
-  Future<String> call(
-    String remoteUrl, {
-    void Function(double progress)? onProgress,
-  }) async {
-    return await repository.getCachedAudioPath(
-      remoteUrl,
-      onProgress: onProgress,
-    );
+  Future<String> call(String trackUrl) async {
+    return await _repository.getCachedAudioPath(trackUrl);
   }
 }

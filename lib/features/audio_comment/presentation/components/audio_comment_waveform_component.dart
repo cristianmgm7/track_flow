@@ -4,10 +4,10 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bl
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_cubit.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_state.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_event.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path.dart';
 
 class AudioCommentWaveform extends StatefulWidget {
   const AudioCommentWaveform({super.key});
@@ -33,11 +33,13 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
             state is AudioPlayerActiveState &&
             state.visualContext == PlayerVisualContext.commentPlayer) {
           final track = state.track;
-          return BlocProvider<AudioCacheCubit>(
-            create:
-                (context) =>
-                    AudioCacheCubit(sl<GetCachedAudioPath>())..load(track.url),
-            child: BlocBuilder<AudioCacheCubit, AudioCacheState>(
+          return BlocProvider<AudioCacheBloc>(
+            create: (context) {
+              final bloc = sl<AudioCacheBloc>();
+              bloc.add(CheckCacheStatusRequested(track.url));
+              return bloc;
+            },
+            child: BlocBuilder<AudioCacheBloc, AudioCacheState>(
               builder: (context, cacheState) {
                 if (cacheState is AudioCacheLoading ||
                     cacheState is AudioCacheProgress) {
@@ -87,15 +89,15 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                                 mini: true,
                                 heroTag: 'add-comment',
                                 child: const Icon(Icons.add),
-                                onPressed: () {
+                                onPressed: () async {
                                   final bloc = context.read<AudioPlayerBloc>();
                                   final currentState = bloc.state;
                                   if (currentState is AudioPlayerPlaying ||
                                       currentState is AudioPlayerPaused) {
-                                    final currentPosition = getCurrentPosition(
-                                      bloc,
-                                    );
-                                    // dispatch an event or show a comment input dialog
+                                    // Get current position from player controller
+                                    final currentPosition = await _playerController.getDuration(DurationType.current);
+                                    // TODO: dispatch an event or show a comment input dialog
+                                    print('Add comment at position: $currentPosition');
                                   }
                                 },
                               ),
