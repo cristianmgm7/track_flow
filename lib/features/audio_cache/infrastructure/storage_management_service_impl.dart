@@ -11,14 +11,14 @@ class StorageManagementServiceImpl implements StorageManagementService {
   static const String _storageLimitKey = 'storage_limit_bytes';
   static const String _lastCleanupKey = 'last_cleanup_timestamp';
   static const String _cachedTracksMetaKey = 'cached_tracks_metadata';
-  
+
   final GetCachedAudioPath getCachedAudioPath;
   final AudioCacheRepository audioCacheRepository;
   final Directory cacheDirectory;
-  
-  final StreamController<StorageStats> _storageStatsController = 
+
+  final StreamController<StorageStats> _storageStatsController =
       StreamController<StorageStats>.broadcast();
-  
+
   StorageStats? _lastStats;
   Timer? _periodicStatsTimer;
 
@@ -61,7 +61,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
 
       _lastStats = stats;
       _storageStatsController.add(stats);
-      
+
       return stats;
     } catch (e) {
       // Return default stats on error
@@ -104,11 +104,11 @@ class StorageManagementServiceImpl implements StorageManagementService {
     try {
       final cachedTracks = await getCachedTracks();
       final corruptedTracks = cachedTracks.where((t) => t.isCorrupted).toList();
-      
+
       for (final track in corruptedTracks) {
         await _removeTrackFile(track.trackUrl);
       }
-      
+
       await _updateLastCleanupTime();
       await _updateStorageStats();
     } catch (e) {
@@ -120,24 +120,24 @@ class StorageManagementServiceImpl implements StorageManagementService {
   Future<int> cleanupOldestFiles(int targetBytes) async {
     try {
       final cachedTracks = await getCachedTracks();
-      
+
       // Sort by last accessed time (oldest first)
       cachedTracks.sort((a, b) => a.lastAccessed.compareTo(b.lastAccessed));
-      
+
       int bytesFreed = 0;
       final tracksToRemove = <String>[];
-      
+
       for (final track in cachedTracks) {
         if (bytesFreed >= targetBytes) break;
-        
+
         tracksToRemove.add(track.trackUrl);
         bytesFreed += track.fileSizeBytes;
       }
-      
+
       await removeCachedTracks(tracksToRemove);
       await _updateLastCleanupTime();
       await _updateStorageStats();
-      
+
       return bytesFreed;
     } catch (e) {
       return 0;
@@ -154,7 +154,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
           }
         }
       }
-      
+
       await _clearCachedTracksMetadata();
       await _updateLastCleanupTime();
       await _updateStorageStats();
@@ -169,7 +169,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
       for (final trackUrl in trackUrls) {
         await _removeTrackFile(trackUrl);
       }
-      
+
       await _updateStorageStats();
     } catch (e) {
       // Handle error gracefully
@@ -180,7 +180,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
   Future<List<CachedTrackInfo>> getCachedTracks() async {
     try {
       final tracks = <CachedTrackInfo>[];
-      
+
       if (await cacheDirectory.exists()) {
         await for (final entity in cacheDirectory.list()) {
           if (entity is File && entity.path.endsWith('.mp3')) {
@@ -192,7 +192,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
           }
         }
       }
-      
+
       return tracks;
     } catch (e) {
       return [];
@@ -224,16 +224,16 @@ class StorageManagementServiceImpl implements StorageManagementService {
     try {
       final stats = await getStorageStats();
       final storageLimit = await getStorageLimit();
-      
+
       // Check if we're low on space
       if (stats.isLowOnSpace) return true;
-      
+
       // Check if we've exceeded storage limit
       if (storageLimit > 0 && stats.totalCacheSize > storageLimit) return true;
-      
+
       // Check if there are corrupted files
       if (stats.corruptedFilesCount > 0) return true;
-      
+
       return false;
     } catch (e) {
       return false;
@@ -250,18 +250,18 @@ class StorageManagementServiceImpl implements StorageManagementService {
 
     try {
       final stats = await getStorageStats();
-      
+
       // First, remove corrupted files
       final cachedTracks = await getCachedTracks();
       final corruptedTracks = cachedTracks.where((t) => t.isCorrupted).toList();
-      
+
       for (final track in corruptedTracks) {
         await _removeTrackFile(track.trackUrl);
         bytesFreed += track.fileSizeBytes;
         corruptedFilesRemoved++;
         removedTrackUrls.add(track.trackUrl);
       }
-      
+
       // Check if we need more cleanup
       final storageLimit = await getStorageLimit();
       if (storageLimit > 0) {
@@ -272,16 +272,15 @@ class StorageManagementServiceImpl implements StorageManagementService {
           bytesFreed += additionalFreed;
         }
       }
-      
+
       await _updateLastCleanupTime();
       await _updateStorageStats();
-      
     } catch (e) {
       // Handle cleanup errors
     }
 
     final duration = DateTime.now().difference(startTime);
-    
+
     return CleanupResult(
       bytesFreed: bytesFreed,
       filesRemoved: filesRemoved,
@@ -294,7 +293,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
   Future<int> _calculateCacheSize() async {
     try {
       int totalSize = 0;
-      
+
       if (await cacheDirectory.exists()) {
         await for (final entity in cacheDirectory.list()) {
           if (entity is File) {
@@ -303,7 +302,7 @@ class StorageManagementServiceImpl implements StorageManagementService {
           }
         }
       }
-      
+
       return totalSize;
     } catch (e) {
       return 0;
@@ -326,7 +325,10 @@ class StorageManagementServiceImpl implements StorageManagementService {
   Future<void> _updateLastCleanupTime() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setInt(_lastCleanupKey, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+        _lastCleanupKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (e) {
       // Handle error gracefully
     }
@@ -352,14 +354,17 @@ class StorageManagementServiceImpl implements StorageManagementService {
     }
   }
 
-  Future<CachedTrackInfo?> _createTrackInfoFromFile(File file, FileStat stat) async {
+  Future<CachedTrackInfo?> _createTrackInfoFromFile(
+    File file,
+    FileStat stat,
+  ) async {
     try {
       // Extract track info from filename or metadata
       // This is a simplified approach - in real implementation you'd
       // have a proper mapping system
       final filename = file.path.split('/').last;
       final trackUrl = filename.replaceAll('.mp3', '');
-      
+
       return CachedTrackInfo(
         trackUrl: trackUrl,
         trackId: trackUrl, // Simplified mapping
