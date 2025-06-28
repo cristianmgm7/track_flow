@@ -4,23 +4,20 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_player/domain/models/audio_source_enum.dart';
 import 'package:trackflow/features/audio_player/domain/models/connectivity_models.dart.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_audio_path_usecase.dart';
-import 'package:trackflow/features/audio_cache/domain/repositories/audio_cache_repository.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/services/cache_orchestration_service.dart';
 import 'package:trackflow/features/audio_player/domain/services/offline_mode_service.dart';
 import 'dart:io';
 
 @Injectable(as: AudioSourceResolver)
 class AudioSourceResolverImpl implements AudioSourceResolver {
-  final GetCachedAudioPath getCachedAudioPath;
-  final AudioCacheRepository audioCacheRepository;
+  final CacheOrchestrationService cacheOrchestrationService;
   final OfflineModeService offlineModeService;
 
   // Track background caching operations
   final Set<String> _backgroundCachingUrls = <String>{};
 
   AudioSourceResolverImpl(
-    this.getCachedAudioPath,
-    this.audioCacheRepository,
+    this.cacheOrchestrationService,
     this.offlineModeService,
   );
 
@@ -130,12 +127,26 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   @override
   Future<bool> isTrackCached(String url) async {
     try {
-      final cachedPath = await getCachedAudioPath(url);
-      final file = File(cachedPath);
-      return await file.exists() && await file.length() > 0;
+      // For now, use URL as trackId (may need to be refined based on your URL structure)
+      final trackId = _extractTrackIdFromUrl(url);
+      final pathResult = await cacheOrchestrationService.getCachedAudioPath(trackId);
+      
+      return pathResult.fold(
+        (failure) => false,
+        (cachedPath) async {
+          final file = File(cachedPath);
+          return await file.exists() && await file.length() > 0;
+        },
+      );
     } catch (e) {
       return false;
     }
+  }
+  
+  // Helper method to extract trackId from URL
+  String _extractTrackIdFromUrl(String url) {
+    // This is a simplified approach - you may need to adjust based on your URL structure
+    return Uri.parse(url).pathSegments.last.split('.').first;
   }
 
   @override
@@ -145,7 +156,9 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
         return const Right(null);
       }
 
-      final cachedPath = await getCachedAudioPath(url);
+      final trackId = _extractTrackIdFromUrl(url);
+      final pathResult = await cacheOrchestrationService.getCachedAudioPath(trackId);
+      final cachedPath = pathResult.getOrElse(() => throw Exception('Cache path not found'));
       final file = File(cachedPath);
 
       // Validate file integrity
@@ -178,10 +191,11 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
 
     _backgroundCachingUrls.add(url);
 
-    // Start background caching using the existing audio cache system
+    // Start background caching using the new orchestration service
     try {
-      // This triggers the existing Firebase Storage download
-      await getCachedAudioPath(url);
+      final trackId = _extractTrackIdFromUrl(url);
+      // This triggers caching via the orchestration service
+      await cacheOrchestrationService.cacheAudio(trackId, url, 'background');
     } catch (e) {
       // Handle caching errors silently to not interrupt playback
     } finally {
@@ -229,10 +243,18 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
       }
 
       // Check if file exists but is corrupted
-      final cachedPath = await getCachedAudioPath(url);
-      final file = File(cachedPath);
-      if (await file.exists()) {
-        return CacheStatus.corrupted;
+      try {
+        final trackId = _extractTrackIdFromUrl(url);
+        final pathResult = await cacheOrchestrationService.getCachedAudioPath(trackId);
+        final cachedPath = pathResult.getOrElse(() => '');
+        if (cachedPath.isNotEmpty) {
+          final file = File(cachedPath);
+          if (await file.exists()) {
+            return CacheStatus.corrupted;
+          }
+        }
+      } catch (e) {
+        // Ignore cache path errors
       }
 
       return CacheStatus.notCached;
