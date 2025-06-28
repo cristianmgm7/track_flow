@@ -19,6 +19,7 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/user_profile_screen.dart';
+import 'package:trackflow/features/audio_cache/demo/cache_demo_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -133,6 +134,10 @@ class AppRouter {
                   (context, state) => ManageCollaboratorsScreen(
                     project: state.extra as Project,
                   ),
+            ),
+            GoRoute(
+              path: AppRoutes.cacheDemo,
+              builder: (context, state) => const CacheDemoScreen(),
             ),
           ],
         ),

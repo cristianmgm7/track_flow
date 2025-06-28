@@ -16,10 +16,10 @@ import '../../domain/value_objects/conflict_policy.dart';
 class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
   final CacheMetadataRepository _metadataRepository;
   final CacheStorageRepository _storageRepository;
-  
+
   // Active downloads tracking
   final Map<String, StreamSubscription> _activeDownloads = {};
-  final StreamController<List<DownloadProgress>> _activeDownloadsController = 
+  final StreamController<List<DownloadProgress>> _activeDownloadsController =
       StreamController<List<DownloadProgress>>.broadcast();
 
   CacheOrchestrationServiceImpl({
@@ -37,8 +37,10 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
   }) async {
     try {
       // Check if already cached
-      final existingAudioResult = await _storageRepository.getCachedAudio(trackId);
-      
+      final existingAudioResult = await _storageRepository.getCachedAudio(
+        trackId,
+      );
+
       return await existingAudioResult.fold(
         (failure) async {
           // Not cached, proceed with download
@@ -48,10 +50,10 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
           if (existingAudio != null) {
             // Already cached, apply conflict policy
             return await _handleCacheConflict(
-              trackId, 
-              audioUrl, 
-              referenceId, 
-              existingAudio, 
+              trackId,
+              audioUrl,
+              referenceId,
+              existingAudio,
               policy,
             );
           } else {
@@ -77,61 +79,62 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
     String referenceId,
   ) async {
     // Mark as downloading in metadata
-    final downloadingResult = await _metadataRepository.markAsDownloading(trackId);
-    
-    return await downloadingResult.fold(
-      (failure) => Left(failure),
-      (_) async {
-        // Start download with progress tracking
-        final downloadResult = await _storageRepository.downloadAndStoreAudio(
-          trackId,
-          audioUrl,
-          progressCallback: (progress) {
-            // Update active downloads
-            _updateActiveDownloads(trackId, progress);
-          },
-        );
-
-        return await downloadResult.fold(
-          (failure) async {
-            // Mark as failed and increment attempts
-            await _metadataRepository.incrementDownloadAttempts(
-              trackId,
-              failure.message,
-            );
-            return Left(failure);
-          },
-          (cachedAudio) async {
-            // Create metadata
-            final metadata = CacheMetadata(
-              trackId: trackId,
-              referenceCount: 1,
-              lastAccessed: DateTime.now(),
-              references: [referenceId],
-              status: CacheStatus.cached,
-              downloadAttempts: 0,
-              originalUrl: audioUrl,
-            );
-
-            // Save metadata and add reference
-            final metadataResult = await _metadataRepository.saveMetadata(metadata);
-            final referenceResult = await _metadataRepository.addReference(trackId, referenceId);
-
-            return await metadataResult.fold(
-              (failure) => Left(failure),
-              (_) => referenceResult.fold(
-                (failure) => Left(failure),
-                (_) async {
-                  await _metadataRepository.markAsCompleted(trackId);
-                  _removeFromActiveDownloads(trackId);
-                  return const Right(unit);
-                },
-              ),
-            );
-          },
-        );
-      },
+    final downloadingResult = await _metadataRepository.markAsDownloading(
+      trackId,
     );
+
+    return await downloadingResult.fold((failure) => Left(failure), (_) async {
+      // Start download with progress tracking
+      final downloadResult = await _storageRepository.downloadAndStoreAudio(
+        trackId,
+        audioUrl,
+        progressCallback: (progress) {
+          // Update active downloads
+          _updateActiveDownloads(trackId, progress);
+        },
+      );
+
+      return await downloadResult.fold(
+        (failure) async {
+          // Mark as failed and increment attempts
+          await _metadataRepository.incrementDownloadAttempts(
+            trackId,
+            failure.message,
+          );
+          return Left(failure);
+        },
+        (cachedAudio) async {
+          // Create metadata
+          final metadata = CacheMetadata(
+            trackId: trackId,
+            referenceCount: 1,
+            lastAccessed: DateTime.now(),
+            references: [referenceId],
+            status: CacheStatus.cached,
+            downloadAttempts: 0,
+            originalUrl: audioUrl,
+          );
+
+          // Save metadata and add reference
+          final metadataResult = await _metadataRepository.saveMetadata(
+            metadata,
+          );
+          final referenceResult = await _metadataRepository.addReference(
+            trackId,
+            referenceId,
+          );
+
+          return await metadataResult.fold(
+            (failure) => Left(failure),
+            (_) => referenceResult.fold((failure) => Left(failure), (_) async {
+              await _metadataRepository.markAsCompleted(trackId);
+              _removeFromActiveDownloads(trackId);
+              return const Right(unit);
+            }),
+          );
+        },
+      );
+    });
   }
 
   Future<Either<CacheFailure, Unit>> _handleCacheConflict(
@@ -144,7 +147,10 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
     switch (policy) {
       case ConflictPolicy.firstWins:
         // Just add reference to existing cache
-        final result = await _metadataRepository.addReference(trackId, referenceId);
+        final result = await _metadataRepository.addReference(
+          trackId,
+          referenceId,
+        );
         return result.fold(
           (failure) => Left(failure),
           (_) => const Right(unit),
@@ -157,7 +163,10 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
 
       case ConflictPolicy.higherQuality:
         // For now, just add reference (quality comparison would need URL analysis)
-        final result = await _metadataRepository.addReference(trackId, referenceId);
+        final result = await _metadataRepository.addReference(
+          trackId,
+          referenceId,
+        );
         return result.fold(
           (failure) => Left(failure),
           (_) => const Right(unit),
@@ -165,7 +174,10 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
 
       case ConflictPolicy.userDecision:
         // For MVP, default to adding reference
-        final result = await _metadataRepository.addReference(trackId, referenceId);
+        final result = await _metadataRepository.addReference(
+          trackId,
+          referenceId,
+        );
         return result.fold(
           (failure) => Left(failure),
           (_) => const Right(unit),
@@ -174,10 +186,12 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
   }
 
   @override
-  Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId) async {
+  Future<Either<CacheFailure, String>> getCachedAudioPath(
+    String trackId,
+  ) async {
     // Update last accessed
     await _metadataRepository.updateLastAccessed(trackId);
-    
+
     return await _storageRepository.getCachedAudioPath(trackId);
   }
 
@@ -186,40 +200,43 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
     String trackId,
     String referenceId,
   ) async {
-    final referenceResult = await _metadataRepository.removeReference(trackId, referenceId);
-    
-    return await referenceResult.fold(
-      (failure) => Left(failure),
-      (updatedReference) async {
-        if (updatedReference == null) {
-          // No more references, safe to delete file
-          return await _storageRepository.deleteAudioFile(trackId);
-        } else {
-          // Still has references, keep file
-          return const Right(unit);
-        }
-      },
+    final referenceResult = await _metadataRepository.removeReference(
+      trackId,
+      referenceId,
     );
+
+    return await referenceResult.fold((failure) => Left(failure), (
+      updatedReference,
+    ) async {
+      if (updatedReference == null) {
+        // No more references, safe to delete file
+        return await _storageRepository.deleteAudioFile(trackId);
+      } else {
+        // Still has references, keep file
+        return const Right(unit);
+      }
+    });
   }
 
   @override
-  Future<Either<CacheFailure, CacheStatus>> getCacheStatus(String trackId) async {
+  Future<Either<CacheFailure, CacheStatus>> getCacheStatus(
+    String trackId,
+  ) async {
     final metadataResult = await _metadataRepository.getMetadata(trackId);
-    
-    return metadataResult.fold(
-      (failure) => Left(failure),
-      (metadata) {
-        if (metadata != null) {
-          return Right(metadata.status);
-        } else {
-          return const Right(CacheStatus.notCached);
-        }
-      },
-    );
+
+    return metadataResult.fold((failure) => Left(failure), (metadata) {
+      if (metadata != null) {
+        return Right(metadata.status);
+      } else {
+        return const Right(CacheStatus.notCached);
+      }
+    });
   }
 
   @override
-  Future<Either<CacheFailure, CacheReference?>> getCacheReference(String trackId) async {
+  Future<Either<CacheFailure, CacheReference?>> getCacheReference(
+    String trackId,
+  ) async {
     return await _metadataRepository.getReference(trackId);
   }
 
@@ -230,9 +247,9 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
 
   @override
   Stream<CacheStatus> watchCacheStatus(String trackId) {
-    return _metadataRepository.watchMetadata(trackId).map(
-      (metadata) => metadata?.status ?? CacheStatus.notCached,
-    );
+    return _metadataRepository
+        .watchMetadata(trackId)
+        .map((metadata) => metadata?.status ?? CacheStatus.notCached);
   }
 
   @override
@@ -254,8 +271,13 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
         final trackId = entry.key;
         final audioUrl = entry.value;
 
-        final result = await cacheAudio(trackId, audioUrl, referenceId, policy: policy);
-        
+        final result = await cacheAudio(
+          trackId,
+          audioUrl,
+          referenceId,
+          policy: policy,
+        );
+
         result.fold(
           (failure) => failedTracks.add(trackId),
           (_) => successfulTracks.add(trackId),
@@ -351,7 +373,8 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
     try {
       final audiosResult = await _storageRepository.getAllCachedAudios();
       final usageResult = await _storageRepository.getTotalStorageUsage();
-      final availableResult = await _storageRepository.getAvailableStorageSpace();
+      final availableResult =
+          await _storageRepository.getAvailableStorageSpace();
       final corruptedResult = await _storageRepository.getCorruptedFiles();
       final orphanedResult = await _storageRepository.getOrphanedFiles();
 
@@ -367,7 +390,8 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
                 (failure) => Left(failure),
                 (orphanedFiles) async {
                   final totalSpace = totalSize + availableSpace;
-                  final usedPercentage = totalSpace > 0 ? totalSize / totalSpace : 0.0;
+                  final usedPercentage =
+                      totalSpace > 0 ? totalSize / totalSpace : 0.0;
 
                   return Right(
                     StorageStats(
@@ -407,20 +431,17 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
         removeTemporary: true,
       );
 
-      return cleanupDetails.fold(
-        (failure) => Left(failure),
-        (details) {
-          return Right(
-            CleanupResult(
-              removedFiles: details.totalFilesRemoved,
-              freedSpaceBytes: details.totalSpaceFreed,
-              corruptedRemoved: details.corruptedFilesRemoved,
-              orphanedRemoved: details.orphanedFilesRemoved,
-              errors: details.errors,
-            ),
-          );
-        },
-      );
+      return cleanupDetails.fold((failure) => Left(failure), (details) {
+        return Right(
+          CleanupResult(
+            removedFiles: details.totalFilesRemoved,
+            freedSpaceBytes: details.totalSpaceFreed,
+            corruptedRemoved: details.corruptedFilesRemoved,
+            orphanedRemoved: details.orphanedFilesRemoved,
+            errors: details.errors,
+          ),
+        );
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -440,46 +461,46 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
   @override
   Future<Either<CacheFailure, Unit>> retryDownload(String trackId) async {
     final metadataResult = await _metadataRepository.getMetadata(trackId);
-    
-    return await metadataResult.fold(
-      (failure) => Left(failure),
-      (metadata) async {
-        if (metadata != null && metadata.shouldRetry && metadata.originalUrl != null) {
-          // Get reference to determine which reference to use for retry
-          final referenceResult = await _metadataRepository.getReference(trackId);
-          
-          return await referenceResult.fold(
-            (failure) => Left(failure),
-            (reference) async {
-              if (reference != null && reference.referenceIds.isNotEmpty) {
-                // Use first reference for retry
-                return await cacheAudio(
-                  trackId,
-                  metadata.originalUrl!,
-                  reference.referenceIds.first,
-                );
-              } else {
-                return Left(
-                  ValidationCacheFailure(
-                    message: 'No reference found for retry',
-                    field: 'trackId',
-                    value: trackId,
-                  ),
-                );
-              }
-            },
-          );
-        } else {
-          return Left(
-            ValidationCacheFailure(
-              message: 'Track cannot be retried or original URL not found',
-              field: 'trackId',
-              value: trackId,
-            ),
-          );
-        }
-      },
-    );
+
+    return await metadataResult.fold((failure) => Left(failure), (
+      metadata,
+    ) async {
+      if (metadata != null &&
+          metadata.shouldRetry &&
+          metadata.originalUrl != null) {
+        // Get reference to determine which reference to use for retry
+        final referenceResult = await _metadataRepository.getReference(trackId);
+
+        return await referenceResult.fold((failure) => Left(failure), (
+          reference,
+        ) async {
+          if (reference != null && reference.referenceIds.isNotEmpty) {
+            // Use first reference for retry
+            return await cacheAudio(
+              trackId,
+              metadata.originalUrl!,
+              reference.referenceIds.first,
+            );
+          } else {
+            return Left(
+              ValidationCacheFailure(
+                message: 'No reference found for retry',
+                field: 'trackId',
+                value: trackId,
+              ),
+            );
+          }
+        });
+      } else {
+        return Left(
+          ValidationCacheFailure(
+            message: 'Track cannot be retried or original URL not found',
+            field: 'trackId',
+            value: trackId,
+          ),
+        );
+      }
+    });
   }
 
   void _updateActiveDownloads(String trackId, DownloadProgress progress) {
@@ -491,7 +512,7 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
   void _removeFromActiveDownloads(String trackId) {
     _activeDownloads[trackId]?.cancel();
     _activeDownloads.remove(trackId);
-    
+
     // Update the active downloads stream
     _activeDownloadsController.add([]);
   }

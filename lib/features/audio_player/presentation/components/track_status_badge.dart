@@ -4,8 +4,9 @@ import 'package:trackflow/features/audio_player/domain/models/audio_source_enum.
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_cache/domain/services/download_management_service.dart';
-import 'package:provider/provider.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart' as cache;
 
 class TrackStatusBadge extends StatefulWidget {
   final String trackUrl;
@@ -27,13 +28,11 @@ class TrackStatusBadge extends StatefulWidget {
 
 class _TrackStatusBadgeState extends State<TrackStatusBadge> {
   CacheStatus _cacheStatus = CacheStatus.notCached;
-  DownloadStatus _downloadStatus = DownloadStatus.notStarted;
 
   @override
   void initState() {
     super.initState();
     _checkCacheStatus();
-    _checkDownloadStatus();
   }
 
   Future<void> _checkCacheStatus() async {
@@ -43,20 +42,6 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
       setState(() {
         _cacheStatus = status;
       });
-    }
-  }
-
-  void _checkDownloadStatus() {
-    try {
-      final downloadManager = Provider.of<DownloadManagementService>(context, listen: false);
-      final status = downloadManager.getDownloadStatus(widget.trackId);
-      if (mounted) {
-        setState(() {
-          _downloadStatus = status;
-        });
-      }
-    } catch (e) {
-      // Download manager might not be available
     }
   }
 
@@ -70,7 +55,7 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
         final isPlaying = playerState is AudioPlayerPlaying && isCurrentTrack;
         final isLoading = playerState is AudioPlayerLoading && isCurrentTrack;
 
-        // Priority: Playing state > Loading state > Download status > Cache status
+        // Priority: Playing state > Loading state > Cache state > Fallback cache status
         if (isPlaying) {
           return _buildBadge(
             icon: Icons.volume_up,
@@ -88,71 +73,115 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
           );
         }
 
-        // Check download status first
-        switch (_downloadStatus) {
-          case DownloadStatus.queued:
-            return _buildBadge(
-              icon: Icons.schedule,
-              color: Colors.blue,
-              text: 'Queued',
-            );
-          case DownloadStatus.downloading:
-            return _buildBadge(
-              icon: Icons.download,
-              color: Colors.blue,
-              text: 'Downloading',
-              isAnimated: true,
-            );
-          case DownloadStatus.completed:
-            return _buildBadge(
-              icon: Icons.offline_pin,
-              color: Colors.green,
-              text: 'Downloaded',
-            );
-          case DownloadStatus.failed:
-            return _buildBadge(
-              icon: Icons.error_outline,
-              color: Colors.red,
-              text: 'Failed',
-            );
-          case DownloadStatus.cancelled:
-            return _buildBadge(
-              icon: Icons.cancel,
-              color: Colors.grey,
-              text: 'Cancelled',
-            );
-          case DownloadStatus.notStarted:
-            break; // Fall through to cache status
-        }
+        // Use nested BlocBuilder for cache state
+        return BlocBuilder<TrackCacheBloc, TrackCacheState>(
+          builder: (context, cacheState) {
+            // Check cache BLoC state for this track
+            if (cacheState is TrackCacheStatusLoaded && 
+                cacheState.trackId == widget.trackId) {
+              switch (cacheState.status) {
+                case cache.CacheStatus.cached:
+                  return _buildBadge(
+                    icon: Icons.offline_pin,
+                    color: Colors.green,
+                    text: 'Downloaded',
+                  );
+                case cache.CacheStatus.downloading:
+                  return _buildBadge(
+                    icon: Icons.download,
+                    color: Colors.blue,
+                    text: 'Downloading',
+                    isAnimated: true,
+                  );
+                case cache.CacheStatus.failed:
+                  return _buildBadge(
+                    icon: Icons.error_outline,
+                    color: Colors.red,
+                    text: 'Failed',
+                  );
+                case cache.CacheStatus.corrupted:
+                  return _buildBadge(
+                    icon: Icons.error_outline,
+                    color: Colors.red,
+                    text: 'Error',
+                  );
+                case cache.CacheStatus.notCached:
+                  break; // Fall through to fallback
+              }
+            }
 
-        // Fallback to cache status
-        switch (_cacheStatus) {
-          case CacheStatus.cached:
-            return _buildBadge(
-              icon: Icons.offline_pin,
-              color: Colors.blue,
-              text: 'Cached',
-            );
-          case CacheStatus.caching:
-            return _buildBadge(
-              icon: Icons.download,
-              color: Colors.orange,
-              text: 'Caching',
-              isAnimated: true,
-            );
-          case CacheStatus.corrupted:
-            return _buildBadge(
-              icon: Icons.error_outline,
-              color: Colors.red,
-              text: 'Error',
-            );
-          case CacheStatus.notCached:
-            return _buildBadge(
-              icon: Icons.cloud,
-              color: Colors.grey,
-              text: 'Streaming',
-            );
-        }
+            if (cacheState is TrackCacheWatching && 
+                cacheState.trackId == widget.trackId) {
+              switch (cacheState.currentStatus) {
+                case cache.CacheStatus.cached:
+                  return _buildBadge(
+                    icon: Icons.offline_pin,
+                    color: Colors.green,
+                    text: 'Downloaded',
+                  );
+                case cache.CacheStatus.downloading:
+                  return _buildBadge(
+                    icon: Icons.download,
+                    color: Colors.blue,
+                    text: 'Downloading',
+                    isAnimated: true,
+                  );
+                case cache.CacheStatus.failed:
+                  return _buildBadge(
+                    icon: Icons.error_outline,
+                    color: Colors.red,
+                    text: 'Failed',
+                  );
+                case cache.CacheStatus.corrupted:
+                  return _buildBadge(
+                    icon: Icons.error_outline,
+                    color: Colors.red,
+                    text: 'Error',
+                  );
+                case cache.CacheStatus.notCached:
+                  break; // Fall through to fallback
+              }
+            }
+
+            if (cacheState is TrackCacheLoading) {
+              return _buildBadge(
+                icon: Icons.download,
+                color: Colors.blue,
+                text: 'Downloading',
+                isAnimated: true,
+              );
+            }
+
+            // Fallback to old cache status check
+            switch (_cacheStatus) {
+              case CacheStatus.cached:
+                return _buildBadge(
+                  icon: Icons.offline_pin,
+                  color: Colors.blue,
+                  text: 'Cached',
+                );
+              case CacheStatus.caching:
+                return _buildBadge(
+                  icon: Icons.download,
+                  color: Colors.orange,
+                  text: 'Caching',
+                  isAnimated: true,
+                );
+              case CacheStatus.corrupted:
+                return _buildBadge(
+                  icon: Icons.error_outline,
+                  color: Colors.red,
+                  text: 'Error',
+                );
+              case CacheStatus.notCached:
+                return _buildBadge(
+                  icon: Icons.cloud,
+                  color: Colors.grey,
+                  text: 'Streaming',
+                );
+            }
+          },
+        );
       },
     );
   }

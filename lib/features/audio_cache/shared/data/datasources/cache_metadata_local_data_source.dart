@@ -65,7 +65,7 @@ class CacheMetadataLocalDataSourceImpl implements CacheMetadataLocalDataSource {
     String referenceId,
   ) async {
     try {
-      CacheReference reference;
+      late CacheReference reference;
       
       await _isar.writeTxn(() async {
         // Get existing reference or create new one
@@ -330,7 +330,7 @@ class CacheMetadataLocalDataSourceImpl implements CacheMetadataLocalDataSource {
   Future<Either<CacheFailure, List<String>>> getTracksByStatus(CacheStatus status) async {
     try {
       final documents = await _isar.cacheMetadataDocuments
-          .where()
+          .filter()
           .statusEqualTo(status)
           .findAll();
       

@@ -21,7 +21,6 @@ import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:provider/provider.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
-import 'package:trackflow/features/audio_cache/domain/services/download_management_service.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -32,9 +31,6 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<AudioSourceResolver>(create: (_) => sl<AudioSourceResolver>()),
-        Provider<DownloadManagementService>(
-          create: (_) => sl<DownloadManagementService>(),
-        ),
       ],
       child: MultiBlocProvider(
         providers: [

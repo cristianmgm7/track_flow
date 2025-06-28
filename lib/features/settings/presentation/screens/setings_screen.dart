@@ -33,15 +33,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
         appBar: AppBar(title: Text("Account Settings")),
         body: ListView(
           padding: const EdgeInsets.all(16.0),
-          children: const [
-            ProfileInformation(),
-            SizedBox(height: 16),
-            Divider(),
+          children: [
+            const ProfileInformation(),
+            const SizedBox(height: 16),
+            const Divider(),
             // Preferences Card
-            Preferences(),
-            SizedBox(height: 16),
+            const Preferences(),
+            const SizedBox(height: 16),
+            // Developer/Debug Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Developer Tools',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: const Icon(Icons.cached),
+                      title: const Text('Audio Cache Demo'),
+                      subtitle: const Text('Test new audio caching system'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () => context.go(AppRoutes.cacheDemo),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             // Sign Out Card
-            SignOut(),
+            const SignOut(),
           ],
         ),
       ),
