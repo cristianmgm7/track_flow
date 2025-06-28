@@ -8,9 +8,10 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bl
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_cache/presentation/widgets/playlist_cache_icon.dart';
-import 'package:trackflow/features/audio_cache/presentation/widgets/smart_cache_icon.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/playlist/presentation/widgets/playlist_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class PlaylistWidget extends StatelessWidget {
@@ -94,9 +95,12 @@ class PlaylistWidget extends StatelessWidget {
                 const Spacer(),
                 // Simplified cache control for playlist
                 BlocProvider(
-                  create: (context) => sl<AudioCacheBloc>(),
+                  create: (context) => sl<PlaylistCacheBloc>(),
                   child: PlaylistCacheIcon(
-                    tracks: tracks,
+                    playlistId: playlist.id,
+                    trackUrlPairs: Map.fromEntries(
+                      tracks.map((track) => MapEntry(track.id.value, track.url)),
+                    ),
                     playlistName: playlist.name,
                     size: 28.0,
                   ),
@@ -197,11 +201,10 @@ class PlaylistWidget extends StatelessWidget {
                           ),
                           // Add Smart Cache Icon for individual track
                           BlocProvider(
-                            create: (context) => sl<AudioCacheBloc>(),
-                            child: SmartCacheIcon(
+                            create: (context) => sl<TrackCacheBloc>(),
+                            child: SmartTrackCacheIcon(
                               trackId: track.id.value,
-                              trackUrl: track.url,
-                              trackName: track.name,
+                              audioUrl: track.url,
                               size: 20.0,
                               onSuccess: (message) {
                                 ScaffoldMessenger.of(context).showSnackBar(

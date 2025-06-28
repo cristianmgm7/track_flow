@@ -4,9 +4,10 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bl
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_state.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_event.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class AudioCommentWaveform extends StatefulWidget {
@@ -33,19 +34,19 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
             state is AudioPlayerActiveState &&
             state.visualContext == PlayerVisualContext.commentPlayer) {
           final track = state.track;
-          return BlocProvider<AudioCacheBloc>(
+          return BlocProvider<TrackCacheBloc>(
             create: (context) {
-              final bloc = sl<AudioCacheBloc>();
-              bloc.add(CheckCacheStatusRequested(track.url));
+              final bloc = sl<TrackCacheBloc>();
+              bloc.add(GetTrackCacheStatusRequested(track.id.value));
+              bloc.add(GetCachedTrackPathRequested(track.id.value));
               return bloc;
             },
-            child: BlocBuilder<AudioCacheBloc, AudioCacheState>(
+            child: BlocBuilder<TrackCacheBloc, TrackCacheState>(
               builder: (context, cacheState) {
-                if (cacheState is AudioCacheLoading ||
-                    cacheState is AudioCacheProgress) {
+                if (cacheState is TrackCacheLoading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (cacheState is AudioCacheDownloaded) {
-                  final localPath = cacheState.localPath;
+                } else if (cacheState is TrackCachePathLoaded && cacheState.filePath != null) {
+                  final localPath = cacheState.filePath!;
                   Future.microtask(
                     () => _playerController.preparePlayer(path: localPath),
                   );

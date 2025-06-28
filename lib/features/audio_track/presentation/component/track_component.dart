@@ -10,8 +10,8 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/widgets/smart_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart';
 
 class TrackComponent extends StatefulWidget {
@@ -178,11 +178,10 @@ class _TrackComponentState extends State<TrackComponent> {
                 const SizedBox(width: 8),
                 // Smart Cache Icon with BLoC provider
                 BlocProvider(
-                  create: (context) => sl<AudioCacheBloc>(),
-                  child: SmartCacheIcon(
+                  create: (context) => sl<TrackCacheBloc>(),
+                  child: SmartTrackCacheIcon(
                     trackId: widget.track.id.value,
-                    trackUrl: widget.track.url,
-                    trackName: widget.track.name,
+                    audioUrl: widget.track.url,
                     size: 20.0,
                     onSuccess: (message) {
                       ScaffoldMessenger.of(context).showSnackBar(

@@ -9,8 +9,8 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_event.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TrackActions {
@@ -70,10 +70,9 @@ class TrackActions {
         Navigator.of(context).pop(); // Close the action sheet
         
         // Use BLoC pattern for downloads
-        context.read<AudioCacheBloc>().add(DownloadTrackRequested(
+        context.read<TrackCacheBloc>().add(CacheTrackRequested(
           trackId: track.id.value,
-          trackUrl: track.url,
-          trackName: track.name,
+          audioUrl: track.url,
         ));
         
         ScaffoldMessenger.of(context).showSnackBar(

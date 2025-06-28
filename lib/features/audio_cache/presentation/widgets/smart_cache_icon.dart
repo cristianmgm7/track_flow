@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_event.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/audio_cache_state.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart';
 
 class SmartCacheIcon extends StatefulWidget {
   // Track identification (simplified for single tracks)
