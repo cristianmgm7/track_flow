@@ -138,7 +138,7 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.cacheDemo,
-              builder: (context, state) => CacheDemoScreenProvider(),
+              builder: (context, state) => const CacheDemoScreen(),
             ),
             GoRoute(
               path: '/storage-management',

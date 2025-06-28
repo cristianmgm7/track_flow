@@ -26,13 +26,15 @@ abstract class CacheStorageRemoteDataSource {
   Future<Either<CacheFailure, bool>> audioExists(String audioReference);
 
   /// Get audio metadata from remote storage
-  Future<Either<CacheFailure, Map<String, dynamic>>> getAudioMetadata(String audioReference);
+  Future<Either<CacheFailure, Map<String, dynamic>>> getAudioMetadata(
+    String audioReference,
+  );
 }
 
 @LazySingleton(as: CacheStorageRemoteDataSource)
 class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
   final FirebaseStorage _storage;
-  
+
   // Track active downloads for cancellation
   final Map<String, bool> _activeDownloads = {};
   final Map<String, bool> _cancelledDownloads = {};
@@ -58,21 +60,22 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
       }
 
       // Generate download ID for tracking
-      final downloadId = '${DateTime.now().millisecondsSinceEpoch}_${uri.pathSegments.last.hashCode}';
-      
+      final downloadId =
+          '${DateTime.now().millisecondsSinceEpoch}_${uri.pathSegments.last.hashCode}';
+
       final file = File(localFilePath);
-      
+
       // Ensure parent directory exists
       await file.parent.create(recursive: true);
-      
+
       // Create HTTP client for download
       final client = http.Client();
-      
+
       try {
         // Start the request
         final request = http.Request('GET', uri);
         final response = await client.send(request);
-        
+
         if (response.statusCode != 200) {
           return Left(
             NetworkCacheFailure(
@@ -81,28 +84,28 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
             ),
           );
         }
-        
+
         final totalBytes = response.contentLength ?? 0;
         int downloadedBytes = 0;
-        
+
         // Track this download for cancellation
         final downloadCompleter = Completer<void>();
-        
+
         // Store cancellation info
         _activeDownloads[downloadId] = true;
-        
+
         // Open file for writing
         final sink = file.openWrite();
-        
+
         // Listen to response stream with progress tracking
         response.stream.listen(
           (List<int> chunk) {
             // Check if download was cancelled
             if (_cancelledDownloads[downloadId] == true) return;
-            
+
             downloadedBytes += chunk.length;
             sink.add(chunk);
-            
+
             // Report progress
             final progress = DownloadProgress(
               trackId: downloadId,
@@ -123,11 +126,11 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
             }
           },
         );
-        
+
         // Wait for download completion or cancellation
         await downloadCompleter.future;
         await sink.close();
-        
+
         final isCancelled = _cancelledDownloads[downloadId] == true;
         if (isCancelled) {
           // Delete partial file if cancelled
@@ -141,10 +144,13 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
             ),
           );
         }
-        
+
         // Verify file was downloaded successfully
         if (await file.exists() && await file.length() > 0) {
-          final completedProgress = DownloadProgress.completed(downloadId, await file.length());
+          final completedProgress = DownloadProgress.completed(
+            downloadId,
+            await file.length(),
+          );
           onProgress(completedProgress);
           return Right(file);
         } else {
@@ -155,13 +161,11 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
             ),
           );
         }
-        
       } finally {
         client.close();
         _activeDownloads.remove(downloadId);
         _cancelledDownloads.remove(downloadId);
       }
-      
     } catch (e) {
       return Left(
         NetworkCacheFailure(
@@ -200,7 +204,9 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, String>> getDownloadUrl(String audioReference) async {
+  Future<Either<CacheFailure, String>> getDownloadUrl(
+    String audioReference,
+  ) async {
     try {
       final ref = _storage.ref(audioReference);
       final downloadUrl = await ref.getDownloadURL();
@@ -241,7 +247,7 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
     try {
       final ref = _storage.ref(audioReference);
       final metadata = await ref.getMetadata();
-      
+
       return Right({
         'size': metadata.size,
         'contentType': metadata.contentType,

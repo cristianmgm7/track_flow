@@ -1,13 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:provider/provider.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/get_track_cache_status_usecase.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart';
-import 'package:trackflow/features/audio_cache/playlist/domain/usecases/cache_playlist_usecase.dart';
-import 'package:trackflow/features/audio_cache/playlist/domain/usecases/get_playlist_cache_status_usecase.dart';
-import 'package:trackflow/features/audio_cache/playlist/domain/usecases/remove_playlist_cache_usecase.dart';
-import 'package:trackflow/core/di/injection.dart';
 
 import '../track/presentation/bloc/track_cache_bloc.dart';
 import '../track/presentation/widgets/smart_track_cache_icon.dart';
@@ -383,32 +375,3 @@ class CacheDemoContentFallback extends StatelessWidget {
   }
 }
 
-class CacheDemoScreenProvider extends StatelessWidget {
-  final Widget? child;
-  const CacheDemoScreenProvider({super.key, this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<CacheTrackUseCase>(create: (_) => sl<CacheTrackUseCase>()),
-        Provider<GetTrackCacheStatusUseCase>(
-          create: (_) => sl<GetTrackCacheStatusUseCase>(),
-        ),
-        Provider<RemoveTrackCacheUseCase>(
-          create: (_) => sl<RemoveTrackCacheUseCase>(),
-        ),
-        Provider<CachePlaylistUseCase>(
-          create: (_) => sl<CachePlaylistUseCase>(),
-        ),
-        Provider<GetPlaylistCacheStatusUseCase>(
-          create: (_) => sl<GetPlaylistCacheStatusUseCase>(),
-        ),
-        Provider<RemovePlaylistCacheUseCase>(
-          create: (_) => sl<RemovePlaylistCacheUseCase>(),
-        ),
-      ],
-      child: child ?? const CacheDemoScreen(),
-    );
-  }
-}
