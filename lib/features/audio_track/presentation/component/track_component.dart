@@ -71,153 +71,166 @@ class _TrackComponentState extends State<TrackComponent> {
   Widget build(BuildContext context) {
     final durationStr = _formatDuration(widget.track.duration);
 
-    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-      builder: (context, playerState) {
-        final isCurrent =
-            playerState is AudioPlayerActiveState &&
-            playerState.track.id == widget.track.id;
-        final isPlaying = isCurrent && playerState is AudioPlayerPlaying;
-        return Card(
-          color:
-              isCurrent
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surface,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Dimensions.space4),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Play/Pause button
-                Material(
-                  color:
-                      widget.uploader != null ? Colors.blueAccent : Colors.grey,
-                  borderRadius: BorderRadius.circular(8),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap:
+    return BlocProvider(
+      create: (context) => sl<TrackCacheBloc>(),
+      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+        builder: (context, playerState) {
+          final isCurrent =
+              playerState is AudioPlayerActiveState &&
+              playerState.track.id == widget.track.id;
+          final isPlaying = isCurrent && playerState is AudioPlayerPlaying;
+          return Card(
+            color:
+                isCurrent
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surface,
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Dimensions.space4),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Play/Pause button
+                  Material(
+                    color:
                         widget.uploader != null
-                            ? () => _playTrack(context)
-                            : null,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child:
-                            isCurrent
-                                ? (isPlaying
-                                    ? const Icon(
-                                      Icons.pause,
-                                      color: Colors.white,
-                                      size: 28,
-                                      key: ValueKey('pause'),
-                                    )
-                                    : const Icon(
-                                      Icons.play_arrow,
-                                      color: Colors.white,
-                                      size: 28,
-                                      key: ValueKey('play'),
-                                    ))
-                                : const Icon(
-                                  Icons.play_arrow,
-                                  color: Colors.white,
-                                  size: 28,
-                                  key: ValueKey('play'),
-                                ),
+                            ? Colors.blueAccent
+                            : Colors.grey,
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap:
+                          widget.uploader != null
+                              ? () => _playTrack(context)
+                              : null,
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child:
+                              isCurrent
+                                  ? (isPlaying
+                                      ? const Icon(
+                                        Icons.pause,
+                                        color: Colors.white,
+                                        size: 28,
+                                        key: ValueKey('pause'),
+                                      )
+                                      : const Icon(
+                                        Icons.play_arrow,
+                                        color: Colors.white,
+                                        size: 28,
+                                        key: ValueKey('play'),
+                                      ))
+                                  : const Icon(
+                                    Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 28,
+                                    key: ValueKey('play'),
+                                  ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                // Info principal (nombre y debajo: icono + colaborador)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.track.name,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          TrackStatusBadge(
-                            trackUrl: widget.track.url,
-                            trackId: widget.track.id.value,
-                            size: 16,
+                  const SizedBox(width: 12),
+                  // Info principal (nombre y debajo: icono + colaborador)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.track.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            widget.uploader?.name ?? 'Unknown User',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            TrackStatusBadge(
+                              trackUrl: widget.track.url,
+                              trackId: widget.track.id.value,
+                              size: 16,
                             ),
-                            overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 8),
+                            Text(
+                              widget.uploader?.name ?? 'Unknown User',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: Text(
+                      durationStr,
+                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: SmartTrackCacheIcon(
+                      trackId: widget.track.id.value,
+                      audioUrl: widget.track.url,
+                      size: 20.0,
+                      onSuccess: (message) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                            backgroundColor: Colors.green,
+                            duration: const Duration(seconds: 2),
                           ),
-                        ],
+                        );
+                      },
+                      onError: (message) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(message),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 3),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: Colors.blueAccent,
                       ),
-                    ],
+                      onPressed: () => _openTrackActionsSheet(context),
+                      tooltip: 'Actions',
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                // Duración
-                Text(
-                  durationStr,
-                  style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                ),
-                const SizedBox(width: 8),
-                // Smart Cache Icon with BLoC provider
-                BlocProvider(
-                  create: (context) => sl<TrackCacheBloc>(),
-                  child: SmartTrackCacheIcon(
-                    trackId: widget.track.id.value,
-                    audioUrl: widget.track.url,
-                    size: 20.0,
-                    onSuccess: (message) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(message),
-                          backgroundColor: Colors.green,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    onError: (message) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(message),
-                          backgroundColor: Colors.red,
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.blueAccent),
-                  onPressed: () => _openTrackActionsSheet(context),
-                  tooltip: 'Actions',
-                  constraints: const BoxConstraints(
-                    minWidth: 40,
-                    minHeight: 40,
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

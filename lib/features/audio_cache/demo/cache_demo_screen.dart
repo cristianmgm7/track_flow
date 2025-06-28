@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/get_track_cache_status_usecase.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart';
+import 'package:trackflow/features/audio_cache/playlist/domain/usecases/cache_playlist_usecase.dart';
+import 'package:trackflow/features/audio_cache/playlist/domain/usecases/get_playlist_cache_status_usecase.dart';
+import 'package:trackflow/features/audio_cache/playlist/domain/usecases/remove_playlist_cache_usecase.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 import '../track/presentation/bloc/track_cache_bloc.dart';
 import '../track/presentation/widgets/smart_track_cache_icon.dart';
@@ -25,18 +33,20 @@ class CacheDemoScreen extends StatelessWidget {
             return MultiBlocProvider(
               providers: [
                 BlocProvider<TrackCacheBloc>(
-                  create: (context) => TrackCacheBloc(
-                    context.read(),
-                    context.read(),
-                    context.read(),
-                  ),
+                  create:
+                      (context) => TrackCacheBloc(
+                        context.read(),
+                        context.read(),
+                        context.read(),
+                      ),
                 ),
                 BlocProvider<PlaylistCacheBloc>(
-                  create: (context) => PlaylistCacheBloc(
-                    context.read(),
-                    context.read(),
-                    context.read(),
-                  ),
+                  create:
+                      (context) => PlaylistCacheBloc(
+                        context.read(),
+                        context.read(),
+                        context.read(),
+                      ),
                 ),
               ],
               child: const CacheDemoContent(),
@@ -66,7 +76,7 @@ class CacheDemoContent extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
-          
+
           // Track Cache Demo
           Card(
             child: Padding(
@@ -86,9 +96,9 @@ class CacheDemoContent extends StatelessWidget {
                         audioUrl: 'https://example.com/audio1.mp3',
                         size: 32,
                         onSuccess: (message) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(message)),
-                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(message)));
                         },
                         onError: (error) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -101,7 +111,9 @@ class CacheDemoContent extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
-                        child: Text('Demo Track 1 - Click para cachear/remover'),
+                        child: Text(
+                          'Demo Track 1 - Click para cachear/remover',
+                        ),
                       ),
                     ],
                   ),
@@ -116,7 +128,9 @@ class CacheDemoContent extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
-                        child: Text('Demo Track 2 - Con referencia de playlist'),
+                        child: Text(
+                          'Demo Track 2 - Con referencia de playlist',
+                        ),
                       ),
                     ],
                   ),
@@ -124,9 +138,9 @@ class CacheDemoContent extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Playlist Cache Demo
           Card(
             child: Padding(
@@ -151,14 +165,16 @@ class CacheDemoContent extends StatelessWidget {
                         },
                         size: 36,
                         onSuccess: (message) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(message)),
-                          );
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text(message)));
                         },
                       ),
                       const SizedBox(width: 12),
                       const Expanded(
-                        child: Text('Demo Playlist (3 tracks) - Click para operación bulk'),
+                        child: Text(
+                          'Demo Playlist (3 tracks) - Click para operación bulk',
+                        ),
                       ),
                     ],
                   ),
@@ -166,9 +182,9 @@ class CacheDemoContent extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Status Indicators Demo
           Card(
             child: Padding(
@@ -206,9 +222,9 @@ class CacheDemoContent extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Integration Instructions
           Container(
             padding: const EdgeInsets.all(16),
@@ -259,7 +275,7 @@ class CacheDemoContentFallback extends StatelessWidget {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 16),
-          
+
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -288,9 +304,9 @@ class CacheDemoContentFallback extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -308,20 +324,26 @@ class CacheDemoContentFallback extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Text('📁 Track Cache: Individual track caching with smart UI components'),
+                  Text(
+                    '📁 Track Cache: Individual track caching with smart UI components',
+                  ),
                   const SizedBox(height: 8),
-                  Text('📁 Playlist Cache: Bulk operations for playlist caching'),
+                  Text(
+                    '📁 Playlist Cache: Bulk operations for playlist caching',
+                  ),
                   const SizedBox(height: 8),
-                  Text('📁 Shared Infrastructure: Common services and data layers'),
+                  Text(
+                    '📁 Shared Infrastructure: Common services and data layers',
+                  ),
                   const SizedBox(height: 8),
                   Text('📁 Storage Management: Cleanup and optimization'),
                 ],
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -357,6 +379,36 @@ class CacheDemoContentFallback extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class CacheDemoScreenProvider extends StatelessWidget {
+  final Widget? child;
+  const CacheDemoScreenProvider({super.key, this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        Provider<CacheTrackUseCase>(create: (_) => sl<CacheTrackUseCase>()),
+        Provider<GetTrackCacheStatusUseCase>(
+          create: (_) => sl<GetTrackCacheStatusUseCase>(),
+        ),
+        Provider<RemoveTrackCacheUseCase>(
+          create: (_) => sl<RemoveTrackCacheUseCase>(),
+        ),
+        Provider<CachePlaylistUseCase>(
+          create: (_) => sl<CachePlaylistUseCase>(),
+        ),
+        Provider<GetPlaylistCacheStatusUseCase>(
+          create: (_) => sl<GetPlaylistCacheStatusUseCase>(),
+        ),
+        Provider<RemovePlaylistCacheUseCase>(
+          create: (_) => sl<RemovePlaylistCacheUseCase>(),
+        ),
+      ],
+      child: child ?? const CacheDemoScreen(),
     );
   }
 }

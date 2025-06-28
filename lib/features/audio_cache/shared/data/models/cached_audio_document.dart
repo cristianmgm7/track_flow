@@ -11,16 +11,16 @@ class CachedAudioDocument {
   late String trackId;
 
   late String filePath;
-  
+
   late int fileSizeBytes;
-  
+
   late DateTime cachedAt;
-  
+
   late String checksum;
-  
+
   @Enumerated(EnumType.name)
   late AudioQuality quality;
-  
+
   @Enumerated(EnumType.name)
   late CacheStatus status;
 

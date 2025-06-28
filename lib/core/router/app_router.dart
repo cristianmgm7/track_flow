@@ -17,7 +17,7 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/settings/presentation/screens/setings_screen.dart';
+import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/user_profile_screen.dart';
 import 'package:trackflow/features/audio_cache/demo/cache_demo_screen.dart';
 
@@ -137,7 +137,7 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.cacheDemo,
-              builder: (context, state) => const CacheDemoScreen(),
+              builder: (context, state) => CacheDemoScreenProvider(),
             ),
           ],
         ),

@@ -132,7 +132,7 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                       ],
                     ),
                   );
-                } else if (cacheState is AudioCacheFailure) {
+                } else if (cacheState is TrackCacheOperationFailure) {
                   return Center(child: Text('Error: ${cacheState.error}'));
                 } else {
                   return const SizedBox.shrink();

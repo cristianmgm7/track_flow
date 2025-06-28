@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/audio_cache/presentation/components/storage_stats_widget.dart';
-import 'package:trackflow/features/audio_cache/presentation/components/cached_tracks_manager.dart';
+import 'package:trackflow/features/audio_cache/widgets/storage_stats_widget.dart';
+import 'package:trackflow/features/audio_cache/widgets/cached_tracks_manager.dart';
 
 class StorageManagementScreen extends StatelessWidget {
   const StorageManagementScreen({Key? key}) : super(key: key);

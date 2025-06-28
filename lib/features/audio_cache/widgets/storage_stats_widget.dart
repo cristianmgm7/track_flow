@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/audio_cache/domain/services/storage_management_service.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/services/enhanced_storage_management_service.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/enhanced_storage_types.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class StorageStatsWidget extends StatefulWidget {
@@ -17,24 +18,27 @@ class StorageStatsWidget extends StatefulWidget {
 }
 
 class _StorageStatsWidgetState extends State<StorageStatsWidget> {
-  late final StorageManagementService _storageService;
-  StorageStats? _currentStats;
+  late final EnhancedStorageManagementService _storageService;
+  EnhancedStorageStats? _currentStats;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _storageService = sl<StorageManagementService>();
+    _storageService = sl<EnhancedStorageManagementService>();
     _loadStorageStats();
     _subscribeToUpdates();
   }
 
   Future<void> _loadStorageStats() async {
     try {
-      final stats = await _storageService.getStorageStats();
+      final result = await _storageService.getStorageStats();
       if (mounted) {
         setState(() {
-          _currentStats = stats;
+          _currentStats = result.fold(
+            (failure) => null,
+            (stats) => stats,
+          );
           _isLoading = false;
         });
       }
@@ -48,7 +52,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
   }
 
   void _subscribeToUpdates() {
-    _storageService.storageStatsStream.listen((stats) {
+    _storageService.watchStorageStats().listen((stats) {
       if (mounted) {
         setState(() {
           _currentStats = stats;
@@ -63,14 +67,17 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
         _isLoading = true;
       });
 
-      final result = await _storageService.performAutoCleanup();
+      final result = await _storageService.performCleanup();
       
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
 
-        _showCleanupResult(result);
+        result.fold(
+          (failure) => _showErrorSnackBar('Cleanup failed: ${failure.message}'),
+          (cleanupResult) => _showCleanupResult(cleanupResult),
+        );
         await _loadStorageStats();
       }
     } catch (e) {
@@ -95,13 +102,16 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
           _isLoading = true;
         });
 
-        await _storageService.clearAllCache();
+        final result = await _storageService.clearAllCache();
         
         if (mounted) {
           setState(() {
             _isLoading = false;
           });
-          _showSuccessSnackBar('All cache cleared successfully');
+          result.fold(
+            (failure) => _showErrorSnackBar('Failed to clear cache: ${failure.message}'),
+            (_) => _showSuccessSnackBar('All cache cleared successfully'),
+          );
           await _loadStorageStats();
         }
       } catch (e) {
@@ -115,11 +125,11 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
     }
   }
 
-  void _showCleanupResult(CleanupResult result) {
-    final bytesFreedMB = (result.bytesFreed / (1024 * 1024)).toStringAsFixed(1);
+  void _showCleanupResult(EnhancedCleanupResult result) {
+    final bytesFreedMB = (result.totalSpaceFreed / (1024 * 1024)).toStringAsFixed(1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Cleanup complete: ${bytesFreedMB}MB freed, ${result.filesRemoved} files removed'),
+        content: Text('Cleanup complete: ${bytesFreedMB}MB freed, ${result.totalFilesRemoved} files removed'),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 3),
       ),
