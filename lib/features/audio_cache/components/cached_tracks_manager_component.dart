@@ -3,21 +3,22 @@ import 'package:trackflow/features/audio_cache/shared/domain/entities/enhanced_s
 import 'package:trackflow/features/audio_cache/shared/domain/services/enhanced_storage_management_service.dart';
 import 'package:trackflow/core/di/injection.dart';
 
-class CachedTracksManager extends StatefulWidget {
+class CachedTracksManagerComponent extends StatefulWidget {
   final bool showHeader;
   final int maxVisibleItems;
 
-  const CachedTracksManager({
+  const CachedTracksManagerComponent({
     super.key,
     this.showHeader = true,
     this.maxVisibleItems = 10,
   });
 
   @override
-  State<CachedTracksManager> createState() => _CachedTracksManagerState();
+  State<CachedTracksManagerComponent> createState() =>
+      _CachedTracksManagerState();
 }
 
-class _CachedTracksManagerState extends State<CachedTracksManager> {
+class _CachedTracksManagerState extends State<CachedTracksManagerComponent> {
   late final EnhancedStorageManagementService _storageService;
   List<EnhancedCachedTrackInfo> _cachedTracks = [];
   List<EnhancedCachedTrackInfo> _selectedTracks = [];

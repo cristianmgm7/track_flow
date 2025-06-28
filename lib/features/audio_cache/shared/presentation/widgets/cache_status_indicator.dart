@@ -59,12 +59,8 @@ class CacheStatusIndicator extends StatelessWidget {
   Widget _buildStatusIcon(Color effectiveColor) {
     switch (status) {
       case CacheStatus.cached:
-        return Icon(
-          Icons.download_done,
-          color: Colors.green,
-          size: size,
-        );
-      
+        return Icon(Icons.download_done, color: Colors.green, size: size);
+
       case CacheStatus.downloading:
         return SizedBox(
           width: size,
@@ -74,14 +70,10 @@ class CacheStatusIndicator extends StatelessWidget {
             color: effectiveColor,
           ),
         );
-      
+
       case CacheStatus.failed:
-        return Icon(
-          Icons.error_outline,
-          color: Colors.red,
-          size: size,
-        );
-      
+        return Icon(Icons.error_outline, color: Colors.red, size: size);
+
       case CacheStatus.notCached:
       default:
         return Icon(

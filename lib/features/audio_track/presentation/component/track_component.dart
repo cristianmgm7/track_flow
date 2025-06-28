@@ -94,54 +94,57 @@ class _TrackComponentState extends State<TrackComponent> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Play/Pause button
-                  Material(
-                    color:
-                        widget.uploader != null
-                            ? Colors.blueAccent
-                            : Colors.grey,
-                    borderRadius: BorderRadius.circular(8),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap:
+                  SizedBox(
+                    width: 44,
+                    height: 44,
+                    child: Material(
+                      color:
                           widget.uploader != null
-                              ? () => _playTrack(context)
-                              : null,
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        alignment: Alignment.center,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child:
-                              isCurrent
-                                  ? (isPlaying
-                                      ? const Icon(
-                                        Icons.pause,
-                                        color: Colors.white,
-                                        size: 28,
-                                        key: ValueKey('pause'),
-                                      )
-                                      : const Icon(
-                                        Icons.play_arrow,
-                                        color: Colors.white,
-                                        size: 28,
-                                        key: ValueKey('play'),
-                                      ))
-                                  : const Icon(
-                                    Icons.play_arrow,
-                                    color: Colors.white,
-                                    size: 28,
-                                    key: ValueKey('play'),
-                                  ),
+                              ? Colors.blueAccent
+                              : Colors.grey,
+                      borderRadius: BorderRadius.circular(8),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap:
+                            widget.uploader != null
+                                ? () => _playTrack(context)
+                                : null,
+                        child: Center(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child:
+                                isCurrent
+                                    ? (isPlaying
+                                        ? const Icon(
+                                          Icons.pause,
+                                          color: Colors.white,
+                                          size: 28,
+                                          key: ValueKey('pause'),
+                                        )
+                                        : const Icon(
+                                          Icons.play_arrow,
+                                          color: Colors.white,
+                                          size: 28,
+                                          key: ValueKey('play'),
+                                        ))
+                                    : const Icon(
+                                      Icons.play_arrow,
+                                      color: Colors.white,
+                                      size: 28,
+                                      key: ValueKey('play'),
+                                    ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  // Info principal (nombre y debajo: icono + colaborador)
+                  // Main info (track name and uploader)
                   Expanded(
+                    flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           widget.track.name,
@@ -150,6 +153,7 @@ class _TrackComponentState extends State<TrackComponent> {
                             fontSize: 16,
                           ),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                         const SizedBox(height: 4),
                         Row(
@@ -160,13 +164,16 @@ class _TrackComponentState extends State<TrackComponent> {
                               size: 16,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              widget.uploader?.name ?? 'Unknown User',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Text(
+                                widget.uploader?.name ?? 'Unknown User',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -174,17 +181,20 @@ class _TrackComponentState extends State<TrackComponent> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Flexible(
-                    fit: FlexFit.loose,
+                  // Duration
+                  SizedBox(
+                    width: 48,
                     child: Text(
                       durationStr,
                       style: TextStyle(color: Colors.grey[700], fontSize: 13),
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Flexible(
-                    fit: FlexFit.loose,
+                  // Cache icon
+                  SizedBox(
+                    width: 32,
                     child: SmartTrackCacheIcon(
                       trackId: widget.track.id.value,
                       audioUrl: widget.track.url,
@@ -209,8 +219,10 @@ class _TrackComponentState extends State<TrackComponent> {
                       },
                     ),
                   ),
-                  Flexible(
-                    fit: FlexFit.loose,
+                  const SizedBox(width: 4),
+                  // Actions button
+                  SizedBox(
+                    width: 40,
                     child: IconButton(
                       icon: const Icon(
                         Icons.more_vert,

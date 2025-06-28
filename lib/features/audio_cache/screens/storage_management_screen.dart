@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/audio_cache/widgets/storage_stats_widget.dart';
-import 'package:trackflow/features/audio_cache/widgets/cached_tracks_manager.dart';
+import 'package:trackflow/features/audio_cache/components/storage_stats_component.dart';
+import 'package:trackflow/features/audio_cache/components/cached_tracks_manager_component.dart';
 
 class StorageManagementScreen extends StatelessWidget {
   const StorageManagementScreen({super.key});
@@ -15,7 +15,7 @@ class StorageManagementScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Storage usage overview
-            StorageStatsWidget(),
+            StorageStatsWidgetComponent(),
 
             SizedBox(height: 16),
 
@@ -24,7 +24,7 @@ class StorageManagementScreen extends StatelessWidget {
             SizedBox(height: 16),
 
             // Cached tracks management
-            CachedTracksManager(),
+            CachedTracksManagerComponent(),
           ],
         ),
       ),

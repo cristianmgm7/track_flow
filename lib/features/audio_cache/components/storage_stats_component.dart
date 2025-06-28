@@ -3,21 +3,22 @@ import 'package:trackflow/features/audio_cache/shared/domain/services/enhanced_s
 import 'package:trackflow/features/audio_cache/shared/domain/entities/enhanced_storage_types.dart';
 import 'package:trackflow/core/di/injection.dart';
 
-class StorageStatsWidget extends StatefulWidget {
+class StorageStatsWidgetComponent extends StatefulWidget {
   final bool showHeader;
   final bool showActions;
 
-  const StorageStatsWidget({
-    Key? key,
+  const StorageStatsWidgetComponent({
+    super.key,
     this.showHeader = true,
     this.showActions = true,
-  }) : super(key: key);
+  });
 
   @override
-  State<StorageStatsWidget> createState() => _StorageStatsWidgetState();
+  State<StorageStatsWidgetComponent> createState() =>
+      _StorageStatsWidgetState();
 }
 
-class _StorageStatsWidgetState extends State<StorageStatsWidget> {
+class _StorageStatsWidgetState extends State<StorageStatsWidgetComponent> {
   late final EnhancedStorageManagementService _storageService;
   EnhancedStorageStats? _currentStats;
   bool _isLoading = true;
@@ -35,10 +36,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
       final result = await _storageService.getStorageStats();
       if (mounted) {
         setState(() {
-          _currentStats = result.fold(
-            (failure) => null,
-            (stats) => stats,
-          );
+          _currentStats = result.fold((failure) => null, (stats) => stats);
           _isLoading = false;
         });
       }
@@ -68,7 +66,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
       });
 
       final result = await _storageService.performCleanup();
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -103,13 +101,14 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
         });
 
         final result = await _storageService.clearAllCache();
-        
+
         if (mounted) {
           setState(() {
             _isLoading = false;
           });
           result.fold(
-            (failure) => _showErrorSnackBar('Failed to clear cache: ${failure.message}'),
+            (failure) =>
+                _showErrorSnackBar('Failed to clear cache: ${failure.message}'),
             (_) => _showSuccessSnackBar('All cache cleared successfully'),
           );
           await _loadStorageStats();
@@ -126,10 +125,13 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
   }
 
   void _showCleanupResult(EnhancedCleanupResult result) {
-    final bytesFreedMB = (result.totalSpaceFreed / (1024 * 1024)).toStringAsFixed(1);
+    final bytesFreedMB = (result.totalSpaceFreed / (1024 * 1024))
+        .toStringAsFixed(1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Cleanup complete: ${bytesFreedMB}MB freed, ${result.totalFilesRemoved} files removed'),
+        content: Text(
+          'Cleanup complete: ${bytesFreedMB}MB freed, ${result.totalFilesRemoved} files removed',
+        ),
         backgroundColor: Colors.green,
         duration: const Duration(seconds: 3),
       ),
@@ -159,20 +161,21 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
   Future<bool> _showConfirmDialog(String title, String message) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Confirm'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
     );
     return result ?? false;
   }
@@ -180,7 +183,8 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '${bytes}B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    if (bytes < 1024 * 1024 * 1024)
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)}GB';
   }
 
@@ -192,9 +196,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(16),
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -223,9 +225,13 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
                   ),
                   if (stats.isLowOnSpace)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: stats.isCriticallyLow ? Colors.red : Colors.orange,
+                        color:
+                            stats.isCriticallyLow ? Colors.red : Colors.orange,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -241,7 +247,7 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
               ),
               const SizedBox(height: 16),
             ],
-            
+
             // Storage usage bar
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +279,9 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
                 Text(
                   '${(stats.cacheUsagePercentage * 100).toStringAsFixed(1)}% used',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.bodySmall?.color?.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                 ),
               ],
@@ -356,7 +364,12 @@ class _StorageStatsWidgetState extends State<StorageStatsWidget> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, ThemeData theme) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    ThemeData theme,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

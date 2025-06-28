@@ -201,33 +201,7 @@ class PlaylistWidget extends StatelessWidget {
                               },
                             ),
                           ),
-                          // Add Smart Cache Icon for individual track
-                          BlocProvider(
-                            create: (context) => sl<TrackCacheBloc>(),
-                            child: SmartTrackCacheIcon(
-                              trackId: track.id.value,
-                              audioUrl: track.url,
-                              size: 20.0,
-                              onSuccess: (message) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(message),
-                                    backgroundColor: Colors.green,
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                              onError: (message) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(message),
-                                    backgroundColor: Colors.red,
-                                    duration: const Duration(seconds: 3),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+
                           const SizedBox(width: 8),
                         ],
                       ),
