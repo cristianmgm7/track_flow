@@ -457,12 +457,7 @@ class CacheMetadataRepositoryImpl implements CacheMetadataRepository {
     List<String> trackIds,
   ) async {
     try {
-      // Note: This implementation assumes the data source has a delete method
-      // Since it's not in the interface yet, we'll implement it as a TODO
-      // For now, we'll return success
-      
-      // TODO: Implement bulk delete in data source
-      return const Right(unit);
+      return await _localDataSource.deleteMultipleMetadata(trackIds);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -476,8 +471,7 @@ class CacheMetadataRepositoryImpl implements CacheMetadataRepository {
   @override
   Future<Either<CacheFailure, Unit>> clearAllMetadata() async {
     try {
-      // TODO: Implement clear all in data source
-      return const Right(unit);
+      return await _localDataSource.clearAllMetadata();
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -500,8 +494,6 @@ class CacheMetadataRepositoryImpl implements CacheMetadataRepository {
 
   @override
   Stream<List<CacheReference>> watchAllReferences() {
-    // TODO: Implement in data source
-    // For now, return empty stream
-    return Stream.value([]);
+    return _localDataSource.watchAllReferences();
   }
 }

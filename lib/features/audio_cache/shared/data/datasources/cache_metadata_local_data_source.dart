@@ -47,10 +47,17 @@ abstract class CacheMetadataLocalDataSource {
   
   Future<Either<CacheFailure, List<String>>> getTracksByReference(String referenceId);
   
+  // Bulk operations
+  Future<Either<CacheFailure, Unit>> deleteMultipleMetadata(List<String> trackIds);
+  
+  Future<Either<CacheFailure, Unit>> clearAllMetadata();
+  
   // Reactive streams
   Stream<CacheReference?> watchReference(String trackId);
   
   Stream<CacheMetadata?> watchMetadata(String trackId);
+  
+  Stream<List<CacheReference>> watchAllReferences();
 }
 
 @LazySingleton(as: CacheMetadataLocalDataSource)
@@ -387,6 +394,62 @@ class CacheMetadataLocalDataSourceImpl implements CacheMetadataLocalDataSource {
   }
 
   @override
+  Future<Either<CacheFailure, Unit>> deleteMultipleMetadata(List<String> trackIds) async {
+    try {
+      await _isar.writeTxn(() async {
+        for (final trackId in trackIds) {
+          // Delete metadata
+          final metadataDoc = await _isar.cacheMetadataDocuments
+              .where()
+              .trackIdEqualTo(trackId)
+              .findFirst();
+          if (metadataDoc != null) {
+            await _isar.cacheMetadataDocuments.delete(metadataDoc.isarId);
+          }
+          
+          // Delete reference
+          final referenceDoc = await _isar.cacheReferenceDocuments
+              .where()
+              .trackIdEqualTo(trackId)
+              .findFirst();
+          if (referenceDoc != null) {
+            await _isar.cacheReferenceDocuments.delete(referenceDoc.isarId);
+          }
+        }
+      });
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to delete multiple metadata: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<CacheFailure, Unit>> clearAllMetadata() async {
+    try {
+      await _isar.writeTxn(() async {
+        // Clear all metadata and references
+        await _isar.cacheMetadataDocuments.clear();
+        await _isar.cacheReferenceDocuments.clear();
+      });
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to clear all metadata: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
+  }
+
+  @override
   Stream<CacheReference?> watchReference(String trackId) {
     return _isar.cacheReferenceDocuments
         .where()
@@ -402,5 +465,13 @@ class CacheMetadataLocalDataSourceImpl implements CacheMetadataLocalDataSource {
         .trackIdEqualTo(trackId)
         .watch(fireImmediately: true)
         .map((documents) => documents.isNotEmpty ? documents.first.toEntity() : null);
+  }
+
+  @override
+  Stream<List<CacheReference>> watchAllReferences() {
+    return _isar.cacheReferenceDocuments
+        .where()
+        .watch(fireImmediately: true)
+        .map((documents) => documents.map((doc) => doc.toEntity()).toList());
   }
 }

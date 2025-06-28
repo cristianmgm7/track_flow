@@ -59,6 +59,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () => context.go(AppRoutes.cacheDemo),
                     ),
+                    ListTile(
+                      leading: const Icon(Icons.storage),
+                      title: const Text('Storage Management'),
+                      subtitle: const Text(
+                        'Manage cached audio and storage usage',
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () => context.push('/storage-management'),
+                    ),
                   ],
                 ),
               ),

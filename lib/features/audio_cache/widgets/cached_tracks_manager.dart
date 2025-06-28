@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/audio_cache/domain/services/storage_management_service.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/enhanced_storage_types.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/services/enhanced_storage_management_service.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class CachedTracksManager extends StatefulWidget {
@@ -17,9 +18,9 @@ class CachedTracksManager extends StatefulWidget {
 }
 
 class _CachedTracksManagerState extends State<CachedTracksManager> {
-  late final StorageManagementService _storageService;
-  List<CachedTrackInfo> _cachedTracks = [];
-  List<CachedTrackInfo> _selectedTracks = [];
+  late final EnhancedStorageManagementService _storageService;
+  List<EnhancedCachedTrackInfo> _cachedTracks = [];
+  List<EnhancedCachedTrackInfo> _selectedTracks = [];
   bool _isLoading = true;
   bool _isSelectionMode = false;
   String _sortBy = 'lastAccessed'; // lastAccessed, cachedAt, fileSize, name
@@ -27,7 +28,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
   @override
   void initState() {
     super.initState();
-    _storageService = sl<StorageManagementService>();
+    _storageService = sl<EnhancedStorageManagementService>();
     _loadCachedTracks();
   }
 
@@ -37,7 +38,11 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
         _isLoading = true;
       });
 
-      final tracks = await _storageService.getCachedTracks();
+      final result = await _storageService.getCachedTracks();
+      final tracks = result.fold(
+        (failure) => <EnhancedCachedTrackInfo>[],
+        (tracks) => tracks,
+      );
 
       if (mounted) {
         setState(() {
@@ -61,20 +66,26 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
         _cachedTracks.sort((a, b) => b.lastAccessed.compareTo(a.lastAccessed));
         break;
       case 'cachedAt':
-        _cachedTracks.sort((a, b) => b.cachedAt.compareTo(a.cachedAt));
+        _cachedTracks.sort(
+          (a, b) => b.cachedAudio.cachedAt.compareTo(a.cachedAudio.cachedAt),
+        );
         break;
       case 'fileSize':
         _cachedTracks.sort(
-          (a, b) => b.fileSizeBytes.compareTo(a.fileSizeBytes),
+          (a, b) => b.cachedAudio.fileSizeBytes.compareTo(
+            a.cachedAudio.fileSizeBytes,
+          ),
         );
         break;
       case 'name':
-        _cachedTracks.sort((a, b) => a.trackName.compareTo(b.trackName));
+        _cachedTracks.sort(
+          (a, b) => a.cachedAudio.trackId.compareTo(b.cachedAudio.trackId),
+        );
         break;
     }
   }
 
-  void _toggleSelection(CachedTrackInfo track) {
+  void _toggleSelection(EnhancedCachedTrackInfo track) {
     setState(() {
       if (_selectedTracks.contains(track)) {
         _selectedTracks.remove(track);
@@ -88,7 +99,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
     });
   }
 
-  void _enterSelectionMode(CachedTrackInfo track) {
+  void _enterSelectionMode(EnhancedCachedTrackInfo track) {
     setState(() {
       _isSelectionMode = true;
       _selectedTracks = [track];
@@ -118,8 +129,9 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
 
     if (confirmed) {
       try {
-        final trackUrls = _selectedTracks.map((t) => t.trackUrl).toList();
-        await _storageService.removeCachedTracks(trackUrls);
+        final trackIds =
+            _selectedTracks.map((t) => t.cachedAudio.trackId).toList();
+        await _storageService.removeCachedTracks(trackIds);
 
         _showSuccessSnackBar('${_selectedTracks.length} tracks removed');
         _exitSelectionMode();
@@ -315,9 +327,9 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
@@ -348,9 +360,7 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
                 child: Text(
                   '+ ${_cachedTracks.length - widget.maxVisibleItems} more tracks...',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(
-                      alpha: 0.7,
-                    ),
+                    color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
                   ),
                 ),
               ),
@@ -361,13 +371,13 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
     );
   }
 
-  Widget _buildTrackItem(CachedTrackInfo track, ThemeData theme) {
+  Widget _buildTrackItem(EnhancedCachedTrackInfo track, ThemeData theme) {
     final isSelected = _selectedTracks.contains(track);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isSelected ? theme.primaryColor.withValues(alpha: 0.1) : null,
+        color: isSelected ? theme.primaryColor.withOpacity(0.1) : null,
         borderRadius: BorderRadius.circular(8),
         border: isSelected ? Border.all(color: theme.primaryColor) : null,
       ),
@@ -383,14 +393,14 @@ class _CachedTracksManagerState extends State<CachedTracksManager> {
                   color: track.isCorrupted ? Colors.red : theme.primaryColor,
                 ),
         title: Text(
-          track.trackName,
+          track.cachedAudio.trackId,
           style: TextStyle(color: track.isCorrupted ? Colors.red : null),
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Size: ${_formatBytes(track.fileSizeBytes)}'),
+            Text('Size: ${_formatBytes(track.cachedAudio.fileSizeBytes)}'),
             Text('Last accessed: ${_formatDateTime(track.lastAccessed)}'),
           ],
         ),

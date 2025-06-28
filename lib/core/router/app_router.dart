@@ -20,6 +20,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/user_profile_screen.dart';
 import 'package:trackflow/features/audio_cache/demo/cache_demo_screen.dart';
+import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -138,6 +139,10 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.cacheDemo,
               builder: (context, state) => CacheDemoScreenProvider(),
+            ),
+            GoRoute(
+              path: '/storage-management',
+              builder: (context, state) => const StorageManagementScreen(),
             ),
           ],
         ),
