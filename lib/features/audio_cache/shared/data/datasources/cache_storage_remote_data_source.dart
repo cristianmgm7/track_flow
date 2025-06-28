@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'package:http/http.dart' as http;
 
 import '../../domain/entities/download_progress.dart';
 import '../../domain/failures/cache_failure.dart';
@@ -33,7 +34,8 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
   final FirebaseStorage _storage;
   
   // Track active downloads for cancellation
-  final Map<String, DownloadTask> _activeDownloads = {};
+  final Map<String, bool> _activeDownloads = {};
+  final Map<String, bool> _cancelledDownloads = {};
 
   CacheStorageRemoteDataSourceImpl(this._storage);
 
@@ -44,69 +46,120 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
     required Function(DownloadProgress) onProgress,
   }) async {
     try {
-      // Parse Firebase Storage URL to get reference
-      final uri = Uri.parse(audioUrl);
-      final pathSegments = uri.pathSegments;
-      
-      // Extract the file path from Firebase Storage URL
-      // Expected format: /v0/b/{bucket}/o/{path}
-      if (pathSegments.length < 4 || pathSegments[0] != 'v0' || pathSegments[1] != 'b') {
+      // Validate the URL
+      final uri = Uri.tryParse(audioUrl);
+      if (uri == null || !uri.hasScheme) {
         return Left(
           NetworkCacheFailure(
-            message: 'Invalid Firebase Storage URL format',
+            message: 'Invalid audio URL format: $audioUrl',
             statusCode: 400,
           ),
         );
       }
 
-      // Reconstruct the storage path
-      final storagePath = Uri.decodeComponent(pathSegments.skip(3).join('/'));
-      final ref = _storage.ref(storagePath);
+      // Generate download ID for tracking
+      final downloadId = '${DateTime.now().millisecondsSinceEpoch}_${uri.pathSegments.last.hashCode}';
       
       final file = File(localFilePath);
-      final downloadTask = ref.writeToFile(file);
       
-      // Generate download ID for tracking
-      final downloadId = '${DateTime.now().millisecondsSinceEpoch}_${file.path.hashCode}';
-      _activeDownloads[downloadId] = downloadTask;
-
-      // Listen to progress
-      final progressSubscription = downloadTask.snapshotEvents.listen(
-        (TaskSnapshot snapshot) {
-          final progress = DownloadProgress(
-            trackId: downloadId,
-            state: _mapTaskState(snapshot.state),
-            downloadedBytes: snapshot.bytesTransferred,
-            totalBytes: snapshot.totalBytes,
-          );
-          onProgress(progress);
-        },
-        onError: (error) {
-          final failedProgress = DownloadProgress.failed(downloadId, error.toString());
-          onProgress(failedProgress);
-        },
-      );
-
+      // Ensure parent directory exists
+      await file.parent.create(recursive: true);
+      
+      // Create HTTP client for download
+      final client = http.Client();
+      
       try {
-        await downloadTask;
+        // Start the request
+        final request = http.Request('GET', uri);
+        final response = await client.send(request);
+        
+        if (response.statusCode != 200) {
+          return Left(
+            NetworkCacheFailure(
+              message: 'Failed to download audio: HTTP ${response.statusCode}',
+              statusCode: response.statusCode,
+            ),
+          );
+        }
+        
+        final totalBytes = response.contentLength ?? 0;
+        int downloadedBytes = 0;
+        
+        // Track this download for cancellation
+        final downloadCompleter = Completer<void>();
+        
+        // Store cancellation info
+        _activeDownloads[downloadId] = true;
+        
+        // Open file for writing
+        final sink = file.openWrite();
+        
+        // Listen to response stream with progress tracking
+        response.stream.listen(
+          (List<int> chunk) {
+            // Check if download was cancelled
+            if (_cancelledDownloads[downloadId] == true) return;
+            
+            downloadedBytes += chunk.length;
+            sink.add(chunk);
+            
+            // Report progress
+            final progress = DownloadProgress(
+              trackId: downloadId,
+              state: DownloadState.downloading,
+              downloadedBytes: downloadedBytes,
+              totalBytes: totalBytes,
+            );
+            onProgress(progress);
+          },
+          onDone: () {
+            if (_cancelledDownloads[downloadId] != true) {
+              downloadCompleter.complete();
+            }
+          },
+          onError: (error) {
+            if (_cancelledDownloads[downloadId] != true) {
+              downloadCompleter.completeError(error);
+            }
+          },
+        );
+        
+        // Wait for download completion or cancellation
+        await downloadCompleter.future;
+        await sink.close();
+        
+        final isCancelled = _cancelledDownloads[downloadId] == true;
+        if (isCancelled) {
+          // Delete partial file if cancelled
+          if (await file.exists()) {
+            await file.delete();
+          }
+          return Left(
+            DownloadCacheFailure(
+              message: 'Download was cancelled',
+              trackId: downloadId,
+            ),
+          );
+        }
         
         // Verify file was downloaded successfully
-        if (await file.exists()) {
+        if (await file.exists() && await file.length() > 0) {
           final completedProgress = DownloadProgress.completed(downloadId, await file.length());
           onProgress(completedProgress);
           return Right(file);
         } else {
           return Left(
             DownloadCacheFailure(
-              message: 'Download completed but file not found',
+              message: 'Download completed but file is empty or missing',
               trackId: downloadId,
             ),
           );
         }
+        
       } finally {
-        // Cleanup
-        progressSubscription.cancel();
+        client.close();
         _activeDownloads.remove(downloadId);
+        _cancelledDownloads.remove(downloadId);
       }
       
     } catch (e) {
@@ -122,10 +175,10 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
   @override
   Future<Either<CacheFailure, Unit>> cancelDownload(String downloadId) async {
     try {
-      final downloadTask = _activeDownloads[downloadId];
-      if (downloadTask != null) {
-        await downloadTask.cancel();
-        _activeDownloads.remove(downloadId);
+      final isActive = _activeDownloads[downloadId];
+      if (isActive == true) {
+        // Mark as cancelled
+        _cancelledDownloads[downloadId] = true;
         return const Right(unit);
       } else {
         return Left(
@@ -216,27 +269,13 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
     }
   }
 
-  /// Map Firebase Storage TaskState to our DownloadState
-  DownloadState _mapTaskState(TaskState state) {
-    switch (state) {
-      case TaskState.running:
-        return DownloadState.downloading;
-      case TaskState.paused:
-        return DownloadState.downloading; // Treat paused as downloading for now
-      case TaskState.success:
-        return DownloadState.completed;
-      case TaskState.canceled:
-        return DownloadState.cancelled;
-      case TaskState.error:
-        return DownloadState.failed;
-    }
-  }
-
   /// Cleanup method to cancel all active downloads
   void dispose() {
-    for (final task in _activeDownloads.values) {
-      task.cancel();
+    // Mark all active downloads as cancelled
+    for (final downloadId in _activeDownloads.keys) {
+      _cancelledDownloads[downloadId] = true;
     }
     _activeDownloads.clear();
+    _cancelledDownloads.clear();
   }
 }

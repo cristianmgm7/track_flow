@@ -65,6 +65,7 @@ dependencies:
   intl: ^0.20.2
   path_provider: ^2.1.2
   crypto: ^3.0.5
+  http: ^1.2.0
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
 

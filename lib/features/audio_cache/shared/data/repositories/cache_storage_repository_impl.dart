@@ -18,10 +18,11 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
   final CacheStorageLocalDataSource _localDataSource;
   final CacheStorageRemoteDataSource _remoteDataSource;
   static const String _cacheSubDirectory = 'audio_cache';
-  
+
   // Active downloads tracking for progress and cancellation
   final Map<String, String> _activeDownloads = {}; // trackId -> downloadId
-  final Map<String, StreamController<DownloadProgress>> _progressControllers = {};
+  final Map<String, StreamController<DownloadProgress>> _progressControllers =
+      {};
 
   CacheStorageRepositoryImpl({
     required CacheStorageLocalDataSource localDataSource,
@@ -45,9 +46,10 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
         filePath,
       ) async {
         // Create progress controller for this download
-        final progressController = StreamController<DownloadProgress>.broadcast();
+        final progressController =
+            StreamController<DownloadProgress>.broadcast();
         _progressControllers[trackId] = progressController;
-        
+
         // Download using remote data source (Firebase Storage)
         String? downloadId;
         final downloadResult = await _remoteDataSource.downloadAudio(
@@ -56,10 +58,12 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           onProgress: (progress) {
             // Store download ID for cancellation tracking
             if (downloadId == null) {
-              downloadId = progress.trackId; // This is the download ID from remote source
+              downloadId =
+                  progress
+                      .trackId; // This is the download ID from remote source
               _activeDownloads[trackId] = downloadId!;
             }
-            
+
             // Map download ID back to trackId for consistency
             final trackProgress = progress.copyWith(trackId: trackId);
             progressCallback?.call(trackProgress);
@@ -69,7 +73,10 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
 
         return await downloadResult.fold(
           (failure) {
-            final failedProgress = DownloadProgress.failed(trackId, failure.message);
+            final failedProgress = DownloadProgress.failed(
+              trackId,
+              failure.message,
+            );
             progressCallback?.call(failedProgress);
             progressController.add(failedProgress);
             _cleanupDownload(trackId);
@@ -102,10 +109,13 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
                 return Left(failure);
               },
               (audio) {
-                final completedProgress = DownloadProgress.completed(trackId, fileSize);
+                final completedProgress = DownloadProgress.completed(
+                  trackId,
+                  fileSize,
+                );
                 progressCallback?.call(completedProgress);
                 progressController.add(completedProgress);
-                
+
                 // Clean up
                 _cleanupDownload(trackId);
                 return Right(audio);
@@ -117,7 +127,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
     } catch (e) {
       final failedProgress = DownloadProgress.failed(trackId, e.toString());
       progressCallback?.call(failedProgress);
-      
+
       // Emit to progress controller if it exists
       _progressControllers[trackId]?.add(failedProgress);
       _cleanupDownload(trackId);
@@ -535,17 +545,17 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
       final downloadId = _activeDownloads[trackId];
       if (downloadId != null) {
         final result = await _remoteDataSource.cancelDownload(downloadId);
-        return result.fold(
-          (failure) => Left(failure),
-          (_) {
-            // Emit cancelled progress
-            final cancelledProgress = DownloadProgress.failed(trackId, 'Download cancelled by user');
-            _progressControllers[trackId]?.add(cancelledProgress);
-            
-            _cleanupDownload(trackId);
-            return const Right(unit);
-          },
-        );
+        return result.fold((failure) => Left(failure), (_) {
+          // Emit cancelled progress
+          final cancelledProgress = DownloadProgress.failed(
+            trackId,
+            'Download cancelled by user',
+          );
+          _progressControllers[trackId]?.add(cancelledProgress);
+
+          _cleanupDownload(trackId);
+          return const Right(unit);
+        });
       } else {
         return Left(
           ValidationCacheFailure(
@@ -572,22 +582,21 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
       if (downloadId != null) {
         // For Firebase Storage, we need to cancel and store progress for later resume
         final result = await _remoteDataSource.cancelDownload(downloadId);
-        return result.fold(
-          (failure) => Left(failure),
-          (_) {
-            // Mark as paused in progress controller
-            final pausedProgress = DownloadProgress(
-              trackId: trackId,
-              state: DownloadState.downloading, // Keep as downloading but store pause state internally
-              downloadedBytes: 0, // We'd need to store this from last progress
-              totalBytes: 0,
-            );
-            _progressControllers[trackId]?.add(pausedProgress);
-            
-            // Don't cleanup yet - keep for resume
-            return const Right(unit);
-          },
-        );
+        return result.fold((failure) => Left(failure), (_) {
+          // Mark as paused in progress controller
+          final pausedProgress = DownloadProgress(
+            trackId: trackId,
+            state:
+                DownloadState
+                    .downloading, // Keep as downloading but store pause state internally
+            downloadedBytes: 0, // We'd need to store this from last progress
+            totalBytes: 0,
+          );
+          _progressControllers[trackId]?.add(pausedProgress);
+
+          // Don't cleanup yet - keep for resume
+          return const Right(unit);
+        });
       } else {
         return Left(
           ValidationCacheFailure(
@@ -615,7 +624,8 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
       // For now, return an error indicating resume is not supported with current implementation
       return Left(
         ValidationCacheFailure(
-          message: 'Download resuming not supported with current Firebase Storage implementation. Please restart download.',
+          message:
+              'Download resuming not supported with current Firebase Storage implementation. Please restart download.',
           field: 'trackId',
           value: trackId,
         ),
@@ -649,23 +659,20 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           ),
         );
       }
-      
+
       // Check if file already exists (completed)
       final existsResult = await audioExists(trackId);
-      return existsResult.fold(
-        (failure) => Left(failure),
-        (exists) {
-          if (exists) {
-            // File exists, so download was completed
-            return const Right(
-              null, // Could return completed progress here
-            );
-          } else {
-            // No active download and file doesn't exist
-            return const Right(null);
-          }
-        },
-      );
+      return existsResult.fold((failure) => Left(failure), (exists) {
+        if (exists) {
+          // File exists, so download was completed
+          return const Right(
+            null, // Could return completed progress here
+          );
+        } else {
+          // No active download and file doesn't exist
+          return const Right(null);
+        }
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -681,10 +688,10 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
   getActiveDownloads() async {
     try {
       final activeDownloads = <DownloadProgress>[];
-      
+
       for (final entry in _activeDownloads.entries) {
         final trackId = entry.key;
-        
+
         // Create a basic progress object for each active download
         activeDownloads.add(
           DownloadProgress(
@@ -695,7 +702,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           ),
         );
       }
-      
+
       return Right(activeDownloads);
     } catch (e) {
       return Left(
@@ -729,12 +736,14 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
       for (final trackId in _activeDownloads.keys) {
         // For active downloads, we could track their last known progress
         // For now, just indicate they're active
-        activeDownloads.add(DownloadProgress(
-          trackId: trackId,
-          state: DownloadState.downloading,
-          downloadedBytes: 0,
-          totalBytes: 0,
-        ));
+        activeDownloads.add(
+          DownloadProgress(
+            trackId: trackId,
+            state: DownloadState.downloading,
+            downloadedBytes: 0,
+            totalBytes: 0,
+          ),
+        );
       }
       return activeDownloads;
     }).distinct();
@@ -767,13 +776,13 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
     try {
       // Basic cache migration implementation
       // In a real app, this would handle version migrations, file structure changes, etc.
-      
+
       int migratedFiles = 0;
       final cacheDir = await _getCacheDirectory();
-      
+
       if (await cacheDir.exists()) {
         final files = cacheDir.listSync().whereType<File>();
-        
+
         for (final file in files) {
           // Example: rename old cache files to new format
           if (file.path.contains('old_cache_')) {
@@ -783,7 +792,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           }
         }
       }
-      
+
       return Right(migratedFiles);
     } catch (e) {
       return Left(
@@ -800,41 +809,41 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
     try {
       // Rebuild cache index by scanning files and updating database
       int rebuiltEntries = 0;
-      
+
       final cacheDir = await _getCacheDirectory();
       if (!await cacheDir.exists()) {
         return const Right(0);
       }
-      
+
       final files = cacheDir.listSync().whereType<File>();
-      
+
       for (final file in files) {
         try {
           // Skip temporary files
-          if (file.path.endsWith('.tmp') || 
-              file.path.endsWith('.part') || 
+          if (file.path.endsWith('.tmp') ||
+              file.path.endsWith('.part') ||
               file.path.endsWith('.download')) {
             continue;
           }
-          
+
           // Extract trackId from filename (assuming specific naming convention)
           final filename = file.path.split('/').last;
           if (filename.contains('_')) {
             final trackId = filename.split('_').first;
-            
+
             // Check if this file has corresponding database entry
             final existsResult = await _localDataSource.audioExists(trackId);
             final exists = existsResult.fold(
               (failure) => false,
               (exists) => exists,
             );
-            
+
             if (!exists) {
               // File exists but no database entry - create one
               final fileSize = await file.length();
               final bytes = await file.readAsBytes();
               final checksum = sha1.convert(bytes).toString();
-              
+
               final cachedAudio = CachedAudio(
                 trackId: trackId,
                 filePath: file.path,
@@ -844,7 +853,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
                 quality: AudioQuality.medium,
                 status: CacheStatus.cached,
               );
-              
+
               await _localDataSource.storeCachedAudio(cachedAudio);
               rebuiltEntries++;
             }
@@ -854,7 +863,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           continue;
         }
       }
-      
+
       return Right(rebuiltEntries);
     } catch (e) {
       return Left(
