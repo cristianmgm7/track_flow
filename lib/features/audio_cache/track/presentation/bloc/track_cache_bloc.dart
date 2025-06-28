@@ -46,20 +46,26 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
       );
 
       result.fold(
-        (failure) => emit(TrackCacheOperationFailure(
-          trackId: event.trackId,
-          error: failure.message,
-        )),
-        (_) => emit(TrackCacheOperationSuccess(
-          trackId: event.trackId,
-          message: 'Track cached successfully',
-        )),
+        (failure) => emit(
+          TrackCacheOperationFailure(
+            trackId: event.trackId,
+            error: failure.message,
+          ),
+        ),
+        (_) => emit(
+          TrackCacheOperationSuccess(
+            trackId: event.trackId,
+            message: 'Track cached successfully',
+          ),
+        ),
       );
     } catch (e) {
-      emit(TrackCacheOperationFailure(
-        trackId: event.trackId,
-        error: 'Unexpected error: $e',
-      ));
+      emit(
+        TrackCacheOperationFailure(
+          trackId: event.trackId,
+          error: 'Unexpected error: $e',
+        ),
+      );
     }
   }
 
@@ -78,20 +84,26 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
       );
 
       result.fold(
-        (failure) => emit(TrackCacheOperationFailure(
-          trackId: event.trackId,
-          error: failure.message,
-        )),
-        (_) => emit(TrackCacheOperationSuccess(
-          trackId: event.trackId,
-          message: 'Track cached with reference successfully',
-        )),
+        (failure) => emit(
+          TrackCacheOperationFailure(
+            trackId: event.trackId,
+            error: failure.message,
+          ),
+        ),
+        (_) => emit(
+          TrackCacheOperationSuccess(
+            trackId: event.trackId,
+            message: 'Track cached with reference successfully',
+          ),
+        ),
       );
     } catch (e) {
-      emit(TrackCacheOperationFailure(
-        trackId: event.trackId,
-        error: 'Unexpected error: $e',
-      ));
+      emit(
+        TrackCacheOperationFailure(
+          trackId: event.trackId,
+          error: 'Unexpected error: $e',
+        ),
+      );
     }
   }
 
@@ -100,28 +112,35 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     Emitter<TrackCacheState> emit,
   ) async {
     emit(const TrackCacheLoading());
-
     try {
       final result = await _removeTrackCacheUseCase(
         trackId: event.trackId,
         referenceId: event.referenceId,
       );
-
       result.fold(
-        (failure) => emit(TrackCacheOperationFailure(
-          trackId: event.trackId,
-          error: failure.message,
-        )),
-        (_) => emit(TrackCacheOperationSuccess(
-          trackId: event.trackId,
-          message: 'Track removed from cache successfully',
-        )),
+        (failure) => emit(
+          TrackCacheOperationFailure(
+            trackId: event.trackId,
+            error: failure.message,
+          ),
+        ),
+        (_) {
+          emit(
+            TrackCacheOperationSuccess(
+              trackId: event.trackId,
+              message: 'Track removed from cache successfully',
+            ),
+          );
+          add(GetTrackCacheStatusRequested(event.trackId));
+        },
       );
     } catch (e) {
-      emit(TrackCacheOperationFailure(
-        trackId: event.trackId,
-        error: 'Unexpected error: $e',
-      ));
+      emit(
+        TrackCacheOperationFailure(
+          trackId: event.trackId,
+          error: 'Unexpected error: $e',
+        ),
+      );
     }
   }
 
@@ -132,25 +151,26 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     emit(const TrackCacheLoading());
 
     try {
-      final result = await _getTrackCacheStatusUseCase(
-        trackId: event.trackId,
-      );
+      final result = await _getTrackCacheStatusUseCase(trackId: event.trackId);
 
       result.fold(
-        (failure) => emit(TrackCacheOperationFailure(
-          trackId: event.trackId,
-          error: failure.message,
-        )),
-        (status) => emit(TrackCacheStatusLoaded(
-          trackId: event.trackId,
-          status: status,
-        )),
+        (failure) => emit(
+          TrackCacheOperationFailure(
+            trackId: event.trackId,
+            error: failure.message,
+          ),
+        ),
+        (status) => emit(
+          TrackCacheStatusLoaded(trackId: event.trackId, status: status),
+        ),
       );
     } catch (e) {
-      emit(TrackCacheOperationFailure(
-        trackId: event.trackId,
-        error: 'Unexpected error: $e',
-      ));
+      emit(
+        TrackCacheOperationFailure(
+          trackId: event.trackId,
+          error: 'Unexpected error: $e',
+        ),
+      );
     }
   }
 
@@ -166,20 +186,23 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
       );
 
       result.fold(
-        (failure) => emit(TrackCacheOperationFailure(
-          trackId: event.trackId,
-          error: failure.message,
-        )),
-        (filePath) => emit(TrackCachePathLoaded(
-          trackId: event.trackId,
-          filePath: filePath,
-        )),
+        (failure) => emit(
+          TrackCacheOperationFailure(
+            trackId: event.trackId,
+            error: failure.message,
+          ),
+        ),
+        (filePath) => emit(
+          TrackCachePathLoaded(trackId: event.trackId, filePath: filePath),
+        ),
       );
     } catch (e) {
-      emit(TrackCacheOperationFailure(
-        trackId: event.trackId,
-        error: 'Unexpected error: $e',
-      ));
+      emit(
+        TrackCacheOperationFailure(
+          trackId: event.trackId,
+          error: 'Unexpected error: $e',
+        ),
+      );
     }
   }
 
@@ -195,30 +218,38 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
       _statusSubscription = _getTrackCacheStatusUseCase
           .watchCacheStatus(trackId: event.trackId)
           .listen(
-        (status) {
-          emit(TrackCacheWatching(
-            trackId: event.trackId,
-            currentStatus: status,
-          ));
-        },
-        onError: (error) {
-          emit(TrackCacheOperationFailure(
-            trackId: event.trackId,
-            error: 'Status watch error: $error',
-          ));
-        },
-      );
+            (status) {
+              emit(
+                TrackCacheWatching(
+                  trackId: event.trackId,
+                  currentStatus: status,
+                ),
+              );
+            },
+            onError: (error) {
+              emit(
+                TrackCacheOperationFailure(
+                  trackId: event.trackId,
+                  error: 'Status watch error: $error',
+                ),
+              );
+            },
+          );
 
       // Emit initial watching state
-      emit(TrackCacheWatching(
-        trackId: event.trackId,
-        currentStatus: CacheStatus.notCached, // Will be updated by stream
-      ));
+      emit(
+        TrackCacheWatching(
+          trackId: event.trackId,
+          currentStatus: CacheStatus.notCached, // Will be updated by stream
+        ),
+      );
     } catch (e) {
-      emit(TrackCacheOperationFailure(
-        trackId: event.trackId,
-        error: 'Failed to start watching: $e',
-      ));
+      emit(
+        TrackCacheOperationFailure(
+          trackId: event.trackId,
+          error: 'Failed to start watching: $e',
+        ),
+      );
     }
   }
 

@@ -99,7 +99,9 @@ class PlaylistWidget extends StatelessWidget {
                   child: PlaylistCacheIcon(
                     playlistId: playlist.id,
                     trackUrlPairs: Map.fromEntries(
-                      tracks.map((track) => MapEntry(track.id.value, track.url)),
+                      tracks.map(
+                        (track) => MapEntry(track.id.value, track.url),
+                      ),
                     ),
                     playlistName: playlist.name,
                     size: 28.0,
@@ -288,5 +290,4 @@ class PlaylistWidget extends StatelessWidget {
         return 'Repeat All';
     }
   }
-
 }

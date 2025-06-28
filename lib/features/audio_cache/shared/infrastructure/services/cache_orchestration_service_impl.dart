@@ -204,7 +204,6 @@ class CacheOrchestrationServiceImpl implements CacheOrchestrationService {
       trackId,
       referenceId,
     );
-
     return await referenceResult.fold((failure) => Left(failure), (
       updatedReference,
     ) async {
