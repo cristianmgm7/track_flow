@@ -72,15 +72,17 @@ class GetCachedTrackPathRequested extends TrackCacheEvent {
   List<Object?> get props => [trackId];
 }
 
-class WatchTrackCacheStatusRequested extends TrackCacheEvent {
+/// Unified event to watch both cache status and download progress
+class WatchTrackCacheInfoRequested extends TrackCacheEvent {
   final String trackId;
 
-  const WatchTrackCacheStatusRequested(this.trackId);
+  const WatchTrackCacheInfoRequested(this.trackId);
 
   @override
   List<Object?> get props => [trackId];
 }
 
-class StopWatchingTrackCacheStatus extends TrackCacheEvent {
-  const StopWatchingTrackCacheStatus();
+/// Event to stop watching unified track cache info
+class StopWatchingTrackCacheInfo extends TrackCacheEvent {
+  const StopWatchingTrackCacheInfo();
 }

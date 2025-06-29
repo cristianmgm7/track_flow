@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../shared/domain/entities/cached_audio.dart';
 import '../../../shared/domain/entities/cache_reference.dart';
+import '../../../shared/domain/entities/download_progress.dart';
 
 sealed class TrackCacheState extends Equatable {
   const TrackCacheState();
@@ -22,10 +23,7 @@ class TrackCacheStatusLoaded extends TrackCacheState {
   final String trackId;
   final CacheStatus status;
 
-  const TrackCacheStatusLoaded({
-    required this.trackId,
-    required this.status,
-  });
+  const TrackCacheStatusLoaded({required this.trackId, required this.status});
 
   @override
   List<Object?> get props => [trackId, status];
@@ -35,10 +33,7 @@ class TrackCachePathLoaded extends TrackCacheState {
   final String trackId;
   final String? filePath;
 
-  const TrackCachePathLoaded({
-    required this.trackId,
-    required this.filePath,
-  });
+  const TrackCachePathLoaded({required this.trackId, required this.filePath});
 
   @override
   List<Object?> get props => [trackId, filePath];
@@ -83,15 +78,27 @@ class TrackCacheOperationFailure extends TrackCacheState {
   List<Object?> get props => [trackId, error];
 }
 
-class TrackCacheWatching extends TrackCacheState {
+/// Unified state that combines cache status and download progress
+class TrackCacheInfoWatching extends TrackCacheState {
   final String trackId;
-  final CacheStatus currentStatus;
+  final CacheStatus status;
+  final DownloadProgress progress;
 
-  const TrackCacheWatching({
+  const TrackCacheInfoWatching({
     required this.trackId,
-    required this.currentStatus,
+    required this.status,
+    required this.progress,
   });
 
   @override
-  List<Object?> get props => [trackId, currentStatus];
+  List<Object?> get props => [trackId, status, progress];
+
+  /// Convenience getters for common checks
+  bool get isDownloading => status == CacheStatus.downloading;
+  bool get isCached => status == CacheStatus.cached;
+  bool get isFailed => status == CacheStatus.failed;
+  bool get isNotCached => status == CacheStatus.notCached;
+  double get progressPercentage => progress.progressPercentage;
+  String get progressText => progress.formattedProgress;
+  String? get errorMessage => progress.errorMessage;
 }

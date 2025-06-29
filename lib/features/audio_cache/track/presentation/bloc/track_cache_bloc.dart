@@ -1,9 +1,13 @@
 import 'dart:async';
 
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/entities/cached_audio.dart';
+import '../../../shared/domain/entities/download_progress.dart';
+import '../../../shared/domain/entities/track_cache_info.dart';
+import '../../../shared/domain/failures/cache_failure.dart';
 import '../../domain/usecases/cache_track_usecase.dart';
 import '../../domain/usecases/get_track_cache_status_usecase.dart';
 import '../../domain/usecases/remove_track_cache_usecase.dart';
@@ -16,7 +20,7 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
   final GetTrackCacheStatusUseCase _getTrackCacheStatusUseCase;
   final RemoveTrackCacheUseCase _removeTrackCacheUseCase;
 
-  StreamSubscription<CacheStatus>? _statusSubscription;
+  StreamSubscription<TrackCacheInfo>? _trackInfoSubscription;
 
   TrackCacheBloc(
     this._cacheTrackUseCase,
@@ -28,8 +32,34 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     on<RemoveTrackCacheRequested>(_onRemoveTrackCacheRequested);
     on<GetTrackCacheStatusRequested>(_onGetTrackCacheStatusRequested);
     on<GetCachedTrackPathRequested>(_onGetCachedTrackPathRequested);
-    on<WatchTrackCacheStatusRequested>(_onWatchTrackCacheStatusRequested);
-    on<StopWatchingTrackCacheStatus>(_onStopWatchingTrackCacheStatus);
+    on<WatchTrackCacheInfoRequested>(_onWatchTrackCacheInfoRequested);
+    on<StopWatchingTrackCacheInfo>(_onStopWatchingTrackCacheInfo);
+  }
+
+  /// Helper method to handle operation results consistently
+  void _handleOperationResult<T>(
+    Either<CacheFailure, T> result,
+    String trackId,
+    Emitter<TrackCacheState> emit, {
+    required void Function(T) onSuccess,
+    String? successMessage,
+  }) {
+    result.fold(
+      (failure) => emit(
+        TrackCacheOperationFailure(trackId: trackId, error: failure.message),
+      ),
+      (data) {
+        onSuccess(data);
+        if (successMessage != null) {
+          emit(
+            TrackCacheOperationSuccess(
+              trackId: trackId,
+              message: successMessage,
+            ),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _onCacheTrackRequested(
@@ -45,19 +75,12 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
         policy: event.policy,
       );
 
-      result.fold(
-        (failure) => emit(
-          TrackCacheOperationFailure(
-            trackId: event.trackId,
-            error: failure.message,
-          ),
-        ),
-        (_) => emit(
-          TrackCacheOperationSuccess(
-            trackId: event.trackId,
-            message: 'Track cached successfully',
-          ),
-        ),
+      _handleOperationResult(
+        result,
+        event.trackId,
+        emit,
+        onSuccess: (_) {},
+        successMessage: 'Track cached successfully',
       );
     } catch (e) {
       emit(
@@ -83,19 +106,12 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
         policy: event.policy,
       );
 
-      result.fold(
-        (failure) => emit(
-          TrackCacheOperationFailure(
-            trackId: event.trackId,
-            error: failure.message,
-          ),
-        ),
-        (_) => emit(
-          TrackCacheOperationSuccess(
-            trackId: event.trackId,
-            message: 'Track cached with reference successfully',
-          ),
-        ),
+      _handleOperationResult(
+        result,
+        event.trackId,
+        emit,
+        onSuccess: (_) {},
+        successMessage: 'Track cached with reference successfully',
       );
     } catch (e) {
       emit(
@@ -117,22 +133,15 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
         trackId: event.trackId,
         referenceId: event.referenceId,
       );
-      result.fold(
-        (failure) => emit(
-          TrackCacheOperationFailure(
-            trackId: event.trackId,
-            error: failure.message,
-          ),
-        ),
-        (_) {
-          emit(
-            TrackCacheOperationSuccess(
-              trackId: event.trackId,
-              message: 'Track removed from cache successfully',
-            ),
-          );
+
+      _handleOperationResult(
+        result,
+        event.trackId,
+        emit,
+        onSuccess: (_) {
           add(GetTrackCacheStatusRequested(event.trackId));
         },
+        successMessage: 'Track removed from cache successfully',
       );
     } catch (e) {
       emit(
@@ -153,16 +162,13 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     try {
       final result = await _getTrackCacheStatusUseCase(trackId: event.trackId);
 
-      result.fold(
-        (failure) => emit(
-          TrackCacheOperationFailure(
-            trackId: event.trackId,
-            error: failure.message,
-          ),
-        ),
-        (status) => emit(
-          TrackCacheStatusLoaded(trackId: event.trackId, status: status),
-        ),
+      _handleOperationResult(
+        result,
+        event.trackId,
+        emit,
+        onSuccess: (status) {
+          emit(TrackCacheStatusLoaded(trackId: event.trackId, status: status));
+        },
       );
     } catch (e) {
       emit(
@@ -185,16 +191,15 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
         trackId: event.trackId,
       );
 
-      result.fold(
-        (failure) => emit(
-          TrackCacheOperationFailure(
-            trackId: event.trackId,
-            error: failure.message,
-          ),
-        ),
-        (filePath) => emit(
-          TrackCachePathLoaded(trackId: event.trackId, filePath: filePath),
-        ),
+      _handleOperationResult(
+        result,
+        event.trackId,
+        emit,
+        onSuccess: (filePath) {
+          emit(
+            TrackCachePathLoaded(trackId: event.trackId, filePath: filePath),
+          );
+        },
       );
     } catch (e) {
       emit(
@@ -206,23 +211,22 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     }
   }
 
-  Future<void> _onWatchTrackCacheStatusRequested(
-    WatchTrackCacheStatusRequested event,
+  Future<void> _onWatchTrackCacheInfoRequested(
+    WatchTrackCacheInfoRequested event,
     Emitter<TrackCacheState> emit,
   ) async {
-    // Cancel any existing subscription
-    await _statusSubscription?.cancel();
+    await _trackInfoSubscription?.cancel();
 
     try {
-      // Start watching cache status changes
-      _statusSubscription = _getTrackCacheStatusUseCase
-          .watchCacheStatus(trackId: event.trackId)
+      _trackInfoSubscription = _getTrackCacheStatusUseCase
+          .watchTrackCacheInfo(trackId: event.trackId)
           .listen(
-            (status) {
+            (trackInfo) {
               emit(
-                TrackCacheWatching(
-                  trackId: event.trackId,
-                  currentStatus: status,
+                TrackCacheInfoWatching(
+                  trackId: trackInfo.trackId,
+                  status: trackInfo.status,
+                  progress: trackInfo.progress,
                 ),
               );
             },
@@ -230,7 +234,7 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
               emit(
                 TrackCacheOperationFailure(
                   trackId: event.trackId,
-                  error: 'Status watch error: $error',
+                  error: 'Track info watch error: $error',
                 ),
               );
             },
@@ -238,9 +242,10 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
 
       // Emit initial watching state
       emit(
-        TrackCacheWatching(
+        TrackCacheInfoWatching(
           trackId: event.trackId,
-          currentStatus: CacheStatus.notCached, // Will be updated by stream
+          status: CacheStatus.notCached,
+          progress: DownloadProgress.notStarted(event.trackId),
         ),
       );
     } catch (e) {
@@ -253,18 +258,18 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     }
   }
 
-  Future<void> _onStopWatchingTrackCacheStatus(
-    StopWatchingTrackCacheStatus event,
+  Future<void> _onStopWatchingTrackCacheInfo(
+    StopWatchingTrackCacheInfo event,
     Emitter<TrackCacheState> emit,
   ) async {
-    await _statusSubscription?.cancel();
-    _statusSubscription = null;
+    await _trackInfoSubscription?.cancel();
+    _trackInfoSubscription = null;
     emit(const TrackCacheInitial());
   }
 
   @override
   Future<void> close() {
-    _statusSubscription?.cancel();
+    _trackInfoSubscription?.cancel();
     return super.close();
   }
 }
