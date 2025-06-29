@@ -1,15 +1,21 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:trackflow/features/audio_cache/shared/domain/services/cache_orchestration_service.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/get_track_cache_status_usecase.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/get_track_cache_status_usecase.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/download_progress.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/entities/track_cache_info.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/failures/cache_failure.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/services/cache_orchestration_service.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/value_objects/conflict_policy.dart';
 
 import 'debug_cache_reactivity_test.mocks.dart';
 
@@ -23,7 +29,7 @@ void main() {
     late MockCacheOrchestrationService mockOrchestrationService;
     late MockGetTrackCacheStatusUseCase mockGetStatusUseCase;
     late MockCacheTrackUseCase mockCacheUseCase;
-    
+
     setUp(() {
       mockOrchestrationService = MockCacheOrchestrationService();
       mockGetStatusUseCase = MockGetTrackCacheStatusUseCase();
@@ -33,9 +39,10 @@ void main() {
     group('Cache Status Retrieval', () {
       test('should return correct status when track is not cached', () async {
         const trackId = 'test_track_123';
-        
-        when(mockOrchestrationService.getCacheStatus(trackId))
-            .thenAnswer((_) async => const Right(CacheStatus.notCached));
+
+        when(
+          mockOrchestrationService.getCacheStatus(trackId),
+        ).thenAnswer((_) async => const Right(CacheStatus.notCached));
 
         final useCase = GetTrackCacheStatusUseCase(mockOrchestrationService);
         final result = await useCase(trackId: trackId);
@@ -51,9 +58,10 @@ void main() {
 
       test('should return correct status when track is cached', () async {
         const trackId = 'test_track_123';
-        
-        when(mockOrchestrationService.getCacheStatus(trackId))
-            .thenAnswer((_) async => const Right(CacheStatus.cached));
+
+        when(
+          mockOrchestrationService.getCacheStatus(trackId),
+        ).thenAnswer((_) async => const Right(CacheStatus.cached));
 
         final useCase = GetTrackCacheStatusUseCase(mockOrchestrationService);
         final result = await useCase(trackId: trackId);
@@ -67,7 +75,7 @@ void main() {
 
       test('should stream status changes correctly', () async {
         const trackId = 'test_track_123';
-        
+
         // Create a stream that simulates status changes
         final statusStream = Stream.fromIterable([
           CacheStatus.notCached,
@@ -75,8 +83,9 @@ void main() {
           CacheStatus.cached,
         ]);
 
-        when(mockOrchestrationService.watchCacheStatus(trackId))
-            .thenAnswer((_) => statusStream);
+        when(
+          mockOrchestrationService.watchCacheStatus(trackId),
+        ).thenAnswer((_) => statusStream);
 
         final useCase = GetTrackCacheStatusUseCase(mockOrchestrationService);
         final stream = useCase.watchCacheStatus(trackId: trackId);
@@ -87,11 +96,14 @@ void main() {
           if (statuses.length == 3) break;
         }
 
-        expect(statuses, equals([
-          CacheStatus.notCached,
-          CacheStatus.downloading,
-          CacheStatus.cached,
-        ]));
+        expect(
+          statuses,
+          equals([
+            CacheStatus.notCached,
+            CacheStatus.downloading,
+            CacheStatus.cached,
+          ]),
+        );
 
         verify(mockOrchestrationService.watchCacheStatus(trackId)).called(1);
       });
@@ -103,11 +115,9 @@ void main() {
         const audioUrl = 'https://example.com/audio.mp3';
 
         // Mock successful caching
-        when(mockCacheUseCase(
-          trackId: trackId,
-          audioUrl: audioUrl,
-          policy: any,
-        )).thenAnswer((_) async => const Right(unit));
+        when(
+          mockCacheUseCase(trackId: trackId, audioUrl: audioUrl, policy: any),
+        ).thenAnswer((_) async => const Right(unit));
 
         final bloc = TrackCacheBloc(
           mockCacheUseCase,
@@ -116,31 +126,29 @@ void main() {
         );
 
         // Add cache request event
-        bloc.add(const CacheTrackRequested(
-          trackId: trackId,
-          audioUrl: audioUrl,
-        ));
+        bloc.add(
+          const CacheTrackRequested(trackId: trackId, audioUrl: audioUrl),
+        );
 
         // Wait for state changes
         await Future.delayed(const Duration(milliseconds: 100));
 
         // Verify the use case was called
-        verify(mockCacheUseCase(
-          trackId: trackId,
-          audioUrl: audioUrl,
-          policy: any,
-        )).called(1);
+        verify(
+          mockCacheUseCase(trackId: trackId, audioUrl: audioUrl, policy: any),
+        ).called(1);
 
         bloc.close();
       });
 
       test('should handle status watching correctly', () async {
         const trackId = 'test_track_123';
-        
-        final statusController = StreamController<CacheStatus>();
-        
-        when(mockGetStatusUseCase.watchCacheStatus(trackId: trackId))
-            .thenAnswer((_) => statusController.stream);
+
+        final infoController = StreamController<TrackCacheInfo>();
+
+        when(
+          mockGetStatusUseCase.watchTrackCacheInfo(trackId: trackId),
+        ).thenAnswer((_) => infoController.stream);
 
         final bloc = TrackCacheBloc(
           mockCacheUseCase,
@@ -152,104 +160,134 @@ void main() {
         final subscription = bloc.stream.listen(states.add);
 
         // Start watching
-        bloc.add(const WatchTrackCacheStatusRequested(trackId));
+        bloc.add(const WatchTrackCacheInfoRequested(trackId));
 
         // Wait for initial state
         await Future.delayed(const Duration(milliseconds: 50));
 
-        // Emit status changes
-        statusController.add(CacheStatus.notCached);
+        // Emit info changes
+        infoController.add(
+          TrackCacheInfo(
+            trackId: trackId,
+            status: CacheStatus.notCached,
+            progress: DownloadProgress.notStarted(trackId),
+          ),
+        );
         await Future.delayed(const Duration(milliseconds: 50));
-        
-        statusController.add(CacheStatus.downloading);
+
+        infoController.add(
+          TrackCacheInfo(
+            trackId: trackId,
+            status: CacheStatus.downloading,
+            progress: DownloadProgress.queued(trackId),
+          ),
+        );
         await Future.delayed(const Duration(milliseconds: 50));
-        
-        statusController.add(CacheStatus.cached);
+
+        infoController.add(
+          TrackCacheInfo(
+            trackId: trackId,
+            status: CacheStatus.cached,
+            progress: DownloadProgress.completed(trackId, 1024),
+          ),
+        );
         await Future.delayed(const Duration(milliseconds: 50));
 
         // Check states
-        final watchingStates = states.whereType<TrackCacheWatching>().toList();
+        final watchingStates =
+            states.whereType<TrackCacheInfoWatching>().toList();
         expect(watchingStates.length, greaterThan(0));
 
         await subscription.cancel();
-        await statusController.close();
+        await infoController.close();
         await bloc.close();
       });
     });
 
     group('Service Integration Issues', () {
-      test('should detect if orchestration service is properly wired', () async {
-        const trackId = 'test_track_123';
-        
-        // Test if service methods are being called as expected
-        when(mockOrchestrationService.getCacheStatus(trackId))
-            .thenAnswer((_) async => const Right(CacheStatus.notCached));
+      test(
+        'should detect if orchestration service is properly wired',
+        () async {
+          const trackId = 'test_track_123';
 
-        when(mockOrchestrationService.cacheAudio(any, any, any, policy: any))
-            .thenAnswer((_) async => const Right(unit));
+          // Test if service methods are being called as expected
+          when(
+            mockOrchestrationService.getCacheStatus(trackId),
+          ).thenAnswer((_) async => const Right(CacheStatus.notCached));
 
-        // Simulate real workflow
-        final getStatusUseCase = GetTrackCacheStatusUseCase(mockOrchestrationService);
-        
-        // 1. Check initial status
-        final initialStatus = await getStatusUseCase(trackId: trackId);
-        expect(initialStatus.isRight(), isTrue);
-        
-        // 2. Cache the track
-        final cacheResult = await mockOrchestrationService.cacheAudio(
-          trackId,
-          'https://example.com/audio.mp3',
-          'individual',
-        );
-        expect(cacheResult.isRight(), isTrue);
+          when(
+            mockOrchestrationService.cacheAudio(any, any, any, policy: any),
+          ).thenAnswer((_) async => const Right(unit));
 
-        // 3. Check status again
-        when(mockOrchestrationService.getCacheStatus(trackId))
-            .thenAnswer((_) async => const Right(CacheStatus.cached));
-            
-        final finalStatus = await getStatusUseCase(trackId: trackId);
-        expect(finalStatus.isRight(), isTrue);
-        finalStatus.fold(
-          (failure) => fail('Expected cached status'),
-          (status) => expect(status, equals(CacheStatus.cached)),
-        );
+          // Simulate real workflow
+          final getStatusUseCase = GetTrackCacheStatusUseCase(
+            mockOrchestrationService,
+          );
 
-        // Verify all interactions
-        verify(mockOrchestrationService.getCacheStatus(trackId)).called(2);
-        verify(mockOrchestrationService.cacheAudio(
-          trackId,
-          'https://example.com/audio.mp3',
-          'individual',
-          policy: anyNamed('policy'),
-        )).called(1);
-      });
+          // 1. Check initial status
+          final initialStatus = await getStatusUseCase(trackId: trackId);
+          expect(initialStatus.isRight(), isTrue);
+
+          // 2. Cache the track
+          final cacheResult = await mockOrchestrationService.cacheAudio(
+            trackId,
+            'https://example.com/audio.mp3',
+            'individual',
+          );
+          expect(cacheResult.isRight(), isTrue);
+
+          // 3. Check status again
+          when(
+            mockOrchestrationService.getCacheStatus(trackId),
+          ).thenAnswer((_) async => const Right(CacheStatus.cached));
+
+          final finalStatus = await getStatusUseCase(trackId: trackId);
+          expect(finalStatus.isRight(), isTrue);
+          finalStatus.fold(
+            (failure) => fail('Expected cached status'),
+            (status) => expect(status, equals(CacheStatus.cached)),
+          );
+
+          // Verify all interactions
+          verify(mockOrchestrationService.getCacheStatus(trackId)).called(2);
+          verify(
+            mockOrchestrationService.cacheAudio(
+              trackId,
+              'https://example.com/audio.mp3',
+              'individual',
+              policy: anyNamed('policy'),
+            ),
+          ).called(1);
+        },
+      );
 
       test('should identify stream connectivity issues', () async {
         const trackId = 'test_track_123';
-        
+
         // Test if streams are properly connected
         var streamCallCount = 0;
-        when(mockOrchestrationService.watchCacheStatus(trackId))
-            .thenAnswer((_) {
-              streamCallCount++;
-              return Stream.fromIterable([CacheStatus.notCached]);
-            });
+        when(mockOrchestrationService.watchCacheStatus(trackId)).thenAnswer((
+          _,
+        ) {
+          streamCallCount++;
+          return Stream.fromIterable([CacheStatus.notCached]);
+        });
 
         final useCase = GetTrackCacheStatusUseCase(mockOrchestrationService);
-        
+
         // Multiple widgets requesting streams
-        final stream1 = useCase.watchCacheStatus(trackId: trackId);
-        final stream2 = useCase.watchCacheStatus(trackId: trackId);
-        
+        final stream1 = useCase.watchTrackCacheInfo(trackId: trackId);
+        final stream2 = useCase.watchTrackCacheInfo(trackId: trackId);
+
         // Both should work
         final future1 = stream1.first;
         final future2 = stream2.first;
-        
+
         final results = await Future.wait([future1, future2]);
-        
-        expect(results[0], equals(CacheStatus.notCached));
-        expect(results[1], equals(CacheStatus.notCached));
-        
+
+        expect(results[0].status, equals(CacheStatus.notCached));
+        expect(results[1].status, equals(CacheStatus.notCached));
+
         // Should have been called for each stream request
         expect(streamCallCount, equals(2));
       });
@@ -258,14 +296,14 @@ void main() {
     group('Reactive UI Issues', () {
       test('should simulate proper BLoC lifecycle management', () async {
         const trackId = 'test_track_123';
-        
+
         // Test multiple BLoC instances (simulating widget recreation)
         final bloc1 = TrackCacheBloc(
           mockCacheUseCase,
           mockGetStatusUseCase,
           MockRemoveTrackCacheUseCase(),
         );
-        
+
         final bloc2 = TrackCacheBloc(
           mockCacheUseCase,
           mockGetStatusUseCase,
@@ -277,8 +315,9 @@ void main() {
         expect(bloc2.state, equals(const TrackCacheInitial()));
 
         // Mock status check
-        when(mockGetStatusUseCase(trackId: trackId))
-            .thenAnswer((_) async => const Right(CacheStatus.cached));
+        when(
+          mockGetStatusUseCase(trackId: trackId),
+        ).thenAnswer((_) async => const Right(CacheStatus.cached));
 
         // Both check status
         bloc1.add(const GetTrackCacheStatusRequested(trackId));
@@ -298,7 +337,8 @@ void main() {
 }
 
 @GenerateMocks([RemoveTrackCacheUseCase])
-class MockRemoveTrackCacheUseCase extends Mock implements RemoveTrackCacheUseCase {}
+class MockRemoveTrackCacheUseCase extends Mock
+    implements RemoveTrackCacheUseCase {}
 
 class StreamController<T> {
   final List<T> _values = [];

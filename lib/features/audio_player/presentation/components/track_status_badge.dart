@@ -6,7 +6,8 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bl
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart' as cache;
+import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart'
+    as cache;
 
 class TrackStatusBadge extends StatefulWidget {
   final String trackUrl;
@@ -77,7 +78,7 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
         return BlocBuilder<TrackCacheBloc, TrackCacheState>(
           builder: (context, cacheState) {
             // Check cache BLoC state for this track
-            if (cacheState is TrackCacheStatusLoaded && 
+            if (cacheState is TrackCacheStatusLoaded &&
                 cacheState.trackId == widget.trackId) {
               switch (cacheState.status) {
                 case cache.CacheStatus.cached:
@@ -110,9 +111,10 @@ class _TrackStatusBadgeState extends State<TrackStatusBadge> {
               }
             }
 
-            if (cacheState is TrackCacheWatching && 
+            // 🎯 NEW: Handle unified TrackCacheInfoWatching state
+            if (cacheState is TrackCacheInfoWatching &&
                 cacheState.trackId == widget.trackId) {
-              switch (cacheState.currentStatus) {
+              switch (cacheState.status) {
                 case cache.CacheStatus.cached:
                   return _buildBadge(
                     icon: Icons.offline_pin,
