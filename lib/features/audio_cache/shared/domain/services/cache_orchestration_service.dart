@@ -14,12 +14,12 @@ abstract class CacheOrchestrationService {
   // ===============================================
 
   /// Cache audio with reference tracking and conflict resolution
-  /// 
+  ///
   /// [trackId] - Unique identifier for the track
   /// [audioUrl] - Source URL for the audio file
   /// [referenceId] - Reference ID (e.g., 'individual', 'playlist_123')
   /// [policy] - How to handle conflicts if track already exists
-  /// 
+  ///
   /// Returns success or specific failure type for proper error handling
   Future<Either<CacheFailure, Unit>> cacheAudio(
     String trackId,
@@ -29,12 +29,12 @@ abstract class CacheOrchestrationService {
   });
 
   /// Get cached audio file path if available
-  /// 
+  ///
   /// Returns file path or failure if not cached/corrupted
   Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId);
 
   /// Remove reference from cache with proper reference counting
-  /// 
+  ///
   /// Only deletes actual file when no references remain
   /// Prevents accidental data loss from shared tracks
   Future<Either<CacheFailure, Unit>> removeFromCache(
@@ -43,7 +43,7 @@ abstract class CacheOrchestrationService {
   );
 
   /// Check current cache status for a track
-  /// 
+  ///
   /// Returns current status (cached, downloading, failed, etc.)
   Future<Either<CacheFailure, CacheStatus>> getCacheStatus(String trackId);
 
@@ -70,13 +70,13 @@ abstract class CacheOrchestrationService {
   // ===============================================
 
   /// Cache multiple tracks with single reference (e.g., playlist)
-  /// 
+  ///
   /// Optimized for playlist caching with proper queue management
   Future<Either<CacheFailure, Unit>> cacheMultipleAudios(
     Map<String, String> trackUrlPairs, // trackId -> audioUrl
-    String referenceId,
-    {ConflictPolicy policy = ConflictPolicy.lastWins}
-  );
+    String referenceId, {
+    ConflictPolicy policy = ConflictPolicy.lastWins,
+  });
 
   /// Remove multiple references at once (e.g., when deleting playlist)
   Future<Either<CacheFailure, Unit>> removeMultipleFromCache(
