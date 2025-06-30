@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../pure_audio_player/presentation/bloc/audio_player_bloc.dart';
-import '../../../pure_audio_player/presentation/bloc/audio_player_event.dart';
-import '../../../pure_audio_player/presentation/bloc/audio_player_state.dart';
-import '../../../pure_audio_player/presentation/widgets/pure_audio_player.dart';
-import '../../../pure_audio_player/domain/entities/audio_track_id.dart';
-import '../../../pure_audio_player/domain/entities/playlist_id.dart';
+import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
+import '../../../audio_player/presentation/bloc/audio_player_event.dart';
+import '../../../audio_player/presentation/bloc/audio_player_state.dart';
+import '../../../audio_player/presentation/widgets/pure_audio_player.dart';
+import '../../../audio_player/domain/entities/audio_track_id.dart';
+import '../../../audio_player/domain/entities/playlist_id.dart';
 import '../../../audio_context/presentation/bloc/audio_context_cubit.dart';
 import '../../../audio_context/presentation/widgets/track_info_display.dart';
 
@@ -27,17 +27,18 @@ class CollaborativeAudioScreen extends StatefulWidget {
   final bool allowContextEdit;
 
   @override
-  State<CollaborativeAudioScreen> createState() => _CollaborativeAudioScreenState();
+  State<CollaborativeAudioScreen> createState() =>
+      _CollaborativeAudioScreenState();
 }
 
 class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize audio player
     context.read<AudioPlayerBloc>().add(const AudioPlayerInitializeRequested());
-    
+
     // Load initial track if provided
     if (widget.initialTrackId != null) {
       _loadTrackWithContext(widget.initialTrackId!);
@@ -64,7 +65,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
           // Listen to audio player changes to update context
           BlocListener<AudioPlayerBloc, AudioPlayerState>(
             listener: (context, audioState) {
-              if (audioState is AudioPlayerPlaying || audioState is AudioPlayerPaused) {
+              if (audioState is AudioPlayerSessionState) {
                 final trackId = audioState.session.currentTrack?.id.value;
                 if (trackId != null) {
                   context.read<AudioContextCubit>().loadTrackContext(trackId);
@@ -86,9 +87,9 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
                 showSpeedControl: true,
                 showTrackInfo: true,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Business context information
               const TrackInfoDisplay(
                 showCollaborator: true,
@@ -96,17 +97,16 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
                 showTags: true,
                 showUploadDate: true,
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Quick actions for testing/demo
               _buildQuickActions(context),
-              
+
               const SizedBox(height: 20),
-              
+
               // Comments section placeholder
-              if (widget.showComments)
-                _buildCommentsSection(context),
+              if (widget.showComments) _buildCommentsSection(context),
             ],
           ),
         ),
@@ -116,7 +116,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
 
   Widget _buildQuickActions(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -130,7 +130,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -182,7 +182,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
 
   Widget _buildCommentsSection(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -191,11 +191,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.comment,
-                  color: theme.primaryColor,
-                  size: 20,
-                ),
+                Icon(Icons.comment, color: theme.primaryColor, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Audio Comments',
@@ -206,7 +202,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            
+
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -215,11 +211,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: theme.primaryColor,
-                    size: 16,
-                  ),
+                  Icon(Icons.info_outline, color: theme.primaryColor, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -244,7 +236,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
     context.read<AudioPlayerBloc>().add(
       PlayAudioRequested(AudioTrackId(trackId)),
     );
-    
+
     // Load business context
     context.read<AudioContextCubit>().loadTrackContext(trackId);
   }
@@ -266,7 +258,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
 
   void _saveState(BuildContext context) {
     context.read<AudioPlayerBloc>().add(const SavePlaybackStateRequested());
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Playback state saved'),

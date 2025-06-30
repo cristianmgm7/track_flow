@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/domain/entities/audio_track_id.dart'
+    as pure_audio;
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
@@ -45,9 +47,10 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
     );
-    context.read<AudioPlayerBloc>().add(
-      ChangeVisualContext(PlayerVisualContext.commentPlayer),
-    );
+    // TODO: Handle visual context change in composition layer
+    // context.read<AudioPlayerBloc>().add(
+    //   ChangeVisualContext(PlayerVisualContext.commentPlayer),
+    // );
     final collaborator =
         widget.collaborators.isNotEmpty
             ? widget.collaborators.first
@@ -59,12 +62,7 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
               createdAt: DateTime.now(),
             );
     context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(
-        source: PlaybackSource(type: PlaybackSourceType.track),
-        visualContext: PlayerVisualContext.commentPlayer,
-        track: widget.track,
-        collaborator: collaborator,
-      ),
+      PlayAudioRequested(pure_audio.AudioTrackId(widget.track.id.value)),
     );
   }
 

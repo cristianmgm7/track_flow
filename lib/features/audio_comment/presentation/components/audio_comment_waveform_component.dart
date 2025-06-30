@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
@@ -30,10 +30,10 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
   Widget build(BuildContext context) {
     return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
       builder: (context, state) {
-        if ((state is AudioPlayerPlaying || state is AudioPlayerPaused) &&
-            state is AudioPlayerActiveState &&
-            state.visualContext == PlayerVisualContext.commentPlayer) {
-          final track = state.track;
+        if (state is AudioPlayerSessionState &&
+            (state is AudioPlayerPlaying || state is AudioPlayerPaused)) {
+          final track = state.session.currentTrack;
+          if (track == null) return const SizedBox.shrink();
           return BlocProvider<TrackCacheBloc>(
             create: (context) {
               final bloc = sl<TrackCacheBloc>();
@@ -45,7 +45,8 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
               builder: (context, cacheState) {
                 if (cacheState is TrackCacheLoading) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (cacheState is TrackCachePathLoaded && cacheState.filePath != null) {
+                } else if (cacheState is TrackCachePathLoaded &&
+                    cacheState.filePath != null) {
                   final localPath = cacheState.filePath!;
                   Future.microtask(
                     () => _playerController.preparePlayer(path: localPath),
@@ -64,7 +65,7 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          track.name,
+                          track.title,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
@@ -96,9 +97,14 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                                   if (currentState is AudioPlayerPlaying ||
                                       currentState is AudioPlayerPaused) {
                                     // Get current position from player controller
-                                    final currentPosition = await _playerController.getDuration(DurationType.current);
+                                    final currentPosition =
+                                        await _playerController.getDuration(
+                                          DurationType.current,
+                                        );
                                     // TODO: dispatch an event or show a comment input dialog
-                                    print('Add comment at position: $currentPosition');
+                                    print(
+                                      'Add comment at position: $currentPosition',
+                                    );
                                   }
                                 },
                               ),

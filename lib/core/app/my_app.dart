@@ -11,7 +11,7 @@ import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +20,6 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:provider/provider.dart';
-import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -30,7 +29,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<AudioSourceResolver>(create: (_) => sl<AudioSourceResolver>()),
+        // Provider<AudioSourceResolver>(create: (_) => sl<AudioSourceResolver>()),
       ],
       child: MultiBlocProvider(
         providers: [
