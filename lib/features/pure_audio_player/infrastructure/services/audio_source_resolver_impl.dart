@@ -1,0 +1,146 @@
+import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
+
+import '../../../../../core/error/failures.dart';
+import '../../../audio_cache/shared/domain/services/cache_orchestration_service.dart';
+import '../../../audio_player/domain/services/offline_mode_service.dart';
+import 'audio_source_resolver.dart';
+
+/// Pure audio source resolver implementation
+/// Integrates with existing cache orchestration service
+/// Provides cache-first audio source resolution for pure audio architecture
+@Injectable(as: AudioSourceResolver)
+class AudioSourceResolverImpl implements AudioSourceResolver {
+  const AudioSourceResolverImpl(
+    this._cacheOrchestrationService,
+    this._offlineModeService,
+  );
+
+  final CacheOrchestrationService _cacheOrchestrationService;
+  final OfflineModeService _offlineModeService;
+
+  @override
+  Future<Either<Failure, String>> resolveAudioSource(String originalUrl) async {
+    try {
+      // 1. Always check cache first (offline-first principle)
+      final cacheResult = await validateCachedTrack(originalUrl);
+      if (cacheResult.isRight()) {
+        final cachedPath = cacheResult.getOrElse(() => null);
+        if (cachedPath != null) {
+          return Right(cachedPath);
+        }
+      }
+
+      // 2. Check offline mode restrictions
+      final isOfflineOnly = await _offlineModeService.isOfflineOnlyModeEnabled();
+      if (isOfflineOnly) {
+        return Left(OfflineFailure('Track not available offline'));
+      }
+
+      // 3. Start background caching for future use
+      await startBackgroundCaching(originalUrl);
+
+      // 4. Return original URL for streaming
+      return Right(originalUrl);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<bool> isTrackCached(String url) async {
+    try {
+      final trackId = _extractTrackIdFromUrl(url);
+      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(trackId);
+      
+      return pathResult.fold(
+        (failure) => false,
+        (cachedPath) => true,
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<Either<Failure, String?>> validateCachedTrack(String url) async {
+    try {
+      final trackId = _extractTrackIdFromUrl(url);
+      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(trackId);
+      
+      return pathResult.fold(
+        (failure) => const Right(null),
+        (cachedPath) => Right(cachedPath),
+      );
+    } catch (e) {
+      return Left(CacheFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<void> startBackgroundCaching(String url) async {
+    try {
+      final trackId = _extractTrackIdFromUrl(url);
+      
+      // Use cache orchestration service for background caching
+      await _cacheOrchestrationService.cacheAudio(
+        trackId,
+        url,
+        'pure_audio_background',
+      );
+    } catch (e) {
+      // Handle caching errors silently to not interrupt playback
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> preloadAudioSource(
+    String url, {
+    required String referenceId,
+  }) async {
+    try {
+      final trackId = _extractTrackIdFromUrl(url);
+      
+      // Use cache orchestration service for preloading
+      final result = await _cacheOrchestrationService.cacheAudio(
+        trackId,
+        url,
+        referenceId,
+      );
+      
+      return result.fold(
+        (failure) => Left(CacheFailure('Preload failed: ${failure.message}')),
+        (success) => const Right(null),
+      );
+    } catch (e) {
+      return Left(CacheFailure('Preload error: $e'));
+    }
+  }
+
+  /// Extract track ID from URL for cache operations
+  /// This is a simplified approach - may need refinement based on URL structure
+  String _extractTrackIdFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.pathSegments.last.split('.').first;
+    } catch (e) {
+      // Fallback: use hash of URL if parsing fails
+      return url.hashCode.toString();
+    }
+  }
+}
+
+/// Cache-specific failure for pure audio architecture
+class CacheFailure extends Failure {
+  const CacheFailure(super.message);
+}
+
+/// Server-specific failure for pure audio architecture
+class ServerFailure extends Failure {
+  const ServerFailure(super.message);
+}
+
+/// Offline-specific failure for pure audio architecture
+class OfflineFailure extends Failure {
+  const OfflineFailure(super.message);
+}
