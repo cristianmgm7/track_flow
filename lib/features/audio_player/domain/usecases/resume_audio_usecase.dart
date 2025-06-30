@@ -1,13 +1,14 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../services/audio_playback_service.dart';
 
 /// Pure audio resume use case
 /// ONLY handles audio resume operation - NO business domain concerns
+@injectable
 class ResumeAudioUseCase {
-  const ResumeAudioUseCase({
-    required AudioPlaybackService playbackService,
-  }) : _playbackService = playbackService;
+  const ResumeAudioUseCase({required AudioPlaybackService playbackService})
+    : _playbackService = playbackService;
 
   final AudioPlaybackService _playbackService;
 

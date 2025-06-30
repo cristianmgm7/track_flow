@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../repositories/playback_persistence_repository.dart';
 import '../services/audio_playback_service.dart';
@@ -6,12 +7,13 @@ import '../services/audio_playback_service.dart';
 /// Pure audio state saving use case
 /// ONLY handles audio playback state persistence - NO business domain concerns
 /// NO: UserProfile data, collaborator info, project context
+@injectable
 class SavePlaybackStateUseCase {
   const SavePlaybackStateUseCase({
     required PlaybackPersistenceRepository persistenceRepository,
     required AudioPlaybackService playbackService,
-  })  : _persistenceRepository = persistenceRepository,
-        _playbackService = playbackService;
+  }) : _persistenceRepository = persistenceRepository,
+       _playbackService = playbackService;
 
   final PlaybackPersistenceRepository _persistenceRepository;
   final AudioPlaybackService _playbackService;
@@ -29,12 +31,19 @@ class SavePlaybackStateUseCase {
 
       // 3. Save queue information separately for faster access
       if (currentSession.queue.isNotEmpty) {
-        final trackIds = currentSession.queue.sources.map((source) => source.metadata.id.value).toList();
-        await _persistenceRepository.saveQueue(trackIds, currentSession.queue.currentIndex);
+        final trackIds =
+            currentSession.queue.sources
+                .map((source) => source.metadata.id.value)
+                .toList();
+        await _persistenceRepository.saveQueue(
+          trackIds,
+          currentSession.queue.currentIndex,
+        );
       }
 
       // 4. Save current track position for resume capability
-      if (currentSession.currentTrack != null && currentSession.position.inMilliseconds > 0) {
+      if (currentSession.currentTrack != null &&
+          currentSession.position.inMilliseconds > 0) {
         await _persistenceRepository.saveTrackPosition(
           currentSession.currentTrack!.id.value,
           currentSession.position,
@@ -43,7 +52,9 @@ class SavePlaybackStateUseCase {
 
       return const Right(null);
     } catch (e) {
-      return Left(StorageFailure('Failed to save playback state: ${e.toString()}'));
+      return Left(
+        StorageFailure('Failed to save playback state: ${e.toString()}'),
+      );
     }
   }
 }

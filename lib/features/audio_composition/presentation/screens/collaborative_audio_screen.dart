@@ -60,22 +60,17 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
           ),
         ],
       ),
-      body: MultiBlocListener(
-        listeners: [
-          // Listen to audio player changes to update context
-          BlocListener<AudioPlayerBloc, AudioPlayerState>(
-            listener: (context, audioState) {
-              if (audioState is AudioPlayerSessionState) {
-                final trackId = audioState.session.currentTrack?.id.value;
-                if (trackId != null) {
-                  context.read<AudioContextCubit>().loadTrackContext(trackId);
-                }
-              } else if (audioState is AudioPlayerStopped) {
-                context.read<AudioContextCubit>().clearContext();
-              }
-            },
-          ),
-        ],
+      body: BlocListener<AudioPlayerBloc, AudioPlayerState>(
+        listener: (context, audioState) {
+          if (audioState is AudioPlayerSessionState) {
+            final trackId = audioState.session.currentTrack?.id.value;
+            if (trackId != null) {
+              context.read<AudioContextCubit>().loadTrackContext(trackId);
+            }
+          } else if (audioState is AudioPlayerStopped) {
+            context.read<AudioContextCubit>().clearContext();
+          }
+        },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(

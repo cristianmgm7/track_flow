@@ -9,9 +9,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/widgets/playlist_cache_icon.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/audio_player/domain/entities/repeat_mode.dart';
 import 'package:trackflow/features/audio_player/domain/entities/playlist_id.dart';
@@ -99,19 +97,20 @@ class PlaylistWidget extends StatelessWidget {
                 ),
                 const Spacer(),
                 // Simplified cache control for playlist
-                BlocProvider(
-                  create: (context) => sl<PlaylistCacheBloc>(),
-                  child: PlaylistCacheIcon(
-                    playlistId: playlist.id,
-                    trackUrlPairs: Map.fromEntries(
-                      tracks.map(
-                        (track) => MapEntry(track.id.value, track.url),
-                      ),
-                    ),
-                    playlistName: playlist.name,
-                    size: 28.0,
-                  ),
-                ),
+                // TODO: Re-enable when PlaylistCacheBloc is properly registered
+                // BlocProvider(
+                //   create: (context) => sl<PlaylistCacheBloc>(),
+                //   child: PlaylistCacheIcon(
+                //     playlistId: playlist.id,
+                //     trackUrlPairs: Map.fromEntries(
+                //       tracks.map(
+                //         (track) => MapEntry(track.id.value, track.url),
+                //       ),
+                //     ),
+                //     playlistName: playlist.name,
+                //     size: 28.0,
+                //   ),
+                // ),
               ],
             ),
             if (isPlayingFromThisPlaylist)

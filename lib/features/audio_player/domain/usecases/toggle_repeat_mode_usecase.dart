@@ -1,14 +1,15 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../entities/repeat_mode.dart';
 import '../services/audio_playback_service.dart';
 
 /// Pure audio repeat mode toggle use case
 /// ONLY handles repeat mode cycling - NO business domain concerns
+@injectable
 class ToggleRepeatModeUseCase {
-  const ToggleRepeatModeUseCase({
-    required AudioPlaybackService playbackService,
-  }) : _playbackService = playbackService;
+  const ToggleRepeatModeUseCase({required AudioPlaybackService playbackService})
+    : _playbackService = playbackService;
 
   final AudioPlaybackService _playbackService;
 
@@ -17,19 +18,21 @@ class ToggleRepeatModeUseCase {
     try {
       final currentSession = _playbackService.currentSession;
       final currentMode = currentSession.repeatMode;
-      
+
       // Cycle through repeat modes
       final nextMode = switch (currentMode) {
         RepeatMode.none => RepeatMode.single,
         RepeatMode.single => RepeatMode.queue,
         RepeatMode.queue => RepeatMode.none,
       };
-      
+
       await _playbackService.setRepeatMode(nextMode);
-      
+
       return Right(nextMode);
     } catch (e) {
-      return Left(PlaybackFailure('Failed to toggle repeat mode: ${e.toString()}'));
+      return Left(
+        PlaybackFailure('Failed to toggle repeat mode: ${e.toString()}'),
+      );
     }
   }
 }

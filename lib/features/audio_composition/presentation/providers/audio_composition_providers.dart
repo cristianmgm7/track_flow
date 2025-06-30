@@ -3,15 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../../audio_context/presentation/bloc/audio_context_cubit.dart';
-import '../../../pure_audio_player/presentation/bloc/audio_player_bloc.dart';
+import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 
 /// Audio composition providers for integrating pure audio with business context
 /// Provides both BLoCs needed for the collaborative audio screen
 class AudioCompositionProviders extends StatelessWidget {
-  const AudioCompositionProviders({
-    super.key,
-    required this.child,
-  });
+  const AudioCompositionProviders({super.key, required this.child});
 
   final Widget child;
 
@@ -23,12 +20,12 @@ class AudioCompositionProviders extends StatelessWidget {
         BlocProvider<AudioPlayerBloc>(
           create: (context) => GetIt.instance<AudioPlayerBloc>(),
         ),
-        
+
         // Audio context cubit - handles business context information
         BlocProvider<AudioContextCubit>(
-          create: (context) => AudioContextCubit(
-            audioContextService: GetIt.instance(),
-          ),
+          create:
+              (context) =>
+                  AudioContextCubit(audioContextService: GetIt.instance()),
         ),
       ],
       child: child,

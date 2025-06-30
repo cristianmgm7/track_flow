@@ -1,14 +1,15 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../services/audio_playback_service.dart';
 
 /// Pure audio navigation use case for skipping to previous track
 /// ONLY handles queue navigation - NO business domain concerns
 /// NO: UserProfile fetching, collaborator logic, project context
+@injectable
 class SkipToPreviousUseCase {
-  const SkipToPreviousUseCase({
-    required AudioPlaybackService playbackService,
-  }) : _playbackService = playbackService;
+  const SkipToPreviousUseCase({required AudioPlaybackService playbackService})
+    : _playbackService = playbackService;
 
   final AudioPlaybackService _playbackService;
 
@@ -26,7 +27,9 @@ class SkipToPreviousUseCase {
 
       return Right(hasPrevious);
     } catch (e) {
-      return Left(QueueFailure('Failed to skip to previous track: ${e.toString()}'));
+      return Left(
+        QueueFailure('Failed to skip to previous track: ${e.toString()}'),
+      );
     }
   }
 }

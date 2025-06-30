@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../entities/playlist_id.dart';
 import '../entities/audio_source.dart';
@@ -8,12 +9,13 @@ import '../services/audio_playback_service.dart';
 /// Pure playlist playback use case
 /// ONLY handles playlist queue setup and playback - NO business domain concerns
 /// NO: UserProfile fetching, collaborator logic, project context
+@injectable
 class PlayPlaylistUseCase {
   const PlayPlaylistUseCase({
     required AudioContentRepository audioContentRepository,
     required AudioPlaybackService playbackService,
-  })  : _audioContentRepository = audioContentRepository,
-        _playbackService = playbackService;
+  }) : _audioContentRepository = audioContentRepository,
+       _playbackService = playbackService;
 
   final AudioContentRepository _audioContentRepository;
   final AudioPlaybackService _playbackService;
@@ -27,7 +29,9 @@ class PlayPlaylistUseCase {
   }) async {
     try {
       // 1. Get playlist tracks metadata (pure audio data only)
-      final tracksMetadata = await _audioContentRepository.getPlaylistTracks(playlistId);
+      final tracksMetadata = await _audioContentRepository.getPlaylistTracks(
+        playlistId,
+      );
 
       if (tracksMetadata.isEmpty) {
         return Left(PlaylistFailure('Playlist is empty: ${playlistId.value}'));
@@ -40,16 +44,15 @@ class PlayPlaylistUseCase {
 
       // 2. Create audio sources for all tracks
       final audioSources = <AudioSource>[];
-      
+
       for (final metadata in tracksMetadata) {
         try {
           // Resolve source URL for each track
-          final sourceUrl = await _audioContentRepository.getAudioSourceUrl(metadata.id);
-          
-          audioSources.add(AudioSource(
-            url: sourceUrl,
-            metadata: metadata,
-          ));
+          final sourceUrl = await _audioContentRepository.getAudioSourceUrl(
+            metadata.id,
+          );
+
+          audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
         } catch (e) {
           // Skip tracks that can't be loaded, continue with others
           continue;
@@ -57,14 +60,21 @@ class PlayPlaylistUseCase {
       }
 
       if (audioSources.isEmpty) {
-        return Left(PlaylistFailure('No playable tracks in playlist: ${playlistId.value}'));
+        return Left(
+          PlaylistFailure(
+            'No playable tracks in playlist: ${playlistId.value}',
+          ),
+        );
       }
 
       // Adjust start index if some tracks were skipped
       final adjustedStartIndex = startIndex.clamp(0, audioSources.length - 1);
 
       // 3. Load queue and start playback (pure audio operation)
-      await _playbackService.loadQueue(audioSources, startIndex: adjustedStartIndex);
+      await _playbackService.loadQueue(
+        audioSources,
+        startIndex: adjustedStartIndex,
+      );
 
       return const Right(null);
     } catch (e) {
@@ -74,7 +84,9 @@ class PlayPlaylistUseCase {
       } else if (e.toString().contains('network')) {
         return const Left(NetworkFailure());
       } else {
-        return Left(PlaylistFailure('Failed to load playlist: ${e.toString()}'));
+        return Left(
+          PlaylistFailure('Failed to load playlist: ${e.toString()}'),
+        );
       }
     }
   }

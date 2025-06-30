@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../entities/audio_track_id.dart';
 import '../entities/audio_source.dart';
@@ -8,12 +9,13 @@ import '../services/audio_playback_service.dart';
 /// Pure audio playback use case
 /// ONLY handles audio playback - NO business domain concerns
 /// NO: UserProfile fetching, collaboration logic, or business context
+@injectable
 class PlayAudioUseCase {
   const PlayAudioUseCase({
     required AudioContentRepository audioContentRepository,
     required AudioPlaybackService playbackService,
-  })  : _audioContentRepository = audioContentRepository,
-        _playbackService = playbackService;
+  }) : _audioContentRepository = audioContentRepository,
+       _playbackService = playbackService;
 
   final AudioContentRepository _audioContentRepository;
   final AudioPlaybackService _playbackService;
@@ -27,13 +29,12 @@ class PlayAudioUseCase {
       final metadata = await _audioContentRepository.getTrackMetadata(trackId);
 
       // 2. Resolve audio source URL (handles cache vs streaming internally)
-      final sourceUrl = await _audioContentRepository.getAudioSourceUrl(trackId);
+      final sourceUrl = await _audioContentRepository.getAudioSourceUrl(
+        trackId,
+      );
 
       // 3. Create audio source for playback
-      final audioSource = AudioSource(
-        url: sourceUrl,
-        metadata: metadata,
-      );
+      final audioSource = AudioSource(url: sourceUrl, metadata: metadata);
 
       // 4. Initiate playback (pure audio operation)
       await _playbackService.play(audioSource);

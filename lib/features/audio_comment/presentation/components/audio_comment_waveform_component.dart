@@ -7,7 +7,6 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class AudioCommentWaveform extends StatefulWidget {

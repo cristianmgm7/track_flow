@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../entities/playback_session.dart';
 import '../entities/audio_source.dart';
@@ -9,14 +10,15 @@ import '../services/audio_playback_service.dart';
 /// Pure audio state restoration use case
 /// ONLY handles audio playback state restoration - NO business domain concerns
 /// NO: UserProfile reconstruction, collaborator data, project context
+@injectable
 class RestorePlaybackStateUseCase {
   const RestorePlaybackStateUseCase({
     required PlaybackPersistenceRepository persistenceRepository,
     required AudioContentRepository audioContentRepository,
     required AudioPlaybackService playbackService,
-  })  : _persistenceRepository = persistenceRepository,
-        _audioContentRepository = audioContentRepository,
-        _playbackService = playbackService;
+  }) : _persistenceRepository = persistenceRepository,
+       _audioContentRepository = audioContentRepository,
+       _playbackService = playbackService;
 
   final PlaybackPersistenceRepository _persistenceRepository;
   final AudioContentRepository _audioContentRepository;
@@ -45,25 +47,30 @@ class RestorePlaybackStateUseCase {
           // Get current metadata for all tracks in queue
           final sources = savedSession.queue.sources;
           final trackIds = sources.map((source) => source.metadata.id).toList();
-          final tracksMetadata = await _audioContentRepository.getTracksMetadata(trackIds);
+          final tracksMetadata = await _audioContentRepository
+              .getTracksMetadata(trackIds);
 
           // Create audio sources for playback service
           final audioSources = <AudioSource>[];
           for (final metadata in tracksMetadata) {
-            final sourceUrl = await _audioContentRepository.getAudioSourceUrl(metadata.id);
+            final sourceUrl = await _audioContentRepository.getAudioSourceUrl(
+              metadata.id,
+            );
             audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
           }
 
           if (audioSources.isNotEmpty) {
             // 4. Load queue into playback service
             await _playbackService.loadQueue(
-              audioSources, 
+              audioSources,
               startIndex: savedSession.queue.currentIndex,
             );
 
             // 5. Restore audio settings
             await _playbackService.setRepeatMode(savedSession.repeatMode);
-            await _playbackService.setShuffleEnabled(savedSession.shuffleEnabled);
+            await _playbackService.setShuffleEnabled(
+              savedSession.shuffleEnabled,
+            );
             await _playbackService.setVolume(savedSession.volume);
             await _playbackService.setPlaybackSpeed(savedSession.playbackSpeed);
 
@@ -82,14 +89,18 @@ class RestorePlaybackStateUseCase {
         } catch (e) {
           // If queue reconstruction fails, clear the saved state
           await _persistenceRepository.clearPlaybackState();
-          return Left(StorageFailure('Failed to restore queue: ${e.toString()}'));
+          return Left(
+            StorageFailure('Failed to restore queue: ${e.toString()}'),
+          );
         }
       }
 
       // Return the current session state after restoration
       return Right(_playbackService.currentSession);
     } catch (e) {
-      return Left(StorageFailure('Failed to restore playback state: ${e.toString()}'));
+      return Left(
+        StorageFailure('Failed to restore playback state: ${e.toString()}'),
+      );
     }
   }
 }
