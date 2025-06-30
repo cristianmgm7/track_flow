@@ -1,134 +1,95 @@
 import 'package:dartz/dartz.dart';
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_state_persistence.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
-import 'dart:math';
+import '../entities/audio_failure.dart';
+import '../entities/playback_session.dart';
+import '../entities/audio_source.dart';
+import '../repositories/playback_persistence_repository.dart';
+import '../repositories/audio_content_repository.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio state restoration use case
+/// ONLY handles audio playback state restoration - NO business domain concerns
+/// NO: UserProfile reconstruction, collaborator data, project context
 class RestorePlaybackStateUseCase {
-  final PlaybackStatePersistence _playbackStatePersistence;
-  final PlaybackService _playbackService;
-  final AudioTrackRepository _audioTrackRepository;
-  final UserProfileRepository _userProfileRepository;
+  const RestorePlaybackStateUseCase({
+    required PlaybackPersistenceRepository persistenceRepository,
+    required AudioContentRepository audioContentRepository,
+    required AudioPlaybackService playbackService,
+  })  : _persistenceRepository = persistenceRepository,
+        _audioContentRepository = audioContentRepository,
+        _playbackService = playbackService;
 
-  RestorePlaybackStateUseCase(
-    this._playbackStatePersistence,
-    this._playbackService,
-    this._audioTrackRepository,
-    this._userProfileRepository,
-  );
+  final PlaybackPersistenceRepository _persistenceRepository;
+  final AudioContentRepository _audioContentRepository;
+  final AudioPlaybackService _playbackService;
 
-  Future<Either<Failure, RestoreResult?>> call() async {
-    final result = await _playbackStatePersistence.restorePlaybackState();
-    
-    return result.fold(
-      (failure) => left(failure),
-      (persistedState) async {
-        if (persistedState == null || persistedState.queue.isEmpty) {
-          return right(null);
-        }
+  /// Restore previously saved playback session
+  /// Handles: state loading, queue reconstruction, position restoration
+  /// Does NOT handle: user context, collaborator data, business rules
+  Future<Either<AudioFailure, PlaybackSession?>> call() async {
+    try {
+      // 1. Check if saved state exists
+      final hasSavedState = await _persistenceRepository.hasPlaybackState();
+      if (!hasSavedState) {
+        return const Right(null); // No saved state to restore
+      }
 
+      // 2. Load saved playback session (pure audio state only)
+      final savedSession = await _persistenceRepository.loadPlaybackState();
+      if (savedSession == null) {
+        return const Right(null);
+      }
+
+      // 3. Reconstruct audio queue if it exists
+      if (savedSession.queue.isNotEmpty) {
         try {
-          if (persistedState.currentTrackId != null) {
-            final track = await _getAudioTrackById(persistedState.currentTrackId!);
-            if (track.isLeft()) {
-              return left(track.fold((l) => l, (r) => throw Exception()));
-            }
-            final audioTrack = track.getOrElse(() => throw Exception());
+          // Get current metadata for all tracks in queue
+          final sources = savedSession.queue.sources;
+          final trackIds = sources.map((source) => source.metadata.id).toList();
+          final tracksMetadata = await _audioContentRepository.getTracksMetadata(trackIds);
 
-            final collaboratorResult = await _getCollaboratorForTrack(audioTrack);
-            if (collaboratorResult.isLeft()) {
-              return left(collaboratorResult.fold((l) => l, (r) => throw Exception()));
-            }
-            final collaborator = collaboratorResult.getOrElse(() => throw Exception());
-
-            // Generate shuffled queue if needed
-            final shuffledQueue = persistedState.queueMode == PlaybackQueueMode.shuffle
-                ? _generateShuffledQueue(persistedState.queue)
-                : <String>[];
-
-            // Optionally seek to last position when restoring
-            if (persistedState.lastPosition > Duration.zero) {
-              await _playbackService.seek(persistedState.lastPosition);
-            }
-
-            return right(RestoreResult(
-              track: audioTrack,
-              collaborator: collaborator,
-              queue: persistedState.queue,
-              shuffledQueue: shuffledQueue,
-              currentIndex: persistedState.currentIndex,
-              repeatMode: persistedState.repeatMode,
-              queueMode: persistedState.queueMode,
-              lastPosition: persistedState.lastPosition,
-              wasPlaying: persistedState.wasPlaying,
-            ));
+          // Create audio sources for playback service
+          final audioSources = <AudioSource>[];
+          for (final metadata in tracksMetadata) {
+            final sourceUrl = await _audioContentRepository.getAudioSourceUrl(metadata.id);
+            audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
           }
-          return right(null);
+
+          if (audioSources.isNotEmpty) {
+            // 4. Load queue into playback service
+            await _playbackService.loadQueue(
+              audioSources, 
+              startIndex: savedSession.queue.currentIndex,
+            );
+
+            // 5. Restore audio settings
+            await _playbackService.setRepeatMode(savedSession.repeatMode);
+            await _playbackService.setShuffleEnabled(savedSession.shuffleEnabled);
+            await _playbackService.setVolume(savedSession.volume);
+            await _playbackService.setPlaybackSpeed(savedSession.playbackSpeed);
+
+            // 6. Restore position if track was playing/paused
+            if (savedSession.position.inMilliseconds > 0) {
+              await _playbackService.seek(savedSession.position);
+            }
+
+            // 7. Restore playback state (but don't auto-play)
+            if (savedSession.isPlaying) {
+              // Note: We restore to paused state to let user decide to resume
+              // Auto-playing on app startup can be annoying
+              await _playbackService.pause();
+            }
+          }
         } catch (e) {
-          return left(UnexpectedFailure(e.toString()));
+          // If queue reconstruction fails, clear the saved state
+          await _persistenceRepository.clearPlaybackState();
+          return Left(StorageFailure('Failed to restore queue: ${e.toString()}'));
         }
-      },
-    );
+      }
+
+      // Return the current session state after restoration
+      return Right(_playbackService.currentSession);
+    } catch (e) {
+      return Left(StorageFailure('Failed to restore playback state: ${e.toString()}'));
+    }
   }
-
-  Future<Either<Failure, AudioTrack>> _getAudioTrackById(String id) async {
-    final result = await _audioTrackRepository.getTrackById(
-      AudioTrackId.fromUniqueString(id),
-    );
-    return result.fold(
-      (failure) => left(failure),
-      (track) => right(track),
-    );
-  }
-
-  Future<Either<Failure, UserProfile>> _getCollaboratorForTrack(AudioTrack track) async {
-    final result = await _userProfileRepository.getUserProfilesByIds([
-      track.uploadedBy.value,
-    ]);
-    return result.fold(
-      (failure) => left(failure),
-      (profiles) => profiles.isNotEmpty
-          ? right(profiles.first)
-          : left(const UnexpectedFailure('Collaborator not found')),
-    );
-  }
-
-  List<String> _generateShuffledQueue(List<String> originalQueue) {
-    if (originalQueue.isEmpty) return [];
-    final shuffled = List<String>.from(originalQueue);
-    shuffled.shuffle(Random());
-    return shuffled;
-  }
-}
-
-class RestoreResult {
-  final AudioTrack track;
-  final UserProfile collaborator;
-  final List<String> queue;
-  final List<String> shuffledQueue;
-  final int currentIndex;
-  final RepeatMode repeatMode;
-  final PlaybackQueueMode queueMode;
-  final Duration lastPosition;
-  final bool wasPlaying;
-
-  RestoreResult({
-    required this.track,
-    required this.collaborator,
-    required this.queue,
-    required this.shuffledQueue,
-    required this.currentIndex,
-    required this.repeatMode,
-    required this.queueMode,
-    required this.lastPosition,
-    required this.wasPlaying,
-  });
 }

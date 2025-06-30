@@ -1,125 +1,81 @@
 import 'package:dartz/dartz.dart';
-import 'package:injectable/injectable.dart';
-import 'dart:math';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
-import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
+import '../entities/audio_failure.dart';
+import '../entities/playlist_id.dart';
+import '../entities/audio_source.dart';
+import '../repositories/audio_content_repository.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure playlist playback use case
+/// ONLY handles playlist queue setup and playback - NO business domain concerns
+/// NO: UserProfile fetching, collaborator logic, project context
 class PlayPlaylistUseCase {
-  final PlaybackService _playbackService;
-  final AudioTrackRepository _audioTrackRepository;
-  final UserProfileRepository _userProfileRepository;
-  final AudioSourceResolver _audioSourceResolver;
+  const PlayPlaylistUseCase({
+    required AudioContentRepository audioContentRepository,
+    required AudioPlaybackService playbackService,
+  })  : _audioContentRepository = audioContentRepository,
+        _playbackService = playbackService;
 
-  PlayPlaylistUseCase(
-    this._playbackService,
-    this._audioTrackRepository,
-    this._userProfileRepository,
-    this._audioSourceResolver,
-  );
+  final AudioContentRepository _audioContentRepository;
+  final AudioPlaybackService _playbackService;
 
-  Future<Either<Failure, PlayPlaylistResult>> call({
-    required Playlist playlist,
-    required int startIndex,
-    PlaybackQueueMode queueMode = PlaybackQueueMode.normal,
+  /// Play playlist starting from specified track index
+  /// Handles: playlist loading, queue setup, playback initiation
+  /// Does NOT handle: user permissions, collaborator data, business rules
+  Future<Either<AudioFailure, void>> call(
+    PlaylistId playlistId, {
+    int startIndex = 0,
   }) async {
     try {
-      final queue = playlist.trackIds;
-      if (queue.isEmpty || startIndex >= queue.length) {
-        return left(const ValidationFailure('Invalid playlist or start index'));
+      // 1. Get playlist tracks metadata (pure audio data only)
+      final tracksMetadata = await _audioContentRepository.getPlaylistTracks(playlistId);
+
+      if (tracksMetadata.isEmpty) {
+        return Left(PlaylistFailure('Playlist is empty: ${playlistId.value}'));
       }
 
-      // Generate shuffled queue if needed
-      final shuffledQueue = _generateShuffledQueue(queue);
-
-      // Get current track to play
-      final trackId = queue[startIndex];
-      final track = await _getAudioTrackById(trackId);
-      if (track.isLeft()) {
-        return left(track.fold((l) => l, (r) => throw Exception()));
+      // Validate start index
+      if (startIndex < 0 || startIndex >= tracksMetadata.length) {
+        return Left(QueueFailure('Invalid start index: $startIndex'));
       }
-      final audioTrack = track.getOrElse(() => throw Exception());
 
-      // Get collaborator
-      final collaboratorResult = await _getCollaboratorForTrack(audioTrack);
-      if (collaboratorResult.isLeft()) {
-        return left(collaboratorResult.fold((l) => l, (r) => throw Exception()));
+      // 2. Create audio sources for all tracks
+      final audioSources = <AudioSource>[];
+      
+      for (final metadata in tracksMetadata) {
+        try {
+          // Resolve source URL for each track
+          final sourceUrl = await _audioContentRepository.getAudioSourceUrl(metadata.id);
+          
+          audioSources.add(AudioSource(
+            url: sourceUrl,
+            metadata: metadata,
+          ));
+        } catch (e) {
+          // Skip tracks that can't be loaded, continue with others
+          continue;
+        }
       }
-      final collaborator = collaboratorResult.getOrElse(() => throw Exception());
 
-      // Resolve audio source and start playback
-      final pathResult = await _audioSourceResolver.resolveAudioSource(audioTrack.url);
-      final path = pathResult.getOrElse(() => audioTrack.url);
-      await _playbackService.play(url: path);
+      if (audioSources.isEmpty) {
+        return Left(PlaylistFailure('No playable tracks in playlist: ${playlistId.value}'));
+      }
 
-      return right(PlayPlaylistResult(
-        playlist: playlist,
-        queue: queue,
-        shuffledQueue: shuffledQueue,
-        currentIndex: startIndex,
-        track: audioTrack,
-        collaborator: collaborator,
-        resolvedPath: path,
-      ));
+      // Adjust start index if some tracks were skipped
+      final adjustedStartIndex = startIndex.clamp(0, audioSources.length - 1);
+
+      // 3. Load queue and start playback (pure audio operation)
+      await _playbackService.loadQueue(audioSources, startIndex: adjustedStartIndex);
+
+      return const Right(null);
     } catch (e) {
-      return left(UnexpectedFailure(e.toString()));
+      // Handle audio-specific errors only
+      if (e.toString().contains('not found')) {
+        return Left(PlaylistFailure('Playlist not found: ${playlistId.value}'));
+      } else if (e.toString().contains('network')) {
+        return const Left(NetworkFailure());
+      } else {
+        return Left(PlaylistFailure('Failed to load playlist: ${e.toString()}'));
+      }
     }
   }
-
-  Future<Either<Failure, AudioTrack>> _getAudioTrackById(String id) async {
-    final result = await _audioTrackRepository.getTrackById(
-      AudioTrackId.fromUniqueString(id),
-    );
-    return result.fold(
-      (failure) => left(failure),
-      (track) => right(track),
-    );
-  }
-
-  Future<Either<Failure, UserProfile>> _getCollaboratorForTrack(AudioTrack track) async {
-    final result = await _userProfileRepository.getUserProfilesByIds([
-      track.uploadedBy.value,
-    ]);
-    return result.fold(
-      (failure) => left(failure),
-      (profiles) => profiles.isNotEmpty
-          ? right(profiles.first)
-          : left(const UnexpectedFailure('Collaborator not found')),
-    );
-  }
-
-  List<String> _generateShuffledQueue(List<String> originalQueue) {
-    if (originalQueue.isEmpty) return [];
-    final shuffled = List<String>.from(originalQueue);
-    shuffled.shuffle(Random());
-    return shuffled;
-  }
-}
-
-class PlayPlaylistResult {
-  final Playlist playlist;
-  final List<String> queue;
-  final List<String> shuffledQueue;
-  final int currentIndex;
-  final AudioTrack track;
-  final UserProfile collaborator;
-  final String resolvedPath;
-
-  PlayPlaylistResult({
-    required this.playlist,
-    required this.queue,
-    required this.shuffledQueue,
-    required this.currentIndex,
-    required this.track,
-    required this.collaborator,
-    required this.resolvedPath,
-  });
 }

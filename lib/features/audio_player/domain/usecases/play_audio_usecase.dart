@@ -1,71 +1,55 @@
 import 'package:dartz/dartz.dart';
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
-import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
+import '../entities/audio_failure.dart';
+import '../entities/audio_track_id.dart';
+import '../entities/audio_source.dart';
+import '../repositories/audio_content_repository.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio playback use case
+/// ONLY handles audio playback - NO business domain concerns
+/// NO: UserProfile fetching, collaboration logic, or business context
 class PlayAudioUseCase {
-  final PlaybackService _playbackService;
-  final UserProfileRepository _userProfileRepository;
-  final AudioSourceResolver _audioSourceResolver;
+  const PlayAudioUseCase({
+    required AudioContentRepository audioContentRepository,
+    required AudioPlaybackService playbackService,
+  })  : _audioContentRepository = audioContentRepository,
+        _playbackService = playbackService;
 
-  PlayAudioUseCase(
-    this._playbackService,
-    this._userProfileRepository,
-    this._audioSourceResolver,
-  );
+  final AudioContentRepository _audioContentRepository;
+  final AudioPlaybackService _playbackService;
 
-  Future<Either<Failure, PlayAudioResult>> call(AudioTrack track) async {
+  /// Play audio track by ID
+  /// Handles: metadata fetching, source resolution, playback initiation
+  /// Does NOT handle: user context, collaborator data, project information
+  Future<Either<AudioFailure, void>> call(AudioTrackId trackId) async {
     try {
-      // Get collaborator for track
-      final collaboratorResult = await _getCollaboratorForTrack(track);
-      if (collaboratorResult.isLeft()) {
-        return left(collaboratorResult.fold((l) => l, (r) => throw Exception()));
-      }
-      final collaborator = collaboratorResult.getOrElse(() => throw Exception());
+      // 1. Get pure audio metadata (NO UserProfile)
+      final metadata = await _audioContentRepository.getTrackMetadata(trackId);
 
-      // Resolve audio source
-      final pathResult = await _audioSourceResolver.resolveAudioSource(track.url);
-      final path = pathResult.getOrElse(() => track.url);
+      // 2. Resolve audio source URL (handles cache vs streaming internally)
+      final sourceUrl = await _audioContentRepository.getAudioSourceUrl(trackId);
 
-      // Start playback
-      await _playbackService.play(url: path);
+      // 3. Create audio source for playback
+      final audioSource = AudioSource(
+        url: sourceUrl,
+        metadata: metadata,
+      );
 
-      return right(PlayAudioResult(
-        track: track,
-        collaborator: collaborator,
-        resolvedPath: path,
-      ));
+      // 4. Initiate playback (pure audio operation)
+      await _playbackService.play(audioSource);
+
+      return const Right(null);
     } catch (e) {
-      return left(UnexpectedFailure(e.toString()));
+      // Handle audio-specific errors only
+      if (e.toString().contains('not found')) {
+        return Left(TrackNotFoundFailure(trackId.value));
+      } else if (e.toString().contains('network')) {
+        return const Left(NetworkFailure());
+      } else if (e.toString().contains('source')) {
+        return Left(AudioSourceFailure(trackId.value));
+      } else {
+        return Left(PlaybackFailure(e.toString()));
+      }
     }
   }
-
-  Future<Either<Failure, UserProfile>> _getCollaboratorForTrack(AudioTrack track) async {
-    final result = await _userProfileRepository.getUserProfilesByIds([
-      track.uploadedBy.value,
-    ]);
-    return result.fold(
-      (failure) => left(failure),
-      (profiles) => profiles.isNotEmpty
-          ? right(profiles.first)
-          : left(const UnexpectedFailure('Collaborator not found')),
-    );
-  }
-}
-
-class PlayAudioResult {
-  final AudioTrack track;
-  final UserProfile collaborator;
-  final String resolvedPath;
-
-  PlayAudioResult({
-    required this.track,
-    required this.collaborator,
-    required this.resolvedPath,
-  });
 }

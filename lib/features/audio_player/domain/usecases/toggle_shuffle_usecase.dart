@@ -1,43 +1,27 @@
-import 'package:injectable/injectable.dart';
-import 'dart:math';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
+import 'package:dartz/dartz.dart';
+import '../entities/audio_failure.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio shuffle toggle use case
+/// ONLY handles shuffle mode toggle - NO business domain concerns
 class ToggleShuffleUseCase {
-  ToggleShuffleUseCase();
+  const ToggleShuffleUseCase({
+    required AudioPlaybackService playbackService,
+  }) : _playbackService = playbackService;
 
-  ToggleShuffleResult call({
-    required PlaybackQueueMode currentMode,
-    required List<String> queue,
-  }) {
-    final newMode = currentMode == PlaybackQueueMode.normal
-        ? PlaybackQueueMode.shuffle
-        : PlaybackQueueMode.normal;
+  final AudioPlaybackService _playbackService;
 
-    final shuffledQueue = newMode == PlaybackQueueMode.shuffle
-        ? _generateShuffledQueue(queue)
-        : <String>[];
-
-    return ToggleShuffleResult(
-      newMode: newMode,
-      shuffledQueue: shuffledQueue,
-    );
+  /// Toggle shuffle mode on/off
+  Future<Either<AudioFailure, bool>> call() async {
+    try {
+      final currentSession = _playbackService.currentSession;
+      final newShuffleState = !currentSession.shuffleEnabled;
+      
+      await _playbackService.setShuffleEnabled(newShuffleState);
+      
+      return Right(newShuffleState);
+    } catch (e) {
+      return Left(PlaybackFailure('Failed to toggle shuffle: ${e.toString()}'));
+    }
   }
-
-  List<String> _generateShuffledQueue(List<String> originalQueue) {
-    if (originalQueue.isEmpty) return [];
-    final shuffled = List<String>.from(originalQueue);
-    shuffled.shuffle(Random());
-    return shuffled;
-  }
-}
-
-class ToggleShuffleResult {
-  final PlaybackQueueMode newMode;
-  final List<String> shuffledQueue;
-
-  ToggleShuffleResult({
-    required this.newMode,
-    required this.shuffledQueue,
-  });
 }

@@ -1,19 +1,23 @@
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_state_persistence.dart';
+import 'package:dartz/dartz.dart';
+import '../entities/audio_failure.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio stop use case
+/// ONLY handles audio stop operation - NO business domain concerns
 class StopAudioUseCase {
-  final PlaybackService _playbackService;
-  final PlaybackStatePersistence _playbackStatePersistence;
+  const StopAudioUseCase({
+    required AudioPlaybackService playbackService,
+  }) : _playbackService = playbackService;
 
-  StopAudioUseCase(
-    this._playbackService,
-    this._playbackStatePersistence,
-  );
+  final AudioPlaybackService _playbackService;
 
-  Future<void> call() async {
-    await _playbackService.stop();
-    await _playbackStatePersistence.clearPlaybackState();
+  /// Stop audio playback and reset position
+  Future<Either<AudioFailure, void>> call() async {
+    try {
+      await _playbackService.stop();
+      return const Right(null);
+    } catch (e) {
+      return Left(PlaybackFailure('Failed to stop audio: ${e.toString()}'));
+    }
   }
 }

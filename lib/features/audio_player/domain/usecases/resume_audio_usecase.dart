@@ -1,13 +1,23 @@
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
+import 'package:dartz/dartz.dart';
+import '../entities/audio_failure.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio resume use case
+/// ONLY handles audio resume operation - NO business domain concerns
 class ResumeAudioUseCase {
-  final PlaybackService _playbackService;
+  const ResumeAudioUseCase({
+    required AudioPlaybackService playbackService,
+  }) : _playbackService = playbackService;
 
-  ResumeAudioUseCase(this._playbackService);
+  final AudioPlaybackService _playbackService;
 
-  Future<void> call() async {
-    await _playbackService.resume();
+  /// Resume paused audio playback
+  Future<Either<AudioFailure, void>> call() async {
+    try {
+      await _playbackService.resume();
+      return const Right(null);
+    } catch (e) {
+      return Left(PlaybackFailure('Failed to resume audio: ${e.toString()}'));
+    }
   }
 }

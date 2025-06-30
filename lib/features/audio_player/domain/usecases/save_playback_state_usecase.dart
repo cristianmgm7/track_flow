@@ -1,43 +1,49 @@
 import 'package:dartz/dartz.dart';
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_state_persistence.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
+import '../entities/audio_failure.dart';
+import '../repositories/playback_persistence_repository.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio state saving use case
+/// ONLY handles audio playback state persistence - NO business domain concerns
+/// NO: UserProfile data, collaborator info, project context
 class SavePlaybackStateUseCase {
-  final PlaybackStatePersistence _playbackStatePersistence;
+  const SavePlaybackStateUseCase({
+    required PlaybackPersistenceRepository persistenceRepository,
+    required AudioPlaybackService playbackService,
+  })  : _persistenceRepository = persistenceRepository,
+        _playbackService = playbackService;
 
-  SavePlaybackStateUseCase(this._playbackStatePersistence);
+  final PlaybackPersistenceRepository _persistenceRepository;
+  final AudioPlaybackService _playbackService;
 
-  Future<Either<Failure, Unit>> call({
-    required AudioTrack currentTrack,
-    required List<String> queue,
-    required int currentIndex,
-    required RepeatMode repeatMode,
-    required PlaybackQueueMode queueMode,
-    required bool isPlaying,
-    Playlist? currentPlaylist,
-    Duration lastPosition = Duration.zero,
-  }) async {
-    final persistedState = PersistedPlaybackState(
-      currentTrackId: currentTrack.id.value,
-      queue: queue,
-      currentIndex: currentIndex,
-      repeatMode: repeatMode,
-      queueMode: queueMode,
-      lastPosition: lastPosition,
-      playlistId: currentPlaylist?.id,
-      wasPlaying: isPlaying,
-      lastUpdated: DateTime.now(),
-    );
+  /// Save current playback session state
+  /// Handles: state persistence, queue saving, position tracking
+  /// Does NOT handle: user context, collaborator data, business rules
+  Future<Either<AudioFailure, void>> call() async {
+    try {
+      // 1. Get current session state (pure audio only)
+      final currentSession = _playbackService.currentSession;
 
-    return await _playbackStatePersistence.savePlaybackState(persistedState);
-  }
+      // 2. Save complete session state
+      await _persistenceRepository.savePlaybackState(currentSession);
 
-  Future<Either<Failure, Unit>> savePosition(Duration position) async {
-    return await _playbackStatePersistence.savePosition(position);
+      // 3. Save queue information separately for faster access
+      if (currentSession.queue.isNotEmpty) {
+        final trackIds = currentSession.queue.sources.map((source) => source.metadata.id.value).toList();
+        await _persistenceRepository.saveQueue(trackIds, currentSession.queue.currentIndex);
+      }
+
+      // 4. Save current track position for resume capability
+      if (currentSession.currentTrack != null && currentSession.position.inMilliseconds > 0) {
+        await _persistenceRepository.saveTrackPosition(
+          currentSession.currentTrack!.id.value,
+          currentSession.position,
+        );
+      }
+
+      return const Right(null);
+    } catch (e) {
+      return Left(StorageFailure('Failed to save playback state: ${e.toString()}'));
+    }
   }
 }
