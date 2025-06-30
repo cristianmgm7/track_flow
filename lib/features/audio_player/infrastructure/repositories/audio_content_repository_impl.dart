@@ -22,14 +22,12 @@ class AudioContentRepositoryImpl implements AudioContentRepository {
   final AudioSourceResolver _audioSourceResolver;
 
   @override
-  Future<AudioTrackMetadata> getTrackMetadata(
-    AudioTrackId trackId,
-  ) async {
+  Future<AudioTrackMetadata> getTrackMetadata(AudioTrackId trackId) async {
     // Get business domain track data
     final trackResult = await _audioTrackRepository.getTrackById(
       core_ids.AudioTrackId.fromUniqueString(trackId.value),
     );
-    
+
     return trackResult.fold(
       (failure) => throw Exception('Track not found: ${trackId.value}'),
       (audioTrack) {
@@ -57,25 +55,28 @@ class AudioContentRepositoryImpl implements AudioContentRepository {
   }
 
   @override
-  Future<String> getAudioSourceUrl(
-    AudioTrackId trackId,
-  ) async {
+  Future<String> getAudioSourceUrl(AudioTrackId trackId) async {
     // Get the original audio URL from business domain
     final trackResult = await _audioTrackRepository.getTrackById(
       core_ids.AudioTrackId.fromUniqueString(trackId.value),
     );
-    
+
     return trackResult.fold(
       (failure) => throw Exception('Track not found: ${trackId.value}'),
       (audioTrack) async {
         final originalUrl = audioTrack.url;
-        
-        // Use audio source resolver to determine best source
+
+        // Use audio source resolver with track ID for consistent cache lookup
         // (cached vs streaming based on offline mode, availability, etc.)
-        final sourceResult = await _audioSourceResolver.resolveAudioSource(originalUrl);
-        
+        final sourceResult = await _audioSourceResolver.resolveAudioSource(
+          originalUrl,
+          trackId:
+              trackId.value, // Pass track ID for consistent cache operations
+        );
+
         return sourceResult.fold(
-          (failure) => throw Exception('Audio source not available: ${trackId.value}'),
+          (failure) =>
+              throw Exception('Audio source not available: ${trackId.value}'),
           (resolvedUrl) => resolvedUrl,
         );
       },
@@ -83,21 +84,19 @@ class AudioContentRepositoryImpl implements AudioContentRepository {
   }
 
   @override
-  Future<bool> isTrackCached(
-    AudioTrackId trackId,
-  ) async {
+  Future<bool> isTrackCached(AudioTrackId trackId) async {
     // Get track URL first
     final trackResult = await _audioTrackRepository.getTrackById(
       core_ids.AudioTrackId.fromUniqueString(trackId.value),
     );
-    
-    return trackResult.fold(
-      (failure) => false,
-      (audioTrack) async {
-        // Check if the track's URL is cached
-        return await _audioSourceResolver.isTrackCached(audioTrack.url);
-      },
-    );
+
+    return trackResult.fold((failure) => false, (audioTrack) async {
+      // Check if the track's URL is cached using consistent track ID
+      return await _audioSourceResolver.isTrackCached(
+        audioTrack.url,
+        trackId: trackId.value, // Pass track ID for consistent cache operations
+      );
+    });
   }
 
   @override
@@ -105,7 +104,7 @@ class AudioContentRepositoryImpl implements AudioContentRepository {
     List<AudioTrackId> trackIds,
   ) async {
     final metadataList = <AudioTrackMetadata>[];
-    
+
     for (final trackId in trackIds) {
       try {
         final metadata = await getTrackMetadata(trackId);
@@ -115,14 +114,12 @@ class AudioContentRepositoryImpl implements AudioContentRepository {
         continue;
       }
     }
-    
+
     return metadataList;
   }
 
   @override
-  Stream<AudioTrackMetadata> watchTrackMetadata(
-    AudioTrackId trackId,
-  ) async* {
+  Stream<AudioTrackMetadata> watchTrackMetadata(AudioTrackId trackId) async* {
     // For now, just yield the current metadata once
     // TODO: Implement real-time updates when business domain supports it
     try {

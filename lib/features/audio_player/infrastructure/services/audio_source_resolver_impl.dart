@@ -10,17 +10,24 @@ import 'audio_source_resolver.dart';
 /// Provides cache-first audio source resolution for pure audio architecture
 @Injectable(as: AudioSourceResolver)
 class AudioSourceResolverImpl implements AudioSourceResolver {
-  const AudioSourceResolverImpl(
-    this._cacheOrchestrationService,
-  );
+  const AudioSourceResolverImpl(this._cacheOrchestrationService);
 
   final CacheOrchestrationService _cacheOrchestrationService;
 
   @override
-  Future<Either<Failure, String>> resolveAudioSource(String originalUrl) async {
+  Future<Either<Failure, String>> resolveAudioSource(
+    String originalUrl, {
+    String? trackId,
+  }) async {
     try {
+      // Use provided trackId for consistent cache operations
+      final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(originalUrl);
+
       // 1. Always check cache first (offline-first principle)
-      final cacheResult = await validateCachedTrack(originalUrl);
+      final cacheResult = await validateCachedTrack(
+        originalUrl,
+        trackId: effectiveTrackId,
+      );
       if (cacheResult.isRight()) {
         final cachedPath = cacheResult.getOrElse(() => null);
         if (cachedPath != null) {
@@ -29,9 +36,9 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
       }
 
       // 2. Start background caching for future use
-      await startBackgroundCaching(originalUrl);
+      await startBackgroundCaching(originalUrl, trackId: effectiveTrackId);
 
-      // 4. Return original URL for streaming
+      // 3. Return original URL for streaming
       return Right(originalUrl);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
@@ -39,26 +46,30 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   }
 
   @override
-  Future<bool> isTrackCached(String url) async {
+  Future<bool> isTrackCached(String url, {String? trackId}) async {
     try {
-      final trackId = _extractTrackIdFromUrl(url);
-      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(trackId);
-      
-      return pathResult.fold(
-        (failure) => false,
-        (cachedPath) => true,
+      final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
+      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(
+        effectiveTrackId,
       );
+
+      return pathResult.fold((failure) => false, (cachedPath) => true);
     } catch (e) {
       return false;
     }
   }
 
   @override
-  Future<Either<Failure, String?>> validateCachedTrack(String url) async {
+  Future<Either<Failure, String?>> validateCachedTrack(
+    String url, {
+    String? trackId,
+  }) async {
     try {
-      final trackId = _extractTrackIdFromUrl(url);
-      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(trackId);
-      
+      final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
+      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(
+        effectiveTrackId,
+      );
+
       return pathResult.fold(
         (failure) => const Right(null),
         (cachedPath) => Right(cachedPath),
@@ -69,13 +80,13 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   }
 
   @override
-  Future<void> startBackgroundCaching(String url) async {
+  Future<void> startBackgroundCaching(String url, {String? trackId}) async {
     try {
-      final trackId = _extractTrackIdFromUrl(url);
-      
+      final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
+
       // Use cache orchestration service for background caching
       await _cacheOrchestrationService.cacheAudio(
-        trackId,
+        effectiveTrackId,
         url,
         'pure_audio_background',
       );
@@ -91,14 +102,14 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   }) async {
     try {
       final trackId = _extractTrackIdFromUrl(url);
-      
+
       // Use cache orchestration service for preloading
       final result = await _cacheOrchestrationService.cacheAudio(
         trackId,
         url,
         referenceId,
       );
-      
+
       return result.fold(
         (failure) => Left(CacheFailure('Preload failed: ${failure.message}')),
         (success) => const Right(null),

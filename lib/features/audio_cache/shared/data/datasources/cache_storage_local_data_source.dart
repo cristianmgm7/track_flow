@@ -1,25 +1,25 @@
 import 'dart:io';
+import 'package:crypto/crypto.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:crypto/crypto.dart';
-import 'package:trackflow/features/audio_cache/shared/data/models/cache_metadata_document.dart';
 
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/failures/cache_failure.dart';
 import '../../domain/value_objects/cache_key.dart';
-import '../models/cached_audio_document.dart';
+import '../models/cached_audio_document_unified.dart';
 
 abstract class CacheStorageLocalDataSource {
-  // Core file operations
-  Future<Either<CacheFailure, CachedAudio>> storeCachedAudio(CachedAudio audio);
+  Future<Either<CacheFailure, CachedAudio>> storeCachedAudio(
+    CachedAudio cachedAudio,
+  );
+
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId);
 
   Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId);
 
   Future<Either<CacheFailure, bool>> audioExists(String trackId);
-
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId);
 
   Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId);
 
@@ -28,7 +28,6 @@ abstract class CacheStorageLocalDataSource {
     String expectedChecksum,
   );
 
-  // Batch operations
   Future<Either<CacheFailure, List<CachedAudio>>> getMultipleCachedAudios(
     List<String> trackIds,
   );
@@ -37,7 +36,6 @@ abstract class CacheStorageLocalDataSource {
     List<String> trackIds,
   );
 
-  // Storage management
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios();
 
   Future<Either<CacheFailure, int>> getTotalStorageUsage();
@@ -46,33 +44,50 @@ abstract class CacheStorageLocalDataSource {
 
   Future<Either<CacheFailure, List<String>>> getOrphanedFiles();
 
-  // Cache key operations
+  Stream<int> watchStorageUsage();
+
   CacheKey generateCacheKey(String trackId, String audioUrl);
 
   Future<Either<CacheFailure, String>> getFilePathFromCacheKey(CacheKey key);
 
-  // Reactive streams
-  Stream<int> watchStorageUsage();
+  Future<Either<CacheFailure, CachedAudioDocumentUnified>>
+  storeUnifiedCachedAudio(CachedAudioDocumentUnified unifiedDoc);
 }
 
 @LazySingleton(as: CacheStorageLocalDataSource)
 class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   final Isar _isar;
-  static const String _cacheSubDirectory = 'audio_cache';
 
   CacheStorageLocalDataSourceImpl(this._isar);
 
   @override
   Future<Either<CacheFailure, CachedAudio>> storeCachedAudio(
-    CachedAudio audio,
+    CachedAudio cachedAudio,
   ) async {
     try {
+      // Convert to unified document
+      final unifiedDoc =
+          CachedAudioDocumentUnified()
+            ..trackId = cachedAudio.trackId
+            ..filePath = cachedAudio.filePath
+            ..fileSizeBytes = cachedAudio.fileSizeBytes
+            ..cachedAt = cachedAudio.cachedAt
+            ..checksum = cachedAudio.checksum
+            ..quality = cachedAudio.quality
+            ..status = cachedAudio.status
+            ..referenceCount = 1
+            ..lastAccessed = DateTime.now()
+            ..references = ['individual']
+            ..downloadAttempts = 0
+            ..lastDownloadAttempt = null
+            ..failureReason = null
+            ..originalUrl = '';
+
       await _isar.writeTxn(() async {
-        final document = CachedAudioDocument.fromEntity(audio);
-        await _isar.cachedAudioDocuments.put(document);
+        await _isar.cachedAudioDocumentUnifieds.put(unifiedDoc);
       });
 
-      return Right(audio);
+      return Right(cachedAudio);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -84,36 +99,58 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
+    String trackId,
+  ) async {
+    try {
+      final unifiedDoc =
+          await _isar.cachedAudioDocumentUnifieds
+              .filter()
+              .trackIdEqualTo(trackId)
+              .findFirst();
+
+      if (unifiedDoc == null) {
+        return const Right(null);
+      }
+
+      // Update last accessed
+      await _isar.writeTxn(() async {
+        unifiedDoc.lastAccessed = DateTime.now();
+        await _isar.cachedAudioDocumentUnifieds.put(unifiedDoc);
+      });
+
+      return Right(unifiedDoc.toCachedAudio());
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to get cached audio: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Either<CacheFailure, String>> getCachedAudioPath(
     String trackId,
   ) async {
     try {
-      final document =
-          await _isar.cachedAudioDocuments
-              .where()
+      final unifiedDoc =
+          await _isar.cachedAudioDocumentUnifieds
+              .filter()
               .trackIdEqualTo(trackId)
               .findFirst();
 
-      if (document == null) {
+      if (unifiedDoc == null) {
         return Left(
           StorageCacheFailure(
-            message: 'Audio file not found for track: $trackId',
+            message: 'Cached audio not found',
             type: StorageFailureType.fileNotFound,
           ),
         );
       }
 
-      final file = File(document.filePath);
-      if (!await file.exists()) {
-        return Left(
-          StorageCacheFailure(
-            message: 'Audio file does not exist at path: ${document.filePath}',
-            type: StorageFailureType.fileNotFound,
-          ),
-        );
-      }
-
-      return Right(document.filePath);
+      return Right(unifiedDoc.filePath);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -127,37 +164,16 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, bool>> audioExists(String trackId) async {
     try {
-      final pathResult = await getCachedAudioPath(trackId);
-      return pathResult.fold((failure) => const Right(false), (path) async {
-        final file = File(path);
-        return Right(await file.exists());
-      });
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to check if audio exists: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
-    String trackId,
-  ) async {
-    try {
-      final document =
-          await _isar.cachedAudioDocuments
-              .where()
+      final count =
+          await _isar.cachedAudioDocumentUnifieds
+              .filter()
               .trackIdEqualTo(trackId)
-              .findFirst();
-
-      return Right(document?.toEntity());
+              .count();
+      return Right(count > 0);
     } catch (e) {
       return Left(
         StorageCacheFailure(
-          message: 'Failed to get cached audio: $e',
+          message: 'Failed to check audio exists: $e',
           type: StorageFailureType.diskError,
         ),
       );
@@ -167,42 +183,24 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId) async {
     try {
-      // Get the file path first
-      final pathResult = await getCachedAudioPath(trackId);
+      final unifiedDoc =
+          await _isar.cachedAudioDocumentUnifieds
+              .filter()
+              .trackIdEqualTo(trackId)
+              .findFirst();
 
-      await _isar.writeTxn(() async {
-        // Delete from Isar (audio)
-        final document =
-            await _isar.cachedAudioDocuments
-                .where()
-                .trackIdEqualTo(trackId)
-                .findFirst();
-        if (document != null) {
-          await _isar.cachedAudioDocuments.delete(document.isarId);
+      if (unifiedDoc != null) {
+        // Delete file from disk
+        final file = File(unifiedDoc.filePath);
+        if (await file.exists()) {
+          await file.delete();
         }
-        // Delete from Isar (metadata)
-        final metadataDoc =
-            await _isar.cacheMetadataDocuments
-                .where()
-                .trackIdEqualTo(trackId)
-                .findFirst();
-        if (metadataDoc != null) {
-          await _isar.cacheMetadataDocuments.delete(metadataDoc.isarId);
-        }
-      });
 
-      // Delete physical file if it exists
-      await pathResult.fold(
-        (failure) async {
-          // File not found in database, that's okay
-        },
-        (path) async {
-          final file = File(path);
-          if (await file.exists()) {
-            await file.delete();
-          }
-        },
-      );
+        // Delete from database
+        await _isar.writeTxn(() async {
+          await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
+        });
+      }
 
       return const Right(unit);
     } catch (e) {
@@ -221,25 +219,30 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     String expectedChecksum,
   ) async {
     try {
-      final pathResult = await getCachedAudioPath(trackId);
+      final unifiedDoc =
+          await _isar.cachedAudioDocumentUnifieds
+              .filter()
+              .trackIdEqualTo(trackId)
+              .findFirst();
 
-      return await pathResult.fold((failure) => Left(failure), (path) async {
-        final file = File(path);
-        if (!await file.exists()) {
-          return const Right(false);
-        }
+      if (unifiedDoc == null) {
+        return const Right(false);
+      }
 
-        final bytes = await file.readAsBytes();
-        final actualChecksum = sha1.convert(bytes).toString();
+      final file = File(unifiedDoc.filePath);
+      if (!await file.exists()) {
+        return const Right(false);
+      }
 
-        return Right(actualChecksum == expectedChecksum);
-      });
+      final bytes = await file.readAsBytes();
+      final actualChecksum = sha1.convert(bytes).toString();
+
+      return Right(actualChecksum == expectedChecksum);
     } catch (e) {
       return Left(
-        CorruptedCacheFailure(
+        StorageCacheFailure(
           message: 'Failed to verify file integrity: $e',
-          trackId: trackId,
-          checksum: expectedChecksum,
+          type: StorageFailureType.diskError,
         ),
       );
     }
@@ -250,14 +253,23 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     List<String> trackIds,
   ) async {
     try {
-      final documents =
-          await _isar.cachedAudioDocuments
-              .where()
-              .anyOf(trackIds, (q, trackId) => q.trackIdEqualTo(trackId))
-              .findAll();
+      final List<CachedAudioDocumentUnified> unifiedDocs = [];
 
-      final audios = documents.map((doc) => doc.toEntity()).toList();
-      return Right(audios);
+      // Query each track ID individually since Isar doesn't have trackIdIsIn
+      for (final trackId in trackIds) {
+        final doc =
+            await _isar.cachedAudioDocumentUnifieds
+                .filter()
+                .trackIdEqualTo(trackId)
+                .findFirst();
+        if (doc != null) {
+          unifiedDocs.add(doc);
+        }
+      }
+
+      final cachedAudios =
+          unifiedDocs.map((doc) => doc.toCachedAudio()).toList();
+      return Right(cachedAudios);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -277,9 +289,10 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
 
       for (final trackId in trackIds) {
         final result = await deleteAudioFile(trackId);
-        result.fold((failure) {
-          // Log failure but continue with other files
-        }, (_) => deletedTrackIds.add(trackId));
+        result.fold(
+          (failure) => null, // Skip failed deletions
+          (_) => deletedTrackIds.add(trackId),
+        );
       }
 
       return Right(deletedTrackIds);
@@ -296,9 +309,12 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios() async {
     try {
-      final documents = await _isar.cachedAudioDocuments.where().findAll();
-      final audios = documents.map((doc) => doc.toEntity()).toList();
-      return Right(audios);
+      final unifiedDocs =
+          await _isar.cachedAudioDocumentUnifieds.where().findAll();
+
+      final cachedAudios =
+          unifiedDocs.map((doc) => doc.toCachedAudio()).toList();
+      return Right(cachedAudios);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -312,11 +328,13 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, int>> getTotalStorageUsage() async {
     try {
-      final documents = await _isar.cachedAudioDocuments.where().findAll();
-      final totalSize = documents.fold<int>(
-        0,
-        (sum, doc) => sum + doc.fileSizeBytes,
-      );
+      final unifiedDocs =
+          await _isar.cachedAudioDocumentUnifieds.where().findAll();
+
+      int totalSize = 0;
+      for (final doc in unifiedDocs) {
+        totalSize += doc.fileSizeBytes;
+      }
 
       return Right(totalSize);
     } catch (e) {
@@ -332,31 +350,23 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, List<String>>> getCorruptedFiles() async {
     try {
-      final documents = await _isar.cachedAudioDocuments.where().findAll();
       final corruptedTrackIds = <String>[];
 
-      for (final doc in documents) {
-        final audio = doc.toEntity();
-        if (audio.status == CacheStatus.corrupted) {
-          corruptedTrackIds.add(audio.trackId);
-        } else {
-          // Verify integrity for cached files
-          final integrityResult = await verifyFileIntegrity(
-            audio.trackId,
-            audio.checksum,
-          );
+      final unifiedDocs =
+          await _isar.cachedAudioDocumentUnifieds.where().findAll();
 
-          integrityResult.fold(
-            (failure) {
-              // Consider as corrupted if we can't verify
-              corruptedTrackIds.add(audio.trackId);
-            },
-            (isValid) {
-              if (!isValid) {
-                corruptedTrackIds.add(audio.trackId);
-              }
-            },
-          );
+      for (final doc in unifiedDocs) {
+        final file = File(doc.filePath);
+        if (!await file.exists()) {
+          corruptedTrackIds.add(doc.trackId);
+          continue;
+        }
+
+        final bytes = await file.readAsBytes();
+        final actualChecksum = sha1.convert(bytes).toString();
+
+        if (actualChecksum != doc.checksum) {
+          corruptedTrackIds.add(doc.trackId);
         }
       }
 
@@ -374,27 +384,35 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, List<String>>> getOrphanedFiles() async {
     try {
-      // Get cache directory
+      final orphanedPaths = <String>[];
       final cacheDir = await _getCacheDirectory();
-      if (!await cacheDir.exists()) {
-        return const Right([]);
+
+      if (await cacheDir.exists()) {
+        final files = cacheDir.listSync(recursive: true).whereType<File>();
+
+        for (final file in files) {
+          // Skip temporary files
+          if (file.path.endsWith('.tmp') ||
+              file.path.endsWith('.part') ||
+              file.path.endsWith('.download')) {
+            continue;
+          }
+
+          // Check if file has corresponding database entry
+          final hasEntry =
+              await _isar.cachedAudioDocumentUnifieds
+                  .filter()
+                  .filePathEqualTo(file.path)
+                  .count() >
+              0;
+
+          if (!hasEntry) {
+            orphanedPaths.add(file.path);
+          }
+        }
       }
 
-      // Get all files in cache directory
-      final files = cacheDir.listSync().whereType<File>().toList();
-
-      // Get all tracked files from database
-      final documents = await _isar.cachedAudioDocuments.where().findAll();
-      final trackedPaths = documents.map((doc) => doc.filePath).toSet();
-
-      // Find orphaned files
-      final orphanedFiles =
-          files
-              .where((file) => !trackedPaths.contains(file.path))
-              .map((file) => file.path)
-              .toList();
-
-      return Right(orphanedFiles);
+      return Right(orphanedPaths);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -406,8 +424,23 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
+  Stream<int> watchStorageUsage() {
+    return _isar.cachedAudioDocumentUnifieds
+        .where()
+        .watch(fireImmediately: true)
+        .map((docs) {
+          int totalSize = 0;
+          for (final doc in docs) {
+            totalSize += doc.fileSizeBytes;
+          }
+          return totalSize;
+        });
+  }
+
+  @override
   CacheKey generateCacheKey(String trackId, String audioUrl) {
-    return CacheKey.fromTrackAndUrl(trackId, audioUrl);
+    final urlHash = sha1.convert(audioUrl.codeUnits).toString();
+    return CacheKey.composite(trackId, urlHash);
   }
 
   @override
@@ -416,10 +449,8 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   ) async {
     try {
       final cacheDir = await _getCacheDirectory();
-      final fileName = '${key.value}.mp3'; // Default to mp3 for now
-      final filePath = '${cacheDir.path}/$fileName';
-
-      return Right(filePath);
+      final filename = '${key.trackId}_${key.checksum}.mp3';
+      return Right('${cacheDir.path}/$filename');
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -431,19 +462,27 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Stream<int> watchStorageUsage() {
-    return _isar.cachedAudioDocuments
-        .where()
-        .watch(fireImmediately: true)
-        .asyncMap((_) async {
-          final result = await getTotalStorageUsage();
-          return result.fold((failure) => 0, (size) => size);
-        });
+  Future<Either<CacheFailure, CachedAudioDocumentUnified>>
+  storeUnifiedCachedAudio(CachedAudioDocumentUnified unifiedDoc) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.cachedAudioDocumentUnifieds.put(unifiedDoc);
+      });
+
+      return Right(unifiedDoc);
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to store unified cached audio: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
   }
 
   Future<Directory> _getCacheDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
-    final cacheDir = Directory('${appDir.path}/$_cacheSubDirectory');
+    final cacheDir = Directory('${appDir.path}/audio_cache');
 
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);

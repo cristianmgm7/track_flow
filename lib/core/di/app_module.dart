@@ -15,8 +15,7 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_document.
 import 'package:trackflow/features/playlist/data/models/playlist_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
-import 'package:trackflow/features/audio_cache/shared/data/models/cache_metadata_document.dart';
-import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_document.dart';
+import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_document_unified.dart';
 import 'package:trackflow/features/audio_cache/shared/data/models/cache_reference_document.dart';
 
 @module
@@ -53,8 +52,7 @@ abstract class AppModule {
       AudioTrackDocumentSchema,
       UserProfileDocumentSchema,
       PlaylistDocumentSchema,
-      CacheMetadataDocumentSchema,
-      CachedAudioDocumentSchema,
+      CachedAudioDocumentUnifiedSchema,
       CacheReferenceDocumentSchema,
     ], directory: dir.path);
     //}

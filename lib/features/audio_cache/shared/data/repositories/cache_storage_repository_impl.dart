@@ -12,6 +12,7 @@ import '../../domain/repositories/cache_storage_repository.dart';
 import '../../domain/value_objects/cache_key.dart';
 import '../datasources/cache_storage_local_data_source.dart';
 import '../datasources/cache_storage_remote_data_source.dart';
+import '../models/cached_audio_document_unified.dart';
 
 @LazySingleton(as: CacheStorageRepository)
 class CacheStorageRepositoryImpl implements CacheStorageRepository {
@@ -71,7 +72,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           },
         );
 
-        return await downloadResult.fold(
+        return downloadResult.fold(
           (failure) {
             final failedProgress = DownloadProgress.failed(
               trackId,
@@ -88,27 +89,35 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
             final bytes = await downloadedFile.readAsBytes();
             final checksum = sha1.convert(bytes).toString();
 
-            final cachedAudio = CachedAudio(
-              trackId: trackId,
-              filePath: filePath,
-              fileSizeBytes: fileSize,
-              cachedAt: DateTime.now(),
-              checksum: checksum,
-              quality: AudioQuality.medium, // Default quality
-              status: CacheStatus.cached,
+            // Create unified document with both file and metadata information
+            final unifiedDocument =
+                CachedAudioDocumentUnified()
+                  ..trackId = trackId
+                  ..filePath = filePath
+                  ..fileSizeBytes = fileSize
+                  ..cachedAt = DateTime.now()
+                  ..checksum = checksum
+                  ..quality = AudioQuality.medium
+                  ..status = CacheStatus.cached
+                  ..referenceCount = 1
+                  ..lastAccessed = DateTime.now()
+                  ..references = ['individual']
+                  ..downloadAttempts = 0
+                  ..lastDownloadAttempt = null
+                  ..failureReason = null
+                  ..originalUrl = audioUrl;
+
+            // Store unified document in local database
+            final storeResult = await _localDataSource.storeUnifiedCachedAudio(
+              unifiedDocument,
             );
 
-            // Store in local database
-            final storeResult = await _localDataSource.storeCachedAudio(
-              cachedAudio,
-            );
-
-            return storeResult.fold(
+            return await storeResult.fold(
               (failure) {
                 _cleanupDownload(trackId);
                 return Left(failure);
               },
-              (audio) {
+              (unifiedDoc) async {
                 final completedProgress = DownloadProgress.completed(
                   trackId,
                   fileSize,
@@ -118,7 +127,10 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
 
                 // Clean up
                 _cleanupDownload(trackId);
-                return Right(audio);
+
+                // Convert back to CachedAudio for backward compatibility
+                final cachedAudio = unifiedDoc.toCachedAudio();
+                return Right(cachedAudio);
               },
             );
           },
@@ -273,7 +285,11 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
 
   @override
   Future<Either<CacheFailure, int>> getTotalStorageUsage() async {
-    return await _localDataSource.getTotalStorageUsage();
+    final totalSize = await _localDataSource.getTotalStorageUsage();
+    return totalSize.fold(
+      (failure) => Left(failure),
+      (size) => Right(size.toInt()),
+    );
   }
 
   @override
@@ -446,7 +462,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
           if (freedBytes >= targetFreeBytes) break;
 
           trackIdsToDelete.add(audio.trackId);
-          freedBytes += audio.fileSizeBytes;
+          freedBytes += audio.fileSizeBytes.toInt();
         }
 
         if (trackIdsToDelete.isNotEmpty) {

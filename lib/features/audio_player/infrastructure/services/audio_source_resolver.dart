@@ -7,18 +7,32 @@ import '../../../../core/error/failures.dart';
 abstract class AudioSourceResolver {
   /// Resolve the best audio source URL for playback
   /// Returns cached path if available, otherwise original URL
-  Future<Either<Failure, String>> resolveAudioSource(String originalUrl);
+  /// [originalUrl] - The original remote URL of the audio
+  /// [trackId] - The track ID for consistent cache operations
+  Future<Either<Failure, String>> resolveAudioSource(
+    String originalUrl, {
+    String? trackId,
+  });
 
   /// Check if a track is cached and available offline
-  Future<bool> isTrackCached(String url);
+  /// [url] - The original URL of the audio
+  /// [trackId] - Optional track ID for consistent cache operations
+  Future<bool> isTrackCached(String url, {String? trackId});
 
   /// Validate cached track integrity
   /// Returns cached path if valid, null if not cached/invalid
-  Future<Either<Failure, String?>> validateCachedTrack(String url);
+  /// [url] - The original URL of the audio
+  /// [trackId] - Optional track ID for consistent cache operations
+  Future<Either<Failure, String?>> validateCachedTrack(
+    String url, {
+    String? trackId,
+  });
 
   /// Start background caching for future offline use
   /// Does not block current playback
-  Future<void> startBackgroundCaching(String url);
+  /// [url] - The original URL of the audio
+  /// [trackId] - Optional track ID for consistent cache operations
+  Future<void> startBackgroundCaching(String url, {String? trackId});
 
   /// Preload audio source for immediate playback
   /// Similar to background caching but with higher priority
