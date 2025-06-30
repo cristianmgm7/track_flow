@@ -4,7 +4,9 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_sheet.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/domain/entities/audio_track_id.dart'
+    as pure_audio;
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
@@ -12,7 +14,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
-import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart';
+// import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart'; // REMOVED
 
 class TrackComponent extends StatefulWidget {
   final AudioTrack track;
@@ -45,12 +47,7 @@ class _TrackComponentState extends State<TrackComponent> {
   void _playTrack(BuildContext context) {
     if (widget.uploader == null) return;
     context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(
-        source: PlaybackSource(type: PlaybackSourceType.track),
-        visualContext: PlayerVisualContext.miniPlayer,
-        track: widget.track,
-        collaborator: widget.uploader!,
-      ),
+      PlayAudioRequested(pure_audio.AudioTrackId(widget.track.id.value)),
     );
   }
 
@@ -76,8 +73,9 @@ class _TrackComponentState extends State<TrackComponent> {
       child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
         builder: (context, playerState) {
           final isCurrent =
-              playerState is AudioPlayerActiveState &&
-              playerState.track.id == widget.track.id;
+              playerState is AudioPlayerSessionState &&
+              playerState.session.currentTrack?.id.value ==
+                  widget.track.id.value;
           final isPlaying = isCurrent && playerState is AudioPlayerPlaying;
           return Card(
             color:
@@ -158,11 +156,13 @@ class _TrackComponentState extends State<TrackComponent> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            TrackStatusBadge(
-                              trackUrl: widget.track.url,
-                              trackId: widget.track.id.value,
-                              size: 16,
-                            ),
+                            // TODO: Implement TrackStatusBadge with pure audio cache status
+                            // TrackStatusBadge(
+                            //   trackUrl: widget.track.url,
+                            //   trackId: widget.track.id.value,
+                            //   size: 16,
+                            // ),
+                            Container(), // Placeholder
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dartz/dartz.dart';
 
 import '../../domain/entities/playback_session.dart';
 import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/audio_failure.dart';
 import '../../domain/services/audio_playback_service.dart';
+import '../../domain/usecases/initialize_audio_player_usecase.dart';
 import '../../domain/usecases/play_audio_usecase.dart';
 import '../../domain/usecases/play_playlist_usecase.dart';
 import '../../domain/usecases/pause_audio_usecase.dart';
@@ -13,7 +13,7 @@ import '../../domain/usecases/resume_audio_usecase.dart';
 import '../../domain/usecases/stop_audio_usecase.dart';
 import '../../domain/usecases/skip_to_next_usecase.dart';
 import '../../domain/usecases/skip_to_previous_usecase.dart';
-import '../../domain/usecases/seek_to_position_usecase.dart';
+import '../../domain/usecases/seek_audio_usecase.dart';
 import '../../domain/usecases/toggle_shuffle_usecase.dart';
 import '../../domain/usecases/toggle_repeat_mode_usecase.dart';
 import '../../domain/usecases/set_volume_usecase.dart';
@@ -33,6 +33,7 @@ import 'audio_player_state.dart';
 /// - State persistence and restoration
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   AudioPlayerBloc({
+    required InitializeAudioPlayerUseCase initializeAudioPlayerUseCase,
     required PlayAudioUseCase playAudioUseCase,
     required PlayPlaylistUseCase playPlaylistUseCase,
     required PauseAudioUseCase pauseAudioUseCase,
@@ -40,7 +41,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     required StopAudioUseCase stopAudioUseCase,
     required SkipToNextUseCase skipToNextUseCase,
     required SkipToPreviousUseCase skipToPreviousUseCase,
-    required SeekToPositionUseCase seekToPositionUseCase,
+    required SeekAudioUseCase seekAudioUseCase,
     required ToggleShuffleUseCase toggleShuffleUseCase,
     required ToggleRepeatModeUseCase toggleRepeatModeUseCase,
     required SetVolumeUseCase setVolumeUseCase,
@@ -48,14 +49,15 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     required SavePlaybackStateUseCase savePlaybackStateUseCase,
     required RestorePlaybackStateUseCase restorePlaybackStateUseCase,
     required AudioPlaybackService playbackService,
-  })  : _playAudioUseCase = playAudioUseCase,
+  })  : _initializeAudioPlayerUseCase = initializeAudioPlayerUseCase,
+        _playAudioUseCase = playAudioUseCase,
         _playPlaylistUseCase = playPlaylistUseCase,
         _pauseAudioUseCase = pauseAudioUseCase,
         _resumeAudioUseCase = resumeAudioUseCase,
         _stopAudioUseCase = stopAudioUseCase,
         _skipToNextUseCase = skipToNextUseCase,
         _skipToPreviousUseCase = skipToPreviousUseCase,
-        _seekToPositionUseCase = seekToPositionUseCase,
+        _seekAudioUseCase = seekAudioUseCase,
         _toggleShuffleUseCase = toggleShuffleUseCase,
         _toggleRepeatModeUseCase = toggleRepeatModeUseCase,
         _setVolumeUseCase = setVolumeUseCase,
@@ -91,6 +93,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   }
 
   // Use cases - pure audio operations only
+  final InitializeAudioPlayerUseCase _initializeAudioPlayerUseCase;
   final PlayAudioUseCase _playAudioUseCase;
   final PlayPlaylistUseCase _playPlaylistUseCase;
   final PauseAudioUseCase _pauseAudioUseCase;
@@ -98,7 +101,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   final StopAudioUseCase _stopAudioUseCase;
   final SkipToNextUseCase _skipToNextUseCase;
   final SkipToPreviousUseCase _skipToPreviousUseCase;
-  final SeekToPositionUseCase _seekToPositionUseCase;
+  final SeekAudioUseCase _seekAudioUseCase;
   final ToggleShuffleUseCase _toggleShuffleUseCase;
   final ToggleRepeatModeUseCase _toggleRepeatModeUseCase;
   final SetVolumeUseCase _setVolumeUseCase;
@@ -130,26 +133,28 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     emit(const AudioPlayerLoading());
     
     try {
-      // Attempt to restore previous playback state
-      final result = await _restorePlaybackStateUseCase();
+      // Initialize the audio player first
+      await _initializeAudioPlayerUseCase();
       
-      result.fold(
-        (failure) {
-          // No saved state or restoration failed - start fresh
+      // Attempt to restore previous playback state
+      try {
+        await _restorePlaybackStateUseCase();
+        // Check if state was restored by examining current session
+        final session = currentSession;
+        if (session.queue.isNotEmpty) {
+          _emitStateForSession(session, emit);
+        } else {
           emit(const AudioPlayerReady());
-        },
-        (restoredSession) {
-          if (restoredSession != null) {
-            // Session restored successfully
-            _emitStateForSession(restoredSession, emit);
-          } else {
-            // No saved state to restore
-            emit(const AudioPlayerReady());
-          }
-        },
-      );
+        }
+      } catch (restoreError) {
+        // No saved state or restoration failed - start fresh
+        emit(const AudioPlayerReady());
+      }
     } catch (e) {
-      emit(const AudioPlayerReady());
+      emit(AudioPlayerError(
+        AudioPlayerFailure('Failed to initialize audio player: ${e.toString()}'),
+        currentSession,
+      ));
     }
   }
 
@@ -271,14 +276,15 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SeekToPositionRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _seekToPositionUseCase(event.position);
-    
-    result.fold(
-      (failure) => emit(AudioPlayerError(failure, currentSession)),
-      (_) {
-        // State will be updated via SessionStateChanged event
-      },
-    );
+    try {
+      await _seekAudioUseCase(event.position);
+      // State will be updated via SessionStateChanged event
+    } catch (e) {
+      emit(AudioPlayerError(
+        AudioPlayerFailure('Failed to seek: ${e.toString()}'),
+        currentSession,
+      ));
+    }
   }
 
   Future<void> _onToggleShuffleRequested(

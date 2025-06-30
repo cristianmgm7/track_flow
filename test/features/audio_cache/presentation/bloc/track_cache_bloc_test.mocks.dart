@@ -11,6 +11,8 @@ import 'package:trackflow/features/audio_cache/shared/domain/entities/cache_refe
     as _i9;
 import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart'
     as _i8;
+import 'package:trackflow/features/audio_cache/shared/domain/entities/track_cache_info.dart'
+    as _i10;
 import 'package:trackflow/features/audio_cache/shared/domain/failures/cache_failure.dart'
     as _i5;
 import 'package:trackflow/features/audio_cache/shared/domain/value_objects/conflict_policy.dart'
@@ -20,7 +22,7 @@ import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track
 import 'package:trackflow/features/audio_cache/track/domain/usecases/get_track_cache_status_usecase.dart'
     as _i7;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart'
-    as _i10;
+    as _i11;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -192,22 +194,23 @@ class MockGetTrackCacheStatusUseCase extends _i1.Mock
       ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i9.CacheReference?>>);
 
   @override
-  _i4.Stream<_i8.CacheStatus> watchCacheStatus({required String? trackId}) =>
+  _i4.Stream<_i10.TrackCacheInfo> watchTrackCacheInfo(
+          {required String? trackId}) =>
       (super.noSuchMethod(
         Invocation.method(
-          #watchCacheStatus,
+          #watchTrackCacheInfo,
           [],
           {#trackId: trackId},
         ),
-        returnValue: _i4.Stream<_i8.CacheStatus>.empty(),
-      ) as _i4.Stream<_i8.CacheStatus>);
+        returnValue: _i4.Stream<_i10.TrackCacheInfo>.empty(),
+      ) as _i4.Stream<_i10.TrackCacheInfo>);
 }
 
 /// A class which mocks [RemoveTrackCacheUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockRemoveTrackCacheUseCase extends _i1.Mock
-    implements _i10.RemoveTrackCacheUseCase {
+    implements _i11.RemoveTrackCacheUseCase {
   MockRemoveTrackCacheUseCase() {
     _i1.throwOnMissingStub(this);
   }

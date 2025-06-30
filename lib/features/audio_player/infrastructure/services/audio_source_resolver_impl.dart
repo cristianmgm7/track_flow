@@ -3,7 +3,6 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../../core/error/failures.dart';
 import '../../../audio_cache/shared/domain/services/cache_orchestration_service.dart';
-import '../../../audio_player/domain/services/offline_mode_service.dart';
 import 'audio_source_resolver.dart';
 
 /// Pure audio source resolver implementation
@@ -13,11 +12,9 @@ import 'audio_source_resolver.dart';
 class AudioSourceResolverImpl implements AudioSourceResolver {
   const AudioSourceResolverImpl(
     this._cacheOrchestrationService,
-    this._offlineModeService,
   );
 
   final CacheOrchestrationService _cacheOrchestrationService;
-  final OfflineModeService _offlineModeService;
 
   @override
   Future<Either<Failure, String>> resolveAudioSource(String originalUrl) async {
@@ -31,13 +28,7 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
         }
       }
 
-      // 2. Check offline mode restrictions
-      final isOfflineOnly = await _offlineModeService.isOfflineOnlyModeEnabled();
-      if (isOfflineOnly) {
-        return Left(OfflineFailure('Track not available offline'));
-      }
-
-      // 3. Start background caching for future use
+      // 2. Start background caching for future use
       await startBackgroundCaching(originalUrl);
 
       // 4. Return original URL for streaming

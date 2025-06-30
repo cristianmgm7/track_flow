@@ -4,7 +4,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -13,6 +13,8 @@ import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/audio_player/domain/entities/repeat_mode.dart';
+import 'package:trackflow/features/audio_player/domain/entities/playlist_id.dart';
 
 class PlaylistWidget extends StatelessWidget {
   final Playlist playlist;
@@ -35,10 +37,13 @@ class PlaylistWidget extends StatelessWidget {
     return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
       builder: (context, playerState) {
         final player = context.read<AudioPlayerBloc>();
+        final session = player.currentSession;
         final isPlayingFromThisPlaylist =
-            playerState is AudioPlayerActiveState &&
-            player.currentQueue.isNotEmpty &&
-            _isCurrentPlaylist(player.currentQueue);
+            playerState is AudioPlayerSessionState &&
+            session.queue.isNotEmpty &&
+            _isCurrentPlaylist(
+              session.queue.sources.map((s) => s.metadata.id.value).toList(),
+            );
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +64,7 @@ class PlaylistWidget extends StatelessWidget {
                       );
                     } else {
                       context.read<AudioPlayerBloc>().add(
-                        PlayPlaylistRequested(playlist),
+                        PlayPlaylistRequested(PlaylistId(playlist.id)),
                       );
                     }
                   },
@@ -74,7 +79,7 @@ class PlaylistWidget extends StatelessWidget {
                   },
                   child: _buildModeIndicator(
                     icon: Icons.shuffle,
-                    isActive: player.queueMode == PlaybackQueueMode.shuffle,
+                    isActive: session.queue.shuffleEnabled,
                     label: 'Shuffle',
                   ),
                 ),
@@ -87,9 +92,9 @@ class PlaylistWidget extends StatelessWidget {
                     );
                   },
                   child: _buildModeIndicator(
-                    icon: _getRepeatIcon(player.repeatMode),
-                    isActive: player.repeatMode != RepeatMode.none,
-                    label: _getRepeatLabel(player.repeatMode),
+                    icon: _getRepeatIcon(session.repeatMode),
+                    isActive: session.repeatMode != RepeatMode.none,
+                    label: _getRepeatLabel(session.repeatMode),
                   ),
                 ),
                 const Spacer(),
@@ -113,7 +118,7 @@ class PlaylistWidget extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
-                  'Playing from this playlist • Track ${player.currentIndex + 1} of ${player.currentQueue.length}',
+                  'Playing from this playlist • Track ${session.queue.currentIndex + 1} of ${session.queue.length}',
                   style: TextStyle(
                     color: Colors.blue[600],
                     fontSize: 12,
@@ -136,8 +141,8 @@ class PlaylistWidget extends StatelessWidget {
                 return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
                   builder: (context, state) {
                     final isCurrent =
-                        state is AudioPlayerActiveState &&
-                        state.track.id == track.id;
+                        state is AudioPlayerSessionState &&
+                        state.session.currentTrack?.id == track.id;
 
                     return Container(
                       decoration: BoxDecoration(
@@ -194,7 +199,7 @@ class PlaylistWidget extends StatelessWidget {
                               onPlay: () {
                                 context.read<AudioPlayerBloc>().add(
                                   PlayPlaylistRequested(
-                                    playlist,
+                                    PlaylistId(playlist.id),
                                     startIndex: index,
                                   ),
                                 );

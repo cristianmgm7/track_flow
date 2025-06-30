@@ -1,18 +1,35 @@
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
+import 'package:dartz/dartz.dart';
+import '../entities/audio_failure.dart';
+import '../entities/repeat_mode.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio repeat mode toggle use case
+/// ONLY handles repeat mode cycling - NO business domain concerns
 class ToggleRepeatModeUseCase {
-  ToggleRepeatModeUseCase();
+  const ToggleRepeatModeUseCase({
+    required AudioPlaybackService playbackService,
+  }) : _playbackService = playbackService;
 
-  RepeatMode call(RepeatMode currentMode) {
-    switch (currentMode) {
-      case RepeatMode.none:
-        return RepeatMode.single;
-      case RepeatMode.single:
-        return RepeatMode.queue;
-      case RepeatMode.queue:
-        return RepeatMode.none;
+  final AudioPlaybackService _playbackService;
+
+  /// Cycle through repeat modes: none -> single -> queue -> none
+  Future<Either<AudioFailure, RepeatMode>> call() async {
+    try {
+      final currentSession = _playbackService.currentSession;
+      final currentMode = currentSession.repeatMode;
+      
+      // Cycle through repeat modes
+      final nextMode = switch (currentMode) {
+        RepeatMode.none => RepeatMode.single,
+        RepeatMode.single => RepeatMode.queue,
+        RepeatMode.queue => RepeatMode.none,
+      };
+      
+      await _playbackService.setRepeatMode(nextMode);
+      
+      return Right(nextMode);
+    } catch (e) {
+      return Left(PlaybackFailure('Failed to toggle repeat mode: ${e.toString()}'));
     }
   }
 }

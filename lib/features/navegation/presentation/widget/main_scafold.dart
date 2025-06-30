@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audioplayer_bloc.dart';
-import 'package:trackflow/features/audio_player/presentation/screens/audio_player_sheet.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+// import 'package:trackflow/features/audio_player/presentation/screens/audio_player_sheet.dart'; // REMOVED
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/widgets/pure_mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 
 class MainScaffold extends StatelessWidget {
@@ -25,13 +25,8 @@ class MainScaffold extends StatelessWidget {
           // const DownloadQueueWidget(showHeader: false, maxVisibleItems: 3),
           BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
             builder: (context, state) {
-              if (state is AudioPlayerActiveState &&
-                  state.visualContext == PlayerVisualContext.miniPlayer) {
-                return AudioPlayerSheet(
-                  mode: PlayerViewMode.mini,
-                  projectId: state.track.projectId,
-                  collaborators: [state.collaborator],
-                );
+              if (state is AudioPlayerSessionState) {
+                return const PureMiniAudioPlayer();
               }
               return const SizedBox.shrink();
             },
@@ -60,9 +55,6 @@ class MainScaffold extends StatelessWidget {
                 icon: const Icon(Icons.home),
                 onPressed: () {
                   context.read<NavigationCubit>().setTab(AppTab.dashboard);
-                  context.read<AudioPlayerBloc>().add(
-                    ChangeVisualContext(PlayerVisualContext.miniPlayer),
-                  );
                   context.go(AppRoutes.dashboard);
                 },
                 color:
@@ -75,9 +67,6 @@ class MainScaffold extends StatelessWidget {
                 icon: const Icon(Icons.folder),
                 onPressed: () {
                   context.read<NavigationCubit>().setTab(AppTab.projects);
-                  context.read<AudioPlayerBloc>().add(
-                    ChangeVisualContext(PlayerVisualContext.miniPlayer),
-                  );
                   context.go(AppRoutes.projects);
                 },
                 color:
@@ -90,9 +79,6 @@ class MainScaffold extends StatelessWidget {
                 icon: const Icon(Icons.notifications),
                 onPressed: () {
                   context.read<NavigationCubit>().setTab(AppTab.notifications);
-                  context.read<AudioPlayerBloc>().add(
-                    ChangeVisualContext(PlayerVisualContext.miniPlayer),
-                  );
                   context.go(AppRoutes.notifications);
                 },
                 color:
@@ -105,9 +91,6 @@ class MainScaffold extends StatelessWidget {
                 icon: const Icon(Icons.person),
                 onPressed: () {
                   context.read<NavigationCubit>().setTab(AppTab.settings);
-                  context.read<AudioPlayerBloc>().add(
-                    ChangeVisualContext(PlayerVisualContext.miniPlayer),
-                  );
                   context.go(AppRoutes.settings);
                 },
                 color:
