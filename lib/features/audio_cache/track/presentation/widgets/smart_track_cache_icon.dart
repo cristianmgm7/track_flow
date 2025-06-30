@@ -6,8 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../shared/domain/entities/cached_audio.dart';
 import '../../../shared/domain/entities/download_progress.dart';
-import '../../../shared/domain/entities/track_cache_info.dart';
-import '../../../shared/domain/services/cache_orchestration_service.dart';
 import '../../../shared/domain/value_objects/conflict_policy.dart';
 import '../bloc/track_cache_bloc.dart';
 import '../bloc/track_cache_event.dart';
