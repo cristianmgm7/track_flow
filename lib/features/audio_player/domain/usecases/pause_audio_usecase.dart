@@ -1,13 +1,23 @@
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/audio_player/domain/services/playback_service.dart';
+import 'package:dartz/dartz.dart';
+import '../entities/audio_failure.dart';
+import '../services/audio_playback_service.dart';
 
-@lazySingleton
+/// Pure audio pause use case
+/// ONLY handles audio pause operation - NO business domain concerns
 class PauseAudioUseCase {
-  final PlaybackService _playbackService;
+  const PauseAudioUseCase({
+    required AudioPlaybackService playbackService,
+  }) : _playbackService = playbackService;
 
-  PauseAudioUseCase(this._playbackService);
+  final AudioPlaybackService _playbackService;
 
-  Future<void> call() async {
-    await _playbackService.pause();
+  /// Pause current audio playback
+  Future<Either<AudioFailure, void>> call() async {
+    try {
+      await _playbackService.pause();
+      return const Right(null);
+    } catch (e) {
+      return Left(PlaybackFailure('Failed to pause audio: ${e.toString()}'));
+    }
   }
 }
