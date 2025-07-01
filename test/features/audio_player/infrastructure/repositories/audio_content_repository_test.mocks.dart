@@ -10,7 +10,7 @@ import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/entities/unique_id.dart' as _i7;
 import 'package:trackflow/core/error/failures.dart' as _i5;
-import 'package:trackflow/features/audio_player/infrastructure/services/audio_source_resolver.dart'
+import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart'
     as _i9;
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
     as _i6;

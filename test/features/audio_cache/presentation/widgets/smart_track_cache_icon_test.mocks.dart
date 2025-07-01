@@ -58,16 +58,6 @@ class MockTrackCacheBloc extends _i1.Mock implements _i2.TrackCacheBloc {
       ) as bool);
 
   @override
-  _i5.Future<void> close() => (super.noSuchMethod(
-        Invocation.method(
-          #close,
-          [],
-        ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
-
-  @override
   void add(_i6.TrackCacheEvent? event) => super.noSuchMethod(
         Invocation.method(
           #add,
@@ -119,6 +109,16 @@ class MockTrackCacheBloc extends _i1.Mock implements _i2.TrackCacheBloc {
         ),
         returnValueForMissingStub: null,
       );
+
+  @override
+  _i5.Future<void> close() => (super.noSuchMethod(
+        Invocation.method(
+          #close,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 
   @override
   void onChange(_i7.Change<_i3.TrackCacheState>? change) => super.noSuchMethod(

@@ -7,22 +7,18 @@ import 'dart:async' as _i4;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:trackflow/features/audio_cache/shared/domain/entities/cache_reference.dart'
-    as _i9;
 import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart'
+    as _i7;
+import 'package:trackflow/features/audio_cache/shared/domain/entities/download_progress.dart'
     as _i8;
-import 'package:trackflow/features/audio_cache/shared/domain/entities/track_cache_info.dart'
-    as _i10;
 import 'package:trackflow/features/audio_cache/shared/domain/failures/cache_failure.dart'
     as _i5;
-import 'package:trackflow/features/audio_cache/shared/domain/value_objects/conflict_policy.dart'
-    as _i6;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart'
     as _i3;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/get_track_cache_status_usecase.dart'
-    as _i7;
+    as _i6;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart'
-    as _i11;
+    as _i9;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -59,7 +55,6 @@ class MockCacheTrackUseCase extends _i1.Mock implements _i3.CacheTrackUseCase {
   _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> call({
     required String? trackId,
     required String? audioUrl,
-    _i6.ConflictPolicy? policy = _i6.ConflictPolicy.lastWins,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -68,7 +63,6 @@ class MockCacheTrackUseCase extends _i1.Mock implements _i3.CacheTrackUseCase {
           {
             #trackId: trackId,
             #audioUrl: audioUrl,
-            #policy: policy,
           },
         ),
         returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>.value(
@@ -80,42 +74,27 @@ class MockCacheTrackUseCase extends _i1.Mock implements _i3.CacheTrackUseCase {
             {
               #trackId: trackId,
               #audioUrl: audioUrl,
-              #policy: policy,
             },
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>);
 
   @override
-  _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> cacheWithReference({
-    required String? trackId,
-    required String? audioUrl,
-    required String? referenceId,
-    _i6.ConflictPolicy? policy = _i6.ConflictPolicy.lastWins,
-  }) =>
+  _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> cacheMultiple(
+          {required Map<String, String>? trackUrlPairs}) =>
       (super.noSuchMethod(
         Invocation.method(
-          #cacheWithReference,
+          #cacheMultiple,
           [],
-          {
-            #trackId: trackId,
-            #audioUrl: audioUrl,
-            #referenceId: referenceId,
-            #policy: policy,
-          },
+          {#trackUrlPairs: trackUrlPairs},
         ),
         returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>.value(
             _FakeEither_0<_i5.CacheFailure, _i2.Unit>(
           this,
           Invocation.method(
-            #cacheWithReference,
+            #cacheMultiple,
             [],
-            {
-              #trackId: trackId,
-              #audioUrl: audioUrl,
-              #referenceId: referenceId,
-              #policy: policy,
-            },
+            {#trackUrlPairs: trackUrlPairs},
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>);
@@ -125,76 +104,89 @@ class MockCacheTrackUseCase extends _i1.Mock implements _i3.CacheTrackUseCase {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockGetTrackCacheStatusUseCase extends _i1.Mock
-    implements _i7.GetTrackCacheStatusUseCase {
+    implements _i6.GetTrackCacheStatusUseCase {
   MockGetTrackCacheStatusUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.CacheFailure, _i8.CacheStatus>> call(
-          {required String? trackId}) =>
+  _i4.Future<_i2.Either<_i5.CacheFailure, _i7.CacheStatus>> call(
+          String? trackId) =>
       (super.noSuchMethod(
         Invocation.method(
           #call,
-          [],
-          {#trackId: trackId},
+          [trackId],
         ),
         returnValue:
-            _i4.Future<_i2.Either<_i5.CacheFailure, _i8.CacheStatus>>.value(
-                _FakeEither_0<_i5.CacheFailure, _i8.CacheStatus>(
+            _i4.Future<_i2.Either<_i5.CacheFailure, _i7.CacheStatus>>.value(
+                _FakeEither_0<_i5.CacheFailure, _i7.CacheStatus>(
           this,
           Invocation.method(
             #call,
-            [],
-            {#trackId: trackId},
+            [trackId],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i8.CacheStatus>>);
+      ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i7.CacheStatus>>);
 
   @override
-  _i4.Future<_i2.Either<_i5.CacheFailure, String?>> getCachedAudioPath(
-          {required String? trackId}) =>
+  _i4.Future<_i2.Either<_i5.CacheFailure, _i7.CachedAudio?>> getCachedAudio(
+          String? trackId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getCachedAudio,
+          [trackId],
+        ),
+        returnValue:
+            _i4.Future<_i2.Either<_i5.CacheFailure, _i7.CachedAudio?>>.value(
+                _FakeEither_0<_i5.CacheFailure, _i7.CachedAudio?>(
+          this,
+          Invocation.method(
+            #getCachedAudio,
+            [trackId],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i7.CachedAudio?>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.CacheFailure, String>> getCachedAudioPath(
+          String? trackId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getCachedAudioPath,
-          [],
-          {#trackId: trackId},
+          [trackId],
         ),
-        returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, String?>>.value(
-            _FakeEither_0<_i5.CacheFailure, String?>(
+        returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, String>>.value(
+            _FakeEither_0<_i5.CacheFailure, String>(
           this,
           Invocation.method(
             #getCachedAudioPath,
-            [],
-            {#trackId: trackId},
+            [trackId],
           ),
         )),
-      ) as _i4.Future<_i2.Either<_i5.CacheFailure, String?>>);
+      ) as _i4.Future<_i2.Either<_i5.CacheFailure, String>>);
 
   @override
-  _i4.Future<
-      _i2.Either<_i5.CacheFailure, _i9.CacheReference?>> getCacheReference(
-          {required String? trackId}) =>
+  _i4.Stream<_i7.CacheStatus> watchCacheStatus(String? trackId) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getCacheReference,
-          [],
-          {#trackId: trackId},
+          #watchCacheStatus,
+          [trackId],
         ),
-        returnValue:
-            _i4.Future<_i2.Either<_i5.CacheFailure, _i9.CacheReference?>>.value(
-                _FakeEither_0<_i5.CacheFailure, _i9.CacheReference?>(
-          this,
-          Invocation.method(
-            #getCacheReference,
-            [],
-            {#trackId: trackId},
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i9.CacheReference?>>);
+        returnValue: _i4.Stream<_i7.CacheStatus>.empty(),
+      ) as _i4.Stream<_i7.CacheStatus>);
 
   @override
-  _i4.Stream<_i10.TrackCacheInfo> watchTrackCacheInfo(
+  _i4.Stream<_i8.DownloadProgress> watchDownloadProgress(String? trackId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #watchDownloadProgress,
+          [trackId],
+        ),
+        returnValue: _i4.Stream<_i8.DownloadProgress>.empty(),
+      ) as _i4.Stream<_i8.DownloadProgress>);
+
+  @override
+  _i4.Stream<_i6.TrackCacheInfo> watchTrackCacheInfo(
           {required String? trackId}) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -202,71 +194,50 @@ class MockGetTrackCacheStatusUseCase extends _i1.Mock
           [],
           {#trackId: trackId},
         ),
-        returnValue: _i4.Stream<_i10.TrackCacheInfo>.empty(),
-      ) as _i4.Stream<_i10.TrackCacheInfo>);
+        returnValue: _i4.Stream<_i6.TrackCacheInfo>.empty(),
+      ) as _i4.Stream<_i6.TrackCacheInfo>);
 }
 
 /// A class which mocks [RemoveTrackCacheUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockRemoveTrackCacheUseCase extends _i1.Mock
-    implements _i11.RemoveTrackCacheUseCase {
+    implements _i9.RemoveTrackCacheUseCase {
   MockRemoveTrackCacheUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> call({
-    required String? trackId,
-    String? referenceId = r'individual',
-  }) =>
+  _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> call(String? trackId) =>
       (super.noSuchMethod(
         Invocation.method(
           #call,
-          [],
-          {
-            #trackId: trackId,
-            #referenceId: referenceId,
-          },
+          [trackId],
         ),
         returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>.value(
             _FakeEither_0<_i5.CacheFailure, _i2.Unit>(
           this,
           Invocation.method(
             #call,
-            [],
-            {
-              #trackId: trackId,
-              #referenceId: referenceId,
-            },
+            [trackId],
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>);
 
   @override
-  _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> removeWithReference({
-    required String? trackId,
-    required String? referenceId,
-  }) =>
+  _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>> removeMultiple(
+          List<String>? trackIds) =>
       (super.noSuchMethod(
         Invocation.method(
-          #removeWithReference,
-          [],
-          {
-            #trackId: trackId,
-            #referenceId: referenceId,
-          },
+          #removeMultiple,
+          [trackIds],
         ),
         returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>.value(
             _FakeEither_0<_i5.CacheFailure, _i2.Unit>(
           this,
           Invocation.method(
-            #removeWithReference,
-            [],
-            {
-              #trackId: trackId,
-              #referenceId: referenceId,
-            },
+            #removeMultiple,
+            [trackIds],
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.CacheFailure, _i2.Unit>>);

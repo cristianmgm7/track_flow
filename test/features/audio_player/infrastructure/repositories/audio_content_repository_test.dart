@@ -9,7 +9,7 @@ import 'package:trackflow/features/audio_track/domain/repositories/audio_track_r
 import 'package:trackflow/features/audio_player/domain/entities/audio_track_id.dart';
 import 'package:trackflow/features/audio_player/domain/entities/audio_track_metadata.dart';
 import 'package:trackflow/features/audio_player/infrastructure/repositories/audio_content_repository_impl.dart';
-import 'package:trackflow/features/audio_player/infrastructure/services/audio_source_resolver.dart';
+import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
 
 import 'audio_content_repository_test.mocks.dart';
 
