@@ -3,17 +3,23 @@ import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
 import '../../../shared/domain/repositories/cache_storage_repository.dart';
+import '../../../../audio_player/domain/repositories/audio_content_repository.dart';
+import '../../../../audio_player/domain/entities/audio_track_id.dart';
 
 @injectable
 class CachePlaylistUseCase {
   final CacheStorageRepository _cacheStorageRepository;
+  final AudioContentRepository _audioContentRepository;
 
-  CachePlaylistUseCase(this._cacheStorageRepository);
+  CachePlaylistUseCase(
+    this._cacheStorageRepository,
+    this._audioContentRepository,
+  );
 
   /// Cache all tracks in a playlist
   Future<Either<CacheFailure, Unit>> call({
     required String playlistId,
-    required Map<String, String> trackUrlPairs, // trackId -> audioUrl
+    required List<String> trackIds,
   }) async {
     // Validate inputs
     if (playlistId.isEmpty) {
@@ -26,10 +32,33 @@ class CachePlaylistUseCase {
       );
     }
 
+    if (trackIds.isEmpty) {
+      return Left(
+        ValidationCacheFailure(
+          message: 'Track IDs cannot be empty',
+          field: 'trackIds',
+          value: trackIds,
+        ),
+      );
+    }
+
+    final trackUrlPairs = <String, String>{};
+    for (final trackId in trackIds) {
+      try {
+        final audioUrl = await _audioContentRepository.getAudioSourceUrl(
+          AudioTrackId(trackId),
+        );
+        trackUrlPairs[trackId] = audioUrl;
+      } catch (e) {
+        // Optionally handle error per track
+      }
+    }
+
     if (trackUrlPairs.isEmpty) {
       return Left(
         ValidationCacheFailure(
-          message: 'Track URL pairs cannot be empty',
+          message:
+              'No valid audio URLs could be resolved for the provided track IDs',
           field: 'trackUrlPairs',
           value: trackUrlPairs,
         ),
@@ -55,7 +84,6 @@ class CachePlaylistUseCase {
       );
     }
   }
-
 
   /// Cache a single track from playlist
   Future<Either<CacheFailure, Unit>> cachePlaylistTrack({

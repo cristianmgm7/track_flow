@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -33,14 +30,11 @@ class PlaylistWidget extends StatelessWidget {
         PlaylistControlsWidget(playlist: playlist),
         PlaylistStatusWidget(playlist: playlist),
         const SizedBox(height: 8),
-        BlocProvider(
-          create: (context) => sl<PlaylistCacheBloc>(),
-          child: PlaylistTracksWidget(
-            playlist: playlist,
-            tracks: tracks,
-            collaboratorsByTrackId: collaboratorsByTrackId,
-            projectId: projectId,
-          ),
+        PlaylistTracksWidget(
+          playlist: playlist,
+          tracks: tracks,
+          collaboratorsByTrackId: collaboratorsByTrackId,
+          projectId: projectId,
         ),
       ],
     );

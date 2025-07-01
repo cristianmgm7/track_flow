@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_sheet.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-import 'package:trackflow/features/audio_player/domain/entities/audio_track_id.dart'
-    as pure_audio;
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
-// import 'package:trackflow/features/audio_player/presentation/components/track_status_badge.dart'; // REMOVED
+
+import 'widgets/track_play_button.dart';
+import 'widgets/track_info_section.dart';
+import 'widgets/track_duration_formatter.dart';
+import 'widgets/track_actions_section.dart';
+import 'widgets/track_interaction_handler.dart';
 
 class TrackComponent extends StatefulWidget {
   final AudioTrack track;
@@ -37,51 +38,37 @@ class TrackComponent extends StatefulWidget {
 }
 
 class _TrackComponentState extends State<TrackComponent> {
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(d.inMinutes.remainder(60));
-    final seconds = twoDigits(d.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
+  late final TrackInteractionHandler _interactionHandler;
+  late final TrackUIFeedbackHandler _feedbackHandler;
 
-  void _playTrack(BuildContext context) {
-    if (widget.uploader == null) return;
-    context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(pure_audio.AudioTrackId(widget.track.id.value)),
-    );
-  }
-
-  void _openTrackActionsSheet(BuildContext context) {
-    showTrackFlowActionSheet(
-      title: widget.track.name,
-      context: context,
-      actions: TrackActions.forTrack(
-        context,
-        widget.projectId,
-        widget.track,
-        widget.uploader != null ? [widget.uploader!] : [],
+  @override
+  void initState() {
+    super.initState();
+    _interactionHandler = TrackInteractionHandler(
+      config: TrackInteractionConfig(
+        track: widget.track,
+        uploader: widget.uploader,
+        projectId: widget.projectId,
+        onPlay: widget.onPlay,
+        onComment: widget.onComment,
       ),
     );
+    _feedbackHandler = const TrackUIFeedbackHandler();
   }
 
   @override
   Widget build(BuildContext context) {
-    final durationStr = _formatDuration(widget.track.duration);
-
     return BlocProvider(
       create: (context) => sl<TrackCacheBloc>(),
       child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
         builder: (context, playerState) {
-          final isCurrent =
-              playerState is AudioPlayerSessionState &&
-              playerState.session.currentTrack?.id.value ==
-                  widget.track.id.value;
+          final isCurrent = _isCurrentTrack(playerState);
           final isPlaying = isCurrent && playerState is AudioPlayerPlaying;
+
           return Card(
-            color:
-                isCurrent
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surface,
+            color: isCurrent
+                ? Theme.of(context).colorScheme.primaryContainer
+                : Theme.of(context).colorScheme.surface,
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(Dimensions.space4),
@@ -92,150 +79,35 @@ class _TrackComponentState extends State<TrackComponent> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Play/Pause button
-                  SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: Material(
-                      color:
-                          widget.uploader != null
-                              ? Colors.blueAccent
-                              : Colors.grey,
-                      borderRadius: BorderRadius.circular(8),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8),
-                        onTap:
-                            widget.uploader != null
-                                ? () => _playTrack(context)
-                                : null,
-                        child: Center(
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child:
-                                isCurrent
-                                    ? (isPlaying
-                                        ? const Icon(
-                                          Icons.pause,
-                                          color: Colors.white,
-                                          size: 28,
-                                          key: ValueKey('pause'),
-                                        )
-                                        : const Icon(
-                                          Icons.play_arrow,
-                                          color: Colors.white,
-                                          size: 28,
-                                          key: ValueKey('play'),
-                                        ))
-                                    : const Icon(
-                                      Icons.play_arrow,
-                                      color: Colors.white,
-                                      size: 28,
-                                      key: ValueKey('play'),
-                                    ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  TrackPlayButton(
+                    isCurrentTrack: isCurrent,
+                    isPlaying: isPlaying,
+                    isEnabled: _interactionHandler.isPlayButtonEnabled,
+                    onTap: () => _interactionHandler.handlePlayTrack(context),
                   ),
                   const SizedBox(width: 12),
-                  // Main info (track name and uploader)
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          widget.track.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            // TODO: Implement TrackStatusBadge with pure audio cache status
-                            // TrackStatusBadge(
-                            //   trackUrl: widget.track.url,
-                            //   trackId: widget.track.id.value,
-                            //   size: 16,
-                            // ),
-                            Container(), // Placeholder
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                widget.uploader?.name ?? 'Unknown User',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  // Track info section
+                  TrackInfoSection(
+                    trackName: _interactionHandler.trackName,
+                    uploaderName: _interactionHandler.uploaderName,
+                    statusBadge: Container(), // TODO: Implement status badge
                   ),
                   const SizedBox(width: 8),
                   // Duration
-                  SizedBox(
-                    width: 48,
-                    child: Text(
-                      durationStr,
-                      style: TextStyle(color: Colors.grey[700], fontSize: 13),
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right,
-                    ),
+                  TrackDurationText(
+                    duration: _interactionHandler.trackDuration,
                   ),
                   const SizedBox(width: 8),
-                  // Cache icon
-                  SizedBox(
-                    width: 32,
-                    child: SmartTrackCacheIcon(
-                      trackId: widget.track.id.value,
-                      audioUrl: widget.track.url,
+                  // Actions section (cache + menu)
+                  TrackActionsSection(
+                    cacheIcon: SmartTrackCacheIcon(
+                      trackId: _interactionHandler.trackId,
+                      audioUrl: _interactionHandler.trackUrl,
                       size: 20.0,
-                      onSuccess: (message) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(message),
-                            backgroundColor: Colors.green,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      onError: (message) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(message),
-                            backgroundColor: Colors.red,
-                            duration: const Duration(seconds: 3),
-                          ),
-                        );
-                      },
+                      onSuccess: (message) => _feedbackHandler.showSuccess(context, message),
+                      onError: (message) => _feedbackHandler.showError(context, message),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  // Actions button
-                  SizedBox(
-                    width: 40,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.more_vert,
-                        color: Colors.blueAccent,
-                      ),
-                      onPressed: () => _openTrackActionsSheet(context),
-                      tooltip: 'Actions',
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
-                      padding: EdgeInsets.zero,
-                    ),
+                    onActionsPressed: () => _interactionHandler.handleOpenActionsSheet(context),
                   ),
                 ],
               ),
@@ -244,5 +116,10 @@ class _TrackComponentState extends State<TrackComponent> {
         },
       ),
     );
+  }
+
+  bool _isCurrentTrack(AudioPlayerState playerState) {
+    return playerState is AudioPlayerSessionState &&
+        playerState.session.currentTrack?.id.value == widget.track.id.value;
   }
 }

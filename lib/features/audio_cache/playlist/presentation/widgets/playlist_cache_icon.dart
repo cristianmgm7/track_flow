@@ -7,10 +7,6 @@ import '../bloc/playlist_cache_bloc.dart';
 import '../bloc/playlist_cache_event.dart';
 import '../bloc/playlist_cache_state.dart';
 import '../../domain/entities/playlist_cache_stats.dart';
-import '../../../../../core/di/injection.dart';
-import '../../../../../core/entities/unique_id.dart' as core_ids;
-import '../../../../audio_player/domain/entities/audio_track_id.dart';
-import '../../../../audio_player/domain/repositories/audio_content_repository.dart';
 import 'cache_icon_builder.dart';
 import 'cache_dialog_builder.dart';
 import 'cache_dialog_data.dart';
@@ -19,7 +15,7 @@ import 'cache_dialog_data.dart';
 ///
 /// NOTE: This widget expects a PlaylistCacheBloc to be provided by an ancestor BlocProvider.
 /// For correct synchronization, provide the Bloc at the PlaylistWidget or screen level.
-class PlaylistCacheIcon extends StatelessWidget {
+class PlaylistCacheIcon extends StatefulWidget {
   const PlaylistCacheIcon({
     super.key,
     required this.playlistId,
@@ -34,27 +30,24 @@ class PlaylistCacheIcon extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return BlocConsumer<PlaylistCacheBloc, PlaylistCacheState>(
-      listener: (context, state) {
-        // Auto-load detailed stats when widget builds
-        if (state is PlaylistCacheInitial) {
-          context.read<PlaylistCacheBloc>().add(
-            GetDetailedProgressRequested(
-              playlistId: playlistId,
-              trackIds: trackIds,
-            ),
-          );
-        }
-      },
-      builder: (context, state) {
-        final iconData = _iconBuilder.getIconDataFromState(state, trackIds);
-        return GestureDetector(
-          onTap: onTap ?? () => _handleCacheAction(context, state),
-          child: _iconBuilder.buildIcon(iconData, size),
+  State<PlaylistCacheIcon> createState() => _PlaylistCacheIconState();
+}
+
+class _PlaylistCacheIconState extends State<PlaylistCacheIcon> {
+  @override
+  void initState() {
+    super.initState();
+    // Emit the event to load detailed progress when the widget is created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<PlaylistCacheBloc>().add(
+          GetDetailedProgressRequested(
+            playlistId: widget.playlistId,
+            trackIds: widget.trackIds,
+          ),
         );
-      },
-    );
+      }
+    });
   }
 
   void _handleCacheAction(BuildContext context, PlaylistCacheState state) {
@@ -77,7 +70,7 @@ class PlaylistCacheIcon extends StatelessWidget {
     if (state is PlaylistCacheStatusLoaded) {
       final cachedCount =
           state.trackStatuses.values.where((exists) => exists).length;
-      final totalCount = trackIds.length;
+      final totalCount = widget.trackIds.length;
       if (cachedCount == totalCount) {
         _showRemoveCacheDialog(context, null);
       } else {
@@ -93,7 +86,7 @@ class PlaylistCacheIcon extends StatelessWidget {
     PlaylistCacheStats? stats,
   ) async {
     final dialogData = CacheDialogData.forCache(
-      trackCount: trackIds.length,
+      trackCount: widget.trackIds.length,
       stats: stats,
     );
     final result = await _dialogBuilder.showConfirmationDialog(
@@ -101,7 +94,13 @@ class PlaylistCacheIcon extends StatelessWidget {
       dialogData,
     );
     if (result == true && context.mounted) {
-      unawaited(_cachePlaylist(context, context.read<PlaylistCacheBloc>()));
+      // Dispatch event to BLoC, let BLoC handle repository logic
+      context.read<PlaylistCacheBloc>().add(
+        CachePlaylistRequested(
+          playlistId: widget.playlistId,
+          trackIds: widget.trackIds,
+        ),
+      );
     }
   }
 
@@ -110,7 +109,7 @@ class PlaylistCacheIcon extends StatelessWidget {
     PlaylistCacheStats? stats,
   ) async {
     final dialogData = CacheDialogData.forRemove(
-      trackCount: trackIds.length,
+      trackCount: widget.trackIds.length,
       stats: stats,
     );
     final result = await _dialogBuilder.showConfirmationDialog(
@@ -118,44 +117,10 @@ class PlaylistCacheIcon extends StatelessWidget {
       dialogData,
     );
     if (result == true && context.mounted) {
-      _removePlaylistCache(context, context.read<PlaylistCacheBloc>());
-    }
-  }
-
-  Future<void> _cachePlaylist(
-    BuildContext context,
-    PlaylistCacheBloc bloc,
-  ) async {
-    final trackUrlPairs = <String, String>{};
-    final audioContentRepository = context.read<AudioContentRepository>();
-    for (final trackId in trackIds) {
-      try {
-        final businessTrackId = core_ids.AudioTrackId.fromUniqueString(trackId);
-        final audioTrackId = AudioTrackId(businessTrackId.value);
-        final audioUrl = await audioContentRepository.getAudioSourceUrl(
-          audioTrackId,
-        );
-        trackUrlPairs[trackId] = audioUrl;
-      } catch (e) {
-        debugPrint('Failed to get audio URL for track $trackId: $e');
-      }
-    }
-    if (trackUrlPairs.isNotEmpty && context.mounted && !bloc.isClosed) {
-      bloc.add(
-        CachePlaylistRequested(
-          playlistId: playlistId,
-          trackUrlPairs: trackUrlPairs,
-        ),
-      );
-    }
-  }
-
-  void _removePlaylistCache(BuildContext context, PlaylistCacheBloc bloc) {
-    if (context.mounted && !bloc.isClosed) {
-      bloc.add(
+      context.read<PlaylistCacheBloc>().add(
         RemovePlaylistCacheRequested(
-          playlistId: playlistId,
-          trackIds: trackIds,
+          playlistId: widget.playlistId,
+          trackIds: widget.trackIds,
         ),
       );
     }
@@ -164,4 +129,20 @@ class PlaylistCacheIcon extends StatelessWidget {
   // Builders
   static const _iconBuilder = CacheIconBuilder();
   static const _dialogBuilder = CacheDialogBuilder();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<PlaylistCacheBloc, PlaylistCacheState>(
+      builder: (context, state) {
+        final iconData = _iconBuilder.getIconDataFromState(
+          state,
+          widget.trackIds,
+        );
+        return GestureDetector(
+          onTap: widget.onTap ?? () => _handleCacheAction(context, state),
+          child: _iconBuilder.buildIcon(iconData, widget.size),
+        );
+      },
+    );
+  }
 }

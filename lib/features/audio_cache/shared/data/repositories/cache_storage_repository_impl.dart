@@ -7,7 +7,6 @@ import 'package:crypto/crypto.dart';
 
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/entities/download_progress.dart';
-import '../../domain/entities/cleanup_details.dart';
 import '../../domain/entities/cache_validation_result.dart';
 import '../../domain/failures/cache_failure.dart';
 import '../../domain/repositories/cache_storage_repository.dart';
@@ -179,16 +178,6 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
     return await _localDataSource.deleteAudioFile(trackId);
   }
 
-  @override
-  Future<Either<CacheFailure, bool>> verifyFileIntegrity(
-    String trackId,
-    String expectedChecksum,
-  ) async {
-    return await _localDataSource.verifyFileIntegrity(
-      trackId,
-      expectedChecksum,
-    );
-  }
 
   @override
   Future<Either<CacheFailure, List<CachedAudio>>> downloadMultipleAudios(
@@ -280,282 +269,16 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
     }
   }
 
-  @override
-  Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios() async {
-    return await _localDataSource.getAllCachedAudios();
-  }
 
-  @override
-  Future<Either<CacheFailure, int>> getTotalStorageUsage() async {
-    final totalSize = await _localDataSource.getTotalStorageUsage();
-    return totalSize.fold(
-      (failure) => Left(failure),
-      (size) => Right(size.toInt()),
-    );
-  }
 
-  @override
-  Future<Either<CacheFailure, int>> getAvailableStorageSpace() async {
-    try {
-      // This is a simplified implementation
-      // In a real app, you'd get the actual available space on the device
-      const totalSpace = 1024 * 1024 * 1024 * 10; // 10GB default
-      final usedSpace = await getTotalStorageUsage();
 
-      return usedSpace.fold(
-        (failure) => Left(failure),
-        (used) => Right(totalSpace - used),
-      );
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get available storage space: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
 
-  @override
-  Future<Either<CacheFailure, int>> getCacheDirectorySize() async {
-    try {
-      final cacheDir = await _getCacheDirectory();
-      int totalSize = 0;
 
-      if (await cacheDir.exists()) {
-        final files = cacheDir.listSync(recursive: true).whereType<File>();
-        for (final file in files) {
-          totalSize += await file.length();
-        }
-      }
 
-      return Right(totalSize);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get cache directory size: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
 
-  @override
-  Future<Either<CacheFailure, List<String>>> getCorruptedFiles() async {
-    return await _localDataSource.getCorruptedFiles();
-  }
 
-  @override
-  Future<Either<CacheFailure, List<String>>> getOrphanedFiles() async {
-    return await _localDataSource.getOrphanedFiles();
-  }
 
-  @override
-  Future<Either<CacheFailure, int>> removeCorruptedFiles() async {
-    try {
-      final corruptedResult = await _localDataSource.getCorruptedFiles();
 
-      return await corruptedResult.fold((failure) => Left(failure), (
-        corruptedTrackIds,
-      ) async {
-        final deletedResult = await _localDataSource.deleteMultipleAudioFiles(
-          corruptedTrackIds,
-        );
-
-        return deletedResult.fold(
-          (failure) => Left(failure),
-          (deletedTrackIds) => Right(deletedTrackIds.length),
-        );
-      });
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to remove corrupted files: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, int>> removeOrphanedFiles() async {
-    try {
-      final orphanedResult = await _localDataSource.getOrphanedFiles();
-
-      return await orphanedResult.fold((failure) => Left(failure), (
-        orphanedPaths,
-      ) async {
-        int removedCount = 0;
-
-        for (final path in orphanedPaths) {
-          try {
-            final file = File(path);
-            if (await file.exists()) {
-              await file.delete();
-              removedCount++;
-            }
-          } catch (e) {
-            // Log error but continue with other files
-          }
-        }
-
-        return Right(removedCount);
-      });
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to remove orphaned files: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, int>> cleanupTemporaryFiles() async {
-    try {
-      final cacheDir = await _getCacheDirectory();
-      int removedCount = 0;
-
-      if (await cacheDir.exists()) {
-        final files = cacheDir.listSync().whereType<File>();
-
-        for (final file in files) {
-          // Remove temp files (e.g., .tmp, .part extensions)
-          if (file.path.endsWith('.tmp') ||
-              file.path.endsWith('.part') ||
-              file.path.endsWith('.download')) {
-            try {
-              await file.delete();
-              removedCount++;
-            } catch (e) {
-              // Log error but continue
-            }
-          }
-        }
-      }
-
-      return Right(removedCount);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to cleanup temporary files: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, int>> freeUpSpace(int targetFreeBytes) async {
-    try {
-      final audiosResult = await _localDataSource.getAllCachedAudios();
-
-      return await audiosResult.fold((failure) => Left(failure), (
-        audios,
-      ) async {
-        // Sort by last accessed (oldest first)
-        audios.sort((a, b) => a.cachedAt.compareTo(b.cachedAt));
-
-        int freedBytes = 0;
-        final trackIdsToDelete = <String>[];
-
-        for (final audio in audios) {
-          if (freedBytes >= targetFreeBytes) break;
-
-          trackIdsToDelete.add(audio.trackId);
-          freedBytes += audio.fileSizeBytes.toInt();
-        }
-
-        if (trackIdsToDelete.isNotEmpty) {
-          await _localDataSource.deleteMultipleAudioFiles(trackIdsToDelete);
-        }
-
-        return Right(freedBytes);
-      });
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to free up space: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, CleanupDetails>> performCleanup({
-    bool removeCorrupted = true,
-    bool removeOrphaned = true,
-    bool removeTemporary = true,
-    int? targetFreeBytes,
-  }) async {
-    try {
-      int corruptedRemoved = 0;
-      int orphanedRemoved = 0;
-      int temporaryRemoved = 0;
-      int oldestRemoved = 0;
-      final List<String> errors = [];
-
-      if (removeCorrupted) {
-        final result = await removeCorruptedFiles();
-        result.fold(
-          (failure) =>
-              errors.add('Corrupted cleanup failed: ${failure.message}'),
-          (count) => corruptedRemoved = count,
-        );
-      }
-
-      if (removeOrphaned) {
-        final result = await removeOrphanedFiles();
-        result.fold(
-          (failure) =>
-              errors.add('Orphaned cleanup failed: ${failure.message}'),
-          (count) => orphanedRemoved = count,
-        );
-      }
-
-      if (removeTemporary) {
-        final result = await cleanupTemporaryFiles();
-        result.fold(
-          (failure) =>
-              errors.add('Temporary cleanup failed: ${failure.message}'),
-          (count) => temporaryRemoved = count,
-        );
-      }
-
-      if (targetFreeBytes != null) {
-        final result = await freeUpSpace(targetFreeBytes);
-        result.fold(
-          (failure) => errors.add('Space cleanup failed: ${failure.message}'),
-          (freedBytes) => oldestRemoved = freedBytes,
-        );
-      }
-
-      final totalFilesRemoved =
-          corruptedRemoved + orphanedRemoved + temporaryRemoved;
-      final totalSpaceFreed = oldestRemoved; // Simplified calculation
-
-      return Right(
-        CleanupDetails(
-          corruptedFilesRemoved: corruptedRemoved,
-          orphanedFilesRemoved: orphanedRemoved,
-          temporaryFilesRemoved: temporaryRemoved,
-          oldestFilesRemoved: 0, // We're counting bytes freed, not files
-          totalSpaceFreed: totalSpaceFreed,
-          totalFilesRemoved: totalFilesRemoved,
-          errors: errors,
-        ),
-      );
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to perform cleanup: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
 
   @override
   Future<Either<CacheFailure, Unit>> cancelDownload(String trackId) async {
@@ -929,7 +652,7 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
               continue;
             }
 
-            final integrityResult = await verifyFileIntegrity(
+            final integrityResult = await _localDataSource.verifyFileIntegrity(
               audio.trackId,
               audio.checksum,
             );

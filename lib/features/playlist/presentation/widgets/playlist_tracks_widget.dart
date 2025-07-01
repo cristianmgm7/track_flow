@@ -31,7 +31,8 @@ class PlaylistTracksWidget extends StatelessWidget {
       builder: (context, playerState) {
         final player = context.read<AudioPlayerBloc>();
         final session = player.currentSession;
-        final isPlayingFromThisPlaylist = playerState is AudioPlayerSessionState &&
+        final isPlayingFromThisPlaylist =
+            playerState is AudioPlayerSessionState &&
             session.queue.isNotEmpty &&
             PlaylistUtils.isPlayingFromPlaylist(
               session.queue.sources.map((s) => s.metadata.id.value).toList(),
@@ -88,9 +89,7 @@ class PlaylistTracksWidget extends StatelessWidget {
                             queuePosition.toString(),
                             style: TextStyle(
                               color:
-                                  isCurrent
-                                      ? Colors.white
-                                      : Colors.grey[600],
+                                  isCurrent ? Colors.white : Colors.grey[600],
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),

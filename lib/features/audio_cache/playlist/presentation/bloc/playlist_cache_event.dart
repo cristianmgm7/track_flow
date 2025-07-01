@@ -11,19 +11,18 @@ abstract class PlaylistCacheEvent extends Equatable {
 
 class CachePlaylistRequested extends PlaylistCacheEvent {
   final String playlistId;
-  final Map<String, String> trackUrlPairs;
+  final List<String> trackIds;
   final ConflictPolicy policy;
 
   const CachePlaylistRequested({
     required this.playlistId,
-    required this.trackUrlPairs,
+    required this.trackIds,
     this.policy = ConflictPolicy.lastWins,
   });
 
   @override
-  List<Object?> get props => [playlistId, trackUrlPairs, policy];
+  List<Object?> get props => [playlistId, trackIds, policy];
 }
-
 
 class RemovePlaylistCacheRequested extends PlaylistCacheEvent {
   final String playlistId;
@@ -38,13 +37,10 @@ class RemovePlaylistCacheRequested extends PlaylistCacheEvent {
   List<Object?> get props => [playlistId, trackIds];
 }
 
-
 class GetPlaylistCacheStatusRequested extends PlaylistCacheEvent {
   final List<String> trackIds;
 
-  const GetPlaylistCacheStatusRequested({
-    required this.trackIds,
-  });
+  const GetPlaylistCacheStatusRequested({required this.trackIds});
 
   @override
   List<Object?> get props => [trackIds];
@@ -75,4 +71,3 @@ class GetDetailedProgressRequested extends PlaylistCacheEvent {
   @override
   List<Object?> get props => [playlistId, trackIds];
 }
-

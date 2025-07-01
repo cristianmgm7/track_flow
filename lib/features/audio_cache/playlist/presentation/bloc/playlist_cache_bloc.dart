@@ -37,7 +37,7 @@ class PlaylistCacheBloc extends Bloc<PlaylistCacheEvent, PlaylistCacheState> {
 
     final result = await _cachePlaylistUseCase(
       playlistId: event.playlistId,
-      trackUrlPairs: event.trackUrlPairs,
+      trackIds: event.trackIds,
     );
 
     emit(
@@ -49,7 +49,7 @@ class PlaylistCacheBloc extends Bloc<PlaylistCacheEvent, PlaylistCacheState> {
         (_) => PlaylistCacheOperationSuccess(
           playlistId: event.playlistId,
           message: 'Playlist cached successfully',
-          affectedTracksCount: event.trackUrlPairs.length,
+          affectedTracksCount: event.trackIds.length,
         ),
       ),
     );

@@ -10,6 +10,8 @@ import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
+import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -105,11 +107,14 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     context: context,
                   ),
                   // PlaylistWidget para los tracks del proyecto
-                  PlaylistWidget(
-                    playlist: playlist,
-                    tracks: tracks,
-                    collaboratorsByTrackId: collaboratorsByTrackId,
-                    projectId: project.id.value,
+                  BlocProvider<PlaylistCacheBloc>(
+                    create: (_) => sl<PlaylistCacheBloc>(),
+                    child: PlaylistWidget(
+                      playlist: playlist,
+                      tracks: tracks,
+                      collaboratorsByTrackId: collaboratorsByTrackId,
+                      projectId: project.id.value,
+                    ),
                   ),
                   if (_isUploadingTrack)
                     Padding(
