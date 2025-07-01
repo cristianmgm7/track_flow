@@ -15,7 +15,10 @@ import 'cache_icon_builder.dart';
 import 'cache_dialog_builder.dart';
 import 'cache_dialog_data.dart';
 
-/// Widget that displays a cache icon for playlist with different states
+/// Widget that displays a cache icon for playlist with different states.
+///
+/// NOTE: This widget expects a PlaylistCacheBloc to be provided by an ancestor BlocProvider.
+/// For correct synchronization, provide the Bloc at the PlaylistWidget or screen level.
 class PlaylistCacheIcon extends StatelessWidget {
   const PlaylistCacheIcon({
     super.key,
@@ -29,151 +32,6 @@ class PlaylistCacheIcon extends StatelessWidget {
   final List<String> trackIds;
   final double size;
   final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider<PlaylistCacheBloc>(
-      create: (context) => sl<PlaylistCacheBloc>(),
-      child: _PlaylistCacheIconContent(
-        playlistId: playlistId,
-        trackIds: trackIds,
-        size: size,
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _PlaylistCacheIconContent extends StatelessWidget {
-  const _PlaylistCacheIconContent({
-    required this.playlistId,
-    required this.trackIds,
-    required this.size,
-    this.onTap,
-  });
-
-  final String playlistId;
-  final List<String> trackIds;
-  final double size;
-  final VoidCallback? onTap;
-
-  void _handleCacheAction(BuildContext context, PlaylistCacheState state) {
-    if (state is PlaylistCacheLoading) {
-      return; // Don't allow action while loading
-    }
-
-    if (state is PlaylistCacheStatsLoaded) {
-      final stats = state.stats;
-      final progress = state.detailedProgress;
-
-      final canCache = progress['canCache'] as bool? ?? true;
-
-      if (stats.isFullyCached) {
-        _showRemoveCacheDialog(context, stats);
-      } else if (canCache) {
-        _showCacheDialog(context, stats);
-      }
-      return;
-    }
-
-    if (state is PlaylistCacheStatusLoaded) {
-      final cachedCount =
-          state.trackStatuses.values.where((exists) => exists).length;
-      final totalCount = trackIds.length;
-
-      if (cachedCount == totalCount) {
-        _showRemoveCacheDialog(context, null);
-      } else {
-        _showCacheDialog(context, null);
-      }
-    } else {
-      _showCacheDialog(context, null);
-    }
-  }
-
-  Future<void> _showCacheDialog(
-    BuildContext context,
-    PlaylistCacheStats? stats,
-  ) async {
-    final dialogData = CacheDialogData.forCache(
-      trackCount: trackIds.length,
-      stats: stats,
-    );
-
-    final result = await _dialogBuilder.showConfirmationDialog(
-      context,
-      dialogData,
-    );
-
-    if (result == true && context.mounted) {
-      unawaited(_cachePlaylist(context, context.read<PlaylistCacheBloc>()));
-    }
-  }
-
-  Future<void> _showRemoveCacheDialog(
-    BuildContext context,
-    PlaylistCacheStats? stats,
-  ) async {
-    final dialogData = CacheDialogData.forRemove(
-      trackCount: trackIds.length,
-      stats: stats,
-    );
-
-    final result = await _dialogBuilder.showConfirmationDialog(
-      context,
-      dialogData,
-    );
-
-    if (result == true && context.mounted) {
-      _removePlaylistCache(context, context.read<PlaylistCacheBloc>());
-    }
-  }
-
-  Future<void> _cachePlaylist(
-    BuildContext context,
-    PlaylistCacheBloc bloc,
-  ) async {
-    final trackUrlPairs = <String, String>{};
-    final audioContentRepository = sl<AudioContentRepository>();
-
-    for (final trackId in trackIds) {
-      try {
-        // Convert business track ID to pure audio track ID
-        final businessTrackId = core_ids.AudioTrackId.fromUniqueString(trackId);
-        final audioTrackId = AudioTrackId(businessTrackId.value);
-
-        // Get the actual audio URL
-        final audioUrl = await audioContentRepository.getAudioSourceUrl(
-          audioTrackId,
-        );
-        trackUrlPairs[trackId] = audioUrl;
-      } catch (e) {
-        // Skip tracks that fail to get URLs but continue with others
-        debugPrint('Failed to get audio URL for track $trackId: $e');
-      }
-    }
-
-    // Check if widget is still mounted and bloc is still open before adding event
-    if (trackUrlPairs.isNotEmpty && context.mounted && !bloc.isClosed) {
-      bloc.add(
-        CachePlaylistRequested(
-          playlistId: playlistId,
-          trackUrlPairs: trackUrlPairs,
-        ),
-      );
-    }
-  }
-
-  void _removePlaylistCache(BuildContext context, PlaylistCacheBloc bloc) {
-    if (context.mounted && !bloc.isClosed) {
-      bloc.add(
-        RemovePlaylistCacheRequested(
-          playlistId: playlistId,
-          trackIds: trackIds,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +55,110 @@ class _PlaylistCacheIconContent extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _handleCacheAction(BuildContext context, PlaylistCacheState state) {
+    if (state is PlaylistCacheLoading) {
+      return; // Don't allow action while loading
+    }
+
+    if (state is PlaylistCacheStatsLoaded) {
+      final stats = state.stats;
+      final progress = state.detailedProgress;
+      final canCache = progress['canCache'] as bool? ?? true;
+      if (stats.isFullyCached) {
+        _showRemoveCacheDialog(context, stats);
+      } else if (canCache) {
+        _showCacheDialog(context, stats);
+      }
+      return;
+    }
+
+    if (state is PlaylistCacheStatusLoaded) {
+      final cachedCount =
+          state.trackStatuses.values.where((exists) => exists).length;
+      final totalCount = trackIds.length;
+      if (cachedCount == totalCount) {
+        _showRemoveCacheDialog(context, null);
+      } else {
+        _showCacheDialog(context, null);
+      }
+    } else {
+      _showCacheDialog(context, null);
+    }
+  }
+
+  Future<void> _showCacheDialog(
+    BuildContext context,
+    PlaylistCacheStats? stats,
+  ) async {
+    final dialogData = CacheDialogData.forCache(
+      trackCount: trackIds.length,
+      stats: stats,
+    );
+    final result = await _dialogBuilder.showConfirmationDialog(
+      context,
+      dialogData,
+    );
+    if (result == true && context.mounted) {
+      unawaited(_cachePlaylist(context, context.read<PlaylistCacheBloc>()));
+    }
+  }
+
+  Future<void> _showRemoveCacheDialog(
+    BuildContext context,
+    PlaylistCacheStats? stats,
+  ) async {
+    final dialogData = CacheDialogData.forRemove(
+      trackCount: trackIds.length,
+      stats: stats,
+    );
+    final result = await _dialogBuilder.showConfirmationDialog(
+      context,
+      dialogData,
+    );
+    if (result == true && context.mounted) {
+      _removePlaylistCache(context, context.read<PlaylistCacheBloc>());
+    }
+  }
+
+  Future<void> _cachePlaylist(
+    BuildContext context,
+    PlaylistCacheBloc bloc,
+  ) async {
+    final trackUrlPairs = <String, String>{};
+    final audioContentRepository = context.read<AudioContentRepository>();
+    for (final trackId in trackIds) {
+      try {
+        final businessTrackId = core_ids.AudioTrackId.fromUniqueString(trackId);
+        final audioTrackId = AudioTrackId(businessTrackId.value);
+        final audioUrl = await audioContentRepository.getAudioSourceUrl(
+          audioTrackId,
+        );
+        trackUrlPairs[trackId] = audioUrl;
+      } catch (e) {
+        debugPrint('Failed to get audio URL for track $trackId: $e');
+      }
+    }
+    if (trackUrlPairs.isNotEmpty && context.mounted && !bloc.isClosed) {
+      bloc.add(
+        CachePlaylistRequested(
+          playlistId: playlistId,
+          trackUrlPairs: trackUrlPairs,
+        ),
+      );
+    }
+  }
+
+  void _removePlaylistCache(BuildContext context, PlaylistCacheBloc bloc) {
+    if (context.mounted && !bloc.isClosed) {
+      bloc.add(
+        RemovePlaylistCacheRequested(
+          playlistId: playlistId,
+          trackIds: trackIds,
+        ),
+      );
+    }
   }
 
   // Builders
