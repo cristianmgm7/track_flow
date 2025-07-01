@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
-import '../shared/domain/repositories/cache_storage_repository.dart';
+import '../shared/domain/services/cache_maintenance_service.dart';
 import '../shared/domain/entities/cached_audio.dart';
 
 /// Component for displaying cache storage statistics
@@ -13,7 +13,7 @@ class StorageStatsComponent extends StatefulWidget {
 }
 
 class _StorageStatsComponentState extends State<StorageStatsComponent> {
-  late final CacheStorageRepository _cacheStorageRepository;
+  late final CacheMaintenanceService _cacheMaintenanceService;
 
   List<CachedAudio> _cachedTracks = [];
   bool _isLoading = false;
@@ -22,7 +22,7 @@ class _StorageStatsComponentState extends State<StorageStatsComponent> {
   @override
   void initState() {
     super.initState();
-    _cacheStorageRepository = sl<CacheStorageRepository>();
+    _cacheMaintenanceService = sl<CacheMaintenanceService>();
     _loadStats();
   }
 
@@ -33,7 +33,7 @@ class _StorageStatsComponentState extends State<StorageStatsComponent> {
     });
 
     try {
-      final result = await _cacheStorageRepository.getAllCachedAudios();
+      final result = await _cacheMaintenanceService.getAllCachedAudios();
       result.fold(
         (failure) {
           setState(() {

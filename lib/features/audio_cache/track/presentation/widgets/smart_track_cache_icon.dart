@@ -82,10 +82,6 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
       context.read<TrackCacheBloc>().add(
         GetTrackCacheStatusRequested(widget.trackId),
       );
-      // Start watching unified track cache info
-      context.read<TrackCacheBloc>().add(
-        WatchTrackCacheInfoRequested(widget.trackId),
-      );
     });
   }
 
