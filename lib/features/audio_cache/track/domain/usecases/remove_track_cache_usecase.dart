@@ -2,18 +2,17 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/services/cache_orchestration_service.dart';
+import '../../../shared/domain/repositories/cache_storage_repository.dart';
 
 @injectable
 class RemoveTrackCacheUseCase {
-  final CacheOrchestrationService _cacheOrchestrationService;
+  final CacheStorageRepository _cacheStorageRepository;
 
-  RemoveTrackCacheUseCase(this._cacheOrchestrationService);
+  RemoveTrackCacheUseCase(this._cacheStorageRepository);
 
-  Future<Either<CacheFailure, Unit>> call({
-    required String trackId,
-    String referenceId = 'individual',
-  }) async {
+  /// Remove a track from cache
+  Future<Either<CacheFailure, Unit>> call(String trackId) async {
+    // Validate inputs
     if (trackId.isEmpty) {
       return Left(
         ValidationCacheFailure(
@@ -25,56 +24,37 @@ class RemoveTrackCacheUseCase {
     }
 
     try {
-      return await _cacheOrchestrationService.removeFromCache(
-        trackId,
-        referenceId,
-      );
+      return await _cacheStorageRepository.deleteAudioFile(trackId);
     } catch (e) {
       return Left(
         ValidationCacheFailure(
           message: 'Unexpected error while removing track from cache: $e',
           field: 'cache_operation',
-          value: {'trackId': trackId, 'referenceId': referenceId},
+          value: {'trackId': trackId},
         ),
       );
     }
   }
 
-  Future<Either<CacheFailure, Unit>> removeWithReference({
-    required String trackId,
-    required String referenceId,
-  }) async {
-    if (trackId.isEmpty) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Track ID cannot be empty',
-          field: 'trackId',
-          value: trackId,
-        ),
-      );
-    }
-
-    if (referenceId.isEmpty) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Reference ID cannot be empty',
-          field: 'referenceId',
-          value: referenceId,
-        ),
-      );
-    }
-
+  /// Remove multiple tracks from cache
+  Future<Either<CacheFailure, Unit>> removeMultiple(
+    List<String> trackIds,
+  ) async {
     try {
-      return await _cacheOrchestrationService.removeFromCache(
-        trackId,
-        referenceId,
+      final result = await _cacheStorageRepository.deleteMultipleAudioFiles(
+        trackIds,
+      );
+      return result.fold(
+        (failure) => Left(failure),
+        (deletedIds) => const Right(unit),
       );
     } catch (e) {
       return Left(
         ValidationCacheFailure(
-          message: 'Unexpected error while removing track with reference: $e',
+          message:
+              'Unexpected error while removing multiple tracks from cache: $e',
           field: 'cache_operation',
-          value: {'trackId': trackId, 'referenceId': referenceId},
+          value: {'trackIds': trackIds},
         ),
       );
     }

@@ -2,17 +2,17 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../../core/error/failures.dart';
-import '../../../audio_cache/shared/domain/services/cache_orchestration_service.dart';
-import 'audio_source_resolver.dart';
+import '../../../audio_cache/shared/domain/repositories/cache_storage_repository.dart';
+import '../../domain/services/audio_source_resolver.dart';
 
 /// Pure audio source resolver implementation
-/// Integrates with existing cache orchestration service
+/// Integrates with cache storage repository
 /// Provides cache-first audio source resolution for pure audio architecture
 @Injectable(as: AudioSourceResolver)
 class AudioSourceResolverImpl implements AudioSourceResolver {
-  const AudioSourceResolverImpl(this._cacheOrchestrationService);
+  const AudioSourceResolverImpl(this._cacheStorageRepository);
 
-  final CacheOrchestrationService _cacheOrchestrationService;
+  final CacheStorageRepository _cacheStorageRepository;
 
   @override
   Future<Either<Failure, String>> resolveAudioSource(
@@ -49,11 +49,11 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   Future<bool> isTrackCached(String url, {String? trackId}) async {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
-      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(
+      final existsResult = await _cacheStorageRepository.audioExists(
         effectiveTrackId,
       );
 
-      return pathResult.fold((failure) => false, (cachedPath) => true);
+      return existsResult.fold((failure) => false, (exists) => exists);
     } catch (e) {
       return false;
     }
@@ -66,7 +66,7 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   }) async {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
-      final pathResult = await _cacheOrchestrationService.getCachedAudioPath(
+      final pathResult = await _cacheStorageRepository.getCachedAudioPath(
         effectiveTrackId,
       );
 
@@ -84,11 +84,10 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
 
-      // Use cache orchestration service for background caching
-      await _cacheOrchestrationService.cacheAudio(
+      // Use cache storage repository for background caching
+      await _cacheStorageRepository.downloadAndStoreAudio(
         effectiveTrackId,
         url,
-        'pure_audio_background',
       );
     } catch (e) {
       // Handle caching errors silently to not interrupt playback
@@ -103,16 +102,15 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
     try {
       final trackId = _extractTrackIdFromUrl(url);
 
-      // Use cache orchestration service for preloading
-      final result = await _cacheOrchestrationService.cacheAudio(
+      // Use cache storage repository for preloading
+      final result = await _cacheStorageRepository.downloadAndStoreAudio(
         trackId,
         url,
-        referenceId,
       );
 
       return result.fold(
         (failure) => Left(CacheFailure('Preload failed: ${failure.message}')),
-        (success) => const Right(null),
+        (cachedAudio) => const Right(null),
       );
     } catch (e) {
       return Left(CacheFailure('Preload error: $e'));

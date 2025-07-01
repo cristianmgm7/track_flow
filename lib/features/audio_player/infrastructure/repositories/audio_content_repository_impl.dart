@@ -6,7 +6,7 @@ import '../../domain/entities/audio_track_id.dart';
 import '../../domain/entities/audio_track_metadata.dart';
 import '../../domain/entities/playlist_id.dart';
 import '../../domain/repositories/audio_content_repository.dart';
-import '../services/audio_source_resolver.dart';
+import '../../domain/services/audio_source_resolver.dart';
 
 /// Pure audio content repository implementation
 /// Bridges business domain data to pure audio architecture

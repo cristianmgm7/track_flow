@@ -1,8 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../shared/domain/entities/cached_audio.dart';
-import '../../domain/usecases/get_playlist_cache_status_usecase.dart';
-
 sealed class PlaylistCacheState extends Equatable {
   const PlaylistCacheState();
 
@@ -19,22 +16,18 @@ class PlaylistCacheLoading extends PlaylistCacheState {
 }
 
 class PlaylistCacheStatusLoaded extends PlaylistCacheState {
-  final Map<String, CacheStatus> trackStatuses;
+  final Map<String, bool> trackStatuses;
 
-  const PlaylistCacheStatusLoaded({
-    required this.trackStatuses,
-  });
+  const PlaylistCacheStatusLoaded({required this.trackStatuses});
 
   @override
   List<Object?> get props => [trackStatuses];
 }
 
 class PlaylistCacheStatsLoaded extends PlaylistCacheState {
-  final PlaylistCacheStats stats;
+  final Map<String, dynamic> stats;
 
-  const PlaylistCacheStatsLoaded({
-    required this.stats,
-  });
+  const PlaylistCacheStatsLoaded({required this.stats});
 
   @override
   List<Object?> get props => [stats];
@@ -43,9 +36,7 @@ class PlaylistCacheStatsLoaded extends PlaylistCacheState {
 class PlaylistFullyCachedResult extends PlaylistCacheState {
   final bool isFullyCached;
 
-  const PlaylistFullyCachedResult({
-    required this.isFullyCached,
-  });
+  const PlaylistFullyCachedResult({required this.isFullyCached});
 
   @override
   List<Object?> get props => [isFullyCached];
@@ -54,9 +45,7 @@ class PlaylistFullyCachedResult extends PlaylistCacheState {
 class CachedTrackIdsLoaded extends PlaylistCacheState {
   final List<String> cachedTrackIds;
 
-  const CachedTrackIdsLoaded({
-    required this.cachedTrackIds,
-  });
+  const CachedTrackIdsLoaded({required this.cachedTrackIds});
 
   @override
   List<Object?> get props => [cachedTrackIds];
@@ -65,9 +54,7 @@ class CachedTrackIdsLoaded extends PlaylistCacheState {
 class UncachedTrackIdsLoaded extends PlaylistCacheState {
   final List<String> uncachedTrackIds;
 
-  const UncachedTrackIdsLoaded({
-    required this.uncachedTrackIds,
-  });
+  const UncachedTrackIdsLoaded({required this.uncachedTrackIds});
 
   @override
   List<Object?> get props => [uncachedTrackIds];
@@ -115,5 +102,10 @@ class PlaylistCacheProgress extends PlaylistCacheState {
   });
 
   @override
-  List<Object?> get props => [playlistId, completedTracks, totalTracks, progressPercentage];
+  List<Object?> get props => [
+    playlistId,
+    completedTracks,
+    totalTracks,
+    progressPercentage,
+  ];
 }

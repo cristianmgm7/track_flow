@@ -7,6 +7,8 @@ import 'package:crypto/crypto.dart';
 
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/entities/download_progress.dart';
+import '../../domain/entities/cleanup_details.dart';
+import '../../domain/entities/cache_validation_result.dart';
 import '../../domain/failures/cache_failure.dart';
 import '../../domain/repositories/cache_storage_repository.dart';
 import '../../domain/value_objects/cache_key.dart';

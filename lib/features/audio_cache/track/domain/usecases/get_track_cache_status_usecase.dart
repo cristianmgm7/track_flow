@@ -1,120 +1,112 @@
+import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
 
 import '../../../shared/domain/entities/cached_audio.dart';
-import '../../../shared/domain/entities/cache_reference.dart';
 import '../../../shared/domain/entities/download_progress.dart';
-import '../../../shared/domain/entities/track_cache_info.dart';
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/services/cache_orchestration_service.dart';
+import '../../../shared/domain/repositories/cache_storage_repository.dart';
 
 @injectable
 class GetTrackCacheStatusUseCase {
-  final CacheOrchestrationService _cacheOrchestrationService;
+  final CacheStorageRepository _cacheStorageRepository;
 
-  GetTrackCacheStatusUseCase(this._cacheOrchestrationService);
+  GetTrackCacheStatusUseCase(this._cacheStorageRepository);
 
-  /// Validate track ID and return failure if invalid
-  Either<CacheFailure, Unit> _validateTrackId(String trackId) {
-    if (trackId.isEmpty) {
+  /// Get current cache status for a track
+  Future<Either<CacheFailure, CacheStatus>> call(String trackId) async {
+    try {
+      final result = await _cacheStorageRepository.audioExists(trackId);
+      return result.fold(
+        (failure) => Left(failure),
+        (exists) => Right(exists ? CacheStatus.cached : CacheStatus.notCached),
+      );
+    } catch (e) {
       return Left(
         ValidationCacheFailure(
-          message: 'Track ID cannot be empty',
+          message: 'Failed to get cache status: $e',
           field: 'trackId',
           value: trackId,
         ),
       );
     }
-    return const Right(unit);
   }
 
-  /// Handle errors consistently across all methods
-  Either<CacheFailure, T> _handleError<T>(
-    String operation,
+  /// Get cached audio information
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
     String trackId,
-    dynamic error,
-  ) {
-    return Left(
-      ValidationCacheFailure(
-        message: 'Unexpected error while $operation: $error',
-        field: 'cache_operation',
-        value: {'trackId': trackId},
-      ),
-    );
-  }
-
-  Future<Either<CacheFailure, CacheStatus>> call({
-    required String trackId,
-  }) async {
-    final validation = _validateTrackId(trackId);
-    if (validation.isLeft())
-      return validation.fold((f) => Left(f), (_) => throw Exception());
-
+  ) async {
     try {
-      return await _cacheOrchestrationService.getCacheStatus(trackId);
+      return await _cacheStorageRepository.getCachedAudio(trackId);
     } catch (e) {
-      return _handleError('getting cache status', trackId, e);
-    }
-  }
-
-  Future<Either<CacheFailure, String?>> getCachedAudioPath({
-    required String trackId,
-  }) async {
-    final validation = _validateTrackId(trackId);
-    if (validation.isLeft())
-      return validation.fold((f) => Left(f), (_) => throw Exception());
-
-    try {
-      final result = await _cacheOrchestrationService.getCachedAudioPath(
-        trackId,
-      );
-      return result.fold((failure) => Left(failure), (path) => Right(path));
-    } catch (e) {
-      return _handleError('getting cached audio path', trackId, e);
-    }
-  }
-
-  Future<Either<CacheFailure, CacheReference?>> getCacheReference({
-    required String trackId,
-  }) async {
-    final validation = _validateTrackId(trackId);
-    if (validation.isLeft())
-      return validation.fold((f) => Left(f), (_) => throw Exception());
-
-    try {
-      return await _cacheOrchestrationService.getCacheReference(trackId);
-    } catch (e) {
-      return _handleError('getting cache reference', trackId, e);
-    }
-  }
-
-  /// Watch both cache status and download progress in a single stream
-  /// This provides a unified view of track cache information
-  Stream<TrackCacheInfo> watchTrackCacheInfo({required String trackId}) {
-    final validation = _validateTrackId(trackId);
-    if (validation.isLeft()) {
-      return Stream.error(validation.fold((f) => f, (_) => throw Exception()));
-    }
-
-    try {
-      return Rx.combineLatest2(
-        _cacheOrchestrationService.watchCacheStatus(trackId),
-        _cacheOrchestrationService.watchDownloadProgress(trackId),
-        (CacheStatus status, DownloadProgress progress) => TrackCacheInfo(
-          trackId: trackId,
-          status: status,
-          progress: progress,
+      return Left(
+        ValidationCacheFailure(
+          message: 'Failed to get cached audio: $e',
+          field: 'trackId',
+          value: trackId,
         ),
       );
+    }
+  }
+
+  /// Get cached audio path
+  Future<Either<CacheFailure, String>> getCachedAudioPath(
+    String trackId,
+  ) async {
+    try {
+      return await _cacheStorageRepository.getCachedAudioPath(trackId);
     } catch (e) {
-      return Stream.error(
-        _handleError(
-          'watching track cache info',
-          trackId,
-          e,
-        ).fold((f) => f, (_) => throw Exception()),
+      return Left(
+        ValidationCacheFailure(
+          message: 'Failed to get cached audio path: $e',
+          field: 'trackId',
+          value: trackId,
+        ),
       );
     }
   }
+
+  /// Watch cache status changes for a track
+  Stream<CacheStatus> watchCacheStatus(String trackId) {
+    // For now, we'll create a simple stream that checks periodically
+    // In a full implementation, this would use Isar's watch functionality
+    return Stream.periodic(const Duration(seconds: 1), (_) => trackId).asyncMap(
+      (id) async {
+        final result = await call(id);
+        return result.fold(
+          (failure) => CacheStatus.notCached,
+          (status) => status,
+        );
+      },
+    ).distinct();
+  }
+
+  /// Watch download progress for a track
+  Stream<DownloadProgress> watchDownloadProgress(String trackId) {
+    return _cacheStorageRepository.watchDownloadProgress(trackId);
+  }
+
+  /// Watch combined cache info (status + progress)
+  Stream<TrackCacheInfo> watchTrackCacheInfo({required String trackId}) {
+    return Rx.combineLatest2(
+      watchCacheStatus(trackId),
+      watchDownloadProgress(trackId),
+      (CacheStatus status, DownloadProgress progress) =>
+          TrackCacheInfo(trackId: trackId, status: status, progress: progress),
+    );
+  }
+}
+
+/// Combined cache information for a track
+class TrackCacheInfo {
+  const TrackCacheInfo({
+    required this.trackId,
+    required this.status,
+    required this.progress,
+  });
+
+  final String trackId;
+  final CacheStatus status;
+  final DownloadProgress progress;
 }

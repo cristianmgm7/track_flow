@@ -2,26 +2,23 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/services/cache_orchestration_service.dart';
-import '../../../shared/domain/value_objects/conflict_policy.dart';
+import '../../../shared/domain/repositories/cache_storage_repository.dart';
 
 @injectable
 class CacheTrackUseCase {
-  final CacheOrchestrationService _cacheOrchestrationService;
+  final CacheStorageRepository _cacheStorageRepository;
 
-  CacheTrackUseCase(this._cacheOrchestrationService);
+  CacheTrackUseCase(this._cacheStorageRepository);
 
   /// Cache a single track for individual playback
-  /// 
+  ///
   /// [trackId] - Unique identifier for the track
   /// [audioUrl] - Source URL for the audio file
-  /// [policy] - How to handle conflicts if track already exists
-  /// 
+  ///
   /// Returns success or specific failure for error handling
   Future<Either<CacheFailure, Unit>> call({
     required String trackId,
     required String audioUrl,
-    ConflictPolicy policy = ConflictPolicy.lastWins,
   }) async {
     // Validate inputs
     if (trackId.isEmpty) {
@@ -57,14 +54,14 @@ class CacheTrackUseCase {
     }
 
     try {
-      // Use 'individual' as the reference ID for single track caching
-      const referenceId = 'individual';
-      
-      return await _cacheOrchestrationService.cacheAudio(
+      final result = await _cacheStorageRepository.downloadAndStoreAudio(
         trackId,
         audioUrl,
-        referenceId,
-        policy: policy,
+      );
+
+      return result.fold(
+        (failure) => Left(failure),
+        (cachedAudio) => const Right(unit),
       );
     } catch (e) {
       return Left(
@@ -77,62 +74,25 @@ class CacheTrackUseCase {
     }
   }
 
-  /// Cache a track with custom reference ID
-  /// Useful for when the track is cached from a specific context
-  Future<Either<CacheFailure, Unit>> cacheWithReference({
-    required String trackId,
-    required String audioUrl,
-    required String referenceId,
-    ConflictPolicy policy = ConflictPolicy.lastWins,
+  /// Cache multiple tracks
+  Future<Either<CacheFailure, Unit>> cacheMultiple({
+    required Map<String, String> trackUrlPairs, // trackId -> audioUrl
   }) async {
-    // Validate inputs
-    if (trackId.isEmpty) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Track ID cannot be empty',
-          field: 'trackId',
-          value: trackId,
-        ),
-      );
-    }
-
-    if (audioUrl.isEmpty) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Audio URL cannot be empty',
-          field: 'audioUrl',
-          value: audioUrl,
-        ),
-      );
-    }
-
-    if (referenceId.isEmpty) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Reference ID cannot be empty',
-          field: 'referenceId',
-          value: referenceId,
-        ),
-      );
-    }
-
     try {
-      return await _cacheOrchestrationService.cacheAudio(
-        trackId,
-        audioUrl,
-        referenceId,
-        policy: policy,
+      final result = await _cacheStorageRepository.downloadMultipleAudios(
+        trackUrlPairs,
+      );
+
+      return result.fold(
+        (failure) => Left(failure),
+        (cachedAudios) => const Right(unit),
       );
     } catch (e) {
       return Left(
         ValidationCacheFailure(
-          message: 'Unexpected error while caching track with reference: $e',
+          message: 'Unexpected error while caching multiple tracks: $e',
           field: 'cache_operation',
-          value: {
-            'trackId': trackId, 
-            'audioUrl': audioUrl, 
-            'referenceId': referenceId,
-          },
+          value: {'trackUrlPairs': trackUrlPairs},
         ),
       );
     }
