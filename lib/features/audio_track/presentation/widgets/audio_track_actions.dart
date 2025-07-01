@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/presentation/widgets/trackflow_action_botton_sheet.dart';
-import 'package:trackflow/core/presentation/widgets/trackflow_form_botton_sheet.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_form_bottom_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -68,13 +68,12 @@ class TrackActions {
       subtitle: 'Save this track to your device',
       onTap: () async {
         Navigator.of(context).pop(); // Close the action sheet
-        
+
         // Use BLoC pattern for downloads
-        context.read<TrackCacheBloc>().add(CacheTrackRequested(
-          trackId: track.id.value,
-          audioUrl: track.url,
-        ));
-        
+        context.read<TrackCacheBloc>().add(
+          CacheTrackRequested(trackId: track.id.value, audioUrl: track.url),
+        );
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${track.name} added to download queue'),

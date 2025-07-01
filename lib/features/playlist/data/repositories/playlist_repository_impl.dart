@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 
 import '../../domain/entities/playlist.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -18,7 +19,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<void> addPlaylist(Playlist playlist) async {
     final dto = PlaylistDto(
-      id: int.tryParse(playlist.id) ?? Isar.autoIncrement,
+      id: int.tryParse(playlist.id.value) ?? Isar.autoIncrement,
       name: playlist.name,
       trackIds: playlist.trackIds,
       playlistSource: playlist.playlistSource.toString(),
@@ -33,7 +34,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     return dtos
         .map(
           (dto) => Playlist(
-            id: dto.id.toString(),
+            id: PlaylistId(dto.id.toString()),
             name: dto.name,
             trackIds: dto.trackIds,
             playlistSource: PlaylistSource.values.firstWhere(
@@ -49,7 +50,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     final dto = await localDataSource.getPlaylistById(id);
     if (dto != null) {
       return Playlist(
-        id: dto.id.toString(),
+        id: PlaylistId(dto.id.toString()),
         name: dto.name,
         trackIds: dto.trackIds,
         playlistSource: PlaylistSource.values.firstWhere(
@@ -63,7 +64,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<void> updatePlaylist(Playlist playlist) async {
     final dto = PlaylistDto(
-      id: int.tryParse(playlist.id) ?? Isar.autoIncrement,
+      id: int.tryParse(playlist.id.value) ?? Isar.autoIncrement,
       name: playlist.name,
       trackIds: playlist.trackIds,
       playlistSource: playlist.playlistSource.toString(),

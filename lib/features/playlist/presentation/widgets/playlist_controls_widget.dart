@@ -4,7 +4,7 @@ import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/domain/entities/playlist_id.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import 'package:trackflow/features/playlist/presentation/utils/playlist_utils.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/play_pause_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/shuffle_button.dart';
@@ -41,7 +41,9 @@ class PlaylistControlsWidget extends StatelessWidget {
                     playerState is AudioPlayerPlaying) {
                   player.add(PauseAudioRequested());
                 } else {
-                  player.add(PlayPlaylistRequested(PlaylistId(playlist.id)));
+                  player.add(
+                    PlayPlaylistRequested(PlaylistId(playlist.id.value)),
+                  );
                 }
               },
             ),
@@ -57,7 +59,7 @@ class PlaylistControlsWidget extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             PlaylistCacheIcon(
-              playlistId: playlist.id,
+              playlistId: playlist.id.value,
               trackIds: playlist.trackIds,
               size: 28.0,
             ),

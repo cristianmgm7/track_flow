@@ -1,10 +1,11 @@
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 
 enum PlaylistSource { project, user }
 
 class Playlist extends Equatable {
-  final String id;
+  final PlaylistId id;
   final String name;
   final List<String> trackIds;
   final PlaylistSource playlistSource;
@@ -17,7 +18,7 @@ class Playlist extends Equatable {
   });
 
   Playlist copyWith({
-    String? id,
+    PlaylistId? id,
     String? name,
     List<String>? trackIds,
     PlaylistSource? playlistSource,

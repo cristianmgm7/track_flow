@@ -32,87 +32,198 @@ class PureAudioPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenSize = MediaQuery.of(context).size;
 
     return Container(
       decoration: BoxDecoration(
-        color: backgroundColor ?? theme.cardColor,
-        borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: backgroundColor ?? theme.scaffoldBackgroundColor,
       ),
-      child: Padding(
-        padding: padding,
-        child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-          builder: (context, state) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Track info section
-                if (showTrackInfo) ...[
-                  _buildTrackInfo(context, state, theme),
-                  const SizedBox(height: 16),
-                ],
+      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+        builder: (context, state) {
+          return Column(
+            children: [
+              // Track info section - expanded to be more prominent
+              if (showTrackInfo) ...[
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: _buildExpandedTrackInfo(
+                      context,
+                      state,
+                      theme,
+                      screenSize,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ] else ...[
+                const Spacer(flex: 3),
+              ],
 
-                // Progress bar
-                const PlaybackProgress(
+              // Progress bar section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: const PlaybackProgress(
                   height: 4.0,
-                  thumbRadius: 8.0,
+                  thumbRadius: 10.0,
                   showTimeLabels: true,
                 ),
-                const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 32),
 
-                // Main controls row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              // Main controls section - larger and more prominent
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     // Queue controls
                     const QueueControls(
-                      size: 28.0,
-                      spacing: 12.0,
+                      size: 32.0,
+                      spacing: 16.0,
                       showRepeatMode: true,
                       showShuffleMode: true,
                     ),
-                    const SizedBox(width: 20),
 
-                    // Main audio controls
+                    // Main audio controls - even larger for full screen
                     const AudioControls(
-                      size: 32.0,
-                      showStop: true,
-                      spacing: 12.0,
+                      size: 48.0,
+                      showStop: false,
+                      spacing: 20.0,
                     ),
                   ],
                 ),
+              ),
 
-                // Additional controls
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    // Volume control
-                    if (showVolumeControl)
-                      Expanded(
-                        child: _buildVolumeControl(context, state, theme),
-                      ),
+              const SizedBox(height: 40),
 
-                    if (showVolumeControl && showSpeedControl)
-                      const SizedBox(width: 20),
+              // Additional controls section
+              Expanded(
+                flex: 1,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: [
+                      // Volume control
+                      if (showVolumeControl) ...[
+                        _buildVolumeControl(context, state, theme),
+                        const SizedBox(height: 20),
+                      ],
 
-                    // Speed control
-                    if (showSpeedControl)
-                      Expanded(
-                        child: _buildSpeedControl(context, state, theme),
-                      ),
-                  ],
+                      // Speed control
+                      if (showSpeedControl)
+                        _buildSpeedControl(context, state, theme),
+                    ],
+                  ),
                 ),
-              ],
-            );
-          },
-        ),
+              ),
+
+              const SizedBox(height: 24),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildExpandedTrackInfo(
+    BuildContext context,
+    AudioPlayerState state,
+    ThemeData theme,
+    Size screenSize,
+  ) {
+    String title = 'No track selected';
+    String artist = '';
+    String? albumArt;
+
+    if (state is AudioPlayerSessionState) {
+      final session = state.session;
+      if (session.currentTrack != null) {
+        title = session.currentTrack!.title;
+        artist = session.currentTrack!.artist;
+        albumArt = session.currentTrack!.coverUrl;
+      }
+    } else if (state is AudioPlayerReady) {
+      title = 'Ready to play';
+      artist = 'Select a track to begin';
+    } else if (state is AudioPlayerLoading) {
+      title = 'Loading...';
+      artist = 'Preparing audio player';
+    } else if (state is AudioPlayerError) {
+      title = 'Playback Error';
+      artist = 'Please try again';
+    }
+
+    final albumArtSize = screenSize.width * 0.6;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Large album art
+        Container(
+          width: albumArtSize,
+          height: albumArtSize,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: theme.primaryColor.withValues(alpha: 0.1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child:
+              albumArt != null
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.network(
+                      albumArt,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (context, error, stackTrace) => Icon(
+                            Icons.music_note,
+                            color: theme.primaryColor,
+                            size: albumArtSize * 0.3,
+                          ),
+                    ),
+                  )
+                  : Icon(
+                    Icons.music_note,
+                    color: theme.primaryColor,
+                    size: albumArtSize * 0.3,
+                  ),
+        ),
+
+        const SizedBox(height: 32),
+
+        // Track title - larger and centered
+        Text(
+          title,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+          maxLines: 2,
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
+        ),
+
+        if (artist.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            artist,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.textTheme.titleMedium?.color?.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ],
     );
   }
 
@@ -153,24 +264,22 @@ class PureAudioPlayer extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             color: theme.primaryColor.withValues(alpha: 0.1),
           ),
-          child: albumArt != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    albumArt,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.music_note,
-                      color: theme.primaryColor,
-                      size: 30,
+          child:
+              albumArt != null
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      albumArt,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (context, error, stackTrace) => Icon(
+                            Icons.music_note,
+                            color: theme.primaryColor,
+                            size: 30,
+                          ),
                     ),
-                  ),
-                )
-              : Icon(
-                  Icons.music_note,
-                  color: theme.primaryColor,
-                  size: 30,
-                ),
+                  )
+                  : Icon(Icons.music_note, color: theme.primaryColor, size: 30),
         ),
         const SizedBox(width: 16),
 
@@ -192,7 +301,9 @@ class PureAudioPlayer extends StatelessWidget {
                 Text(
                   artist,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                    color: theme.textTheme.bodyMedium?.color?.withValues(
+                      alpha: 0.7,
+                    ),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -235,17 +346,12 @@ class PureAudioPlayer extends StatelessWidget {
             child: Slider(
               value: volume,
               onChanged: (value) {
-                context.read<AudioPlayerBloc>().add(
-                  SetVolumeRequested(value),
-                );
+                context.read<AudioPlayerBloc>().add(SetVolumeRequested(value));
               },
             ),
           ),
         ),
-        Text(
-          '${(volume * 100).round()}%',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('${(volume * 100).round()}%', style: theme.textTheme.bodySmall),
       ],
     );
   }
@@ -264,11 +370,7 @@ class PureAudioPlayer extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          Icons.speed,
-          size: 20,
-          color: theme.primaryColor,
-        ),
+        Icon(Icons.speed, size: 20, color: theme.primaryColor),
         const SizedBox(width: 8),
         Expanded(
           child: SliderTheme(
@@ -290,10 +392,7 @@ class PureAudioPlayer extends StatelessWidget {
             ),
           ),
         ),
-        Text(
-          '${speed.toStringAsFixed(1)}x',
-          style: theme.textTheme.bodySmall,
-        ),
+        Text('${speed.toStringAsFixed(1)}x', style: theme.textTheme.bodySmall),
       ],
     );
   }

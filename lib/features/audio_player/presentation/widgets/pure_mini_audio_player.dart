@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/widgets/pure_audio_player.dart';
 import '../bloc/audio_player_bloc.dart';
 import '../bloc/audio_player_state.dart';
 import 'audio_controls.dart';
@@ -67,15 +68,10 @@ class PureMiniAudioPlayer extends StatelessWidget {
                     children: [
                       // Track info section
                       if (showTrackInfo)
-                        Expanded(
-                          child: _buildTrackInfo(context, state, theme),
-                        ),
+                        Expanded(child: _buildTrackInfo(context, state, theme)),
 
                       // Audio controls
-                      const AudioControls(
-                        size: 20.0,
-                        showStop: false,
-                      ),
+                      const AudioControls(size: 20.0, showStop: false),
                       const SizedBox(width: 8),
 
                       // Queue controls (if enabled)
@@ -110,7 +106,7 @@ class PureMiniAudioPlayer extends StatelessWidget {
       if (session.currentTrack != null) {
         title = session.currentTrack!.title;
         artist = session.currentTrack!.artist;
-        
+
         if (session.duration != null) {
           duration = _formatDuration(session.duration!);
         }
@@ -126,8 +122,43 @@ class PureMiniAudioPlayer extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Could expand to full player or show track details
-        // For now, just provide basic interaction
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder:
+              (context) => Container(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom,
+                ),
+                height: MediaQuery.of(context).size.height * 0.9,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: const PureAudioPlayer(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.only(right: 12.0),
@@ -144,7 +175,7 @@ class PureMiniAudioPlayer extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            
+
             // Artist and duration
             if (artist.isNotEmpty || duration.isNotEmpty)
               Padding(
@@ -156,8 +187,9 @@ class PureMiniAudioPlayer extends StatelessWidget {
                         child: Text(
                           artist,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.textTheme.bodySmall?.color
-                                ?.withValues(alpha: 0.7),
+                            color: theme.textTheme.bodySmall?.color?.withValues(
+                              alpha: 0.7,
+                            ),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -168,8 +200,9 @@ class PureMiniAudioPlayer extends StatelessWidget {
                       Text(
                         ' • ',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withValues(alpha: 0.7),
+                          color: theme.textTheme.bodySmall?.color?.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],
@@ -177,8 +210,9 @@ class PureMiniAudioPlayer extends StatelessWidget {
                       Text(
                         duration,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withValues(alpha: 0.7),
+                          color: theme.textTheme.bodySmall?.color?.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                   ],
