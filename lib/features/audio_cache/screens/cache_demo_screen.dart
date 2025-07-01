@@ -160,11 +160,7 @@ class PlaylistCacheDemo extends StatelessWidget {
                       context.read<PlaylistCacheBloc>().add(
                         CachePlaylistRequested(
                           playlistId: 'demo_playlist_1',
-                          trackUrlPairs: {
-                            'track_1': 'https://example.com/track_1.mp3',
-                            'track_2': 'https://example.com/track_2.mp3',
-                            'track_3': 'https://example.com/track_3.mp3',
-                          },
+                          trackIds: ['track_1', 'track_2', 'track_3'],
                         ),
                       );
                     },

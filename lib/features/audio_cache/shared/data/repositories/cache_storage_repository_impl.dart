@@ -178,7 +178,6 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
     return await _localDataSource.deleteAudioFile(trackId);
   }
 
-
   @override
   Future<Either<CacheFailure, List<CachedAudio>>> downloadMultipleAudios(
     Map<String, String> trackUrlPairs, {
@@ -268,17 +267,6 @@ class CacheStorageRepositoryImpl implements CacheStorageRepository {
       );
     }
   }
-
-
-
-
-
-
-
-
-
-
-
 
   @override
   Future<Either<CacheFailure, Unit>> cancelDownload(String trackId) async {

@@ -55,7 +55,7 @@ class PlaylistControlsWidget extends StatelessWidget {
               mode: session.repeatMode,
               onPressed: () => player.add(ToggleRepeatModeRequested()),
             ),
-            const Spacer(),
+            const SizedBox(width: 8),
             PlaylistCacheIcon(
               playlistId: playlist.id,
               trackIds: playlist.trackIds,

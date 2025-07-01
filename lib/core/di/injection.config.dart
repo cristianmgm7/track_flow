@@ -21,19 +21,19 @@ import 'package:internet_connection_checker/internet_connection_checker.dart'
     as _i17;
 import 'package:isar/isar.dart' as _i18;
 import 'package:shared_preferences/shared_preferences.dart' as _i41;
-import 'package:trackflow/core/app/startup_resource_manager.dart' as _i123;
+import 'package:trackflow/core/app/startup_resource_manager.dart' as _i121;
 import 'package:trackflow/core/di/app_module.dart' as _i136;
 import 'package:trackflow/core/network/network_info.dart' as _i24;
 import 'package:trackflow/core/services/dynamic_link_service.dart' as _i10;
 import 'package:trackflow/core/session/session_storage.dart' as _i81;
 import 'package:trackflow/features/audio_cache/playlist/domain/usecases/cache_playlist_usecase.dart'
-    as _i103;
+    as _i129;
 import 'package:trackflow/features/audio_cache/playlist/domain/usecases/get_playlist_cache_status_usecase.dart'
     as _i70;
 import 'package:trackflow/features/audio_cache/playlist/domain/usecases/remove_playlist_cache_usecase.dart'
     as _i79;
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart'
-    as _i116;
+    as _i133;
 import 'package:trackflow/features/audio_cache/shared/data/datasources/cache_storage_local_data_source.dart'
     as _i63;
 import 'package:trackflow/features/audio_cache/shared/data/datasources/cache_storage_remote_data_source.dart'
@@ -71,15 +71,15 @@ import 'package:trackflow/features/audio_comment/domain/services/project_comment
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart'
     as _i97;
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart'
-    as _i105;
+    as _i104;
 import 'package:trackflow/features/audio_comment/domain/usecases/sync_audio_comment_usecase.dart'
     as _i82;
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_usecase.dart'
     as _i93;
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart'
-    as _i126;
+    as _i124;
 import 'package:trackflow/features/audio_player/domain/repositories/audio_content_repository.dart'
-    as _i127;
+    as _i125;
 import 'package:trackflow/features/audio_player/domain/repositories/playback_persistence_repository.dart'
     as _i26;
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart'
@@ -91,9 +91,9 @@ import 'package:trackflow/features/audio_player/domain/usecases/initialize_audio
 import 'package:trackflow/features/audio_player/domain/usecases/pause_audio_usecase.dart'
     as _i25;
 import 'package:trackflow/features/audio_player/domain/usecases/play_audio_usecase.dart'
-    as _i132;
+    as _i131;
 import 'package:trackflow/features/audio_player/domain/usecases/play_playlist_usecase.dart'
-    as _i133;
+    as _i132;
 import 'package:trackflow/features/audio_player/domain/usecases/restore_playback_state_usecase.dart'
     as _i134;
 import 'package:trackflow/features/audio_player/domain/usecases/resume_audio_usecase.dart'
@@ -117,7 +117,7 @@ import 'package:trackflow/features/audio_player/domain/usecases/toggle_repeat_mo
 import 'package:trackflow/features/audio_player/domain/usecases/toggle_shuffle_usecase.dart'
     as _i46;
 import 'package:trackflow/features/audio_player/infrastructure/repositories/audio_content_repository_impl.dart'
-    as _i128;
+    as _i126;
 import 'package:trackflow/features/audio_player/infrastructure/repositories/playback_persistence_repository_impl.dart'
     as _i27;
 import 'package:trackflow/features/audio_player/infrastructure/services/audio_playback_service_impl.dart'
@@ -137,9 +137,9 @@ import 'package:trackflow/features/audio_track/domain/repositories/audio_track_r
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart'
     as _i78;
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart'
-    as _i106;
+    as _i105;
 import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart'
-    as _i108;
+    as _i107;
 import 'package:trackflow/features/audio_track/domain/usecases/sync_audio_tracks_usecase.dart'
     as _i83;
 import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_track_usecase.dart'
@@ -147,7 +147,7 @@ import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_tra
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart'
     as _i95;
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart'
-    as _i129;
+    as _i127;
 import 'package:trackflow/features/auth/data/data_sources/auth_local_datasource.dart'
     as _i61;
 import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource.dart'
@@ -157,19 +157,19 @@ import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.d
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart'
     as _i101;
 import 'package:trackflow/features/auth/domain/usecases/get_auth_state_usecase.dart'
-    as _i110;
+    as _i109;
 import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart'
-    as _i111;
+    as _i110;
 import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart'
-    as _i115;
+    as _i114;
 import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart'
-    as _i120;
+    as _i118;
 import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart'
-    as _i121;
+    as _i119;
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart'
-    as _i122;
+    as _i120;
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart'
-    as _i130;
+    as _i128;
 import 'package:trackflow/features/magic_link/data/datasources/magic_link_local_data_source.dart'
     as _i19;
 import 'package:trackflow/features/magic_link/data/datasources/magic_link_remote_data_source.dart'
@@ -181,7 +181,7 @@ import 'package:trackflow/features/magic_link/domain/repositories/magic_link_rep
 import 'package:trackflow/features/magic_link/domain/usecases/consume_magic_link_use_case.dart'
     as _i68;
 import 'package:trackflow/features/magic_link/domain/usecases/generate_magic_link_use_case.dart'
-    as _i109;
+    as _i108;
 import 'package:trackflow/features/magic_link/domain/usecases/get_magic_link_status_use_case.dart'
     as _i69;
 import 'package:trackflow/features/magic_link/domain/usecases/resend_magic_link_use_case.dart'
@@ -189,7 +189,7 @@ import 'package:trackflow/features/magic_link/domain/usecases/resend_magic_link_
 import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_link_use_case.dart'
     as _i51;
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart'
-    as _i114;
+    as _i113;
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_local_datasource.dart'
     as _i73;
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_remote_datasource.dart'
@@ -199,21 +199,21 @@ import 'package:trackflow/features/manage_collaborators/data/repositories/manage
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart'
     as _i75;
 import 'package:trackflow/features/manage_collaborators/domain/services/add_collaborator_and_sync_profile_service.dart'
-    as _i125;
+    as _i123;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart'
     as _i98;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/join_project_with_id_usecase.dart'
-    as _i112;
+    as _i111;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart'
-    as _i113;
+    as _i112;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart'
-    as _i119;
+    as _i117;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
     as _i88;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart'
     as _i52;
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart'
-    as _i131;
+    as _i130;
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart'
     as _i23;
 import 'package:trackflow/features/project_detail/data/datasource/project_detail_remote_datasource.dart'
@@ -227,7 +227,7 @@ import 'package:trackflow/features/project_detail/domain/usecases/get_project_by
 import 'package:trackflow/features/project_detail/domain/usecases/watch_project_detail.dart'
     as _i94;
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart'
-    as _i117;
+    as _i115;
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart'
     as _i32;
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart'
@@ -237,9 +237,9 @@ import 'package:trackflow/features/projects/data/repositories/projects_repositor
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i33;
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart'
-    as _i104;
+    as _i103;
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart'
-    as _i107;
+    as _i106;
 import 'package:trackflow/features/projects/domain/usecases/sync_projects_usecase.dart'
     as _i84;
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart'
@@ -247,7 +247,7 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart'
     as _i92;
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart'
-    as _i118;
+    as _i116;
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart'
     as _i47;
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart'
@@ -265,7 +265,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/update_user_prof
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart'
     as _i96;
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart'
-    as _i124;
+    as _i122;
 
 extension GetItInjectableX on _i1.GetIt {
 // initializes the registration of main-scope dependencies inside of GetIt
@@ -564,159 +564,161 @@ extension GetItInjectableX on _i1.GetIt {
           audioCommentLocalDataSource: gh<_i53.AudioCommentLocalDataSource>(),
           sessionStorage: gh<_i81.SessionStorage>(),
         ));
-    gh.factory<_i103.CachePlaylistUseCase>(
-        () => _i103.CachePlaylistUseCase(gh<_i65.CacheStorageRepository>()));
-    gh.lazySingleton<_i104.CreateProjectUseCase>(
-        () => _i104.CreateProjectUseCase(
+    gh.lazySingleton<_i103.CreateProjectUseCase>(
+        () => _i103.CreateProjectUseCase(
               gh<_i33.ProjectsRepository>(),
               gh<_i81.SessionStorage>(),
             ));
-    gh.lazySingleton<_i105.DeleteAudioCommentUseCase>(
-        () => _i105.DeleteAudioCommentUseCase(
+    gh.lazySingleton<_i104.DeleteAudioCommentUseCase>(
+        () => _i104.DeleteAudioCommentUseCase(
               gh<_i77.ProjectCommentService>(),
               gh<_i29.ProjectDetailRepository>(),
               gh<_i81.SessionStorage>(),
             ));
-    gh.lazySingleton<_i106.DeleteAudioTrack>(() => _i106.DeleteAudioTrack(
+    gh.lazySingleton<_i105.DeleteAudioTrack>(() => _i105.DeleteAudioTrack(
           gh<_i81.SessionStorage>(),
           gh<_i29.ProjectDetailRepository>(),
           gh<_i78.ProjectTrackService>(),
         ));
-    gh.lazySingleton<_i107.DeleteProjectUseCase>(
-        () => _i107.DeleteProjectUseCase(
+    gh.lazySingleton<_i106.DeleteProjectUseCase>(
+        () => _i106.DeleteProjectUseCase(
               gh<_i33.ProjectsRepository>(),
               gh<_i81.SessionStorage>(),
             ));
-    gh.lazySingleton<_i108.EditAudioTrackUseCase>(
-        () => _i108.EditAudioTrackUseCase(
+    gh.lazySingleton<_i107.EditAudioTrackUseCase>(
+        () => _i107.EditAudioTrackUseCase(
               gh<_i78.ProjectTrackService>(),
               gh<_i29.ProjectDetailRepository>(),
             ));
-    gh.lazySingleton<_i109.GenerateMagicLinkUseCase>(
-        () => _i109.GenerateMagicLinkUseCase(
+    gh.lazySingleton<_i108.GenerateMagicLinkUseCase>(
+        () => _i108.GenerateMagicLinkUseCase(
               gh<_i21.MagicLinkRepository>(),
               gh<_i101.AuthRepository>(),
             ));
-    gh.lazySingleton<_i110.GetAuthStateUseCase>(
-        () => _i110.GetAuthStateUseCase(gh<_i101.AuthRepository>()));
-    gh.lazySingleton<_i111.GoogleSignInUseCase>(
-        () => _i111.GoogleSignInUseCase(gh<_i101.AuthRepository>()));
-    gh.lazySingleton<_i112.JoinProjectWithIdUseCase>(
-        () => _i112.JoinProjectWithIdUseCase(
+    gh.lazySingleton<_i109.GetAuthStateUseCase>(
+        () => _i109.GetAuthStateUseCase(gh<_i101.AuthRepository>()));
+    gh.lazySingleton<_i110.GoogleSignInUseCase>(
+        () => _i110.GoogleSignInUseCase(gh<_i101.AuthRepository>()));
+    gh.lazySingleton<_i111.JoinProjectWithIdUseCase>(
+        () => _i111.JoinProjectWithIdUseCase(
               gh<_i29.ProjectDetailRepository>(),
               gh<_i75.ManageCollaboratorsRepository>(),
               gh<_i81.SessionStorage>(),
             ));
-    gh.lazySingleton<_i113.LeaveProjectUseCase>(() => _i113.LeaveProjectUseCase(
+    gh.lazySingleton<_i112.LeaveProjectUseCase>(() => _i112.LeaveProjectUseCase(
           gh<_i75.ManageCollaboratorsRepository>(),
           gh<_i81.SessionStorage>(),
         ));
-    gh.factory<_i114.MagicLinkBloc>(() => _i114.MagicLinkBloc(
-          generateMagicLink: gh<_i109.GenerateMagicLinkUseCase>(),
+    gh.factory<_i113.MagicLinkBloc>(() => _i113.MagicLinkBloc(
+          generateMagicLink: gh<_i108.GenerateMagicLinkUseCase>(),
           validateMagicLink: gh<_i51.ValidateMagicLinkUseCase>(),
           consumeMagicLink: gh<_i68.ConsumeMagicLinkUseCase>(),
           resendMagicLink: gh<_i35.ResendMagicLinkUseCase>(),
           getMagicLinkStatus: gh<_i69.GetMagicLinkStatusUseCase>(),
-          joinProjectWithId: gh<_i112.JoinProjectWithIdUseCase>(),
+          joinProjectWithId: gh<_i111.JoinProjectWithIdUseCase>(),
           authRepository: gh<_i101.AuthRepository>(),
         ));
-    gh.lazySingleton<_i115.OnboardingUseCase>(
-        () => _i115.OnboardingUseCase(gh<_i101.AuthRepository>()));
-    gh.factory<_i116.PlaylistCacheBloc>(() => _i116.PlaylistCacheBloc(
-          cachePlaylistUseCase: gh<_i103.CachePlaylistUseCase>(),
-          getPlaylistCacheStatusUseCase:
-              gh<_i70.GetPlaylistCacheStatusUseCase>(),
-          removePlaylistCacheUseCase: gh<_i79.RemovePlaylistCacheUseCase>(),
-        ));
-    gh.factory<_i117.ProjectDetailBloc>(() => _i117.ProjectDetailBloc(
+    gh.lazySingleton<_i114.OnboardingUseCase>(
+        () => _i114.OnboardingUseCase(gh<_i101.AuthRepository>()));
+    gh.factory<_i115.ProjectDetailBloc>(() => _i115.ProjectDetailBloc(
         watchProjectDetail: gh<_i94.WatchProjectDetailUseCase>()));
-    gh.factory<_i118.ProjectsBloc>(() => _i118.ProjectsBloc(
-          createProject: gh<_i104.CreateProjectUseCase>(),
+    gh.factory<_i116.ProjectsBloc>(() => _i116.ProjectsBloc(
+          createProject: gh<_i103.CreateProjectUseCase>(),
           updateProject: gh<_i89.UpdateProjectUseCase>(),
-          deleteProject: gh<_i107.DeleteProjectUseCase>(),
+          deleteProject: gh<_i106.DeleteProjectUseCase>(),
           watchAllProjects: gh<_i92.WatchAllProjectsUseCase>(),
         ));
-    gh.lazySingleton<_i119.RemoveCollaboratorUseCase>(
-        () => _i119.RemoveCollaboratorUseCase(
+    gh.lazySingleton<_i117.RemoveCollaboratorUseCase>(
+        () => _i117.RemoveCollaboratorUseCase(
               gh<_i29.ProjectDetailRepository>(),
               gh<_i75.ManageCollaboratorsRepository>(),
               gh<_i81.SessionStorage>(),
             ));
-    gh.lazySingleton<_i120.SignInUseCase>(
-        () => _i120.SignInUseCase(gh<_i101.AuthRepository>()));
-    gh.lazySingleton<_i121.SignOutUseCase>(
-        () => _i121.SignOutUseCase(gh<_i101.AuthRepository>()));
-    gh.lazySingleton<_i122.SignUpUseCase>(
-        () => _i122.SignUpUseCase(gh<_i101.AuthRepository>()));
-    gh.lazySingleton<_i123.StartupResourceManager>(
-        () => _i123.StartupResourceManager(
+    gh.lazySingleton<_i118.SignInUseCase>(
+        () => _i118.SignInUseCase(gh<_i101.AuthRepository>()));
+    gh.lazySingleton<_i119.SignOutUseCase>(
+        () => _i119.SignOutUseCase(gh<_i101.AuthRepository>()));
+    gh.lazySingleton<_i120.SignUpUseCase>(
+        () => _i120.SignUpUseCase(gh<_i101.AuthRepository>()));
+    gh.lazySingleton<_i121.StartupResourceManager>(
+        () => _i121.StartupResourceManager(
               gh<_i82.SyncAudioCommentsUseCase>(),
               gh<_i83.SyncAudioTracksUseCase>(),
               gh<_i84.SyncProjectsUseCase>(),
               gh<_i86.SyncUserProfileUseCase>(),
               gh<_i85.SyncUserProfileCollaboratorsUseCase>(),
             ));
-    gh.factory<_i124.UserProfileBloc>(() => _i124.UserProfileBloc(
+    gh.factory<_i122.UserProfileBloc>(() => _i122.UserProfileBloc(
           updateUserProfileUseCase: gh<_i90.UpdateUserProfileUseCase>(),
           watchUserProfileUseCase: gh<_i96.WatchUserProfileUseCase>(),
         ));
-    gh.lazySingleton<_i125.AddCollaboratorAndSyncProfileService>(
-        () => _i125.AddCollaboratorAndSyncProfileService(
+    gh.lazySingleton<_i123.AddCollaboratorAndSyncProfileService>(
+        () => _i123.AddCollaboratorAndSyncProfileService(
               gh<_i98.AddCollaboratorToProjectUseCase>(),
               gh<_i49.UserProfileRepository>(),
             ));
-    gh.factory<_i126.AudioCommentBloc>(() => _i126.AudioCommentBloc(
+    gh.factory<_i124.AudioCommentBloc>(() => _i124.AudioCommentBloc(
           watchCommentsByTrackUseCase: gh<_i93.WatchCommentsByTrackUseCase>(),
           addAudioCommentUseCase: gh<_i97.AddAudioCommentUseCase>(),
-          deleteAudioCommentUseCase: gh<_i105.DeleteAudioCommentUseCase>(),
+          deleteAudioCommentUseCase: gh<_i104.DeleteAudioCommentUseCase>(),
         ));
-    gh.lazySingleton<_i127.AudioContentRepository>(
-        () => _i128.AudioContentRepositoryImpl(
+    gh.lazySingleton<_i125.AudioContentRepository>(
+        () => _i126.AudioContentRepositoryImpl(
               gh<_i59.AudioTrackRepository>(),
               gh<_i99.AudioSourceResolver>(),
             ));
-    gh.factory<_i129.AudioTrackBloc>(() => _i129.AudioTrackBloc(
+    gh.factory<_i127.AudioTrackBloc>(() => _i127.AudioTrackBloc(
           watchAudioTracksByProject: gh<_i95.WatchTracksByProjectIdUseCase>(),
-          deleteAudioTrack: gh<_i106.DeleteAudioTrack>(),
+          deleteAudioTrack: gh<_i105.DeleteAudioTrack>(),
           uploadAudioTrackUseCase: gh<_i91.UploadAudioTrackUseCase>(),
-          editAudioTrackUseCase: gh<_i108.EditAudioTrackUseCase>(),
+          editAudioTrackUseCase: gh<_i107.EditAudioTrackUseCase>(),
         ));
-    gh.factory<_i130.AuthBloc>(() => _i130.AuthBloc(
-          signIn: gh<_i120.SignInUseCase>(),
-          signUp: gh<_i122.SignUpUseCase>(),
-          signOut: gh<_i121.SignOutUseCase>(),
-          googleSignIn: gh<_i111.GoogleSignInUseCase>(),
-          getAuthState: gh<_i110.GetAuthStateUseCase>(),
-          onboarding: gh<_i115.OnboardingUseCase>(),
+    gh.factory<_i128.AuthBloc>(() => _i128.AuthBloc(
+          signIn: gh<_i118.SignInUseCase>(),
+          signUp: gh<_i120.SignUpUseCase>(),
+          signOut: gh<_i119.SignOutUseCase>(),
+          googleSignIn: gh<_i110.GoogleSignInUseCase>(),
+          getAuthState: gh<_i109.GetAuthStateUseCase>(),
+          onboarding: gh<_i114.OnboardingUseCase>(),
         ));
-    gh.factory<_i131.ManageCollaboratorsBloc>(
-        () => _i131.ManageCollaboratorsBloc(
+    gh.factory<_i129.CachePlaylistUseCase>(() => _i129.CachePlaylistUseCase(
+          gh<_i65.CacheStorageRepository>(),
+          gh<_i125.AudioContentRepository>(),
+        ));
+    gh.factory<_i130.ManageCollaboratorsBloc>(
+        () => _i130.ManageCollaboratorsBloc(
               addCollaboratorAndSyncProfileService:
-                  gh<_i125.AddCollaboratorAndSyncProfileService>(),
-              removeCollaboratorUseCase: gh<_i119.RemoveCollaboratorUseCase>(),
+                  gh<_i123.AddCollaboratorAndSyncProfileService>(),
+              removeCollaboratorUseCase: gh<_i117.RemoveCollaboratorUseCase>(),
               updateCollaboratorRoleUseCase:
                   gh<_i88.UpdateCollaboratorRoleUseCase>(),
-              leaveProjectUseCase: gh<_i113.LeaveProjectUseCase>(),
+              leaveProjectUseCase: gh<_i112.LeaveProjectUseCase>(),
               watchUserProfilesUseCase: gh<_i52.WatchUserProfilesUseCase>(),
             ));
-    gh.factory<_i132.PlayAudioUseCase>(() => _i132.PlayAudioUseCase(
-          audioContentRepository: gh<_i127.AudioContentRepository>(),
+    gh.factory<_i131.PlayAudioUseCase>(() => _i131.PlayAudioUseCase(
+          audioContentRepository: gh<_i125.AudioContentRepository>(),
           playbackService: gh<_i3.AudioPlaybackService>(),
         ));
-    gh.factory<_i133.PlayPlaylistUseCase>(() => _i133.PlayPlaylistUseCase(
-          audioContentRepository: gh<_i127.AudioContentRepository>(),
+    gh.factory<_i132.PlayPlaylistUseCase>(() => _i132.PlayPlaylistUseCase(
+          audioContentRepository: gh<_i125.AudioContentRepository>(),
           playbackService: gh<_i3.AudioPlaybackService>(),
+        ));
+    gh.factory<_i133.PlaylistCacheBloc>(() => _i133.PlaylistCacheBloc(
+          cachePlaylistUseCase: gh<_i129.CachePlaylistUseCase>(),
+          getPlaylistCacheStatusUseCase:
+              gh<_i70.GetPlaylistCacheStatusUseCase>(),
+          removePlaylistCacheUseCase: gh<_i79.RemovePlaylistCacheUseCase>(),
         ));
     gh.factory<_i134.RestorePlaybackStateUseCase>(
         () => _i134.RestorePlaybackStateUseCase(
               persistenceRepository: gh<_i26.PlaybackPersistenceRepository>(),
-              audioContentRepository: gh<_i127.AudioContentRepository>(),
+              audioContentRepository: gh<_i125.AudioContentRepository>(),
               playbackService: gh<_i3.AudioPlaybackService>(),
             ));
     gh.factory<_i135.AudioPlayerBloc>(() => _i135.AudioPlayerBloc(
           initializeAudioPlayerUseCase: gh<_i16.InitializeAudioPlayerUseCase>(),
-          playAudioUseCase: gh<_i132.PlayAudioUseCase>(),
-          playPlaylistUseCase: gh<_i133.PlayPlaylistUseCase>(),
+          playAudioUseCase: gh<_i131.PlayAudioUseCase>(),
+          playPlaylistUseCase: gh<_i132.PlayPlaylistUseCase>(),
           pauseAudioUseCase: gh<_i25.PauseAudioUseCase>(),
           resumeAudioUseCase: gh<_i36.ResumeAudioUseCase>(),
           stopAudioUseCase: gh<_i44.StopAudioUseCase>(),
