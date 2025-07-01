@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/usecases/cache_playlist_usecase.dart';
 import '../../domain/usecases/get_playlist_cache_status_usecase.dart';
 import '../../domain/usecases/remove_playlist_cache_usecase.dart';
+import '../../domain/entities/playlist_cache_stats.dart';
 import 'playlist_cache_event.dart';
 import 'playlist_cache_state.dart';
 
@@ -19,6 +20,8 @@ class PlaylistCacheBloc extends Bloc<PlaylistCacheEvent, PlaylistCacheState> {
        super(const PlaylistCacheInitial()) {
     on<CachePlaylistRequested>(_onCachePlaylistRequested);
     on<GetPlaylistCacheStatusRequested>(_onGetPlaylistCacheStatusRequested);
+    on<GetPlaylistCacheStatsRequested>(_onGetPlaylistCacheStatsRequested);
+    on<GetDetailedProgressRequested>(_onGetDetailedProgressRequested);
     on<RemovePlaylistCacheRequested>(_onRemovePlaylistCacheRequested);
   }
 
@@ -67,6 +70,66 @@ class PlaylistCacheBloc extends Bloc<PlaylistCacheEvent, PlaylistCacheState> {
           error: failure.message,
         ),
         (statusMap) => PlaylistCacheStatusLoaded(trackStatuses: statusMap),
+      ),
+    );
+  }
+
+  Future<void> _onGetPlaylistCacheStatsRequested(
+    GetPlaylistCacheStatsRequested event,
+    Emitter<PlaylistCacheState> emit,
+  ) async {
+    emit(const PlaylistCacheLoading());
+
+    final result = await _getPlaylistCacheStatusUseCase.getPlaylistCacheStats(
+      playlistId: event.playlistId,
+      trackIds: event.trackIds,
+    );
+
+    emit(
+      result.fold(
+        (failure) => PlaylistCacheOperationFailure(
+          playlistId: event.playlistId,
+          error: failure.message,
+        ),
+        (stats) => PlaylistCacheStatsLoaded(
+          stats: stats,
+          detailedProgress: {
+            'statusDescription': stats.statusDescription,
+            'progressDescription': stats.progressDescription,
+            'canCache': !stats.isFullyCached,
+            'canRemove': stats.cachedTracks > 0,
+            'showProgress': stats.hasDownloading,
+            'status': stats.status,
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onGetDetailedProgressRequested(
+    GetDetailedProgressRequested event,
+    Emitter<PlaylistCacheState> emit,
+  ) async {
+    emit(const PlaylistCacheLoading());
+
+    final result = await _getPlaylistCacheStatusUseCase.getDetailedProgress(
+      playlistId: event.playlistId,
+      trackIds: event.trackIds,
+    );
+
+    emit(
+      result.fold(
+        (failure) => PlaylistCacheOperationFailure(
+          playlistId: event.playlistId,
+          error: failure.message,
+        ),
+        (detailedProgress) {
+          final stats = detailedProgress['stats'] as PlaylistCacheStats;
+          return PlaylistCacheStatsLoaded(
+            stats: stats,
+            detailedProgress: detailedProgress,
+          );
+        },
       ),
     );
   }

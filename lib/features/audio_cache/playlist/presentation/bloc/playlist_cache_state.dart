@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/playlist_cache_stats.dart';
 
 sealed class PlaylistCacheState extends Equatable {
   const PlaylistCacheState();
@@ -25,40 +26,18 @@ class PlaylistCacheStatusLoaded extends PlaylistCacheState {
 }
 
 class PlaylistCacheStatsLoaded extends PlaylistCacheState {
-  final Map<String, dynamic> stats;
+  final PlaylistCacheStats stats;
+  final Map<String, dynamic> detailedProgress;
 
-  const PlaylistCacheStatsLoaded({required this.stats});
-
-  @override
-  List<Object?> get props => [stats];
-}
-
-class PlaylistFullyCachedResult extends PlaylistCacheState {
-  final bool isFullyCached;
-
-  const PlaylistFullyCachedResult({required this.isFullyCached});
+  const PlaylistCacheStatsLoaded({
+    required this.stats,
+    required this.detailedProgress,
+  });
 
   @override
-  List<Object?> get props => [isFullyCached];
+  List<Object?> get props => [stats, detailedProgress];
 }
 
-class CachedTrackIdsLoaded extends PlaylistCacheState {
-  final List<String> cachedTrackIds;
-
-  const CachedTrackIdsLoaded({required this.cachedTrackIds});
-
-  @override
-  List<Object?> get props => [cachedTrackIds];
-}
-
-class UncachedTrackIdsLoaded extends PlaylistCacheState {
-  final List<String> uncachedTrackIds;
-
-  const UncachedTrackIdsLoaded({required this.uncachedTrackIds});
-
-  @override
-  List<Object?> get props => [uncachedTrackIds];
-}
 
 class PlaylistCacheOperationSuccess extends PlaylistCacheState {
   final String playlistId;
@@ -88,24 +67,3 @@ class PlaylistCacheOperationFailure extends PlaylistCacheState {
   List<Object?> get props => [playlistId, error];
 }
 
-class PlaylistCacheProgress extends PlaylistCacheState {
-  final String playlistId;
-  final int completedTracks;
-  final int totalTracks;
-  final double progressPercentage;
-
-  const PlaylistCacheProgress({
-    required this.playlistId,
-    required this.completedTracks,
-    required this.totalTracks,
-    required this.progressPercentage,
-  });
-
-  @override
-  List<Object?> get props => [
-    playlistId,
-    completedTracks,
-    totalTracks,
-    progressPercentage,
-  ];
-}

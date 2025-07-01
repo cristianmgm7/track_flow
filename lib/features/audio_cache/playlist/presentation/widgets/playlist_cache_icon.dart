@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/playlist_cache_bloc.dart';
 import '../bloc/playlist_cache_event.dart';
 import '../bloc/playlist_cache_state.dart';
+import '../../domain/entities/playlist_cache_stats.dart';
 
 /// Widget that displays a cache icon for playlist with different states
 class PlaylistCacheIcon extends StatelessWidget {
@@ -22,7 +23,18 @@ class PlaylistCacheIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PlaylistCacheBloc, PlaylistCacheState>(
+    return BlocConsumer<PlaylistCacheBloc, PlaylistCacheState>(
+      listener: (context, state) {
+        // Auto-load detailed stats when widget builds
+        if (state is PlaylistCacheInitial) {
+          context.read<PlaylistCacheBloc>().add(
+            GetDetailedProgressRequested(
+              playlistId: playlistId,
+              trackIds: trackIds,
+            ),
+          );
+        }
+      },
       builder: (context, state) {
         return GestureDetector(
           onTap: onTap ?? () => _handleCacheAction(context, state),
@@ -41,19 +53,17 @@ class PlaylistCacheIcon extends StatelessWidget {
       );
     }
 
+    if (state is PlaylistCacheStatsLoaded) {
+      return _buildStatsIcon(state.stats, state.detailedProgress);
+    }
+
     if (state is PlaylistCacheStatusLoaded) {
       final cachedCount =
           state.trackStatuses.values.where((exists) => exists).length;
       final totalCount = trackIds.length;
       final cachePercentage = totalCount > 0 ? cachedCount / totalCount : 0.0;
 
-      if (cachePercentage == 1.0) {
-        return Icon(Icons.cloud_done, size: size, color: Colors.green);
-      } else if (cachePercentage > 0) {
-        return Icon(Icons.cloud_sync, size: size, color: Colors.orange);
-      } else {
-        return Icon(Icons.cloud_off, size: size, color: Colors.grey);
-      }
+      return _buildBasicIcon(cachePercentage, cachedCount, totalCount);
     }
 
     if (state is PlaylistCacheOperationSuccess) {
@@ -68,13 +78,136 @@ class PlaylistCacheIcon extends StatelessWidget {
       }
     }
 
-    // Default state - check if any tracks are cached
+    // Default state - not cached
     return Icon(Icons.cloud_off, size: size, color: Colors.grey);
+  }
+
+  Widget _buildStatsIcon(
+    PlaylistCacheStats stats,
+    Map<String, dynamic> progress,
+  ) {
+    final status = stats.status;
+
+    // Show detailed progress text for partially cached
+    if (status == CacheStatus.partiallyCached) {
+      return Tooltip(
+        message: '${stats.progressDescription}\n${stats.statusDescription}',
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(Icons.cloud_sync, size: size, color: Colors.orange),
+            Positioned(
+              bottom: -2,
+              right: -2,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Colors.orange,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  stats.cachedTracks.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Other states with rich tooltips
+    return Tooltip(
+      message: _getTooltipMessage(stats, progress),
+      child: _getIconForStatus(status),
+    );
+  }
+
+  Widget _buildBasicIcon(
+    double cachePercentage,
+    int cachedCount,
+    int totalCount,
+  ) {
+    if (cachePercentage == 1.0) {
+      return Tooltip(
+        message: 'Fully cached ($cachedCount/$totalCount tracks)',
+        child: Icon(Icons.cloud_done, size: size, color: Colors.green),
+      );
+    } else if (cachePercentage > 0) {
+      return Tooltip(
+        message: 'Partially cached ($cachedCount/$totalCount tracks)',
+        child: Icon(Icons.cloud_sync, size: size, color: Colors.orange),
+      );
+    } else {
+      return Tooltip(
+        message: 'Not cached',
+        child: Icon(Icons.cloud_off, size: size, color: Colors.grey),
+      );
+    }
+  }
+
+  Widget _getIconForStatus(CacheStatus status) {
+    switch (status) {
+      case CacheStatus.fullyCached:
+        return Icon(Icons.cloud_done, size: size, color: Colors.green);
+      case CacheStatus.downloading:
+        return SizedBox(
+          width: size,
+          height: size,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.0,
+            color: Colors.blue,
+          ),
+        );
+      case CacheStatus.partiallyCached:
+        return Icon(Icons.cloud_sync, size: size, color: Colors.orange);
+      case CacheStatus.failed:
+        return Icon(Icons.error, size: size, color: Colors.red);
+      case CacheStatus.notCached:
+        return Icon(Icons.cloud_off, size: size, color: Colors.grey);
+    }
+  }
+
+  String _getTooltipMessage(
+    PlaylistCacheStats stats,
+    Map<String, dynamic> progress,
+  ) {
+    final buffer = StringBuffer();
+    buffer.writeln(stats.progressDescription);
+    buffer.writeln(stats.statusDescription);
+
+    if (stats.hasFailures) {
+      buffer.writeln('${stats.failedTracks} tracks failed');
+    }
+
+    if (stats.hasDownloading) {
+      buffer.writeln('${stats.downloadingTracks} tracks downloading');
+    }
+
+    return buffer.toString().trim();
   }
 
   void _handleCacheAction(BuildContext context, PlaylistCacheState state) {
     if (state is PlaylistCacheLoading) {
       return; // Don't allow action while loading
+    }
+
+    if (state is PlaylistCacheStatsLoaded) {
+      final stats = state.stats;
+      final progress = state.detailedProgress;
+
+      final canCache = progress['canCache'] as bool? ?? true;
+
+      if (stats.isFullyCached) {
+        _showRemoveCacheDialog(context, stats);
+      } else if (canCache) {
+        _showCacheDialog(context, stats);
+      }
+      return;
     }
 
     if (state is PlaylistCacheStatusLoaded) {
@@ -83,26 +216,39 @@ class PlaylistCacheIcon extends StatelessWidget {
       final totalCount = trackIds.length;
 
       if (cachedCount == totalCount) {
-        // All tracks cached, offer to remove
-        _showRemoveCacheDialog(context);
+        _showRemoveCacheDialog(context, null);
       } else {
-        // Some or no tracks cached, offer to cache
-        _showCacheDialog(context);
+        _showCacheDialog(context, null);
       }
     } else {
-      // No status loaded, offer to cache
-      _showCacheDialog(context);
+      _showCacheDialog(context, null);
     }
   }
 
-  void _showCacheDialog(BuildContext context) {
+  void _showCacheDialog(BuildContext context, PlaylistCacheStats? stats) {
+    final message =
+        stats != null
+            ? 'Cache remaining ${stats.totalTracks - stats.cachedTracks} tracks for offline playback?'
+            : 'Cache ${trackIds.length} tracks for offline playback?';
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
             title: const Text('Cache Playlist'),
-            content: Text(
-              'Cache ${trackIds.length} tracks for offline playback?',
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(message),
+                if (stats != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Current: ${stats.progressDescription}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
             ),
             actions: [
               TextButton(
@@ -121,13 +267,31 @@ class PlaylistCacheIcon extends StatelessWidget {
     );
   }
 
-  void _showRemoveCacheDialog(BuildContext context) {
+  void _showRemoveCacheDialog(BuildContext context, PlaylistCacheStats? stats) {
+    final message =
+        stats != null
+            ? 'Remove ${stats.cachedTracks} cached tracks from this playlist?'
+            : 'Remove all cached tracks for this playlist?';
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
             title: const Text('Remove Cache'),
-            content: const Text('Remove all cached tracks for this playlist?'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(message),
+                if (stats != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Status: ${stats.statusDescription}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -168,12 +332,6 @@ class PlaylistCacheIcon extends StatelessWidget {
   void _removePlaylistCache(BuildContext context) {
     context.read<PlaylistCacheBloc>().add(
       RemovePlaylistCacheRequested(playlistId: playlistId, trackIds: trackIds),
-    );
-  }
-
-  void _getCacheStatus(BuildContext context) {
-    context.read<PlaylistCacheBloc>().add(
-      GetPlaylistCacheStatusRequested(trackIds: trackIds),
     );
   }
 }
