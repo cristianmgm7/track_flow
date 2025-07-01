@@ -10,8 +10,6 @@ import 'package:trackflow/features/playlist/presentation/widgets/buttons/play_pa
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/shuffle_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/repeat_button.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/widgets/playlist_cache_icon.dart';
-import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
-import 'package:trackflow/core/di/injection.dart';
 
 class PlaylistControlsWidget extends StatelessWidget {
   final Playlist playlist;
@@ -58,13 +56,10 @@ class PlaylistControlsWidget extends StatelessWidget {
               onPressed: () => player.add(ToggleRepeatModeRequested()),
             ),
             const Spacer(),
-            BlocProvider(
-              create: (context) => sl<PlaylistCacheBloc>(),
-              child: PlaylistCacheIcon(
-                playlistId: playlist.id,
-                trackIds: playlist.trackIds,
-                size: 28.0,
-              ),
+            PlaylistCacheIcon(
+              playlistId: playlist.id,
+              trackIds: playlist.trackIds,
+              size: 28.0,
             ),
           ],
         );
