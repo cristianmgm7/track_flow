@@ -231,21 +231,6 @@ This document describes the repository architecture used in TrackFlow, following
 - `Future<Either<CacheFailure, int>> rebuildCacheMetadata()` — Rebuild cache metadata from file system.
 - `Future<Either<CacheFailure, int>> scanAndUpdateCacheRegistry()` — Scan file system and update cache registry.
 
-### CacheStorageFacadeRepository (Deprecated)
-
-**Location**: `lib/features/audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart`
-**Responsibility**: Facade repository that combines specialized cache repositories. Deprecated in favor of using specialized repositories directly.
-**Public Methods:**
-
-- `AudioDownloadRepository get downloadRepository` — Access to download operations.
-- `AudioStorageRepository get storageRepository` — Access to storage operations.
-- `CacheKeyRepository get keyRepository` — Access to cache key operations.
-- `CacheMaintenanceRepository get maintenanceRepository` — Access to maintenance operations.
-- `Future<Either<CacheFailure, CachedAudio>> downloadAndStoreAudio(...)` — Download and store audio file (composite operation).
-- `Future<Either<CacheFailure, List<CachedAudio>>> downloadAndStoreMultipleAudios(...)` — Download and store multiple audio files (composite operation).
-
----
-
 ## 10. Playback Persistence Domain
 
 ### PlaybackPersistenceRepository
