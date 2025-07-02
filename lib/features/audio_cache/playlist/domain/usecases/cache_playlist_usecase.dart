@@ -3,16 +3,17 @@ import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
 import '../../../shared/domain/repositories/cache_storage_repository.dart';
-import '../../../../audio_player/domain/repositories/audio_content_repository.dart';
-import '../../../../audio_player/domain/entities/audio_track_id.dart';
+import '../../../../audio_track/domain/repositories/audio_track_repository.dart';
+import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class CachePlaylistUseCase {
   final CacheStorageRepository _cacheStorageRepository;
+  final AudioTrackRepository _audioTrackRepository;
 
   CachePlaylistUseCase(
     this._cacheStorageRepository,
-    this._audioContentRepository,
+    this._audioTrackRepository,
   );
 
   /// Cache all tracks in a playlist
@@ -44,10 +45,19 @@ class CachePlaylistUseCase {
     final trackUrlPairs = <String, String>{};
     for (final trackId in trackIds) {
       try {
-        final audioUrl = await _audioContentRepository.getAudioSourceUrl(
-          AudioTrackId(trackId),
+        final trackOrFailure = await _audioTrackRepository.getTrackById(
+          AudioTrackId.fromUniqueString(trackId),
         );
-        trackUrlPairs[trackId] = audioUrl;
+        trackOrFailure.fold(
+          (failure) {
+            // Optionally handle error per track (skip or log)
+          },
+          (track) {
+            if (track.url.isNotEmpty) {
+              trackUrlPairs[trackId] = track.url;
+            }
+          },
+        );
       } catch (e) {
         // Optionally handle error per track
       }

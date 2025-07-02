@@ -2,8 +2,12 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../../../playlist/domain/entities/playlist_id.dart';
+import '../../../playlist/domain/repositories/playlist_repository.dart';
+import '../../../audio_track/domain/repositories/audio_track_repository.dart';
 import '../entities/audio_source.dart';
-import '../repositories/audio_content_repository.dart';
+import '../entities/audio_track_metadata.dart';
+import '../entities/audio_track_id.dart' as player;
+import '../../../../../core/entities/unique_id.dart' as core;
 import '../services/audio_playback_service.dart';
 
 /// Pure playlist playback use case
@@ -12,12 +16,15 @@ import '../services/audio_playback_service.dart';
 @injectable
 class PlayPlaylistUseCase {
   const PlayPlaylistUseCase({
-    required AudioContentRepository audioContentRepository,
+    required PlaylistRepository playlistRepository,
+    required AudioTrackRepository audioTrackRepository,
     required AudioPlaybackService playbackService,
-  }) : _audioContentRepository = audioContentRepository,
+  }) : _playlistRepository = playlistRepository,
+       _audioTrackRepository = audioTrackRepository,
        _playbackService = playbackService;
 
-  final AudioContentRepository _audioContentRepository;
+  final PlaylistRepository _playlistRepository;
+  final AudioTrackRepository _audioTrackRepository;
   final AudioPlaybackService _playbackService;
 
   /// Play playlist starting from specified track index
@@ -28,37 +35,50 @@ class PlayPlaylistUseCase {
     int startIndex = 0,
   }) async {
     try {
-      // 1. Get playlist tracks metadata (pure audio data only)
-      final tracksMetadata = await _audioContentRepository.getPlaylistTracks(
-        playlistId,
+      // 1. Get playlist by ID
+      final playlist = await _playlistRepository.getPlaylistById(
+        playlistId.value,
       );
-
-      if (tracksMetadata.isEmpty) {
+      if (playlist == null) {
+        return Left(PlaylistFailure('Playlist not found: ${playlistId.value}'));
+      }
+      if (playlist.trackIds.isEmpty) {
         return Left(PlaylistFailure('Playlist is empty: ${playlistId.value}'));
       }
-
       // Validate start index
-      if (startIndex < 0 || startIndex >= tracksMetadata.length) {
+      if (startIndex < 0 || startIndex >= playlist.trackIds.length) {
         return Left(QueueFailure('Invalid start index: $startIndex'));
       }
-
       // 2. Create audio sources for all tracks
       final audioSources = <AudioSource>[];
-
-      for (final metadata in tracksMetadata) {
+      for (final trackId in playlist.trackIds) {
         try {
-          // Resolve source URL for each track
-          final sourceUrl = await _audioContentRepository.getAudioSourceUrl(
-            metadata.id,
+          final trackOrFailure = await _audioTrackRepository.getTrackById(
+            core.AudioTrackId.fromUniqueString(trackId),
           );
-
-          audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
+          trackOrFailure.fold(
+            (failure) {
+              // Skip tracks that can't be loaded
+            },
+            (track) {
+              if (track.url.isNotEmpty) {
+                final metadata = AudioTrackMetadata(
+                  id: player.AudioTrackId(track.id.value),
+                  title: track.name,
+                  artist: '', // No artist info in AudioTrack
+                  duration: track.duration,
+                );
+                audioSources.add(
+                  AudioSource(url: track.url, metadata: metadata),
+                );
+              }
+            },
+          );
         } catch (e) {
-          // Skip tracks that can't be loaded, continue with others
+          // Skip tracks that can't be loaded
           continue;
         }
       }
-
       if (audioSources.isEmpty) {
         return Left(
           PlaylistFailure(
@@ -66,16 +86,13 @@ class PlayPlaylistUseCase {
           ),
         );
       }
-
       // Adjust start index if some tracks were skipped
       final adjustedStartIndex = startIndex.clamp(0, audioSources.length - 1);
-
       // 3. Load queue and start playback (pure audio operation)
       await _playbackService.loadQueue(
         audioSources,
         startIndex: adjustedStartIndex,
       );
-
       return const Right(null);
     } catch (e) {
       // Handle audio-specific errors only

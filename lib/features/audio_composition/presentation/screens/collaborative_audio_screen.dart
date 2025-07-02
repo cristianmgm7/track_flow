@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
 import '../../../audio_player/presentation/bloc/audio_player_state.dart';
 import '../../../audio_player/presentation/widgets/pure_audio_player.dart';
 import '../../../audio_player/domain/entities/audio_track_id.dart';
-import '../../../audio_player/domain/entities/playlist_id.dart';
 import '../../../audio_context/presentation/bloc/audio_context_cubit.dart';
 import '../../../audio_context/presentation/widgets/track_info_display.dart';
 
