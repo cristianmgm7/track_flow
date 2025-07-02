@@ -5,7 +5,7 @@ import 'package:trackflow/features/projects/data/datasources/project_local_data_
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 abstract class ManageCollaboratorsLocalDataSource {
-  Future<void> updateProject(Project project);
+  Future<Project> updateProject(Project project);
   Future<Project?> getProjectById(ProjectId projectId);
 }
 
@@ -25,7 +25,10 @@ class ManageCollaboratorsLocalDataSourceImpl
 
   @override
   Future<Project?> getProjectById(ProjectId projectId) async {
-    final dto = await _projectsLocalDataSource.getCachedProject(projectId);
-    return dto?.toDomain();
+    final result = await _projectsLocalDataSource.getCachedProject(projectId);
+    return result.fold(
+      (failure) => null, // Return null on failure
+      (dto) => dto?.toDomain(), // Convert DTO to domain if not null
+    );
   }
 }

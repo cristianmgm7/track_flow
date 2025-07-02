@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_cache_repository.dart';
 
 class GetProjectWithUserProfilesParams {
   final ProjectId projectId;
@@ -13,11 +13,11 @@ class GetProjectWithUserProfilesParams {
 
 @lazySingleton
 class WatchUserProfilesUseCase {
-  final UserProfileRepository userProfileRepository;
+  final UserProfileCacheRepository userProfileCacheRepository;
 
-  WatchUserProfilesUseCase(this.userProfileRepository);
+  WatchUserProfilesUseCase(this.userProfileCacheRepository);
 
   Stream<Either<Failure, List<UserProfile>>> call(List<String> userIds) {
-    return userProfileRepository.watchUserProfilesByIds(userIds);
+    return userProfileCacheRepository.watchUserProfilesByIds(userIds);
   }
 }

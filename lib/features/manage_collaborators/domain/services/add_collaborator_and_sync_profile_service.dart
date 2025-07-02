@@ -3,16 +3,16 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_cache_repository.dart';
 
 @lazySingleton
 class AddCollaboratorAndSyncProfileService {
   final AddCollaboratorToProjectUseCase _addCollaboratorUseCase;
-  final UserProfileRepository _userProfileRepository;
+  final UserProfileCacheRepository _userProfileCacheRepository;
 
   AddCollaboratorAndSyncProfileService(
     this._addCollaboratorUseCase,
-    this._userProfileRepository,
+    this._userProfileCacheRepository,
   );
 
   Future<Either<Failure, Project>> call(
@@ -20,12 +20,12 @@ class AddCollaboratorAndSyncProfileService {
   ) async {
     final result = await _addCollaboratorUseCase(params);
     if (result.isRight()) {
-      final profilesResult = await _userProfileRepository.getUserProfilesByIds([
+      final profilesResult = await _userProfileCacheRepository.getUserProfilesByIds([
         params.collaboratorId.value,
       ]);
       profilesResult.fold((failure) => null, (profiles) async {
         if (profiles.isNotEmpty) {
-          await _userProfileRepository.cacheUserProfiles([profiles.first]);
+          await _userProfileCacheRepository.cacheUserProfiles([profiles.first]);
         }
       });
     }
