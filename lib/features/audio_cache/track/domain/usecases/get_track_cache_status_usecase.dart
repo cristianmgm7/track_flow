@@ -6,18 +6,23 @@ import 'package:rxdart/rxdart.dart';
 import '../../../shared/domain/entities/cached_audio.dart';
 import '../../../shared/domain/entities/download_progress.dart';
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_repository.dart';
+import '../../../shared/domain/repositories/audio_storage_repository.dart';
+import '../../../shared/domain/repositories/audio_download_repository.dart';
 
 @injectable
 class GetTrackCacheStatusUseCase {
-  final CacheStorageRepository _cacheStorageRepository;
+  final AudioStorageRepository _audioStorageRepository;
+  final AudioDownloadRepository _audioDownloadRepository;
 
-  GetTrackCacheStatusUseCase(this._cacheStorageRepository);
+  GetTrackCacheStatusUseCase(
+    this._audioStorageRepository,
+    this._audioDownloadRepository,
+  );
 
   /// Get current cache status for a track
   Future<Either<CacheFailure, CacheStatus>> call(String trackId) async {
     try {
-      final result = await _cacheStorageRepository.audioExists(trackId);
+      final result = await _audioStorageRepository.audioExists(trackId);
       return result.fold(
         (failure) => Left(failure),
         (exists) => Right(exists ? CacheStatus.cached : CacheStatus.notCached),
@@ -38,7 +43,7 @@ class GetTrackCacheStatusUseCase {
     String trackId,
   ) async {
     try {
-      return await _cacheStorageRepository.getCachedAudio(trackId);
+      return await _audioStorageRepository.getCachedAudio(trackId);
     } catch (e) {
       return Left(
         ValidationCacheFailure(
@@ -55,7 +60,7 @@ class GetTrackCacheStatusUseCase {
     String trackId,
   ) async {
     try {
-      return await _cacheStorageRepository.getCachedAudioPath(trackId);
+      return await _audioStorageRepository.getCachedAudioPath(trackId);
     } catch (e) {
       return Left(
         ValidationCacheFailure(
@@ -84,7 +89,7 @@ class GetTrackCacheStatusUseCase {
 
   /// Watch download progress for a track
   Stream<DownloadProgress> watchDownloadProgress(String trackId) {
-    return _cacheStorageRepository.watchDownloadProgress(trackId);
+    return _audioDownloadRepository.watchDownloadProgress(trackId);
   }
 
   /// Watch combined cache info (status + progress)

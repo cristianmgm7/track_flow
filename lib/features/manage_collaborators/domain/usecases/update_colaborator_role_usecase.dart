@@ -9,7 +9,7 @@ import 'package:trackflow/features/projects/domain/value_objects/project_permiss
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 
 class UpdateCollaboratorRoleParams extends Equatable {
   final ProjectId projectId;
@@ -29,12 +29,12 @@ class UpdateCollaboratorRoleParams extends Equatable {
 @lazySingleton
 class UpdateCollaboratorRoleUseCase {
   final ProjectsRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   UpdateCollaboratorRoleUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionService,
   );
 
@@ -64,14 +64,22 @@ class UpdateCollaboratorRoleUseCase {
       }
 
       try {
-        final updatedProject = project.updateCollaboratorRole(
+        final result = await _collaboratorRepository.updateCollaboratorRole(
+          params.projectId,
           params.userId,
-          params.role,
+          params.role.toShortString(),
         );
-        final result = await _repositoryManageCollaborators.updateProject(
-          updatedProject,
+        return result.fold(
+          (failure) => left(failure),
+          (_) async {
+            // Return updated project after successful role update
+            final updatedProject = project.updateCollaboratorRole(
+              params.userId,
+              params.role,
+            );
+            return right(updatedProject);
+          },
         );
-        return result;
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }

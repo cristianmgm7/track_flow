@@ -2,11 +2,11 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_repository.dart';
+import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
 
 @injectable
 class RemovePlaylistCacheUseCase {
-  final CacheStorageRepository _cacheStorageRepository;
+  final CacheStorageFacadeRepository _cacheStorageRepository;
 
   RemovePlaylistCacheUseCase(this._cacheStorageRepository);
 

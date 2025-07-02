@@ -1,24 +1,32 @@
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/auth/domain/repositories/onboarding_repository.dart';
+import 'package:trackflow/features/auth/domain/repositories/welcome_screen_repository.dart';
 
 @lazySingleton
 class OnboardingUseCase {
-  final AuthRepository repository;
-  OnboardingUseCase(this.repository);
+  final OnboardingRepository _onboardingRepository;
+  final WelcomeScreenRepository _welcomeScreenRepository;
+  
+  OnboardingUseCase(
+    this._onboardingRepository,
+    this._welcomeScreenRepository,
+  );
 
-  Future<bool> onboardingCompleted() async {
-    return repository.onboardingCompleted();
+  Future<Either<Failure, Unit>> onboardingCompleted() async {
+    return await _onboardingRepository.onboardingCompleted();
   }
 
-  Future<void> welcomeScreenSeenCompleted() async {
-    return repository.welcomeScreenSeenCompleted();
+  Future<Either<Failure, Unit>> welcomeScreenSeenCompleted() async {
+    return await _welcomeScreenRepository.welcomeScreenSeenCompleted();
   }
 
-  Future<bool> checkWelcomeScreenSeen() async {
-    return repository.checkWelcomeScreenSeen();
+  Future<Either<Failure, bool>> checkWelcomeScreenSeen() async {
+    return await _welcomeScreenRepository.checkWelcomeScreenSeen();
   }
 
-  Future<bool> checkOnboardingCompleted() async {
-    return repository.checkOnboardingCompleted();
+  Future<Either<Failure, bool>> checkOnboardingCompleted() async {
+    return await _onboardingRepository.checkOnboardingCompleted();
   }
 }

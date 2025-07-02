@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../../core/error/failures.dart';
-import '../../../audio_cache/shared/domain/repositories/cache_storage_repository.dart';
+import '../../../audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart';
 import '../../domain/services/audio_source_resolver.dart';
 
 /// Pure audio source resolver implementation
@@ -12,7 +12,7 @@ import '../../domain/services/audio_source_resolver.dart';
 class AudioSourceResolverImpl implements AudioSourceResolver {
   const AudioSourceResolverImpl(this._cacheStorageRepository);
 
-  final CacheStorageRepository _cacheStorageRepository;
+  final CacheStorageFacadeRepository _cacheStorageRepository;
 
   @override
   Future<Either<Failure, String>> resolveAudioSource(

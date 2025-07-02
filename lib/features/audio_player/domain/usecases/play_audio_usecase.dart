@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
@@ -15,14 +15,14 @@ import '../services/audio_playback_service.dart';
 class PlayAudioUseCase {
   const PlayAudioUseCase({
     required AudioTrackRepository audioTrackRepository,
-    required CacheStorageRepository cacheStorageRepository,
+    required CacheStorageFacadeRepository cacheStorageRepository,
     required AudioPlaybackService playbackService,
   }) : _audioTrackRepository = audioTrackRepository,
        _cacheStorageRepository = cacheStorageRepository,
        _playbackService = playbackService;
 
   final AudioTrackRepository _audioTrackRepository;
-  final CacheStorageRepository _cacheStorageRepository;
+  final CacheStorageFacadeRepository _cacheStorageRepository;
   final AudioPlaybackService _playbackService;
 
   /// Play audio track by ID

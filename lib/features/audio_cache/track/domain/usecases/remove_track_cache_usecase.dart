@@ -2,13 +2,13 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_repository.dart';
+import '../../../shared/domain/repositories/audio_storage_repository.dart';
 
 @injectable
 class RemoveTrackCacheUseCase {
-  final CacheStorageRepository _cacheStorageRepository;
+  final AudioStorageRepository _audioStorageRepository;
 
-  RemoveTrackCacheUseCase(this._cacheStorageRepository);
+  RemoveTrackCacheUseCase(this._audioStorageRepository);
 
   /// Remove a track from cache
   Future<Either<CacheFailure, Unit>> call(String trackId) async {
@@ -24,7 +24,7 @@ class RemoveTrackCacheUseCase {
     }
 
     try {
-      return await _cacheStorageRepository.deleteAudioFile(trackId);
+      return await _audioStorageRepository.deleteAudioFile(trackId);
     } catch (e) {
       return Left(
         ValidationCacheFailure(
@@ -41,7 +41,7 @@ class RemoveTrackCacheUseCase {
     List<String> trackIds,
   ) async {
     try {
-      final result = await _cacheStorageRepository.deleteMultipleAudioFiles(
+      final result = await _audioStorageRepository.deleteMultipleAudioFiles(
         trackIds,
       );
       return result.fold(

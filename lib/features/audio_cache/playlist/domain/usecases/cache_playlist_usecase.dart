@@ -2,13 +2,13 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_repository.dart';
+import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
 import '../../../../audio_track/domain/repositories/audio_track_repository.dart';
 import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class CachePlaylistUseCase {
-  final CacheStorageRepository _cacheStorageRepository;
+  final CacheStorageFacadeRepository _cacheStorageRepository;
   final AudioTrackRepository _audioTrackRepository;
 
   CachePlaylistUseCase(
@@ -75,7 +75,7 @@ class CachePlaylistUseCase {
     }
 
     try {
-      final result = await _cacheStorageRepository.downloadMultipleAudios(
+      final result = await _cacheStorageRepository.downloadAndStoreMultipleAudios(
         trackUrlPairs,
       );
 

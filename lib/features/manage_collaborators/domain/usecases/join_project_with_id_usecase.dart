@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
@@ -22,12 +22,12 @@ class JoinProjectWithIdParams extends Equatable {
 @lazySingleton
 class JoinProjectWithIdUseCase {
   final ProjectsRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionRepository;
 
   JoinProjectWithIdUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionRepository,
   );
 
@@ -52,11 +52,18 @@ class JoinProjectWithIdUseCase {
       );
 
       try {
-        project.addCollaborator(newCollaborator);
-        final result = await _repositoryManageCollaborators.updateProject(
-          project,
+        final result = await _collaboratorRepository.joinProject(
+          params.projectId,
+          UserId.fromUniqueString(userId),
         );
-        return result;
+        return result.fold(
+          (failure) => left(failure),
+          (_) async {
+            // Return updated project after successful join
+            final updatedProject = project.addCollaborator(newCollaborator);
+            return right(updatedProject);
+          },
+        );
       } catch (e) {
         return left(ServerFailure('Failed to join project: ${e.toString()}'));
       }

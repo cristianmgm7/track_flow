@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart' as core_ids;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/playback_session.dart';
 import '../entities/audio_source.dart';
@@ -18,7 +18,7 @@ class RestorePlaybackStateUseCase {
   const RestorePlaybackStateUseCase({
     required PlaybackPersistenceRepository persistenceRepository,
     required AudioTrackRepository audioTrackRepository,
-    required CacheStorageRepository cacheStorageRepository,
+    required CacheStorageFacadeRepository cacheStorageRepository,
     required AudioPlaybackService playbackService,
   }) : _persistenceRepository = persistenceRepository,
        _audioTrackRepository = audioTrackRepository,
@@ -27,7 +27,7 @@ class RestorePlaybackStateUseCase {
 
   final PlaybackPersistenceRepository _persistenceRepository;
   final AudioTrackRepository _audioTrackRepository;
-  final CacheStorageRepository _cacheStorageRepository;
+  final CacheStorageFacadeRepository _cacheStorageRepository;
   final AudioPlaybackService _playbackService;
 
   /// Restore previously saved playback session

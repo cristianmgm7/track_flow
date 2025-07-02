@@ -4,7 +4,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
@@ -30,12 +30,12 @@ class AddCollaboratorToProjectParams extends Equatable {
 @lazySingleton
 class AddCollaboratorToProjectUseCase {
   final ProjectsRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   AddCollaboratorToProjectUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionService,
   );
 
@@ -67,11 +67,19 @@ class AddCollaboratorToProjectUseCase {
       );
 
       try {
-        final updatedProject = project.addCollaborator(newCollaborator);
-        final result = await _repositoryManageCollaborators.updateProject(
-          updatedProject,
+        final result = await _collaboratorRepository.addCollaborator(
+          params.projectId,
+          params.collaboratorId,
+          newCollaborator.role.toShortString(),
         );
-        return result;
+        return result.fold(
+          (failure) => left(failure),
+          (_) async {
+            // Return updated project after successful addition
+            final updatedProject = project.addCollaborator(newCollaborator);
+            return right(updatedProject);
+          },
+        );
       } on manage_collab_exc.CollaboratorAlreadyExistsException catch (e) {
         return left(
           manage_collab_exc.ManageCollaboratorException(e.toString()),

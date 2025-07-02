@@ -2,11 +2,11 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_repository.dart';
+import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
 
 @injectable
 class CacheTrackUseCase {
-  final CacheStorageRepository _cacheStorageRepository;
+  final CacheStorageFacadeRepository _cacheStorageRepository;
 
   CacheTrackUseCase(this._cacheStorageRepository);
 
@@ -79,7 +79,7 @@ class CacheTrackUseCase {
     required Map<String, String> trackUrlPairs, // trackId -> audioUrl
   }) async {
     try {
-      final result = await _cacheStorageRepository.downloadMultipleAudios(
+      final result = await _cacheStorageRepository.downloadAndStoreMultipleAudios(
         trackUrlPairs,
       );
 
