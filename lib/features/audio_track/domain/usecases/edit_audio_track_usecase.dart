@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 
 class EditAudioTrackParams {
   final AudioTrackId trackId;
@@ -20,7 +20,7 @@ class EditAudioTrackParams {
 @lazySingleton
 class EditAudioTrackUseCase {
   final ProjectTrackService projectTrackService;
-  final ProjectDetailRepository projectDetailRepository;
+  final ProjectsRepository projectDetailRepository;
 
   EditAudioTrackUseCase(this.projectTrackService, this.projectDetailRepository);
 

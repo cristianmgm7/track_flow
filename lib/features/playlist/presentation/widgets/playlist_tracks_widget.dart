@@ -8,7 +8,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_b
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_player/domain/entities/playlist_id.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import 'package:trackflow/features/playlist/presentation/utils/playlist_utils.dart';
 
 class PlaylistTracksWidget extends StatelessWidget {
@@ -107,7 +107,7 @@ class PlaylistTracksWidget extends StatelessWidget {
                           onPlay: () {
                             context.read<AudioPlayerBloc>().add(
                               PlayPlaylistRequested(
-                                PlaylistId(playlist.id),
+                                PlaylistId(playlist.id.value),
                                 startIndex: index,
                               ),
                             );

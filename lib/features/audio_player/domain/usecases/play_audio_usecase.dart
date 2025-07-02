@@ -1,23 +1,29 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart' as core_ids;
+import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/audio_track_id.dart';
 import '../entities/audio_source.dart';
-import '../repositories/audio_content_repository.dart';
+import '../entities/audio_track_metadata.dart';
 import '../services/audio_playback_service.dart';
 
 /// Pure audio playback use case
 /// ONLY handles audio playback - NO business domain concerns
-/// NO: UserProfile fetching, collaboration logic, or business context
+/// Uses existing repositories directly - NO additional abstractions
 @injectable
 class PlayAudioUseCase {
   const PlayAudioUseCase({
-    required AudioContentRepository audioContentRepository,
+    required AudioTrackRepository audioTrackRepository,
+    required CacheStorageRepository cacheStorageRepository,
     required AudioPlaybackService playbackService,
-  }) : _audioContentRepository = audioContentRepository,
+  }) : _audioTrackRepository = audioTrackRepository,
+       _cacheStorageRepository = cacheStorageRepository,
        _playbackService = playbackService;
 
-  final AudioContentRepository _audioContentRepository;
+  final AudioTrackRepository _audioTrackRepository;
+  final CacheStorageRepository _cacheStorageRepository;
   final AudioPlaybackService _playbackService;
 
   /// Play audio track by ID
@@ -25,21 +31,41 @@ class PlayAudioUseCase {
   /// Does NOT handle: user context, collaborator data, project information
   Future<Either<AudioFailure, void>> call(AudioTrackId trackId) async {
     try {
-      // 1. Get pure audio metadata (NO UserProfile)
-      final metadata = await _audioContentRepository.getTrackMetadata(trackId);
-
-      // 2. Resolve audio source URL (handles cache vs streaming internally)
-      final sourceUrl = await _audioContentRepository.getAudioSourceUrl(
-        trackId,
+      // 1. Get track from business repository
+      final trackResult = await _audioTrackRepository.getTrackById(
+        core_ids.AudioTrackId.fromUniqueString(trackId.value),
       );
 
-      // 3. Create audio source for playback
-      final audioSource = AudioSource(url: sourceUrl, metadata: metadata);
+      return await trackResult.fold(
+        (failure) async => Left(TrackNotFoundFailure(trackId.value)),
+        (audioTrack) async {
+          // 2. Convert to pure audio metadata
+          final metadata = AudioTrackMetadata(
+            id: trackId,
+            title: audioTrack.name,
+            artist: audioTrack.uploadedBy.value,
+            duration: audioTrack.duration,
+            coverUrl: null, // AudioTrack doesn't have cover URL
+          );
 
-      // 4. Initiate playback (pure audio operation)
-      await _playbackService.play(audioSource);
+          // 3. Try to get cached path first, fallback to streaming URL
+          final cacheResult = await _cacheStorageRepository.getCachedAudioPath(
+            trackId.value,
+          );
+          final sourceUrl = cacheResult.fold(
+            (cacheFailure) => audioTrack.url, // Use streaming URL if not cached
+            (cachedPath) => cachedPath, // Use cached file if available
+          );
 
-      return const Right(null);
+          // 4. Create audio source for playback
+          final audioSource = AudioSource(url: sourceUrl, metadata: metadata);
+
+          // 5. Initiate playback (pure audio operation)
+          await _playbackService.play(audioSource);
+
+          return const Right(null);
+        },
+      );
     } catch (e) {
       // Handle audio-specific errors only
       if (e.toString().contains('not found')) {

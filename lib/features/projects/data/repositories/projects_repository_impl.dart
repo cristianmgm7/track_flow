@@ -67,6 +67,15 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
+    final hasConnected = await _networkInfo.isConnected;
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
+    }
+    return await _remoteDataSource.getProjectById(projectId);
+  }
+
   // watching projects stream
   @override
   Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId) {

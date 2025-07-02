@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 
@@ -7,6 +8,7 @@ import '../datasources/playlist_local_data_source.dart';
 import '../datasources/playlist_remote_data_source.dart';
 import '../models/playlist_dto.dart';
 
+@LazySingleton(as: PlaylistRepository)
 class PlaylistRepositoryImpl implements PlaylistRepository {
   final PlaylistLocalDataSource localDataSource;
   final PlaylistRemoteDataSource remoteDataSource;

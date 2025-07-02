@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/playlist_dto.dart';
 
@@ -9,6 +10,7 @@ abstract class PlaylistRemoteDataSource {
   Future<void> deletePlaylist(String id);
 }
 
+@LazySingleton(as: PlaylistRemoteDataSource)
 class PlaylistRemoteDataSourceImpl implements PlaylistRemoteDataSource {
   final FirebaseFirestore firestore;
 

@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
@@ -28,7 +28,7 @@ class UpdateCollaboratorRoleParams extends Equatable {
 
 @lazySingleton
 class UpdateCollaboratorRoleUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
+  final ProjectsRepository _repositoryProjectDetail;
   final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final SessionStorage _sessionService;
 

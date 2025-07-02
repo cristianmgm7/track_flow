@@ -5,7 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -21,7 +21,7 @@ class JoinProjectWithIdParams extends Equatable {
 
 @lazySingleton
 class JoinProjectWithIdUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
+  final ProjectsRepository _repositoryProjectDetail;
   final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final SessionStorage _sessionRepository;
 

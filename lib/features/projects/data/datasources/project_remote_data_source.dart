@@ -14,6 +14,8 @@ abstract class ProjectRemoteDataSource {
 
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
 
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
+
   Future<Either<Failure, List<Project>>> getUserProjects(String userId);
 }
 
@@ -106,6 +108,41 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       return Left(
         UnexpectedFailure(
           'An unexpected error occurred while deleting the project',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
+    try {
+      final docSnapshot = await _firestore
+          .collection(ProjectDTO.collection)
+          .doc(projectId.value)
+          .get();
+      
+      if (docSnapshot.exists) {
+        final project = ProjectDTO.fromFirestore(docSnapshot).toDomain();
+        return Right(project);
+      } else {
+        return Left(DatabaseFailure('Project not found'));
+      }
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        return Left(
+          AuthenticationFailure(
+            'You don\'t have permission to access this project',
+          ),
+        );
+      }
+      if (e.code == 'not-found') {
+        return Left(DatabaseFailure('Project not found'));
+      }
+      return Left(DatabaseFailure('Failed to get project: ${e.message}'));
+    } catch (e) {
+      return Left(
+        UnexpectedFailure(
+          'An unexpected error occurred while getting the project',
         ),
       );
     }

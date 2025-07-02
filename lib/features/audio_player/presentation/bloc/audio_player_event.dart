@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/audio_track_id.dart';
-import '../../domain/entities/playlist_id.dart';
+import '../../../playlist/domain/entities/playlist_id.dart';
 import '../../domain/entities/repeat_mode.dart';
 import '../../domain/entities/playback_session.dart';
 
@@ -39,7 +39,7 @@ class PlayPlaylistRequested extends AudioPlayerEvent {
 
   /// Playlist ID to play
   final PlaylistId playlistId;
-  
+
   /// Starting track index in playlist
   final int startIndex;
 
@@ -47,7 +47,8 @@ class PlayPlaylistRequested extends AudioPlayerEvent {
   List<Object?> get props => [playlistId, startIndex];
 
   @override
-  String toString() => 'PlayPlaylistRequested(playlistId: $playlistId, startIndex: $startIndex)';
+  String toString() =>
+      'PlayPlaylistRequested(playlistId: $playlistId, startIndex: $startIndex)';
 }
 
 /// Pause current audio playback

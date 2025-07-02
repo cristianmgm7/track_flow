@@ -7,7 +7,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
@@ -28,7 +28,7 @@ class RemoveCollaboratorParams extends Equatable {
 
 @lazySingleton
 class RemoveCollaboratorUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
+  final ProjectsRepository _repositoryProjectDetail;
   final ManageCollaboratorsRepository _repositoryManageCollaborators;
   final SessionStorage _sessionService;
 

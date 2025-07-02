@@ -7,6 +7,7 @@ abstract class ProjectsRepository {
   Future<Either<Failure, Project>> createProject(Project project);
   Future<Either<Failure, Unit>> updateProject(Project project);
   Future<Either<Failure, Unit>> deleteProject(UniqueId id);
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
 
   /// Streams local projects.
   Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId);

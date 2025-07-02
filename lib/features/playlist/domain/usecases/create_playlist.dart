@@ -1,3 +1,5 @@
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
+
 import '../entities/playlist.dart';
 import '../repositories/playlist_repository.dart';
 
@@ -12,7 +14,7 @@ class CreatePlaylist {
     PlaylistSource source,
   ) async {
     final playlist = Playlist(
-      id: _generateId(),
+      id: PlaylistId(_generateId()),
       name: name,
       trackIds: trackIds,
       playlistSource: source,

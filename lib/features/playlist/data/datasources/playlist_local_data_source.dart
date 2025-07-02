@@ -1,3 +1,4 @@
+import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 import 'package:trackflow/features/playlist/data/models/playlist_document.dart';
 import '../models/playlist_dto.dart';
@@ -10,6 +11,7 @@ abstract class PlaylistLocalDataSource {
   Future<void> deletePlaylist(String uuid);
 }
 
+@LazySingleton(as: PlaylistLocalDataSource)
 class PlaylistLocalDataSourceImpl implements PlaylistLocalDataSource {
   final Isar isar;
 

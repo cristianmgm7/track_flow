@@ -1,27 +1,33 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart' as core_ids;
+import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/playback_session.dart';
 import '../entities/audio_source.dart';
+import '../entities/audio_track_metadata.dart';
 import '../repositories/playback_persistence_repository.dart';
-import '../repositories/audio_content_repository.dart';
 import '../services/audio_playback_service.dart';
 
 /// Pure audio state restoration use case
 /// ONLY handles audio playback state restoration - NO business domain concerns
-/// NO: UserProfile reconstruction, collaborator data, project context
+/// Uses existing repositories directly - NO additional abstractions
 @injectable
 class RestorePlaybackStateUseCase {
   const RestorePlaybackStateUseCase({
     required PlaybackPersistenceRepository persistenceRepository,
-    required AudioContentRepository audioContentRepository,
+    required AudioTrackRepository audioTrackRepository,
+    required CacheStorageRepository cacheStorageRepository,
     required AudioPlaybackService playbackService,
   }) : _persistenceRepository = persistenceRepository,
-       _audioContentRepository = audioContentRepository,
+       _audioTrackRepository = audioTrackRepository,
+       _cacheStorageRepository = cacheStorageRepository,
        _playbackService = playbackService;
 
   final PlaybackPersistenceRepository _persistenceRepository;
-  final AudioContentRepository _audioContentRepository;
+  final AudioTrackRepository _audioTrackRepository;
+  final CacheStorageRepository _cacheStorageRepository;
   final AudioPlaybackService _playbackService;
 
   /// Restore previously saved playback session
@@ -47,16 +53,44 @@ class RestorePlaybackStateUseCase {
           // Get current metadata for all tracks in queue
           final sources = savedSession.queue.sources;
           final trackIds = sources.map((source) => source.metadata.id).toList();
-          final tracksMetadata = await _audioContentRepository
-              .getTracksMetadata(trackIds);
 
           // Create audio sources for playback service
           final audioSources = <AudioSource>[];
-          for (final metadata in tracksMetadata) {
-            final sourceUrl = await _audioContentRepository.getAudioSourceUrl(
-              metadata.id,
-            );
-            audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
+          for (final trackId in trackIds) {
+            try {
+              // Get track from business repository
+              final trackResult = await _audioTrackRepository.getTrackById(
+                core_ids.AudioTrackId.fromUniqueString(trackId.value),
+              );
+
+              await trackResult.fold(
+                (failure) async {
+                  // Skip tracks that can't be loaded
+                },
+                (audioTrack) async {
+                  // Convert to pure audio metadata
+                  final metadata = AudioTrackMetadata(
+                    id: trackId,
+                    title: audioTrack.name,
+                    artist: 'Unknown Artist',
+                    duration: audioTrack.duration,
+                    coverUrl: null,
+                  );
+
+                  // Try to get cached path first, fallback to streaming URL
+                  final cacheResult = await _cacheStorageRepository.getCachedAudioPath(trackId.value);
+                  final sourceUrl = cacheResult.fold(
+                    (cacheFailure) => audioTrack.url, // Use streaming URL if not cached
+                    (cachedPath) => cachedPath,        // Use cached file if available
+                  );
+
+                  audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
+                },
+              );
+            } catch (e) {
+              // Skip tracks that can't be loaded, continue with others
+              continue;
+            }
           }
 
           if (audioSources.isNotEmpty) {

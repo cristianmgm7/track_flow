@@ -9,7 +9,6 @@ import '../../../../audio_player/domain/entities/audio_track_id.dart';
 @injectable
 class CachePlaylistUseCase {
   final CacheStorageRepository _cacheStorageRepository;
-  final AudioContentRepository _audioContentRepository;
 
   CachePlaylistUseCase(
     this._cacheStorageRepository,
