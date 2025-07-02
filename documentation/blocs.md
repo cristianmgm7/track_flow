@@ -1,31 +1,39 @@
 # BLoCs Documentation
 
-Este documento proporciona una visión general de todos los BLoCs (Business Logic Components) en el codebase de TrackFlow, sus responsabilidades y métodos públicos.
+This document provides an overview of all BLoCs (Business Logic Components) in the TrackFlow codebase, their responsibilities, and public methods after the SOLID refactoring.
 
-## Resumen General
+## General Overview
 
-**Total de BLoCs:** 11
+**Total BLoCs:** 11
+**Refactor Impact:** ✅ BLoCs updated to work with new specialized repositories from Phase 3
 
-Los BLoCs están organizados por features siguiendo la arquitectura Clean Architecture y están registrados como injectable usando el patrón de inyección de dependencias.
+BLoCs are organized by features following Clean Architecture and are registered as injectable using the dependency injection pattern.
 
 ## Lista de BLoCs por Feature
 
-### 1. AuthBloc
-**Ubicación:** `lib/features/auth/presentation/bloc/auth_bloc.dart`
+### 1. AuthBloc ✨ **UPDATED FOR SOLID REFACTOR**
+**Location:** `lib/features/auth/presentation/bloc/auth_bloc.dart`
 
-**Responsabilidad:** Gestión de autenticación y onboarding de usuarios
+**Responsibility:** Authentication and onboarding user management
 
-**Métodos públicos (eventos que maneja):**
-- `AuthCheckRequested` - Verificar estado de autenticación
-- `AuthSignInRequested` - Iniciar sesión con email/password
-- `AuthSignUpRequested` - Registrar nuevo usuario
-- `AuthSignOutRequested` - Cerrar sesión
-- `AuthGoogleSignInRequested` - Iniciar sesión con Google
-- `OnboardingMarkCompleted` - Marcar onboarding como completado
-- `WelcomeScreenMarkCompleted` - Marcar pantalla de bienvenida como vista
+⚠️ **Refactor Note:** Now works with 3 specialized repositories instead of 1 monolithic AuthRepository
 
-**Casos de uso dependientes:** 7
+**Public Methods (events handled):**
+- `AuthCheckRequested` - Check authentication state
+- `AuthSignInRequested` - Sign in with email/password
+- `AuthSignUpRequested` - Register new user
+- `AuthSignOutRequested` - Sign out
+- `AuthGoogleSignInRequested` - Sign in with Google
+- `OnboardingMarkCompleted` - Mark onboarding as completed
+- `WelcomeScreenMarkCompleted` - Mark welcome screen as seen
+
+**Dependent Use Cases:** 7
 - SignInUseCase, SignUpUseCase, SignOutUseCase, GoogleSignInUseCase, GetAuthStateUseCase, OnboardingUseCase
+
+**Repository Dependencies (After Phase 3):**
+- `AuthRepository` - Core authentication operations
+- `OnboardingRepository` - Onboarding state management  
+- `WelcomeScreenRepository` - Welcome screen state
 
 ---
 
@@ -178,25 +186,31 @@ Los BLoCs están organizados por features siguiendo la arquitectura Clean Archit
 
 ---
 
-### 9. ManageCollaboratorsBloc
-**Ubicación:** `lib/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart`
+### 9. ManageCollaboratorsBloc ✨ **UPDATED FOR SOLID REFACTOR**
+**Location:** `lib/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart`
 
-**Responsabilidad:** Gestión de colaboradores en proyectos
+**Responsibility:** Project collaborator management
 
-**Métodos públicos (eventos que maneja):**
-- `WatchCollaborators` - Observar colaboradores de un proyecto
-- `AddCollaborator` - Agregar colaborador al proyecto
-- `RemoveCollaborator` - Remover colaborador del proyecto
-- `UpdateCollaboratorRole` - Actualizar rol de colaborador
-- `LeaveProject` - Abandonar proyecto (usuario actual)
+⚠️ **Refactor Note:** Now works with specialized CollaboratorRepository instead of ManageCollaboratorsRepository
 
-**Casos de uso dependientes:** 5
+**Public Methods (events handled):**
+- `WatchCollaborators` - Watch project collaborators
+- `AddCollaborator` - Add collaborator to project
+- `RemoveCollaborator` - Remove collaborator from project
+- `UpdateCollaboratorRole` - Update collaborator role
+- `LeaveProject` - Leave project (current user)
+
+**Dependent Use Cases:** 5
 - AddCollaboratorAndSyncProfileService, RemoveCollaboratorUseCase, UpdateCollaboratorRoleUseCase, LeaveProjectUseCase, WatchUserProfilesUseCase
 
-**Características especiales:**
-- Manejo específico de ProjectPermissionException
-- Conserva último estado exitoso en caso de errores
-- Stream subscription para observar perfiles de colaboradores
+**Repository Dependencies (After Phase 3):**
+- `CollaboratorRepository` - Collaborator management operations
+- `UserProfileCacheRepository` - Bulk profile caching for collaborators
+
+**Special Features:**
+- Specific handling of ProjectPermissionException
+- Preserves last successful state on errors
+- Stream subscription to watch collaborator profiles
 
 ---
 

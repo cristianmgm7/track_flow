@@ -82,8 +82,10 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     return _localDataSource
         .watchAllProjects(ownerId)
         .map(
-          (projects) =>
-              Right(projects.map((project) => project.toDomain()).toList()),
+          (either) => either.map(
+            (projects) =>
+                projects.map((project) => project.toDomain()).toList(),
+          ),
         );
   }
 }

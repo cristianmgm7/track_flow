@@ -24,10 +24,14 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   @override
   Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
     try {
-      final track = await localDataSource.getTrackById(id.value);
-      return track != null
-          ? Right(track.toDomain())
-          : Left(ServerFailure('Track not found'));
+      final result = await localDataSource.getTrackById(id.value);
+      return result.fold(
+        (failure) => Left(failure),
+        (dto) =>
+            dto != null
+                ? Right(dto.toDomain())
+                : Left(ServerFailure('Track not found')),
+      );
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

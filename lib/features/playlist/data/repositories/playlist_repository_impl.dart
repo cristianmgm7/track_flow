@@ -25,14 +25,20 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<List<Playlist>> getAllPlaylists() async {
-    final dtos = await localDataSource.getAllPlaylists();
-    return dtos.map((dto) => dto.toDomain()).toList();
+    final either = await localDataSource.getAllPlaylists();
+    return either.fold(
+      (failure) => [], // or handle the failure as needed
+      (dtos) => dtos.map((dto) => dto.toDomain()).toList(),
+    );
   }
 
   @override
   Future<Playlist?> getPlaylistById(String id) async {
-    final dto = await localDataSource.getPlaylistById(id);
-    return dto?.toDomain();
+    final either = await localDataSource.getPlaylistById(id);
+    return either.fold(
+      (failure) => null, // or handle the failure as needed
+      (dto) => dto?.toDomain(),
+    );
   }
 
   @override

@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
 
 class _App extends StatefulWidget {
   _App() {
-    debugPrint('App constructor called');
+    // App constructor called
   }
   @override
   State<_App> createState() => _AppState();

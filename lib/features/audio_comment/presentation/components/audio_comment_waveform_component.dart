@@ -101,9 +101,6 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                                           DurationType.current,
                                         );
                                     // TODO: dispatch an event or show a comment input dialog
-                                    print(
-                                      'Add comment at position: $currentPosition',
-                                    );
                                   }
                                 },
                               ),

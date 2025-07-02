@@ -1,42 +1,61 @@
 # Data Sources Documentation
 
-Esta documentación lista todos los **Local Data Sources** y **Remote Data Sources** organizados por feature en la aplicación TrackFlow.
+This documentation lists all **Local Data Sources** and **Remote Data Sources** organized by feature in the TrackFlow application, updated after the Phase 2 SOLID refactoring.
 
-## Resumen General
+## General Overview
 
-- **Total de Data Sources:** 18 archivos (9 local + 9 remote)
-- **Features Cubiertas:** 9 diferentes features
-- **Patrón de Arquitectura:** Clean Architecture con separación clara entre fuentes locales y remotas
+- **Total Data Sources:** 19 files (10 local + 9 remote)
+- **Features Covered:** 9 different features
+- **Architecture Pattern:** Clean Architecture with clear separation between local and remote sources
+- **Refactor Status:** ✅ Phase 2 Complete - SRP violations fixed, Either<Failure, T> standardized
 
 ---
 
 ## 1. Auth Feature
 
-### Local Data Source: `auth_local_datasource.dart`
-**Ubicación:** `lib/features/auth/data/data_sources/`
+⚠️ **SOLID Refactor Note:** AuthLocalDataSource was split in Phase 2 to follow Single Responsibility Principle (SRP)
 
-**Métodos Públicos:**
-- `Future<void> cacheUserId(String userId)` - Cachea el ID del usuario
-- `Future<String?> getCachedUserId()` - Obtiene el ID del usuario cacheado
-- `Future<void> setOnboardingCompleted(bool completed)` - Marca el onboarding como completado
-- `Future<bool> isOnboardingCompleted()` - Verifica si el onboarding está completado
-- `Future<void> setWelcomeScreenSeen(bool seen)` - Marca la pantalla de bienvenida como vista
-- `Future<bool> isWelcomeScreenSeen()` - Verifica si la pantalla de bienvenida fue vista
-- `Future<void> setOfflineCredentials(String email, bool hasCredentials)` - Establece credenciales offline
-- `Future<String?> getOfflineEmail()` - Obtiene el email offline
-- `Future<bool> hasOfflineCredentials()` - Verifica si tiene credenciales offline
-- `Future<void> clearOfflineCredentials()` - Limpia las credenciales offline
+### Local Data Source: `user_session_local_datasource.dart` ✨ **NEW**
+**Location:** `lib/features/auth/data/data_sources/`
+
+**Responsibility:** Manages user session state and offline credentials
+
+**Public Methods:**
+- `Future<Either<Failure, Unit>> cacheUserId(String userId)` - Cache user ID
+- `Future<Either<Failure, String?>> getCachedUserId()` - Get cached user ID
+- `Future<Either<Failure, Unit>> setOfflineCredentials(String email, bool hasCredentials)` - Set offline credentials
+- `Future<Either<Failure, String?>> getOfflineEmail()` - Get offline email
+- `Future<Either<Failure, bool>> hasOfflineCredentials()` - Check if has offline credentials
+- `Future<Either<Failure, Unit>> clearOfflineCredentials()` - Clear offline credentials
+
+### Local Data Source: `onboarding_state_local_datasource.dart` ✨ **NEW**
+**Location:** `lib/features/auth/data/data_sources/`
+
+**Responsibility:** Manages onboarding and welcome screen state
+
+**Public Methods:**
+- `Future<Either<Failure, Unit>> setOnboardingCompleted(bool completed)` - Mark onboarding as completed
+- `Future<Either<Failure, bool>> isOnboardingCompleted()` - Check if onboarding is completed
+- `Future<Either<Failure, Unit>> setWelcomeScreenSeen(bool seen)` - Mark welcome screen as seen
+- `Future<Either<Failure, bool>> isWelcomeScreenSeen()` - Check if welcome screen was seen
+
+### Local Data Source: `auth_local_datasource.dart` 🔄 **DEPRECATED**
+**Location:** `lib/features/auth/data/data_sources/`
+
+**Status:** Maintained for backward compatibility, delegates to specialized data sources
+
+**Migration Path:** Use `UserSessionLocalDataSource` and `OnboardingStateLocalDataSource` instead
 
 ### Remote Data Source: `auth_remote_datasource.dart`
-**Ubicación:** `lib/features/auth/data/data_sources/`
+**Location:** `lib/features/auth/data/data_sources/`
 
-**Métodos Públicos:**
-- `Future<User?> getCurrentUser()` - Obtiene el usuario actual
-- `Stream<User?> authStateChanges()` - Stream de cambios en el estado de autenticación
-- `Future<User?> signInWithEmailAndPassword(String email, String password)` - Inicia sesión con email y contraseña
-- `Future<User?> signUpWithEmailAndPassword(String email, String password)` - Registra usuario con email y contraseña
-- `Future<User?> signInWithGoogle()` - Inicia sesión con Google
-- `Future<void> signOut()` - Cierra sesión
+**Public Methods:**
+- `Future<User?> getCurrentUser()` - Get current user
+- `Stream<User?> authStateChanges()` - Stream of authentication state changes
+- `Future<User?> signInWithEmailAndPassword(String email, String password)` - Sign in with email/password
+- `Future<User?> signUpWithEmailAndPassword(String email, String password)` - Sign up with email/password
+- `Future<User?> signInWithGoogle()` - Sign in with Google
+- `Future<void> signOut()` - Sign out
 
 ---
 
@@ -240,31 +259,53 @@ Esta documentación lista todos los **Local Data Sources** y **Remote Data Sourc
 
 ---
 
-## Tecnologías Utilizadas
+## Technologies Used
 
-### Almacenamiento Local
-- **Isar Database** - Para datos estructurados
-- **SharedPreferences** - Para preferencias y configuraciones simples
+### Local Storage
+- **Isar Database** - For structured data
+- **SharedPreferences** - For preferences and simple configurations
 
-### Servicios Remotos
-- **Firebase Firestore** - Base de datos en tiempo real
-- **Firebase Storage** - Almacenamiento de archivos
-- **Firebase Auth** - Autenticación
+### Remote Services
+- **Firebase Firestore** - Real-time database
+- **Firebase Storage** - File storage
+- **Firebase Auth** - Authentication
 
-### Patrones de Arquitectura
-- **Either/Failure** - Manejo de errores con Dartz
-- **Dependency Injection** - Con Injectable
-- **Reactive Programming** - Con Streams
-- **Clean Architecture** - Separación clara de responsabilidades
+### Architecture Patterns
+- **Either/Failure** - Error handling with Dartz
+- **Dependency Injection** - With Injectable
+- **Reactive Programming** - With Streams
+- **Clean Architecture** - Clear separation of responsibilities
+- **Single Responsibility Principle (SRP)** - Each data source has one responsibility ✨
 
 ---
 
-## Observaciones
+## SOLID Refactor Achievements (Phase 2)
 
-1. **Consistencia:** Todas las features siguen el mismo patrón de arquitectura
-2. **Manejo de Errores:** Uso consistente de `Either<Failure, T>` para operaciones que pueden fallar
-3. **Reactividad:** Amplio uso de `Stream` para actualizaciones en tiempo real
-4. **Cache Strategy:** Implementación robusta de cache local con validación de integridad
-5. **Pending Work:** Magic Link local data source requiere implementación
+### ✅ Single Responsibility Principle (SRP)
+- **AuthLocalDataSource** split into specialized data sources
+- Each data source now has exactly one responsibility
+- Clear separation between user session and onboarding concerns
 
-Esta documentación refleja el estado actual del codebase y debe actualizarse cuando se añadan nuevas features o se modifiquen las existentes.
+### ✅ Error Handling Standardization
+- **All data sources** now return `Either<Failure, T>` types
+- Consistent error handling across the entire data layer
+- Improved error propagation and handling
+
+### ✅ Interface Segregation
+- Smaller, focused interfaces instead of large monolithic ones
+- Clients only depend on methods they actually use
+- Better testability and maintainability
+
+---
+
+## Key Observations
+
+1. **Consistency:** All features follow the same architecture pattern
+2. **Error Handling:** Consistent use of `Either<Failure, T>` for operations that can fail ✅
+3. **Reactivity:** Extensive use of `Stream` for real-time updates
+4. **Cache Strategy:** Robust local cache implementation with integrity validation
+5. **SOLID Compliance:** All data sources now follow SOLID principles ✨
+6. **Backward Compatibility:** Deprecated data sources maintain existing APIs
+7. **Migration Path:** Clear guidance for transitioning to new specialized data sources
+
+This documentation reflects the current state of the codebase after Phase 2 SOLID refactoring and should be updated when new features are added or existing ones are modified.

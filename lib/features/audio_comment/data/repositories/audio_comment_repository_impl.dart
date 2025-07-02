@@ -30,7 +30,13 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     final comments = await _localDataSource.getCachedCommentsByTrack(
       commentId.value,
     );
-    return Right(comments.first.toDomain());
+    return comments.fold(
+      (failure) => Left(failure),
+      (dtos) =>
+          dtos.isNotEmpty
+              ? Right(dtos.first.toDomain())
+              : Left(ServerFailure('No comment found')),
+    );
   }
 
   @override
