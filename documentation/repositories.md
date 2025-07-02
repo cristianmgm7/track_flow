@@ -4,408 +4,266 @@ This document describes the repository architecture used in TrackFlow, following
 
 ## Overview
 
-- **Total Repositories:** 19 specialized repositories organized by domain
-- **Architecture Pattern:** Clean Architecture with Domain-Driven Design
-- **Design Principles:** SOLID principles with single responsibility and clear interfaces
-- **Error Handling:** Consistent `Either<Failure, T>` pattern using Dartz library
+- **Total Repositories:** All repositories are organized by domain and feature.
+- **Architecture Pattern:** Clean Architecture with Domain-Driven Design.
+- **Design Principles:** SOLID principles with single responsibility and clear interfaces.
+- **Error Handling:** Consistent `Either<Failure, T>` pattern using Dartz library.
 
-## 1. Authentication Domain 🔐
+## 1. Authentication Domain
 
 ### AuthRepository
 
 **Location**: `lib/features/auth/domain/repositories/auth_repository.dart`
+**Responsibility**: Handles user authentication operations only.
+**Public Methods:**
 
-**Responsibility**: Handles **authentication operations only** (core auth functions)
-
-**Methods** (7 focused methods):
-- `Stream<User?> get authState` - Stream of authentication state
-- `signInWithEmailAndPassword(String email, String password)` - Sign in with email/password
-- `signUpWithEmailAndPassword(String email, String password)` - Sign up with email/password  
-- `signInWithGoogle()` - Sign in with Google
-- `signOut()` - Sign out
-- `isLoggedIn()` - Check if logged in
-- `getSignedInUserId()` - Get signed in user ID
+- `Stream<User?> get authState` — Stream of authentication state.
+- `Future<Either<Failure, User>> signInWithEmailAndPassword(String email, String password)` — Sign in with email and password.
+- `Future<Either<Failure, User>> signUpWithEmailAndPassword(String email, String password)` — Sign up with email and password.
+- `Future<Either<Failure, User>> signInWithGoogle()` — Sign in with Google.
+- `Future<Either<Failure, Unit>> signOut()` — Sign out.
+- `Future<Either<Failure, bool>> isLoggedIn()` — Check if user is logged in.
+- `Future<Either<Failure, String>> getSignedInUserId()` — Get the signed-in user ID.
 
 ### OnboardingRepository
 
 **Location**: `lib/features/auth/domain/repositories/onboarding_repository.dart`
+**Responsibility**: Manages onboarding state only.
+**Public Methods:**
 
-**Responsibility**: Manages **onboarding state only**
-
-**Methods** (2 focused methods):
-- `onboardingCompleted()` - Mark onboarding as completed
-- `checkOnboardingCompleted()` - Check if onboarding completed
+- `Future<Either<Failure, Unit>> onboardingCompleted()` — Mark onboarding as completed.
+- `Future<Either<Failure, bool>> checkOnboardingCompleted()` — Check if onboarding is completed.
 
 ### WelcomeScreenRepository
 
 **Location**: `lib/features/auth/domain/repositories/welcome_screen_repository.dart`
+**Responsibility**: Manages welcome screen state only.
+**Public Methods:**
 
-**Responsibility**: Manages **welcome screen state only**
-
-**Methods** (2 focused methods):
-- `welcomeScreenSeenCompleted()` - Mark welcome screen as seen
-- `checkWelcomeScreenSeen()` - Check if welcome screen was seen
-
----
-
-## 2. AudioTrackRepository
-
-**Ubicación**: `lib/features/audio_track/domain/repositories/audio_track_repository.dart`
-
-**Responsabilidad**: Gestiona las pistas de audio, incluyendo obtención, subida, eliminación y edición.
-
-**Métodos**:
-
-- `getTrackById(AudioTrackId id)` - Obtener pista por ID
-- `watchTracksByProject(ProjectId projectId)` - Stream de pistas por proyecto
-- `uploadAudioTrack({File file, AudioTrack track})` - Subir nueva pista de audio
-- `deleteTrack(String trackId, String projectId)` - Eliminar pista
-- `editTrackName({AudioTrackId trackId, ProjectId projectId, String newName})` - Editar nombre de pista
+- `Future<Either<Failure, Unit>> welcomeScreenSeenCompleted()` — Mark welcome screen as seen/completed.
+- `Future<Either<Failure, bool>> checkWelcomeScreenSeen()` — Check if user has seen the welcome screen.
 
 ---
 
-## 3. AudioCommentRepository
+## 2. Audio Track Domain
 
-**Ubicación**: `lib/features/audio_comment/domain/repositories/audio_comment_repository.dart`
+### AudioTrackRepository
 
-**Responsabilidad**: Gestiona los comentarios de audio asociados a las pistas.
+**Location**: `lib/features/audio_track/domain/repositories/audio_track_repository.dart`
+**Responsibility**: Manages audio tracks, including retrieval, upload, deletion, and editing.
+**Public Methods:**
 
-**Métodos**:
-
-- `getCommentById(AudioCommentId commentId)` - Obtener comentario por ID
-- `addComment(AudioComment comment)` - Agregar nuevo comentario
-- `watchCommentsByTrack(AudioTrackId trackId)` - Stream de comentarios por pista
-- `deleteComment(AudioCommentId commentId)` - Eliminar comentario
-
----
-
-## 4. PlaylistRepository
-
-**Ubicación**: `lib/features/playlist/domain/repositories/playlist_repository.dart`
-
-**Responsabilidad**: Gestiona las playlists de la aplicación.
-
-**Métodos**:
-
-- `addPlaylist(Playlist playlist)` - Agregar nueva playlist
-- `getAllPlaylists()` - Obtener todas las playlists
-- `getPlaylistById(String id)` - Obtener playlist por ID
-- `updatePlaylist(Playlist playlist)` - Actualizar playlist
-- `deletePlaylist(String id)` - Eliminar playlist
+- `Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id)` — Get track by ID.
+- `Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(ProjectId projectId)` — Stream tracks by project.
+- `Future<Either<Failure, Unit>> uploadAudioTrack({required File file, required AudioTrack track})` — Upload a new audio track.
+- `Future<Either<Failure, Unit>> deleteTrack(String trackId, String projectId)` — Delete a track.
+- `Future<Either<Failure, Unit>> editTrackName({required AudioTrackId trackId, required ProjectId projectId, required String newName})` — Edit track name.
 
 ---
 
-## 5. ProjectsRepository
+## 3. Audio Comment Domain
 
-**Ubicación**: `lib/features/projects/domain/repositories/projects_repository.dart`
+### AudioCommentRepository
 
-**Responsabilidad**: Gestiona los proyectos del usuario.
+**Location**: `lib/features/audio_comment/domain/repositories/audio_comment_repository.dart`
+**Responsibility**: Manages audio comments associated with tracks.
+**Public Methods:**
 
-**Métodos**:
-
-- `createProject(Project project)` - Crear nuevo proyecto
-- `updateProject(Project project)` - Actualizar proyecto
-- `deleteProject(UniqueId id)` - Eliminar proyecto
-- `watchLocalProjects(UserId ownerId)` - Stream de proyectos locales del usuario
-
----
-
-? se puede eliminar y poner ese metodo de getprojectbyid en projects repository ?
-
-## 6. ProjectDetailRepository
-
-**Ubicación**: `lib/features/project_detail/domain/repositories/project_detail_repository.dart`
-
-**Responsabilidad**: Obtiene detalles específicos de un proyecto.
-
-**Métodos**:
-
-- `getProjectById(ProjectId projectId)` - Obtener proyecto por ID
+- `Future<Either<Failure, AudioComment>> getCommentById(AudioCommentId commentId)` — Get comment by ID.
+- `Future<Either<Failure, Unit>> addComment(AudioComment comment)` — Add a new comment.
+- `Stream<Either<Failure, List<AudioComment>>> watchCommentsByTrack(AudioTrackId trackId)` — Stream comments by track.
+- `Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId)` — Delete a comment.
 
 ---
 
-## 7. User Profile Domain 👤
+## 4. Playlist Domain
+
+### PlaylistRepository
+
+**Location**: `lib/features/playlist/domain/repositories/playlist_repository.dart`
+**Responsibility**: Manages playlists in the application.
+**Public Methods:**
+
+- `Future<void> addPlaylist(Playlist playlist)` — Add a new playlist.
+- `Future<List<Playlist>> getAllPlaylists()` — Get all playlists.
+- `Future<Playlist?> getPlaylistById(String id)` — Get playlist by ID.
+- `Future<void> updatePlaylist(Playlist playlist)` — Update a playlist.
+- `Future<void> deletePlaylist(String id)` — Delete a playlist.
+
+---
+
+## 5. Projects Domain
+
+### ProjectsRepository
+
+**Location**: `lib/features/projects/domain/repositories/projects_repository.dart`
+**Responsibility**: Manages user projects.
+**Public Methods:**
+
+- `Future<Either<Failure, Project>> createProject(Project project)` — Create a new project.
+- `Future<Either<Failure, Unit>> updateProject(Project project)` — Update a project.
+- `Future<Either<Failure, Unit>> deleteProject(UniqueId id)` — Delete a project.
+- `Future<Either<Failure, Project>> getProjectById(ProjectId projectId)` — Get project by ID.
+- `Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId)` — Stream local projects for a user.
+
+---
+
+## 6. User Profile Domain
 
 ### UserProfileRepository
 
 **Location**: `lib/features/user_profile/domain/repositories/user_profile_repository.dart`
+**Responsibility**: Manages individual user profile operations.
+**Public Methods:**
 
-**Responsibility**: Manages **individual user profile operations**
-
-**Methods** (3 focused methods):
-- `updateUserProfile(UserProfile userProfile)` - Update user profile
-- `getUserProfile(UserId userId)` - Get user profile
-- `watchUserProfile(UserId userId)` - Stream of user profile
+- `Future<Either<Failure, Unit>> updateUserProfile(UserProfile userProfile)` — Update a user profile.
+- `Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId)` — Stream a user profile by ID.
+- `Future<Either<Failure, UserProfile?>> getUserProfile(UserId userId)` — Get a user profile by ID.
 
 ### UserProfileCacheRepository
 
 **Location**: `lib/features/user_profile/domain/repositories/user_profile_cache_repository.dart`
+**Responsibility**: Manages bulk cache operations for user profiles.
+**Public Methods:**
 
-**Responsibility**: Manages **bulk cache operations for user profiles**
-
-**Methods** (5 focused methods):
-- `cacheUserProfiles(List<UserProfile> profiles)` - Cache user profiles
-- `getUserProfilesByIds(List<String> userIds)` - Get profiles by IDs
-- `watchUserProfilesByIds(List<String> userIds)` - Stream of profiles by IDs
-- `preloadProfiles(List<String> userIds)` - Preload profiles for performance
-- `clearCache()` - Clear profile cache
+- `Future<Either<Failure, Unit>> cacheUserProfiles(List<UserProfile> profiles)` — Cache a list of user profiles locally.
+- `Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(List<String> userIds)` — Stream user profiles by IDs.
+- `Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(List<String> userIds)` — Get user profiles by IDs.
+- `Future<Either<Failure, Unit>> clearCache()` — Clear all cached user profiles.
+- `Future<Either<Failure, Unit>> preloadProfiles(List<String> userIds)` — Preload user profiles for better offline experience.
 
 ---
 
-## 8. Collaboration Domain 👥
+## 7. Collaboration Domain
 
 ### CollaboratorRepository
 
 **Location**: `lib/features/manage_collaborators/domain/repositories/collaborator_repository.dart`
+**Responsibility**: Manages project collaborator operations.
+**Public Methods:**
 
-**Responsibility**: Manages **collaborator operations only**
-
-**Methods** (5 focused methods):
-- `joinProjectWithId(ProjectId projectId, UserId userId)` - Join project
-- `leaveProject({ProjectId projectId, UserId userId})` - Leave project
-- `getProjectCollaborators(Project project)` - Get project collaborators
-- `removeCollaborator(ProjectId projectId, UserId userId)` - Remove collaborator
-- `updateCollaboratorRole(ProjectId projectId, UserId userId, ProjectRole role)` - Update collaborator role
-
-### ManageCollaboratorsRepository (Legacy)
-
-**Location**: `lib/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart`
-
-**Status**: Legacy repository maintained for backward compatibility
-
-**Recommended Usage**: 
-- Use `CollaboratorRepository` for new collaborator operations
-- Use `ProjectsRepository` for project-specific operations
+- `Future<Either<Failure, Unit>> joinProject(ProjectId projectId, UserId userId)` — Join a project as a collaborator.
+- `Future<Either<Failure, Unit>> leaveProject({required ProjectId projectId, required UserId userId})` — Leave a project as a collaborator.
+- `Future<Either<Failure, Unit>> addCollaborator(ProjectId projectId, UserId userId, String role)` — Add a collaborator to a project with a specific role.
+- `Future<Either<Failure, Unit>> removeCollaborator(ProjectId projectId, UserId userId)` — Remove a collaborator from a project.
+- `Future<Either<Failure, Unit>> updateCollaboratorRole(ProjectId projectId, UserId userId, String newRole)` — Update a collaborator's role in a project.
 
 ---
 
-## 9. MagicLinkRepository
+## 8. Magic Link Domain
 
-**Ubicación**: `lib/features/magic_link/domain/repositories/magic_link_repository.dart`
+### MagicLinkRepository
 
-**Responsabilidad**: Gestiona links mágicos para invitaciones y acceso a proyectos.
+**Location**: `lib/features/magic_link/domain/repositories/magic_link_repository.dart`
+**Responsibility**: Manages magic links for invitations and project access.
+**Public Methods:**
 
-**Métodos**:
-
-- `generateMagicLink({String projectId, String userId})` - Generar link mágico
-- `validateMagicLink({String linkId})` - Validar link mágico
-- `consumeMagicLink({String linkId})` - Consumir link mágico
-- `resendMagicLink({String linkId})` - Reenviar link mágico
-- `getMagicLinkStatus({String linkId})` - Obtener estado del link mágico
-
----
-
-## 10. PlaybackPersistenceRepository
-
-**Ubicación**: `lib/features/audio_player/domain/repositories/playback_persistence_repository.dart`
-
-**Responsabilidad**: Persiste el estado de reproducción de audio para reanudar sesiones.
-
-**Métodos**:
-
-- `savePlaybackState(PlaybackSession session)` - Guardar estado de reproducción
-- `loadPlaybackState()` - Cargar estado de reproducción
-- `clearPlaybackState()` - Limpiar estado de reproducción
-- `hasPlaybackState()` - Verificar si existe estado guardado
-- `saveQueue(List<String> trackIds, int currentIndex)` - Guardar cola de reproducción
-- `loadQueue()` - Cargar cola de reproducción
-- `saveTrackPosition(String trackId, Duration position)` - Guardar posición de pista
-- `loadTrackPosition(String trackId)` - Cargar posición de pista
-- `clearTrackPositions()` - Limpiar todas las posiciones
+- `Future<Either<Failure, MagicLink>> generateMagicLink({required String projectId, required String userId})` — Generate a magic link.
+- `Future<Either<Failure, MagicLink>> validateMagicLink({required String linkId})` — Validate a magic link.
+- `Future<Either<Failure, Unit>> consumeMagicLink({required String linkId})` — Consume a magic link.
+- `Future<Either<Failure, Unit>> resendMagicLink({required String linkId})` — Resend a magic link.
+- `Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({required String linkId})` — Get the status of a magic link.
 
 ---
 
-## 11. Audio Cache Domain 💾
+## 9. Audio Cache Domain
 
 ### AudioDownloadRepository
 
 **Location**: `lib/features/audio_cache/shared/domain/repositories/audio_download_repository.dart`
+**Responsibility**: Handles audio download operations only.
+**Public Methods:**
 
-**Responsibility**: Manages **download operations and progress tracking**
-
-**Methods** (15 focused methods):
-- `downloadAndStoreAudio(String trackId, String audioUrl, {progressCallback})` - Download and store audio
-- `downloadMultipleAudios(Map<String, String> trackUrlPairs, {progressCallback})` - Download multiple audios
-- `cancelDownload(String trackId)` - Cancel download
-- `pauseDownload(String trackId)` - Pause download
-- `resumeDownload(String trackId)` - Resume download
-- `getDownloadProgress(String trackId)` - Get download progress
-- `getActiveDownloads()` - Get active downloads
-- `watchDownloadProgress(String trackId)` - Stream of download progress
-- `watchActiveDownloads()` - Stream of active downloads
-- Plus 6 more download-specific methods...
+- `Future<Either<CacheFailure, String>> downloadAudio(String trackId, String audioUrl, {void Function(DownloadProgress)? progressCallback})` — Download an audio file.
+- `Future<Either<CacheFailure, Map<String, String>>> downloadMultipleAudios(Map<String, String> trackUrlPairs, {void Function(String trackId, DownloadProgress)? progressCallback})` — Download multiple audio files.
+- `Future<Either<CacheFailure, Unit>> cancelDownload(String trackId)` — Cancel an ongoing download.
+- `Future<Either<CacheFailure, Unit>> pauseDownload(String trackId)` — Pause a download.
+- `Future<Either<CacheFailure, Unit>> resumeDownload(String trackId)` — Resume a paused download.
+- `Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(String trackId)` — Get current download progress for a track.
+- `Future<Either<CacheFailure, List<DownloadProgress>>> getActiveDownloads()` — Get all currently active downloads.
 
 ### AudioStorageRepository
 
 **Location**: `lib/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart`
+**Responsibility**: Handles physical audio file storage operations only.
+**Public Methods:**
 
-**Responsibility**: Manages **physical file storage and retrieval**
-
-**Methods** (15 focused methods):
-- `getCachedAudioPath(String trackId)` - Get cached audio path
-- `audioExists(String trackId)` - Check if file exists
-- `getCachedAudio(String trackId)` - Get cached audio info
-- `deleteAudioFile(String trackId)` - Delete audio file
-- `getMultipleCachedAudios(List<String> trackIds)` - Get multiple cached audios
-- `deleteMultipleAudioFiles(List<String> trackIds)` - Delete multiple files
-- `checkMultipleAudioExists(List<String> trackIds)` - Check multiple files exist
-- `watchStorageUsage()` - Stream of storage usage
-- Plus 7 more storage-specific methods...
+- `Future<Either<CacheFailure, CachedAudio>> storeAudio(String trackId, File audioFile)` — Store an audio file in cache.
+- `Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId)` — Get cached audio file path if exists.
+- `Future<Either<CacheFailure, bool>> audioExists(String trackId)` — Check if audio file exists and is valid.
+- `Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId)` — Get cached audio information.
+- `Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId)` — Delete audio file from storage.
+- `Future<Either<CacheFailure, Map<String, CachedAudio>>> getMultipleCachedAudios(List<String> trackIds)` — Get cached audio info for multiple tracks.
+- `Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(List<String> trackIds)` — Delete multiple audio files.
+- `Future<Either<CacheFailure, Map<String, bool>>> checkMultipleAudioExists(List<String> trackIds)` — Check existence of multiple audio files.
 
 ### CacheKeyRepository
 
 **Location**: `lib/features/audio_cache/shared/domain/repositories/cache_key_repository.dart`
+**Responsibility**: Handles cache key management only.
+**Public Methods:**
 
-**Responsibility**: Manages **cache key generation and validation**
-
-**Methods** (12 focused methods):
-- `generateCacheKey(String trackId, String audioUrl)` - Generate cache key
-- `getFilePathFromCacheKey(CacheKey key)` - Get file path from key
-- `isValidCacheKey(CacheKey key)` - Validate cache key format
-- `convertLegacyKey(String legacyKey)` - Convert legacy keys
-- `generateBatchKeys(Map<String, String> trackUrlPairs)` - Generate batch keys
-- Plus 7 more key management methods...
+- `CacheKey generateCacheKey(String trackId, String audioUrl)` — Generate cache key from track ID and URL.
+- `CacheKey generateCacheKeyWithParams(String trackId, String audioUrl, Map<String, String> parameters)` — Generate cache key with custom parameters.
+- `Future<Either<CacheFailure, String>> getFilePathFromCacheKey(CacheKey key)` — Get file path from cache key.
+- `Future<Either<CacheFailure, String>> getDirectoryPathFromCacheKey(CacheKey key)` — Get directory path from cache key.
+- `bool isValidCacheKey(CacheKey key)` — Validate cache key format.
+- `Either<CacheFailure, Map<String, String>> parseCacheKey(CacheKey key)` — Parse cache key to extract components.
+- `CacheKey generateTempCacheKey(String trackId)` — Generate cache key for temporary files.
+- `bool isTempCacheKey(CacheKey key)` — Check if cache key represents a temporary file.
+- `String cacheKeyToStorageId(CacheKey key)` — Convert cache key to storage identifier.
+- `Either<CacheFailure, CacheKey> storageIdToCacheKey(String storageId)` — Convert storage identifier to cache key.
 
 ### CacheMaintenanceRepository
 
 **Location**: `lib/features/audio_cache/shared/domain/repositories/cache_maintenance_repository.dart`
+**Responsibility**: Handles cache maintenance and validation operations only.
+**Public Methods:**
 
-**Responsibility**: Manages **validation, cleanup, migration, and health monitoring**
+- `Future<Either<CacheFailure, CacheValidationResult>> validateCacheConsistency()` — Validate entire cache consistency.
+- `Future<Either<CacheFailure, bool>> validateCacheEntry(String trackId)` — Validate specific cache entry.
+- `Future<Either<CacheFailure, bool>> validateCacheMetadata()` — Validate cache metadata integrity.
+- `Future<Either<CacheFailure, int>> cleanupOrphanedFiles()` — Clean up orphaned files.
+- `Future<Either<CacheFailure, int>> cleanupInvalidMetadata()` — Clean up invalid metadata entries.
+- `Future<Either<CacheFailure, int>> cleanupTemporaryFiles()` — Clean up temporary files.
+- `Future<Either<CacheFailure, int>> cleanupOldEntries({Duration? maxAge, int? maxEntries})` — Clean up old cache entries based on policies.
+- `Future<Either<CacheFailure, int>> rebuildCacheIndex()` — Rebuild cache index from existing files.
+- `Future<Either<CacheFailure, int>> rebuildCacheMetadata()` — Rebuild cache metadata from file system.
+- `Future<Either<CacheFailure, int>> scanAndUpdateCacheRegistry()` — Scan file system and update cache registry.
 
-**Methods** (20 focused methods):
-- `migrateCacheStructure()` - Migrate cache structure
-- `rebuildCacheIndex()` - Rebuild cache index
-- `validateCacheConsistency()` - Validate cache consistency
-- `performCacheCleanup()` - Perform cache cleanup
-- `getCorruptedFiles()` - Get corrupted files
-- `getOrphanedFiles()` - Get orphaned files
-- `repairCacheStructure()` - Repair cache structure
-- `generateHealthReport()` - Generate health report
-- Plus 12 more maintenance methods...
-
-### CacheStorageFacadeRepository
+### CacheStorageFacadeRepository (Deprecated)
 
 **Location**: `lib/features/audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart`
+**Responsibility**: Facade repository that combines specialized cache repositories. Deprecated in favor of using specialized repositories directly.
+**Public Methods:**
 
-**Responsibility**: **Backward compatibility facade** that delegates to specialized repositories
-
-**Status**: Provides seamless migration path from original CacheStorageRepository
-
-### CacheStorageRepository (Legacy)
-
-**Location**: `lib/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart`
-
-**Status**: Legacy repository maintained for backward compatibility
-
-**Architecture**: Modern cache system uses specialized repositories:
-- `AudioDownloadRepository` for download operations
-- `AudioStorageRepository` for file management  
-- `CacheKeyRepository` for key operations
-- `CacheMaintenanceRepository` for maintenance tasks
-- `CacheStorageFacadeRepository` provides unified interface
+- `AudioDownloadRepository get downloadRepository` — Access to download operations.
+- `AudioStorageRepository get storageRepository` — Access to storage operations.
+- `CacheKeyRepository get keyRepository` — Access to cache key operations.
+- `CacheMaintenanceRepository get maintenanceRepository` — Access to maintenance operations.
+- `Future<Either<CacheFailure, CachedAudio>> downloadAndStoreAudio(...)` — Download and store audio file (composite operation).
+- `Future<Either<CacheFailure, List<CachedAudio>>> downloadAndStoreMultipleAudios(...)` — Download and store multiple audio files (composite operation).
 
 ---
 
-## Repository Organization by Domain:
+## 10. Playback Persistence Domain
 
-### 🔐 Authentication & Authorization:
-- **AuthRepository**: Core authentication operations (7 methods)
-- **OnboardingRepository**: Onboarding state management (2 methods)
-- **WelcomeScreenRepository**: Welcome screen state (2 methods)
+### PlaybackPersistenceRepository
 
-### 👥 User Management & Collaboration:
-- **UserProfileRepository**: Individual profile operations (3 methods)
-- **UserProfileCacheRepository**: Bulk profile caching (5 methods)
-- **CollaboratorRepository**: Collaborator management (5 methods)
-- **MagicLinkRepository**: Invitation links (5 methods)
+**Location**: `lib/features/audio_player/domain/repositories/playback_persistence_repository.dart`
+**Responsibility**: Handles saving/loading of audio playback state only.
+**Public Methods:**
 
-### 🎵 Audio & Playback:
-- **AudioTrackRepository**: Audio track management (5 methods)
-- **AudioCommentRepository**: Comments on tracks (4 methods)
-- **PlaylistRepository**: Playlist management (5 methods)
-- **PlaybackPersistenceRepository**: Playback state persistence (8 methods)
-
-### 💾 Audio Cache System:
-- **AudioDownloadRepository**: Download operations (15 methods)
-- **AudioStorageRepository**: File storage management (15 methods)
-- **CacheKeyRepository**: Cache key management (12 methods)
-- **CacheMaintenanceRepository**: Maintenance & health (20 methods)
-- **CacheStorageFacadeRepository**: Backward compatibility facade
-
-### 📁 Projects:
-- **ProjectsRepository**: CRUD operations (4 methods)
-- **ProjectDetailRepository**: Project details (1 method)
+- `Future<void> savePlaybackState(PlaybackSession session)` — Save current playback session state.
+- `Future<PlaybackSession?> loadPlaybackState()` — Load previously saved playback session.
+- `Future<void> clearPlaybackState()` — Clear saved playback state.
+- `Future<bool> hasPlaybackState()` — Check if saved state exists.
+- `Future<void> saveQueue(List<String> trackIds, int currentIndex)` — Save queue information separately.
+- `Future<({List<String> trackIds, int currentIndex})?> loadQueue()` — Load saved queue information.
+- `Future<void> saveTrackPosition(String trackId, Duration position)` — Save playback position for a specific track.
+- `Future<Duration?> loadTrackPosition(String trackId)` — Load saved position for a specific track.
+- `Future<void> clearTrackPositions()` — Clear all track positions.
 
 ---
 
-## Architecture Principles
-
-### 🎯 Single Responsibility Principle (SRP)
-- Each repository has one clear, focused responsibility
-- Specialized repositories handle specific domain concerns
-- Average 5-15 methods per repository for focused interfaces
-
-### 🔌 Interface Segregation Principle (ISP)
-- Small, focused interfaces that clients actually need
-- No forced dependencies on unused methods
-- Enhanced testability through targeted mocking
-
-### 🔀 Dependency Inversion Principle (DIP)
-- All repositories use abstract interfaces
-- Implementations are injected via dependency injection
-- Easy to swap implementations for testing or different environments
-
-### 📐 Open/Closed Principle (OCP)
-- Extensible through composition and new repositories
-- Existing repositories don't need modification for new features
-- Facade patterns enable seamless evolution
-
-### 🔄 Liskov Substitution Principle (LSP)
-- Consistent interfaces across all repositories
-- Proper inheritance hierarchies where applicable
-
----
-
-## Architecture Benefits
-
-### 🏗️ Design Quality
-- **Maintainability**: Single-purpose repositories are easier to understand and modify
-- **Testability**: Focused interfaces simplify unit testing and mocking
-- **Scalability**: New features extend the system without modifying existing code
-- **Team Collaboration**: Different developers can work on different repositories independently
-
-### 🔧 Technical Excellence
-- **Type Safety**: Strong typing with Either<Failure, T> error handling
-- **Reactive Programming**: Stream-based APIs for real-time data
-- **Clean Boundaries**: Clear separation between domain logic and infrastructure
-- **Dependency Injection**: Proper IoC container integration
-
----
-
-## Implementation Guidelines
-
-### Error Handling
-All repositories use `Either<Failure, T>` pattern for consistent error handling:
-```dart
-Future<Either<Failure, User>> getUserProfile(UserId userId);
-```
-
-### Reactive Patterns
-Streams are provided for frequently changing data:
-```dart
-Stream<List<Project>> watchLocalProjects(UserId ownerId);
-```
-
-### Dependency Injection
-Repositories are registered with the DI container using `@injectable`:
-```dart
-@Injectable(as: UserProfileRepository)
-class UserProfileRepositoryImpl implements UserProfileRepository {
-  // Implementation
-}
-```
-
-### Repository Naming
-- Interface: `{Domain}Repository` (e.g., `UserProfileRepository`)
-- Implementation: `{Domain}RepositoryImpl` (e.g., `UserProfileRepositoryImpl`)
-- Location: `lib/features/{feature}/domain/repositories/`
+# End of Repository Documentation
