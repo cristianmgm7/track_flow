@@ -16,14 +16,16 @@
 ## Phase 2: Data Sources Refactor
 - [x] Divide data sources with multiple responsibilities (SRP, ISP)
 - [x] Create new specialized interfaces and migrate implementations (AuthLocalDataSource split)
-- [ ] Refactor duplicate methods and consolidate logic in repositories
-- [ ] Standardize all methods to `Either<Failure, T>` (AudioTrack ✅, AudioComment ✅, Projects pending, Playlist pending)
-- [ ] Migrate tests and update dependency injection
-- [ ] Validate integration with refactored entities
+- [x] Refactor duplicate methods and consolidate logic in repositories
+- [x] Standardize all methods to `Either<Failure, T>` (AudioTrack ✅, AudioComment ✅, Projects ✅, Playlist ✅)
+- [x] Validate integration with refactored entities
+- [ ] **FUTURE**: Implement MagicLink local data source (feature not active yet)
+- [ ] ~~Migrate tests and update dependency injection~~ (SKIPPED - Tests after complete refactor)
 - [ ] ~~Execute data sources test suite~~ (SKIPPED - Tests after complete refactor)
 
 ## Phase 3: Repositories Refactor
-- [ ] Divide repositories with multiple responsibilities into specialized interfaces
+- [x] Divide repositories with multiple responsibilities into specialized interfaces (AuthRepository ✅, ManageCollaboratorsRepository ✅)
+- [ ] Continue repository SRP refactoring (UserProfileRepository, CacheStorageRepository pending)
 - [ ] Implement generic base repositories where applicable
 - [ ] Apply CQRS in features that require it (e.g., AudioTrack)
 - [ ] Implement Specification Pattern for complex queries

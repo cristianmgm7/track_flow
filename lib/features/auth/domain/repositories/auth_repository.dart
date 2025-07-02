@@ -2,6 +2,8 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
 import '../entities/user.dart';
 
+/// Repository responsible for user authentication operations
+/// Follows Single Responsibility Principle - only handles authentication
 abstract class AuthRepository {
   /// Get the current authentication state
   Stream<User?> get authState;
@@ -22,23 +24,11 @@ abstract class AuthRepository {
   Future<Either<Failure, User>> signInWithGoogle();
 
   /// Sign out
-  Future<void> signOut();
+  Future<Either<Failure, Unit>> signOut();
 
-  // is logged in
-  Future<bool> isLoggedIn();
+  /// Check if user is logged in
+  Future<Either<Failure, bool>> isLoggedIn();
 
-  /// mark onboarding as completed
-  Future<bool> onboardingCompleted();
-
-  /// mark welcome screen as completed
-  Future<void> welcomeScreenSeenCompleted();
-
-  /// Check if user has seen welcome screen
-  Future<bool> checkWelcomeScreenSeen();
-
-  /// check if onboarding is completed
-  Future<bool> checkOnboardingCompleted();
-
-  /// get the signed in user id
+  /// Get the signed in user id
   Future<Either<Failure, String>> getSignedInUserId();
 }
