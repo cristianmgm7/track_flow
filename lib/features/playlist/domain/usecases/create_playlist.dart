@@ -1,5 +1,4 @@
-import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
-
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../entities/playlist.dart';
 import '../repositories/playlist_repository.dart';
 
@@ -14,16 +13,11 @@ class CreatePlaylist {
     PlaylistSource source,
   ) async {
     final playlist = Playlist(
-      id: PlaylistId(_generateId()),
+      id: PlaylistId(),
       name: name,
       trackIds: trackIds,
       playlistSource: source,
     );
     await repository.addPlaylist(playlist);
-  }
-
-  String _generateId() {
-    // Implement a method to generate a unique ID for the playlist
-    return DateTime.now().millisecondsSinceEpoch.toString();
   }
 }

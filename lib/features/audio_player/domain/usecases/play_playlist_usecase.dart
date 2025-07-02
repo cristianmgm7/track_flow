@@ -6,8 +6,7 @@ import '../../../playlist/domain/repositories/playlist_repository.dart';
 import '../../../audio_track/domain/repositories/audio_track_repository.dart';
 import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
-import '../entities/audio_track_id.dart' as player;
-import '../../../../../core/entities/unique_id.dart' as core;
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../services/audio_playback_service.dart';
 
 /// Pure playlist playback use case
@@ -54,7 +53,7 @@ class PlayPlaylistUseCase {
       for (final trackId in playlist.trackIds) {
         try {
           final trackOrFailure = await _audioTrackRepository.getTrackById(
-            core.AudioTrackId.fromUniqueString(trackId),
+            AudioTrackId.fromUniqueString(trackId),
           );
           trackOrFailure.fold(
             (failure) {
@@ -63,7 +62,7 @@ class PlayPlaylistUseCase {
             (track) {
               if (track.url.isNotEmpty) {
                 final metadata = AudioTrackMetadata(
-                  id: player.AudioTrackId(track.id.value),
+                  id: AudioTrackId.fromUniqueString(track.id.value),
                   title: track.name,
                   artist: '', // No artist info in AudioTrack
                   duration: track.duration,

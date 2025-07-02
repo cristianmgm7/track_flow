@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'audio_track_id.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 /// Pure audio track metadata without any business domain concerns
 /// Contains only information necessary for audio playback

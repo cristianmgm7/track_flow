@@ -153,7 +153,7 @@ class Project extends AggregateRoot<ProjectId> {
 extension ProjectPlaylist on Project {
   Playlist toPlaylist(List<AudioTrack> tracks) {
     return Playlist(
-      id: PlaylistId('project_${id.value}'),
+      id: PlaylistId.fromUniqueString('project_${id.value}'),
       name: name.value.getOrElse(() => 'Project Playlist'),
       trackIds: tracks.map((t) => t.id.value).toList(),
       playlistSource: PlaylistSource.project,

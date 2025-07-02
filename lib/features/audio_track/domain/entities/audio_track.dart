@@ -1,8 +1,7 @@
-import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-class AudioTrack extends Equatable {
-  final AudioTrackId id;
+class AudioTrack extends AggregateRoot<AudioTrackId> {
   final String name;
   final String url;
   final Duration duration;
@@ -11,14 +10,14 @@ class AudioTrack extends Equatable {
   final DateTime createdAt;
 
   const AudioTrack({
-    required this.id,
+    required AudioTrackId id,
     required this.name,
     required this.url,
     required this.duration,
     required this.projectId,
     required this.uploadedBy,
     required this.createdAt,
-  });
+  }) : super(id);
 
   factory AudioTrack.create({
     required String name,
@@ -58,16 +57,6 @@ class AudioTrack extends Equatable {
     );
   }
 
-  @override
-  List<Object> get props => [
-    id,
-    name,
-    url,
-    duration,
-    projectId,
-    uploadedBy,
-    createdAt,
-  ];
 
   bool belongsToProject(ProjectId projectId) {
     return this.projectId == projectId;

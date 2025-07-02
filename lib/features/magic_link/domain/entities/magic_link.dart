@@ -1,8 +1,7 @@
-import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/domain/entity.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-class MagicLink extends Equatable {
-  final String id;
+class MagicLink extends Entity<MagicLinkId> {
   final String url;
   final UserId userId; // --> sender
   final String projectId;
@@ -12,7 +11,7 @@ class MagicLink extends Equatable {
   final MagicLinkStatus status;
 
   const MagicLink({
-    required this.id,
+    required MagicLinkId id,
     required this.url,
     required this.userId,
     required this.projectId,
@@ -20,18 +19,8 @@ class MagicLink extends Equatable {
     this.expiresAt,
     required this.isUsed,
     required this.status,
-  });
+  }) : super(id);
 
-  @override
-  List<Object?> get props => [
-    id,
-    url,
-    userId,
-    createdAt,
-    expiresAt,
-    isUsed,
-    status,
-  ];
 }
 
 enum MagicLinkStatus { valid, expired, used }

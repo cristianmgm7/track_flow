@@ -6,7 +6,6 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/audio_player/domain/entities/audio_track_id.dart';
 import 'package:trackflow/features/audio_player/domain/entities/audio_track_metadata.dart';
 import 'package:trackflow/features/audio_player/infrastructure/repositories/audio_content_repository_impl.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_source_resolver.dart';
@@ -37,17 +36,15 @@ void main() {
     group('getAudioSourceUrl', () {
       test('should use consistent track ID for cache operations', () async {
         // Arrange
-        final audioTrackId = AudioTrackId(testTrackId);
-        final coreAudioTrackId = core_ids.AudioTrackId.fromUniqueString(
-          testTrackId,
-        );
+        final audioTrackId = AudioTrackId.fromUniqueString(testTrackId);
+        final coreAudioTrackId = audioTrackId;
 
         final audioTrack = AudioTrack(
           id: coreAudioTrackId,
           name: testTrackName,
           url: testAudioUrl,
           duration: testDuration,
-          projectId: core_ids.ProjectId.fromUniqueString('project-123'),
+          projectId: ProjectId.fromUniqueString('project-123'),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -82,17 +79,15 @@ void main() {
         'should fallback to remote URL when cache is not available',
         () async {
           // Arrange
-          final audioTrackId = AudioTrackId(testTrackId);
-          final coreAudioTrackId = core_ids.AudioTrackId.fromUniqueString(
-            testTrackId,
-          );
+          final audioTrackId = AudioTrackId.fromUniqueString(testTrackId);
+          final coreAudioTrackId = audioTrackId;
 
           final audioTrack = AudioTrack(
             id: coreAudioTrackId,
             name: testTrackName,
             url: testAudioUrl,
             duration: testDuration,
-            projectId: core_ids.ProjectId.fromUniqueString('project-123'),
+            projectId: ProjectId.fromUniqueString('project-123'),
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           );
@@ -128,17 +123,15 @@ void main() {
     group('isTrackCached', () {
       test('should use consistent track ID for cache check', () async {
         // Arrange
-        final audioTrackId = AudioTrackId(testTrackId);
-        final coreAudioTrackId = core_ids.AudioTrackId.fromUniqueString(
-          testTrackId,
-        );
+        final audioTrackId = AudioTrackId.fromUniqueString(testTrackId);
+        final coreAudioTrackId = audioTrackId;
 
         final audioTrack = AudioTrack(
           id: coreAudioTrackId,
           name: testTrackName,
           url: testAudioUrl,
           duration: testDuration,
-          projectId: core_ids.ProjectId.fromUniqueString('project-123'),
+          projectId: ProjectId.fromUniqueString('project-123'),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -171,10 +164,8 @@ void main() {
 
       test('should return false when track is not found', () async {
         // Arrange
-        final audioTrackId = AudioTrackId(testTrackId);
-        final coreAudioTrackId = core_ids.AudioTrackId.fromUniqueString(
-          testTrackId,
-        );
+        final audioTrackId = AudioTrackId.fromUniqueString(testTrackId);
+        final coreAudioTrackId = audioTrackId;
 
         when(
           mockAudioTrackRepository.getTrackById(coreAudioTrackId),
@@ -201,17 +192,15 @@ void main() {
         'should transform business domain track to pure audio metadata',
         () async {
           // Arrange
-          final audioTrackId = AudioTrackId(testTrackId);
-          final coreAudioTrackId = core_ids.AudioTrackId.fromUniqueString(
-            testTrackId,
-          );
+          final audioTrackId = AudioTrackId.fromUniqueString(testTrackId);
+          final coreAudioTrackId = audioTrackId;
 
           final audioTrack = AudioTrack(
             id: coreAudioTrackId,
             name: testTrackName,
             url: testAudioUrl,
             duration: testDuration,
-            projectId: core_ids.ProjectId.fromUniqueString('project-123'),
+            projectId: ProjectId.fromUniqueString('project-123'),
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           );

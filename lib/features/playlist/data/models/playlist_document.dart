@@ -17,7 +17,7 @@ class PlaylistDocument {
 
   factory PlaylistDocument.fromDTO(PlaylistDto dto) {
     return PlaylistDocument()
-      ..uuid = dto.id.toString()
+      ..uuid = dto.id
       ..name = dto.name
       ..trackIds = dto.trackIds
       ..playlistSource = dto.playlistSource;
@@ -25,7 +25,7 @@ class PlaylistDocument {
 
   PlaylistDto toDTO() {
     return PlaylistDto(
-      id: int.parse(uuid),
+      id: uuid,
       name: name,
       trackIds: trackIds,
       playlistSource: playlistSource,

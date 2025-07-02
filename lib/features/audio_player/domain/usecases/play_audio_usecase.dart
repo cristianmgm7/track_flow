@@ -1,10 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart' as core_ids;
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart';
 import '../entities/audio_failure.dart';
-import '../entities/audio_track_id.dart';
 import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
 import '../services/audio_playback_service.dart';
@@ -33,7 +32,7 @@ class PlayAudioUseCase {
     try {
       // 1. Get track from business repository
       final trackResult = await _audioTrackRepository.getTrackById(
-        core_ids.AudioTrackId.fromUniqueString(trackId.value),
+        trackId,
       );
 
       return await trackResult.fold(

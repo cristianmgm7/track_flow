@@ -5,7 +5,7 @@ import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
 import '../../../audio_player/presentation/bloc/audio_player_state.dart';
 import '../../../audio_player/presentation/widgets/pure_audio_player.dart';
-import '../../../audio_player/domain/entities/audio_track_id.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../../../audio_context/presentation/bloc/audio_context_cubit.dart';
 import '../../../audio_context/presentation/widgets/track_info_display.dart';
 
@@ -229,7 +229,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
   void _loadTrackWithContext(String trackId) {
     // Load track in audio player
     context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(AudioTrackId(trackId)),
+      PlayAudioRequested(AudioTrackId.fromUniqueString(trackId)),
     );
 
     // Load business context
@@ -242,7 +242,7 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
 
   void _loadDemoPlaylist(BuildContext context) {
     context.read<AudioPlayerBloc>().add(
-      PlayPlaylistRequested(const PlaylistId('demo_playlist_001')),
+      PlayPlaylistRequested(PlaylistId.fromUniqueString('demo_playlist_001')),
     );
   }
 

@@ -1,21 +1,19 @@
-import 'package:collection/collection.dart';
-import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
+import 'package:trackflow/core/domain/aggregate_root.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 enum PlaylistSource { project, user }
 
-class Playlist extends Equatable {
-  final PlaylistId id;
+class Playlist extends AggregateRoot<PlaylistId> {
   final String name;
   final List<String> trackIds;
   final PlaylistSource playlistSource;
 
   const Playlist({
-    required this.id,
+    required PlaylistId id,
     required this.name,
     required this.trackIds,
     required this.playlistSource,
-  });
+  }) : super(id);
 
   Playlist copyWith({
     PlaylistId? id,
@@ -34,22 +32,4 @@ class Playlist extends Equatable {
   @override
   String toString() =>
       'Playlist(id: $id, name: $name, trackIds: $trackIds, playlistSource: $playlistSource)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is Playlist &&
-        other.id == id &&
-        other.name == name &&
-        ListEquality().equals(other.trackIds, trackIds) &&
-        other.playlistSource == playlistSource;
-  }
-
-  @override
-  int get hashCode =>
-      id.hashCode ^ name.hashCode ^ trackIds.hashCode ^ playlistSource.hashCode;
-
-  @override
-  List<Object?> get props => [id, name, trackIds, playlistSource];
 }

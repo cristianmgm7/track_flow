@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/audio_track_id.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../../../playlist/domain/entities/playlist_id.dart';
 import '../../domain/entities/repeat_mode.dart';
 import '../../domain/entities/playback_session.dart';

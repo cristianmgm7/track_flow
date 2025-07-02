@@ -20,7 +20,7 @@ class PlaylistRemoteDataSourceImpl implements PlaylistRemoteDataSource {
   Future<void> addPlaylist(PlaylistDto playlist) async {
     await firestore
         .collection('playlists')
-        .doc(playlist.id.toString())
+        .doc(playlist.id)
         .set(playlist.toJson());
   }
 
@@ -45,7 +45,7 @@ class PlaylistRemoteDataSourceImpl implements PlaylistRemoteDataSource {
   Future<void> updatePlaylist(PlaylistDto playlist) async {
     await firestore
         .collection('playlists')
-        .doc(playlist.id.toString())
+        .doc(playlist.id)
         .update(playlist.toJson());
   }
 

@@ -1,10 +1,9 @@
-import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/domain/entity.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
-class AudioComment extends Equatable {
-  final AudioCommentId id;
+class AudioComment extends Entity<AudioCommentId> {
   final ProjectId projectId;
   final AudioTrackId trackId;
   final UserId createdBy;
@@ -13,14 +12,14 @@ class AudioComment extends Equatable {
   final DateTime createdAt;
 
   const AudioComment({
-    required this.id,
+    required AudioCommentId id,
     required this.projectId,
     required this.trackId,
     required this.createdBy,
     required this.content,
     required this.timestamp,
     required this.createdAt,
-  });
+  }) : super(id);
 
   factory AudioComment.create({
     required ProjectId projectId,
@@ -38,16 +37,6 @@ class AudioComment extends Equatable {
       createdAt: DateTime.now(),
     );
   }
-  @override
-  List<Object> get props => [
-    id,
-    projectId,
-    trackId,
-    createdBy,
-    content,
-    timestamp,
-    createdAt,
-  ];
 
   AudioComment copyWith({
     AudioCommentId? id,

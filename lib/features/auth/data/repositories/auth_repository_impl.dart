@@ -108,7 +108,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
         await _local.setOfflineCredentials(email, true);
-        return right(domain.User(id: 'offline', email: email));
+        return right(domain.User(id: UserId.fromUniqueString('offline'), email: email));
       }
       final user = await _remote.signInWithEmailAndPassword(email, password);
       if (user != null) {
@@ -134,7 +134,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
         await _local.setOfflineCredentials(email, true);
-        return right(domain.User(id: 'offline', email: email));
+        return right(domain.User(id: UserId.fromUniqueString('offline'), email: email));
       }
       final user = await _remote.signUpWithEmailAndPassword(email, password);
       if (user != null) {

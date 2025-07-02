@@ -1,6 +1,4 @@
 import 'package:injectable/injectable.dart';
-import 'package:isar/isar.dart';
-import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 
 import '../../domain/entities/playlist.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -20,12 +18,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<void> addPlaylist(Playlist playlist) async {
-    final dto = PlaylistDto(
-      id: int.tryParse(playlist.id.value) ?? Isar.autoIncrement,
-      name: playlist.name,
-      trackIds: playlist.trackIds,
-      playlistSource: playlist.playlistSource.toString(),
-    );
+    final dto = PlaylistDto.fromDomain(playlist);
     await localDataSource.addPlaylist(dto);
     await remoteDataSource.addPlaylist(dto);
   }
@@ -33,44 +26,18 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   @override
   Future<List<Playlist>> getAllPlaylists() async {
     final dtos = await localDataSource.getAllPlaylists();
-    return dtos
-        .map(
-          (dto) => Playlist(
-            id: PlaylistId(dto.id.toString()),
-            name: dto.name,
-            trackIds: dto.trackIds,
-            playlistSource: PlaylistSource.values.firstWhere(
-              (e) => e.toString() == dto.playlistSource,
-            ),
-          ),
-        )
-        .toList();
+    return dtos.map((dto) => dto.toDomain()).toList();
   }
 
   @override
   Future<Playlist?> getPlaylistById(String id) async {
     final dto = await localDataSource.getPlaylistById(id);
-    if (dto != null) {
-      return Playlist(
-        id: PlaylistId(dto.id.toString()),
-        name: dto.name,
-        trackIds: dto.trackIds,
-        playlistSource: PlaylistSource.values.firstWhere(
-          (e) => e.toString() == dto.playlistSource,
-        ),
-      );
-    }
-    return null;
+    return dto?.toDomain();
   }
 
   @override
   Future<void> updatePlaylist(Playlist playlist) async {
-    final dto = PlaylistDto(
-      id: int.tryParse(playlist.id.value) ?? Isar.autoIncrement,
-      name: playlist.name,
-      trackIds: playlist.trackIds,
-      playlistSource: playlist.playlistSource.toString(),
-    );
+    final dto = PlaylistDto.fromDomain(playlist);
     await localDataSource.updatePlaylist(dto);
     await remoteDataSource.updatePlaylist(dto);
   }
