@@ -43,7 +43,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   }
 
   @override
-  Future<Either<Failure, void>> updateUserProfile(
+  Future<Either<Failure, Unit>> updateUserProfile(
     UserProfile userProfile,
   ) async {
     try {
@@ -51,52 +51,44 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       final result = await _userProfileRemoteDataSource.updateProfile(
         userProfileDTO,
       );
-      return await result.fold((failure) => left(failure), (updatedDTO) async {
+      return await result.fold((failure) => Left(failure), (updatedDTO) async {
         await _userProfileLocalDataSource.cacheUserProfile(updatedDTO);
-        return right(null);
+        return const Right(unit);
       });
     } catch (e) {
-      return left(ServerFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<void> cacheUserProfiles(List<UserProfile> profiles) async {
-    for (final profile in profiles) {
-      await _userProfileLocalDataSource.cacheUserProfile(
-        UserProfileDTO.fromDomain(profile),
-      );
-    }
-  }
-
-  @override
-  Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
-    List<String> userIds,
-  ) {
-    return _userProfileLocalDataSource
-        .watchUserProfilesByIds(userIds)
-        .map(
-          (either) => either.fold(
-            (failure) => Left(failure),
-            (dtos) => Right(dtos.map((e) => e.toDomain()).toList()),
-          ),
+  Future<Either<Failure, UserProfile?>> getUserProfile(UserId userId) async {
+    try {
+      final hasConnected = await _networkInfo.isConnected;
+      if (hasConnected) {
+        // Try remote first if connected
+        final remoteResult = await _userProfileRemoteDataSource.getProfileById(userId.value);
+        return await remoteResult.fold(
+          (failure) async {
+            // Fallback to local if remote fails - using the first value from watch stream
+            final localStream = _userProfileLocalDataSource.watchUserProfile(userId.value);
+            final localDTO = await localStream.first;
+            return Right(localDTO?.toDomain());
+          },
+          (userProfile) async {
+            // Cache the remote result
+            final dto = UserProfileDTO.fromDomain(userProfile);
+            await _userProfileLocalDataSource.cacheUserProfile(dto);
+            return Right(userProfile);
+          },
         );
-  }
-
-  @override
-  Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
-    List<String> userIds,
-  ) async {
-    final hasConnected = await _networkInfo.isConnected;
-    if (!hasConnected) {
-      return left(DatabaseFailure('No internet connection'));
+      } else {
+        // Use local data when offline - using the first value from watch stream
+        final localStream = _userProfileLocalDataSource.watchUserProfile(userId.value);
+        final localDTO = await localStream.first;
+        return Right(localDTO?.toDomain());
+      }
+    } catch (e) {
+      return Left(ServerFailure('Failed to get user profile: $e'));
     }
-    final dtos = await _userProfileRemoteDataSource.getUserProfilesByIds(
-      userIds,
-    );
-    return dtos.fold(
-      (failure) => left(failure),
-      (dtos) => right(dtos.map((e) => e.toDomain()).toList()),
-    );
   }
 }

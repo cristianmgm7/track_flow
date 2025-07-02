@@ -15,6 +15,7 @@ import '../datasources/cache_storage_local_data_source.dart';
 import '../datasources/cache_storage_remote_data_source.dart';
 import '../models/cached_audio_document_unified.dart';
 
+@Deprecated('Use specialized repository implementations instead')
 @LazySingleton(as: CacheStorageRepository)
 class CacheStorageRepositoryImpl implements CacheStorageRepository {
   final CacheStorageLocalDataSource _localDataSource;

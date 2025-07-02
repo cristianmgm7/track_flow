@@ -7,6 +7,15 @@ import '../value_objects/cache_key.dart';
 
 /// Repository for managing physical file storage operations
 /// Handles actual file downloads, storage, and retrieval
+/// 
+/// DEPRECATED: This repository violates Single Responsibility Principle.
+/// Use specialized repositories instead:
+/// - AudioDownloadRepository for download operations
+/// - AudioStorageRepository for storage operations
+/// - CacheKeyRepository for cache key management
+/// - CacheMaintenanceRepository for maintenance operations
+/// - CacheStorageFacadeRepository for backward compatibility
+@Deprecated('Use specialized repositories directly (AudioDownloadRepository, AudioStorageRepository, etc.) or CacheStorageFacadeRepository for backward compatibility')
 abstract class CacheStorageRepository {
   // ===============================================
   // BASIC CRUD OPERATIONS
