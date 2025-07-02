@@ -1,21 +1,19 @@
-# Data Sources Documentation
+# TrackFlow Data Sources Architecture
 
-This documentation lists all **Local Data Sources** and **Remote Data Sources** organized by feature in the TrackFlow application, updated after the Phase 2 SOLID refactoring.
+This document describes the data access layer architecture in TrackFlow, following Clean Architecture principles with clear separation between local and remote data sources.
 
-## General Overview
+## Architecture Overview
 
-- **Total Data Sources:** 19 files (10 local + 9 remote)
-- **Features Covered:** 9 different features
-- **Architecture Pattern:** Clean Architecture with clear separation between local and remote sources
-- **Refactor Status:** ✅ Phase 2 Complete - SRP violations fixed, Either<Failure, T> standardized
+- **Total Data Sources:** 19 specialized data sources (10 local + 9 remote)
+- **Features Covered:** 9 domain features
+- **Architecture Pattern:** Clean Architecture with Repository pattern
+- **Design Principles:** Single Responsibility, consistent error handling, reactive programming
 
 ---
 
 ## 1. Auth Feature
 
-⚠️ **SOLID Refactor Note:** AuthLocalDataSource was split in Phase 2 to follow Single Responsibility Principle (SRP)
-
-### Local Data Source: `user_session_local_datasource.dart` ✨ **NEW**
+### Local Data Source: `user_session_local_datasource.dart`
 **Location:** `lib/features/auth/data/data_sources/`
 
 **Responsibility:** Manages user session state and offline credentials
@@ -28,7 +26,7 @@ This documentation lists all **Local Data Sources** and **Remote Data Sources** 
 - `Future<Either<Failure, bool>> hasOfflineCredentials()` - Check if has offline credentials
 - `Future<Either<Failure, Unit>> clearOfflineCredentials()` - Clear offline credentials
 
-### Local Data Source: `onboarding_state_local_datasource.dart` ✨ **NEW**
+### Local Data Source: `onboarding_state_local_datasource.dart`
 **Location:** `lib/features/auth/data/data_sources/`
 
 **Responsibility:** Manages onboarding and welcome screen state
@@ -39,12 +37,14 @@ This documentation lists all **Local Data Sources** and **Remote Data Sources** 
 - `Future<Either<Failure, Unit>> setWelcomeScreenSeen(bool seen)` - Mark welcome screen as seen
 - `Future<Either<Failure, bool>> isWelcomeScreenSeen()` - Check if welcome screen was seen
 
-### Local Data Source: `auth_local_datasource.dart` 🔄 **DEPRECATED**
+### Local Data Source: `auth_local_datasource.dart` (Legacy)
 **Location:** `lib/features/auth/data/data_sources/`
 
-**Status:** Maintained for backward compatibility, delegates to specialized data sources
+**Status:** Legacy data source maintained for backward compatibility
 
-**Migration Path:** Use `UserSessionLocalDataSource` and `OnboardingStateLocalDataSource` instead
+**Architecture:** Modern auth system uses specialized data sources:
+- `UserSessionLocalDataSource` for session management
+- `OnboardingStateLocalDataSource` for onboarding state
 
 ### Remote Data Source: `auth_remote_datasource.dart`
 **Location:** `lib/features/auth/data/data_sources/`
@@ -154,7 +154,7 @@ This documentation lists all **Local Data Sources** and **Remote Data Sources** 
 - `Future<Either<Failure, MagicLink>> getCachedMagicLink({required UserId userId})` - Obtiene magic link cacheado
 - `Future<Either<Failure, Unit>> clearCachedMagicLink({required UserId userId})` - Limpia magic link cacheado
 
-⚠️ **Nota:** Todos los métodos están marcados como `UnimplementedError()` - implementación pendiente.
+**Note:** Some methods may show `UnimplementedError()` indicating planned future implementation.
 
 ### Remote Data Source: `magic_link_remote_data_source.dart`
 **Ubicación:** `lib/features/magic_link/data/datasources/`
@@ -259,53 +259,100 @@ This documentation lists all **Local Data Sources** and **Remote Data Sources** 
 
 ---
 
-## Technologies Used
+## Technology Stack
 
-### Local Storage
-- **Isar Database** - For structured data
-- **SharedPreferences** - For preferences and simple configurations
+### Local Storage Technologies
+- **Isar Database** - High-performance local database for structured data
+- **SharedPreferences** - Simple key-value storage for preferences and configuration
+- **File System** - Direct file storage for audio cache and temporary files
 
 ### Remote Services
-- **Firebase Firestore** - Real-time database
-- **Firebase Storage** - File storage
-- **Firebase Auth** - Authentication
+- **Firebase Firestore** - Real-time NoSQL database for collaborative data
+- **Firebase Storage** - Scalable file storage for audio tracks and media
+- **Firebase Auth** - Authentication and user management
 
 ### Architecture Patterns
-- **Either/Failure** - Error handling with Dartz
-- **Dependency Injection** - With Injectable
-- **Reactive Programming** - With Streams
-- **Clean Architecture** - Clear separation of responsibilities
-- **Single Responsibility Principle (SRP)** - Each data source has one responsibility ✨
+- **Either<Failure, T>** - Functional error handling with Dartz library
+- **Dependency Injection** - IoC container with Injectable annotations
+- **Reactive Programming** - Stream-based reactive data flow
+- **Repository Pattern** - Data access abstraction layer
+- **Single Responsibility** - Each data source handles one specific concern
 
 ---
 
-## SOLID Refactor Achievements (Phase 2)
+## Design Principles
 
-### ✅ Single Responsibility Principle (SRP)
-- **AuthLocalDataSource** split into specialized data sources
-- Each data source now has exactly one responsibility
-- Clear separation between user session and onboarding concerns
+### 🎯 Single Responsibility Principle
+- Each data source has one focused responsibility
+- Clear separation between different types of data operations
+- Specialized data sources for specific use cases
 
-### ✅ Error Handling Standardization
-- **All data sources** now return `Either<Failure, T>` types
-- Consistent error handling across the entire data layer
-- Improved error propagation and handling
+### 📐 Consistent Error Handling
+- All data sources use `Either<Failure, T>` for error handling
+- Standardized failure types across the entire data layer
+- Proper error propagation from data sources to repositories
 
-### ✅ Interface Segregation
-- Smaller, focused interfaces instead of large monolithic ones
-- Clients only depend on methods they actually use
-- Better testability and maintainability
+### 🔄 Reactive Data Flow
+- Stream-based APIs for real-time data updates
+- Reactive cache invalidation and synchronization
+- Event-driven data synchronization patterns
+
+### 📦 Interface Segregation
+- Small, focused interfaces tailored to specific client needs
+- No forced dependencies on unused methods
+- Enhanced testability through targeted mocking
 
 ---
 
-## Key Observations
+## Implementation Guidelines
 
-1. **Consistency:** All features follow the same architecture pattern
-2. **Error Handling:** Consistent use of `Either<Failure, T>` for operations that can fail ✅
-3. **Reactivity:** Extensive use of `Stream` for real-time updates
-4. **Cache Strategy:** Robust local cache implementation with integrity validation
-5. **SOLID Compliance:** All data sources now follow SOLID principles ✨
-6. **Backward Compatibility:** Deprecated data sources maintain existing APIs
-7. **Migration Path:** Clear guidance for transitioning to new specialized data sources
+### Error Handling Pattern
+```dart
+Future<Either<Failure, UserProfile>> getUserProfile(String userId) async {
+  try {
+    final profile = await _database.getUserProfile(userId);
+    return Right(profile);
+  } catch (e) {
+    return Left(DatabaseFailure(e.toString()));
+  }
+}
+```
 
-This documentation reflects the current state of the codebase after Phase 2 SOLID refactoring and should be updated when new features are added or existing ones are modified.
+### Reactive Data Pattern
+```dart
+Stream<Either<Failure, List<Project>>> watchUserProjects(String userId) {
+  return _database.watchProjects(userId)
+      .map((projects) => Right(projects))
+      .onErrorReturnWith((error) => Stream.value(Left(DatabaseFailure(error.toString()))));
+}
+```
+
+### Cache Strategy
+- **Cache-First**: Local data sources serve cached data immediately
+- **Background Sync**: Remote data sources update cache in background
+- **Conflict Resolution**: Smart merging strategies for offline/online conflicts
+- **Cache Invalidation**: Automatic cache cleanup and validation
+
+---
+
+## Quality Attributes
+
+### ✅ Maintainability
+- Single-purpose data sources are easier to understand and modify
+- Clear separation of concerns between local and remote operations
+- Consistent patterns across all features
+
+### ✅ Testability
+- Small, focused interfaces simplify unit testing
+- Easy mocking of data sources in repository tests
+- Isolated testing of cache vs remote operations
+
+### ✅ Performance
+- Efficient local caching reduces remote calls
+- Stream-based reactive updates minimize unnecessary processing
+- Smart preloading and batch operations
+
+### ✅ Reliability
+- Robust error handling with typed failures
+- Cache integrity validation and repair mechanisms
+- Offline-first architecture with graceful degradation
