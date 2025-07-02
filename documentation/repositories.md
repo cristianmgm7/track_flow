@@ -3,11 +3,13 @@
 Este documento describe todos los repositorios disponibles en la aplicación TrackFlow, sus responsabilidades y métodos disponibles.
 
 ## 1. AuthRepository
+
 **Ubicación**: `lib/features/auth/domain/repositories/auth_repository.dart`
 
 **Responsabilidad**: Gestiona la autenticación de usuarios, estados de sesión y onboarding.
 
 **Métodos**:
+
 - `Stream<User?> get authState` - Stream del estado de autenticación
 - `signInWithEmailAndPassword(String email, String password)` - Iniciar sesión con email/password
 - `signUpWithEmailAndPassword(String email, String password)` - Registrar usuario con email/password
@@ -23,11 +25,13 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 ---
 
 ## 2. AudioTrackRepository
+
 **Ubicación**: `lib/features/audio_track/domain/repositories/audio_track_repository.dart`
 
 **Responsabilidad**: Gestiona las pistas de audio, incluyendo obtención, subida, eliminación y edición.
 
 **Métodos**:
+
 - `getTrackById(AudioTrackId id)` - Obtener pista por ID
 - `watchTracksByProject(ProjectId projectId)` - Stream de pistas por proyecto
 - `uploadAudioTrack({File file, AudioTrack track})` - Subir nueva pista de audio
@@ -37,11 +41,13 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 ---
 
 ## 3. AudioCommentRepository
+
 **Ubicación**: `lib/features/audio_comment/domain/repositories/audio_comment_repository.dart`
 
 **Responsabilidad**: Gestiona los comentarios de audio asociados a las pistas.
 
 **Métodos**:
+
 - `getCommentById(AudioCommentId commentId)` - Obtener comentario por ID
 - `addComment(AudioComment comment)` - Agregar nuevo comentario
 - `watchCommentsByTrack(AudioTrackId trackId)` - Stream de comentarios por pista
@@ -50,11 +56,13 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 ---
 
 ## 4. PlaylistRepository
+
 **Ubicación**: `lib/features/playlist/domain/repositories/playlist_repository.dart`
 
 **Responsabilidad**: Gestiona las playlists de la aplicación.
 
 **Métodos**:
+
 - `addPlaylist(Playlist playlist)` - Agregar nueva playlist
 - `getAllPlaylists()` - Obtener todas las playlists
 - `getPlaylistById(String id)` - Obtener playlist por ID
@@ -64,25 +72,42 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 ---
 
 ## 5. ProjectsRepository
+
 **Ubicación**: `lib/features/projects/domain/repositories/projects_repository.dart`
 
 **Responsabilidad**: Gestiona los proyectos del usuario.
 
 **Métodos**:
+
 - `createProject(Project project)` - Crear nuevo proyecto
 - `updateProject(Project project)` - Actualizar proyecto
 - `deleteProject(UniqueId id)` - Eliminar proyecto
-- `getProjectById(ProjectId projectId)` - Obtener proyecto por ID
 - `watchLocalProjects(UserId ownerId)` - Stream de proyectos locales del usuario
 
 ---
 
-## 6. UserProfileRepository
+? se puede eliminar y poner ese metodo de getprojectbyid en projects repository ?
+
+## 6. ProjectDetailRepository
+
+**Ubicación**: `lib/features/project_detail/domain/repositories/project_detail_repository.dart`
+
+**Responsabilidad**: Obtiene detalles específicos de un proyecto.
+
+**Métodos**:
+
+- `getProjectById(ProjectId projectId)` - Obtener proyecto por ID
+
+---
+
+## 7. UserProfileRepository
+
 **Ubicación**: `lib/features/user_profile/domain/repositories/user_profile_repository.dart`
 
 **Responsabilidad**: Gestiona los perfiles de usuario y cache de colaboradores.
 
 **Métodos**:
+
 - `updateUserProfile(UserProfile userProfile)` - Actualizar perfil de usuario
 - `watchUserProfile(UserId userId)` - Stream del perfil de usuario
 - `cacheUserProfiles(List<UserProfile> profiles)` - Cachear perfiles de usuario
@@ -91,24 +116,28 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 
 ---
 
-## 7. ManageCollaboratorsRepository
+## 8. ManageCollaboratorsRepository
+
 **Ubicación**: `lib/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart`
 
 **Responsabilidad**: Gestiona colaboradores en proyectos.
 
 **Métodos**:
+
 - `joinProjectWithId(ProjectId projectId, UserId userId)` - Unirse a proyecto
 - `updateProject(Project project)` - Actualizar proyecto
 - `leaveProject({ProjectId projectId, UserId userId})` - Abandonar proyecto
 
 ---
 
-## 8. MagicLinkRepository
+## 9. MagicLinkRepository
+
 **Ubicación**: `lib/features/magic_link/domain/repositories/magic_link_repository.dart`
 
 **Responsabilidad**: Gestiona links mágicos para invitaciones y acceso a proyectos.
 
 **Métodos**:
+
 - `generateMagicLink({String projectId, String userId})` - Generar link mágico
 - `validateMagicLink({String linkId})` - Validar link mágico
 - `consumeMagicLink({String linkId})` - Consumir link mágico
@@ -117,12 +146,14 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 
 ---
 
-## 9. PlaybackPersistenceRepository
+## 10. PlaybackPersistenceRepository
+
 **Ubicación**: `lib/features/audio_player/domain/repositories/playback_persistence_repository.dart`
 
 **Responsabilidad**: Persiste el estado de reproducción de audio para reanudar sesiones.
 
 **Métodos**:
+
 - `savePlaybackState(PlaybackSession session)` - Guardar estado de reproducción
 - `loadPlaybackState()` - Cargar estado de reproducción
 - `clearPlaybackState()` - Limpiar estado de reproducción
@@ -135,12 +166,14 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 
 ---
 
-## 10. CacheStorageRepository
+## 11. CacheStorageRepository
+
 **Ubicación**: `lib/features/audio_cache/shared/domain/repositories/cache_storage_repository.dart`
 
 **Responsabilidad**: Gestiona el almacenamiento físico de archivos de audio en cache, incluyendo descargas, validación y operaciones de batch.
 
 ### Operaciones CRUD Básicas:
+
 - `downloadAndStoreAudio(String trackId, String audioUrl, {progressCallback})` - Descargar y almacenar archivo de audio
 - `getCachedAudioPath(String trackId)` - Obtener ruta del archivo cacheado
 - `audioExists(String trackId)` - Verificar si existe el archivo
@@ -148,12 +181,14 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 - `deleteAudioFile(String trackId)` - Eliminar archivo de audio
 
 ### Operaciones en Lote:
+
 - `downloadMultipleAudios(Map<String, String> trackUrlPairs, {progressCallback})` - Descargar múltiples audios
 - `getMultipleCachedAudios(List<String> trackIds)` - Obtener info de múltiples audios cacheados
 - `deleteMultipleAudioFiles(List<String> trackIds)` - Eliminar múltiples archivos
 - `checkMultipleAudioExists(List<String> trackIds)` - Verificar existencia de múltiples archivos
 
 ### Gestión de Descargas:
+
 - `cancelDownload(String trackId)` - Cancelar descarga
 - `pauseDownload(String trackId)` - Pausar descarga
 - `resumeDownload(String trackId)` - Reanudar descarga
@@ -161,16 +196,19 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 - `getActiveDownloads()` - Obtener descargas activas
 
 ### Streams Reactivos:
+
 - `watchDownloadProgress(String trackId)` - Stream del progreso de descarga
 - `watchActiveDownloads()` - Stream de descargas activas
 - `watchStorageUsage()` - Stream del uso de almacenamiento
 
 ### Gestión de Cache Keys:
+
 - `generateCacheKey(String trackId, String audioUrl)` - Generar clave de cache
 - `getFilePathFromCacheKey(CacheKey key)` - Obtener ruta desde clave
 - `isValidCacheKey(CacheKey key)` - Validar formato de clave
 
 ### Migración y Mantenimiento:
+
 - `migrateCacheStructure()` - Migrar estructura de cache
 - `rebuildCacheIndex()` - Reconstruir índice de cache
 - `validateCacheConsistency()` - Validar consistencia del cache
@@ -180,6 +218,7 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 ## Resumen de Responsabilidades por Dominio:
 
 ### 🎵 Audio y Reproducción:
+
 - **AudioTrackRepository**: Gestión de pistas de audio
 - **AudioCommentRepository**: Comentarios en pistas
 - **PlaylistRepository**: Gestión de playlists
@@ -187,13 +226,16 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 - **CacheStorageRepository**: Almacenamiento físico de archivos de audio
 
 ### 👥 Usuarios y Colaboración:
+
 - **AuthRepository**: Autenticación y sesiones
 - **UserProfileRepository**: Perfiles de usuario
 - **ManageCollaboratorsRepository**: Gestión de colaboradores
 - **MagicLinkRepository**: Links de invitación
 
 ### 📁 Proyectos:
-- **ProjectsRepository**: CRUD de proyectos y obtención de detalles
+
+- **ProjectsRepository**: CRUD de proyectos
+- **ProjectDetailRepository**: Detalles de proyectos
 
 ---
 
@@ -201,10 +243,8 @@ Este documento describe todos los repositorios disponibles en la aplicación Tra
 
 1. **AudioContentRepository**: Este repositorio fue eliminado durante el refactor ya que sus responsabilidades fueron distribuidas entre `AudioTrackRepository`, `CacheStorageRepository` y otros servicios como `AudioSourceResolver`.
 
-2. **ProjectDetailRepository**: Este repositorio fue eliminado ya que su única responsabilidad (`getProjectById`) fue movida al `ProjectsRepository` para simplificar la arquitectura.
+2. **Patrones de Error**: Todos los repositorios usan `Either<Failure, T>` para manejo de errores usando la librería Dartz.
 
-3. **Patrones de Error**: Todos los repositorios usan `Either<Failure, T>` para manejo de errores usando la librería Dartz.
+3. **Reactividad**: Muchos repositorios proporcionan Streams para datos que cambian frecuentemente, permitiendo UI reactiva.
 
-4. **Reactividad**: Muchos repositorios proporcionan Streams para datos que cambian frecuentemente, permitiendo UI reactiva.
-
-5. **Separación de Responsabilidades**: Cada repositorio tiene una responsabilidad clara y bien definida siguiendo principios de Clean Architecture.
+4. **Separación de Responsabilidades**: Cada repositorio tiene una responsabilidad clara y bien definida siguiendo principios de Clean Architecture.
