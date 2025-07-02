@@ -7,15 +7,15 @@ import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
 abstract class AudioTrackLocalDataSource {
-  Future<void> cacheTrack(AudioTrackDTO track);
-  Future<AudioTrackDTO?> getTrackById(String id);
-  Future<void> deleteTrack(String id);
-  Future<void> deleteAllTracks();
+  Future<Either<Failure, Unit>> cacheTrack(AudioTrackDTO track);
+  Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id);
+  Future<Either<Failure, Unit>> deleteTrack(String id);
+  Future<Either<Failure, Unit>> deleteAllTracks();
   Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
     String projectId,
   );
-  Future<void> clearCache();
-  Future<void> updateTrackName(String trackId, String newName);
+  Future<Either<Failure, Unit>> clearCache();
+  Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName);
 }
 
 @LazySingleton(as: AudioTrackLocalDataSource)
@@ -25,31 +25,50 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   IsarAudioTrackLocalDataSource(this._isar);
 
   @override
-  Future<void> cacheTrack(AudioTrackDTO track) async {
-    final trackDoc = AudioTrackDocument.fromDTO(track);
-    await _isar.writeTxn(() async {
-      await _isar.audioTrackDocuments.put(trackDoc);
-    });
+  Future<Either<Failure, Unit>> cacheTrack(AudioTrackDTO track) async {
+    try {
+      final trackDoc = AudioTrackDocument.fromDTO(track);
+      await _isar.writeTxn(() async {
+        await _isar.audioTrackDocuments.put(trackDoc);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to cache track: $e'));
+    }
   }
 
   @override
-  Future<AudioTrackDTO?> getTrackById(String id) async {
-    final trackDoc = await _isar.audioTrackDocuments.get(fastHash(id));
-    return trackDoc?.toDTO();
+  Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id) async {
+    try {
+      final trackDoc = await _isar.audioTrackDocuments.get(fastHash(id));
+      return Right(trackDoc?.toDTO());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get track by id: $e'));
+    }
   }
 
   @override
-  Future<void> deleteTrack(String id) async {
-    await _isar.writeTxn(() async {
-      await _isar.audioTrackDocuments.delete(fastHash(id));
-    });
+  Future<Either<Failure, Unit>> deleteTrack(String id) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioTrackDocuments.delete(fastHash(id));
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete track: $e'));
+    }
   }
 
   @override
-  Future<void> deleteAllTracks() async {
-    await _isar.writeTxn(() async {
-      await _isar.audioTrackDocuments.clear();
-    });
+  Future<Either<Failure, Unit>> deleteAllTracks() async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioTrackDocuments.clear();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete all tracks: $e'));
+    }
   }
 
   @override
@@ -70,20 +89,30 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Future<void> clearCache() async {
-    await _isar.writeTxn(() async {
-      await _isar.audioTrackDocuments.clear();
-    });
+  Future<Either<Failure, Unit>> clearCache() async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioTrackDocuments.clear();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to clear cache: $e'));
+    }
   }
 
   @override
-  Future<void> updateTrackName(String trackId, String newName) async {
-    await _isar.writeTxn(() async {
-      final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
-      if (track != null) {
-        track.name = newName;
-        await _isar.audioTrackDocuments.put(track);
-      }
-    });
+  Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName) async {
+    try {
+      await _isar.writeTxn(() async {
+        final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
+        if (track != null) {
+          track.name = newName;
+          await _isar.audioTrackDocuments.put(track);
+        }
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to update track name: $e'));
+    }
   }
 }

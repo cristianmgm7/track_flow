@@ -11,7 +11,8 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
-import 'package:trackflow/features/auth/data/data_sources/auth_local_datasource.dart';
+import 'package:trackflow/features/auth/data/data_sources/user_session_local_datasource.dart';
+import 'package:trackflow/features/auth/data/data_sources/onboarding_state_local_datasource.dart';
 import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
@@ -21,7 +22,8 @@ import 'package:trackflow/core/session/session_storage.dart';
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
-  final AuthLocalDataSource _local;
+  final UserSessionLocalDataSource _userSessionLocalDataSource;
+  final OnboardingStateLocalDataSource _onboardingStateLocalDataSource;
   final NetworkInfo _networkInfo;
   final FirebaseFirestore _firestore;
   final UserProfileLocalDataSource _userProfileLocalDataSource;
@@ -32,7 +34,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
-    required AuthLocalDataSource local,
+    required UserSessionLocalDataSource userSessionLocalDataSource,
+    required OnboardingStateLocalDataSource onboardingStateLocalDataSource,
     required NetworkInfo networkInfo,
     required FirebaseFirestore firestore,
     required UserProfileLocalDataSource userProfileLocalDataSource,
@@ -41,7 +44,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required AudioCommentLocalDataSource audioCommentLocalDataSource,
     required SessionStorage sessionStorage,
   }) : _remote = remote,
-       _local = local,
+       _userSessionLocalDataSource = userSessionLocalDataSource,
+       _onboardingStateLocalDataSource = onboardingStateLocalDataSource,
        _networkInfo = networkInfo,
        _firestore = firestore,
        _userProfileLocalDataSource = userProfileLocalDataSource,
@@ -107,13 +111,15 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
-        await _local.setOfflineCredentials(email, true);
+        final result = await _userSessionLocalDataSource.setOfflineCredentials(email, true);
+        result.fold((failure) => throw Exception(failure.message), (_) {});
         return right(domain.User(id: UserId.fromUniqueString('offline'), email: email));
       }
       final user = await _remote.signInWithEmailAndPassword(email, password);
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
-        await _local.cacheUserId(user.uid);
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(user.uid);
+        cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _createOrSyncUserProfile(user);
       }
       if (user == null) {
@@ -133,14 +139,16 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
-        await _local.setOfflineCredentials(email, true);
+        final result = await _userSessionLocalDataSource.setOfflineCredentials(email, true);
+        result.fold((failure) => throw Exception(failure.message), (_) {});
         return right(domain.User(id: UserId.fromUniqueString('offline'), email: email));
       }
       final user = await _remote.signUpWithEmailAndPassword(email, password);
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
         await _createOrSyncUserProfile(user);
-        await _local.cacheUserId(user.uid);
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(user.uid);
+        cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
       }
       if (user == null) {
         return left(AuthenticationFailure('No user found after sign up'));
@@ -165,7 +173,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remote.signInWithGoogle();
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
-        await _local.cacheUserId(user.uid);
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(user.uid);
+        cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _createOrSyncUserProfile(user);
       }
       if (user == null) {
@@ -183,7 +192,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() async {
     final isConnected = await _networkInfo.isConnected;
     if (!isConnected) {
-      await _local.clearOfflineCredentials();
+      final clearResult = await _userSessionLocalDataSource.clearOfflineCredentials();
+      clearResult.fold((failure) => throw Exception(failure.message), (_) {});
       await _sessionStorage.clearUserId();
       return;
     }
@@ -199,7 +209,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<bool> isLoggedIn() async {
     final isConnected = await _networkInfo.isConnected;
     if (!isConnected) {
-      return await _local.hasOfflineCredentials();
+      final hasCredentialsResult = await _userSessionLocalDataSource.hasOfflineCredentials();
+      return hasCredentialsResult.fold((failure) => false, (hasCredentials) => hasCredentials);
     }
     final user = await _remote.getCurrentUser();
     return user != null;
@@ -207,22 +218,26 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<bool> onboardingCompleted() async {
-    await _local.setOnboardingCompleted(true);
+    final result = await _onboardingStateLocalDataSource.setOnboardingCompleted(true);
+    result.fold((failure) => throw Exception(failure.message), (_) {});
     return true;
   }
 
   @override
   Future<void> welcomeScreenSeenCompleted() async {
-    await _local.setWelcomeScreenSeen(true);
+    final result = await _onboardingStateLocalDataSource.setWelcomeScreenSeen(true);
+    result.fold((failure) => throw Exception(failure.message), (_) {});
   }
 
   @override
   Future<bool> checkWelcomeScreenSeen() async {
-    return await _local.isWelcomeScreenSeen();
+    final result = await _onboardingStateLocalDataSource.isWelcomeScreenSeen();
+    return result.fold((failure) => false, (isSeen) => isSeen);
   }
 
   @override
   Future<bool> checkOnboardingCompleted() async {
-    return await _local.isOnboardingCompleted();
+    final result = await _onboardingStateLocalDataSource.isOnboardingCompleted();
+    return result.fold((failure) => false, (isCompleted) => isCompleted);
   }
 }

@@ -1,386 +1,493 @@
-# TrackFlow - Entidades y Value Objects
+# TrackFlow - Entities and Value Objects
 
-## Resumen General
+## General Overview
 
-TrackFlow implementa un modelo de dominio robusto siguiendo los principios de Domain-Driven Design (DDD) con una clara separación entre **Entidades** y **Value Objects**. Esta documentación presenta un análisis completo de todas las entidades y value objects encontradas en el proyecto.
+TrackFlow implements a robust domain model following Domain-Driven Design (DDD) principles with clear separation between **Entities** and **Value Objects**. This documentation presents a comprehensive analysis of all entities and value objects found in the project after the SOLID refactor completion.
 
-### Estadísticas del Dominio
-- **Entidades Base**: 2 clases abstractas
-- **Entidades de Dominio**: ~45 implementaciones
-- **Value Objects**: 19 implementaciones
-- **DTOs**: ~15 clases para transferencia de datos
-- **Document Models**: ~10 modelos para persistencia
+### Domain Statistics
+- **Base Entities**: 2 abstract classes
+- **Domain Entities**: ~45 implementations
+- **Value Objects**: 19 implementations
+- **DTOs**: ~15 classes for data transfer
+- **Document Models**: ~10 models for persistence
 
 ---
 
-## 🏗️ Arquitectura Base
+## 🏗️ Base Architecture
 
-### Clases Base Fundamentales
+### Fundamental Base Classes
 
 #### **Entity<T>** (`lib/core/domain/entity.dart`)
 ```dart
-abstract class Entity<T>
+abstract class Entity<T> {
+  final T id;
+  const Entity(this.id);
+  
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is Entity<T> && other.id == id;
+}
 ```
-- Clase base abstracta para todas las entidades
-- Implementa igualdad basada en ID
-- Proporciona el patrón fundamental para objetos con identidad
+- Abstract base class for all entities
+- Implements identity-based equality
+- Provides fundamental pattern for objects with identity
 
 #### **AggregateRoot<T>** (`lib/core/domain/aggregate_root.dart`)
 ```dart
-abstract class AggregateRoot<T> extends Entity<T>
+abstract class AggregateRoot<T> extends Entity<T> {
+  const AggregateRoot(super.id);
+}
 ```
-- Extiende Entity para implementar el patrón Aggregate Root de DDD
-- Base para entidades principales que encapsulan otros objetos del dominio
+- Extends Entity to implement DDD Aggregate Root pattern
+- Base for main entities that encapsulate other domain objects
 
 #### **ValueObject<T>** (`lib/core/entities/value_object.dart`)
 ```dart
-abstract class ValueObject<T> extends Equatable
+abstract class ValueObject<T> extends Equatable {
+  final T value;
+  const ValueObject(this.value);
+  
+  @override
+  List<Object?> get props => [value];
+}
 ```
-- Clase base para todos los value objects
-- Implementa igualdad basada en valor usando Equatable
+- Base class for all value objects
+- Implements value-based equality using Equatable
 
 ---
 
-## 🆔 Sistema de Identificación
+## 🆔 Identification System
 
-### Value Objects de Identificación
+### Identification Value Objects
 
 #### **UniqueId** (`lib/core/entities/unique_id.dart`)
-- **UniqueId**: Identificador base usando UUID
-- **UserId**: Identificación de usuarios
-- **ProjectId**: Identificación de proyectos
-- **AudioTrackId**: Identificación de pistas de audio (dominio)
-- **AudioCommentId**: Identificación de comentarios de audio
+**Centralized ID Management:**
+- **UniqueId**: Base identifier using UUID
+- **UserId**: User identification
+- **ProjectId**: Project identification
+- **AudioTrackId**: Audio track identification (consolidated)
+- **AudioCommentId**: Audio comment identification
+- **MagicLinkId**: Magic link identification (new)
+- **PlaylistId**: Playlist identification (consolidated)
 
-#### **Identificadores Específicos por Feature**
+**Key Changes in SOLID Refactor:**
+- Removed redundant equality implementations
+- Consolidated duplicate AudioTrackId implementations
+- Added missing ID types (MagicLinkId)
+- Standardized factory constructors pattern
+
+```dart
+class AudioTrackId extends UniqueId {
+  factory AudioTrackId() => AudioTrackId._(const Uuid().v4());
+  factory AudioTrackId.fromUniqueString(String input) => AudioTrackId._(input);
+  const AudioTrackId._(super.value) : super._();
+}
+```
+
+#### **Specific Identifiers by Feature**
 - **ProjectCollaboratorId** (`lib/features/projects/domain/value_objects/project_collaborator_id.dart`)
-- **PlaylistId** (`lib/features/playlist/domain/entities/playlist_id.dart`)
-- **AudioTrackId** (`lib/features/audio_player/domain/entities/audio_track_id.dart`) - Para reproductor
 
 ---
 
-## 👤 Gestión de Usuarios e Identidad
+## 👤 User Management and Identity
 
-### Entidades de Usuario
+### User Entities
 
 #### **User** (`lib/features/auth/domain/entities/user.dart`)
 ```dart
-class User extends Entity<UserId>
+class User extends Entity<UserId> {
+  final String email;
+  final String? displayName;
+
+  User({required UserId id, required this.email, this.displayName}) : super(id);
+}
 ```
-- Entidad principal para autenticación
-- Maneja información básica del usuario autenticado
+**SOLID Refactor Changes:**
+- Migrated from plain class to Entity<UserId>
+- Changed constructor to accept UserId instead of String
+- Removed manual equality implementation
 
 #### **UserProfile** (`lib/features/user_profile/domain/entities/user_profile.dart`)
 ```dart
-class UserProfile extends Entity<UserId>
+class UserProfile extends AggregateRoot<UserId> {
+  final String name;
+  final String email;
+  final CreativeRole? creativeRole;
+  // ...
+  
+  const UserProfile({
+    required UserId id,
+    required this.name,
+    // ...
+  }) : super(id);
+}
 ```
-- Perfil extendido del usuario
-- Incluye roles creativos y información adicional
+**SOLID Refactor Changes:**
+- Migrated from Equatable to AggregateRoot<UserId>
+- Standardized constructor pattern
+- Removed manual props implementation
 
-### Value Objects de Autenticación
+### Authentication Value Objects
 
 #### **EmailAddress** (`lib/features/auth/domain/entities/email.dart`)
 ```dart
-class EmailAddress extends ValueObject<String>
+class EmailAddress extends ValueObject<Either<Failure, String>>
 ```
-- Validación de formato de email
-- Retorna Either<Failure, String> para manejo de errores
+- Email format validation
+- Returns Either<Failure, String> for error handling
 
 #### **PasswordValue** (`lib/features/auth/domain/entities/password.dart`)
 ```dart
-class PasswordValue extends ValueObject<String>
+class PasswordValue extends ValueObject<Either<Failure, String>>
 ```
-- Validación de contraseñas
-- Implementa reglas de seguridad
-
-#### **UserCreativeRole** (`lib/core/entities/user_creative_role.dart`)
-```dart
-enum UserCreativeRole
-```
-- Roles creativos: producer, songwriter, mixing engineer, etc.
-- Define capacidades y permisos del usuario
+- Password validation
+- Implements security rules
 
 ---
 
-## 📁 Gestión de Proyectos
+## 📁 Project Management
 
-### Entidad Principal
+### Main Entity
 
 #### **Project** (`lib/features/projects/domain/entities/project.dart`)
 ```dart
 class Project extends AggregateRoot<ProjectId>
 ```
-**Características principales:**
-- Aggregate Root principal del dominio de proyectos
-- Gestión de colaboradores con roles y permisos
-- Operaciones basadas en permisos
-- Funcionalidad de soft delete
-- Conversión a playlist
-- Validación de membresía
+**Key Features:**
+- Main Aggregate Root for project domain
+- Collaborator management with roles and permissions
+- Permission-based operations
+- Soft delete functionality
+- Playlist conversion
+- Membership validation
 
-**Métodos clave:**
-- `addCollaborator()` - Agregar colaboradores
-- `removeCollaborator()` - Remover colaboradores
-- `updateCollaboratorRole()` - Actualizar roles
-- `canUserEdit()` - Validación de permisos
-- `toPlaylist()` - Convertir a playlist
+**Key Methods:**
+- `addCollaborator()` - Add collaborators
+- `removeCollaborator()` - Remove collaborators
+- `updateCollaboratorRole()` - Update roles
+- `canUserEdit()` - Permission validation
+- `toPlaylist()` - Convert to playlist
 
 #### **ProjectCollaborator** (`lib/features/projects/domain/entities/project_collaborator.dart`)
 ```dart
 class ProjectCollaborator extends Entity<ProjectCollaboratorId>
 ```
-- Gestión de colaboradores individuales
-- Sistema de roles y permisos
-- Validaciones específicas de permisos
-- Sobrescritura de permisos individuales
+- Individual collaborator management
+- Role and permission system
+- Specific permission validations
+- Individual permission overrides
 
-### Value Objects de Proyecto
+### Project Value Objects
 
 #### **ProjectName** (`lib/features/projects/domain/value_objects/project_name.dart`)
 ```dart
 class ProjectName extends ValueObject<String>
 ```
-- Validación de nombres (máximo 50 caracteres)
-- Reglas de formato y contenido
+- Name validation (max 50 characters)
+- Format and content rules
 
 #### **ProjectDescription** (`lib/features/projects/domain/value_objects/project_description.dart`)
 ```dart
 class ProjectDescription extends ValueObject<String>
 ```
-- Validación de descripciones (máximo 500 caracteres)
-- Formateo y sanitización
+- Description validation (max 500 characters)
+- Formatting and sanitization
 
 #### **ProjectRole** (`lib/features/projects/domain/value_objects/project_role.dart`)
 ```dart
 enum ProjectRole { owner, admin, editor, viewer }
 ```
-- Jerarquía de roles en proyectos
-- Define niveles de acceso y permisos
-
-#### **ProjectPermission** (`lib/features/projects/domain/value_objects/project_permission.dart`)
-```dart
-enum ProjectPermission
-```
-- Permisos granulares específicos
-- Control de acceso fino
+- Project role hierarchy
+- Defines access levels and permissions
 
 ---
 
-## 🎵 Sistema de Audio
+## 🎵 Audio System
 
-### Entidades de Contenido de Audio
+### Audio Content Entities
 
 #### **AudioTrack** (`lib/features/audio_track/domain/entities/audio_track.dart`)
 ```dart
-class AudioTrack extends Entity<AudioTrackId>
+class AudioTrack extends AggregateRoot<AudioTrackId> {
+  final String name;
+  final String url;
+  final Duration duration;
+  final ProjectId projectId;
+  final UserId uploadedBy;
+  final DateTime createdAt;
+
+  const AudioTrack({
+    required AudioTrackId id,
+    required this.name,
+    // ...
+  }) : super(id);
+}
 ```
-**Características:**
-- Metadatos de pista (nombre, URL, duración)
-- Asociación con proyectos
-- Seguimiento de uploads
-- Validación de membresía de proyecto
+**SOLID Refactor Changes:**
+- Migrated from Equatable to AggregateRoot<AudioTrackId>
+- Uses consolidated AudioTrackId from core
+- Standardized constructor pattern
+- Removed manual props implementation
 
 #### **AudioComment** (`lib/features/audio_comment/domain/entities/audio_comment.dart`)
 ```dart
-class AudioComment extends Entity<AudioCommentId>
-```
-- Comentarios con marcas de tiempo
-- Asociados a pistas específicas
-- Sistema de threading/respuestas
+class AudioComment extends Entity<AudioCommentId> {
+  final ProjectId projectId;
+  final AudioTrackId trackId;
+  final UserId createdBy;
+  final String content;
+  final Duration timestamp;
+  final DateTime createdAt;
 
-### Sistema de Reproductor de Audio
+  const AudioComment({
+    required AudioCommentId id,
+    required this.projectId,
+    // ...
+  }) : super(id);
+}
+```
+**SOLID Refactor Changes:**
+- Migrated from Equatable to Entity<AudioCommentId>
+- Standardized constructor pattern
+- Removed manual props implementation
+
+### Audio Player System
 
 #### **PlaybackSession** (`lib/features/audio_player/domain/entities/playback_session.dart`)
 ```dart
 class PlaybackSession extends Entity<UniqueId>
 ```
-**Funcionalidades centrales:**
-- Estado de pista actual
-- Gestión de cola de audio
-- Controles de reproducción (play/pause/stop)
-- Seguimiento de posición y progreso
-- Control de volumen y velocidad
-- Manejo de errores de reproducción
+**Core Features:**
+- Current track state
+- Audio queue management
+- Playback controls (play/pause/stop)
+- Position and progress tracking
+- Volume and speed control
+- Playback error handling
 
-**Entidades relacionadas:**
-- **AudioTrackMetadata** - Metadatos para el reproductor
-- **PlaybackState** - Estados de reproducción
-- **RepeatMode** - Modos de repetición
-- **AudioSource** - Abstracciones de fuente de audio
-- **AudioFailure** - Manejo de errores
-- **AudioQueue** - Gestión de cola
+**Related Entities:**
+- **AudioTrackMetadata** - Metadata for player
+- **PlaybackState** - Playback states
+- **RepeatMode** - Repeat modes
+- **AudioSource** - Audio source abstractions
+- **AudioFailure** - Error handling
+- **AudioQueue** - Queue management
 
-### Sistema de Playlists
+### Playlist System
 
 #### **Playlist** (`lib/features/playlist/domain/entities/playlist.dart`)
 ```dart
-class Playlist extends Entity<PlaylistId>
+class Playlist extends AggregateRoot<PlaylistId> {
+  final String name;
+  final List<String> trackIds;
+  final PlaylistSource playlistSource;
+
+  const Playlist({
+    required PlaylistId id,
+    required this.name,
+    required this.trackIds,
+    required this.playlistSource,
+  }) : super(id);
+}
 ```
-**Características:**
-- Colección de IDs de pistas
-- Seguimiento de fuente (proyecto vs usuario)
-- Operaciones de gestión de playlist
+**SOLID Refactor Changes:**
+- Migrated from Equatable to AggregateRoot<PlaylistId>
+- Uses consolidated PlaylistId from core
+- Removed custom equality operators
+- Standardized constructor pattern
 
 ---
 
-## 🗂️ Sistema de Cache de Audio
+## 🗂️ Audio Cache System
 
-### Entidades de Cache
+### Cache Entities
 
 #### **CachedAudio** (`lib/features/audio_cache/shared/domain/entities/cached_audio.dart`)
 ```dart
 class CachedAudio extends Entity<UniqueId>
 ```
-**Funcionalidades:**
-- Información del sistema de archivos
-- Seguimiento de estado de cache
-- Niveles de calidad
-- Validación de checksum
+**Features:**
+- File system information
+- Cache state tracking
+- Quality levels
+- Checksum validation
 
-**Entidades relacionadas:**
-- **CacheReference** - Gestión de referencias de cache
-- **CacheMetadata** - Metadatos de cache
-- **DownloadProgress** - Seguimiento de descargas
-- **CacheValidationResult** - Resultados de validación
-- **CleanupDetails** - Seguimiento de limpieza
-- **PlaylistCacheStats** - Estadísticas de cache de playlist
+**Related Entities:**
+- **CacheReference** - Cache reference management
+- **CacheMetadata** - Cache metadata
+- **DownloadProgress** - Download tracking
+- **CacheValidationResult** - Validation results
+- **CleanupDetails** - Cleanup tracking
+- **PlaylistCacheStats** - Playlist cache statistics
 
-### Value Objects de Cache
+### Cache Value Objects
 
 #### **CacheKey** (`lib/features/audio_cache/shared/domain/value_objects/cache_key.dart`)
 ```dart
 class CacheKey extends ValueObject<String>
 ```
-- Generación de claves compuestas
-- Hash de URLs
-- Validación de integridad
+- Composite key generation
+- URL hashing
+- Integrity validation
 
 #### **StorageLimit** (`lib/features/audio_cache/shared/domain/value_objects/storage_limit.dart`)
 ```dart
 class StorageLimit extends ValueObject<int>
 ```
-- Conversiones byte/MB/GB
-- Cálculos de uso
-- Validación de límites
-
-#### **ConflictPolicy** (`lib/features/audio_cache/shared/domain/value_objects/conflict_policy.dart`)
-```dart
-enum ConflictPolicy
-```
-- Políticas de resolución de conflictos
-- Estrategias de sobrescritura
-
-#### **CleanupResult** (`lib/features/audio_cache/shared/domain/value_objects/cleanup_result.dart`)
-```dart
-class CleanupResult extends ValueObject<Map<String, dynamic>>
-```
-- Resultados inmutables de operaciones de limpieza
-- Estadísticas de limpieza
+- Byte/MB/GB conversions
+- Usage calculations
+- Limit validation
 
 ---
 
-## 🔗 Otros Dominios
+## 🔗 Other Domains
 
-### Autenticación por Magic Link
+### Magic Link Authentication
 
 #### **MagicLink** (`lib/features/magic_link/domain/entities/magic_link.dart`)
 ```dart
-class MagicLink extends Entity<UniqueId>
-```
-- Autenticación sin contraseña
-- Tokens temporales con expiración
+class MagicLink extends Entity<MagicLinkId> {
+  final String url;
+  final UserId userId;
+  final String projectId;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
+  final bool isUsed;
+  final MagicLinkStatus status;
 
-### Contexto de Audio
-
-#### **TrackContext** (`lib/features/audio_context/domain/entities/track_context.dart`)
-```dart
-class TrackContext extends Entity<UniqueId>
+  const MagicLink({
+    required MagicLinkId id,
+    required this.url,
+    // ...
+  }) : super(id);
+}
 ```
-- Información contextual de pistas
-- Metadatos adicionales para reproducción
+**SOLID Refactor Changes:**
+- Migrated from Equatable to Entity<MagicLinkId>
+- Added new MagicLinkId type
+- Standardized constructor pattern
 
 ---
 
-## 📋 Capa de Transferencia de Datos
+## 📋 Data Transfer Layer
 
 ### Data Transfer Objects (DTOs)
 
-El proyecto incluye DTOs completos para serialización:
+The project includes comprehensive DTOs for serialization:
 
-- **AuthDto** - Autenticación con Firebase
-- **ProjectDTO** - Integración con Firestore
-- **AudioTrackDTO** - Transferencia de datos de pistas
-- **AudioCommentDto** - Datos de comentarios
-- **UserProfileDto** - Datos de perfil
-- **PlaylistDto** - Datos de playlist
-- **MagicLinkDto** - Autenticación por enlace mágico
+- **AuthDto** - Firebase authentication
+- **ProjectDTO** - Firestore integration
+- **AudioTrackDTO** - Track data transfer
+- **AudioCommentDto** - Comment data
+- **UserProfileDto** - Profile data
+- **PlaylistDto** - Playlist data
+- **MagicLinkDto** - Magic link authentication
+
+**SOLID Refactor Impact:**
+- All DTOs updated to handle new entity constructor patterns
+- Added proper ID conversion methods (toDomain/fromDomain)
+- Standardized string ID handling in data layer
 
 ### Document Models
 
-Modelos de documentos de base de datos con generación de código:
-- Documentos de proyecto, pistas de audio, comentarios
-- Documentos de perfil de usuario, playlists
-- Documentos de referencias de cache, audio cacheado
+Database document models with code generation:
+- Project, audio track, comment documents
+- User profile, playlist documents
+- Cache reference, cached audio documents
 
 ---
 
-## 🏛️ Patrones Arquitectónicos
+## 🏛️ Architectural Patterns
 
 ### Domain-Driven Design (DDD)
 
-El codebase sigue principios DDD con:
+The codebase follows DDD principles with:
 
-1. **Entidades** - Objetos con identidad que extienden la clase base Entity
-2. **Aggregate Roots** - Objetos de negocio complejos (como Project)
-3. **Value Objects** - Datos inmutables con igualdad basada en valor
-4. **DTOs** - Transferencia de datos entre capas
-5. **Document Models** - Persistencia en base de datos
+1. **Entities** - Objects with identity extending base Entity class
+2. **Aggregate Roots** - Complex business objects (like Project, AudioTrack, UserProfile, Playlist)
+3. **Value Objects** - Immutable data with value-based equality
+4. **DTOs** - Data transfer between layers
+5. **Document Models** - Database persistence
 
-### Separación de Responsabilidades
+### Separation of Responsibilities
 
-- **Domain Layer**: Entidades y value objects puros
-- **Data Layer**: DTOs y document models
-- **Infrastructure**: Implementaciones específicas
+- **Domain Layer**: Pure entities and value objects
+- **Data Layer**: DTOs and document models
+- **Infrastructure**: Specific implementations
 
-### Validación y Reglas de Negocio
+### Validation and Business Rules
 
-- Value objects encapsulan validaciones
-- Entidades implementan reglas de negocio complejas
-- Sistema de permisos granular en Project
+- Value objects encapsulate validations
+- Entities implement complex business rules
+- Granular permission system in Project
 
 ---
 
-## 📊 Resumen por Categorías
+## 📊 Summary by Categories
 
-### Entidades (45+ implementaciones)
-- **Base**: 2 clases abstractas
-- **Identificación y Usuario**: 4 entidades
-- **Gestión de Proyectos**: 2 entidades principales
-- **Audio**: 15+ entidades (tracks, player, cache)
-- **Playlists**: 1 entidad
-- **Otros Dominios**: 3 entidades
+### Entities (45+ implementations)
+- **Base**: 2 abstract classes
+- **Identification and User**: 4 entities
+- **Project Management**: 2 main entities
+- **Audio**: 15+ entities (tracks, player, cache)
+- **Playlists**: 1 entity
+- **Other Domains**: 3 entities
 
-### Value Objects (19 implementaciones)
-- **Base**: 1 clase abstracta
-- **IDs**: 7 tipos diferentes
-- **Autenticación**: 2 value objects validados
-- **Proyecto**: 4 value objects específicos
-- **Cache de Audio**: 4 value objects
+### Value Objects (19 implementations)
+- **Base**: 1 abstract class
+- **IDs**: 7 different types (consolidated)
+- **Authentication**: 2 validated value objects
+- **Project**: 4 specific value objects
+- **Audio Cache**: 4 value objects
 - **Roles**: 1 value object
 
-### Transferencia de Datos
-- **DTOs**: 15+ clases
-- **Document Models**: 10+ modelos
+### Data Transfer
+- **DTOs**: 15+ classes (updated for new entity patterns)
+- **Document Models**: 10+ models
 
 ---
 
-## 🔍 Observaciones Arquitectónicas
+## 🔍 SOLID Refactor Achievements
 
-1. **Consistencia**: Uso consistente de patrones DDD en todo el proyecto
-2. **Separación Clara**: Distinción bien definida entre entidades y value objects
-3. **Validación Robusta**: Value objects encapsulan todas las reglas de validación
-4. **Escalabilidad**: Arquitectura preparada para crecimiento
-5. **Type Safety**: Fuerte tipado con identificadores específicos por dominio
-6. **Error Handling**: Uso de Either<Failure, T> para manejo de errores
+### Phase 1 Completion: Entities Refactor
 
-La arquitectura de TrackFlow demuestra una implementación madura y bien estructurada de DDD, proporcionando una base sólida para una plataforma de producción de audio colaborativa con capacidades sofisticadas de reproducción, cache y gestión de proyectos.
+1. **Single Responsibility Principle (SRP)**
+   - Each entity has a clear, single purpose
+   - Separated concerns between entities and value objects
+
+2. **Open/Closed Principle (OCP)**
+   - Removed redundant equality implementations
+   - Entities extend base classes without modification
+
+3. **Liskov Substitution Principle (LSP)**
+   - All entities properly substitute their base classes
+   - Consistent inheritance patterns
+
+4. **Interface Segregation Principle (ISP)**
+   - Clean, focused entity interfaces
+   - No forced dependencies on unused methods
+
+5. **Dependency Inversion Principle (DIP)**
+   - Entities depend on abstractions (Entity<T>, AggregateRoot<T>)
+   - Consistent ID abstraction through UniqueId
+
+### Key Improvements
+
+- **Eliminated Duplication**: Removed duplicate AudioTrackId implementations
+- **Standardized Inheritance**: All entities now properly extend Entity<T> or AggregateRoot<T>
+- **Consistent Patterns**: Unified constructor and ID handling patterns
+- **Type Safety**: Strong typing with consolidated ID system
+- **Maintainability**: Simplified equality logic and reduced code duplication
+
+---
+
+## 🎯 Next Steps: Data Sources Refactor
+
+With entities now following SOLID principles, the next phase will focus on:
+
+1. **Data Source Interface Segregation**: Split large interfaces following ISP
+2. **Method Standardization**: Ensure all methods return `Either<Failure, T>`
+3. **Duplicate Elimination**: Remove redundant methods across data sources
+4. **Repository Consolidation**: Move business logic from data sources to repositories
+
+The entity refactor provides a solid foundation for the remaining phases of the SOLID architecture improvement.

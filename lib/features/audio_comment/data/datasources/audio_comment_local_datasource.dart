@@ -9,27 +9,27 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 abstract class AudioCommentLocalDataSource {
   /// Caches or updates a comment locally in Isar.
   /// Used in: SyncAudioCommentsUseCase, AudioCommentRepositoryImpl (for local persistence after remote sync or creation)
-  Future<void> cacheComment(AudioCommentDTO comment);
+  Future<Either<Failure, Unit>> cacheComment(AudioCommentDTO comment);
 
   /// Deletes a cached comment by its ID from Isar.
   /// Used in: AudioCommentRepositoryImpl (for local deletion after remote deletion)
-  Future<void> deleteCachedComment(String commentId);
+  Future<Either<Failure, Unit>> deleteCachedComment(String commentId);
 
   /// Returns a list of cached comments for a given track (one-time fetch).
   /// Used in: AudioCommentRepositoryImpl (for business logic or non-reactive UI)
-  Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId);
+  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(String trackId);
 
   /// Returns a single cached comment by its ID.
   /// Used in: AudioCommentRepositoryImpl, ProjectCommentService (for detail/edit flows)
-  Future<AudioCommentDTO?> getCommentById(String id);
+  Future<Either<Failure, AudioCommentDTO?>> getCommentById(String id);
 
   /// Deletes a comment by its ID from Isar.
   /// Used in: AudioCommentRepositoryImpl (for local deletion, alternative to deleteCachedComment)
-  Future<void> deleteComment(String id);
+  Future<Either<Failure, Unit>> deleteComment(String id);
 
   /// Deletes all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
-  Future<void> deleteAllComments();
+  Future<Either<Failure, Unit>> deleteAllComments();
 
   /// Watches and streams all comments for a given track (reactive, for UI updates).
   /// Used in: UI (Bloc/Cubit/ViewModel) for offline-first, real-time comment updates
@@ -39,7 +39,7 @@ abstract class AudioCommentLocalDataSource {
 
   /// Clears all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
-  Future<void> clearCache();
+  Future<Either<Failure, Unit>> clearCache();
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
@@ -49,49 +49,77 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   IsarAudioCommentLocalDataSource(this._isar);
 
   @override
-  Future<void> cacheComment(AudioCommentDTO comment) async {
-    final commentDoc = AudioCommentDocument.fromDTO(comment);
-    await _isar.writeTxn(() async {
-      await _isar.audioCommentDocuments.put(commentDoc);
-    });
+  Future<Either<Failure, Unit>> cacheComment(AudioCommentDTO comment) async {
+    try {
+      final commentDoc = AudioCommentDocument.fromDTO(comment);
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments.put(commentDoc);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to cache comment: $e'));
+    }
   }
 
   @override
-  Future<void> deleteCachedComment(String commentId) async {
-    await _isar.writeTxn(() async {
-      await _isar.audioCommentDocuments.delete(fastHash(commentId));
-    });
+  Future<Either<Failure, Unit>> deleteCachedComment(String commentId) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments.delete(fastHash(commentId));
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete cached comment: $e'));
+    }
   }
 
   @override
-  Future<List<AudioCommentDTO>> getCachedCommentsByTrack(String trackId) async {
-    final commentDocs =
-        await _isar.audioCommentDocuments
-            .filter()
-            .trackIdEqualTo(trackId)
-            .findAll();
-    return commentDocs.map((doc) => doc.toDTO()).toList();
+  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(String trackId) async {
+    try {
+      final commentDocs =
+          await _isar.audioCommentDocuments
+              .filter()
+              .trackIdEqualTo(trackId)
+              .findAll();
+      return Right(commentDocs.map((doc) => doc.toDTO()).toList());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get cached comments by track: $e'));
+    }
   }
 
   @override
-  Future<AudioCommentDTO?> getCommentById(String id) async {
-    final commentDoc =
-        await _isar.audioCommentDocuments.filter().idEqualTo(id).findFirst();
-    return commentDoc?.toDTO();
+  Future<Either<Failure, AudioCommentDTO?>> getCommentById(String id) async {
+    try {
+      final commentDoc =
+          await _isar.audioCommentDocuments.filter().idEqualTo(id).findFirst();
+      return Right(commentDoc?.toDTO());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get comment by id: $e'));
+    }
   }
 
   @override
-  Future<void> deleteComment(String id) async {
-    await _isar.writeTxn(() async {
-      await _isar.audioCommentDocuments.delete(fastHash(id));
-    });
+  Future<Either<Failure, Unit>> deleteComment(String id) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments.delete(fastHash(id));
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete comment: $e'));
+    }
   }
 
   @override
-  Future<void> deleteAllComments() async {
-    await _isar.writeTxn(() async {
-      await _isar.audioCommentDocuments.clear();
-    });
+  Future<Either<Failure, Unit>> deleteAllComments() async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments.clear();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete all comments: $e'));
+    }
   }
 
   @override
@@ -112,9 +140,14 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<void> clearCache() async {
-    await _isar.writeTxn(() async {
-      await _isar.audioCommentDocuments.clear();
-    });
+  Future<Either<Failure, Unit>> clearCache() async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments.clear();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to clear cache: $e'));
+    }
   }
 }

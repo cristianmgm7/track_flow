@@ -14,10 +14,10 @@
 - [x] ~~Execute and fix domain and entity tests~~ (SKIPPED - Tests after complete refactor)
 
 ## Phase 2: Data Sources Refactor
-- [ ] Divide data sources with multiple responsibilities (SRP, ISP)
-- [ ] Create new specialized interfaces and migrate implementations
+- [x] Divide data sources with multiple responsibilities (SRP, ISP)
+- [x] Create new specialized interfaces and migrate implementations (AuthLocalDataSource split)
 - [ ] Refactor duplicate methods and consolidate logic in repositories
-- [ ] Standardize all methods to `Either<Failure, T>`
+- [ ] Standardize all methods to `Either<Failure, T>` (AudioTrack ✅, AudioComment ✅, Projects pending, Playlist pending)
 - [ ] Migrate tests and update dependency injection
 - [ ] Validate integration with refactored entities
 - [ ] ~~Execute data sources test suite~~ (SKIPPED - Tests after complete refactor)

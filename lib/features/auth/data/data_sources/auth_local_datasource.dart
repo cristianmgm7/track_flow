@@ -1,73 +1,73 @@
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'user_session_local_datasource.dart';
+import 'onboarding_state_local_datasource.dart';
 
+/// Legacy auth local data source for backward compatibility
+/// DEPRECATED: Use UserSessionLocalDataSource and OnboardingStateLocalDataSource directly
+/// This composite will be removed in future versions
+@Deprecated('Use UserSessionLocalDataSource and OnboardingStateLocalDataSource directly')
 abstract class AuthLocalDataSource {
-  Future<void> cacheUserId(String userId);
-  Future<String?> getCachedUserId();
-  Future<void> setOnboardingCompleted(bool completed);
-  Future<bool> isOnboardingCompleted();
-  Future<void> setWelcomeScreenSeen(bool seen);
-  Future<bool> isWelcomeScreenSeen();
-  Future<void> setOfflineCredentials(String email, bool hasCredentials);
-  Future<String?> getOfflineEmail();
-  Future<bool> hasOfflineCredentials();
-  Future<void> clearOfflineCredentials();
+  Future<Either<Failure, Unit>> cacheUserId(String userId);
+  Future<Either<Failure, String?>> getCachedUserId();
+  Future<Either<Failure, Unit>> setOnboardingCompleted(bool completed);
+  Future<Either<Failure, bool>> isOnboardingCompleted();
+  Future<Either<Failure, Unit>> setWelcomeScreenSeen(bool seen);
+  Future<Either<Failure, bool>> isWelcomeScreenSeen();
+  Future<Either<Failure, Unit>> setOfflineCredentials(String email, bool hasCredentials);
+  Future<Either<Failure, String?>> getOfflineEmail();
+  Future<Either<Failure, bool>> hasOfflineCredentials();
+  Future<Either<Failure, Unit>> clearOfflineCredentials();
 }
 
 @LazySingleton(as: AuthLocalDataSource)
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
-  final SharedPreferences _prefs;
-  AuthLocalDataSourceImpl(this._prefs);
+  final UserSessionLocalDataSource _userSessionDataSource;
+  final OnboardingStateLocalDataSource _onboardingStateDataSource;
+  
+  AuthLocalDataSourceImpl(
+    this._userSessionDataSource,
+    this._onboardingStateDataSource,
+  );
 
   @override
-  Future<void> cacheUserId(String userId) async {
-    await _prefs.setString('userId', userId);
-  }
+  Future<Either<Failure, Unit>> cacheUserId(String userId) =>
+      _userSessionDataSource.cacheUserId(userId);
 
   @override
-  Future<String?> getCachedUserId() async {
-    return _prefs.getString('userId');
-  }
+  Future<Either<Failure, String?>> getCachedUserId() =>
+      _userSessionDataSource.getCachedUserId();
 
   @override
-  Future<void> setOnboardingCompleted(bool completed) async {
-    await _prefs.setBool('onboardingCompleted', completed);
-  }
+  Future<Either<Failure, Unit>> setOnboardingCompleted(bool completed) =>
+      _onboardingStateDataSource.setOnboardingCompleted(completed);
 
   @override
-  Future<bool> isOnboardingCompleted() async {
-    return _prefs.getBool('onboardingCompleted') ?? false;
-  }
+  Future<Either<Failure, bool>> isOnboardingCompleted() =>
+      _onboardingStateDataSource.isOnboardingCompleted();
 
   @override
-  Future<void> setWelcomeScreenSeen(bool seen) async {
-    await _prefs.setBool('welcomeScreenSeenCompleted', seen);
-  }
+  Future<Either<Failure, Unit>> setWelcomeScreenSeen(bool seen) =>
+      _onboardingStateDataSource.setWelcomeScreenSeen(seen);
 
   @override
-  Future<bool> isWelcomeScreenSeen() async {
-    return _prefs.getBool('welcomeScreenSeenCompleted') ?? false;
-  }
+  Future<Either<Failure, bool>> isWelcomeScreenSeen() =>
+      _onboardingStateDataSource.isWelcomeScreenSeen();
 
   @override
-  Future<void> setOfflineCredentials(String email, bool hasCredentials) async {
-    await _prefs.setBool('has_credentials', hasCredentials);
-    await _prefs.setString('offline_email', email);
-  }
+  Future<Either<Failure, Unit>> setOfflineCredentials(String email, bool hasCredentials) =>
+      _userSessionDataSource.setOfflineCredentials(email, hasCredentials);
 
   @override
-  Future<String?> getOfflineEmail() async {
-    return _prefs.getString('offline_email');
-  }
+  Future<Either<Failure, String?>> getOfflineEmail() =>
+      _userSessionDataSource.getOfflineEmail();
 
   @override
-  Future<bool> hasOfflineCredentials() async {
-    return _prefs.getBool('has_credentials') ?? false;
-  }
+  Future<Either<Failure, bool>> hasOfflineCredentials() =>
+      _userSessionDataSource.hasOfflineCredentials();
 
   @override
-  Future<void> clearOfflineCredentials() async {
-    await _prefs.setBool('has_credentials', false);
-    await _prefs.remove('offline_email');
-  }
+  Future<Either<Failure, Unit>> clearOfflineCredentials() =>
+      _userSessionDataSource.clearOfflineCredentials();
 }
