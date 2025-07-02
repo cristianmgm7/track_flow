@@ -56,7 +56,7 @@ This document describes the repository architecture used in TrackFlow, following
 - `Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id)` — Get track by ID.
 - `Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(ProjectId projectId)` — Stream tracks by project.
 - `Future<Either<Failure, Unit>> uploadAudioTrack({required File file, required AudioTrack track})` — Upload a new audio track.
-- `Future<Either<Failure, Unit>> deleteTrack(String trackId, String projectId)` — Delete a track.
+- `Future<Either<Failure, Unit>> deleteTrack(String trackId, String projectId)` — Delete a track. ❌
 - `Future<Either<Failure, Unit>> editTrackName({required AudioTrackId trackId, required ProjectId projectId, required String newName})` — Edit track name.
 
 ---
@@ -86,9 +86,9 @@ This document describes the repository architecture used in TrackFlow, following
 
 - `Future<void> addPlaylist(Playlist playlist)` — Add a new playlist.
 - `Future<List<Playlist>> getAllPlaylists()` — Get all playlists.
-- `Future<Playlist?> getPlaylistById(String id)` — Get playlist by ID.
+- `Future<Playlist?> getPlaylistById(String id)` — Get playlist by ID. ❌
 - `Future<void> updatePlaylist(Playlist playlist)` — Update a playlist.
-- `Future<void> deletePlaylist(String id)` — Delete a playlist.
+- `Future<void> deletePlaylist(String id)` — Delete a playlist. ❌
 
 ---
 
@@ -158,11 +158,11 @@ This document describes the repository architecture used in TrackFlow, following
 **Responsibility**: Manages magic links for invitations and project access.
 **Public Methods:**
 
-- `Future<Either<Failure, MagicLink>> generateMagicLink({required String projectId, required String userId})` — Generate a magic link.
-- `Future<Either<Failure, MagicLink>> validateMagicLink({required String linkId})` — Validate a magic link.
-- `Future<Either<Failure, Unit>> consumeMagicLink({required String linkId})` — Consume a magic link.
-- `Future<Either<Failure, Unit>> resendMagicLink({required String linkId})` — Resend a magic link.
-- `Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({required String linkId})` — Get the status of a magic link.
+- `Future<Either<Failure, MagicLink>> generateMagicLink({required String projectId, required String userId})` — Generate a magic link. ❌
+- `Future<Either<Failure, MagicLink>> validateMagicLink({required String linkId})` — Validate a magic link. ❌
+- `Future<Either<Failure, Unit>> consumeMagicLink({required String linkId})` — Consume a magic link. ❌
+- `Future<Either<Failure, Unit>> resendMagicLink({required String linkId})` — Resend a magic link. ❌
+- `Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({required String linkId})` — Get the status of a magic link. ❌
 
 ---
 
@@ -174,12 +174,12 @@ This document describes the repository architecture used in TrackFlow, following
 **Responsibility**: Handles audio download operations only.
 **Public Methods:**
 
-- `Future<Either<CacheFailure, String>> downloadAudio(String trackId, String audioUrl, {void Function(DownloadProgress)? progressCallback})` — Download an audio file.
-- `Future<Either<CacheFailure, Map<String, String>>> downloadMultipleAudios(Map<String, String> trackUrlPairs, {void Function(String trackId, DownloadProgress)? progressCallback})` — Download multiple audio files.
-- `Future<Either<CacheFailure, Unit>> cancelDownload(String trackId)` — Cancel an ongoing download.
-- `Future<Either<CacheFailure, Unit>> pauseDownload(String trackId)` — Pause a download.
-- `Future<Either<CacheFailure, Unit>> resumeDownload(String trackId)` — Resume a paused download.
-- `Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(String trackId)` — Get current download progress for a track.
+- `Future<Either<CacheFailure, String>> downloadAudio(String trackId, String audioUrl, {void Function(DownloadProgress)? progressCallback})` — Download an audio file. ❌
+- `Future<Either<CacheFailure, Map<String, String>>> downloadMultipleAudios(Map<String, String> trackUrlPairs, {void Function(String trackId, DownloadProgress)? progressCallback})` — Download multiple audio files. ❌
+- `Future<Either<CacheFailure, Unit>> cancelDownload(String trackId)` — Cancel an ongoing download. ❌
+- `Future<Either<CacheFailure, Unit>> pauseDownload(String trackId)` — Pause a download. ❌
+- `Future<Either<CacheFailure, Unit>> resumeDownload(String trackId)` — Resume a paused download. ❌
+- `Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(String trackId)` — Get current download progress for a track. ❌
 - `Future<Either<CacheFailure, List<DownloadProgress>>> getActiveDownloads()` — Get all currently active downloads.
 
 ### AudioStorageRepository
@@ -188,14 +188,14 @@ This document describes the repository architecture used in TrackFlow, following
 **Responsibility**: Handles physical audio file storage operations only.
 **Public Methods:**
 
-- `Future<Either<CacheFailure, CachedAudio>> storeAudio(String trackId, File audioFile)` — Store an audio file in cache.
-- `Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId)` — Get cached audio file path if exists.
-- `Future<Either<CacheFailure, bool>> audioExists(String trackId)` — Check if audio file exists and is valid.
-- `Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId)` — Get cached audio information.
-- `Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId)` — Delete audio file from storage.
-- `Future<Either<CacheFailure, Map<String, CachedAudio>>> getMultipleCachedAudios(List<String> trackIds)` — Get cached audio info for multiple tracks.
-- `Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(List<String> trackIds)` — Delete multiple audio files.
-- `Future<Either<CacheFailure, Map<String, bool>>> checkMultipleAudioExists(List<String> trackIds)` — Check existence of multiple audio files.
+- `Future<Either<CacheFailure, CachedAudio>> storeAudio(String trackId, File audioFile)` — Store an audio file in cache. ❌
+- `Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId)` — Get cached audio file path if exists. ❌
+- `Future<Either<CacheFailure, bool>> audioExists(String trackId)` — Check if audio file exists and is valid. ❌
+- `Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId)` — Get cached audio information. ❌
+- `Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId)` — Delete audio file from storage. ❌
+- `Future<Either<CacheFailure, Map<String, CachedAudio>>> getMultipleCachedAudios(List<String> trackIds)` — Get cached audio info for multiple tracks. ❌
+- `Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(List<String> trackIds)` — Delete multiple audio files. ❌
+- `Future<Either<CacheFailure, Map<String, bool>>> checkMultipleAudioExists(List<String> trackIds)` — Check existence of multiple audio files. ❌
 
 ### CacheKeyRepository
 
@@ -203,16 +203,16 @@ This document describes the repository architecture used in TrackFlow, following
 **Responsibility**: Handles cache key management only.
 **Public Methods:**
 
-- `CacheKey generateCacheKey(String trackId, String audioUrl)` — Generate cache key from track ID and URL.
-- `CacheKey generateCacheKeyWithParams(String trackId, String audioUrl, Map<String, String> parameters)` — Generate cache key with custom parameters.
+- `CacheKey generateCacheKey(String trackId, String audioUrl)` — Generate cache key from track ID and URL. ❌
+- `CacheKey generateCacheKeyWithParams(String trackId, String audioUrl, Map<String, String> parameters)` — Generate cache key with custom parameters. ❌
 - `Future<Either<CacheFailure, String>> getFilePathFromCacheKey(CacheKey key)` — Get file path from cache key.
 - `Future<Either<CacheFailure, String>> getDirectoryPathFromCacheKey(CacheKey key)` — Get directory path from cache key.
 - `bool isValidCacheKey(CacheKey key)` — Validate cache key format.
 - `Either<CacheFailure, Map<String, String>> parseCacheKey(CacheKey key)` — Parse cache key to extract components.
-- `CacheKey generateTempCacheKey(String trackId)` — Generate cache key for temporary files.
+- `CacheKey generateTempCacheKey(String trackId)` — Generate cache key for temporary files. ❌
 - `bool isTempCacheKey(CacheKey key)` — Check if cache key represents a temporary file.
 - `String cacheKeyToStorageId(CacheKey key)` — Convert cache key to storage identifier.
-- `Either<CacheFailure, CacheKey> storageIdToCacheKey(String storageId)` — Convert storage identifier to cache key.
+- `Either<CacheFailure, CacheKey> storageIdToCacheKey(String storageId)` — Convert storage identifier to cache key. ❌
 
 ### CacheMaintenanceRepository
 
@@ -221,7 +221,7 @@ This document describes the repository architecture used in TrackFlow, following
 **Public Methods:**
 
 - `Future<Either<CacheFailure, CacheValidationResult>> validateCacheConsistency()` — Validate entire cache consistency.
-- `Future<Either<CacheFailure, bool>> validateCacheEntry(String trackId)` — Validate specific cache entry.
+- `Future<Either<CacheFailure, bool>> validateCacheEntry(String trackId)` — Validate specific cache entry. ❌
 - `Future<Either<CacheFailure, bool>> validateCacheMetadata()` — Validate cache metadata integrity.
 - `Future<Either<CacheFailure, int>> cleanupOrphanedFiles()` — Clean up orphaned files.
 - `Future<Either<CacheFailure, int>> cleanupInvalidMetadata()` — Clean up invalid metadata entries.

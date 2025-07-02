@@ -67,10 +67,7 @@ class ProjectTrackService {
       if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
         return Left(ProjectPermissionException());
       }
-      return await trackRepository.deleteTrack(
-        track.id.value,
-        project.id.value,
-      );
+      return await trackRepository.deleteTrack(track.id, project.id);
     });
   }
 
