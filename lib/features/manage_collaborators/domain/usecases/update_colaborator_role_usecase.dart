@@ -67,7 +67,7 @@ class UpdateCollaboratorRoleUseCase {
         final result = await _collaboratorRepository.updateCollaboratorRole(
           params.projectId,
           params.userId,
-          params.role.toShortString(),
+          params.role,
         );
         return result.fold(
           (failure) => left(failure),

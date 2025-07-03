@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 /// Repository responsible for managing project collaborators
 /// Follows Single Responsibility Principle - only handles collaborator operations
@@ -21,7 +22,7 @@ abstract class CollaboratorRepository {
   Future<Either<Failure, Unit>> addCollaborator(
     ProjectId projectId,
     UserId userId,
-    String role,
+    ProjectRole role,
   );
 
   /// Remove a collaborator from a project
@@ -34,6 +35,6 @@ abstract class CollaboratorRepository {
   Future<Either<Failure, Unit>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
-    String newRole,
+    ProjectRole newRole,
   );
 }

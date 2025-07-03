@@ -36,7 +36,7 @@ class PlayPlaylistUseCase {
     try {
       // 1. Get playlist by ID
       final playlist = await _playlistRepository.getPlaylistById(
-        playlistId.value,
+        playlistId,
       );
       if (playlist == null) {
         return Left(PlaylistFailure('Playlist not found: ${playlistId.value}'));

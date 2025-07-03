@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_cache_repository.dart';
 
@@ -19,7 +20,8 @@ class SyncUserProfileCollaboratorsUseCase {
           .toList(),
     );
     if (collaboratorIds.isEmpty) return;
-    final result = await userProfileCacheRepo.getUserProfilesByIds(collaboratorIds);
+    final collaboratorIdObjects = collaboratorIds.map((id) => UserId.fromUniqueString(id)).toList();
+    final result = await userProfileCacheRepo.getUserProfilesByIds(collaboratorIdObjects);
     result.fold(
       (failure) => null,
       (profiles) async => await userProfileCacheRepo.cacheUserProfiles(profiles),

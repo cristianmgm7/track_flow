@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../domain/entities/playlist.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -33,8 +34,8 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  Future<Playlist?> getPlaylistById(String id) async {
-    final either = await localDataSource.getPlaylistById(id);
+  Future<Playlist?> getPlaylistById(PlaylistId id) async {
+    final either = await localDataSource.getPlaylistById(id.value);
     return either.fold(
       (failure) => null, // or handle the failure as needed
       (dto) => dto?.toDomain(),
@@ -49,8 +50,8 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   }
 
   @override
-  Future<void> deletePlaylist(String id) async {
-    await localDataSource.deletePlaylist(id);
-    await remoteDataSource.deletePlaylist(id);
+  Future<void> deletePlaylist(PlaylistId id) async {
+    await localDataSource.deletePlaylist(id.value);
+    await remoteDataSource.deletePlaylist(id.value);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../domain/failures/cache_failure.dart';
 import '../../domain/repositories/cache_key_repository.dart';
@@ -15,18 +16,18 @@ class CacheKeyRepositoryImpl implements CacheKeyRepository {
   }) : _localDataSource = localDataSource;
 
   @override
-  CacheKey generateCacheKey(String trackId, String audioUrl) {
-    return _localDataSource.generateCacheKey(trackId, audioUrl);
+  CacheKey generateCacheKey(AudioTrackId trackId, String audioUrl) {
+    return _localDataSource.generateCacheKey(trackId.value, audioUrl);
   }
 
   @override
   CacheKey generateCacheKeyWithParams(
-    String trackId,
+    AudioTrackId trackId,
     String audioUrl,
     Map<String, String> parameters,
   ) {
     // Create a composite key with additional parameters
-    final baseKey = _localDataSource.generateCacheKey(trackId, audioUrl);
+    final baseKey = _localDataSource.generateCacheKey(trackId.value, audioUrl);
     
     // Extend the cache key with parameters
     // This is a simplified implementation - in production you'd want to
@@ -36,7 +37,7 @@ class CacheKeyRepositoryImpl implements CacheKeyRepository {
         .join('&');
     
     return CacheKey.composite(
-      trackId,
+      trackId.value,
       '${baseKey.checksum}_$paramString',
     );
   }
@@ -126,9 +127,9 @@ class CacheKeyRepositoryImpl implements CacheKeyRepository {
   }
 
   @override
-  CacheKey generateTempCacheKey(String trackId) {
+  CacheKey generateTempCacheKey(AudioTrackId trackId) {
     return CacheKey.composite(
-      trackId,
+      trackId.value,
       'temp_${DateTime.now().millisecondsSinceEpoch}',
     );
   }

@@ -6,6 +6,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_local_datasource.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 @LazySingleton(as: CollaboratorRepository)
 class CollaboratorRepositoryImpl implements CollaboratorRepository {
@@ -85,7 +86,7 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
   Future<Either<Failure, Unit>> addCollaborator(
     ProjectId projectId,
     UserId userId,
-    String role,
+    ProjectRole role,
   ) async {
     final hasConnected = await _networkInfo.isConnected;
     if (!hasConnected) {
@@ -114,7 +115,7 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
   Future<Either<Failure, Unit>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
-    String newRole,
+    ProjectRole newRole,
   ) async {
     final hasConnected = await _networkInfo.isConnected;
     if (!hasConnected) {

@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/magic_link/data/datasources/magic_link_remote_data_source.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
@@ -13,40 +14,40 @@ class MagicLinkRepositoryImp extends MagicLinkRepository {
 
   @override
   Future<Either<Failure, MagicLink>> generateMagicLink({
-    required String projectId,
-    required String userId,
+    required ProjectId projectId,
+    required UserId userId,
   }) async {
     return await _magicLinkRemoteDataSource.generateMagicLink(
-      projectId: projectId,
-      userId: userId,
+      projectId: projectId.value,
+      userId: userId.value,
     );
   }
 
   @override
   Future<Either<Failure, MagicLink>> validateMagicLink({
-    required String linkId,
+    required MagicLinkId linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.validateMagicLink(linkId: linkId);
+    return await _magicLinkRemoteDataSource.validateMagicLink(linkId: linkId.value);
   }
 
   @override
   Future<Either<Failure, Unit>> consumeMagicLink({
-    required String linkId,
+    required MagicLinkId linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.consumeMagicLink(linkId: linkId);
+    return await _magicLinkRemoteDataSource.consumeMagicLink(linkId: linkId.value);
   }
 
   @override
   Future<Either<Failure, Unit>> resendMagicLink({
-    required String linkId,
+    required MagicLinkId linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.resendMagicLink(linkId: linkId);
+    return await _magicLinkRemoteDataSource.resendMagicLink(linkId: linkId.value);
   }
 
   @override
   Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({
-    required String linkId,
+    required MagicLinkId linkId,
   }) async {
-    return await _magicLinkRemoteDataSource.getMagicLinkStatus(linkId: linkId);
+    return await _magicLinkRemoteDataSource.getMagicLinkStatus(linkId: linkId.value);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
@@ -10,17 +11,17 @@ abstract class UserProfileCacheRepository {
 
   /// Watch a list of user profiles by their IDs (reactive, for offline-first UI)
   Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
-    List<String> userIds,
+    List<UserId> userIds,
   );
 
   /// Get a list of user profiles by their IDs (one-time fetch)
   Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
-    List<String> userIds,
+    List<UserId> userIds,
   );
 
   /// Clear all cached user profiles
   Future<Either<Failure, Unit>> clearCache();
 
   /// Preload user profiles for better offline experience
-  Future<Either<Failure, Unit>> preloadProfiles(List<String> userIds);
+  Future<Either<Failure, Unit>> preloadProfiles(List<UserId> userIds);
 }

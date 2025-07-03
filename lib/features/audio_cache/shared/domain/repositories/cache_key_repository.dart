@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../failures/cache_failure.dart';
 import '../value_objects/cache_key.dart';
 
@@ -10,11 +11,11 @@ abstract class CacheKeyRepository {
   // ===============================================
 
   /// Generate cache key from track ID and URL
-  CacheKey generateCacheKey(String trackId, String audioUrl);
+  CacheKey generateCacheKey(AudioTrackId trackId, String audioUrl);
 
   /// Generate cache key with custom parameters
   CacheKey generateCacheKeyWithParams(
-    String trackId,
+    AudioTrackId trackId,
     String audioUrl,
     Map<String, String> parameters,
   );
@@ -42,7 +43,7 @@ abstract class CacheKeyRepository {
   // ===============================================
 
   /// Generate cache key for temporary files
-  CacheKey generateTempCacheKey(String trackId);
+  CacheKey generateTempCacheKey(AudioTrackId trackId);
 
   /// Check if cache key represents a temporary file
   bool isTempCacheKey(CacheKey key);

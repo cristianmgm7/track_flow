@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:crypto/crypto.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/failures/cache_failure.dart';
@@ -19,12 +20,12 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
   @override
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
-    String trackId,
+    AudioTrackId trackId,
     File audioFile,
   ) async {
     try {
       // Generate storage path for the audio file
-      final cacheKey = _localDataSource.generateCacheKey(trackId, '');
+      final cacheKey = _localDataSource.generateCacheKey(trackId.value, '');
       final filePathResult = await _localDataSource.getFilePathFromCacheKey(cacheKey);
 
       return await filePathResult.fold(
@@ -40,7 +41,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
           // Create unified document with both file and metadata information
           final unifiedDocument = CachedAudioDocumentUnified()
-            ..trackId = trackId
+            ..trackId = trackId.value
             ..filePath = destinationPath
             ..fileSizeBytes = fileSize
             ..cachedAt = DateTime.now()
@@ -81,36 +82,36 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   @override
-  Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId) async {
-    return await _localDataSource.getCachedAudioPath(trackId);
+  Future<Either<CacheFailure, String>> getCachedAudioPath(AudioTrackId trackId) async {
+    return await _localDataSource.getCachedAudioPath(trackId.value);
   }
 
   @override
-  Future<Either<CacheFailure, bool>> audioExists(String trackId) async {
-    return await _localDataSource.audioExists(trackId);
+  Future<Either<CacheFailure, bool>> audioExists(AudioTrackId trackId) async {
+    return await _localDataSource.audioExists(trackId.value);
   }
 
   @override
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId) async {
-    return await _localDataSource.getCachedAudio(trackId);
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(AudioTrackId trackId) async {
+    return await _localDataSource.getCachedAudio(trackId.value);
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId) async {
-    return await _localDataSource.deleteAudioFile(trackId);
+  Future<Either<CacheFailure, Unit>> deleteAudioFile(AudioTrackId trackId) async {
+    return await _localDataSource.deleteAudioFile(trackId.value);
   }
 
   @override
-  Future<Either<CacheFailure, Map<String, CachedAudio>>> getMultipleCachedAudios(
-    List<String> trackIds,
+  Future<Either<CacheFailure, Map<AudioTrackId, CachedAudio>>> getMultipleCachedAudios(
+    List<AudioTrackId> trackIds,
   ) async {
     return await _localDataSource
-        .getMultipleCachedAudios(trackIds)
+        .getMultipleCachedAudios(trackIds.map((id) => id.value).toList())
         .then(
           (result) => result.fold((failure) => Left(failure), (audios) {
-            final Map<String, CachedAudio> audioMap = {};
+            final Map<AudioTrackId, CachedAudio> audioMap = {};
             for (final audio in audios) {
-              audioMap[audio.trackId] = audio;
+              audioMap[AudioTrackId.fromUniqueString(audio.trackId)] = audio;
             }
             return Right(audioMap);
           }),
@@ -118,21 +119,25 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   @override
-  Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(
-    List<String> trackIds,
+  Future<Either<CacheFailure, List<AudioTrackId>>> deleteMultipleAudioFiles(
+    List<AudioTrackId> trackIds,
   ) async {
-    return await _localDataSource.deleteMultipleAudioFiles(trackIds);
+    final result = await _localDataSource.deleteMultipleAudioFiles(trackIds.map((id) => id.value).toList());
+    return result.fold(
+      (failure) => Left(failure),
+      (deletedIds) => Right(deletedIds.map((id) => AudioTrackId.fromUniqueString(id)).toList()),
+    );
   }
 
   @override
-  Future<Either<CacheFailure, Map<String, bool>>> checkMultipleAudioExists(
-    List<String> trackIds,
+  Future<Either<CacheFailure, Map<AudioTrackId, bool>>> checkMultipleAudioExists(
+    List<AudioTrackId> trackIds,
   ) async {
     try {
-      final Map<String, bool> existsMap = {};
+      final Map<AudioTrackId, bool> existsMap = {};
 
       for (final trackId in trackIds) {
-        final result = await _localDataSource.audioExists(trackId);
+        final result = await _localDataSource.audioExists(trackId.value);
         result.fold(
           (failure) => existsMap[trackId] = false,
           (exists) => existsMap[trackId] = exists,

@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
@@ -36,10 +37,10 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
 
   @override
   Stream<Either<Failure, List<UserProfile>>> watchUserProfilesByIds(
-    List<String> userIds,
+    List<UserId> userIds,
   ) {
     return _localDataSource
-        .watchUserProfilesByIds(userIds)
+        .watchUserProfilesByIds(userIds.map((id) => id.value).toList())
         .map(
           (either) => either.fold(
             (failure) => Left(failure),
@@ -50,14 +51,14 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
 
   @override
   Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
-    List<String> userIds,
+    List<UserId> userIds,
   ) async {
     final hasConnected = await _networkInfo.isConnected;
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
     
-    final dtos = await _remoteDataSource.getUserProfilesByIds(userIds);
+    final dtos = await _remoteDataSource.getUserProfilesByIds(userIds.map((id) => id.value).toList());
     return dtos.fold(
       (failure) => Left(failure),
       (dtos) => Right(dtos.map((e) => e.toDomain()).toList()),
@@ -75,7 +76,7 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> preloadProfiles(List<String> userIds) async {
+  Future<Either<Failure, Unit>> preloadProfiles(List<UserId> userIds) async {
     try {
       final hasConnected = await _networkInfo.isConnected;
       if (!hasConnected) {

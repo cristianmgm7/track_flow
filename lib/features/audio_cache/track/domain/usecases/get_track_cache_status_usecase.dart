@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../../shared/domain/entities/cached_audio.dart';
 import '../../../shared/domain/entities/download_progress.dart';
@@ -22,7 +23,9 @@ class GetTrackCacheStatusUseCase {
   /// Get current cache status for a track
   Future<Either<CacheFailure, CacheStatus>> call(String trackId) async {
     try {
-      final result = await _audioStorageRepository.audioExists(trackId);
+      final result = await _audioStorageRepository.audioExists(
+        AudioTrackId.fromUniqueString(trackId),
+      );
       return result.fold(
         (failure) => Left(failure),
         (exists) => Right(exists ? CacheStatus.cached : CacheStatus.notCached),
@@ -43,7 +46,9 @@ class GetTrackCacheStatusUseCase {
     String trackId,
   ) async {
     try {
-      return await _audioStorageRepository.getCachedAudio(trackId);
+      return await _audioStorageRepository.getCachedAudio(
+        AudioTrackId.fromUniqueString(trackId),
+      );
     } catch (e) {
       return Left(
         ValidationCacheFailure(
@@ -60,7 +65,9 @@ class GetTrackCacheStatusUseCase {
     String trackId,
   ) async {
     try {
-      return await _audioStorageRepository.getCachedAudioPath(trackId);
+      return await _audioStorageRepository.getCachedAudioPath(
+        AudioTrackId.fromUniqueString(trackId),
+      );
     } catch (e) {
       return Left(
         ValidationCacheFailure(
@@ -89,7 +96,9 @@ class GetTrackCacheStatusUseCase {
 
   /// Watch download progress for a track
   Stream<DownloadProgress> watchDownloadProgress(String trackId) {
-    return _audioDownloadRepository.watchDownloadProgress(trackId);
+    return _audioDownloadRepository.watchDownloadProgress(
+      AudioTrackId.fromUniqueString(trackId),
+    );
   }
 
   /// Watch combined cache info (status + progress)

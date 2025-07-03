@@ -70,7 +70,7 @@ class AddCollaboratorToProjectUseCase {
         final result = await _collaboratorRepository.addCollaborator(
           params.projectId,
           params.collaboratorId,
-          newCollaborator.role.toShortString(),
+          newCollaborator.role,
         );
         return result.fold(
           (failure) => left(failure),

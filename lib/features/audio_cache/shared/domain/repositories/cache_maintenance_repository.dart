@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../entities/cache_validation_result.dart';
 import '../failures/cache_failure.dart';
 
@@ -14,7 +15,7 @@ abstract class CacheMaintenanceRepository {
       validateCacheConsistency();
 
   /// Validate specific cache entry
-  Future<Either<CacheFailure, bool>> validateCacheEntry(String trackId);
+  Future<Either<CacheFailure, bool>> validateCacheEntry(AudioTrackId trackId);
 
   /// Validate cache metadata integrity
   Future<Either<CacheFailure, bool>> validateCacheMetadata();

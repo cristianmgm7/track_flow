@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../domain/entities/cache_validation_result.dart';
 import '../../domain/entities/cached_audio.dart';
@@ -100,9 +101,9 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   }
 
   @override
-  Future<Either<CacheFailure, bool>> validateCacheEntry(String trackId) async {
+  Future<Either<CacheFailure, bool>> validateCacheEntry(AudioTrackId trackId) async {
     try {
-      final audioResult = await _localDataSource.getCachedAudio(trackId);
+      final audioResult = await _localDataSource.getCachedAudio(trackId.value);
       return await audioResult.fold(
         (failure) => Left(failure),
         (audio) async {

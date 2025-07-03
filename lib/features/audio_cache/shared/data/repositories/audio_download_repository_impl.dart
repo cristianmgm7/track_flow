@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../domain/entities/download_progress.dart';
 import '../../domain/failures/cache_failure.dart';
@@ -12,8 +13,8 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
   final CacheStorageRemoteDataSource _remoteDataSource;
 
   // Active downloads tracking for progress and cancellation
-  final Map<String, String> _activeDownloads = {}; // trackId -> downloadId
-  final Map<String, StreamController<DownloadProgress>> _progressControllers =
+  final Map<AudioTrackId, String> _activeDownloads = {}; // trackId -> downloadId
+  final Map<AudioTrackId, StreamController<DownloadProgress>> _progressControllers =
       {};
 
   AudioDownloadRepositoryImpl({
@@ -22,7 +23,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
 
   @override
   Future<Either<CacheFailure, String>> downloadAudio(
-    String trackId,
+    AudioTrackId trackId,
     String audioUrl, {
     void Function(DownloadProgress)? progressCallback,
   }) async {
@@ -33,7 +34,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
       _progressControllers[trackId] = progressController;
 
       // Create temporary file path for download
-      final tempFilePath = '/tmp/audio_cache_${trackId}_${DateTime.now().millisecondsSinceEpoch}.tmp';
+      final tempFilePath = '/tmp/audio_cache_${trackId.value}_${DateTime.now().millisecondsSinceEpoch}.tmp';
 
       // Download using remote data source
       String? downloadId;
@@ -48,7 +49,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           }
 
           // Map download ID back to trackId for consistency
-          final trackProgress = progress.copyWith(trackId: trackId);
+          final trackProgress = progress.copyWith(trackId: trackId.value);
           progressCallback?.call(trackProgress);
           progressController.add(trackProgress);
         },
@@ -57,7 +58,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
       return downloadResult.fold(
         (failure) {
           final failedProgress = DownloadProgress.failed(
-            trackId,
+            trackId.value,
             failure.message,
           );
           progressCallback?.call(failedProgress);
@@ -67,7 +68,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         },
         (downloadedFile) {
           final completedProgress = DownloadProgress.completed(
-            trackId,
+            trackId.value,
             downloadedFile.lengthSync(),
           );
           progressCallback?.call(completedProgress);
@@ -80,7 +81,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         },
       );
     } catch (e) {
-      final failedProgress = DownloadProgress.failed(trackId, e.toString());
+      final failedProgress = DownloadProgress.failed(trackId.value, e.toString());
       progressCallback?.call(failedProgress);
 
       // Emit to progress controller if it exists
@@ -90,19 +91,19 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
       return Left(
         DownloadCacheFailure(
           message: 'Failed to download audio: $e',
-          trackId: trackId,
+          trackId: trackId.value,
         ),
       );
     }
   }
 
   @override
-  Future<Either<CacheFailure, Map<String, String>>> downloadMultipleAudios(
-    Map<String, String> trackUrlPairs, {
-    void Function(String trackId, DownloadProgress)? progressCallback,
+  Future<Either<CacheFailure, Map<AudioTrackId, String>>> downloadMultipleAudios(
+    Map<AudioTrackId, String> trackUrlPairs, {
+    void Function(AudioTrackId trackId, DownloadProgress)? progressCallback,
   }) async {
     try {
-      final Map<String, String> downloadedFiles = {};
+      final Map<AudioTrackId, String> downloadedFiles = {};
 
       for (final entry in trackUrlPairs.entries) {
         final trackId = entry.key;
@@ -138,7 +139,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> cancelDownload(String trackId) async {
+  Future<Either<CacheFailure, Unit>> cancelDownload(AudioTrackId trackId) async {
     try {
       final downloadId = _activeDownloads[trackId];
       if (downloadId != null) {
@@ -146,7 +147,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         return result.fold((failure) => Left(failure), (_) {
           // Emit cancelled progress
           final cancelledProgress = DownloadProgress.failed(
-            trackId,
+            trackId.value,
             'Download cancelled by user',
           );
           _progressControllers[trackId]?.add(cancelledProgress);
@@ -159,7 +160,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           ValidationCacheFailure(
             message: 'No active download found for track',
             field: 'trackId',
-            value: trackId,
+            value: trackId.value,
           ),
         );
       }
@@ -167,14 +168,14 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
       return Left(
         DownloadCacheFailure(
           message: 'Failed to cancel download: $e',
-          trackId: trackId,
+          trackId: trackId.value,
         ),
       );
     }
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> pauseDownload(String trackId) async {
+  Future<Either<CacheFailure, Unit>> pauseDownload(AudioTrackId trackId) async {
     try {
       final downloadId = _activeDownloads[trackId];
       if (downloadId != null) {
@@ -183,7 +184,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         return result.fold((failure) => Left(failure), (_) {
           // Mark as paused in progress controller
           final pausedProgress = DownloadProgress(
-            trackId: trackId,
+            trackId: trackId.value,
             state: DownloadState.downloading, // Keep as downloading but store pause state internally
             downloadedBytes: 0, // We'd need to store this from last progress
             totalBytes: 0,
@@ -198,7 +199,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           ValidationCacheFailure(
             message: 'No active download found for track',
             field: 'trackId',
-            value: trackId,
+            value: trackId.value,
           ),
         );
       }
@@ -206,14 +207,14 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
       return Left(
         DownloadCacheFailure(
           message: 'Failed to pause download: $e',
-          trackId: trackId,
+          trackId: trackId.value,
         ),
       );
     }
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> resumeDownload(String trackId) async {
+  Future<Either<CacheFailure, Unit>> resumeDownload(AudioTrackId trackId) async {
     try {
       // For Firebase Storage, resuming means starting a new download
       // In a full implementation, we'd need to store the original URL and progress
@@ -223,14 +224,14 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           message:
               'Download resuming not supported with current Firebase Storage implementation. Please restart download.',
           field: 'trackId',
-          value: trackId,
+          value: trackId.value,
         ),
       );
     } catch (e) {
       return Left(
         DownloadCacheFailure(
           message: 'Failed to resume download: $e',
-          trackId: trackId,
+          trackId: trackId.value,
         ),
       );
     }
@@ -238,7 +239,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
 
   @override
   Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(
-    String trackId,
+    AudioTrackId trackId,
   ) async {
     try {
       // Check if download is currently active
@@ -248,7 +249,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         // In a full implementation, we'd store last known progress
         return Right(
           DownloadProgress(
-            trackId: trackId,
+            trackId: trackId.value,
             state: DownloadState.downloading,
             downloadedBytes: 0,
             totalBytes: 0,
@@ -279,7 +280,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         // Create a basic progress object for each active download
         activeDownloads.add(
           DownloadProgress(
-            trackId: trackId,
+            trackId: trackId.value,
             state: DownloadState.downloading,
             downloadedBytes: 0, // We'd need to store actual progress
             totalBytes: 0,
@@ -299,7 +300,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
   }
 
   @override
-  Stream<DownloadProgress> watchDownloadProgress(String trackId) {
+  Stream<DownloadProgress> watchDownloadProgress(AudioTrackId trackId) {
     // Return existing controller stream or create a new one
     final controller = _progressControllers[trackId];
     if (controller != null) {
@@ -322,7 +323,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
         // For now, just indicate they're active
         activeDownloads.add(
           DownloadProgress(
-            trackId: trackId,
+            trackId: trackId.value,
             state: DownloadState.downloading,
             downloadedBytes: 0,
             totalBytes: 0,
@@ -334,7 +335,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
   }
 
   /// Cleanup download tracking resources
-  void _cleanupDownload(String trackId) {
+  void _cleanupDownload(AudioTrackId trackId) {
     _activeDownloads.remove(trackId);
     _progressControllers[trackId]?.close();
     _progressControllers.remove(trackId);

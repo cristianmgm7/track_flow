@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'dart:io';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../entities/cached_audio.dart';
 import '../failures/cache_failure.dart';
 
@@ -17,41 +18,41 @@ abstract class AudioStorageRepository {
   ///
   /// Returns cached audio info or failure
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
-    String trackId,
+    AudioTrackId trackId,
     File audioFile,
   );
 
   /// Get cached audio file path if exists
   ///
   /// Returns absolute file path or failure if not found
-  Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId);
+  Future<Either<CacheFailure, String>> getCachedAudioPath(AudioTrackId trackId);
 
   /// Check if audio file exists and is valid
-  Future<Either<CacheFailure, bool>> audioExists(String trackId);
+  Future<Either<CacheFailure, bool>> audioExists(AudioTrackId trackId);
 
   /// Get cached audio information
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId);
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(AudioTrackId trackId);
 
   /// Delete audio file from storage
   /// WARNING: This physically deletes the file - ensure reference counting first
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId);
+  Future<Either<CacheFailure, Unit>> deleteAudioFile(AudioTrackId trackId);
 
   // ===============================================
   // BATCH OPERATIONS
   // ===============================================
 
   /// Get cached audio info for multiple tracks
-  Future<Either<CacheFailure, Map<String, CachedAudio>>>
-      getMultipleCachedAudios(List<String> trackIds);
+  Future<Either<CacheFailure, Map<AudioTrackId, CachedAudio>>>
+      getMultipleCachedAudios(List<AudioTrackId> trackIds);
 
   /// Delete multiple audio files
-  Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(
-    List<String> trackIds,
+  Future<Either<CacheFailure, List<AudioTrackId>>> deleteMultipleAudioFiles(
+    List<AudioTrackId> trackIds,
   );
 
   /// Check existence of multiple audio files
-  Future<Either<CacheFailure, Map<String, bool>>> checkMultipleAudioExists(
-    List<String> trackIds,
+  Future<Either<CacheFailure, Map<AudioTrackId, bool>>> checkMultipleAudioExists(
+    List<AudioTrackId> trackIds,
   );
 
   // ===============================================

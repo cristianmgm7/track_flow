@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
 import '../../../shared/domain/repositories/audio_storage_repository.dart';
@@ -24,7 +25,9 @@ class RemoveTrackCacheUseCase {
     }
 
     try {
-      return await _audioStorageRepository.deleteAudioFile(trackId);
+      return await _audioStorageRepository.deleteAudioFile(
+        AudioTrackId.fromUniqueString(trackId),
+      );
     } catch (e) {
       return Left(
         ValidationCacheFailure(
@@ -41,8 +44,9 @@ class RemoveTrackCacheUseCase {
     List<String> trackIds,
   ) async {
     try {
+      final trackIdObjects = trackIds.map((id) => AudioTrackId.fromUniqueString(id)).toList();
       final result = await _audioStorageRepository.deleteMultipleAudioFiles(
-        trackIds,
+        trackIdObjects,
       );
       return result.fold(
         (failure) => Left(failure),

@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import '../entities/download_progress.dart';
 import '../failures/cache_failure.dart';
 
@@ -17,15 +18,15 @@ abstract class AudioDownloadRepository {
   ///
   /// Returns file path or failure
   Future<Either<CacheFailure, String>> downloadAudio(
-    String trackId,
+    AudioTrackId trackId,
     String audioUrl, {
     void Function(DownloadProgress)? progressCallback,
   });
 
   /// Download multiple audio files with progress tracking
-  Future<Either<CacheFailure, Map<String, String>>> downloadMultipleAudios(
-    Map<String, String> trackUrlPairs, { // trackId -> audioUrl
-    void Function(String trackId, DownloadProgress)? progressCallback,
+  Future<Either<CacheFailure, Map<AudioTrackId, String>>> downloadMultipleAudios(
+    Map<AudioTrackId, String> trackUrlPairs, { // trackId -> audioUrl
+    void Function(AudioTrackId trackId, DownloadProgress)? progressCallback,
   });
 
   // ===============================================
@@ -33,17 +34,17 @@ abstract class AudioDownloadRepository {
   // ===============================================
 
   /// Cancel ongoing download for a track
-  Future<Either<CacheFailure, Unit>> cancelDownload(String trackId);
+  Future<Either<CacheFailure, Unit>> cancelDownload(AudioTrackId trackId);
 
   /// Pause download (if supported)
-  Future<Either<CacheFailure, Unit>> pauseDownload(String trackId);
+  Future<Either<CacheFailure, Unit>> pauseDownload(AudioTrackId trackId);
 
   /// Resume paused download
-  Future<Either<CacheFailure, Unit>> resumeDownload(String trackId);
+  Future<Either<CacheFailure, Unit>> resumeDownload(AudioTrackId trackId);
 
   /// Get current download progress for a track
   Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(
-    String trackId,
+    AudioTrackId trackId,
   );
 
   /// Get all currently active downloads
@@ -54,7 +55,7 @@ abstract class AudioDownloadRepository {
   // ===============================================
 
   /// Watch download progress for a specific track
-  Stream<DownloadProgress> watchDownloadProgress(String trackId);
+  Stream<DownloadProgress> watchDownloadProgress(AudioTrackId trackId);
 
   /// Watch all active downloads
   Stream<List<DownloadProgress>> watchActiveDownloads();
