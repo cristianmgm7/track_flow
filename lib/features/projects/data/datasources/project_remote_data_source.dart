@@ -16,7 +16,7 @@ abstract class ProjectRemoteDataSource {
 
   Future<Either<Failure, Project>> getProjectById(ProjectId projectId);
 
-  Future<Either<Failure, List<Project>>> getUserProjects(String userId);
+  Future<Either<Failure, List<Project>>> getUserProjects(UserId userId);
 }
 
 @LazySingleton(as: ProjectRemoteDataSource)
@@ -150,20 +150,20 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
 
   /// Get all projects for a user.for offline first
   @override
-  Future<Either<Failure, List<Project>>> getUserProjects(String userId) async {
+  Future<Either<Failure, List<Project>>> getUserProjects(UserId userId) async {
     try {
       // Query for projects owned by the user
       final ownedProjectsFuture =
           _firestore
               .collection(ProjectDTO.collection)
-              .where('ownerId', isEqualTo: userId)
+              .where('ownerId', isEqualTo: userId.value)
               .get();
 
       // Query for projects where the user is a collaborator
       final collaboratorProjectsFuture =
           _firestore
               .collection(ProjectDTO.collection)
-              .where('collaboratorIds', arrayContains: userId)
+              .where('collaboratorIds', arrayContains: userId.value)
               .get();
 
       final results = await Future.wait([

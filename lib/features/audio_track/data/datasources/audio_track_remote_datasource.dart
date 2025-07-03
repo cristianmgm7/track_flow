@@ -7,6 +7,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class AudioTrackRemoteDataSource {
   Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack({
@@ -14,11 +15,11 @@ abstract class AudioTrackRemoteDataSource {
     required AudioTrack track,
   });
 
-  Future<void> deleteTrackFromProject(String trackId, String projectId);
-  Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
+  Future<void> deleteTrackFromProject(AudioTrackId trackId, ProjectId projectId);
+  Future<List<AudioTrackDTO>> getTracksByProjectIds(List<ProjectId> projectIds);
   Future<void> editTrackName({
-    required String trackId,
-    required String projectId,
+    required AudioTrackId trackId,
+    required ProjectId projectId,
     required String newName,
   });
 }
@@ -56,13 +57,13 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   }
 
   @override
-  Future<void> deleteTrackFromProject(String trackId, String projectId) async {
+  Future<void> deleteTrackFromProject(AudioTrackId trackId, ProjectId projectId) async {
     try {
       await _firestore
           .collection(ProjectDTO.collection)
-          .doc(projectId)
+          .doc(projectId.value)
           .collection(AudioTrackDTO.collection)
-          .doc(trackId)
+          .doc(trackId.value)
           .delete();
     } catch (e) {
       // Handle error
@@ -72,13 +73,13 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   // for offline first
   @override
   Future<List<AudioTrackDTO>> getTracksByProjectIds(
-    List<String> projectIds,
+    List<ProjectId> projectIds,
   ) async {
     if (projectIds.isEmpty) {
       // Received empty projectIds list
       return [];
     }
-    // Fetching tracks for projects: $projectIds
+    // Fetching tracks for projects: ${projectIds.map((id) => id.value).toList()}
 
     try {
       final List<AudioTrackDTO> allTracks = [];
@@ -88,7 +89,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
         final sublist = projectIds.sublist(
           i,
           i + 10 > projectIds.length ? projectIds.length : i + 10,
-        );
+        ).map((id) => id.value).toList();
 
         final snapshot =
             await _firestore
@@ -116,12 +117,12 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
 
   @override
   Future<void> editTrackName({
-    required String trackId,
-    required String projectId,
+    required AudioTrackId trackId,
+    required ProjectId projectId,
     required String newName,
   }) async {
     try {
-      await _firestore.collection('audio_tracks').doc(trackId).update({
+      await _firestore.collection('audio_tracks').doc(trackId.value).update({
         'name': newName,
       });
     } catch (e) {

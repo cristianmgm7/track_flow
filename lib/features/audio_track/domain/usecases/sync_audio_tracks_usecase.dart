@@ -4,6 +4,7 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_loca
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 @lazySingleton
 class SyncAudioTracksUseCase {
@@ -28,7 +29,7 @@ class SyncAudioTracksUseCase {
     }
 
     final projectsEither = await projectRemoteDataSource.getUserProjects(
-      userId,
+      UserId.fromUniqueString(userId),
     );
     await projectsEither.fold(
       (failure) async {
@@ -41,7 +42,7 @@ class SyncAudioTracksUseCase {
         if (projects.isEmpty) {
           return;
         }
-        final projectIds = projects.map((p) => p.id.value).toList();
+        final projectIds = projects.map((p) => p.id).toList();
         final List<AudioTrackDTO> tracks = await remote.getTracksByProjectIds(
           projectIds,
         );

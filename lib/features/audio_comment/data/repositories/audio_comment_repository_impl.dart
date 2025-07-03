@@ -27,15 +27,14 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   Future<Either<Failure, AudioComment>> getCommentById(
     AudioCommentId commentId,
   ) async {
-    final comments = await _localDataSource.getCachedCommentsByTrack(
-      commentId.value,
+    final comment = await _localDataSource.getCommentById(
+      commentId,
     );
-    return comments.fold(
+    return comment.fold(
       (failure) => Left(failure),
-      (dtos) =>
-          dtos.isNotEmpty
-              ? Right(dtos.first.toDomain())
-              : Left(ServerFailure('No comment found')),
+      (dto) => dto != null 
+          ? Right(dto.toDomain())
+          : Left(ServerFailure('No comment found')),
     );
   }
 
@@ -45,7 +44,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   ) {
     try {
       return _localDataSource
-          .watchCommentsByTrack(trackId.value)
+          .watchCommentsByTrack(trackId)
           .map(
             (either) => either.fold(
               (failure) => Left(failure),
@@ -80,11 +79,11 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     if (await _networkInfo.isConnected) {
       final remoteResult = await _remoteDataSource.deleteComment(commentId);
       return await remoteResult.fold((failure) => Left(failure), (_) async {
-        await _localDataSource.deleteCachedComment(commentId.value);
+        await _localDataSource.deleteCachedComment(commentId);
         return Right(unit);
       });
     } else {
-      await _localDataSource.deleteCachedComment(commentId.value);
+      await _localDataSource.deleteCachedComment(commentId);
       return Right(unit);
     }
   }

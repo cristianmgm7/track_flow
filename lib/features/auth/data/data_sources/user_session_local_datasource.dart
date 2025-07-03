@@ -2,13 +2,17 @@ import 'package:dartz/dartz.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 /// Local data source responsible for user session management
 /// Follows Single Responsibility Principle - only handles user session state
 abstract class UserSessionLocalDataSource {
-  Future<Either<Failure, Unit>> cacheUserId(String userId);
+  Future<Either<Failure, Unit>> cacheUserId(UserId userId);
   Future<Either<Failure, String?>> getCachedUserId();
-  Future<Either<Failure, Unit>> setOfflineCredentials(String email, bool hasCredentials);
+  Future<Either<Failure, Unit>> setOfflineCredentials(
+    String email,
+    bool hasCredentials,
+  );
   Future<Either<Failure, String?>> getOfflineEmail();
   Future<Either<Failure, bool>> hasOfflineCredentials();
   Future<Either<Failure, Unit>> clearOfflineCredentials();
@@ -17,13 +21,13 @@ abstract class UserSessionLocalDataSource {
 @LazySingleton(as: UserSessionLocalDataSource)
 class UserSessionLocalDataSourceImpl implements UserSessionLocalDataSource {
   final SharedPreferences _prefs;
-  
+
   UserSessionLocalDataSourceImpl(this._prefs);
 
   @override
-  Future<Either<Failure, Unit>> cacheUserId(String userId) async {
+  Future<Either<Failure, Unit>> cacheUserId(UserId userId) async {
     try {
-      await _prefs.setString('userId', userId);
+      await _prefs.setString('userId', userId.value);
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to cache user ID: $e'));
@@ -41,7 +45,10 @@ class UserSessionLocalDataSourceImpl implements UserSessionLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> setOfflineCredentials(String email, bool hasCredentials) async {
+  Future<Either<Failure, Unit>> setOfflineCredentials(
+    String email,
+    bool hasCredentials,
+  ) async {
     try {
       await _prefs.setBool('has_credentials', hasCredentials);
       await _prefs.setString('offline_email', email);

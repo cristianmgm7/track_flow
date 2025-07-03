@@ -24,7 +24,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   @override
   Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
     try {
-      final result = await localDataSource.getTrackById(id.value);
+      final result = await localDataSource.getTrackById(id);
       return result.fold(
         (failure) => Left(failure),
         (dto) =>
@@ -43,7 +43,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   ) {
     try {
       return localDataSource
-          .watchTracksByProject(projectId.value)
+          .watchTracksByProject(projectId)
           .map(
             (either) => either.fold(
               (failure) => Left(failure),
@@ -86,10 +86,10 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.deleteTrackFromProject(
-          trackId.value,
-          projectId.value,
+          trackId,
+          projectId,
         );
-        await localDataSource.deleteTrack(trackId.value);
+        await localDataSource.deleteTrack(trackId);
         return Right(unit);
       } catch (e) {
         return Left(ServerFailure(e.toString()));
@@ -109,11 +109,11 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.editTrackName(
-          trackId: trackId.value,
-          projectId: projectId.value,
+          trackId: trackId,
+          projectId: projectId,
           newName: newName,
         );
-        await localDataSource.updateTrackName(trackId.value, newName);
+        await localDataSource.updateTrackName(trackId, newName);
         return Right(unit);
       } catch (e) {
         return Left(ServerFailure(e.toString()));

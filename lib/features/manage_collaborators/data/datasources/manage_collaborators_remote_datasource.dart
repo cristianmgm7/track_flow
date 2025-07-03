@@ -11,8 +11,8 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 
 abstract class ManageCollaboratorsRemoteDataSource {
   Future<Either<Failure, void>> selfJoinProjectWithProjectId({
-    required String projectId,
-    required String userId,
+    required ProjectId projectId,
+    required UserId userId,
   });
 
   Future<Either<Failure, Project>> updateProject(Project project);
@@ -38,13 +38,13 @@ class ManageCollaboratorsRemoteDataSourceImpl
   });
   @override
   Future<Either<Failure, void>> selfJoinProjectWithProjectId({
-    required String projectId,
-    required String userId,
+    required ProjectId projectId,
+    required UserId userId,
   }) async {
     try {
-      final docRef = firestore.collection(ProjectDTO.collection).doc(projectId);
+      final docRef = firestore.collection(ProjectDTO.collection).doc(projectId.value);
       await docRef.update({
-        'collaborators': FieldValue.arrayUnion([userId]),
+        'collaborators': FieldValue.arrayUnion([userId.value]),
       });
       return right(null);
     } on FirebaseException catch (e) {

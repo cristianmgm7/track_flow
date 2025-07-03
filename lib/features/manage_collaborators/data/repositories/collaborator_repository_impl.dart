@@ -33,8 +33,8 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
     }
     
     final result = await _remoteDataSource.selfJoinProjectWithProjectId(
-      projectId: projectId.value,
-      userId: userId.value,
+      projectId: projectId,
+      userId: userId,
     );
     
     if (result.isRight()) {

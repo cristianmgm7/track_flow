@@ -114,7 +114,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remote.signInWithEmailAndPassword(email, password);
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
-        final cacheResult = await _userSessionLocalDataSource.cacheUserId(user.uid);
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(UserId.fromUniqueString(user.uid));
         cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _createOrSyncUserProfile(user);
       }
@@ -143,7 +143,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
         await _createOrSyncUserProfile(user);
-        final cacheResult = await _userSessionLocalDataSource.cacheUserId(user.uid);
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(UserId.fromUniqueString(user.uid));
         cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
       }
       if (user == null) {
@@ -169,7 +169,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remote.signInWithGoogle();
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
-        final cacheResult = await _userSessionLocalDataSource.cacheUserId(user.uid);
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(UserId.fromUniqueString(user.uid));
         cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _createOrSyncUserProfile(user);
       }

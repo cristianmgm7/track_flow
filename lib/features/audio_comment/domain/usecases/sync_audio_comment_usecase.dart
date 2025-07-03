@@ -4,6 +4,7 @@ import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 @lazySingleton
 class SyncAudioCommentsUseCase {
@@ -29,14 +30,14 @@ class SyncAudioCommentsUseCase {
     }
 
     final projectsEither = await _projectRemoteDataSource.getUserProjects(
-      userId,
+      UserId.fromUniqueString(userId),
     );
     await projectsEither.fold((failure) {}, (projects) async {
       await _audioCommentLocalDataSource.deleteAllComments();
       if (projects.isEmpty) {
         return;
       }
-      final projectIds = projects.map((p) => p.id.value).toList();
+      final projectIds = projects.map((p) => p.id).toList();
       final allTracks = await _audioTrackRemoteDataSource.getTracksByProjectIds(
         projectIds,
       );
@@ -45,7 +46,7 @@ class SyncAudioCommentsUseCase {
       }
       for (final track in allTracks) {
         final comments = await _audioCommentRemoteDataSource
-            .getCommentsByTrackId(track.id.value);
+            .getCommentsByTrackId(track.id);
         for (final comment in comments) {
           await _audioCommentLocalDataSource.cacheComment(comment);
         }

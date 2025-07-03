@@ -5,6 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class AudioCommentLocalDataSource {
   /// Caches or updates a comment locally in Isar.
@@ -13,19 +14,19 @@ abstract class AudioCommentLocalDataSource {
 
   /// Deletes a cached comment by its ID from Isar.
   /// Used in: AudioCommentRepositoryImpl (for local deletion after remote deletion)
-  Future<Either<Failure, Unit>> deleteCachedComment(String commentId);
+  Future<Either<Failure, Unit>> deleteCachedComment(AudioCommentId commentId);
 
   /// Returns a list of cached comments for a given track (one-time fetch).
   /// Used in: AudioCommentRepositoryImpl (for business logic or non-reactive UI)
-  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(String trackId);
+  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(AudioTrackId trackId);
 
   /// Returns a single cached comment by its ID.
   /// Used in: AudioCommentRepositoryImpl, ProjectCommentService (for detail/edit flows)
-  Future<Either<Failure, AudioCommentDTO?>> getCommentById(String id);
+  Future<Either<Failure, AudioCommentDTO?>> getCommentById(AudioCommentId id);
 
   /// Deletes a comment by its ID from Isar.
   /// Used in: AudioCommentRepositoryImpl (for local deletion, alternative to deleteCachedComment)
-  Future<Either<Failure, Unit>> deleteComment(String id);
+  Future<Either<Failure, Unit>> deleteComment(AudioCommentId id);
 
   /// Deletes all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
@@ -34,7 +35,7 @@ abstract class AudioCommentLocalDataSource {
   /// Watches and streams all comments for a given track (reactive, for UI updates).
   /// Used in: UI (Bloc/Cubit/ViewModel) for offline-first, real-time comment updates
   Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(
-    String trackId,
+    AudioTrackId trackId,
   );
 
   /// Clears all cached comments from Isar.
@@ -62,10 +63,10 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteCachedComment(String commentId) async {
+  Future<Either<Failure, Unit>> deleteCachedComment(AudioCommentId commentId) async {
     try {
       await _isar.writeTxn(() async {
-        await _isar.audioCommentDocuments.delete(fastHash(commentId));
+        await _isar.audioCommentDocuments.delete(fastHash(commentId.value));
       });
       return const Right(unit);
     } catch (e) {
@@ -74,12 +75,12 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(String trackId) async {
+  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(AudioTrackId trackId) async {
     try {
       final commentDocs =
           await _isar.audioCommentDocuments
               .filter()
-              .trackIdEqualTo(trackId)
+              .trackIdEqualTo(trackId.value)
               .findAll();
       return Right(commentDocs.map((doc) => doc.toDTO()).toList());
     } catch (e) {
@@ -88,10 +89,10 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, AudioCommentDTO?>> getCommentById(String id) async {
+  Future<Either<Failure, AudioCommentDTO?>> getCommentById(AudioCommentId id) async {
     try {
       final commentDoc =
-          await _isar.audioCommentDocuments.filter().idEqualTo(id).findFirst();
+          await _isar.audioCommentDocuments.filter().idEqualTo(id.value).findFirst();
       return Right(commentDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get comment by id: $e'));
@@ -99,10 +100,10 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteComment(String id) async {
+  Future<Either<Failure, Unit>> deleteComment(AudioCommentId id) async {
     try {
       await _isar.writeTxn(() async {
-        await _isar.audioCommentDocuments.delete(fastHash(id));
+        await _isar.audioCommentDocuments.delete(fastHash(id.value));
       });
       return const Right(unit);
     } catch (e) {
@@ -124,12 +125,12 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
 
   @override
   Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(
-    String trackId,
+    AudioTrackId trackId,
   ) {
     return _isar.audioCommentDocuments
         .where()
         .filter()
-        .trackIdEqualTo(trackId)
+        .trackIdEqualTo(trackId.value)
         .watch(fireImmediately: true)
         .map(
           (docs) => right<Failure, List<AudioCommentDTO>>(

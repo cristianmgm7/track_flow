@@ -40,7 +40,7 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
     List<UserId> userIds,
   ) {
     return _localDataSource
-        .watchUserProfilesByIds(userIds.map((id) => id.value).toList())
+        .watchUserProfilesByIds(userIds)
         .map(
           (either) => either.fold(
             (failure) => Left(failure),
@@ -58,7 +58,7 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
       return Left(DatabaseFailure('No internet connection'));
     }
     
-    final dtos = await _remoteDataSource.getUserProfilesByIds(userIds.map((id) => id.value).toList());
+    final dtos = await _remoteDataSource.getUserProfilesByIds(userIds);
     return dtos.fold(
       (failure) => Left(failure),
       (dtos) => Right(dtos.map((e) => e.toDomain()).toList()),

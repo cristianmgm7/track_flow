@@ -9,7 +9,7 @@ import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.d
 abstract class AudioCommentRemoteDataSource {
   Future<Either<Failure, Unit>> addComment(AudioComment comment);
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
-  Future<List<AudioCommentDTO>> getCommentsByTrackId(String audioTrackId);
+  Future<List<AudioCommentDTO>> getCommentsByTrackId(AudioTrackId audioTrackId);
 }
 
 @LazySingleton(as: AudioCommentRemoteDataSource)
@@ -49,13 +49,13 @@ class FirebaseAudioCommentRemoteDataSource
 
   @override
   Future<List<AudioCommentDTO>> getCommentsByTrackId(
-    String audioTrackId,
+    AudioTrackId audioTrackId,
   ) async {
     try {
       final snapshot =
           await _firestore
               .collection(AudioCommentDTO.collection)
-              .where('trackId', isEqualTo: audioTrackId)
+              .where('trackId', isEqualTo: audioTrackId.value)
               .get();
       return snapshot.docs.map((doc) {
         final data = doc.data();

@@ -25,7 +25,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId) async* {
     try {
       await for (final dto in _userProfileLocalDataSource.watchUserProfile(
-        userId.value,
+        userId,
       )) {
         try {
           yield Right(dto?.toDomain());
@@ -66,11 +66,11 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       final hasConnected = await _networkInfo.isConnected;
       if (hasConnected) {
         // Try remote first if connected
-        final remoteResult = await _userProfileRemoteDataSource.getProfileById(userId.value);
+        final remoteResult = await _userProfileRemoteDataSource.getProfileById(userId);
         return await remoteResult.fold(
           (failure) async {
             // Fallback to local if remote fails - using the first value from watch stream
-            final localStream = _userProfileLocalDataSource.watchUserProfile(userId.value);
+            final localStream = _userProfileLocalDataSource.watchUserProfile(userId);
             final localDTO = await localStream.first;
             return Right(localDTO?.toDomain());
           },
@@ -83,7 +83,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         );
       } else {
         // Use local data when offline - using the first value from watch stream
-        final localStream = _userProfileLocalDataSource.watchUserProfile(userId.value);
+        final localStream = _userProfileLocalDataSource.watchUserProfile(userId);
         final localDTO = await localStream.first;
         return Right(localDTO?.toDomain());
       }
