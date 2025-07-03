@@ -8,7 +8,7 @@ This document describes the data access layer architecture in TrackFlow, followi
 - **Features Covered:** All domain features
 - **Architecture Pattern:** Clean Architecture with Repository pattern
 - **Design Principles:** Single Responsibility, consistent error handling, reactive programming
-- **Type Safety:** All data sources use domain value objects (AudioTrackId, ProjectId, UserId, etc.) instead of primitive String types for enhanced type safety and domain integrity
+- **Type Safety:** Core data sources use domain value objects (AudioTrackId, ProjectId, UserId, etc.) instead of primitive String types for enhanced type safety and domain integrity\n- **Refactoring Status:** Data sources for AudioTrack, AudioComment, UserProfile, ManageCollaborators, Projects, and Auth (UserSession) have been updated to use domain types. Other data sources may still use String types where appropriate (e.g., cache keys, download IDs, etc.)
 
 ---
 
@@ -174,11 +174,11 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote operations for magic links.
 **Public Methods:**
 
-- `Future<Either<Failure, MagicLink>> generateMagicLink({required String projectId, required String userId})` — Generate magic link.
-- `Future<Either<Failure, MagicLink>> validateMagicLink({required String linkId})` — Validate magic link.
-- `Future<Either<Failure, Unit>> consumeMagicLink({required String linkId})` — Consume magic link.
-- `Future<Either<Failure, Unit>> resendMagicLink({required String linkId})` — Resend magic link.
-- `Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({required String linkId})` — Get magic link status.
+- `Future<Either<Failure, MagicLink>> generateMagicLink({required ProjectId projectId, required UserId userId})` — Generate magic link.
+- `Future<Either<Failure, MagicLink>> validateMagicLink({required MagicLinkId linkId})` — Validate magic link.
+- `Future<Either<Failure, Unit>> consumeMagicLink({required MagicLinkId linkId})` — Consume magic link.
+- `Future<Either<Failure, Unit>> resendMagicLink({required MagicLinkId linkId})` — Resend magic link.
+- `Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({required MagicLinkId linkId})` — Get magic link status.
 
 ---
 
@@ -286,6 +286,38 @@ This document describes the data access layer architecture in TrackFlow, followi
 - `Future<Either<Failure, UserProfile>> getProfileById(UserId userId)` — Get user profile by ID remotely.
 - `Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile)` — Update user profile remotely.
 - `Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(List<UserId> userIds)` — Get user profiles by IDs remotely.
+
+---
+
+## Refactoring Summary: String to Domain Types
+
+The following data sources have been refactored to use domain value objects instead of primitive String types:
+
+### ✅ Refactored Data Sources:
+
+1. **AudioTrackLocalDataSource** - Methods using `AudioTrackId`, `ProjectId`
+2. **AudioTrackRemoteDataSource** - Methods using `AudioTrackId`, `ProjectId` 
+3. **AudioCommentLocalDataSource** - Methods using `AudioCommentId`, `AudioTrackId`
+4. **AudioCommentRemoteDataSource** - Methods using `AudioCommentId`, `AudioTrackId`
+5. **UserProfileLocalDataSource** - Methods using `UserId`
+6. **UserProfileRemoteDataSource** - Methods using `UserId`
+7. **UserSessionLocalDataSource** - Methods using `UserId`
+8. **ManageCollaboratorsRemoteDataSource** - Methods using `ProjectId`, `UserId`
+9. **ProjectRemoteDataSource** - Methods using `UserId`
+
+### 📋 Non-Refactored Data Sources:
+
+- **Audio Cache Data Sources** - Use String types for cache keys, file paths, and download IDs (appropriate for their domain)
+- **Magic Link Data Sources** - Some methods may still use String for link tokens and external references
+- **Playlist Data Sources** - May use String UUIDs for playlist identification
+- **Onboarding Data Sources** - Use boolean flags and don't require domain ID types
+
+### 🎯 Benefits Achieved:
+
+- **Type Safety**: Eliminated runtime errors from passing wrong ID types
+- **Domain Clarity**: Method signatures clearly indicate expected ID types  
+- **SOLID Compliance**: Data sources now properly depend on domain abstractions
+- **Consistency**: Repository ↔ DataSource communication uses consistent types
 
 ---
 
