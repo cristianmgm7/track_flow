@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/services/deep_link_service.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
 import 'package:trackflow/features/magic_link/data/models/magic_link_dto.dart';
 
@@ -24,9 +24,13 @@ abstract class MagicLinkRemoteDataSource {
 @LazySingleton(as: MagicLinkRemoteDataSource)
 class MagicLinkRemoteDataSourceImpl extends MagicLinkRemoteDataSource {
   final FirebaseFirestore _firestore;
+  final DeepLinkService _deepLinkService;
 
-  MagicLinkRemoteDataSourceImpl({required FirebaseFirestore firestore})
-    : _firestore = firestore;
+  MagicLinkRemoteDataSourceImpl({
+    required FirebaseFirestore firestore,
+    required DeepLinkService deepLinkService,
+  }) : _firestore = firestore,
+       _deepLinkService = deepLinkService;
 
   @override
   Future<Either<Failure, MagicLink>> generateMagicLink({
@@ -44,25 +48,11 @@ class MagicLinkRemoteDataSourceImpl extends MagicLinkRemoteDataSource {
         'status': 'valid',
       });
 
-      // Genera el Dynamic Link
-      final dynamicLinkParams = DynamicLinkParameters(
-        uriPrefix: 'https://trackflow.page.link',
-        link: Uri.parse('https://trackflow.page.link/magic-link/${docRef.id}'),
-        androidParameters: AndroidParameters(
-          packageName: 'com.trackflow.app',
-          minimumVersion: 0,
-        ),
-        iosParameters: IOSParameters(
-          bundleId: 'com.trackflow.ios',
-          minimumVersion: '0',
-        ),
-        // Puedes agregar socialMetaTagParameters, etc.
+      // Generate the deep link using the new service
+      final url = await _deepLinkService.generateMagicLink(
+        projectId: projectId,
+        token: docRef.id,
       );
-
-      final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
-        dynamicLinkParams,
-      );
-      final url = dynamicLink.shortUrl.toString();
 
       await docRef.update({'url': url});
       final doc = await docRef.get();

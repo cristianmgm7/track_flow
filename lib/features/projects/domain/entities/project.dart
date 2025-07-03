@@ -1,5 +1,4 @@
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';

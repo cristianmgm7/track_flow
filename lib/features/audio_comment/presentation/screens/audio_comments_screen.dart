@@ -48,16 +48,16 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
     // context.read<AudioPlayerBloc>().add(
     //   ChangeVisualContext(PlayerVisualContext.commentPlayer),
     // );
-    final collaborator =
-        widget.collaborators.isNotEmpty
-            ? widget.collaborators.first
-            : UserProfile(
-              id: widget.track.uploadedBy,
-              name: '',
-              email: '',
-              avatarUrl: '',
-              createdAt: DateTime.now(),
-            );
+    // final collaborator =
+    //     widget.collaborators.isNotEmpty
+    //         ? widget.collaborators.first
+    //         : UserProfile(
+    //           id: widget.track.uploadedBy,
+    //           name: '',
+    //           email: '',
+    //           avatarUrl: '',
+    //           createdAt: DateTime.now(),
+    //         ); // TODO: Use for author display
     context.read<AudioPlayerBloc>().add(
       PlayAudioRequested(AudioTrackId.fromUniqueString(widget.track.id.value)),
     );

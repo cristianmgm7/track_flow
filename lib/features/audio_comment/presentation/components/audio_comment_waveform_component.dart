@@ -96,10 +96,10 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
                                   if (currentState is AudioPlayerPlaying ||
                                       currentState is AudioPlayerPaused) {
                                     // Get current position from player controller
-                                    final currentPosition =
-                                        await _playerController.getDuration(
-                                          DurationType.current,
-                                        );
+                                    // final currentPosition =
+                                    //     await _playerController.getDuration(
+                                    //       DurationType.current,
+                                    //     ); // TODO: Use for waveform position
                                     // TODO: dispatch an event or show a comment input dialog
                                   }
                                 },

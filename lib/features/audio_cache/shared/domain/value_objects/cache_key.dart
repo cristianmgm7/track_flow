@@ -15,12 +15,12 @@ abstract class ValueObject<T> extends Equatable {
 }
 
 class CacheKey extends ValueObject<String> {
-  const CacheKey._(String value) : super(value);
+  const CacheKey._(super.value);
 
   /// CRITICAL: Use composite key to avoid collisions
   /// Creates a unique cache key combining trackId and checksum
   factory CacheKey.composite(String trackId, String checksum) {
-    return CacheKey._("${trackId}_${checksum}");
+    return CacheKey._("${trackId}_$checksum");
   }
 
   /// Creates a cache key from a URL using SHA1 hash

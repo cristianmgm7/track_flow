@@ -1,7 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
-import '../../../playlist/domain/entities/playlist_id.dart';
 import '../../../playlist/domain/repositories/playlist_repository.dart';
 import '../../../audio_track/domain/repositories/audio_track_repository.dart';
 import '../entities/audio_source.dart';

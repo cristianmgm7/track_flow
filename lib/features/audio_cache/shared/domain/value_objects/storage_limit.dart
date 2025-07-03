@@ -13,7 +13,7 @@ abstract class ValueObject<T> extends Equatable {
 }
 
 class StorageLimit extends ValueObject<int> {
-  const StorageLimit._(int bytes) : super(bytes);
+  const StorageLimit._(super.bytes);
 
   /// Default storage limit: 500MB
   static const StorageLimit defaultLimit = StorageLimit._(500 * 1024 * 1024);

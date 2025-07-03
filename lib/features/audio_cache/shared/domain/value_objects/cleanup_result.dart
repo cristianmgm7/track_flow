@@ -18,8 +18,9 @@ class CleanupResult {
 
   String get formattedFreedSpace {
     if (freedSpaceBytes < 1024) return '${freedSpaceBytes}B';
-    if (freedSpaceBytes < 1024 * 1024)
+    if (freedSpaceBytes < 1024 * 1024) {
       return '${(freedSpaceBytes / 1024).toStringAsFixed(1)}KB';
+    }
     if (freedSpaceBytes < 1024 * 1024 * 1024) {
       return '${(freedSpaceBytes / (1024 * 1024)).toStringAsFixed(1)}MB';
     }

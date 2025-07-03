@@ -7,7 +7,6 @@ import 'package:mockito/annotations.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/widgets/playlist_cache_icon.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_state.dart';
-import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_event.dart';
 import 'package:trackflow/features/audio_cache/playlist/domain/entities/playlist_cache_stats.dart';
 
 import 'playlist_cache_icon_test.mocks.dart';
