@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
@@ -15,14 +15,14 @@ import '../services/audio_playback_service.dart';
 class PlayAudioUseCase {
   const PlayAudioUseCase({
     required AudioTrackRepository audioTrackRepository,
-    required CacheStorageFacadeRepository cacheStorageRepository,
+    required AudioStorageRepository audioStorageRepository,
     required AudioPlaybackService playbackService,
   }) : _audioTrackRepository = audioTrackRepository,
-       _cacheStorageRepository = cacheStorageRepository,
+       _audioStorageRepository = audioStorageRepository,
        _playbackService = playbackService;
 
   final AudioTrackRepository _audioTrackRepository;
-  final CacheStorageFacadeRepository _cacheStorageRepository;
+  final AudioStorageRepository _audioStorageRepository;
   final AudioPlaybackService _playbackService;
 
   /// Play audio track by ID
@@ -48,8 +48,8 @@ class PlayAudioUseCase {
           );
 
           // 3. Try to get cached path first, fallback to streaming URL
-          final cacheResult = await _cacheStorageRepository.getCachedAudioPath(
-            trackId.value,
+          final cacheResult = await _audioStorageRepository.getCachedAudioPath(
+            trackId,
           );
           final sourceUrl = cacheResult.fold(
             (cacheFailure) => audioTrack.url, // Use streaming URL if not cached

@@ -2,14 +2,15 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
+import '../../../shared/domain/repositories/audio_storage_repository.dart';
 import '../entities/playlist_cache_stats.dart';
+import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class GetPlaylistCacheStatusUseCase {
-  final CacheStorageFacadeRepository _cacheStorageRepository;
+  final AudioStorageRepository _audioStorageRepository;
 
-  GetPlaylistCacheStatusUseCase(this._cacheStorageRepository);
+  GetPlaylistCacheStatusUseCase(this._audioStorageRepository);
 
   /// Get cache status for all tracks in a playlist
   Future<Either<CacheFailure, Map<String, bool>>> call(
@@ -26,7 +27,20 @@ class GetPlaylistCacheStatusUseCase {
     }
 
     try {
-      return await _cacheStorageRepository.checkMultipleAudioExists(trackIds);
+      final audioTrackIds = trackIds.map((id) => AudioTrackId.fromUniqueString(id)).toList();
+      final result = await _audioStorageRepository.checkMultipleAudioExists(audioTrackIds);
+      
+      return result.fold(
+        (failure) => Left(failure),
+        (statusMap) {
+          // Convert AudioTrackId keys back to String keys
+          final stringStatusMap = <String, bool>{};
+          statusMap.forEach((audioTrackId, exists) {
+            stringStatusMap[audioTrackId.value] = exists;
+          });
+          return Right(stringStatusMap);
+        },
+      );
     } catch (e) {
       return Left(
         ValidationCacheFailure(

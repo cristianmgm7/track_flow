@@ -2,13 +2,14 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
+import '../../../shared/domain/repositories/audio_download_repository.dart';
+import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class CacheTrackUseCase {
-  final CacheStorageFacadeRepository _cacheStorageRepository;
+  final AudioDownloadRepository _audioDownloadRepository;
 
-  CacheTrackUseCase(this._cacheStorageRepository);
+  CacheTrackUseCase(this._audioDownloadRepository);
 
   /// Cache a single track for individual playback
   ///
@@ -54,8 +55,8 @@ class CacheTrackUseCase {
     }
 
     try {
-      final result = await _cacheStorageRepository.downloadAndStoreAudio(
-        trackId,
+      final result = await _audioDownloadRepository.downloadAudio(
+        AudioTrackId.fromUniqueString(trackId),
         audioUrl,
       );
 
@@ -79,8 +80,13 @@ class CacheTrackUseCase {
     required Map<String, String> trackUrlPairs, // trackId -> audioUrl
   }) async {
     try {
-      final result = await _cacheStorageRepository.downloadAndStoreMultipleAudios(
-        trackUrlPairs,
+      final audioTrackUrlPairs = <AudioTrackId, String>{};
+      trackUrlPairs.forEach((trackId, audioUrl) {
+        audioTrackUrlPairs[AudioTrackId.fromUniqueString(trackId)] = audioUrl;
+      });
+      
+      final result = await _audioDownloadRepository.downloadMultipleAudios(
+        audioTrackUrlPairs,
       );
 
       return result.fold(

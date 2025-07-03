@@ -2,13 +2,14 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
+import '../../../shared/domain/repositories/audio_storage_repository.dart';
+import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class RemovePlaylistCacheUseCase {
-  final CacheStorageFacadeRepository _cacheStorageRepository;
+  final AudioStorageRepository _audioStorageRepository;
 
-  RemovePlaylistCacheUseCase(this._cacheStorageRepository);
+  RemovePlaylistCacheUseCase(this._audioStorageRepository);
 
   /// Remove all tracks from a playlist cache
   Future<Either<CacheFailure, Unit>> call(List<String> trackIds) async {
@@ -23,8 +24,9 @@ class RemovePlaylistCacheUseCase {
     }
 
     try {
-      final result = await _cacheStorageRepository.deleteMultipleAudioFiles(
-        trackIds,
+      final audioTrackIds = trackIds.map((id) => AudioTrackId.fromUniqueString(id)).toList();
+      final result = await _audioStorageRepository.deleteMultipleAudioFiles(
+        audioTrackIds,
       );
       return result.fold(
         (failure) => Left(failure),
@@ -54,7 +56,7 @@ class RemovePlaylistCacheUseCase {
     }
 
     try {
-      return await _cacheStorageRepository.deleteAudioFile(trackId);
+      return await _audioStorageRepository.deleteAudioFile(AudioTrackId.fromUniqueString(trackId));
     } catch (e) {
       return Left(
         ValidationCacheFailure(

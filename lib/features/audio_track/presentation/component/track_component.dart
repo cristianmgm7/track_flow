@@ -66,9 +66,10 @@ class _TrackComponentState extends State<TrackComponent> {
           final isPlaying = isCurrent && playerState is AudioPlayerPlaying;
 
           return Card(
-            color: isCurrent
-                ? Theme.of(context).colorScheme.primaryContainer
-                : Theme.of(context).colorScheme.surface,
+            color:
+                isCurrent
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surface,
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(Dimensions.space4),
@@ -104,10 +105,16 @@ class _TrackComponentState extends State<TrackComponent> {
                       trackId: _interactionHandler.trackId,
                       audioUrl: _interactionHandler.trackUrl,
                       size: 20.0,
-                      onSuccess: (message) => _feedbackHandler.showSuccess(context, message),
-                      onError: (message) => _feedbackHandler.showError(context, message),
+                      onSuccess:
+                          (message) =>
+                              _feedbackHandler.showSuccess(context, message),
+                      onError:
+                          (message) =>
+                              _feedbackHandler.showError(context, message),
                     ),
-                    onActionsPressed: () => _interactionHandler.handleOpenActionsSheet(context),
+                    onActionsPressed:
+                        () =>
+                            _interactionHandler.handleOpenActionsSheet(context),
                   ),
                 ],
               ),

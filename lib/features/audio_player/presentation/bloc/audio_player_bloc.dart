@@ -5,22 +5,7 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/playback_session.dart';
 import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/audio_failure.dart';
-import '../../domain/services/audio_playback_service.dart';
-import '../../domain/usecases/initialize_audio_player_usecase.dart';
-import '../../domain/usecases/play_audio_usecase.dart';
-import '../../domain/usecases/play_playlist_usecase.dart';
-import '../../domain/usecases/pause_audio_usecase.dart';
-import '../../domain/usecases/resume_audio_usecase.dart';
-import '../../domain/usecases/stop_audio_usecase.dart';
-import '../../domain/usecases/skip_to_next_usecase.dart';
-import '../../domain/usecases/skip_to_previous_usecase.dart';
-import '../../domain/usecases/seek_audio_usecase.dart';
-import '../../domain/usecases/toggle_shuffle_usecase.dart';
-import '../../domain/usecases/toggle_repeat_mode_usecase.dart';
-import '../../domain/usecases/set_volume_usecase.dart';
-import '../../domain/usecases/set_playback_speed_usecase.dart';
-import '../../domain/usecases/save_playback_state_usecase.dart';
-import '../../domain/usecases/restore_playback_state_usecase.dart';
+import '../../domain/services/audio_player_service.dart';
 
 import 'audio_player_event.dart';
 import 'audio_player_state.dart';
@@ -34,40 +19,9 @@ import 'audio_player_state.dart';
 /// - State persistence and restoration
 @injectable
 class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
-  AudioPlayerBloc({
-    required InitializeAudioPlayerUseCase initializeAudioPlayerUseCase,
-    required PlayAudioUseCase playAudioUseCase,
-    required PlayPlaylistUseCase playPlaylistUseCase,
-    required PauseAudioUseCase pauseAudioUseCase,
-    required ResumeAudioUseCase resumeAudioUseCase,
-    required StopAudioUseCase stopAudioUseCase,
-    required SkipToNextUseCase skipToNextUseCase,
-    required SkipToPreviousUseCase skipToPreviousUseCase,
-    required SeekAudioUseCase seekAudioUseCase,
-    required ToggleShuffleUseCase toggleShuffleUseCase,
-    required ToggleRepeatModeUseCase toggleRepeatModeUseCase,
-    required SetVolumeUseCase setVolumeUseCase,
-    required SetPlaybackSpeedUseCase setPlaybackSpeedUseCase,
-    required SavePlaybackStateUseCase savePlaybackStateUseCase,
-    required RestorePlaybackStateUseCase restorePlaybackStateUseCase,
-    required AudioPlaybackService playbackService,
-  }) : _initializeAudioPlayerUseCase = initializeAudioPlayerUseCase,
-       _playAudioUseCase = playAudioUseCase,
-       _playPlaylistUseCase = playPlaylistUseCase,
-       _pauseAudioUseCase = pauseAudioUseCase,
-       _resumeAudioUseCase = resumeAudioUseCase,
-       _stopAudioUseCase = stopAudioUseCase,
-       _skipToNextUseCase = skipToNextUseCase,
-       _skipToPreviousUseCase = skipToPreviousUseCase,
-       _seekAudioUseCase = seekAudioUseCase,
-       _toggleShuffleUseCase = toggleShuffleUseCase,
-       _toggleRepeatModeUseCase = toggleRepeatModeUseCase,
-       _setVolumeUseCase = setVolumeUseCase,
-       _setPlaybackSpeedUseCase = setPlaybackSpeedUseCase,
-       _savePlaybackStateUseCase = savePlaybackStateUseCase,
-       _restorePlaybackStateUseCase = restorePlaybackStateUseCase,
-       _playbackService = playbackService,
-       super(const AudioPlayerInitial()) {
+  AudioPlayerBloc({required AudioPlayerService audioPlayerService})
+    : _audioPlayerService = audioPlayerService,
+      super(const AudioPlayerInitial()) {
     // Register event handlers
     on<AudioPlayerInitializeRequested>(_onInitializeRequested);
     on<PlayAudioRequested>(_onPlayAudioRequested);
@@ -88,36 +42,19 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     on<PlaybackPositionUpdated>(_onPlaybackPositionUpdated);
 
     // Listen to playback service session changes
-    _sessionSubscription = _playbackService.sessionStream.listen(
+    _sessionSubscription = _audioPlayerService.sessionStream.listen(
       (session) => add(SessionStateChanged(session)),
     );
   }
 
-  // Use cases - pure audio operations only
-  final InitializeAudioPlayerUseCase _initializeAudioPlayerUseCase;
-  final PlayAudioUseCase _playAudioUseCase;
-  final PlayPlaylistUseCase _playPlaylistUseCase;
-  final PauseAudioUseCase _pauseAudioUseCase;
-  final ResumeAudioUseCase _resumeAudioUseCase;
-  final StopAudioUseCase _stopAudioUseCase;
-  final SkipToNextUseCase _skipToNextUseCase;
-  final SkipToPreviousUseCase _skipToPreviousUseCase;
-  final SeekAudioUseCase _seekAudioUseCase;
-  final ToggleShuffleUseCase _toggleShuffleUseCase;
-  final ToggleRepeatModeUseCase _toggleRepeatModeUseCase;
-  final SetVolumeUseCase _setVolumeUseCase;
-  final SetPlaybackSpeedUseCase _setPlaybackSpeedUseCase;
-  final SavePlaybackStateUseCase _savePlaybackStateUseCase;
-  final RestorePlaybackStateUseCase _restorePlaybackStateUseCase;
-
-  // Playback service for direct session access
-  final AudioPlaybackService _playbackService;
+  // Single service that encapsulates all audio operations
+  final AudioPlayerService _audioPlayerService;
 
   // Subscription to playback service updates
   late final StreamSubscription<PlaybackSession> _sessionSubscription;
 
   /// Get current playback session
-  PlaybackSession get currentSession => _playbackService.currentSession;
+  PlaybackSession get currentSession => _audioPlayerService.currentSession;
 
   @override
   Future<void> close() {
@@ -135,11 +72,11 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
 
     try {
       // Initialize the audio player first
-      await _initializeAudioPlayerUseCase();
+      await _audioPlayerService.initialize();
 
       // Attempt to restore previous playback state
       try {
-        await _restorePlaybackStateUseCase();
+        await _audioPlayerService.restorePlaybackState();
         // Check if state was restored by examining current session
         final session = currentSession;
         if (session.queue.isNotEmpty) {
@@ -169,7 +106,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     emit(AudioPlayerBuffering(currentSession));
 
-    final result = await _playAudioUseCase(event.trackId);
+    final result = await _audioPlayerService.playAudio(event.trackId);
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -185,7 +122,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     emit(AudioPlayerBuffering(currentSession));
 
-    final result = await _playPlaylistUseCase(
+    final result = await _audioPlayerService.playPlaylist(
       event.playlistId,
       startIndex: event.startIndex,
     );
@@ -201,7 +138,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     PauseAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _pauseAudioUseCase();
+    final result = await _audioPlayerService.pause();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -214,7 +151,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ResumeAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _resumeAudioUseCase();
+    final result = await _audioPlayerService.resume();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -227,7 +164,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     StopAudioRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _stopAudioUseCase();
+    final result = await _audioPlayerService.stop();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -240,7 +177,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SkipToNextRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _skipToNextUseCase();
+    final result = await _audioPlayerService.skipToNext();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       hasNext,
@@ -257,7 +194,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SkipToPreviousRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _skipToPreviousUseCase();
+    final result = await _audioPlayerService.skipToPrevious();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       hasPrevious,
@@ -275,7 +212,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     try {
-      await _seekAudioUseCase(event.position);
+      await _audioPlayerService.seek(event.position);
       // State will be updated via SessionStateChanged event
     } catch (e) {
       emit(
@@ -291,7 +228,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ToggleShuffleRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _toggleShuffleUseCase();
+    final result = await _audioPlayerService.toggleShuffle();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       newShuffleState,
@@ -304,7 +241,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     ToggleRepeatModeRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _toggleRepeatModeUseCase();
+    final result = await _audioPlayerService.toggleRepeatMode();
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       newRepeatMode,
@@ -318,7 +255,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     Emitter<AudioPlayerState> emit,
   ) async {
     try {
-      await _playbackService.setRepeatMode(event.mode);
+      await _audioPlayerService.setRepeatMode(event.mode);
       // State will be updated via SessionStateChanged event
     } catch (e) {
       emit(
@@ -334,7 +271,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SetVolumeRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _setVolumeUseCase(event.volume);
+    final result = await _audioPlayerService.setVolume(event.volume);
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -347,7 +284,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SetPlaybackSpeedRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _setPlaybackSpeedUseCase(event.speed);
+    final result = await _audioPlayerService.setPlaybackSpeed(event.speed);
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -360,7 +297,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     SavePlaybackStateRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    final result = await _savePlaybackStateUseCase();
+    final result = await _audioPlayerService.savePlaybackState();
 
     result.fold(
       (failure) {

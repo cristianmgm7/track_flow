@@ -2,17 +2,17 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/cache_storage_facade_repository.dart';
+import '../../../shared/domain/repositories/audio_download_repository.dart';
 import '../../../../audio_track/domain/repositories/audio_track_repository.dart';
 import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class CachePlaylistUseCase {
-  final CacheStorageFacadeRepository _cacheStorageRepository;
+  final AudioDownloadRepository _audioDownloadRepository;
   final AudioTrackRepository _audioTrackRepository;
 
   CachePlaylistUseCase(
-    this._cacheStorageRepository,
+    this._audioDownloadRepository,
     this._audioTrackRepository,
   );
 
@@ -42,11 +42,12 @@ class CachePlaylistUseCase {
       );
     }
 
-    final trackUrlPairs = <String, String>{};
+    final trackUrlPairs = <AudioTrackId, String>{};
     for (final trackId in trackIds) {
       try {
+        final audioTrackId = AudioTrackId.fromUniqueString(trackId);
         final trackOrFailure = await _audioTrackRepository.getTrackById(
-          AudioTrackId.fromUniqueString(trackId),
+          audioTrackId,
         );
         trackOrFailure.fold(
           (failure) {
@@ -54,7 +55,7 @@ class CachePlaylistUseCase {
           },
           (track) {
             if (track.url.isNotEmpty) {
-              trackUrlPairs[trackId] = track.url;
+              trackUrlPairs[audioTrackId] = track.url;
             }
           },
         );
@@ -75,7 +76,7 @@ class CachePlaylistUseCase {
     }
 
     try {
-      final result = await _cacheStorageRepository.downloadAndStoreMultipleAudios(
+      final result = await _audioDownloadRepository.downloadMultipleAudios(
         trackUrlPairs,
       );
 
@@ -121,8 +122,8 @@ class CachePlaylistUseCase {
     }
 
     try {
-      final result = await _cacheStorageRepository.downloadAndStoreAudio(
-        trackId,
+      final result = await _audioDownloadRepository.downloadAudio(
+        AudioTrackId.fromUniqueString(trackId),
         audioUrl,
       );
 

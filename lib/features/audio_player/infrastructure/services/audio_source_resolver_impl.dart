@@ -2,17 +2,23 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../../core/error/failures.dart';
-import '../../../audio_cache/shared/domain/repositories/cache_storage_facade_repository.dart';
+import '../../../audio_cache/shared/domain/repositories/audio_storage_repository.dart';
+import '../../../audio_cache/shared/domain/repositories/audio_download_repository.dart';
 import '../../domain/services/audio_source_resolver.dart';
+import '../../../../../core/entities/unique_id.dart';
 
 /// Pure audio source resolver implementation
-/// Integrates with cache storage repository
+/// Integrates with specialized cache repositories
 /// Provides cache-first audio source resolution for pure audio architecture
 @Injectable(as: AudioSourceResolver)
 class AudioSourceResolverImpl implements AudioSourceResolver {
-  const AudioSourceResolverImpl(this._cacheStorageRepository);
+  const AudioSourceResolverImpl(
+    this._audioStorageRepository,
+    this._audioDownloadRepository,
+  );
 
-  final CacheStorageFacadeRepository _cacheStorageRepository;
+  final AudioStorageRepository _audioStorageRepository;
+  final AudioDownloadRepository _audioDownloadRepository;
 
   @override
   Future<Either<Failure, String>> resolveAudioSource(
@@ -49,8 +55,9 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   Future<bool> isTrackCached(String url, {String? trackId}) async {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
-      final existsResult = await _cacheStorageRepository.audioExists(
-        effectiveTrackId,
+      final audioTrackId = AudioTrackId.fromUniqueString(effectiveTrackId);
+      final existsResult = await _audioStorageRepository.audioExists(
+        audioTrackId,
       );
 
       return existsResult.fold((failure) => false, (exists) => exists);
@@ -66,8 +73,9 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
   }) async {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
-      final pathResult = await _cacheStorageRepository.getCachedAudioPath(
-        effectiveTrackId,
+      final audioTrackId = AudioTrackId.fromUniqueString(effectiveTrackId);
+      final pathResult = await _audioStorageRepository.getCachedAudioPath(
+        audioTrackId,
       );
 
       return pathResult.fold(
@@ -84,9 +92,10 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
 
-      // Use cache storage repository for background caching
-      await _cacheStorageRepository.downloadAndStoreAudio(
-        effectiveTrackId,
+      // Use audio download repository for background caching
+      final audioTrackId = AudioTrackId.fromUniqueString(effectiveTrackId);
+      await _audioDownloadRepository.downloadAudio(
+        audioTrackId,
         url,
       );
     } catch (e) {
@@ -102,9 +111,10 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
     try {
       final trackId = _extractTrackIdFromUrl(url);
 
-      // Use cache storage repository for preloading
-      final result = await _cacheStorageRepository.downloadAndStoreAudio(
-        trackId,
+      // Use audio download repository for preloading
+      final audioTrackId = AudioTrackId.fromUniqueString(trackId);
+      final result = await _audioDownloadRepository.downloadAudio(
+        audioTrackId,
         url,
       );
 
