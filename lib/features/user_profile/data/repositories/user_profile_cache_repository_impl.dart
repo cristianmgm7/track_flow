@@ -7,7 +7,7 @@ import 'package:trackflow/features/user_profile/data/datasources/user_profile_lo
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_cache_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
 
 @LazySingleton(as: UserProfileCacheRepository)
 class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {

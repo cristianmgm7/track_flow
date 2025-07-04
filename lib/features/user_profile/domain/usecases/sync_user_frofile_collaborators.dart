@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_cache_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
 
 @lazySingleton
 class SyncUserProfileCollaboratorsUseCase {

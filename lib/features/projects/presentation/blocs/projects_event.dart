@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 abstract class ProjectsEvent extends Equatable {
   const ProjectsEvent();
@@ -57,4 +58,23 @@ class ProjectsUpdated extends ProjectsEvent {
   const ProjectsUpdated(this.projects);
   @override
   List<Object?> get props => [projects];
+}
+
+// Project Detail Events
+class WatchProjectDetail extends ProjectsEvent {
+  final Project project;
+
+  const WatchProjectDetail({required this.project});
+
+  @override
+  List<Object?> get props => [project];
+}
+
+class TracksUpdated extends ProjectsEvent {
+  final List<AudioTrack> tracks;
+
+  const TracksUpdated(this.tracks);
+
+  @override
+  List<Object?> get props => [tracks];
 }

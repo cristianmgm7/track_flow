@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'dart:io';
 
 class ProjectDetailCollaboratorsComponent extends StatelessWidget {

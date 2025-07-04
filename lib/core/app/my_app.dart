@@ -12,7 +12,6 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
@@ -39,9 +38,6 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
         BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
-        BlocProvider<ProjectDetailBloc>(
-          create: (context) => sl<ProjectDetailBloc>(),
-        ),
         BlocProvider<ManageCollaboratorsBloc>(
           create: (context) => sl<ManageCollaboratorsBloc>(),
         ),
