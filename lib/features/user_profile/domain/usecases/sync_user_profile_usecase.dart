@@ -2,7 +2,6 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
-import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 @lazySingleton
 class SyncUserProfileUseCase {
@@ -18,8 +17,8 @@ class SyncUserProfileUseCase {
       return;
     }
     final failureOrProfile = await remote.getProfileById(userId);
-    await failureOrProfile.fold((failure) async {}, (profile) async {
-      await local.cacheUserProfile(UserProfileDTO.fromDomain(profile));
+    await failureOrProfile.fold((failure) async {}, (profileDTO) async {
+      await local.cacheUserProfile(profileDTO);
     });
   }
 }

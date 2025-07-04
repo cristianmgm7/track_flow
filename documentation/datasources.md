@@ -8,8 +8,7 @@ This document describes the data access layer architecture in TrackFlow, followi
 - **Features Covered:** All domain features
 - **Architecture Pattern:** Clean Architecture with Repository pattern
 - **Design Principles:** Single Responsibility, consistent error handling, reactive programming
-- **Clean Architecture Compliance:** All data sources now follow Clean Architecture principles by using DTOs and primitive types instead of domain entities
-- **Refactoring Status:** ✅ COMPLETED - All data sources have been refactored to eliminate domain entity dependencies and use appropriate DTOs for data transfer
+- **Clean Architecture Compliance:** All data sources now use DTOs and primitive types instead of domain entities or value objects. All conversions between DTOs and domain entities are handled in the repository layer.
 
 ---
 
@@ -21,7 +20,7 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Manages user session state and offline credentials.
 **Public Methods:**
 
-- `Future<Either<Failure, Unit>> cacheUserId(UserId userId)` — Cache user ID.
+- `Future<Either<Failure, Unit>> cacheUserId(String userId)` — Cache user ID.
 - `Future<Either<Failure, String?>> getCachedUserId()` — Get cached user ID.
 - `Future<Either<Failure, Unit>> setOfflineCredentials(String email, bool hasCredentials)` — Set offline credentials.
 - `Future<Either<Failure, String?>> getOfflineEmail()` — Get offline email.
@@ -42,8 +41,7 @@ This document describes the data access layer architecture in TrackFlow, followi
 ### Local Data Source: AuthLocalDataSource (Deprecated)
 
 **Location:** `lib/features/auth/data/data_sources/auth_local_datasource.dart`
-**Status:** Deprecated. Use `UserSessionLocalDataSource` and `OnboardingStateLocalDataSource` directly.
-**Public Methods:** Composite of the above two data sources for backward compatibility.
+**Status:** Deprecated. The file has been removed from the codebase. Use `UserSessionLocalDataSource` and `OnboardingStateLocalDataSource` directly.
 
 ### Remote Data Source: AuthRemoteDataSource
 
@@ -68,15 +66,15 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Manages local storage and retrieval of cached audio files and metadata.
 **Public Methods:**
 
-- `Future<Either<CacheFailure, CachedAudio>> storeCachedAudio(CachedAudio cachedAudio)` — Store audio in cache.
-- `Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId)` — Get cached audio.
+- `Future<Either<CacheFailure, CachedAudioDocumentUnified>> storeCachedAudio(CachedAudioDocumentUnified cachedAudio)` — Store audio in cache.
+- `Future<Either<CacheFailure, CachedAudioDocumentUnified?>> getCachedAudio(String trackId)` — Get cached audio.
 - `Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId)` — Get path of cached audio.
 - `Future<Either<CacheFailure, bool>> audioExists(String trackId)` — Check if audio exists.
 - `Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId)` — Delete audio file.
 - `Future<Either<CacheFailure, bool>> verifyFileIntegrity(String trackId, String expectedChecksum)` — Verify file integrity.
-- `Future<Either<CacheFailure, List<CachedAudio>>> getMultipleCachedAudios(List<String> trackIds)` — Get multiple cached audios.
+- `Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>> getMultipleCachedAudios(List<String> trackIds)` — Get multiple cached audios.
 - `Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(List<String> trackIds)` — Delete multiple audio files.
-- `Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios()` — Get all cached audios.
+- `Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>> getAllCachedAudios()` — Get all cached audios.
 - `Future<Either<CacheFailure, int>> getTotalStorageUsage()` — Get total storage usage.
 - `Future<Either<CacheFailure, List<String>>> getCorruptedFiles()` — Get corrupted files.
 - `Future<Either<CacheFailure, List<String>>> getOrphanedFiles()` — Get orphaned files.
@@ -108,12 +106,12 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Public Methods:**
 
 - `Future<Either<Failure, Unit>> cacheComment(AudioCommentDTO comment)` — Cache a comment.
-- `Future<Either<Failure, Unit>> deleteCachedComment(AudioCommentId commentId)` — Delete cached comment.
-- `Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(AudioTrackId trackId)` — Get cached comments by track.
-- `Future<Either<Failure, AudioCommentDTO?>> getCommentById(AudioCommentId id)` — Get comment by ID.
-- `Future<Either<Failure, Unit>> deleteComment(AudioCommentId id)` — Delete comment.
+- `Future<Either<Failure, Unit>> deleteCachedComment(String commentId)` — Delete cached comment.
+- `Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(String trackId)` — Get cached comments by track.
+- `Future<Either<Failure, AudioCommentDTO?>> getCommentById(String commentId)` — Get comment by ID.
+- `Future<Either<Failure, Unit>> deleteComment(String commentId)` — Delete comment.
 - `Future<Either<Failure, Unit>> deleteAllComments()` — Delete all comments.
-- `Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(AudioTrackId trackId)` — Stream comments by track.
+- `Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(String trackId)` — Stream comments by track.
 - `Future<Either<Failure, Unit>> clearCache()` — Clear cache.
 
 ### Remote Data Source: AudioCommentRemoteDataSource
@@ -122,9 +120,9 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote operations for audio comments.
 **Public Methods:**
 
-- `Future<Either<Failure, Unit>> addComment(AudioComment comment)` — Add comment remotely.
-- `Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId)` — Delete comment remotely.
-- `Future<List<AudioCommentDTO>> getCommentsByTrackId(AudioTrackId audioTrackId)` — Get comments by track ID.
+- `Future<Either<Failure, Unit>> addComment(AudioCommentDTO comment)` — Add comment remotely.
+- `Future<Either<Failure, Unit>> deleteComment(String commentId)` — Delete comment remotely.
+- `Future<List<AudioCommentDTO>> getCommentsByTrackId(String audioTrackId)` — Get comments by track ID.
 
 ---
 
@@ -137,12 +135,12 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Public Methods:**
 
 - `Future<Either<Failure, Unit>> cacheTrack(AudioTrackDTO track)` — Cache a track.
-- `Future<Either<Failure, AudioTrackDTO?>> getTrackById(AudioTrackId id)` — Get track by ID.
-- `Future<Either<Failure, Unit>> deleteTrack(AudioTrackId id)` — Delete track.
+- `Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id)` — Get track by ID.
+- `Future<Either<Failure, Unit>> deleteTrack(String id)` — Delete track.
 - `Future<Either<Failure, Unit>> deleteAllTracks()` — Delete all tracks.
-- `Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(ProjectId projectId)` — Stream tracks by project.
+- `Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(String projectId)` — Stream tracks by project.
 - `Future<Either<Failure, Unit>> clearCache()` — Clear cache.
-- `Future<Either<Failure, Unit>> updateTrackName(AudioTrackId trackId, String newName)` — Update track name.
+- `Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName)` — Update track name.
 
 ### Remote Data Source: AudioTrackRemoteDataSource
 
@@ -150,10 +148,10 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote upload and management of audio tracks.
 **Public Methods:**
 
-- `Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack({required File file, required AudioTrack track})` — Upload audio track.
-- `Future<void> deleteTrackFromProject(AudioTrackId trackId, ProjectId projectId)` — Delete track from project.
-- `Future<List<AudioTrackDTO>> getTracksByProjectIds(List<ProjectId> projectIds)` — Get tracks by project IDs.
-- `Future<void> editTrackName({required AudioTrackId trackId, required ProjectId projectId, required String newName})` — Edit track name.
+- `Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(AudioTrackDTO trackData)` — Upload audio track.
+- `Future<void> deleteTrackFromProject(String trackId, String projectId)` — Delete track from project.
+- `Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds)` — Get tracks by project IDs.
+- `Future<void> editTrackName(String trackId, String projectId, String newName)` — Edit track name.
 
 ---
 
@@ -191,8 +189,8 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Manages local collaborator project updates and retrieval.
 **Public Methods:**
 
-- `Future<Project> updateProject(Project project)` — Update project locally.
-- `Future<Project?> getProjectById(ProjectId projectId)` — Get project by ID locally.
+- `Future<ProjectDTO> updateProject(ProjectDTO project)` — Update project locally.
+- `Future<ProjectDTO?> getProjectById(String projectId)` — Get project by ID locally.
 
 ### Remote Data Source: ManageCollaboratorsRemoteDataSource
 
@@ -200,10 +198,10 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote collaborator project operations.
 **Public Methods:**
 
-- `Future<Either<Failure, void>> selfJoinProjectWithProjectId({required ProjectId projectId, required UserId userId})` — Join project remotely.
-- `Future<Either<Failure, Project>> updateProject(Project project)` — Update project remotely.
-- `Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(Project project)` — Get project collaborators remotely.
-- `Future<Either<Failure, Unit>> leaveProject({required ProjectId projectId, required UserId userId})` — Leave project remotely.
+- `Future<Either<Failure, void>> selfJoinProjectWithProjectId({required String projectId, required String userId})` — Join project remotely.
+- `Future<Either<Failure, ProjectDTO>> updateProject(ProjectDTO project)` — Update project remotely.
+- `Future<Either<Failure, List<UserProfileDTO>>> getProjectCollaborators(ProjectDTO project)` — Get project collaborators remotely.
+- `Future<Either<Failure, Unit>> leaveProject({required String projectId, required String userId})` — Leave project remotely.
 
 ---
 
@@ -244,10 +242,10 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Public Methods:**
 
 - `Future<Either<Failure, Unit>> cacheProject(ProjectDTO project)` — Cache project.
-- `Future<Either<Failure, ProjectDTO?>> getCachedProject(ProjectId projectId)` — Get cached project.
-- `Future<Either<Failure, Unit>> removeCachedProject(ProjectId projectId)` — Remove cached project.
+- `Future<Either<Failure, ProjectDTO?>> getCachedProject(String projectId)` — Get cached project.
+- `Future<Either<Failure, Unit>> removeCachedProject(String projectId)` — Remove cached project.
 - `Future<Either<Failure, List<ProjectDTO>>> getAllProjects()` — Get all projects.
-- `Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(UserId ownerId)` — Stream all projects for a user.
+- `Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(String ownerId)` — Stream all projects for a user.
 - `Future<Either<Failure, Unit>> clearCache()` — Clear all cached projects.
 
 ### Remote Data Source: ProjectRemoteDataSource
@@ -256,11 +254,11 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote project operations.
 **Public Methods:**
 
-- `Future<Either<Failure, Project>> createProject(Project project)` — Create project remotely.
-- `Future<Either<Failure, Unit>> updateProject(Project project)` — Update project remotely.
-- `Future<Either<Failure, Unit>> deleteProject(ProjectId projectId)` — Delete project remotely.
-- `Future<Either<Failure, Project>> getProjectById(ProjectId projectId)` — Get project by ID remotely.
-- `Future<Either<Failure, List<Project>>> getUserProjects(UserId userId)` — Get all projects for a user remotely.
+- `Future<Either<Failure, ProjectDTO>> createProject(ProjectDTO project)` — Create project remotely.
+- `Future<Either<Failure, Unit>> updateProject(ProjectDTO project)` — Update project remotely.
+- `Future<Either<Failure, Unit>> deleteProject(String projectId)` — Delete project remotely.
+- `Future<Either<Failure, ProjectDTO>> getProjectById(String projectId)` — Get project by ID remotely.
+- `Future<Either<Failure, List<ProjectDTO>>> getUserProjects(String userId)` — Get all projects for a user remotely.
 
 ---
 
@@ -273,9 +271,9 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Public Methods:**
 
 - `Future<void> cacheUserProfile(UserProfileDTO profile)` — Cache user profile.
-- `Stream<UserProfileDTO?> watchUserProfile(UserId userId)` — Stream user profile by ID.
-- `Future<List<UserProfileDTO>> getUserProfilesByIds(List<UserId> userIds)` — Get user profiles by IDs.
-- `Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(List<UserId> userIds)` — Stream user profiles by IDs.
+- `Stream<UserProfileDTO?> watchUserProfile(String userId)` — Stream user profile by ID.
+- `Future<List<UserProfileDTO>> getUserProfilesByIds(List<String> userIds)` — Get user profiles by IDs.
+- `Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(List<String> userIds)` — Stream user profiles by IDs.
 - `Future<void> clearCache()` — Clear all cached user profiles.
 
 ### Remote Data Source: UserProfileRemoteDataSource
@@ -284,45 +282,9 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote operations for user profiles.
 **Public Methods:**
 
-- `Future<Either<Failure, UserProfile>> getProfileById(UserId userId)` — Get user profile by ID remotely.
+- `Future<Either<Failure, UserProfileDTO>> getProfileById(String userId)` — Get user profile by ID remotely.
 - `Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile)` — Update user profile remotely.
-- `Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(List<UserId> userIds)` — Get user profiles by IDs remotely.
-
----
-
-## Clean Architecture Refactoring Summary
-
-✅ **COMPLETED REFACTORING**: All data sources now follow Clean Architecture principles by eliminating domain entity dependencies.
-
-### 🎯 Refactoring Achievements:
-
-1. **Domain Independence**: Data sources no longer import or depend on domain entities (`AudioTrack`, `Project`, `MagicLink`, etc.)
-2. **DTO-Based Communication**: All data sources use DTOs (`AudioCommentDTO`, `ProjectDTO`, `MagicLinkDto`, etc.) for data transfer
-3. **Primitive Type Usage**: Where appropriate, data sources use primitive types (String, int, bool) instead of domain value objects
-4. **Repository Responsibility**: All domain ↔ DTO conversions are now handled in the repository layer
-
-### 📊 Refactored Data Sources:
-
-**✅ Fully Compliant Data Sources:**
-- `MagicLinkLocalDataSource` & `MagicLinkRemoteDataSource` - Uses specific DTOs (MagicLinkRequestDto, MagicLinkValidationDto)
-- `ManageCollaboratorsLocalDataSource` & `ManageCollaboratorsRemoteDataSource` - Uses CollaboratorOperationDto types
-- `AudioCommentLocalDataSource` & `AudioCommentRemoteDataSource` - Uses AudioCommentDTO and primitive strings
-- `AudioTrackRemoteDataSource` - Uses AudioTrackDTO for data operations
-- `ProjectRemoteDataSource` - Uses ProjectDTO for all operations
-- `UserProfileRemoteDataSource` - Uses UserProfileDTO for data transfer
-
-**✅ Already Compliant:**
-- Audio Cache Data Sources - Use primitive types and appropriate cache DTOs
-- Playlist Data Sources - Use PlaylistDto for all operations
-- Auth Data Sources - Use primitive types and AuthDto where needed
-
-### 🎯 Benefits Achieved:
-
-- **Clean Architecture Compliance**: Data sources are now properly isolated from domain logic
-- **Better Testability**: DTOs are easier to create and mock than complex domain entities
-- **Improved Maintainability**: Changes to domain entities don't affect data layer implementations
-- **Professional Code Quality**: Follows industry best practices for layered architecture
-- **Type Safety**: Maintained through specific DTOs rather than generic primitives
+- `Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(List<String> userIds)` — Get user profiles by IDs remotely.
 
 ---
 

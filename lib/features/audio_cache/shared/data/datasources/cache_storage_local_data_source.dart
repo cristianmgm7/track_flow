@@ -5,17 +5,18 @@ import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
-import '../../domain/entities/cached_audio.dart';
+import '../models/cached_audio_document_unified.dart';
 import '../../domain/failures/cache_failure.dart';
 import '../../domain/value_objects/cache_key.dart';
-import '../models/cached_audio_document_unified.dart';
 
 abstract class CacheStorageLocalDataSource {
-  Future<Either<CacheFailure, CachedAudio>> storeCachedAudio(
-    CachedAudio cachedAudio,
+  Future<Either<CacheFailure, CachedAudioDocumentUnified>> storeCachedAudio(
+    CachedAudioDocumentUnified cachedAudio,
   );
 
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId);
+  Future<Either<CacheFailure, CachedAudioDocumentUnified?>> getCachedAudio(
+    String trackId,
+  );
 
   Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId);
 
@@ -28,15 +29,15 @@ abstract class CacheStorageLocalDataSource {
     String expectedChecksum,
   );
 
-  Future<Either<CacheFailure, List<CachedAudio>>> getMultipleCachedAudios(
-    List<String> trackIds,
-  );
+  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
+  getMultipleCachedAudios(List<String> trackIds);
 
   Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(
     List<String> trackIds,
   );
 
-  Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios();
+  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
+  getAllCachedAudios();
 
   Future<Either<CacheFailure, int>> getTotalStorageUsage();
 
@@ -61,30 +62,12 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   CacheStorageLocalDataSourceImpl(this._isar);
 
   @override
-  Future<Either<CacheFailure, CachedAudio>> storeCachedAudio(
-    CachedAudio cachedAudio,
+  Future<Either<CacheFailure, CachedAudioDocumentUnified>> storeCachedAudio(
+    CachedAudioDocumentUnified cachedAudio,
   ) async {
     try {
-      // Convert to unified document
-      final unifiedDoc =
-          CachedAudioDocumentUnified()
-            ..trackId = cachedAudio.trackId
-            ..filePath = cachedAudio.filePath
-            ..fileSizeBytes = cachedAudio.fileSizeBytes
-            ..cachedAt = cachedAudio.cachedAt
-            ..checksum = cachedAudio.checksum
-            ..quality = cachedAudio.quality
-            ..status = cachedAudio.status
-            ..referenceCount = 1
-            ..lastAccessed = DateTime.now()
-            ..references = ['individual']
-            ..downloadAttempts = 0
-            ..lastDownloadAttempt = null
-            ..failureReason = null
-            ..originalUrl = '';
-
       await _isar.writeTxn(() async {
-        await _isar.cachedAudioDocumentUnifieds.put(unifiedDoc);
+        await _isar.cachedAudioDocumentUnifieds.put(cachedAudio);
       });
 
       return Right(cachedAudio);
@@ -99,7 +82,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
+  Future<Either<CacheFailure, CachedAudioDocumentUnified?>> getCachedAudio(
     String trackId,
   ) async {
     try {
@@ -119,7 +102,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         await _isar.cachedAudioDocumentUnifieds.put(unifiedDoc);
       });
 
-      return Right(unifiedDoc.toCachedAudio());
+      return Right(unifiedDoc);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -249,9 +232,8 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, List<CachedAudio>>> getMultipleCachedAudios(
-    List<String> trackIds,
-  ) async {
+  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
+  getMultipleCachedAudios(List<String> trackIds) async {
     try {
       final List<CachedAudioDocumentUnified> unifiedDocs = [];
 
@@ -267,9 +249,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         }
       }
 
-      final cachedAudios =
-          unifiedDocs.map((doc) => doc.toCachedAudio()).toList();
-      return Right(cachedAudios);
+      return Right(unifiedDocs);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -307,14 +287,13 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios() async {
+  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
+  getAllCachedAudios() async {
     try {
       final unifiedDocs =
           await _isar.cachedAudioDocumentUnifieds.where().findAll();
 
-      final cachedAudios =
-          unifiedDocs.map((doc) => doc.toCachedAudio()).toList();
-      return Right(cachedAudios);
+      return Right(unifiedDocs);
     } catch (e) {
       return Left(
         StorageCacheFailure(

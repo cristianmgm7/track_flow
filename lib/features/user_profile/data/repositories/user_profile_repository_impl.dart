@@ -78,11 +78,10 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             final localDTO = await localStream.first;
             return Right(localDTO?.toDomain());
           },
-          (userProfile) async {
+          (userProfileDTO) async {
             // Cache the remote result
-            final dto = UserProfileDTO.fromDomain(userProfile);
-            await _userProfileLocalDataSource.cacheUserProfile(dto);
-            return Right(userProfile);
+            await _userProfileLocalDataSource.cacheUserProfile(userProfileDTO);
+            return Right(userProfileDTO.toDomain());
           },
         );
       } else {

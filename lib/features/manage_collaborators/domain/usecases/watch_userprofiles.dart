@@ -18,7 +18,8 @@ class WatchUserProfilesUseCase {
   WatchUserProfilesUseCase(this.userProfileCacheRepository);
 
   Stream<Either<Failure, List<UserProfile>>> call(List<String> userIds) {
-    final userIdObjects = userIds.map((id) => UserId.fromUniqueString(id)).toList();
+    final userIdObjects =
+        userIds.map((id) => UserId.fromUniqueString(id)).toList();
     return userProfileCacheRepository.watchUserProfilesByIds(userIdObjects);
   }
 }

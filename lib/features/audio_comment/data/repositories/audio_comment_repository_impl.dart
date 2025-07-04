@@ -27,14 +27,13 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   Future<Either<Failure, AudioComment>> getCommentById(
     AudioCommentId commentId,
   ) async {
-    final comment = await _localDataSource.getCommentById(
-      commentId.value,
-    );
+    final comment = await _localDataSource.getCommentById(commentId.value);
     return comment.fold(
       (failure) => Left(failure),
-      (dto) => dto != null 
-          ? Right(dto.toDomain())
-          : Left(ServerFailure('No comment found')),
+      (dto) =>
+          dto != null
+              ? Right(dto.toDomain())
+              : Left(ServerFailure('No comment found')),
     );
   }
 
@@ -60,15 +59,18 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
 
   @override
   Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
-    final commentDto = AudioCommentDTO.fromDomain(comment);
     if (await _networkInfo.isConnected) {
-      final remoteResult = await _remoteDataSource.addComment(commentDto);
+      final remoteResult = await _remoteDataSource.addComment(
+        AudioCommentDTO.fromDomain(comment),
+      );
       return await remoteResult.fold((failure) => Left(failure), (_) async {
-        await _localDataSource.cacheComment(commentDto);
+        await _localDataSource.cacheComment(
+          AudioCommentDTO.fromDomain(comment),
+        );
         return Right(unit);
       });
     } else {
-      await _localDataSource.cacheComment(commentDto);
+      await _localDataSource.cacheComment(AudioCommentDTO.fromDomain(comment));
       return Right(unit);
     }
   }
@@ -76,7 +78,9 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   @override
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId) async {
     if (await _networkInfo.isConnected) {
-      final remoteResult = await _remoteDataSource.deleteComment(commentId.value);
+      final remoteResult = await _remoteDataSource.deleteComment(
+        commentId.value,
+      );
       return await remoteResult.fold((failure) => Left(failure), (_) async {
         await _localDataSource.deleteCachedComment(commentId.value);
         return Right(unit);

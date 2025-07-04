@@ -4,10 +4,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class UserProfileRemoteDataSource {
-  Future<Either<Failure, UserProfile>> getProfileById(String userId);
+  Future<Either<Failure, UserProfileDTO>> getProfileById(String userId);
   Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile);
 
   /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)
@@ -24,7 +23,7 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   UserProfileRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<Either<Failure, UserProfile>> getProfileById(String userId) async {
+  Future<Either<Failure, UserProfileDTO>> getProfileById(String userId) async {
     try {
       final query =
           await _firestore
@@ -36,7 +35,7 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
         return left(DatabaseFailure('User profile not found for ID: $userId'));
       }
 
-      return right(UserProfileDTO.fromJson(query.data()!).toDomain());
+      return right(UserProfileDTO.fromJson(query.data()!));
     } on FirebaseException catch (e) {
       return left(ServerFailure(e.message ?? 'An error occurred'));
     } catch (e) {

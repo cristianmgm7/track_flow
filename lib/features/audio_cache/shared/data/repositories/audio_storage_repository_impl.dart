@@ -26,51 +26,50 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     try {
       // Generate storage path for the audio file
       final cacheKey = _localDataSource.generateCacheKey(trackId.value, '');
-      final filePathResult = await _localDataSource.getFilePathFromCacheKey(cacheKey);
-
-      return await filePathResult.fold(
-        (failure) => Left(failure),
-        (destinationPath) async {
-          // Copy the file to the cache location
-          final destinationFile = await audioFile.copy(destinationPath);
-
-          // Verify file and calculate checksum
-          final fileSize = await destinationFile.length();
-          final bytes = await destinationFile.readAsBytes();
-          final checksum = sha1.convert(bytes).toString();
-
-          // Create unified document with both file and metadata information
-          final unifiedDocument = CachedAudioDocumentUnified()
-            ..trackId = trackId.value
-            ..filePath = destinationPath
-            ..fileSizeBytes = fileSize
-            ..cachedAt = DateTime.now()
-            ..checksum = checksum
-            ..quality = AudioQuality.medium
-            ..status = CacheStatus.cached
-            ..referenceCount = 1
-            ..lastAccessed = DateTime.now()
-            ..references = ['individual']
-            ..downloadAttempts = 0
-            ..lastDownloadAttempt = null
-            ..failureReason = null
-            ..originalUrl = '';
-
-          // Store unified document in local database
-          final storeResult = await _localDataSource.storeUnifiedCachedAudio(
-            unifiedDocument,
-          );
-
-          return storeResult.fold(
-            (failure) => Left(failure),
-            (unifiedDoc) {
-              // Convert back to CachedAudio for return
-              final cachedAudio = unifiedDoc.toCachedAudio();
-              return Right(cachedAudio);
-            },
-          );
-        },
+      final filePathResult = await _localDataSource.getFilePathFromCacheKey(
+        cacheKey,
       );
+
+      return await filePathResult.fold((failure) => Left(failure), (
+        destinationPath,
+      ) async {
+        // Copy the file to the cache location
+        final destinationFile = await audioFile.copy(destinationPath);
+
+        // Verify file and calculate checksum
+        final fileSize = await destinationFile.length();
+        final bytes = await destinationFile.readAsBytes();
+        final checksum = sha1.convert(bytes).toString();
+
+        // Create unified document with both file and metadata information
+        final unifiedDocument =
+            CachedAudioDocumentUnified()
+              ..trackId = trackId.value
+              ..filePath = destinationPath
+              ..fileSizeBytes = fileSize
+              ..cachedAt = DateTime.now()
+              ..checksum = checksum
+              ..quality = AudioQuality.medium
+              ..status = CacheStatus.cached
+              ..referenceCount = 1
+              ..lastAccessed = DateTime.now()
+              ..references = ['individual']
+              ..downloadAttempts = 0
+              ..lastDownloadAttempt = null
+              ..failureReason = null
+              ..originalUrl = '';
+
+        // Store unified document in local database
+        final storeResult = await _localDataSource.storeUnifiedCachedAudio(
+          unifiedDocument,
+        );
+
+        return storeResult.fold((failure) => Left(failure), (unifiedDoc) {
+          // Convert back to CachedAudio for return
+          final cachedAudio = unifiedDoc.toCachedAudio();
+          return Right(cachedAudio);
+        });
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -82,7 +81,9 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   @override
-  Future<Either<CacheFailure, String>> getCachedAudioPath(AudioTrackId trackId) async {
+  Future<Either<CacheFailure, String>> getCachedAudioPath(
+    AudioTrackId trackId,
+  ) async {
     return await _localDataSource.getCachedAudioPath(trackId.value);
   }
 
@@ -92,26 +93,34 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   @override
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(AudioTrackId trackId) async {
-    return await _localDataSource.getCachedAudio(trackId.value);
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
+    AudioTrackId trackId,
+  ) async {
+    final result = await _localDataSource.getCachedAudio(trackId.value);
+    return result.fold(
+      (failure) => Left(failure),
+      (doc) => Right(doc?.toCachedAudio()),
+    );
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(AudioTrackId trackId) async {
+  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+    AudioTrackId trackId,
+  ) async {
     return await _localDataSource.deleteAudioFile(trackId.value);
   }
 
   @override
-  Future<Either<CacheFailure, Map<AudioTrackId, CachedAudio>>> getMultipleCachedAudios(
-    List<AudioTrackId> trackIds,
-  ) async {
+  Future<Either<CacheFailure, Map<AudioTrackId, CachedAudio>>>
+  getMultipleCachedAudios(List<AudioTrackId> trackIds) async {
     return await _localDataSource
         .getMultipleCachedAudios(trackIds.map((id) => id.value).toList())
         .then(
           (result) => result.fold((failure) => Left(failure), (audios) {
             final Map<AudioTrackId, CachedAudio> audioMap = {};
-            for (final audio in audios) {
-              audioMap[AudioTrackId.fromUniqueString(audio.trackId)] = audio;
+            for (final audioDoc in audios) {
+              audioMap[AudioTrackId.fromUniqueString(audioDoc.trackId)] =
+                  audioDoc.toCachedAudio();
             }
             return Right(audioMap);
           }),
@@ -122,17 +131,20 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   Future<Either<CacheFailure, List<AudioTrackId>>> deleteMultipleAudioFiles(
     List<AudioTrackId> trackIds,
   ) async {
-    final result = await _localDataSource.deleteMultipleAudioFiles(trackIds.map((id) => id.value).toList());
+    final result = await _localDataSource.deleteMultipleAudioFiles(
+      trackIds.map((id) => id.value).toList(),
+    );
     return result.fold(
       (failure) => Left(failure),
-      (deletedIds) => Right(deletedIds.map((id) => AudioTrackId.fromUniqueString(id)).toList()),
+      (deletedIds) => Right(
+        deletedIds.map((id) => AudioTrackId.fromUniqueString(id)).toList(),
+      ),
     );
   }
 
   @override
-  Future<Either<CacheFailure, Map<AudioTrackId, bool>>> checkMultipleAudioExists(
-    List<AudioTrackId> trackIds,
-  ) async {
+  Future<Either<CacheFailure, Map<AudioTrackId, bool>>>
+  checkMultipleAudioExists(List<AudioTrackId> trackIds) async {
     try {
       final Map<AudioTrackId, bool> existsMap = {};
 
@@ -164,16 +176,13 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   Future<Either<CacheFailure, int>> getStorageUsage() async {
     try {
       final audiosResult = await _localDataSource.getAllCachedAudios();
-      return audiosResult.fold(
-        (failure) => Left(failure),
-        (audios) {
-          final totalSize = audios.fold<int>(
-            0,
-            (sum, audio) => sum + audio.fileSizeBytes,
-          );
-          return Right(totalSize);
-        },
-      );
+      return audiosResult.fold((failure) => Left(failure), (audios) {
+        final totalSize = audios.fold<int>(
+          0,
+          (sum, audio) => sum + audio.fileSizeBytes,
+        );
+        return Right(totalSize);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -191,7 +200,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       // This is a simplified implementation - in production you'd want to
       // check actual disk space available
       const maxCacheSize = 1024 * 1024 * 1024; // 1GB max cache size
-      
+
       final usageResult = await getStorageUsage();
       return usageResult.fold(
         (failure) => Left(failure),

@@ -2,12 +2,11 @@ import 'package:dartz/dartz.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 /// Local data source responsible for user session management
 /// Follows Single Responsibility Principle - only handles user session state
 abstract class UserSessionLocalDataSource {
-  Future<Either<Failure, Unit>> cacheUserId(UserId userId);
+  Future<Either<Failure, Unit>> cacheUserId(String userId);
   Future<Either<Failure, String?>> getCachedUserId();
   Future<Either<Failure, Unit>> setOfflineCredentials(
     String email,
@@ -25,9 +24,9 @@ class UserSessionLocalDataSourceImpl implements UserSessionLocalDataSource {
   UserSessionLocalDataSourceImpl(this._prefs);
 
   @override
-  Future<Either<Failure, Unit>> cacheUserId(UserId userId) async {
+  Future<Either<Failure, Unit>> cacheUserId(String userId) async {
     try {
-      await _prefs.setString('userId', userId.value);
+      await _prefs.setString('userId', userId);
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to cache user ID: $e'));

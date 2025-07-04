@@ -8,23 +8,31 @@ class SyncUserProfileCollaboratorsUseCase {
   final ProjectsLocalDataSource projectsLocal;
   final UserProfileCacheRepository userProfileCacheRepo;
 
-  SyncUserProfileCollaboratorsUseCase(this.projectsLocal, this.userProfileCacheRepo);
+  SyncUserProfileCollaboratorsUseCase(
+    this.projectsLocal,
+    this.userProfileCacheRepo,
+  );
 
   Future<void> call() async {
     final projectsResult = await projectsLocal.getAllProjects();
     final collaboratorIds = projectsResult.fold(
       (failure) => <String>[],
-      (projects) => projects
-          .expand((p) => p.collaboratorIds.map((c) => c))
-          .toSet()
-          .toList(),
+      (projects) =>
+          projects
+              .expand((p) => p.collaboratorIds.map((c) => c))
+              .toSet()
+              .toList(),
     );
     if (collaboratorIds.isEmpty) return;
-    final collaboratorIdObjects = collaboratorIds.map((id) => UserId.fromUniqueString(id)).toList();
-    final result = await userProfileCacheRepo.getUserProfilesByIds(collaboratorIdObjects);
+    final collaboratorIdObjects =
+        collaboratorIds.map((id) => UserId.fromUniqueString(id)).toList();
+    final result = await userProfileCacheRepo.getUserProfilesByIds(
+      collaboratorIdObjects,
+    );
     result.fold(
       (failure) => null,
-      (profiles) async => await userProfileCacheRepo.cacheUserProfiles(profiles),
+      (profiles) async =>
+          await userProfileCacheRepo.cacheUserProfiles(profiles),
     );
   }
 }

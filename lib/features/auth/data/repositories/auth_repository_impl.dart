@@ -107,14 +107,21 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
-        final result = await _userSessionLocalDataSource.setOfflineCredentials(email, true);
+        final result = await _userSessionLocalDataSource.setOfflineCredentials(
+          email,
+          true,
+        );
         result.fold((failure) => throw Exception(failure.message), (_) {});
-        return right(domain.User(id: UserId.fromUniqueString('offline'), email: email));
+        return right(
+          domain.User(id: UserId.fromUniqueString('offline'), email: email),
+        );
       }
       final user = await _remote.signInWithEmailAndPassword(email, password);
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
-        final cacheResult = await _userSessionLocalDataSource.cacheUserId(UserId.fromUniqueString(user.uid));
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(
+          user.uid,
+        );
         cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _createOrSyncUserProfile(user);
       }
@@ -135,15 +142,22 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
-        final result = await _userSessionLocalDataSource.setOfflineCredentials(email, true);
+        final result = await _userSessionLocalDataSource.setOfflineCredentials(
+          email,
+          true,
+        );
         result.fold((failure) => throw Exception(failure.message), (_) {});
-        return right(domain.User(id: UserId.fromUniqueString('offline'), email: email));
+        return right(
+          domain.User(id: UserId.fromUniqueString('offline'), email: email),
+        );
       }
       final user = await _remote.signUpWithEmailAndPassword(email, password);
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
         await _createOrSyncUserProfile(user);
-        final cacheResult = await _userSessionLocalDataSource.cacheUserId(UserId.fromUniqueString(user.uid));
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(
+          user.uid,
+        );
         cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
       }
       if (user == null) {
@@ -169,7 +183,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = await _remote.signInWithGoogle();
       if (user != null) {
         await _sessionStorage.saveUserId(user.uid);
-        final cacheResult = await _userSessionLocalDataSource.cacheUserId(UserId.fromUniqueString(user.uid));
+        final cacheResult = await _userSessionLocalDataSource.cacheUserId(
+          user.uid,
+        );
         cacheResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _createOrSyncUserProfile(user);
       }
@@ -189,7 +205,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
-        final clearResult = await _userSessionLocalDataSource.clearOfflineCredentials();
+        final clearResult =
+            await _userSessionLocalDataSource.clearOfflineCredentials();
         clearResult.fold((failure) => throw Exception(failure.message), (_) {});
         await _sessionStorage.clearUserId();
         return right(unit);
@@ -211,7 +228,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
-        final hasCredentialsResult = await _userSessionLocalDataSource.hasOfflineCredentials();
+        final hasCredentialsResult =
+            await _userSessionLocalDataSource.hasOfflineCredentials();
         return hasCredentialsResult.fold(
           (failure) => left(failure),
           (hasCredentials) => right(hasCredentials),
@@ -223,5 +241,4 @@ class AuthRepositoryImpl implements AuthRepository {
       return left(AuthenticationFailure(e.toString()));
     }
   }
-
 }

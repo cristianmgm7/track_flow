@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_document_unified.dart';
 
 import '../../domain/entities/cache_validation_result.dart';
 import '../../domain/entities/cached_audio.dart';
@@ -21,7 +22,8 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   }) : _localDataSource = localDataSource;
 
   @override
-  Future<Either<CacheFailure, CacheValidationResult>> validateCacheConsistency() async {
+  Future<Either<CacheFailure, CacheValidationResult>>
+  validateCacheConsistency() async {
     try {
       final audiosResult = await _localDataSource.getAllCachedAudios();
 
@@ -101,36 +103,35 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   }
 
   @override
-  Future<Either<CacheFailure, bool>> validateCacheEntry(AudioTrackId trackId) async {
+  Future<Either<CacheFailure, bool>> validateCacheEntry(
+    AudioTrackId trackId,
+  ) async {
     try {
       final audioResult = await _localDataSource.getCachedAudio(trackId.value);
-      return await audioResult.fold(
-        (failure) => Left(failure),
-        (audio) async {
-          if (audio == null) {
-            return const Right(false);
-          }
+      return await audioResult.fold((failure) => Left(failure), (audio) async {
+        if (audio == null) {
+          return const Right(false);
+        }
 
-          final file = File(audio.filePath);
-          if (!await file.exists()) {
-            return const Right(false);
-          }
+        final file = File(audio.filePath);
+        if (!await file.exists()) {
+          return const Right(false);
+        }
 
-          final actualSize = await file.length();
-          if (actualSize != audio.fileSizeBytes) {
-            return const Right(false);
-          }
+        final actualSize = await file.length();
+        if (actualSize != audio.fileSizeBytes) {
+          return const Right(false);
+        }
 
-          final integrityResult = await _localDataSource.verifyFileIntegrity(
-            audio.trackId,
-            audio.checksum,
-          );
-          return integrityResult.fold(
-            (failure) => const Right(false),
-            (isValid) => Right(isValid),
-          );
-        },
-      );
+        final integrityResult = await _localDataSource.verifyFileIntegrity(
+          audio.trackId,
+          audio.checksum,
+        );
+        return integrityResult.fold(
+          (failure) => const Right(false),
+          (isValid) => Right(isValid),
+        );
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -145,21 +146,18 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   Future<Either<CacheFailure, bool>> validateCacheMetadata() async {
     try {
       final audiosResult = await _localDataSource.getAllCachedAudios();
-      return audiosResult.fold(
-        (failure) => Left(failure),
-        (audios) {
-          // Check that all metadata entries have required fields
-          for (final audio in audios) {
-            if (audio.trackId.isEmpty ||
-                audio.filePath.isEmpty ||
-                audio.checksum.isEmpty ||
-                audio.fileSizeBytes <= 0) {
-              return const Right(false);
-            }
+      return audiosResult.fold((failure) => Left(failure), (audios) {
+        // Check that all metadata entries have required fields
+        for (final audio in audios) {
+          if (audio.trackId.isEmpty ||
+              audio.filePath.isEmpty ||
+              audio.checksum.isEmpty ||
+              audio.fileSizeBytes <= 0) {
+            return const Right(false);
           }
-          return const Right(true);
-        },
-      );
+        }
+        return const Right(true);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -183,26 +181,25 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
       final files = cacheDir.listSync().whereType<File>();
       final audiosResult = await _localDataSource.getAllCachedAudios();
 
-      return await audiosResult.fold(
-        (failure) => Left(failure),
-        (audios) async {
-          final validFilePaths = audios.map((audio) => audio.filePath).toSet();
+      return await audiosResult.fold((failure) => Left(failure), (
+        audios,
+      ) async {
+        final validFilePaths = audios.map((audio) => audio.filePath).toSet();
 
-          for (final file in files) {
-            if (!validFilePaths.contains(file.path)) {
-              // This file doesn't have corresponding metadata - it's orphaned
-              try {
-                await file.delete();
-                cleanedFiles++;
-              } catch (e) {
-                // Continue with other files if one fails to delete
-              }
+        for (final file in files) {
+          if (!validFilePaths.contains(file.path)) {
+            // This file doesn't have corresponding metadata - it's orphaned
+            try {
+              await file.delete();
+              cleanedFiles++;
+            } catch (e) {
+              // Continue with other files if one fails to delete
             }
           }
+        }
 
-          return Right(cleanedFiles);
-        },
-      );
+        return Right(cleanedFiles);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -219,21 +216,20 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
       int cleanedEntries = 0;
       final audiosResult = await _localDataSource.getAllCachedAudios();
 
-      return await audiosResult.fold(
-        (failure) => Left(failure),
-        (audios) async {
-          for (final audio in audios) {
-            final file = File(audio.filePath);
-            if (!await file.exists()) {
-              // Metadata exists but file doesn't - remove metadata
-              await _localDataSource.deleteAudioFile(audio.trackId);
-              cleanedEntries++;
-            }
+      return await audiosResult.fold((failure) => Left(failure), (
+        audios,
+      ) async {
+        for (final audio in audios) {
+          final file = File(audio.filePath);
+          if (!await file.exists()) {
+            // Metadata exists but file doesn't - remove metadata
+            await _localDataSource.deleteAudioFile(audio.trackId);
+            cleanedEntries++;
           }
+        }
 
-          return Right(cleanedEntries);
-        },
-      );
+        return Right(cleanedEntries);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -291,38 +287,37 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
       int cleanedEntries = 0;
       final audiosResult = await _localDataSource.getAllCachedAudios();
 
-      return await audiosResult.fold(
-        (failure) => Left(failure),
-        (audios) async {
-          final now = DateTime.now();
-          final ageLimit = maxAge ?? const Duration(days: 30);
+      return await audiosResult.fold((failure) => Left(failure), (
+        audios,
+      ) async {
+        final now = DateTime.now();
+        final ageLimit = maxAge ?? const Duration(days: 30);
 
-          // Sort by cache date (oldest first)
-          final sortedAudios = List<CachedAudio>.from(audios)
-            ..sort((a, b) => a.cachedAt.compareTo(b.cachedAt));
+        // Sort by cache date (oldest first)
+        final sortedAudios = List<CachedAudio>.from(audios)
+          ..sort((a, b) => a.cachedAt.compareTo(b.cachedAt));
 
-          // Clean up by age
-          if (maxAge != null) {
-            for (final audio in sortedAudios) {
-              if (now.difference(audio.cachedAt) > ageLimit) {
-                await _localDataSource.deleteAudioFile(audio.trackId);
-                cleanedEntries++;
-              }
-            }
-          }
-
-          // Clean up by count (keep only the newest maxEntries)
-          if (maxEntries != null && sortedAudios.length > maxEntries) {
-            final entriesToRemove = sortedAudios.length - maxEntries;
-            for (int i = 0; i < entriesToRemove; i++) {
-              await _localDataSource.deleteAudioFile(sortedAudios[i].trackId);
+        // Clean up by age
+        if (maxAge != null) {
+          for (final audio in sortedAudios) {
+            if (now.difference(audio.cachedAt) > ageLimit) {
+              await _localDataSource.deleteAudioFile(audio.trackId);
               cleanedEntries++;
             }
           }
+        }
 
-          return Right(cleanedEntries);
-        },
-      );
+        // Clean up by count (keep only the newest maxEntries)
+        if (maxEntries != null && sortedAudios.length > maxEntries) {
+          final entriesToRemove = sortedAudios.length - maxEntries;
+          for (int i = 0; i < entriesToRemove; i++) {
+            await _localDataSource.deleteAudioFile(sortedAudios[i].trackId);
+            cleanedEntries++;
+          }
+        }
+
+        return Right(cleanedEntries);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -383,7 +378,9 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
                 status: CacheStatus.cached,
               );
 
-              await _localDataSource.storeCachedAudio(cachedAudio);
+              await _localDataSource.storeCachedAudio(
+                CachedAudioDocumentUnified.fromCachedAudio(cachedAudio),
+              );
               rebuiltEntries++;
             }
           }
@@ -487,13 +484,13 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
     try {
       // Check if any old format files exist
       final cacheDir = await _getCacheDirectory();
-      
+
       if (!await cacheDir.exists()) {
         return const Right(false);
       }
 
       final files = cacheDir.listSync().whereType<File>();
-      
+
       for (final file in files) {
         if (file.path.contains('old_cache_')) {
           return const Right(true);
@@ -560,25 +557,25 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   }
 
   @override
-  Future<Either<CacheFailure, Map<String, dynamic>>> getCacheHealthStats() async {
+  Future<Either<CacheFailure, Map<String, dynamic>>>
+  getCacheHealthStats() async {
     try {
       final validationResult = await validateCacheConsistency();
-      return validationResult.fold(
-        (failure) => Left(failure),
-        (result) {
-          final Map<String, dynamic> stats = {
-            'totalFiles': result.totalFiles,
-            'validFiles': result.validFiles,
-            'corruptedFiles': result.corruptedFiles,
-            'orphanedFiles': result.orphanedFiles,
-            'missingMetadata': result.missingMetadata,
-            'inconsistentSizes': result.inconsistentSizes,
-            'healthScore': result.validFiles / (result.totalFiles > 0 ? result.totalFiles : 1),
-            'issueCount': result.issues.length,
-          };
-          return Right(stats);
-        },
-      );
+      return validationResult.fold((failure) => Left(failure), (result) {
+        final Map<String, dynamic> stats = {
+          'totalFiles': result.totalFiles,
+          'validFiles': result.validFiles,
+          'corruptedFiles': result.corruptedFiles,
+          'orphanedFiles': result.orphanedFiles,
+          'missingMetadata': result.missingMetadata,
+          'inconsistentSizes': result.inconsistentSizes,
+          'healthScore':
+              result.validFiles /
+              (result.totalFiles > 0 ? result.totalFiles : 1),
+          'issueCount': result.issues.length,
+        };
+        return Right(stats);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -593,15 +590,11 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   Future<Either<CacheFailure, double>> checkCacheIntegrityScore() async {
     try {
       final validationResult = await validateCacheConsistency();
-      return validationResult.fold(
-        (failure) => Left(failure),
-        (result) {
-          final score = result.totalFiles > 0 
-            ? result.validFiles / result.totalFiles 
-            : 1.0;
-          return Right(score);
-        },
-      );
+      return validationResult.fold((failure) => Left(failure), (result) {
+        final score =
+            result.totalFiles > 0 ? result.validFiles / result.totalFiles : 1.0;
+        return Right(score);
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -616,40 +609,40 @@ class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
   Future<Either<CacheFailure, String>> generateMaintenanceReport() async {
     try {
       final validationResult = await validateCacheConsistency();
-      return validationResult.fold(
-        (failure) => Left(failure),
-        (result) {
-          final report = StringBuffer();
-          report.writeln('=== Cache Maintenance Report ===');
-          report.writeln('Generated: ${DateTime.now().toIso8601String()}');
-          report.writeln('');
-          report.writeln('Cache Statistics:');
-          report.writeln('- Total Files: ${result.totalFiles}');
-          report.writeln('- Valid Files: ${result.validFiles}');
-          report.writeln('- Corrupted Files: ${result.corruptedFiles}');
-          report.writeln('- Orphaned Files: ${result.orphanedFiles}');
-          report.writeln('- Missing Metadata: ${result.missingMetadata}');
-          report.writeln('- Inconsistent Sizes: ${result.inconsistentSizes}');
-          report.writeln('');
-          
-          final healthScore = result.totalFiles > 0 
-            ? (result.validFiles / result.totalFiles * 100).toStringAsFixed(2)
-            : '100.00';
-          report.writeln('Health Score: $healthScore%');
-          report.writeln('');
-          
-          if (result.issues.isNotEmpty) {
-            report.writeln('Issues Found:');
-            for (final issue in result.issues) {
-              report.writeln('- $issue');
-            }
-          } else {
-            report.writeln('No issues found.');
+      return validationResult.fold((failure) => Left(failure), (result) {
+        final report = StringBuffer();
+        report.writeln('=== Cache Maintenance Report ===');
+        report.writeln('Generated: ${DateTime.now().toIso8601String()}');
+        report.writeln('');
+        report.writeln('Cache Statistics:');
+        report.writeln('- Total Files: ${result.totalFiles}');
+        report.writeln('- Valid Files: ${result.validFiles}');
+        report.writeln('- Corrupted Files: ${result.corruptedFiles}');
+        report.writeln('- Orphaned Files: ${result.orphanedFiles}');
+        report.writeln('- Missing Metadata: ${result.missingMetadata}');
+        report.writeln('- Inconsistent Sizes: ${result.inconsistentSizes}');
+        report.writeln('');
+
+        final healthScore =
+            result.totalFiles > 0
+                ? (result.validFiles / result.totalFiles * 100).toStringAsFixed(
+                  2,
+                )
+                : '100.00';
+        report.writeln('Health Score: $healthScore%');
+        report.writeln('');
+
+        if (result.issues.isNotEmpty) {
+          report.writeln('Issues Found:');
+          for (final issue in result.issues) {
+            report.writeln('- $issue');
           }
-          
-          return Right(report.toString());
-        },
-      );
+        } else {
+          report.writeln('No issues found.');
+        }
+
+        return Right(report.toString());
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
