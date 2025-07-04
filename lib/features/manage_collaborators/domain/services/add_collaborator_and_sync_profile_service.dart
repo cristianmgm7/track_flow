@@ -20,9 +20,8 @@ class AddCollaboratorAndSyncProfileService {
   ) async {
     final result = await _addCollaboratorUseCase(params);
     if (result.isRight()) {
-      final profilesResult = await _userProfileCacheRepository.getUserProfilesByIds([
-        params.collaboratorId,
-      ]);
+      final profilesResult = await _userProfileCacheRepository
+          .getUserProfilesByIds([params.collaboratorId]);
       profilesResult.fold((failure) => null, (profiles) async {
         if (profiles.isNotEmpty) {
           await _userProfileCacheRepository.cacheUserProfiles([profiles.first]);

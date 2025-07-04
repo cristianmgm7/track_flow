@@ -64,9 +64,7 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteCachedComment(
-    String commentId,
-  ) async {
+  Future<Either<Failure, Unit>> deleteCachedComment(String commentId) async {
     try {
       await _isar.writeTxn(() async {
         await _isar.audioCommentDocuments.delete(fastHash(commentId));
@@ -94,12 +92,10 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, AudioCommentDTO?>> getCommentById(
-    String commentId,
-  ) async {
+  Future<Either<Failure, AudioCommentDTO?>> getCommentById(String id) async {
     try {
       final commentDoc =
-          await _isar.audioCommentDocuments.filter().idEqualTo(commentId).findFirst();
+          await _isar.audioCommentDocuments.filter().idEqualTo(id).findFirst();
       return Right(commentDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get comment by id: $e'));
@@ -107,10 +103,10 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteComment(String commentId) async {
+  Future<Either<Failure, Unit>> deleteComment(String id) async {
     try {
       await _isar.writeTxn(() async {
-        await _isar.audioCommentDocuments.delete(fastHash(commentId));
+        await _isar.audioCommentDocuments.delete(fastHash(id));
       });
       return const Right(unit);
     } catch (e) {
