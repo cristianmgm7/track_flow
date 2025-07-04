@@ -8,6 +8,7 @@ import 'package:trackflow/features/manage_collaborators/domain/repositories/coll
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_local_datasource.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/manage_collaborators/data/models/collaborator_operation_dto.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 @LazySingleton(as: CollaboratorRepository)
 class CollaboratorRepositoryImpl implements CollaboratorRepository {
@@ -104,12 +105,26 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
       return Left(DatabaseFailure('No internet connection'));
     }
 
-    // This would be implemented when the remote data source supports it
-    return Left(ServerFailure('Remove collaborator not implemented yet'));
+    final result = await _remoteDataSource.leaveProject(
+      LeaveProjectDto(projectId: projectId.value, userId: userId.value),
+    );
+
+    if (result.isRight()) {
+      // Update local cache
+      final updatedProject = await _localDataSource.getProjectById(
+        projectId.value,
+      );
+      if (updatedProject != null) {
+        await _localDataSource.updateProject(updatedProject);
+      }
+      return const Right(unit);
+    }
+
+    return result.fold((failure) => Left(failure), (_) => const Right(unit));
   }
 
   @override
-  Future<Either<Failure, Unit>> updateCollaboratorRole(
+  Future<Either<Failure, Project>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
     ProjectRole newRole,
@@ -119,7 +134,27 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
       return Left(DatabaseFailure('No internet connection'));
     }
 
-    // This would be implemented when the remote data source supports it
-    return Left(ServerFailure('Update collaborator role not implemented yet'));
+    final result = await _remoteDataSource.updateCollaboratorRole(
+      projectId: projectId.value,
+      userId: userId.value,
+      newRole: newRole.value.toString(),
+    );
+
+    if (result.isLeft()) {
+      return result.fold(
+        (failure) => Left(failure),
+        (_) => throw Exception('Unexpected right value'),
+      );
+    }
+
+    // Get the updated project from local data source
+    final updatedProjectDTO = await _localDataSource.getProjectById(
+      projectId.value,
+    );
+    if (updatedProjectDTO == null) {
+      return Left(DatabaseFailure('Project not found after role update'));
+    }
+    final updatedProject = updatedProjectDTO.toDomain();
+    return Right(updatedProject);
   }
 }

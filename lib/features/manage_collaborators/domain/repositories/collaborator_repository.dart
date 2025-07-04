@@ -2,15 +2,13 @@ import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 /// Repository responsible for managing project collaborators
 /// Follows Single Responsibility Principle - only handles collaborator operations
 abstract class CollaboratorRepository {
   /// Join a project as a collaborator
-  Future<Either<Failure, Unit>> joinProject(
-    ProjectId projectId,
-    UserId userId,
-  );
+  Future<Either<Failure, Unit>> joinProject(ProjectId projectId, UserId userId);
 
   /// Leave a project as a collaborator
   Future<Either<Failure, Unit>> leaveProject({
@@ -32,7 +30,7 @@ abstract class CollaboratorRepository {
   );
 
   /// Update collaborator role in a project
-  Future<Either<Failure, Unit>> updateCollaboratorRole(
+  Future<Either<Failure, Project>> updateCollaboratorRole(
     ProjectId projectId,
     UserId userId,
     ProjectRole newRole,

@@ -69,17 +69,14 @@ class UpdateCollaboratorRoleUseCase {
           params.userId,
           params.role,
         );
-        return result.fold(
-          (failure) => left(failure),
-          (_) async {
-            // Return updated project after successful role update
-            final updatedProject = project.updateCollaboratorRole(
-              params.userId,
-              params.role,
-            );
-            return right(updatedProject);
-          },
-        );
+        return result.fold((failure) => left(failure), (_) async {
+          // Return updated project after successful role update
+          final updatedProject = project.updateCollaboratorRole(
+            params.userId,
+            params.role,
+          );
+          return right(updatedProject);
+        });
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }

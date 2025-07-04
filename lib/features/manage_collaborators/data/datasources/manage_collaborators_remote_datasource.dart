@@ -13,14 +13,18 @@ abstract class ManageCollaboratorsRemoteDataSource {
   );
 
   Future<Either<Failure, ProjectDTO>> updateProject(ProjectDTO project);
-  
+
   Future<Either<Failure, List<UserProfileDTO>>> getProjectCollaborators(
     GetCollaboratorsDto request,
   );
 
-  Future<Either<Failure, Unit>> leaveProject(
-    LeaveProjectDto leaveRequest,
-  );
+  Future<Either<Failure, Unit>> leaveProject(LeaveProjectDto leaveRequest);
+
+  Future<Either<Failure, Unit>> updateCollaboratorRole({
+    required String projectId,
+    required String userId,
+    required String newRole,
+  });
 }
 
 @LazySingleton(as: ManageCollaboratorsRemoteDataSource)
@@ -38,7 +42,9 @@ class ManageCollaboratorsRemoteDataSourceImpl
     JoinProjectDto joinRequest,
   ) async {
     try {
-      final docRef = firestore.collection(ProjectDTO.collection).doc(joinRequest.projectId);
+      final docRef = firestore
+          .collection(ProjectDTO.collection)
+          .doc(joinRequest.projectId);
       await docRef.update({
         'collaborators': FieldValue.arrayUnion([joinRequest.userId]),
       });
@@ -115,6 +121,39 @@ class ManageCollaboratorsRemoteDataSourceImpl
       return right(unit);
     } catch (e) {
       return left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateCollaboratorRole({
+    required String projectId,
+    required String userId,
+    required String newRole,
+  }) async {
+    try {
+      final docRef = firestore.collection(ProjectDTO.collection).doc(projectId);
+      await docRef.update({'collaboratorsRoles.$userId': newRole});
+      return right(unit);
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        return Left(
+          AuthenticationFailure(
+            'You don\'t have permission to update this project',
+          ),
+        );
+      }
+      if (e.code == 'not-found') {
+        return Left(DatabaseFailure('Project not found'));
+      }
+      return Left(
+        DatabaseFailure('Failed to update collaborator role: \\${e.message}'),
+      );
+    } catch (e) {
+      return Left(
+        UnexpectedFailure(
+          'An unexpected error occurred while updating collaborator role',
+        ),
+      );
     }
   }
 }
