@@ -7,6 +7,7 @@ import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 import 'package:trackflow/features/manage_collaborators/data/datasources/manage_collaborators_local_datasource.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/manage_collaborators/data/models/collaborator_operation_dto.dart';
 
 @LazySingleton(as: CollaboratorRepository)
 class CollaboratorRepositoryImpl implements CollaboratorRepository {
@@ -31,25 +32,23 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    
+
     final result = await _remoteDataSource.selfJoinProjectWithProjectId(
-      projectId: projectId,
-      userId: userId,
+      JoinProjectDto(projectId: projectId.value, userId: userId.value),
     );
-    
+
     if (result.isRight()) {
       // Update local cache
-      final updatedProject = await _localDataSource.getProjectById(projectId);
+      final updatedProject = await _localDataSource.getProjectById(
+        projectId.value,
+      );
       if (updatedProject != null) {
         await _localDataSource.updateProject(updatedProject);
       }
       return const Right(unit);
     }
-    
-    return result.fold(
-      (failure) => Left(failure),
-      (_) => const Right(unit),
-    );
+
+    return result.fold((failure) => Left(failure), (_) => const Right(unit));
   }
 
   @override
@@ -61,25 +60,23 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    
+
     final result = await _remoteDataSource.leaveProject(
-      projectId: projectId,
-      userId: userId,
+      LeaveProjectDto(projectId: projectId.value, userId: userId.value),
     );
-    
+
     if (result.isRight()) {
       // Update local cache
-      final updatedProject = await _localDataSource.getProjectById(projectId);
+      final updatedProject = await _localDataSource.getProjectById(
+        projectId.value,
+      );
       if (updatedProject != null) {
         await _localDataSource.updateProject(updatedProject);
       }
       return const Right(unit);
     }
-    
-    return result.fold(
-      (failure) => Left(failure),
-      (_) => const Right(unit),
-    );
+
+    return result.fold((failure) => Left(failure), (_) => const Right(unit));
   }
 
   @override
@@ -92,7 +89,7 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    
+
     // This would be implemented when the remote data source supports it
     return Left(ServerFailure('Add collaborator not implemented yet'));
   }
@@ -106,7 +103,7 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    
+
     // This would be implemented when the remote data source supports it
     return Left(ServerFailure('Remove collaborator not implemented yet'));
   }
@@ -121,7 +118,7 @@ class CollaboratorRepositoryImpl implements CollaboratorRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    
+
     // This would be implemented when the remote data source supports it
     return Left(ServerFailure('Update collaborator role not implemented yet'));
   }

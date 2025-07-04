@@ -8,7 +8,6 @@ import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_
 import 'package:rxdart/rxdart.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 class ProjectDetailBundle {
   final List<AudioTrack> tracks;
@@ -39,7 +38,7 @@ class WatchProjectDetailUseCase {
     required List<String> collaboratorIds,
   }) {
     final tracks$ = tracksLocal
-        .watchTracksByProject(ProjectId.fromUniqueString(projectId))
+        .watchTracksByProject(projectId)
         .map(
           (either) => either.fold<Either<Failure, List<AudioTrack>>>(
             (failure) => left(failure),
@@ -49,7 +48,7 @@ class WatchProjectDetailUseCase {
         .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())));
 
     final users$ = userProfilesLocal
-        .watchUserProfilesByIds(collaboratorIds.map((id) => UserId.fromUniqueString(id)).toList())
+        .watchUserProfilesByIds(collaboratorIds)
         .map(
           (either) => either.fold<Either<Failure, List<UserProfile>>>(
             (failure) => left(failure),
@@ -59,7 +58,7 @@ class WatchProjectDetailUseCase {
         .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())));
 
     final comments$ = commentsLocal
-        .watchCommentsByTrack(AudioTrackId.fromUniqueString(projectId))
+        .watchCommentsByTrack(projectId)
         .map(
           (either) => either.fold<Either<Failure, List<AudioComment>>>(
             (failure) => left(failure),

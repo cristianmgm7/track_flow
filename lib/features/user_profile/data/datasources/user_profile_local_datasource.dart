@@ -5,18 +5,17 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class UserProfileLocalDataSource {
   Future<void> cacheUserProfile(UserProfileDTO profile);
-  Stream<UserProfileDTO?> watchUserProfile(UserId userId);
+  Stream<UserProfileDTO?> watchUserProfile(String userId);
 
   /// Obtiene múltiples perfiles de usuario por sus IDs (one-shot)
-  Future<List<UserProfileDTO>> getUserProfilesByIds(List<UserId> userIds);
+  Future<List<UserProfileDTO>> getUserProfilesByIds(List<String> userIds);
 
   /// Observa múltiples perfiles de usuario por sus IDs (stream reactivo)
   Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(
-    List<UserId> userIds,
+    List<String> userIds,
   );
 
   Future<void> clearCache();
@@ -37,27 +36,27 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
   }
 
   @override
-  Stream<UserProfileDTO?> watchUserProfile(UserId userId) {
+  Stream<UserProfileDTO?> watchUserProfile(String userId) {
     return _isar.userProfileDocuments
-        .watchObject(fastHash(userId.value), fireImmediately: true)
+        .watchObject(fastHash(userId), fireImmediately: true)
         .map((doc) => doc?.toDTO());
   }
 
   @override
   Future<List<UserProfileDTO>> getUserProfilesByIds(
-    List<UserId> userIds,
+    List<String> userIds,
   ) async {
-    final docs = await _isar.userProfileDocuments.getAllById(userIds.map((id) => id.value).toList());
+    final docs = await _isar.userProfileDocuments.getAllById(userIds);
     return docs.whereType<UserProfileDocument>().map((e) => e.toDTO()).toList();
   }
 
   @override
   Stream<Either<Failure, List<UserProfileDTO>>> watchUserProfilesByIds(
-    List<UserId> userIds,
+    List<String> userIds,
   ) {
     return _isar.userProfileDocuments
         .where()
-        .anyOf(userIds.map((id) => id.value).toList(), (q, id) => q.idEqualTo(id))
+        .anyOf(userIds, (q, id) => q.idEqualTo(id))
         .watch(fireImmediately: true)
         .map((docs) {
           return right<Failure, List<UserProfileDTO>>(

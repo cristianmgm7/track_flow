@@ -2,8 +2,6 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
-import 'package:trackflow/features/projects/data/models/project_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 @lazySingleton
 class SyncProjectsUseCase {
@@ -18,10 +16,10 @@ class SyncProjectsUseCase {
     if (userId == null) {
       return;
     }
-    final failureOrProjects = await remote.getUserProjects(UserId.fromUniqueString(userId));
+    final failureOrProjects = await remote.getUserProjects(userId);
     await failureOrProjects.fold((failure) async {}, (projects) async {
       for (final project in projects) {
-        await local.cacheProject(ProjectDTO.fromDomain(project));
+        await local.cacheProject(project);
       }
     });
   }

@@ -5,18 +5,17 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class AudioTrackLocalDataSource {
   Future<Either<Failure, Unit>> cacheTrack(AudioTrackDTO track);
-  Future<Either<Failure, AudioTrackDTO?>> getTrackById(AudioTrackId id);
-  Future<Either<Failure, Unit>> deleteTrack(AudioTrackId id);
+  Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id);
+  Future<Either<Failure, Unit>> deleteTrack(String id);
   Future<Either<Failure, Unit>> deleteAllTracks();
   Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
-    ProjectId projectId,
+    String projectId,
   );
   Future<Either<Failure, Unit>> clearCache();
-  Future<Either<Failure, Unit>> updateTrackName(AudioTrackId trackId, String newName);
+  Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName);
 }
 
 @LazySingleton(as: AudioTrackLocalDataSource)
@@ -39,9 +38,9 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, AudioTrackDTO?>> getTrackById(AudioTrackId id) async {
+  Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id) async {
     try {
-      final trackDoc = await _isar.audioTrackDocuments.get(fastHash(id.value));
+      final trackDoc = await _isar.audioTrackDocuments.get(fastHash(id));
       return Right(trackDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get track by id: $e'));
@@ -49,10 +48,10 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteTrack(AudioTrackId id) async {
+  Future<Either<Failure, Unit>> deleteTrack(String id) async {
     try {
       await _isar.writeTxn(() async {
-        await _isar.audioTrackDocuments.delete(fastHash(id.value));
+        await _isar.audioTrackDocuments.delete(fastHash(id));
       });
       return const Right(unit);
     } catch (e) {
@@ -74,12 +73,12 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
 
   @override
   Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
-    ProjectId projectId,
+    String projectId,
   ) {
     return _isar.audioTrackDocuments
         .where()
         .filter()
-        .projectIdEqualTo(projectId.value)
+        .projectIdEqualTo(projectId)
         .watch(fireImmediately: true)
         .map(
           (docs) => right<Failure, List<AudioTrackDTO>>(
@@ -102,10 +101,10 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> updateTrackName(AudioTrackId trackId, String newName) async {
+  Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName) async {
     try {
       await _isar.writeTxn(() async {
-        final track = await _isar.audioTrackDocuments.get(fastHash(trackId.value));
+        final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
         if (track != null) {
           track.name = newName;
           await _isar.audioTrackDocuments.put(track);

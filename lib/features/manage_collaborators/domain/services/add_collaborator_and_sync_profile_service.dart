@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/user_profile/domain/repositories/user_profile_cache_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
 
 @lazySingleton
 class AddCollaboratorAndSyncProfileService {

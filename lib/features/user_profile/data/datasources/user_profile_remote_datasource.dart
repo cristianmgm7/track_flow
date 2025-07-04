@@ -5,15 +5,14 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class UserProfileRemoteDataSource {
-  Future<Either<Failure, UserProfile>> getProfileById(UserId userId);
+  Future<Either<Failure, UserProfile>> getProfileById(String userId);
   Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile);
 
   /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)
   Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
-    List<UserId> userIds,
+    List<String> userIds,
   );
 }
 
@@ -25,16 +24,16 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
   UserProfileRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<Either<Failure, UserProfile>> getProfileById(UserId userId) async {
+  Future<Either<Failure, UserProfile>> getProfileById(String userId) async {
     try {
       final query =
           await _firestore
               .collection(UserProfileDTO.collection)
-              .doc(userId.value)
+              .doc(userId)
               .get();
 
       if (!query.exists) {
-        return left(DatabaseFailure('User profile not found for ID: ${userId.value}'));
+        return left(DatabaseFailure('User profile not found for ID: $userId'));
       }
 
       return right(UserProfileDTO.fromJson(query.data()!).toDomain());
@@ -73,13 +72,13 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
 
   @override
   Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
-    List<UserId> userIds,
+    List<String> userIds,
   ) async {
     try {
       // Firestore limita a 10 IDs por whereIn
       final List<UserProfileDTO> result = [];
       for (var i = 0; i < userIds.length; i += 10) {
-        final batch = userIds.skip(i).take(10).map((id) => id.value).toList();
+        final batch = userIds.skip(i).take(10).toList();
         final query =
             await _firestore
                 .collection(UserProfileDTO.collection)

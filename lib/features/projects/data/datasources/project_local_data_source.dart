@@ -4,18 +4,17 @@ import 'package:isar/isar.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
 import '../models/project_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class ProjectsLocalDataSource {
   Future<Either<Failure, Unit>> cacheProject(ProjectDTO project);
 
-  Future<Either<Failure, ProjectDTO?>> getCachedProject(UniqueId id);
+  Future<Either<Failure, ProjectDTO?>> getCachedProject(String projectId);
 
-  Future<Either<Failure, Unit>> removeCachedProject(UniqueId id);
+  Future<Either<Failure, Unit>> removeCachedProject(String projectId);
 
   Future<Either<Failure, List<ProjectDTO>>> getAllProjects();
 
-  Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(UserId ownerId);
+  Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(String ownerId);
 
   Future<Either<Failure, Unit>> clearCache();
 }
@@ -40,9 +39,13 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, ProjectDTO?>> getCachedProject(UniqueId id) async {
+  Future<Either<Failure, ProjectDTO?>> getCachedProject(
+    String projectId,
+  ) async {
     try {
-      final projectDoc = await _isar.projectDocuments.get(fastHash(id.value));
+      final projectDoc = await _isar.projectDocuments.get(
+        fastHash(projectId),
+      );
       return Right(projectDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get cached project: $e'));
@@ -50,10 +53,12 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> removeCachedProject(UniqueId id) async {
+  Future<Either<Failure, Unit>> removeCachedProject(String projectId) async {
     try {
       await _isar.writeTxn(() async {
-        final projectDoc = await _isar.projectDocuments.get(fastHash(id.value));
+        final projectDoc = await _isar.projectDocuments.get(
+          fastHash(projectId),
+        );
         if (projectDoc != null) {
           projectDoc.isDeleted = true;
           await _isar.projectDocuments.put(projectDoc);
@@ -76,7 +81,7 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   }
 
   @override
-  Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(UserId ownerId) {
+  Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(String ownerId) {
     return _isar.projectDocuments
         .where()
         .filter()
@@ -84,14 +89,16 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
         .and()
         .group(
           (q) => q
-              .ownerIdEqualTo(ownerId.value)
+              .ownerIdEqualTo(ownerId)
               .or()
-              .collaboratorIdsElementEqualTo(ownerId.value),
+              .collaboratorIdsElementEqualTo(ownerId),
         )
         .watch(fireImmediately: true)
-        .map((docs) => right<Failure, List<ProjectDTO>>(
-              docs.map((doc) => doc.toDTO()).toList(),
-            ))
+        .map(
+          (docs) => right<Failure, List<ProjectDTO>>(
+            docs.map((doc) => doc.toDTO()).toList(),
+          ),
+        )
         .handleError((e) => left(CacheFailure('Failed to watch projects: $e')));
   }
 

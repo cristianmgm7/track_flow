@@ -28,7 +28,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     AudioCommentId commentId,
   ) async {
     final comment = await _localDataSource.getCommentById(
-      commentId,
+      commentId.value,
     );
     return comment.fold(
       (failure) => Left(failure),
@@ -44,7 +44,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   ) {
     try {
       return _localDataSource
-          .watchCommentsByTrack(trackId)
+          .watchCommentsByTrack(trackId.value)
           .map(
             (either) => either.fold(
               (failure) => Left(failure),
@@ -60,16 +60,15 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
 
   @override
   Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
+    final commentDto = AudioCommentDTO.fromDomain(comment);
     if (await _networkInfo.isConnected) {
-      final remoteResult = await _remoteDataSource.addComment(comment);
+      final remoteResult = await _remoteDataSource.addComment(commentDto);
       return await remoteResult.fold((failure) => Left(failure), (_) async {
-        await _localDataSource.cacheComment(
-          AudioCommentDTO.fromDomain(comment),
-        );
+        await _localDataSource.cacheComment(commentDto);
         return Right(unit);
       });
     } else {
-      await _localDataSource.cacheComment(AudioCommentDTO.fromDomain(comment));
+      await _localDataSource.cacheComment(commentDto);
       return Right(unit);
     }
   }
@@ -77,13 +76,13 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   @override
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId) async {
     if (await _networkInfo.isConnected) {
-      final remoteResult = await _remoteDataSource.deleteComment(commentId);
+      final remoteResult = await _remoteDataSource.deleteComment(commentId.value);
       return await remoteResult.fold((failure) => Left(failure), (_) async {
-        await _localDataSource.deleteCachedComment(commentId);
+        await _localDataSource.deleteCachedComment(commentId.value);
         return Right(unit);
       });
     } else {
-      await _localDataSource.deleteCachedComment(commentId);
+      await _localDataSource.deleteCachedComment(commentId.value);
       return Right(unit);
     }
   }

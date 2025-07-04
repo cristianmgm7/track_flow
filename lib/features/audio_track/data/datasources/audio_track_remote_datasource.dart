@@ -5,23 +5,18 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class AudioTrackRemoteDataSource {
-  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack({
-    required File file,
-    required AudioTrack track,
-  });
+  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(
+    AudioTrackDTO trackData,
+  );
 
-  Future<void> deleteTrackFromProject(AudioTrackId trackId, ProjectId projectId);
-  Future<List<AudioTrackDTO>> getTracksByProjectIds(List<ProjectId> projectIds);
-  Future<void> editTrackName({
-    required AudioTrackId trackId,
-    required ProjectId projectId,
-    required String newName,
-  });
+  Future<void> deleteTrackFromProject(String trackId, String projectId);
+
+  Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
+
+  Future<void> editTrackName(String trackId, String projectId, String newName);
 }
 
 @LazySingleton(as: AudioTrackRemoteDataSource)
@@ -32,38 +27,45 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   AudioTrackRemoteDataSourceImpl(this._firestore, this._storage);
 
   @override
-  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack({
-    required File file,
-    required AudioTrack track,
-  }) async {
+  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(
+    AudioTrackDTO trackData,
+  ) async {
     try {
       final storageRef = _storage.ref().child(
-        '${AudioTrackDTO.collection}/${DateTime.now().millisecondsSinceEpoch}_${track.name}',
+        '${AudioTrackDTO.collection}/${DateTime.now().millisecondsSinceEpoch}_${trackData.name}',
       );
-      final uploadTask = await storageRef.putFile(file);
+      final uploadTask = await storageRef.putFile(File(trackData.url));
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
-      final trackDTO = AudioTrackDTO.fromDomain(track, url: downloadUrl);
+      final updatedTrackDTO = AudioTrackDTO(
+        id: trackData.id,
+        name: trackData.name,
+        url: downloadUrl,
+        projectId: trackData.projectId,
+        duration: trackData.duration,
+        uploadedBy: trackData.uploadedBy,
+        createdAt: trackData.createdAt,
+      );
 
       await _firestore
           .collection(AudioTrackDTO.collection)
-          .doc(trackDTO.id.value)
-          .set(trackDTO.toJson());
+          .doc(updatedTrackDTO.id.value)
+          .set(updatedTrackDTO.toJson());
 
-      return Right(trackDTO);
+      return Right(updatedTrackDTO);
     } catch (e) {
       return Left(ServerFailure('Error uploading audio track: $e'));
     }
   }
 
   @override
-  Future<void> deleteTrackFromProject(AudioTrackId trackId, ProjectId projectId) async {
+  Future<void> deleteTrackFromProject(String trackId, String projectId) async {
     try {
       await _firestore
           .collection(ProjectDTO.collection)
-          .doc(projectId.value)
+          .doc(projectId)
           .collection(AudioTrackDTO.collection)
-          .doc(trackId.value)
+          .doc(trackId)
           .delete();
     } catch (e) {
       // Handle error
@@ -73,13 +75,13 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   // for offline first
   @override
   Future<List<AudioTrackDTO>> getTracksByProjectIds(
-    List<ProjectId> projectIds,
+    List<String> projectIds,
   ) async {
     if (projectIds.isEmpty) {
       // Received empty projectIds list
       return [];
     }
-    // Fetching tracks for projects: ${projectIds.map((id) => id.value).toList()}
+    // Fetching tracks for projects: ${projectIds.toList()}
 
     try {
       final List<AudioTrackDTO> allTracks = [];
@@ -89,7 +91,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
         final sublist = projectIds.sublist(
           i,
           i + 10 > projectIds.length ? projectIds.length : i + 10,
-        ).map((id) => id.value).toList();
+        );
 
         final snapshot =
             await _firestore
@@ -116,13 +118,13 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   }
 
   @override
-  Future<void> editTrackName({
-    required AudioTrackId trackId,
-    required ProjectId projectId,
-    required String newName,
-  }) async {
+  Future<void> editTrackName(
+    String trackId,
+    String projectId,
+    String newName,
+  ) async {
     try {
-      await _firestore.collection('audio_tracks').doc(trackId.value).update({
+      await _firestore.collection('audio_tracks').doc(trackId).update({
         'name': newName,
       });
     } catch (e) {

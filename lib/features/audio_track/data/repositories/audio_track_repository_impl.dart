@@ -5,6 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_info.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
+import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'dart:io';
@@ -24,7 +25,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   @override
   Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
     try {
-      final result = await localDataSource.getTrackById(id);
+      final result = await localDataSource.getTrackById(id.value);
       return result.fold(
         (failure) => Left(failure),
         (dto) =>
@@ -43,7 +44,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   ) {
     try {
       return localDataSource
-          .watchTracksByProject(projectId)
+          .watchTracksByProject(projectId.value)
           .map(
             (either) => either.fold(
               (failure) => Left(failure),
@@ -63,8 +64,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     if (await networkInfo.isConnected) {
       try {
         final result = await remoteDataSource.uploadAudioTrack(
-          file: file,
-          track: track,
+          AudioTrackDTO.fromDomain(track),
         );
         return await result.fold((failure) => Left(failure), (trackDTO) async {
           await localDataSource.cacheTrack(trackDTO);
@@ -86,10 +86,10 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.deleteTrackFromProject(
-          trackId,
-          projectId,
+          trackId.value,
+          projectId.value,
         );
-        await localDataSource.deleteTrack(trackId);
+        await localDataSource.deleteTrack(trackId.value);
         return Right(unit);
       } catch (e) {
         return Left(ServerFailure(e.toString()));
@@ -109,11 +109,11 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     if (await networkInfo.isConnected) {
       try {
         await remoteDataSource.editTrackName(
-          trackId: trackId,
-          projectId: projectId,
-          newName: newName,
+          trackId.value,
+          projectId.value,
+          newName,
         );
-        await localDataSource.updateTrackName(trackId, newName);
+        await localDataSource.updateTrackName(trackId.value, newName);
         return Right(unit);
       } catch (e) {
         return Left(ServerFailure(e.toString()));

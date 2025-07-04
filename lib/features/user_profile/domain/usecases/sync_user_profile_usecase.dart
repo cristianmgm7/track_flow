@@ -3,7 +3,6 @@ import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 @lazySingleton
 class SyncUserProfileUseCase {
@@ -18,7 +17,7 @@ class SyncUserProfileUseCase {
     if (userId == null) {
       return;
     }
-    final failureOrProfile = await remote.getProfileById(UserId.fromUniqueString(userId));
+    final failureOrProfile = await remote.getProfileById(userId);
     await failureOrProfile.fold((failure) async {}, (profile) async {
       await local.cacheUserProfile(UserProfileDTO.fromDomain(profile));
     });

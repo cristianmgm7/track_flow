@@ -1,15 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 
 abstract class AudioCommentRemoteDataSource {
-  Future<Either<Failure, Unit>> addComment(AudioComment comment);
-  Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
-  Future<List<AudioCommentDTO>> getCommentsByTrackId(AudioTrackId audioTrackId);
+  Future<Either<Failure, Unit>> addComment(AudioCommentDTO comment);
+  Future<Either<Failure, Unit>> deleteComment(String commentId);
+  Future<List<AudioCommentDTO>> getCommentsByTrackId(String audioTrackId);
 }
 
 @LazySingleton(as: AudioCommentRemoteDataSource)
@@ -20,13 +18,12 @@ class FirebaseAudioCommentRemoteDataSource
   FirebaseAudioCommentRemoteDataSource(this._firestore);
 
   @override
-  Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
+  Future<Either<Failure, Unit>> addComment(AudioCommentDTO comment) async {
     try {
-      final dto = AudioCommentDTO.fromDomain(comment);
-      final data = dto.toJson();
+      final data = comment.toJson();
       await _firestore
           .collection(AudioCommentDTO.collection)
-          .doc(dto.id)
+          .doc(comment.id)
           .set(data);
       return Right(unit);
     } catch (e) {
@@ -35,11 +32,11 @@ class FirebaseAudioCommentRemoteDataSource
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId) async {
+  Future<Either<Failure, Unit>> deleteComment(String commentId) async {
     try {
       await _firestore
           .collection(AudioCommentDTO.collection)
-          .doc(commentId.value)
+          .doc(commentId)
           .delete();
       return Right(unit);
     } catch (e) {
@@ -49,13 +46,13 @@ class FirebaseAudioCommentRemoteDataSource
 
   @override
   Future<List<AudioCommentDTO>> getCommentsByTrackId(
-    AudioTrackId audioTrackId,
+    String audioTrackId,
   ) async {
     try {
       final snapshot =
           await _firestore
               .collection(AudioCommentDTO.collection)
-              .where('trackId', isEqualTo: audioTrackId.value)
+              .where('trackId', isEqualTo: audioTrackId)
               .get();
       return snapshot.docs.map((doc) {
         final data = doc.data();

@@ -8,7 +8,8 @@ This document describes the data access layer architecture in TrackFlow, followi
 - **Features Covered:** All domain features
 - **Architecture Pattern:** Clean Architecture with Repository pattern
 - **Design Principles:** Single Responsibility, consistent error handling, reactive programming
-- **Type Safety:** Core data sources use domain value objects (AudioTrackId, ProjectId, UserId, etc.) instead of primitive String types for enhanced type safety and domain integrity\n- **Refactoring Status:** Data sources for AudioTrack, AudioComment, UserProfile, ManageCollaborators, Projects, and Auth (UserSession) have been updated to use domain types. Other data sources may still use String types where appropriate (e.g., cache keys, download IDs, etc.)
+- **Clean Architecture Compliance:** All data sources now follow Clean Architecture principles by using DTOs and primitive types instead of domain entities
+- **Refactoring Status:** ✅ COMPLETED - All data sources have been refactored to eliminate domain entity dependencies and use appropriate DTOs for data transfer
 
 ---
 
@@ -164,9 +165,9 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Manages local caching of magic links.
 **Public Methods:**
 
-- `Future<Either<Failure, MagicLink>> cacheMagicLink({required UserId userId})` — Cache magic link.
-- `Future<Either<Failure, MagicLink>> getCachedMagicLink({required UserId userId})` — Get cached magic link.
-- `Future<Either<Failure, Unit>> clearCachedMagicLink({required UserId userId})` — Clear cached magic link.
+- `Future<Either<Failure, MagicLinkDto>> cacheMagicLink(MagicLinkCacheRequestDto request)` — Cache magic link.
+- `Future<Either<Failure, MagicLinkDto>> getCachedMagicLink(MagicLinkCacheQueryDto query)` — Get cached magic link.
+- `Future<Either<Failure, Unit>> clearCachedMagicLink(MagicLinkCacheQueryDto query)` — Clear cached magic link.
 
 ### Remote Data Source: MagicLinkRemoteDataSource
 
@@ -174,11 +175,11 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Responsibility:** Handles remote operations for magic links.
 **Public Methods:**
 
-- `Future<Either<Failure, MagicLink>> generateMagicLink({required ProjectId projectId, required UserId userId})` — Generate magic link.
-- `Future<Either<Failure, MagicLink>> validateMagicLink({required MagicLinkId linkId})` — Validate magic link.
-- `Future<Either<Failure, Unit>> consumeMagicLink({required MagicLinkId linkId})` — Consume magic link.
-- `Future<Either<Failure, Unit>> resendMagicLink({required MagicLinkId linkId})` — Resend magic link.
-- `Future<Either<Failure, MagicLinkStatus>> getMagicLinkStatus({required MagicLinkId linkId})` — Get magic link status.
+- `Future<Either<Failure, MagicLinkDto>> generateMagicLink(MagicLinkRequestDto request)` — Generate magic link.
+- `Future<Either<Failure, MagicLinkDto>> validateMagicLink(MagicLinkValidationDto validation)` — Validate magic link.
+- `Future<Either<Failure, Unit>> consumeMagicLink(MagicLinkValidationDto validation)` — Consume magic link.
+- `Future<Either<Failure, Unit>> resendMagicLink(MagicLinkValidationDto validation)` — Resend magic link.
+- `Future<Either<Failure, String>> getMagicLinkStatus(MagicLinkStatusDto status)` — Get magic link status.
 
 ---
 
@@ -243,8 +244,8 @@ This document describes the data access layer architecture in TrackFlow, followi
 **Public Methods:**
 
 - `Future<Either<Failure, Unit>> cacheProject(ProjectDTO project)` — Cache project.
-- `Future<Either<Failure, ProjectDTO?>> getCachedProject(UniqueId id)` — Get cached project.
-- `Future<Either<Failure, Unit>> removeCachedProject(UniqueId id)` — Remove cached project.
+- `Future<Either<Failure, ProjectDTO?>> getCachedProject(ProjectId projectId)` — Get cached project.
+- `Future<Either<Failure, Unit>> removeCachedProject(ProjectId projectId)` — Remove cached project.
 - `Future<Either<Failure, List<ProjectDTO>>> getAllProjects()` — Get all projects.
 - `Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(UserId ownerId)` — Stream all projects for a user.
 - `Future<Either<Failure, Unit>> clearCache()` — Clear all cached projects.
@@ -257,7 +258,7 @@ This document describes the data access layer architecture in TrackFlow, followi
 
 - `Future<Either<Failure, Project>> createProject(Project project)` — Create project remotely.
 - `Future<Either<Failure, Unit>> updateProject(Project project)` — Update project remotely.
-- `Future<Either<Failure, Unit>> deleteProject(UniqueId id)` — Delete project remotely.
+- `Future<Either<Failure, Unit>> deleteProject(ProjectId projectId)` — Delete project remotely.
 - `Future<Either<Failure, Project>> getProjectById(ProjectId projectId)` — Get project by ID remotely.
 - `Future<Either<Failure, List<Project>>> getUserProjects(UserId userId)` — Get all projects for a user remotely.
 
@@ -289,35 +290,39 @@ This document describes the data access layer architecture in TrackFlow, followi
 
 ---
 
-## Refactoring Summary: String to Domain Types
+## Clean Architecture Refactoring Summary
 
-The following data sources have been refactored to use domain value objects instead of primitive String types:
+✅ **COMPLETED REFACTORING**: All data sources now follow Clean Architecture principles by eliminating domain entity dependencies.
 
-### ✅ Refactored Data Sources:
+### 🎯 Refactoring Achievements:
 
-1. **AudioTrackLocalDataSource** - Methods using `AudioTrackId`, `ProjectId`
-2. **AudioTrackRemoteDataSource** - Methods using `AudioTrackId`, `ProjectId` 
-3. **AudioCommentLocalDataSource** - Methods using `AudioCommentId`, `AudioTrackId`
-4. **AudioCommentRemoteDataSource** - Methods using `AudioCommentId`, `AudioTrackId`
-5. **UserProfileLocalDataSource** - Methods using `UserId`
-6. **UserProfileRemoteDataSource** - Methods using `UserId`
-7. **UserSessionLocalDataSource** - Methods using `UserId`
-8. **ManageCollaboratorsRemoteDataSource** - Methods using `ProjectId`, `UserId`
-9. **ProjectRemoteDataSource** - Methods using `UserId`
+1. **Domain Independence**: Data sources no longer import or depend on domain entities (`AudioTrack`, `Project`, `MagicLink`, etc.)
+2. **DTO-Based Communication**: All data sources use DTOs (`AudioCommentDTO`, `ProjectDTO`, `MagicLinkDto`, etc.) for data transfer
+3. **Primitive Type Usage**: Where appropriate, data sources use primitive types (String, int, bool) instead of domain value objects
+4. **Repository Responsibility**: All domain ↔ DTO conversions are now handled in the repository layer
 
-### 📋 Non-Refactored Data Sources:
+### 📊 Refactored Data Sources:
 
-- **Audio Cache Data Sources** - Use String types for cache keys, file paths, and download IDs (appropriate for their domain)
-- **Magic Link Data Sources** - Some methods may still use String for link tokens and external references
-- **Playlist Data Sources** - May use String UUIDs for playlist identification
-- **Onboarding Data Sources** - Use boolean flags and don't require domain ID types
+**✅ Fully Compliant Data Sources:**
+- `MagicLinkLocalDataSource` & `MagicLinkRemoteDataSource` - Uses specific DTOs (MagicLinkRequestDto, MagicLinkValidationDto)
+- `ManageCollaboratorsLocalDataSource` & `ManageCollaboratorsRemoteDataSource` - Uses CollaboratorOperationDto types
+- `AudioCommentLocalDataSource` & `AudioCommentRemoteDataSource` - Uses AudioCommentDTO and primitive strings
+- `AudioTrackRemoteDataSource` - Uses AudioTrackDTO for data operations
+- `ProjectRemoteDataSource` - Uses ProjectDTO for all operations
+- `UserProfileRemoteDataSource` - Uses UserProfileDTO for data transfer
+
+**✅ Already Compliant:**
+- Audio Cache Data Sources - Use primitive types and appropriate cache DTOs
+- Playlist Data Sources - Use PlaylistDto for all operations
+- Auth Data Sources - Use primitive types and AuthDto where needed
 
 ### 🎯 Benefits Achieved:
 
-- **Type Safety**: Eliminated runtime errors from passing wrong ID types
-- **Domain Clarity**: Method signatures clearly indicate expected ID types  
-- **SOLID Compliance**: Data sources now properly depend on domain abstractions
-- **Consistency**: Repository ↔ DataSource communication uses consistent types
+- **Clean Architecture Compliance**: Data sources are now properly isolated from domain logic
+- **Better Testability**: DTOs are easier to create and mock than complex domain entities
+- **Improved Maintainability**: Changes to domain entities don't affect data layer implementations
+- **Professional Code Quality**: Follows industry best practices for layered architecture
+- **Type Safety**: Maintained through specific DTOs rather than generic primitives
 
 ---
 

@@ -22,7 +22,9 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
   );
 
   @override
-  Future<Either<Failure, Unit>> cacheUserProfiles(List<UserProfile> profiles) async {
+  Future<Either<Failure, Unit>> cacheUserProfiles(
+    List<UserProfile> profiles,
+  ) async {
     try {
       for (final profile in profiles) {
         await _localDataSource.cacheUserProfile(
@@ -40,7 +42,7 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
     List<UserId> userIds,
   ) {
     return _localDataSource
-        .watchUserProfilesByIds(userIds)
+        .watchUserProfilesByIds(userIds.map((e) => e.value).toList())
         .map(
           (either) => either.fold(
             (failure) => Left(failure),
@@ -57,8 +59,10 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-    
-    final dtos = await _remoteDataSource.getUserProfilesByIds(userIds);
+
+    final dtos = await _remoteDataSource.getUserProfilesByIds(
+      userIds.map((e) => e.value).toList(),
+    );
     return dtos.fold(
       (failure) => Left(failure),
       (dtos) => Right(dtos.map((e) => e.toDomain()).toList()),

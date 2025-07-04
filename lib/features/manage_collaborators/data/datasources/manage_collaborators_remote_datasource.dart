@@ -1,29 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/manage_collaborators/data/models/collaborator_operation_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ManageCollaboratorsRemoteDataSource {
-  Future<Either<Failure, void>> selfJoinProjectWithProjectId({
-    required ProjectId projectId,
-    required UserId userId,
-  });
-
-  Future<Either<Failure, Project>> updateProject(Project project);
-  Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    Project project,
+  Future<Either<Failure, Unit>> selfJoinProjectWithProjectId(
+    JoinProjectDto joinRequest,
   );
 
-  Future<Either<Failure, Unit>> leaveProject({
-    required ProjectId projectId,
-    required UserId userId,
-  });
+  Future<Either<Failure, ProjectDTO>> updateProject(ProjectDTO project);
+  
+  Future<Either<Failure, List<UserProfileDTO>>> getProjectCollaborators(
+    GetCollaboratorsDto request,
+  );
+
+  Future<Either<Failure, Unit>> leaveProject(
+    LeaveProjectDto leaveRequest,
+  );
 }
 
 @LazySingleton(as: ManageCollaboratorsRemoteDataSource)
@@ -37,16 +34,15 @@ class ManageCollaboratorsRemoteDataSourceImpl
     required this.firestore,
   });
   @override
-  Future<Either<Failure, void>> selfJoinProjectWithProjectId({
-    required ProjectId projectId,
-    required UserId userId,
-  }) async {
+  Future<Either<Failure, Unit>> selfJoinProjectWithProjectId(
+    JoinProjectDto joinRequest,
+  ) async {
     try {
-      final docRef = firestore.collection(ProjectDTO.collection).doc(projectId.value);
+      final docRef = firestore.collection(ProjectDTO.collection).doc(joinRequest.projectId);
       await docRef.update({
-        'collaborators': FieldValue.arrayUnion([userId.value]),
+        'collaborators': FieldValue.arrayUnion([joinRequest.userId]),
       });
-      return right(null);
+      return right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
@@ -69,13 +65,12 @@ class ManageCollaboratorsRemoteDataSourceImpl
   }
 
   @override
-  Future<Either<Failure, Project>> updateProject(Project project) async {
+  Future<Either<Failure, ProjectDTO>> updateProject(ProjectDTO project) async {
     try {
-      final projectDto = ProjectDTO.fromDomain(project);
       await firestore
           .collection(ProjectDTO.collection)
-          .doc(project.id.value)
-          .update(projectDto.toJson());
+          .doc(project.id)
+          .update(project.toJson());
       return right(project);
     } on FirebaseException catch (e) {
       return left(DatabaseFailure('Failed to update project: ${e.message}'));
@@ -85,21 +80,19 @@ class ManageCollaboratorsRemoteDataSourceImpl
   }
 
   @override
-  Future<Either<Failure, List<UserProfile>>> getProjectCollaborators(
-    Project project,
+  Future<Either<Failure, List<UserProfileDTO>>> getProjectCollaborators(
+    GetCollaboratorsDto request,
   ) async {
     try {
-      final ids = project.collaborators.map((e) => e.userId.value).toList();
-
       final snapshot =
           await firestore
               .collection(UserProfileDTO.collection)
-              .where(FieldPath.documentId, whereIn: ids)
+              .where(FieldPath.documentId, whereIn: request.collaboratorIds)
               .get();
 
       final userProfiles =
           snapshot.docs
-              .map((doc) => UserProfileDTO.fromJson(doc.data()).toDomain())
+              .map((doc) => UserProfileDTO.fromJson(doc.data()))
               .toList();
 
       return right(userProfiles);
@@ -109,16 +102,15 @@ class ManageCollaboratorsRemoteDataSourceImpl
   }
 
   @override
-  Future<Either<Failure, Unit>> leaveProject({
-    required ProjectId projectId,
-    required UserId userId,
-  }) async {
+  Future<Either<Failure, Unit>> leaveProject(
+    LeaveProjectDto leaveRequest,
+  ) async {
     try {
       await firestore
           .collection(ProjectDTO.collection)
-          .doc(projectId.value)
+          .doc(leaveRequest.projectId)
           .update({
-            'collaborators': FieldValue.arrayRemove([userId.value]),
+            'collaborators': FieldValue.arrayRemove([leaveRequest.userId]),
           });
       return right(unit);
     } catch (e) {
