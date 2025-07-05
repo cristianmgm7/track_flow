@@ -16,9 +16,10 @@ import '../../domain/services/audio_playback_service.dart';
 class AudioPlaybackServiceImpl implements AudioPlaybackService {
   AudioPlaybackServiceImpl();
 
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _audioPlayer = AudioPlayer(); // use this to play audio
   PlaybackSession _currentSession = PlaybackSession.initial();
-  final StreamController<PlaybackSession> _sessionController = 
+
+  final StreamController<PlaybackSession> _sessionController =
       StreamController<PlaybackSession>.broadcast();
 
   @override
@@ -32,23 +33,22 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     try {
       // Set up audio player listeners if not already set
       _setupListeners();
-      
+
       // Load the audio source
       await _audioPlayer.setUrl(source.url);
-      
+
       // Update session state
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.loading,
-      ));
-      
+      _updateSession(_currentSession.copyWith(state: PlaybackState.loading));
+
       // Start playback
       await _audioPlayer.play();
-      
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to play audio: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to play audio: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -58,10 +58,12 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     try {
       await _audioPlayer.pause();
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to pause: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to pause: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -71,10 +73,12 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     try {
       await _audioPlayer.play();
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to resume: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to resume: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -83,15 +87,19 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   Future<void> stop() async {
     try {
       await _audioPlayer.stop();
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.stopped,
-        position: Duration.zero,
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.stopped,
+          position: Duration.zero,
+        ),
+      );
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to stop: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to stop: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -101,10 +109,12 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     try {
       await _audioPlayer.seek(position);
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to seek: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to seek: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -114,14 +124,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     try {
       final clampedSpeed = speed.clamp(0.5, 2.0);
       await _audioPlayer.setSpeed(clampedSpeed);
-      _updateSession(_currentSession.copyWith(
-        playbackSpeed: clampedSpeed,
-      ));
+      _updateSession(_currentSession.copyWith(playbackSpeed: clampedSpeed));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to set playback speed: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to set playback speed: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -131,14 +141,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     try {
       final clampedVolume = volume.clamp(0.0, 1.0);
       await _audioPlayer.setVolume(clampedVolume);
-      _updateSession(_currentSession.copyWith(
-        volume: clampedVolume,
-      ));
+      _updateSession(_currentSession.copyWith(volume: clampedVolume));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to set volume: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to set volume: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -146,14 +156,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   @override
   Future<void> setRepeatMode(RepeatMode mode) async {
     try {
-      _updateSession(_currentSession.copyWith(
-        repeatMode: mode,
-      ));
+      _updateSession(_currentSession.copyWith(repeatMode: mode));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to set repeat mode: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to set repeat mode: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -165,7 +175,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       if (!queue.hasNext) {
         return false;
       }
-      
+
       final nextSource = queue.next();
       if (nextSource != null) {
         await play(nextSource);
@@ -173,10 +183,12 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       }
       return false;
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to skip to next: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to skip to next: $e',
+        ),
+      );
       return false;
     }
   }
@@ -188,7 +200,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       if (!queue.hasPrevious) {
         return false;
       }
-      
+
       final previousSource = queue.previous();
       if (previousSource != null) {
         await play(previousSource);
@@ -196,10 +208,12 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       }
       return false;
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to skip to previous: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to skip to previous: $e',
+        ),
+      );
       return false;
     }
   }
@@ -210,46 +224,49 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       final updatedQueue = _currentSession.queue.copyWith(
         shuffleEnabled: enabled,
       );
-      _updateSession(_currentSession.copyWith(
-        queue: updatedQueue,
-      ));
+      _updateSession(_currentSession.copyWith(queue: updatedQueue));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to set shuffle: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to set shuffle: $e',
+        ),
+      );
       rethrow;
     }
   }
 
   @override
-  Future<void> loadQueue(List<AudioSource> sources, {int startIndex = 0}) async {
+  Future<void> loadQueue(
+    List<AudioSource> sources, {
+    int startIndex = 0,
+  }) async {
     try {
       if (sources.isEmpty) {
         throw ArgumentError('Cannot load empty queue');
       }
-      
+
       if (startIndex < 0 || startIndex >= sources.length) {
         throw ArgumentError('Start index out of bounds');
       }
-      
+
       // Create new queue with sources
       final newQueue = AudioQueue.fromSources(sources, startIndex: startIndex);
-      
+
       // Update session with new queue
-      _updateSession(_currentSession.copyWith(
-        queue: newQueue,
-        state: PlaybackState.stopped,
-      ));
-      
+      _updateSession(
+        _currentSession.copyWith(queue: newQueue, state: PlaybackState.stopped),
+      );
+
       // Play the track at start index
       await play(sources[startIndex]);
-      
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to load queue: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to load queue: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -258,14 +275,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   Future<void> addToQueue(AudioSource source) async {
     try {
       final updatedQueue = _currentSession.queue.add(source);
-      _updateSession(_currentSession.copyWith(
-        queue: updatedQueue,
-      ));
+      _updateSession(_currentSession.copyWith(queue: updatedQueue));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to add to queue: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to add to queue: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -274,14 +291,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   Future<void> insertInQueue(AudioSource source, int index) async {
     try {
       final updatedQueue = _currentSession.queue.insert(source, index);
-      _updateSession(_currentSession.copyWith(
-        queue: updatedQueue,
-      ));
+      _updateSession(_currentSession.copyWith(queue: updatedQueue));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to insert in queue: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to insert in queue: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -290,14 +307,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   Future<void> removeFromQueue(int index) async {
     try {
       final updatedQueue = _currentSession.queue.removeAt(index);
-      _updateSession(_currentSession.copyWith(
-        queue: updatedQueue,
-      ));
+      _updateSession(_currentSession.copyWith(queue: updatedQueue));
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to remove from queue: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to remove from queue: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -306,15 +323,19 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   Future<void> clearQueue() async {
     try {
       await stop();
-      _updateSession(_currentSession.copyWith(
-        queue: AudioQueue.empty(),
-        state: PlaybackState.stopped,
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          queue: AudioQueue.empty(),
+          state: PlaybackState.stopped,
+        ),
+      );
     } catch (e) {
-      _updateSession(_currentSession.copyWith(
-        state: PlaybackState.error,
-        error: 'Failed to clear queue: $e',
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          state: PlaybackState.error,
+          error: 'Failed to clear queue: $e',
+        ),
+      );
       rethrow;
     }
   }
@@ -331,16 +352,16 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   }
 
   // Private helper methods
-  
+
   bool _listenersSetup = false;
-  
+
   void _setupListeners() {
     if (_listenersSetup) return;
-    
+
     _audioPlayer.positionStream.listen(_onPositionChanged);
     _audioPlayer.durationStream.listen(_onDurationChanged);
     _audioPlayer.playerStateStream.listen(_onPlayerStateChanged);
-    
+
     _listenersSetup = true;
   }
 
@@ -350,24 +371,24 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   }
 
   void _onPositionChanged(Duration position) {
-    _updateSession(_currentSession.copyWith(
-      position: position,
-    ));
+    _updateSession(_currentSession.copyWith(position: position));
   }
 
   void _onDurationChanged(Duration? duration) {
     if (duration != null) {
       // Note: We'll need to update the current track's duration
       // This might require updating the queue's current track
-      _updateSession(_currentSession.copyWith(
-        // duration: duration, // Will implement when PlaybackSession supports this
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          // duration: duration, // Will implement when PlaybackSession supports this
+        ),
+      );
     }
   }
 
   void _onPlayerStateChanged(PlayerState playerState) {
     PlaybackState newState;
-    
+
     switch (playerState.processingState) {
       case ProcessingState.idle:
         newState = PlaybackState.stopped;
@@ -377,7 +398,8 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
         newState = PlaybackState.loading;
         break;
       case ProcessingState.ready:
-        newState = playerState.playing ? PlaybackState.playing : PlaybackState.paused;
+        newState =
+            playerState.playing ? PlaybackState.playing : PlaybackState.paused;
         break;
       case ProcessingState.completed:
         newState = PlaybackState.completed;
@@ -385,9 +407,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
         break;
     }
 
-    _updateSession(_currentSession.copyWith(
-      state: newState,
-    ));
+    _updateSession(_currentSession.copyWith(state: newState));
   }
 
   void _handleTrackCompletion() {
@@ -397,7 +417,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
         seek(Duration.zero);
         resume();
         break;
-      
+
       case RepeatMode.queue:
         if (_currentSession.queue.hasNext) {
           skipToNext();
@@ -409,7 +429,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
           }
         }
         break;
-      
+
       case RepeatMode.none:
         if (_currentSession.queue.hasNext) {
           skipToNext();
