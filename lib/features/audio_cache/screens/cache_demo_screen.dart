@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../track/presentation/bloc/track_cache_bloc.dart';
 import '../track/presentation/bloc/track_cache_event.dart';
@@ -25,8 +26,8 @@ class CacheDemoScreen extends StatelessWidget {
               create:
                   (context) => TrackCacheBloc(
                     cacheTrackUseCase: context.read(),
-                    getTrackCacheStatusUseCase: context.read(),
                     removeTrackCacheUseCase: context.read(),
+                    watchTrackCacheStatusUseCase: context.read(),
                   ),
               child: const TrackCacheDemo(),
             ),
@@ -86,7 +87,9 @@ class TrackCacheDemo extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       context.read<TrackCacheBloc>().add(
-                        GetTrackCacheStatusRequested('demo_track_1'),
+                        WatchTrackCacheStatusRequested(
+                          AudioTrackId.fromUniqueString('demo_track_1'),
+                        ),
                       );
                     },
                     child: const Text('Check Status'),

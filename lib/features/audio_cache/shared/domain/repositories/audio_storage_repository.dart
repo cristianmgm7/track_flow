@@ -31,7 +31,9 @@ abstract class AudioStorageRepository {
   Future<Either<CacheFailure, bool>> audioExists(AudioTrackId trackId);
 
   /// Get cached audio information
-  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(AudioTrackId trackId);
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
+    AudioTrackId trackId,
+  );
 
   /// Delete audio file from storage
   /// WARNING: This physically deletes the file - ensure reference counting first
@@ -43,7 +45,7 @@ abstract class AudioStorageRepository {
 
   /// Get cached audio info for multiple tracks
   Future<Either<CacheFailure, Map<AudioTrackId, CachedAudio>>>
-      getMultipleCachedAudios(List<AudioTrackId> trackIds);
+  getMultipleCachedAudios(List<AudioTrackId> trackIds);
 
   /// Delete multiple audio files
   Future<Either<CacheFailure, List<AudioTrackId>>> deleteMultipleAudioFiles(
@@ -51,9 +53,8 @@ abstract class AudioStorageRepository {
   );
 
   /// Check existence of multiple audio files
-  Future<Either<CacheFailure, Map<AudioTrackId, bool>>> checkMultipleAudioExists(
-    List<AudioTrackId> trackIds,
-  );
+  Future<Either<CacheFailure, Map<AudioTrackId, bool>>>
+  checkMultipleAudioExists(List<AudioTrackId> trackIds);
 
   // ===============================================
   // STORAGE MONITORING
@@ -67,4 +68,7 @@ abstract class AudioStorageRepository {
 
   /// Get available storage space
   Future<Either<CacheFailure, int>> getAvailableStorage();
+
+  /// Watch cache status for a single track
+  Stream<bool> watchTrackCacheStatus(AudioTrackId trackId);
 }

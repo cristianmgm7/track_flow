@@ -25,7 +25,6 @@ import 'package:trackflow/features/user_profile/presentation/user_profile_screen
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',

@@ -215,4 +215,9 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       );
     }
   }
+
+  @override
+  Stream<bool> watchTrackCacheStatus(AudioTrackId trackId) {
+    return _localDataSource.watchTrackCacheStatus(trackId.value);
+  }
 }

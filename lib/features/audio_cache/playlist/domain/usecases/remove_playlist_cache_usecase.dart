@@ -24,7 +24,8 @@ class RemovePlaylistCacheUseCase {
     }
 
     try {
-      final audioTrackIds = trackIds.map((id) => AudioTrackId.fromUniqueString(id)).toList();
+      final audioTrackIds =
+          trackIds.map((id) => AudioTrackId.fromUniqueString(id)).toList();
       final result = await _audioStorageRepository.deleteMultipleAudioFiles(
         audioTrackIds,
       );
@@ -38,32 +39,6 @@ class RemovePlaylistCacheUseCase {
           message: 'Unexpected error while removing playlist cache: $e',
           field: 'cache_operation',
           value: {'trackIds': trackIds},
-        ),
-      );
-    }
-  }
-
-  /// Remove a single track from playlist cache
-  Future<Either<CacheFailure, Unit>> removeTrack(String trackId) async {
-    if (trackId.isEmpty) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Track ID cannot be empty',
-          field: 'trackId',
-          value: trackId,
-        ),
-      );
-    }
-
-    try {
-      return await _audioStorageRepository.deleteAudioFile(AudioTrackId.fromUniqueString(trackId));
-    } catch (e) {
-      return Left(
-        ValidationCacheFailure(
-          message:
-              'Unexpected error while removing track from playlist cache: $e',
-          field: 'cache_operation',
-          value: {'trackId': trackId},
         ),
       );
     }

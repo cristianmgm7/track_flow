@@ -9,12 +9,14 @@ import 'package:trackflow/features/projects/domain/value_objects/project_permiss
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
 
 @lazySingleton
 class ProjectTrackService {
   final AudioTrackRepository trackRepository;
+  final AudioStorageRepository audioStorageRepository;
 
-  ProjectTrackService(this.trackRepository);
+  ProjectTrackService(this.trackRepository, this.audioStorageRepository);
 
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
@@ -67,7 +69,14 @@ class ProjectTrackService {
       if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
         return Left(ProjectPermissionException());
       }
-      return await trackRepository.deleteTrack(track.id, project.id);
+      final deleteResult = await trackRepository.deleteTrack(
+        track.id,
+        project.id,
+      );
+      return await deleteResult.fold((failure) => Left(failure), (_) async {
+        await audioStorageRepository.deleteAudioFile(trackId);
+        return Right(unit);
+      });
     });
   }
 

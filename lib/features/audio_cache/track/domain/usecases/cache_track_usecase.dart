@@ -1,15 +1,21 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:io';
 
 import '../../../shared/domain/failures/cache_failure.dart';
 import '../../../shared/domain/repositories/audio_download_repository.dart';
+import '../../../shared/domain/repositories/audio_storage_repository.dart';
 import '../../../../../core/entities/unique_id.dart';
 
 @injectable
 class CacheTrackUseCase {
   final AudioDownloadRepository _audioDownloadRepository;
+  final AudioStorageRepository _audioStorageRepository;
 
-  CacheTrackUseCase(this._audioDownloadRepository);
+  CacheTrackUseCase(
+    this._audioDownloadRepository,
+    this._audioStorageRepository,
+  );
 
   /// Cache a single track for individual playback
   ///
@@ -60,45 +66,22 @@ class CacheTrackUseCase {
         audioUrl,
       );
 
-      return result.fold(
-        (failure) => Left(failure),
-        (cachedAudio) => const Right(unit),
-      );
+      return await result.fold((failure) => Left(failure), (filePath) async {
+        final storeResult = await _audioStorageRepository.storeAudio(
+          AudioTrackId.fromUniqueString(trackId),
+          File(filePath),
+        );
+        return storeResult.fold(
+          (failure) => Left(failure),
+          (_) => const Right(unit),
+        );
+      });
     } catch (e) {
       return Left(
         ValidationCacheFailure(
           message: 'Unexpected error while caching track: $e',
           field: 'cache_operation',
           value: {'trackId': trackId, 'audioUrl': audioUrl},
-        ),
-      );
-    }
-  }
-
-  /// Cache multiple tracks
-  Future<Either<CacheFailure, Unit>> cacheMultiple({
-    required Map<String, String> trackUrlPairs, // trackId -> audioUrl
-  }) async {
-    try {
-      final audioTrackUrlPairs = <AudioTrackId, String>{};
-      trackUrlPairs.forEach((trackId, audioUrl) {
-        audioTrackUrlPairs[AudioTrackId.fromUniqueString(trackId)] = audioUrl;
-      });
-      
-      final result = await _audioDownloadRepository.downloadMultipleAudios(
-        audioTrackUrlPairs,
-      );
-
-      return result.fold(
-        (failure) => Left(failure),
-        (cachedAudios) => const Right(unit),
-      );
-    } catch (e) {
-      return Left(
-        ValidationCacheFailure(
-          message: 'Unexpected error while caching multiple tracks: $e',
-          field: 'cache_operation',
-          value: {'trackUrlPairs': trackUrlPairs},
         ),
       );
     }

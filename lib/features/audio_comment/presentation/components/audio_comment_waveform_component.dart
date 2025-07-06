@@ -36,7 +36,7 @@ class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
           return BlocProvider<TrackCacheBloc>(
             create: (context) {
               final bloc = sl<TrackCacheBloc>();
-              bloc.add(GetTrackCacheStatusRequested(track.id.value));
+              bloc.add(WatchTrackCacheStatusRequested(track.id));
               bloc.add(GetCachedTrackPathRequested(track.id.value));
               return bloc;
             },

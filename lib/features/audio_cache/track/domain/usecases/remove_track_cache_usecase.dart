@@ -38,29 +38,4 @@ class RemoveTrackCacheUseCase {
       );
     }
   }
-
-  /// Remove multiple tracks from cache
-  Future<Either<CacheFailure, Unit>> removeMultiple(
-    List<String> trackIds,
-  ) async {
-    try {
-      final trackIdObjects = trackIds.map((id) => AudioTrackId.fromUniqueString(id)).toList();
-      final result = await _audioStorageRepository.deleteMultipleAudioFiles(
-        trackIdObjects,
-      );
-      return result.fold(
-        (failure) => Left(failure),
-        (deletedIds) => const Right(unit),
-      );
-    } catch (e) {
-      return Left(
-        ValidationCacheFailure(
-          message:
-              'Unexpected error while removing multiple tracks from cache: $e',
-          field: 'cache_operation',
-          value: {'trackIds': trackIds},
-        ),
-      );
-    }
-  }
 }

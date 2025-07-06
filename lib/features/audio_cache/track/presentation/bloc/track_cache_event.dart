@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../../shared/domain/value_objects/conflict_policy.dart';
 
@@ -54,15 +55,6 @@ class RemoveTrackCacheRequested extends TrackCacheEvent {
   List<Object?> get props => [trackId, referenceId];
 }
 
-class GetTrackCacheStatusRequested extends TrackCacheEvent {
-  final String trackId;
-
-  const GetTrackCacheStatusRequested(this.trackId);
-
-  @override
-  List<Object?> get props => [trackId];
-}
-
 class GetCachedTrackPathRequested extends TrackCacheEvent {
   final String trackId;
 
@@ -85,4 +77,13 @@ class WatchTrackCacheInfoRequested extends TrackCacheEvent {
 /// Event to stop watching unified track cache info
 class StopWatchingTrackCacheInfo extends TrackCacheEvent {
   const StopWatchingTrackCacheInfo();
+}
+
+class WatchTrackCacheStatusRequested extends TrackCacheEvent {
+  final AudioTrackId trackId;
+
+  const WatchTrackCacheStatusRequested(this.trackId);
+
+  @override
+  List<Object?> get props => [trackId];
 }

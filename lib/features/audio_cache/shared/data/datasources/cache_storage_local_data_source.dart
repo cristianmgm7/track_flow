@@ -53,6 +53,9 @@ abstract class CacheStorageLocalDataSource {
 
   Future<Either<CacheFailure, CachedAudioDocumentUnified>>
   storeUnifiedCachedAudio(CachedAudioDocumentUnified unifiedDoc);
+
+  /// Watch cache status for a single track
+  Stream<bool> watchTrackCacheStatus(String trackId);
 }
 
 @LazySingleton(as: CacheStorageLocalDataSource)
@@ -457,6 +460,16 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         ),
       );
     }
+  }
+
+  /// Watch cache status for a single track
+  @override
+  Stream<bool> watchTrackCacheStatus(String trackId) {
+    return _isar.cachedAudioDocumentUnifieds
+        .filter()
+        .trackIdEqualTo(trackId)
+        .watch(fireImmediately: true)
+        .map((docs) => docs.isNotEmpty);
   }
 
   Future<Directory> _getCacheDirectory() async {

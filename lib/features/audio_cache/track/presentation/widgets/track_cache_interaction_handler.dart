@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../../shared/domain/entities/cached_audio.dart';
 import '../../../shared/domain/value_objects/conflict_policy.dart';
@@ -166,14 +167,18 @@ class TrackCacheInteractionHandler {
   /// Request initial cache status
   void requestInitialStatus(BuildContext context) {
     context.read<TrackCacheBloc>().add(
-      GetTrackCacheStatusRequested(config.trackId),
+      WatchTrackCacheStatusRequested(
+        AudioTrackId.fromUniqueString(config.trackId),
+      ),
     );
   }
 
   /// Refresh status after operation
   void refreshStatus(BuildContext context) {
     context.read<TrackCacheBloc>().add(
-      GetTrackCacheStatusRequested(config.trackId),
+      WatchTrackCacheStatusRequested(
+        AudioTrackId.fromUniqueString(config.trackId),
+      ),
     );
   }
 }

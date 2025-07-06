@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:async';
 
 import '../../domain/usecases/cache_track_usecase.dart';
-import '../../domain/usecases/get_track_cache_status_usecase.dart'
-    as status_usecase;
+import '../../domain/usecases/watch_cache_status.dart' as status_usecase;
 import '../../domain/usecases/remove_track_cache_usecase.dart';
 import 'track_cache_event.dart';
 import 'track_cache_state.dart';
@@ -12,20 +12,41 @@ import 'track_cache_state.dart';
 class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
   TrackCacheBloc({
     required CacheTrackUseCase cacheTrackUseCase,
-    required status_usecase.GetTrackCacheStatusUseCase
-    getTrackCacheStatusUseCase,
+    required status_usecase.WatchTrackCacheStatusUseCase
+    watchTrackCacheStatusUseCase,
     required RemoveTrackCacheUseCase removeTrackCacheUseCase,
   }) : _cacheTrackUseCase = cacheTrackUseCase,
-       _getTrackCacheStatusUseCase = getTrackCacheStatusUseCase,
+       _watchTrackCacheStatusUseCase = watchTrackCacheStatusUseCase,
        _removeTrackCacheUseCase = removeTrackCacheUseCase,
        super(const TrackCacheInitial()) {
     on<CacheTrackRequested>(_onCacheTrackRequested);
     on<RemoveTrackCacheRequested>(_onRemoveTrackCacheRequested);
-    on<GetTrackCacheStatusRequested>(_onGetTrackCacheStatusRequested);
+    on<WatchTrackCacheStatusRequested>((event, emit) async {
+      await emit.onEach(
+        _watchTrackCacheStatusUseCase(event.trackId.value),
+        onData: (either) {
+          either.fold(
+            (failure) => emit(
+              TrackCacheOperationFailure(
+                trackId: event.trackId.value,
+                error: failure.message,
+              ),
+            ),
+            (status) => emit(
+              TrackCacheStatusLoaded(
+                trackId: event.trackId.value,
+                status: status,
+              ),
+            ),
+          );
+        },
+      );
+    });
   }
 
   final CacheTrackUseCase _cacheTrackUseCase;
-  final status_usecase.GetTrackCacheStatusUseCase _getTrackCacheStatusUseCase;
+  final status_usecase.WatchTrackCacheStatusUseCase
+  _watchTrackCacheStatusUseCase;
   final RemoveTrackCacheUseCase _removeTrackCacheUseCase;
 
   Future<void> _onCacheTrackRequested(
@@ -71,26 +92,6 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
           trackId: event.trackId,
           message: 'Track cache removed successfully',
         ),
-      ),
-    );
-  }
-
-  Future<void> _onGetTrackCacheStatusRequested(
-    GetTrackCacheStatusRequested event,
-    Emitter<TrackCacheState> emit,
-  ) async {
-    emit(const TrackCacheLoading());
-
-    final result = await _getTrackCacheStatusUseCase(event.trackId);
-
-    emit(
-      result.fold(
-        (failure) => TrackCacheOperationFailure(
-          trackId: event.trackId,
-          error: failure.message,
-        ),
-        (status) =>
-            TrackCacheStatusLoaded(trackId: event.trackId, status: status),
       ),
     );
   }

@@ -10,6 +10,8 @@ import '../bloc/track_cache_state.dart';
 import 'track_cache_animation_handler.dart';
 import 'track_cache_icon_builder.dart';
 import 'track_cache_interaction_handler.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import '../bloc/track_cache_event.dart';
 
 class SmartTrackCacheIcon extends StatefulWidget {
   // Track identification
@@ -58,13 +60,12 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
   late final TrackCacheIconBuilder _iconBuilder;
   late final TrackCacheInteractionHandler _interactionHandler;
 
-  CacheStatus? _lastKnownStatus;
   Timer? _progressPollingTimer;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize handlers
     _animationHandler = TrackCacheAnimationHandler(vsync: this);
     _iconBuilder = const TrackCacheIconBuilder();
@@ -83,7 +84,11 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
 
     // Check initial cache status
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _interactionHandler.requestInitialStatus(context);
+      context.read<TrackCacheBloc>().add(
+        WatchTrackCacheStatusRequested(
+          AudioTrackId.fromUniqueString(widget.trackId),
+        ),
+      );
     });
   }
 
@@ -97,7 +102,7 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
   void _handleTap(TrackCacheState currentState) {
     // Animate for immediate feedback
     unawaited(_animationHandler.animateTap());
-    
+
     // Handle interaction through dedicated handler
     _interactionHandler.handleTap(context, currentState);
   }
@@ -108,17 +113,22 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
       listener: (context, state) {
         if (state is TrackCacheOperationSuccess) {
           widget.onSuccess?.call(state.message);
-          _interactionHandler.refreshStatus(context);
+          // No refresques el estado aquí, el stream lo hará automáticamente
         } else if (state is TrackCacheOperationFailure) {
           widget.onError?.call(state.error);
-        } else if (state is TrackCacheStatusLoaded) {
-          _lastKnownStatus = state.status;
-        } else if (state is TrackCacheInfoWatching) {
-          _lastKnownStatus = state.status;
         }
       },
       child: BlocBuilder<TrackCacheBloc, TrackCacheState>(
         builder: (context, state) {
+          CacheStatus status;
+          if (state is TrackCacheStatusLoaded) {
+            status = state.status;
+          } else if (state is TrackCacheInfoWatching) {
+            status = state.status;
+          } else {
+            status = CacheStatus.notCached;
+          }
+
           final iconConfig = TrackCacheIconConfig(
             size: widget.size,
             color: widget.color,
@@ -142,7 +152,7 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
                   state,
                   iconConfig,
                   context,
-                  lastKnownStatus: _lastKnownStatus,
+                  lastKnownStatus: status,
                 ),
               ),
             ),
@@ -151,5 +161,4 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
       ),
     );
   }
-
 }
