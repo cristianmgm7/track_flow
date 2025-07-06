@@ -1,4 +1,5 @@
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -152,7 +153,7 @@ class Project extends AggregateRoot<ProjectId> {
 extension ProjectPlaylist on Project {
   Playlist toPlaylist(List<AudioTrack> tracks) {
     return Playlist(
-      id: PlaylistId.fromUniqueString('project_${id.value}'),
+      id: PlaylistId.fromUniqueString(id.value.toString()),
       name: name.value.getOrElse(() => 'Project Playlist'),
       trackIds: tracks.map((t) => t.id.value).toList(),
       playlistSource: PlaylistSource.project,

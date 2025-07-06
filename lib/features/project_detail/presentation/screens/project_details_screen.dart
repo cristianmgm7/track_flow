@@ -55,87 +55,88 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         ),
         body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
           builder: (context, state) {
-            if (state is ProjectDetailBundleState) {
-              if (state.isLoadingProject && state.project == null) {
-                return const Center(child: CircularProgressIndicator());
-              }
+            if (state.isLoadingProject && state.project == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-              if (state.projectError != null && state.project == null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Error loading project: ${state.projectError}',
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              final project = state.project;
-              if (project == null) {
-                return const Center(child: Text('No project found'));
-              }
-
-              final tracks = state.tracks;
-              final collaborators = state.collaborators;
-              final playlist = project.toPlaylist(tracks);
-              final collaboratorsByTrackId = <String, UserProfile>{
-                for (var track in tracks)
-                  track.id.value: collaborators.firstWhere(
-                    (c) => c.id == track.uploadedBy,
-                    orElse:
-                        () => UserProfile(
-                          id: track.uploadedBy,
-                          name: 'Unknown',
-                          email: '',
-                          avatarUrl: '',
-                          createdAt: DateTime(1970),
-                        ),
-                  ),
-              };
-
-              return SingleChildScrollView(
+            if (state.projectError != null && state.project == null) {
+              return Center(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ProjectDetailHeaderComponent(
-                      project: project,
-                      context: context,
+                    Text(
+                      'Error loading project: ${state.projectError}',
+                      style: const TextStyle(color: Colors.red),
                     ),
-                    BlocProvider<PlaylistCacheBloc>(
-                      create: (_) => sl<PlaylistCacheBloc>(),
-                      child: PlaylistWidget(
-                        playlist: playlist,
-                        tracks: tracks,
-                        collaboratorsByTrackId: collaboratorsByTrackId,
-                        projectId: project.id.value,
-                      ),
-                    ),
-                    if (_isUploadingTrack)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            SizedBox(width: 12),
-                            Text('Uploading track...'),
-                          ],
-                        ),
-                      ),
-                    ProjectDetailCollaboratorsComponent(state: state),
                   ],
                 ),
               );
             }
-            return const Center(child: CircularProgressIndicator());
+
+            final project = state.project;
+            if (project == null) {
+              return const Center(child: Text('No project found'));
+            }
+
+            // Extrae los tracks y colaboradores del state
+            final tracks = state.tracks;
+            final collaborators = state.collaborators;
+            final playlist = project.toPlaylist(tracks);
+            final collaboratorsByTrackId = <String, UserProfile>{
+              for (var track in tracks)
+                track.id.value: collaborators.firstWhere(
+                  (c) => c.id == track.uploadedBy,
+                  orElse:
+                      () => UserProfile(
+                        id: track.uploadedBy,
+                        name: 'Unknown',
+                        email: '',
+                        avatarUrl: '',
+                        createdAt: DateTime(1970),
+                      ),
+                ),
+            };
+
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Project Header
+                  ProjectDetailHeaderComponent(
+                    project: project,
+                    context: context,
+                  ),
+                  // PlaylistWidget para los tracks del proyecto
+                  BlocProvider<PlaylistCacheBloc>(
+                    create: (_) => sl<PlaylistCacheBloc>(),
+                    child: PlaylistWidget(
+                      playlist: playlist,
+                      tracks: tracks,
+                      collaboratorsByTrackId: collaboratorsByTrackId,
+                      projectId: project.id.value,
+                    ),
+                  ),
+                  if (_isUploadingTrack)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 12),
+                          Text('Uploading track...'),
+                        ],
+                      ),
+                    ),
+                  // Collaborators Section
+                  ProjectDetailCollaboratorsComponent(state: state),
+                ],
+              ),
+            );
           },
         ),
       ),

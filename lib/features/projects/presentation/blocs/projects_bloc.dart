@@ -4,13 +4,11 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
@@ -20,7 +18,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
   final WatchAllProjectsUseCase watchAllProjects;
-  final GetProjectByIdUseCase getProjectById;
+  //
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
 
@@ -30,13 +28,11 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     required this.updateProject,
     required this.deleteProject,
     required this.watchAllProjects,
-    required this.getProjectById,
   }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<StartWatchingProjects>(_onStartWatchingProjects);
-    on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -97,20 +93,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
               _mapFailureToMessage(ServerFailure(error.toString())),
             ),
           ),
-    );
-  }
-
-  Future<void> _onGetProjectByIdRequested(
-    GetProjectByIdRequested event,
-    Emitter<ProjectsState> emit,
-  ) async {
-    emit(ProjectsLoading());
-    final result = await getProjectById.call(
-      ProjectId.fromUniqueString(event.projectId),
-    );
-    result.fold(
-      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectsLoaded([project])),
     );
   }
 

@@ -5,7 +5,7 @@ import 'package:trackflow/features/project_detail/presentation/bloc/project_deta
 import 'dart:io';
 
 class ProjectDetailCollaboratorsComponent extends StatelessWidget {
-  final ProjectDetailBundleState state;
+  final ProjectDetailState state;
   const ProjectDetailCollaboratorsComponent({super.key, required this.state});
 
   @override

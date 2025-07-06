@@ -1,50 +1,22 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
-abstract class ProjectDetailState extends Equatable {
-  const ProjectDetailState();
-  @override
-  List<Object?> get props => [];
-}
-
-class ProjectDetailInitial extends ProjectDetailState {}
-
-class ProjectDetailLoading extends ProjectDetailState {}
-
-class ProjectDetailLoaded extends ProjectDetailState {
-  final Project project;
-  final List<AudioTrack> tracks;
-  final List<UserProfile> collaborators;
-  const ProjectDetailLoaded({
-    required this.project,
-    required this.tracks,
-    required this.collaborators,
-  });
-  @override
-  List<Object?> get props => [project, tracks, collaborators];
-}
-
-class ProjectDetailError extends ProjectDetailState {
-  final String message;
-  const ProjectDetailError(this.message);
-  @override
-  List<Object?> get props => [message];
-}
-
-class ProjectDetailBundleState extends ProjectDetailState {
+class ProjectDetailState extends Equatable {
   final Project? project;
   final List<AudioTrack> tracks;
   final List<UserProfile> collaborators;
+
   final bool isLoadingProject;
   final bool isLoadingTracks;
   final bool isLoadingCollaborators;
+
   final String? projectError;
   final String? tracksError;
   final String? collaboratorsError;
 
-  const ProjectDetailBundleState({
+  const ProjectDetailState({
     required this.project,
     required this.tracks,
     required this.collaborators,
@@ -56,7 +28,7 @@ class ProjectDetailBundleState extends ProjectDetailState {
     required this.collaboratorsError,
   });
 
-  factory ProjectDetailBundleState.initial() => const ProjectDetailBundleState(
+  factory ProjectDetailState.initial() => const ProjectDetailState(
     project: null,
     tracks: [],
     collaborators: [],
@@ -68,7 +40,7 @@ class ProjectDetailBundleState extends ProjectDetailState {
     collaboratorsError: null,
   );
 
-  ProjectDetailBundleState copyWith({
+  ProjectDetailState copyWith({
     Project? project,
     List<AudioTrack>? tracks,
     List<UserProfile>? collaborators,
@@ -79,7 +51,7 @@ class ProjectDetailBundleState extends ProjectDetailState {
     String? tracksError,
     String? collaboratorsError,
   }) {
-    return ProjectDetailBundleState(
+    return ProjectDetailState(
       project: project ?? this.project,
       tracks: tracks ?? this.tracks,
       collaborators: collaborators ?? this.collaborators,

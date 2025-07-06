@@ -5,8 +5,8 @@ import 'package:trackflow/features/audio_track/presentation/component/track_comp
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 
 class ProjectDetailTracksComponent extends StatelessWidget {
+  final ProjectDetailState state;
   final BuildContext context;
-  final ProjectDetailBundleState state;
   const ProjectDetailTracksComponent({
     super.key,
     required this.state,

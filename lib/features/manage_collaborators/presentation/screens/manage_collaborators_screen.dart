@@ -7,8 +7,8 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/components/collaborator_component.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/manage_collaborators_actions.dart';
-import 'package:trackflow/features/projects/presentation/widgets/add_collaborator_form.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/add_collaborator_form.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {

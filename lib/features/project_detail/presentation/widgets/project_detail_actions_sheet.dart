@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_form_bottom_sheet.dart';
-import 'package:trackflow/features/projects/presentation/widgets/add_collaborator_form.dart';
-import 'package:trackflow/features/projects/presentation/widgets/delete_project_alert_dialog.dart';
-import 'package:trackflow/features/projects/presentation/widgets/edit_project_form.dart';
-import 'package:trackflow/features/projects/presentation/widgets/up_load_track_form.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/add_collaborator_form.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_alert_dialog.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/edit_project_form.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/up_load_track_form.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailActions {

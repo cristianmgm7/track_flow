@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class ProjectsState extends Equatable {
   const ProjectsState();
@@ -38,6 +36,13 @@ class ProjectsError extends ProjectsState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class ProjectDetailsLoaded extends ProjectsState {
+  final Project project;
+  const ProjectDetailsLoaded(this.project);
+  @override
+  List<Object?> get props => [project];
 }
 
 class ProjectsLoaded extends ProjectsState {
