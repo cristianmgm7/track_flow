@@ -60,16 +60,6 @@ class ProjectsUpdated extends ProjectsEvent {
   List<Object?> get props => [projects];
 }
 
-// Project Detail Events
-class WatchProjectDetail extends ProjectsEvent {
-  final Project project;
-
-  const WatchProjectDetail({required this.project});
-
-  @override
-  List<Object?> get props => [project];
-}
-
 class TracksUpdated extends ProjectsEvent {
   final List<AudioTrack> tracks;
 

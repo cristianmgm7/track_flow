@@ -2,11 +2,11 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 
 class ProjectDetailTracksComponent extends StatelessWidget {
-  final ProjectDetailState state;
   final BuildContext context;
+  final ProjectDetailBundleState state;
   const ProjectDetailTracksComponent({
     super.key,
     required this.state,

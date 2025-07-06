@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
-import 'package:trackflow/features/projects/presentation/components/project_detail_header_component.dart';
-import 'package:trackflow/features/projects/presentation/components/project_detail_collaborators_component.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
+import 'package:trackflow/features/project_detail/presentation/components/project_detail_header_component.dart';
+import 'package:trackflow/features/project_detail/presentation/components/project_detail_collaborators_component.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -28,7 +28,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProjectsBloc>().add(
+    context.read<ProjectDetailBloc>().add(
       WatchProjectDetail(project: widget.project),
     );
   }
@@ -53,9 +53,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             ),
           ),
         ),
-        body: BlocBuilder<ProjectsBloc, ProjectsState>(
+        body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
           builder: (context, state) {
-            if (state is ProjectDetailState) {
+            if (state is ProjectDetailBundleState) {
               if (state.isLoadingProject && state.project == null) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -79,7 +79,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 return const Center(child: Text('No project found'));
               }
 
-              // Extrae los tracks y colaboradores del state
               final tracks = state.tracks;
               final collaborators = state.collaborators;
               final playlist = project.toPlaylist(tracks);
@@ -102,12 +101,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Project Header
                     ProjectDetailHeaderComponent(
                       project: project,
                       context: context,
                     ),
-                    // PlaylistWidget para los tracks del proyecto
                     BlocProvider<PlaylistCacheBloc>(
                       create: (_) => sl<PlaylistCacheBloc>(),
                       child: PlaylistWidget(
@@ -133,7 +130,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           ],
                         ),
                       ),
-                    // Collaborators Section
                     ProjectDetailCollaboratorsComponent(state: state),
                   ],
                 ),

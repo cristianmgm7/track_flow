@@ -36,7 +36,6 @@ class MyApp extends StatelessWidget {
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),
         ),
-        BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
         BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
         BlocProvider<ManageCollaboratorsBloc>(
           create: (context) => sl<ManageCollaboratorsBloc>(),
@@ -49,14 +48,7 @@ class MyApp extends StatelessWidget {
           create: (context) => sl<AudioPlayerBloc>(),
         ),
       ],
-      child: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            sl<StartupResourceManager>().initializeAppData();
-          }
-        },
-        child: _App(),
-      ),
+      child: _App(),
     );
   }
 }
@@ -92,10 +84,17 @@ class _AppState extends State<_App> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TrackFlow',
-      theme: AppTheme.darkTheme,
-      routerConfig: _router,
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          sl<StartupResourceManager>().initializeAppData();
+        }
+      },
+      child: MaterialApp.router(
+        title: 'TrackFlow',
+        theme: AppTheme.darkTheme,
+        routerConfig: _router,
+      ),
     );
   }
 }

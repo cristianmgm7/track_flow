@@ -11,7 +11,6 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/get_project_by_id_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/watch_project_detail_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 
@@ -22,10 +21,8 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final DeleteProjectUseCase deleteProject;
   final WatchAllProjectsUseCase watchAllProjects;
   final GetProjectByIdUseCase getProjectById;
-  final WatchProjectDetailUseCase watchProjectDetail;
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
-  StreamSubscription<Either<Failure, ProjectDetailBundle>>? _detailSubscription;
 
   //constructor
   ProjectsBloc({
@@ -34,14 +31,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     required this.deleteProject,
     required this.watchAllProjects,
     required this.getProjectById,
-    required this.watchProjectDetail,
   }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<StartWatchingProjects>(_onStartWatchingProjects);
     on<GetProjectByIdRequested>(_onGetProjectByIdRequested);
-    on<WatchProjectDetail>(_onWatchProjectDetail);
   }
 
   Future<void> _onCreateProjectRequested(
@@ -110,57 +105,18 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await getProjectById.call(ProjectId.fromUniqueString(event.projectId));
+    final result = await getProjectById.call(
+      ProjectId.fromUniqueString(event.projectId),
+    );
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectDetailsLoaded(project)),
-    );
-  }
-
-  Future<void> _onWatchProjectDetail(
-    WatchProjectDetail event,
-    Emitter<ProjectsState> emit,
-  ) async {
-    emit(ProjectDetailState.initial().copyWith(
-      project: event.project,
-      isLoadingTracks: true,
-      isLoadingCollaborators: true,
-    ));
-
-    await emit.onEach<Either<Failure, ProjectDetailBundle>>(
-      watchProjectDetail.call(
-        projectId: event.project.id.value,
-        collaboratorIds: event.project.collaborators.map((e) => e.userId.value).toList(),
-      ),
-      onData: (either) {
-        either.fold(
-          (failure) {
-            emit(ProjectDetailState.initial().copyWith(
-              project: event.project,
-              isLoadingTracks: false,
-              isLoadingCollaborators: false,
-              tracksError: _mapFailureToMessage(failure),
-              collaboratorsError: _mapFailureToMessage(failure),
-            ));
-          },
-          (bundle) {
-            emit(ProjectDetailState.initial().copyWith(
-              project: event.project,
-              tracks: bundle.tracks,
-              collaborators: bundle.collaborators,
-              isLoadingTracks: false,
-              isLoadingCollaborators: false,
-            ));
-          },
-        );
-      },
+      (project) => emit(ProjectsLoaded([project])),
     );
   }
 
   @override
   Future<void> close() {
     _projectsSubscription?.cancel();
-    _detailSubscription?.cancel();
     return super.close();
   }
 

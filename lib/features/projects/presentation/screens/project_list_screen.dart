@@ -82,11 +82,12 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                 final project = projects[index];
                 return ProjectCard(
                   project: project,
-                  onTap:
-                      () => context.push(
-                        AppRoutes.projectDetails,
-                        extra: project,
-                      ),
+                  onTap: () async {
+                    await context.push(
+                      AppRoutes.projectDetails,
+                      extra: project,
+                    );
+                  },
                 );
               },
             );

@@ -32,7 +32,6 @@ class StartupResourceManager {
   }
 
   Future<void> refreshAppData() async {
-    // Si necesitas lógica especial para forzar refresco, agrégala aquí
     await initializeAppData();
   }
 }
