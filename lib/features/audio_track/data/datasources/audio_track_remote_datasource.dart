@@ -5,14 +5,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
-import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 abstract class AudioTrackRemoteDataSource {
   Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(
     AudioTrackDTO trackData,
   );
 
-  Future<void> deleteTrackFromProject(String trackId, String projectId);
+  Future<Either<Failure, Unit>> deleteAudioTrack(String trackId);
 
   Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
 
@@ -31,8 +30,11 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     AudioTrackDTO trackData,
   ) async {
     try {
+      // Extract extension from the DTO, not from the URL
+      final ext = trackData.extension;
+      final fileName = '${trackData.id.value}.$ext';
       final storageRef = _storage.ref().child(
-        '${AudioTrackDTO.collection}/${DateTime.now().millisecondsSinceEpoch}_${trackData.name}',
+        '${AudioTrackDTO.collection}/$fileName',
       );
       final uploadTask = await storageRef.putFile(File(trackData.url));
       final downloadUrl = await uploadTask.ref.getDownloadURL();
@@ -45,6 +47,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
         duration: trackData.duration,
         uploadedBy: trackData.uploadedBy,
         createdAt: trackData.createdAt,
+        extension: ext,
       );
 
       await _firestore
@@ -59,16 +62,42 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   }
 
   @override
-  Future<void> deleteTrackFromProject(String trackId, String projectId) async {
+  Future<Either<Failure, Unit>> deleteAudioTrack(String trackId) async {
     try {
+      // Fetch the track document to get the extension
+      final docSnapshot =
+          await _firestore
+              .collection(AudioTrackDTO.collection)
+              .doc(trackId)
+              .get();
+
+      String? ext;
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data();
+        if (data != null && data['extension'] != null) {
+          ext = data['extension'] as String;
+        }
+      }
+
       await _firestore
-          .collection(ProjectDTO.collection)
-          .doc(projectId)
           .collection(AudioTrackDTO.collection)
           .doc(trackId)
           .delete();
+
+      if (ext != null) {
+        final fileName = '$trackId.$ext';
+        final storageRef = _storage.ref().child(
+          '${AudioTrackDTO.collection}/$fileName',
+        );
+        try {
+          await storageRef.delete();
+        } catch (e) {
+          // Ignore if file does not exist
+        }
+      }
+      return const Right(unit);
     } catch (e) {
-      // Handle error
+      return Left(ServerFailure('Error deleting audio track: $e'));
     }
   }
 

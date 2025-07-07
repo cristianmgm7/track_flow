@@ -64,7 +64,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     if (await networkInfo.isConnected) {
       try {
         final result = await remoteDataSource.uploadAudioTrack(
-          AudioTrackDTO.fromDomain(track),
+          AudioTrackDTO.fromDomain(track, extension: file.path.split('.').last),
         );
         return await result.fold((failure) => Left(failure), (trackDTO) async {
           await localDataSource.cacheTrack(trackDTO);
@@ -85,10 +85,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   ) async {
     if (await networkInfo.isConnected) {
       try {
-        await remoteDataSource.deleteTrackFromProject(
-          trackId.value,
-          projectId.value,
-        );
+        await remoteDataSource.deleteAudioTrack(trackId.value);
         await localDataSource.deleteTrack(trackId.value);
         return Right(unit);
       } catch (e) {

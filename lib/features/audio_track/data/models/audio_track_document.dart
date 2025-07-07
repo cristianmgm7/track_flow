@@ -21,6 +21,7 @@ class AudioTrackDocument {
 
   late String uploadedBy;
   late DateTime createdAt;
+  late String extension;
 
   AudioTrackDocument();
 
@@ -32,7 +33,8 @@ class AudioTrackDocument {
       ..duration = dto.duration
       ..projectId = dto.projectId.value
       ..uploadedBy = dto.uploadedBy.value
-      ..createdAt = dto.createdAt ?? DateTime.now();
+      ..createdAt = dto.createdAt ?? DateTime.now()
+      ..extension = dto.extension;
   }
 
   AudioTrackDTO toDTO() {
@@ -44,6 +46,7 @@ class AudioTrackDocument {
       projectId: ProjectId.fromUniqueString(projectId),
       uploadedBy: UserId.fromUniqueString(uploadedBy),
       createdAt: createdAt,
+      extension: extension.isNotEmpty ? extension : '',
     );
   }
 }

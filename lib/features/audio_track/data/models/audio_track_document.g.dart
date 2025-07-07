@@ -28,28 +28,33 @@ const AudioTrackDocumentSchema = CollectionSchema(
       name: r'duration',
       type: IsarType.long,
     ),
-    r'id': PropertySchema(
+    r'extension': PropertySchema(
       id: 2,
+      name: r'extension',
+      type: IsarType.string,
+    ),
+    r'id': PropertySchema(
+      id: 3,
       name: r'id',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'projectId': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'projectId',
       type: IsarType.string,
     ),
     r'uploadedBy': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'uploadedBy',
       type: IsarType.string,
     ),
     r'url': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'url',
       type: IsarType.string,
     )
@@ -101,6 +106,7 @@ int _audioTrackDocumentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.extension.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.projectId.length * 3;
@@ -117,11 +123,12 @@ void _audioTrackDocumentSerialize(
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
   writer.writeLong(offsets[1], object.duration);
-  writer.writeString(offsets[2], object.id);
-  writer.writeString(offsets[3], object.name);
-  writer.writeString(offsets[4], object.projectId);
-  writer.writeString(offsets[5], object.uploadedBy);
-  writer.writeString(offsets[6], object.url);
+  writer.writeString(offsets[2], object.extension);
+  writer.writeString(offsets[3], object.id);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.projectId);
+  writer.writeString(offsets[6], object.uploadedBy);
+  writer.writeString(offsets[7], object.url);
 }
 
 AudioTrackDocument _audioTrackDocumentDeserialize(
@@ -133,11 +140,12 @@ AudioTrackDocument _audioTrackDocumentDeserialize(
   final object = AudioTrackDocument();
   object.createdAt = reader.readDateTime(offsets[0]);
   object.duration = reader.readLong(offsets[1]);
-  object.id = reader.readString(offsets[2]);
-  object.name = reader.readString(offsets[3]);
-  object.projectId = reader.readString(offsets[4]);
-  object.uploadedBy = reader.readString(offsets[5]);
-  object.url = reader.readString(offsets[6]);
+  object.extension = reader.readString(offsets[2]);
+  object.id = reader.readString(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.projectId = reader.readString(offsets[5]);
+  object.uploadedBy = reader.readString(offsets[6]);
+  object.url = reader.readString(offsets[7]);
   return object;
 }
 
@@ -161,6 +169,8 @@ P _audioTrackDocumentDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -515,6 +525,142 @@ extension AudioTrackDocumentQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'extension',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'extension',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'extension',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'extension',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'extension',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'extension',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'extension',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'extension',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'extension',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      extensionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'extension',
+        value: '',
       ));
     });
   }
@@ -1293,6 +1439,20 @@ extension AudioTrackDocumentQuerySortBy
   }
 
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByExtension() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'extension', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByExtensionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'extension', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
       sortById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1390,6 +1550,20 @@ extension AudioTrackDocumentQuerySortThenBy
       thenByDurationDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'duration', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByExtension() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'extension', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByExtensionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'extension', Sort.desc);
     });
   }
 
@@ -1494,6 +1668,13 @@ extension AudioTrackDocumentQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct>
+      distinctByExtension({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'extension', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct> distinctById(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1548,6 +1729,13 @@ extension AudioTrackDocumentQueryProperty
   QueryBuilder<AudioTrackDocument, int, QQueryOperations> durationProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'duration');
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, String, QQueryOperations>
+      extensionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'extension');
     });
   }
 
