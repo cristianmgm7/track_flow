@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import '../../domain/entities/repeat_mode.dart';
 import '../../domain/entities/playback_session.dart';
+import '../../../audio_track/domain/entities/audio_track.dart';
 
 /// Pure audio player events - ONLY audio operations
 /// NO: UserProfile, ProjectId, collaborators, or business context
@@ -34,20 +35,28 @@ class PlayAudioRequested extends AudioPlayerEvent {
 
 /// Play a playlist starting from specified index
 class PlayPlaylistRequested extends AudioPlayerEvent {
-  const PlayPlaylistRequested(this.playlistId, {this.startIndex = 0});
+  /// For persisted playlists, provide playlistId. For ephemeral playlists, provide tracks.
+  const PlayPlaylistRequested({
+    this.playlistId,
+    this.tracks,
+    this.startIndex = 0,
+  });
 
-  /// Playlist ID to play
-  final PlaylistId playlistId;
+  /// Playlist ID to play (for persisted playlists)
+  final PlaylistId? playlistId;
+
+  /// List of tracks to play (for ephemeral playlists)
+  final List<AudioTrack>? tracks;
 
   /// Starting track index in playlist
   final int startIndex;
 
   @override
-  List<Object?> get props => [playlistId, startIndex];
+  List<Object?> get props => [playlistId, tracks, startIndex];
 
   @override
   String toString() =>
-      'PlayPlaylistRequested(playlistId: $playlistId, startIndex: $startIndex)';
+      'PlayPlaylistRequested(playlistId: $playlistId, tracks: $tracks, startIndex: $startIndex)';
 }
 
 /// Pause current audio playback

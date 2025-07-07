@@ -2,10 +2,12 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 import '../entities/playback_session.dart';
 import '../entities/audio_failure.dart';
 import '../entities/repeat_mode.dart';
+import '../entities/audio_source.dart';
 import '../usecases/initialize_audio_player_usecase.dart';
 import '../usecases/play_audio_usecase.dart';
 import '../usecases/play_playlist_usecase.dart';
@@ -102,7 +104,18 @@ class AudioPlayerService {
     PlaylistId playlistId, {
     int startIndex = 0,
   }) async {
-    return await _playPlaylistUseCase(playlistId, startIndex: startIndex);
+    return await _playPlaylistUseCase(
+      playlistId: playlistId,
+      startIndex: startIndex,
+    );
+  }
+
+  /// Play tracks directly starting from specified track index
+  Future<Either<AudioFailure, void>> playTracks(
+    List<AudioTrack> tracks, {
+    int startIndex = 0,
+  }) async {
+    return await _playPlaylistUseCase(tracks: tracks, startIndex: startIndex);
   }
 
   /// Pause current audio playback
@@ -168,5 +181,13 @@ class AudioPlayerService {
   /// Restore previously saved playback session
   Future<Either<AudioFailure, PlaybackSession?>> restorePlaybackState() async {
     return await _restorePlaybackStateUseCase();
+  }
+
+  /// Load a queue of audio sources and start playing from specified index
+  Future<void> loadQueue(
+    List<AudioSource> sources, {
+    int startIndex = 0,
+  }) async {
+    await _playbackService.loadQueue(sources, startIndex: startIndex);
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
@@ -122,16 +123,38 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
   ) async {
     emit(AudioPlayerBuffering(currentSession));
 
-    final result = await _audioPlayerService.playPlaylist(
-      event.playlistId,
-      startIndex: event.startIndex,
-    );
+    Either<AudioFailure, void> result;
 
-    result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
-      _,
-    ) {
-      // State will be updated via SessionStateChanged event
-    });
+    if (event.tracks != null) {
+      // Use provided tracks directly for on-the-fly playlists
+      result = await _audioPlayerService.playTracks(
+        event.tracks!,
+        startIndex: event.startIndex,
+      );
+    } else if (event.playlistId != null) {
+      // Use playlist ID via PlayPlaylistUseCase
+      result = await _audioPlayerService.playPlaylist(
+        event.playlistId!,
+        startIndex: event.startIndex,
+      );
+    } else {
+      emit(
+        AudioPlayerError(
+          AudioPlayerFailure('No playlist data provided'),
+          currentSession,
+        ),
+      );
+      return;
+    }
+
+    result.fold(
+      (failure) {
+        emit(AudioPlayerError(failure, currentSession));
+      },
+      (_) {
+        // Success - state will be updated via SessionStateChanged event
+      },
+    );
   }
 
   Future<void> _onPauseAudioRequested(
