@@ -34,11 +34,14 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       // Set up audio player listeners if not already set
       _setupListeners();
 
+      // Update session with current track and loading state
+      _updateSession(_currentSession.copyWith(
+        currentTrack: source.metadata,
+        state: PlaybackState.loading,
+      ));
+
       // Load the audio source
       await _audioPlayer.setUrl(source.url);
-
-      // Update session state
-      _updateSession(_currentSession.copyWith(state: PlaybackState.loading));
 
       // Start playback
       await _audioPlayer.play();
@@ -179,6 +182,11 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       final nextSource = queue.next();
       if (nextSource != null) {
         await play(nextSource);
+        // Update the queue in session to reflect the new current index
+        _updateSession(_currentSession.copyWith(
+          queue: queue,
+          currentTrack: nextSource.metadata,
+        ));
         return true;
       }
       return false;
@@ -204,6 +212,11 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       final previousSource = queue.previous();
       if (previousSource != null) {
         await play(previousSource);
+        // Update the queue in session to reflect the new current index
+        _updateSession(_currentSession.copyWith(
+          queue: queue,
+          currentTrack: previousSource.metadata,
+        ));
         return true;
       }
       return false;
@@ -259,7 +272,13 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       );
 
       // Play the track at start index
-      await play(sources[startIndex]);
+      final startSource = sources[startIndex];
+      await play(startSource);
+      
+      // Update session with the current track from the queue
+      _updateSession(_currentSession.copyWith(
+        currentTrack: startSource.metadata,
+      ));
     } catch (e) {
       _updateSession(
         _currentSession.copyWith(

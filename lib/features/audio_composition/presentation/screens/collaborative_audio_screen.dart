@@ -241,7 +241,9 @@ class _CollaborativeAudioScreenState extends State<CollaborativeAudioScreen> {
 
   void _loadDemoPlaylist(BuildContext context) {
     context.read<AudioPlayerBloc>().add(
-      PlayPlaylistRequested(PlaylistId.fromUniqueString('demo_playlist_001')),
+      PlayPlaylistRequested(
+        playlistId: PlaylistId.fromUniqueString('demo_playlist_001'),
+      ),
     );
   }
 

@@ -7,7 +7,6 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_collaborators_component.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
@@ -78,24 +77,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               return const Center(child: Text('No project found'));
             }
 
-            // Extrae los tracks y colaboradores del state
+            // getting the tracks to build the playlist
             final tracks = state.tracks;
-            final collaborators = state.collaborators;
             final playlist = project.toPlaylist(tracks);
-            final collaboratorsByTrackId = <String, UserProfile>{
-              for (var track in tracks)
-                track.id.value: collaborators.firstWhere(
-                  (c) => c.id == track.uploadedBy,
-                  orElse:
-                      () => UserProfile(
-                        id: track.uploadedBy,
-                        name: 'Unknown',
-                        email: '',
-                        avatarUrl: '',
-                        createdAt: DateTime(1970),
-                      ),
-                ),
-            };
 
             return SingleChildScrollView(
               child: Column(
@@ -106,13 +90,13 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     project: project,
                     context: context,
                   ),
+
                   // PlaylistWidget para los tracks del proyecto
                   BlocProvider<PlaylistCacheBloc>(
                     create: (_) => sl<PlaylistCacheBloc>(),
                     child: PlaylistWidget(
                       playlist: playlist,
                       tracks: tracks,
-                      collaboratorsByTrackId: collaboratorsByTrackId,
                       projectId: project.id.value,
                     ),
                   ),

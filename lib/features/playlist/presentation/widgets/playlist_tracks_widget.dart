@@ -106,7 +106,7 @@ class PlaylistTracksWidget extends StatelessWidget {
                           onPlay: () {
                             context.read<AudioPlayerBloc>().add(
                               PlayPlaylistRequested(
-                                playlist.id,
+                                playlistId: playlist.id,
                                 startIndex: index,
                               ),
                             );

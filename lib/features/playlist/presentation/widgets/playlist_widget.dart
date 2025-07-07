@@ -27,7 +27,7 @@ class PlaylistWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PlaylistControlsWidget(playlist: playlist),
+        PlaylistControlsWidget(playlist: playlist, tracks: tracks),
         PlaylistStatusWidget(playlist: playlist),
         const SizedBox(height: 8),
         PlaylistTracksWidget(

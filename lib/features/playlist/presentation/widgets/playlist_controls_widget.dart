@@ -9,11 +9,17 @@ import 'package:trackflow/features/playlist/presentation/widgets/buttons/play_pa
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/shuffle_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/repeat_button.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/widgets/playlist_cache_icon.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 
 class PlaylistControlsWidget extends StatelessWidget {
   final Playlist playlist;
+  final List<AudioTrack> tracks;
 
-  const PlaylistControlsWidget({super.key, required this.playlist});
+  const PlaylistControlsWidget({
+    super.key,
+    required this.playlist,
+    required this.tracks,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +46,7 @@ class PlaylistControlsWidget extends StatelessWidget {
                     playerState is AudioPlayerPlaying) {
                   player.add(PauseAudioRequested());
                 } else {
-                  player.add(
-                    PlayPlaylistRequested(playlist.id),
-                  );
+                  player.add(PlayPlaylistRequested(tracks: tracks));
                 }
               },
             ),
