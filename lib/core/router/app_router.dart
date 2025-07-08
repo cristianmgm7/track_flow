@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
+import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
@@ -112,6 +113,9 @@ class AppRouter {
                   BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
                   BlocProvider<ProjectDetailBloc>(
                     create: (_) => sl<ProjectDetailBloc>(),
+                  ),
+                  BlocProvider<AudioContextBloc>(
+                    create: (_) => sl<AudioContextBloc>(),
                   ),
                 ],
                 child: MainScaffold(child: child),

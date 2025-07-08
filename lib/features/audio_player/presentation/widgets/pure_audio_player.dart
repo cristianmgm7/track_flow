@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/audio_player_bloc.dart';
 import '../bloc/audio_player_event.dart';
 import '../bloc/audio_player_state.dart';
+import '../../../audio_context/presentation/bloc/audio_context_bloc.dart';
+import '../../../audio_context/presentation/bloc/audio_context_state.dart';
 import 'audio_controls.dart';
 import 'playback_progress.dart';
 import 'queue_controls.dart';
@@ -141,7 +143,7 @@ class PureAudioPlayer extends StatelessWidget {
       final session = state.session;
       if (session.currentTrack != null) {
         title = session.currentTrack!.title;
-        artist = session.currentTrack!.artist;
+        artist = session.currentTrack!.artist; // Fallback to metadata artist
         albumArt = session.currentTrack!.coverUrl;
       }
     } else if (state is AudioPlayerReady) {
@@ -212,15 +214,28 @@ class PureAudioPlayer extends StatelessWidget {
 
         if (artist.isNotEmpty) ...[
           const SizedBox(height: 8),
-          Text(
-            artist,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.textTheme.titleMedium?.color?.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
+          // Use both audio context and audio player state for artist info
+          BlocBuilder<AudioContextBloc, AudioContextState>(
+            builder: (context, contextState) {
+              String displayArtist = artist; // Fallback from audio metadata
+              
+              // Override with context if available (more accurate user name)
+              if (contextState is AudioContextLoaded && 
+                  contextState.collaborator != null) {
+                displayArtist = contextState.collaborator!.name;
+              }
+              
+              return Text(
+                displayArtist,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.textTheme.titleMedium?.color?.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              );
+            },
           ),
         ],
       ],
