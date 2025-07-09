@@ -39,14 +39,22 @@ class AudioTrackDocument {
 
   AudioTrackDTO toDTO() {
     return AudioTrackDTO(
-      id: AudioTrackId.fromUniqueString(id),
+      id: AudioTrackId.fromUniqueString(_cleanId(id)),
       name: name,
       url: url,
       duration: duration,
-      projectId: ProjectId.fromUniqueString(projectId),
-      uploadedBy: UserId.fromUniqueString(uploadedBy),
+      projectId: ProjectId.fromUniqueString(_cleanId(projectId)),
+      uploadedBy: UserId.fromUniqueString(_cleanId(uploadedBy)),
       createdAt: createdAt,
       extension: extension.isNotEmpty ? extension : '',
     );
+  }
+
+  /// Clean ID string by removing wrapper format like "UserId(id)" -> "id"
+  String _cleanId(String id) {
+    // Remove patterns like "UserId(...)", "AudioTrackId(...)", etc.
+    final regex = RegExp(r'^[A-Za-z]+\((.+)\)$');
+    final match = regex.firstMatch(id);
+    return match?.group(1) ?? id;
   }
 }

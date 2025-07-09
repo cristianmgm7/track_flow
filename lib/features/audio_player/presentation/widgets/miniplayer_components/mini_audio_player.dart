@@ -42,7 +42,6 @@ class MiniAudioPlayer extends StatelessWidget {
     final modalPresentationService = modalService ?? ModalPresentationService();
 
     return Container(
-      height: config.height,
       decoration: BoxDecoration(
         color: config.backgroundColor ?? theme.cardColor,
         boxShadow: [
@@ -60,35 +59,38 @@ class MiniAudioPlayer extends StatelessWidget {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  children: [
+                    // track info
+                    if (config.showTrackInfo)
+                      Expanded(
+                        child: TrackInfoWidget(
+                          state: state,
+                          onTap:
+                              () => modalPresentationService
+                                  .showFullPlayerModal(context),
+                        ),
+                      ),
+                    // audio controls
+                    const AudioControls(size: 20.0, showStop: false),
+                    const SizedBox(width: 8),
+                    if (config.showQueueControls)
+                      const QueueControls(
+                        size: 18.0,
+                        showRepeatMode: false,
+                        showShuffleMode: false,
+                      ),
+                  ],
+                ),
+                // progress bar
                 if (config.showProgress) ...[
+                  const SizedBox(height: 8),
                   const PlaybackProgress(
                     height: 2.0,
                     thumbRadius: 6.0,
                     showTimeLabels: false,
                   ),
-                  const SizedBox(height: 8),
                 ],
-                Expanded(
-                  child: Row(
-                    children: [
-                      if (config.showTrackInfo)
-                        Expanded(
-                          child: TrackInfoWidget(
-                            state: state,
-                            onTap: () => modalPresentationService.showFullPlayerModal(context),
-                          ),
-                        ),
-                      const AudioControls(size: 20.0, showStop: false),
-                      const SizedBox(width: 8),
-                      if (config.showQueueControls)
-                        const QueueControls(
-                          size: 18.0,
-                          showRepeatMode: false,
-                          showShuffleMode: false,
-                        ),
-                    ],
-                  ),
-                ),
               ],
             );
           },

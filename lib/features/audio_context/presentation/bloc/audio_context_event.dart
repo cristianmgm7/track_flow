@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 /// Events for audio context management
 /// These events can be triggered by UI components based on audio player state changes
@@ -13,7 +14,7 @@ abstract class AudioContextEvent extends Equatable {
 class LoadTrackContextRequested extends AudioContextEvent {
   const LoadTrackContextRequested(this.trackId);
 
-  final String trackId;
+  final AudioTrackId trackId;
 
   @override
   List<Object?> get props => [trackId];

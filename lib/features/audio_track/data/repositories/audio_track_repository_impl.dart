@@ -27,7 +27,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     try {
       final result = await localDataSource.getTrackById(id.value);
       return result.fold(
-        (failure) => Left(failure),
+        (failure) => Left(failure), // Pass failure through without wrapping
         (dto) =>
             dto != null
                 ? Right(dto.toDomain())

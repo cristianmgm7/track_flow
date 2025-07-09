@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_context/domain/usecases/load_track_context_usecase.dart';
-import 'package:trackflow/features/audio_context/domain/usecases/watch_track_context_usecase.dart';
 import '../../domain/entities/track_context.dart';
-import '../../domain/services/audio_context_service.dart';
 import 'audio_context_event.dart';
 import 'audio_context_state.dart';
 
@@ -14,25 +13,15 @@ import 'audio_context_state.dart';
 @injectable
 class AudioContextBloc extends Bloc<AudioContextEvent, AudioContextState> {
   final LoadTrackContextUseCase _loadTrackContextUseCase;
-  final WatchTrackContextUseCase _watchTrackContextUseCase;
 
-  AudioContextBloc({
-    required LoadTrackContextUseCase loadTrackContextUseCase,
-    required WatchTrackContextUseCase watchTrackContextUseCase,
-  }) : _loadTrackContextUseCase = loadTrackContextUseCase,
-       _watchTrackContextUseCase = watchTrackContextUseCase,
-       super(const AudioContextInitial()) {
+  AudioContextBloc({required LoadTrackContextUseCase loadTrackContextUseCase})
+    : _loadTrackContextUseCase = loadTrackContextUseCase,
+      super(const AudioContextInitial()) {
     // Register event handlers
     on<LoadTrackContextRequested>(_onLoadTrackContextRequested);
-    on<ClearTrackContextRequested>(_onClearTrackContextRequested);
-    on<StartWatchingTrackContextRequested>(
-      _onStartWatchingTrackContextRequested,
-    );
-    on<StopWatchingTrackContextRequested>(_onStopWatchingTrackContextRequested);
   }
 
-  StreamSubscription<TrackContext>? _contextSubscription;
-  String? _currentTrackId;
+  AudioTrackId? _currentTrackId;
 
   /// Load context for a specific track
   Future<void> _onLoadTrackContextRequested(
@@ -44,79 +33,36 @@ class AudioContextBloc extends Bloc<AudioContextEvent, AudioContextState> {
     }
 
     _currentTrackId = event.trackId;
-    emit(AudioContextLoading(trackId: event.trackId));
+    emit(AudioContextLoading(trackId: event.trackId.value));
 
     try {
-      final context = await _loadTrackContextUseCase.call(event.trackId);
+      final result = await _loadTrackContextUseCase.call(event.trackId);
 
-      if (context != null) {
-        emit(AudioContextLoaded(context));
-      } else {
-        emit(AudioContextNotFound(event.trackId));
-      }
+      result.fold(
+        (failure) {
+          emit(
+            AudioContextError(
+              'Failed to load track context: ${failure.message}',
+              trackId: event.trackId.value,
+            ),
+          );
+        },
+        (context) {
+          emit(AudioContextLoaded(context));
+        },
+      );
     } catch (e) {
       emit(
         AudioContextError(
-          'Failed to load track context: ${e.toString()}',
-          trackId: event.trackId,
+          'Unexpected error: ${e.toString()}',
+          trackId: event.trackId.value,
         ),
       );
     }
   }
 
-  /// Clear current context
-  void _onClearTrackContextRequested(
-    ClearTrackContextRequested event,
-    Emitter<AudioContextState> emit,
-  ) {
-    _stopWatching();
-    _currentTrackId = null;
-    emit(const AudioContextInitial());
-  }
-
-  /// Start watching context changes for current track
-  void _onStartWatchingTrackContextRequested(
-    StartWatchingTrackContextRequested event,
-    Emitter<AudioContextState> emit,
-  ) {
-    if (_currentTrackId != null) {
-      _stopWatching(); // Clean up previous subscription
-
-      _contextSubscription = _watchTrackContextUseCase
-          .call(_currentTrackId!)
-          .listen(
-            (context) {
-              if (_currentTrackId == context.trackId) {
-                emit(AudioContextLoaded(context));
-              }
-            },
-            onError: (error) {
-              emit(
-                AudioContextError(
-                  'Context watch error: ${error.toString()}',
-                  trackId: _currentTrackId,
-                ),
-              );
-            },
-          );
-    }
-  }
-
-  /// Stop watching context changes
-  void _onStopWatchingTrackContextRequested(
-    StopWatchingTrackContextRequested event,
-    Emitter<AudioContextState> emit,
-  ) {
-    _stopWatching();
-  }
-
-  void _stopWatching() {
-    _contextSubscription?.cancel();
-    _contextSubscription = null;
-  }
-
   /// Get current track ID
-  String? get currentTrackId => _currentTrackId;
+  AudioTrackId? get currentTrackId => _currentTrackId;
 
   /// Check if context is loaded
   bool get hasContext => state is AudioContextLoaded;
@@ -136,10 +82,4 @@ class AudioContextBloc extends Bloc<AudioContextEvent, AudioContextState> {
   DateTime? get uploadedAt => currentContext?.uploadedAt;
   List<String>? get tags => currentContext?.tags;
   String? get description => currentContext?.description;
-
-  @override
-  Future<void> close() {
-    _stopWatching();
-    return super.close();
-  }
 }

@@ -5,7 +5,7 @@ import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubi
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 // import 'package:trackflow/features/audio_player/presentation/screens/audio_player_sheet.dart'; // REMOVED
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/presentation/widgets/pure_mini_audio_player.dart';
+import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 
 class MainScaffold extends StatelessWidget {
@@ -20,16 +20,22 @@ class MainScaffold extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          Expanded(child: child),
-          // TODO: Reimplement download queue widget with new Clean Architecture
-          // const DownloadQueueWidget(showHeader: false, maxVisibleItems: 3),
-          BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-            builder: (context, state) {
-              if (state is AudioPlayerSessionState) {
-                return const PureMiniAudioPlayer();
-              }
-              return const SizedBox.shrink();
-            },
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: child),
+                // TODO: Reimplement download queue widget with new Clean Architecture
+                // const DownloadQueueWidget(showHeader: false, maxVisibleItems: 3),
+                BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+                  builder: (context, state) {
+                    if (state is AudioPlayerSessionState) {
+                      return const MiniAudioPlayer();
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),

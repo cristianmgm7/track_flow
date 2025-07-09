@@ -33,7 +33,7 @@ class TrackInfoBuilder implements ITrackInfoBuilder {
       final session = state.session;
       if (session.currentTrack != null) {
         title = session.currentTrack!.title;
-        trackId = session.currentTrack!.id.toString();
+        trackId = session.currentTrack!.id.value;
 
         if (session.duration != null) {
           duration = DurationFormatter.format(session.duration!);
@@ -47,11 +47,7 @@ class TrackInfoBuilder implements ITrackInfoBuilder {
       title = 'Error';
     }
 
-    return TrackDisplayInfo(
-      title: title,
-      duration: duration,
-      trackId: trackId,
-    );
+    return TrackDisplayInfo(title: title, duration: duration, trackId: trackId);
   }
 }
 
@@ -136,9 +132,10 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                         trackInfo.duration.isNotEmpty)
                     ? Padding(
                       padding: const EdgeInsets.only(top: 2.0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Row(
+                          children: [
                           if (displayArtist.isNotEmpty) ...[
                             Flexible(
                               child: Text(
@@ -155,7 +152,9 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                           if (displayArtist.isNotEmpty &&
                               trackInfo.duration.isNotEmpty) ...[
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4.0,
+                              ),
                               child: Text(
                                 '•',
                                 style: theme.textTheme.bodySmall?.copyWith(
@@ -174,6 +173,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                               ),
                             ),
                         ],
+                        ),
                       ),
                     )
                     : const SizedBox.shrink();

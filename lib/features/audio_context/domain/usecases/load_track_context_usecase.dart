@@ -1,4 +1,7 @@
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
 import '../services/audio_context_service.dart';
 import '../entities/track_context.dart';
 
@@ -12,7 +15,7 @@ class LoadTrackContextUseCase {
 
   /// Load context for a specific track
   /// Returns null if track context cannot be found or loaded
-  Future<TrackContext?> call(String trackId) async {
+  Future<Either<Failure, TrackContext>> call(AudioTrackId trackId) async {
     return await _audioContextService.getTrackContext(trackId);
   }
 }
