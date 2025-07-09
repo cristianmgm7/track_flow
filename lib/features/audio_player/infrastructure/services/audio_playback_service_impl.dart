@@ -35,10 +35,12 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       _setupListeners();
 
       // Update session with current track and loading state
-      _updateSession(_currentSession.copyWith(
-        currentTrack: source.metadata,
-        state: PlaybackState.loading,
-      ));
+      _updateSession(
+        _currentSession.copyWith(
+          currentTrack: source.metadata,
+          state: PlaybackState.loading,
+        ),
+      );
 
       // Load the audio source
       await _audioPlayer.setUrl(source.url);
@@ -181,12 +183,17 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
 
       final nextSource = queue.next();
       if (nextSource != null) {
+        // Move to next track and update queue index
+        final updatedQueue = queue.moveToNext();
+        
         await play(nextSource);
         // Update the queue in session to reflect the new current index
-        _updateSession(_currentSession.copyWith(
-          queue: queue,
-          currentTrack: nextSource.metadata,
-        ));
+        _updateSession(
+          _currentSession.copyWith(
+            queue: updatedQueue,
+            currentTrack: nextSource.metadata,
+          ),
+        );
         return true;
       }
       return false;
@@ -211,12 +218,17 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
 
       final previousSource = queue.previous();
       if (previousSource != null) {
+        // Move to previous track and update queue index
+        final updatedQueue = queue.moveToPrevious();
+        
         await play(previousSource);
         // Update the queue in session to reflect the new current index
-        _updateSession(_currentSession.copyWith(
-          queue: queue,
-          currentTrack: previousSource.metadata,
-        ));
+        _updateSession(
+          _currentSession.copyWith(
+            queue: updatedQueue,
+            currentTrack: previousSource.metadata,
+          ),
+        );
         return true;
       }
       return false;
@@ -274,11 +286,11 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       // Play the track at start index
       final startSource = sources[startIndex];
       await play(startSource);
-      
+
       // Update session with the current track from the queue
-      _updateSession(_currentSession.copyWith(
-        currentTrack: startSource.metadata,
-      ));
+      _updateSession(
+        _currentSession.copyWith(currentTrack: startSource.metadata),
+      );
     } catch (e) {
       _updateSession(
         _currentSession.copyWith(

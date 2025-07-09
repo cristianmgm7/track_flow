@@ -44,7 +44,7 @@ class QueueControls extends StatelessWidget {
             _buildPreviousButton(context, state, iconColor),
             SizedBox(width: spacing),
 
-            // Next button  
+            // Next button
             _buildNextButton(context, state, iconColor),
 
             // Repeat mode button
@@ -70,11 +70,12 @@ class QueueControls extends StatelessWidget {
     }
 
     return IconButton(
-      onPressed: canGoToPrevious
-          ? () => context.read<AudioPlayerBloc>().add(
+      onPressed:
+          canGoToPrevious
+              ? () => context.read<AudioPlayerBloc>().add(
                 const SkipToPreviousRequested(),
               )
-          : null,
+              : null,
       icon: Icon(
         Icons.skip_previous,
         size: size,
@@ -96,11 +97,12 @@ class QueueControls extends StatelessWidget {
     }
 
     return IconButton(
-      onPressed: canGoToNext
-          ? () => context.read<AudioPlayerBloc>().add(
+      onPressed:
+          canGoToNext
+              ? () => context.read<AudioPlayerBloc>().add(
                 const SkipToNextRequested(),
               )
-          : null,
+              : null,
       icon: Icon(
         Icons.skip_next,
         size: size,
@@ -124,17 +126,21 @@ class QueueControls extends StatelessWidget {
     }
 
     return IconButton(
-      onPressed: hasQueue
-          ? () => context.read<AudioPlayerBloc>().add(
+      onPressed:
+          hasQueue
+              ? () => context.read<AudioPlayerBloc>().add(
                 const ToggleShuffleRequested(),
               )
-          : null,
+              : null,
       icon: Icon(
         Icons.shuffle,
         size: size,
-        color: hasQueue 
-            ? (isShuffleEnabled ? iconColor : iconColor.withValues(alpha: 0.5))
-            : iconColor.withValues(alpha: 0.3),
+        color:
+            hasQueue
+                ? (isShuffleEnabled
+                    ? iconColor
+                    : iconColor.withValues(alpha: 0.5))
+                : iconColor.withValues(alpha: 0.3),
       ),
       tooltip: isShuffleEnabled ? 'Disable shuffle' : 'Enable shuffle',
     );
@@ -161,7 +167,10 @@ class QueueControls extends StatelessWidget {
       case RepeatMode.none:
         icon = Icons.repeat;
         tooltip = 'Enable repeat';
-        buttonColor = hasQueue ? iconColor.withValues(alpha: 0.5) : iconColor.withValues(alpha: 0.3);
+        buttonColor =
+            hasQueue
+                ? iconColor.withValues(alpha: 0.5)
+                : iconColor.withValues(alpha: 0.3);
         break;
       case RepeatMode.single:
         icon = Icons.repeat_one;
@@ -176,16 +185,13 @@ class QueueControls extends StatelessWidget {
     }
 
     return IconButton(
-      onPressed: hasQueue
-          ? () => context.read<AudioPlayerBloc>().add(
+      onPressed:
+          hasQueue
+              ? () => context.read<AudioPlayerBloc>().add(
                 const ToggleRepeatModeRequested(),
               )
-          : null,
-      icon: Icon(
-        icon,
-        size: size,
-        color: buttonColor,
-      ),
+              : null,
+      icon: Icon(icon, size: size, color: buttonColor),
       tooltip: tooltip,
     );
   }
