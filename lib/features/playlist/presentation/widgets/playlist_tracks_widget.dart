@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
@@ -45,7 +44,6 @@ class PlaylistTracksWidget extends StatelessWidget {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final track = tracks[index];
-            final uploader = collaboratorsByTrackId?[track.id.value];
             final queuePosition = index + 1;
 
             return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
@@ -98,19 +96,10 @@ class PlaylistTracksWidget extends StatelessWidget {
                       Expanded(
                         child: TrackComponent(
                           track: track,
-                          uploader: uploader,
                           projectId:
                               projectId != null
                                   ? ProjectId.fromUniqueString(projectId!)
                                   : track.projectId,
-                          onPlay: () {
-                            context.read<AudioPlayerBloc>().add(
-                              PlayPlaylistRequested(
-                                playlistId: playlist.id,
-                                startIndex: index,
-                              ),
-                            );
-                          },
                         ),
                       ),
                       const SizedBox(width: 8),

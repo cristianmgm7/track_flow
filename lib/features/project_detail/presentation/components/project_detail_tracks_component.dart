@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
@@ -53,16 +52,8 @@ class ProjectDetailTracksComponent extends StatelessWidget {
             ],
             if (state.tracks.isNotEmpty) ...[
               ...state.tracks.map(
-                (track) => TrackComponent(
-                  track: track,
-                  projectId: state.project!.id,
-                  uploader: state.collaborators.firstWhereOrNull(
-                    (collaborator) => collaborator.id == track.uploadedBy,
-                  ),
-                  onPlay: () {
-                    // TODO: Implement track playback
-                  },
-                ),
+                (track) =>
+                    TrackComponent(track: track, projectId: state.project!.id),
               ),
             ],
           ],
