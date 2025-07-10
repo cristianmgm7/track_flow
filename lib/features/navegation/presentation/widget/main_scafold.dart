@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-// import 'package:trackflow/features/audio_player/presentation/screens/audio_player_sheet.dart'; // REMOVED
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
@@ -18,14 +17,21 @@ class MainScaffold extends StatelessWidget {
     final currentTab = context.select((NavigationCubit cubit) => cubit.state);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(currentTab == AppTab.projects ? 'Projects' : 'My Music'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.go(AppRoutes.settings),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
             child: Column(
               children: [
                 Expanded(child: child),
-                // TODO: Reimplement download queue widget with new Clean Architecture
-                // const DownloadQueueWidget(showHeader: false, maxVisibleItems: 3),
                 BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
                   builder: (context, state) {
                     if (state is AudioPlayerSessionState) {
@@ -39,74 +45,32 @@ class MainScaffold extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: const Color.fromARGB(95, 255, 255, 255),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.surface,
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // --- Home Button ---
-              IconButton(
-                icon: const Icon(Icons.home),
-                onPressed: () {
-                  context.read<NavigationCubit>().setTab(AppTab.dashboard);
-                  context.go(AppRoutes.dashboard);
-                },
-                color:
-                    currentTab == AppTab.dashboard
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey[400],
-              ),
-              // --- Projects Button ---
-              IconButton(
-                icon: const Icon(Icons.folder),
-                onPressed: () {
-                  context.read<NavigationCubit>().setTab(AppTab.projects);
-                  context.go(AppRoutes.projects);
-                },
-                color:
-                    currentTab == AppTab.projects
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey[400],
-              ),
-              // --- Notifications Button ---
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  context.read<NavigationCubit>().setTab(AppTab.notifications);
-                  context.go(AppRoutes.notifications);
-                },
-                color:
-                    currentTab == AppTab.notifications
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey[400],
-              ),
-              // --- Settings Button ---
-              IconButton(
-                icon: const Icon(Icons.person),
-                onPressed: () {
-                  context.read<NavigationCubit>().setTab(AppTab.settings);
-                  context.go(AppRoutes.settings);
-                },
-                color:
-                    currentTab == AppTab.settings
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey[400],
-              ),
-            ],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentTab.index,
+        onTap: (index) {
+          final tab = AppTab.values[index];
+          context.read<NavigationCubit>().setTab(tab);
+          switch (tab) {
+            case AppTab.projects:
+              context.go(AppRoutes.projects);
+              break;
+            case AppTab.myMusic:
+              // TODO: Create a dedicated route for playlists
+              // For now, we can navigate to a placeholder or the first project
+              context.go(AppRoutes.projects);
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.folder),
+            label: 'Projects',
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.music_note),
+            label: 'My Music',
+          ),
+        ],
       ),
     );
   }

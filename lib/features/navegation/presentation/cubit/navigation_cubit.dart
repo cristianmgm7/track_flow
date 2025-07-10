@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-enum AppTab { dashboard, projects, notifications, settings }
+enum AppTab { projects, myMusic }
 
 @injectable
 class NavigationCubit extends Cubit<AppTab> {
-  NavigationCubit() : super(AppTab.dashboard);
+  NavigationCubit() : super(AppTab.projects);
 
   void setTab(AppTab tab) => emit(tab);
 
@@ -14,5 +14,5 @@ class NavigationCubit extends Cubit<AppTab> {
     super.onChange(change);
   }
 
-  void reset() => emit(AppTab.dashboard);
+  void reset() => emit(AppTab.projects);
 }
