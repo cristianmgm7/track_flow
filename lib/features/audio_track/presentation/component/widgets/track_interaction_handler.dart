@@ -35,11 +35,15 @@ class TrackInteractionHandler {
   void handlePlayTrack(BuildContext context) {
     if (config.uploader == null) return;
 
-    context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(AudioTrackId.fromUniqueString(config.track.id.value)),
-    );
-
-    config.onPlay?.call();
+    if (config.onPlay != null) {
+      config.onPlay!();
+    } else {
+      context.read<AudioPlayerBloc>().add(
+        PlayAudioRequested(
+          AudioTrackId.fromUniqueString(config.track.id.value),
+        ),
+      );
+    }
   }
 
   /// Handle opening track actions sheet

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
@@ -100,6 +101,14 @@ class PlaylistTracksWidget extends StatelessWidget {
                               projectId != null
                                   ? ProjectId.fromUniqueString(projectId!)
                                   : track.projectId,
+                          onPlay: () {
+                            context.read<AudioPlayerBloc>().add(
+                              PlayPlaylistRequested(
+                                tracks: tracks,
+                                startIndex: index,
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 8),
