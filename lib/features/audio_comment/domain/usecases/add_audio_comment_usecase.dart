@@ -10,11 +10,13 @@ class AddAudioCommentParams {
   final ProjectId projectId;
   final AudioTrackId trackId;
   final String content;
+  final Duration timestamp;
 
   AddAudioCommentParams({
     required this.projectId,
     required this.trackId,
     required this.content,
+    required this.timestamp,
   });
 }
 
@@ -44,6 +46,7 @@ class AddAudioCommentUseCase {
         requester: UserId.fromUniqueString(userId),
         trackId: params.trackId,
         content: params.content,
+        timestamp: params.timestamp,
       );
     });
   }

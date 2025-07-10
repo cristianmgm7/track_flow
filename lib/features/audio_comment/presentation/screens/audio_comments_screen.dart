@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
@@ -43,23 +41,6 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
     super.initState();
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
-    );
-    // TODO: Handle visual context change in composition layer
-    // context.read<AudioPlayerBloc>().add(
-    //   ChangeVisualContext(PlayerVisualContext.commentPlayer),
-    // );
-    // final collaborator =
-    //     widget.collaborators.isNotEmpty
-    //         ? widget.collaborators.first
-    //         : UserProfile(
-    //           id: widget.track.uploadedBy,
-    //           name: '',
-    //           email: '',
-    //           avatarUrl: '',
-    //           createdAt: DateTime.now(),
-    //         ); // TODO: Use for author display
-    context.read<AudioPlayerBloc>().add(
-      PlayAudioRequested(AudioTrackId.fromUniqueString(widget.track.id.value)),
     );
   }
 
@@ -118,7 +99,12 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
             AudioCommentInputComment(
               onSend: (text) {
                 context.read<AudioCommentBloc>().add(
-                  AddAudioCommentEvent(widget.projectId, widget.track.id, text),
+                  AddAudioCommentEvent(
+                    widget.projectId,
+                    widget.track.id,
+                    text,
+                    Duration(milliseconds: 0),
+                  ),
                 );
               },
             ),

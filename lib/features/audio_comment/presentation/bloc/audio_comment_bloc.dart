@@ -40,6 +40,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
         projectId: event.projectId,
         trackId: event.trackId,
         content: event.content,
+        timestamp: event.timestamp,
       ),
     );
     result.fold(

@@ -6,6 +6,7 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
@@ -83,12 +84,14 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.audioComments,
           builder: (context, state) {
-            // Puedes pasar los argumentos por extra o queryParams
             final args = state.extra as AudioCommentsScreenArgs;
-            return AudioCommentsScreen(
-              projectId: args.projectId,
-              track: args.track,
-              collaborators: args.collaborators,
+            return BlocProvider<TrackCacheBloc>(
+              create: (context) => sl<TrackCacheBloc>(),
+              child: AudioCommentsScreen(
+                projectId: args.projectId,
+                track: args.track,
+                collaborators: args.collaborators,
+              ),
             );
           },
         ),

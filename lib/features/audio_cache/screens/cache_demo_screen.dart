@@ -28,6 +28,7 @@ class CacheDemoScreen extends StatelessWidget {
                     cacheTrackUseCase: context.read(),
                     removeTrackCacheUseCase: context.read(),
                     watchTrackCacheStatusUseCase: context.read(),
+                    getCachedTrackPathUseCase: context.read(),
                   ),
               child: const TrackCacheDemo(),
             ),

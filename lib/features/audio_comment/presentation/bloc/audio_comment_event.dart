@@ -13,11 +13,12 @@ class AddAudioCommentEvent extends AudioCommentEvent {
   final ProjectId projectId;
   final AudioTrackId trackId;
   final String content;
+  final Duration timestamp;
 
-  AddAudioCommentEvent(this.projectId, this.trackId, this.content);
+  AddAudioCommentEvent(this.projectId, this.trackId, this.content, this.timestamp);
 
   @override
-  List<Object?> get props => [projectId, trackId, content];
+  List<Object?> get props => [projectId, trackId, content, timestamp];
 }
 
 class DeleteAudioCommentEvent extends AudioCommentEvent {

@@ -25,6 +25,7 @@ class ProjectCommentService {
     required AudioTrackId trackId,
     required UserId requester,
     required String content,
+    required Duration timestamp,
   }) async {
     final collaborator = project.collaborators.firstWhere(
       (c) => c.userId == requester,
@@ -40,7 +41,7 @@ class ProjectCommentService {
       trackId: trackId,
       createdBy: requester,
       content: content,
-    );
+    ).copyWith(timestamp: timestamp);
 
     return await commentRepository.addComment(comment);
   }

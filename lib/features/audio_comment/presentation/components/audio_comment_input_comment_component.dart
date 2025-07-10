@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class AudioCommentInputComment extends StatefulWidget {
   final void Function(String) onSend;
-  const AudioCommentInputComment({super.key, required this.onSend});
+  final FocusNode? focusNode;
+  const AudioCommentInputComment({super.key, required this.onSend, this.focusNode});
 
   @override
   State<AudioCommentInputComment> createState() =>
@@ -23,6 +24,7 @@ class _AudioCommentInputCommentState extends State<AudioCommentInputComment> {
     if (text.isNotEmpty) {
       widget.onSend(text);
       _controller.clear();
+      widget.focusNode?.unfocus();
     }
   }
 
@@ -36,6 +38,7 @@ class _AudioCommentInputCommentState extends State<AudioCommentInputComment> {
           Expanded(
             child: TextField(
               controller: _controller,
+              focusNode: widget.focusNode,
               style: const TextStyle(color: Colors.white),
               decoration: const InputDecoration(
                 hintText: 'Escribe un comentario...',
