@@ -1,171 +1,164 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/waveform/audio_waveform_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
 
-class AudioCommentWaveform extends StatefulWidget {
+class AudioCommentWaveform extends StatelessWidget {
   const AudioCommentWaveform({super.key});
 
   @override
-  State<AudioCommentWaveform> createState() => _AudioCommentWaveformState();
-}
-
-class _AudioCommentWaveformState extends State<AudioCommentWaveform> {
-  final PlayerController _playerController = PlayerController();
-  StreamSubscription? _playerStateSubscription;
-  int _currentPosition = 0;
-  String? _currentTrackId;
-
-  @override
-  void initState() {
-    super.initState();
-    _playerStateSubscription = _playerController.onPlayerStateChanged.listen((
-      state,
-    ) {
-      if (state == PlayerState.stopped) {
-        // Handle visual reset if needed
-      }
-    });
-    _playerController.onCurrentDurationChanged.listen((pos) {
-      setState(() {
-        _currentPosition = pos;
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _playerStateSubscription?.cancel();
-    _playerController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AudioPlayerBloc, AudioPlayerState>(
-      listener: (context, state) {
-        if (state is AudioPlayerSessionState) {
-          final sessionPosition = state.session.position.inMilliseconds;
-          final controllerPosition =
-              _playerController.playerState == PlayerState.playing
-                  ? _currentPosition
-                  : 0;
-
-          if ((sessionPosition - controllerPosition).abs() > 500) {
-            _playerController.seekTo(sessionPosition);
-          }
+    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+      builder: (context, playerState) {
+        if (playerState is! AudioPlayerSessionState ||
+            (playerState is! AudioPlayerPlaying &&
+                playerState is! AudioPlayerPaused)) {
+          return const SizedBox.shrink();
         }
-      },
-      builder: (context, state) {
-        if (state is AudioPlayerSessionState &&
-            (state is AudioPlayerPlaying || state is AudioPlayerPaused)) {
-          final track = state.session.currentTrack;
-          if (track == null) return const SizedBox.shrink();
 
-          // Dispatch event when track changes
-          if (_currentTrackId != track.id.value) {
-            _currentTrackId = track.id.value;
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              context.read<TrackCacheBloc>().add(
-                GetCachedTrackPathRequested(track.id.value),
+        final track = playerState.session.currentTrack;
+        if (track == null) {
+          return const SizedBox.shrink();
+        }
+
+        return BlocProvider(
+          create:
+              (context) => sl<AudioWaveformBloc>()..add(LoadWaveform(track.id)),
+          child: BlocBuilder<AudioWaveformBloc, AudioWaveformState>(
+            builder: (context, waveformState) {
+              return Container(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 24,
+                ),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      track.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildWaveformBody(context, waveformState),
+                    const SizedBox(height: 12),
+                    _buildControls(context, playerState),
+                  ],
+                ),
               );
-            });
-          }
-
-          return BlocBuilder<TrackCacheBloc, TrackCacheState>(
-            builder: (context, cacheState) {
-              if (cacheState is TrackCacheLoading) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (cacheState is TrackCachePathLoaded &&
-                  cacheState.filePath != null) {
-                final localPath = cacheState.filePath!;
-                Future.microtask(() {
-                  if (_playerController.playerState == PlayerState.stopped) {
-                    _playerController.preparePlayer(
-                      path: localPath,
-                      shouldExtractWaveform: true,
-                      noOfSamples: 100,
-                      volume: 0.0,
-                    );
-                  }
-                });
-
-                return Container(
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 24,
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blueGrey[50],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        track.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
-                      AudioFileWaveforms(
-                        size: const Size(double.infinity, 60),
-                        playerController: _playerController,
-                        enableSeekGesture: true,
-                        waveformType: WaveformType.fitWidth,
-                        playerWaveStyle: PlayerWaveStyle(
-                          fixedWaveColor: Colors.blueAccent[100]!,
-                          liveWaveColor: Colors.blueAccent,
-                          spacing: 4,
-                          waveThickness: 2,
-                          showSeekLine: true,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: Icon(
-                              state is AudioPlayerPlaying
-                                  ? Icons.pause_circle_filled
-                                  : Icons.play_circle_filled,
-                              size: 48,
-                              color: Colors.blueAccent,
-                            ),
-                            onPressed: () {
-                              if (state is AudioPlayerPlaying) {
-                                context.read<AudioPlayerBloc>().add(
-                                  const PauseAudioRequested(),
-                                );
-                              } else {
-                                context.read<AudioPlayerBloc>().add(
-                                  const ResumeAudioRequested(),
-                                );
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              } else if (cacheState is TrackCacheOperationFailure) {
-                return Center(child: Text('Error: ${cacheState.error}'));
-              } else {
-                return const Center(child: Text('Preparing waveform...'));
-              }
             },
-          );
-        }
-        return const SizedBox.shrink();
+          ),
+        );
       },
     );
+  }
+
+  Widget _buildWaveformBody(
+    BuildContext context,
+    AudioWaveformState waveformState,
+  ) {
+    switch (waveformState.status) {
+      case WaveformStatus.loading:
+        return const Center(child: CircularProgressIndicator());
+      case WaveformStatus.error:
+        return Center(
+          child: Text('Error: ${waveformState.errorMessage ?? "Unknown"}'),
+        );
+      case WaveformStatus.ready:
+        if (waveformState.playerController != null) {
+          return GestureDetector(
+            onTapDown:
+                (details) => _handleWaveformTap(
+                  context,
+                  details,
+                  waveformState.playerController!,
+                ),
+            child: AudioFileWaveforms(
+              size: const Size(double.infinity, 60),
+              playerController: waveformState.playerController!,
+              enableSeekGesture: false, // Disabled to handle manually
+              waveformType: WaveformType.fitWidth,
+              playerWaveStyle: PlayerWaveStyle(
+                fixedWaveColor: Colors.blueAccent[100]!,
+                liveWaveColor: const Color.fromARGB(255, 104, 14, 177),
+                spacing: 4,
+                waveThickness: 2,
+                showSeekLine: true,
+                seekLineColor: const Color.fromARGB(255, 211, 99, 51),
+              ),
+            ),
+          );
+        }
+        return const Center(child: Text('Preparing waveform...'));
+      default:
+        return const Center(child: Text('Preparing waveform...'));
+    }
+  }
+
+  Widget _buildControls(BuildContext context, AudioPlayerState playerState) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: Icon(
+            playerState is AudioPlayerPlaying
+                ? Icons.pause_circle_filled
+                : Icons.play_circle_filled,
+            size: 48,
+            color: Colors.blueAccent,
+          ),
+          onPressed: () {
+            final audioPlayerBloc = context.read<AudioPlayerBloc>();
+            if (playerState is AudioPlayerPlaying) {
+              audioPlayerBloc.add(const PauseAudioRequested());
+            } else {
+              audioPlayerBloc.add(const ResumeAudioRequested());
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  void _handleWaveformTap(
+    BuildContext context,
+    TapDownDetails details,
+    PlayerController controller,
+  ) async {
+    try {
+      // Get the render box to calculate the actual width before async call
+      final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+
+      final waveformWidth =
+          renderBox.size.width - 48; // Subtract container padding (24*2)
+      final tapPosition = details.localPosition.dx;
+      final seekRatio = (tapPosition / waveformWidth).clamp(0.0, 1.0);
+
+      // Get the total duration of the track
+      final totalDuration = await controller.getDuration(DurationType.max);
+      if (totalDuration == 0) return;
+
+      final seekPosition = Duration(
+        milliseconds: (totalDuration * seekRatio).round(),
+      );
+
+      // Send seek event to AudioPlayerBloc
+      if (context.mounted) {
+        context.read<AudioPlayerBloc>().add(
+          SeekToPositionRequested(seekPosition),
+        );
+      }
+    } catch (e) {
+      // Error handling - could be logged properly in production
+    }
   }
 }
