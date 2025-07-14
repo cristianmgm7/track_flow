@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -116,16 +118,14 @@ class CommentComponent extends StatelessWidget {
 }
 
 class AudioCommentCommentsList extends StatelessWidget {
-  final List<AudioComment> comments;
   final List<UserProfile> collaborators;
+  
   const AudioCommentCommentsList({
     super.key,
-    required this.comments,
     required this.collaborators,
   });
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildCommentsList(List<AudioComment> comments) {
     if (comments.isEmpty) {
       return const Center(
         child: Text('No comments yet.', style: TextStyle(color: Colors.white)),
@@ -146,6 +146,42 @@ class AudioCommentCommentsList extends StatelessWidget {
           ),
         );
         return CommentComponent(comment: comment, collaborator: collaborator);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AudioCommentBloc, AudioCommentState>(
+      builder: (context, state) {
+        if (state is AudioCommentLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is AudioCommentError) {
+          return Center(
+            child: Text(
+              'Error: ${state.message}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+        if (state is AudioCommentsLoaded) {
+          return _buildCommentsList(state.comments);
+        }
+        if (state is AudioCommentOperationSuccess) {
+          return Center(
+            child: Text(
+              state.message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        }
+        return const Center(
+          child: Text(
+            'Unable to load comments.',
+            style: TextStyle(color: Colors.white),
+          ),
+        );
       },
     );
   }

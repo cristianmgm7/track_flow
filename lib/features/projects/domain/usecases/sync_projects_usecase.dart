@@ -14,13 +14,23 @@ class SyncProjectsUseCase {
   Future<void> call() async {
     final userId = sessionStorage.getUserId();
     if (userId == null) {
+      await local.clearCache();
       return;
     }
+    
     final failureOrProjects = await remote.getUserProjects(userId);
-    await failureOrProjects.fold((failure) async {}, (projects) async {
-      for (final project in projects) {
-        await local.cacheProject(project);
+    await failureOrProjects.fold(
+      (failure) async {
+        // Don't clear cache if remote fetch fails - preserve existing data
+        print('Error syncing projects: $failure');
+      }, 
+      (projects) async {
+        // Only clear cache when we have new data to replace it
+        await local.clearCache();
+        for (final project in projects) {
+          await local.cacheProject(project);
+        }
       }
-    });
+    );
   }
 }

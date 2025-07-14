@@ -12,9 +12,8 @@ void main() {
 
     // Debug: Check if add button is present
     final addButton = find.byIcon(Icons.add);
-    debugPrint('Add button found: \\${addButton.evaluate().length}');
     if (addButton.evaluate().isEmpty) {
-      debugDumpApp();
+      // debugDumpApp();
     }
 
     // CREATE

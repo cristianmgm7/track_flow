@@ -23,16 +23,27 @@ class SyncUserProfileCollaboratorsUseCase {
               .toSet()
               .toList(),
     );
-    if (collaboratorIds.isEmpty) return;
+    if (collaboratorIds.isEmpty) {
+      // Clear cache if no collaborators found in projects
+      await userProfileCacheRepo.clearCache();
+      return;
+    }
+    
     final collaboratorIdObjects =
         collaboratorIds.map((id) => UserId.fromUniqueString(id)).toList();
     final result = await userProfileCacheRepo.getUserProfilesByIds(
       collaboratorIdObjects,
     );
     result.fold(
-      (failure) => null,
-      (profiles) async =>
-          await userProfileCacheRepo.cacheUserProfiles(profiles),
+      (failure) async {
+        // Don't clear cache if remote fetch fails - preserve existing data
+        print('Error syncing collaborators: $failure');
+      },
+      (profiles) async {
+        // Only clear cache when we have new data to replace it
+        await userProfileCacheRepo.clearCache();
+        await userProfileCacheRepo.cacheUserProfiles(profiles);
+      },
     );
   }
 }

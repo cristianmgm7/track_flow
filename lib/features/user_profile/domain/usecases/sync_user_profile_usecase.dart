@@ -14,11 +14,21 @@ class SyncUserProfileUseCase {
   Future<void> call() async {
     final userId = sessionStorage.getUserId();
     if (userId == null) {
+      await local.clearCache();
       return;
     }
+    
     final failureOrProfile = await remote.getProfileById(userId);
-    await failureOrProfile.fold((failure) async {}, (profileDTO) async {
-      await local.cacheUserProfile(profileDTO);
-    });
+    await failureOrProfile.fold(
+      (failure) async {
+        // Don't clear cache if remote fetch fails - preserve existing data
+        print('Error syncing user profile: $failure');
+      }, 
+      (profileDTO) async {
+        // Only clear cache when we have new data to replace it
+        await local.clearCache();
+        await local.cacheUserProfile(profileDTO);
+      }
+    );
   }
 }

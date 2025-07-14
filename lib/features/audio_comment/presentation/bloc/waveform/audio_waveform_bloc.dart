@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/watch_cache_status.dart';
 import 'package:trackflow/features/audio_player/domain/entities/playback_session.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart';
 
@@ -20,6 +19,7 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
   StreamSubscription? _sessionSubscription;
   StreamSubscription? _cacheSubscription;
   AudioTrackId? _currentTrackId;
+  bool _isSeekingFromWaveform = false;
 
   AudioWaveformBloc({
     required AudioPlaybackService audioPlaybackService,
@@ -31,6 +31,7 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
     on<_PlayerSessionUpdated>(_onPlayerSessionUpdated);
     on<_TrackPathLoaded>(_onTrackPathLoaded);
     on<_TrackCacheFailed>(_onTrackCacheFailed);
+    on<WaveformSeeked>(_onWaveformSeeked);
 
     _listenToAudioPlayer();
   }
@@ -91,12 +92,22 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
         ),
       );
 
+      // Crear PlayerWaveStyle para calcular muestras
+      const waveStyle = PlayerWaveStyle(spacing: 4, waveThickness: 3);
+
       await newController.preparePlayer(
         path: event.path,
         shouldExtractWaveform: true,
-        noOfSamples: 100,
-        volume: 0.0, // The waveform is visual only
+        noOfSamples: waveStyle.getSamplesForWidth(
+          300,
+        ), // Calcular muestras apropiadas para el ancho
+        volume: 0.0, // Sin volumen para que no se escuche
       );
+
+      // NO iniciar el player - solo extraer datos
+      // El PlayerController solo se usa para obtener waveformData
+      // La reproducción real la maneja AudioPlayerBloc
+      await newController.seekTo(0); // Posición inicial
 
       emit(
         state.copyWith(
@@ -133,16 +144,18 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
       return;
     }
 
-    // Sync position
-    final sessionPosition = event.session.position.inMilliseconds;
-    final controllerPosition =
-        controller.playerState == PlayerState.playing
-            ? await controller.getDuration(DurationType.current)
-            : 0;
-
-    if ((sessionPosition - controllerPosition).abs() > 500) {
-      controller.seekTo(sessionPosition);
+    // Skip sync if we're in the middle of seeking from waveform
+    if (_isSeekingFromWaveform) {
+      return;
     }
+
+    // Sync position always to show seek line correctly
+    final sessionPosition = event.session.position.inMilliseconds;
+
+    try {
+      // Update the controller position to show the seek line
+      await controller.seekTo(sessionPosition);
+    } catch (e) {}
   }
 
   Future<void> _onWaveformSeeked(
@@ -150,10 +163,16 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
     Emitter<AudioWaveformState> emit,
   ) async {
     try {
+      _isSeekingFromWaveform = true;
       await _audioPlaybackService.seek(event.position);
+      // Reset flag after a delay to allow position sync
+      Future.delayed(const Duration(milliseconds: 200), () {
+        _isSeekingFromWaveform = false;
+      });
     } catch (e) {
+      _isSeekingFromWaveform = false;
       // Handle error, maybe emit an error state or log it
-      print('Error seeking from waveform: $e');
+      // TODO: Replace with proper logging framework
     }
   }
 

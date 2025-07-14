@@ -10,7 +10,7 @@ class DeepLinkService {
   DeepLinkService._internal();
 
   final ValueNotifier<String?> magicLinkToken = ValueNotifier<String?>(null);
-  
+
   static const String _baseUrl = 'https://trackflow.app';
   static const String _customScheme = 'trackflow';
 
@@ -21,11 +21,11 @@ class DeepLinkService {
     Map<String, String>? queryParameters,
   }) async {
     final uri = Uri.parse('$_baseUrl/$type/$token');
-    
+
     if (queryParameters != null) {
       return uri.replace(queryParameters: queryParameters).toString();
     }
-    
+
     return uri.toString();
   }
 
@@ -33,23 +33,19 @@ class DeepLinkService {
   Future<void> handleIncomingLink(String link) async {
     try {
       final uri = Uri.parse(link);
-      
+
       // Handle web URLs (https://trackflow.app/magic-link/token)
       if (uri.host == 'trackflow.app' || uri.host == 'www.trackflow.app') {
         _handleWebLink(uri);
         return;
       }
-      
+
       // Handle custom scheme URLs (trackflow://magic-link/token)
       if (uri.scheme == _customScheme) {
         _handleCustomSchemeLink(uri);
         return;
       }
-      
-      debugPrint('Unhandled deep link: $link');
-    } catch (e) {
-      debugPrint('Error handling deep link: $e');
-    }
+    } catch (e) {}
   }
 
   void _handleWebLink(Uri uri) {
@@ -77,12 +73,11 @@ class DeepLinkService {
   /// adding url_launcher package dependency and proper URL launching capabilities
   Future<bool> launchDeepLink(String url) async {
     try {
-      debugPrint('Deep link generated: $url');
+      // debugPrint('Deep link generated: $url');
       // In a real implementation, this would use url_launcher package
       // For now, we just return true to indicate the link was "generated"
       return true;
     } catch (e) {
-      debugPrint('Error launching deep link: $e');
       return false;
     }
   }
@@ -95,9 +90,7 @@ class DeepLinkService {
     return generateDeepLink(
       type: 'magic-link',
       token: token,
-      queryParameters: {
-        'project': projectId,
-      },
+      queryParameters: {'project': projectId},
     );
   }
 

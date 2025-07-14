@@ -22,13 +22,12 @@ class StartupResourceManager {
   );
 
   Future<void> initializeAppData() async {
-    await Future.wait([
-      syncAudioComments(),
-      syncAudioTracks(),
-      syncProjects(),
-      syncUserProfile(),
-      syncUserProfileCollaborators(),
-    ]);
+    // Execute sequentially to avoid Isar unique index conflicts
+    await syncUserProfile();
+    await syncProjects();
+    await syncAudioTracks();
+    await syncUserProfileCollaborators();
+    await syncAudioComments();
   }
 
   Future<void> refreshAppData() async {
