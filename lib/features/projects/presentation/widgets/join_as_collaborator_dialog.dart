@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
@@ -46,9 +48,9 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
       listener: (context, state) {
         if (state is JoinProjectSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Successfully joined the project!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Successfully joined the project!'),
+              backgroundColor: AppColors.success,
             ),
           );
           context.go(AppRoutes.projectDetails, extra: state.project);
@@ -56,13 +58,13 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
         }
       },
       child: BottomSheet(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         onClosing: () => Navigator.of(context).pop(),
         builder:
             (context) =>
@@ -86,16 +88,16 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: Dimensions.space16),
                           ElevatedButton(
                             onPressed:
                                 state is ProjectsLoading ? null : _joinProject,
                             child:
                                 state is ProjectsLoading
-                                    ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
+                                    ? SizedBox(
+                                      width: Dimensions.iconMedium,
+                                      height: Dimensions.iconMedium,
+                                      child: const CircularProgressIndicator(
                                         strokeWidth: 2,
                                       ),
                                     )
