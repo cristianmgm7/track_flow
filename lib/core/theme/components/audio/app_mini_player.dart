@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import '../../app_dimensions.dart';
-import '../../app_colors.dart';
 import '../../app_shadows.dart';
 import '../../app_borders.dart';
 import '../../app_animations.dart';
-import 'app_audio_controls.dart';
 import '../../../../features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../../features/audio_player/presentation/bloc/audio_player_state.dart';
+import '../../../../features/audio_player/presentation/widgets/audio_controls.dart';
 import '../../../../features/audio_player/presentation/widgets/playback_progress.dart';
 import '../../../../features/audio_player/presentation/widgets/queue_controls.dart';
 import '../../../../features/audio_player/presentation/widgets/miniplayer_components/track_info_widget.dart';
@@ -59,11 +59,13 @@ class AppMiniPlayer extends StatelessWidget {
       height: config.height ?? Dimensions.miniPlayerHeight,
       decoration: BoxDecoration(
         color: config.backgroundColor ?? theme.colorScheme.surface,
-        borderRadius: config.borderRadius ?? BorderRadius.only(
-          topLeft: Radius.circular(Dimensions.radiusLarge),
-          topRight: Radius.circular(Dimensions.radiusLarge),
-        ),
-        boxShadow: AppShadows.elevation8,
+        borderRadius:
+            config.borderRadius ??
+            BorderRadius.only(
+              topLeft: Radius.circular(Dimensions.radiusLarge),
+              topRight: Radius.circular(Dimensions.radiusLarge),
+            ),
+        boxShadow: AppShadows.medium,
         border: AppBorders.subtleBorder(context),
       ),
       child: Material(
@@ -77,9 +79,9 @@ class AppMiniPlayer extends StatelessWidget {
                 children: [
                   // Handle bar for swipe gesture indication
                   _buildHandleBar(context),
-                  
+
                   SizedBox(height: Dimensions.space8),
-                  
+
                   // Main content row
                   Row(
                     children: [
@@ -87,32 +89,34 @@ class AppMiniPlayer extends StatelessWidget {
                       if (config.showTrackInfo)
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => modalPresentationService
-                                .showFullPlayerModal(context),
+                            onTap:
+                                () => modalPresentationService
+                                    .showFullPlayerModal(context),
                             child: TrackInfoWidget(
                               state: state,
-                              onTap: () => modalPresentationService
-                                  .showFullPlayerModal(context),
+                              onTap:
+                                  () => modalPresentationService
+                                      .showFullPlayerModal(context),
                             ),
                           ),
                         ),
-                      
+
                       SizedBox(width: Dimensions.space12),
-                      
-                      // Audio controls
-                      AppAudioControls(
+
+                      // Audio controls - using original AudioControls with design system values
+                      AudioControls(
                         size: Dimensions.iconMedium,
                         showStop: false,
                         spacing: Dimensions.space8,
                       ),
-                      
+
                       if (config.showQueueControls) ...[
                         SizedBox(width: Dimensions.space12),
-                        _buildQueueControls(),
+                        _buildQueueControls(context),
                       ],
                     ],
                   ),
-                  
+
                   // Progress bar
                   if (config.showProgress) ...[
                     SizedBox(height: Dimensions.space12),
@@ -138,14 +142,14 @@ class AppMiniPlayer extends StatelessWidget {
     );
   }
 
-  Widget _buildQueueControls() {
+  Widget _buildQueueControls(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: Dimensions.space8,
         vertical: Dimensions.space4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.5),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
         border: AppBorders.subtleBorder(null),
       ),
@@ -182,8 +186,18 @@ class MiniAudioPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Convert old config to new config
+    final appConfig = AppMiniPlayerConfig(
+      height: config.height,
+      padding: config.padding,
+      backgroundColor: config.backgroundColor,
+      showQueueControls: config.showQueueControls,
+      showProgress: config.showProgress,
+      showTrackInfo: config.showTrackInfo,
+    );
+    
     return AppMiniPlayer(
-      config: config,
+      config: appConfig,
       modalService: modalService,
     );
   }

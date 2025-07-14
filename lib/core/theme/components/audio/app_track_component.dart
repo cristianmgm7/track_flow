@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../app_dimensions.dart';
-import '../../app_colors.dart';
 import '../../app_shadows.dart';
 import '../../app_borders.dart';
 import '../../app_animations.dart';
@@ -92,7 +91,6 @@ class _AppTrackComponentState extends State<AppTrackComponent>
                   backgroundColor: isCurrent
                       ? Theme.of(context).colorScheme.primaryContainer
                       : null,
-                  elevation: isCurrent ? AppShadows.elevation4 : AppShadows.elevation2,
                   borderRadius: AppBorders.medium,
                   padding: EdgeInsets.symmetric(
                     vertical: Dimensions.space12,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../app_dimensions.dart';
-import '../../app_colors.dart';
 import '../../app_text_style.dart';
 import '../../app_borders.dart';
 import '../../app_shadows.dart';
@@ -26,7 +25,7 @@ class AudioCommentsScreenArgs {
   final ProjectId projectId;
   final AudioTrack track;
   final List<UserProfile> collaborators;
-  
+
   AudioCommentsScreenArgs({
     required this.projectId,
     required this.track,
@@ -40,19 +39,19 @@ class AppAudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
   final List<UserProfile> collaborators;
-  
+
   const AppAudioCommentsScreen({
     super.key,
     required this.projectId,
     required this.track,
     required this.collaborators,
   });
-  
+
   @override
   State<AppAudioCommentsScreen> createState() => _AppAudioCommentsScreenState();
 }
 
-class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> 
+class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
     with SingleTickerProviderStateMixin {
   final FocusNode _focusNode = FocusNode();
   Duration? _capturedTimestamp;
@@ -63,24 +62,20 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: AppAnimations.normal,
       vsync: this,
     );
-    
-    _slideAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    
+
+    _slideAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
     );
-    
+
     _focusNode.addListener(_handleInputFocus);
   }
 
@@ -116,13 +111,10 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AppScaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppAppBar(
-        title: 'Comments',
-        subtitle: widget.track.name,
-      ),
+      appBar: AppAppBar(title: 'Comments'),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
@@ -133,7 +125,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
               children: [
                 // Waveform header
                 _buildWaveformHeader(),
-                
+
                 // Comments list
                 Expanded(
                   child: Container(
@@ -145,12 +137,12 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
                     ),
                   ),
                 ),
-                
+
                 // Space for input when visible
                 SizedBox(height: Dimensions.space80),
               ],
             ),
-            
+
             // Floating comment input
             AnimatedBuilder(
               animation: _slideAnimation,
@@ -175,15 +167,13 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: AppBorders.large,
-        boxShadow: AppShadows.elevation2,
+        boxShadow: AppShadows.medium,
         border: AppBorders.subtleBorder(context),
       ),
       child: ClipRRect(
         borderRadius: AppBorders.large,
         child: AudioCommentHeader(
-          waveform: AudioCommentWaveformDisplay(
-            trackId: widget.track.id,
-          ),
+          waveform: AudioCommentWaveformDisplay(trackId: widget.track.id),
           trackId: widget.track.id,
         ),
       ),
@@ -198,10 +188,8 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
           topLeft: Radius.circular(Dimensions.radiusLarge),
           topRight: Radius.circular(Dimensions.radiusLarge),
         ),
-        boxShadow: AppShadows.elevation8,
-        border: Border(
-          top: AppBorders.subtleSide(context),
-        ),
+        boxShadow: AppShadows.medium,
+        border: Border(top: AppBorders.subtleSide(context)),
       ),
       child: SafeArea(
         top: false,
@@ -217,18 +205,20 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
                   width: Dimensions.space48,
                   height: Dimensions.space4,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(Dimensions.radiusRound),
                   ),
                 ),
               ),
-              
+
               SizedBox(height: Dimensions.space12),
-              
+
               // Timestamp header (if focused)
               if (_isInputFocused && _capturedTimestamp != null)
                 _buildTimestampHeader(),
-              
+
               // Comment input
               AudioCommentInputComment(
                 focusNode: _focusNode,
@@ -254,11 +244,14 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
 
   Widget _buildTimestampHeader() {
     if (_capturedTimestamp == null) return const SizedBox.shrink();
-    
+
     final timestamp = _capturedTimestamp!;
-    final minutes = timestamp.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final minutes = timestamp.inMinutes
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
     final seconds = (timestamp.inSeconds % 60).toString().padLeft(2, '0');
-    
+
     return AnimatedContainer(
       duration: AppAnimations.fast,
       margin: EdgeInsets.only(bottom: Dimensions.space12),
@@ -301,14 +294,14 @@ class AudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
   final List<UserProfile> collaborators;
-  
+
   const AudioCommentsScreen({
     super.key,
     required this.projectId,
     required this.track,
     required this.collaborators,
   });
-  
+
   @override
   State<AudioCommentsScreen> createState() => _AudioCommentsScreenState();
 }
