@@ -169,4 +169,25 @@ class AppBorders {
       bottomRight: Radius.circular(bottomRight ?? 0),
     );
   }
+
+  // Context-aware border methods
+  static Border subtleBorder(BuildContext? context) {
+    if (context != null) {
+      return Border.all(
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        width: widthThin,
+      );
+    }
+    return thinBorder;
+  }
+
+  static BorderSide subtleSide(BuildContext? context) {
+    if (context != null) {
+      return BorderSide(
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        width: widthThin,
+      );
+    }
+    return thin;
+  }
 }

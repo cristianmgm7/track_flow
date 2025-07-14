@@ -53,6 +53,10 @@ class Dimensions {
   static const double touchTargetMedium = 56.0;
   static const double touchTargetLarge = 64.0;
 
+  // Audio player dimensions
+  static const double miniPlayerHeight = 80.0;
+  static const double space6 = 6.0;
+
   // Screen margins
   static const double screenMarginSmall = 16.0;
   static const double screenMarginMedium = 24.0;
