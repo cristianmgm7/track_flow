@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 class AudioCommentInputComment extends StatefulWidget {
   final void Function(String) onSend;
   final FocusNode? focusNode;
-  const AudioCommentInputComment({super.key, required this.onSend, this.focusNode});
+  final Widget? header;
+  const AudioCommentInputComment({
+    super.key,
+    required this.onSend,
+    this.focusNode,
+    this.header,
+  });
 
   @override
   State<AudioCommentInputComment> createState() =>
@@ -30,86 +36,78 @@ class _AudioCommentInputCommentState extends State<AudioCommentInputComment> {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Botón de agregar
-        Container(
-          margin: const EdgeInsets.only(right: 12),
-          child: IconButton(
-            icon: const Icon(
-              Icons.add,
-              color: Colors.white70,
-              size: 24,
+        if (widget.header != null) widget.header!,
+        Row(
+          children: [
+            // Botón de agregar
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              child: IconButton(
+                icon: const Icon(Icons.add, color: Colors.white70, size: 24),
+                onPressed: () {
+                  // Acción del botón de agregar
+                },
+              ),
             ),
-            onPressed: () {
-              // Acción del botón de agregar
-            },
-          ),
-        ),
-        
-        // Campo de texto expandible
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF2C2C2E),
-              borderRadius: BorderRadius.circular(25),
+
+            // Campo de texto expandible
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2E),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: TextField(
+                  controller: _controller,
+                  focusNode: widget.focusNode,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: const InputDecoration(
+                    hintText: 'Leave a comment',
+                    hintStyle: TextStyle(color: Colors.white54, fontSize: 16),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  onSubmitted: (_) => _handleSend(),
+                  maxLines: null, // Permite múltiples líneas
+                  textInputAction: TextInputAction.newline,
+                ),
+              ),
             ),
-            child: TextField(
-              controller: _controller,
-              focusNode: widget.focusNode,
-              style: const TextStyle(
+
+            // Botón de micrófono
+            Container(
+              margin: const EdgeInsets.only(left: 12),
+              child: IconButton(
+                icon: const Icon(Icons.mic, color: Colors.white70, size: 24),
+                onPressed: () {
+                  // Acción del micrófono
+                },
+              ),
+            ),
+
+            // Botón de waveform/audio
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                fontSize: 16,
+                shape: BoxShape.circle,
               ),
-              decoration: const InputDecoration(
-                hintText: 'Ask anything',
-                hintStyle: TextStyle(
-                  color: Colors.white54,
-                  fontSize: 16,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.graphic_eq,
+                  color: Colors.black,
+                  size: 20,
                 ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
+                onPressed: _handleSend,
               ),
-              onSubmitted: (_) => _handleSend(),
-              maxLines: null, // Permite múltiples líneas
-              textInputAction: TextInputAction.newline,
             ),
-          ),
-        ),
-        
-        // Botón de micrófono
-        Container(
-          margin: const EdgeInsets.only(left: 12),
-          child: IconButton(
-            icon: const Icon(
-              Icons.mic,
-              color: Colors.white70,
-              size: 24,
-            ),
-            onPressed: () {
-              // Acción del micrófono
-            },
-          ),
-        ),
-        
-        // Botón de waveform/audio
-        Container(
-          margin: const EdgeInsets.only(left: 8),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(
-              Icons.graphic_eq,
-              color: Colors.black,
-              size: 20,
-            ),
-            onPressed: _handleSend,
-          ),
+          ],
         ),
       ],
     );

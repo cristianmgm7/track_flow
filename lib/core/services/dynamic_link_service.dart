@@ -21,6 +21,5 @@ class DynamicLinkService {
     // Firebase Dynamic Links are deprecated
     // Deep link handling is now done through the new DeepLinkService
     // and platform-specific implementations (iOS Universal Links, Android App Links)
-    debugPrint('DynamicLinkService.init() called - Firebase Dynamic Links are deprecated');
   }
 }

@@ -66,7 +66,8 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
         filePath,
       ) {
         if (filePath != null) {
-          add(_TrackPathLoaded(filePath));
+          // Pass noOfSamples to _TrackPathLoaded
+          add(_TrackPathLoaded(filePath, noOfSamples: event.noOfSamples));
         } else {
           add(_TrackCacheFailed('Track not cached'));
         }
@@ -94,13 +95,13 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
 
       // Crear PlayerWaveStyle para calcular muestras
       const waveStyle = PlayerWaveStyle(spacing: 4, waveThickness: 3);
+      final noOfSamples =
+          event.noOfSamples ?? waveStyle.getSamplesForWidth(400);
 
       await newController.preparePlayer(
         path: event.path,
         shouldExtractWaveform: true,
-        noOfSamples: waveStyle.getSamplesForWidth(
-          300,
-        ), // Calcular muestras apropiadas para el ancho
+        noOfSamples: noOfSamples,
         volume: 0.0, // Sin volumen para que no se escuche
       );
 

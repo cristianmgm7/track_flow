@@ -10,10 +10,11 @@ abstract class AudioWaveformEvent extends Equatable {
 /// Event to trigger loading the waveform for a specific track.
 class LoadWaveform extends AudioWaveformEvent {
   final AudioTrackId trackId;
-  const LoadWaveform(this.trackId);
+  final int? noOfSamples;
+  const LoadWaveform(this.trackId, {this.noOfSamples});
 
   @override
-  List<Object> get props => [trackId];
+  List<Object> get props => [trackId, noOfSamples ?? 0];
 }
 
 /// Internal event to update the waveform based on the main player's session.
@@ -28,10 +29,11 @@ class _PlayerSessionUpdated extends AudioWaveformEvent {
 /// Internal event when the track path is successfully fetched from cache.
 class _TrackPathLoaded extends AudioWaveformEvent {
   final String path;
-  const _TrackPathLoaded(this.path);
+  final int? noOfSamples;
+  const _TrackPathLoaded(this.path, {this.noOfSamples});
 
   @override
-  List<Object> get props => [path];
+  List<Object> get props => [path, noOfSamples ?? 0];
 }
 
 /// Internal event when track caching fails.

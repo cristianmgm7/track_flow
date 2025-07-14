@@ -4,13 +4,14 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
-import 'package:trackflow/features/audio_comment/presentation/components/waveform.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/header/audio_comment_header.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/header/waveform.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_waveform_display.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_comments_component.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_list_comments.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_input_comment_component.dart';
 
 class AudioCommentsScreenArgs {
@@ -39,94 +40,127 @@ class AudioCommentsScreen extends StatefulWidget {
 }
 
 class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
+  final FocusNode _focusNode = FocusNode();
+  Duration? _capturedTimestamp;
+  bool _isInputFocused = false;
+
   @override
   void initState() {
     super.initState();
     context.read<AudioCommentBloc>().add(
       WatchCommentsByTrackEvent(widget.track.id),
     );
+    _focusNode.addListener(_handleInputFocus);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleInputFocus);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleInputFocus() {
+    if (_focusNode.hasFocus) {
+      final audioPlayerBloc = context.read<AudioPlayerBloc>();
+      final state = audioPlayerBloc.state;
+      if (state is AudioPlayerSessionState) {
+        setState(() {
+          _capturedTimestamp = state.session.position;
+          _isInputFocused = true;
+        });
+        audioPlayerBloc.add(const PauseAudioRequested());
+      }
+    } else {
+      setState(() {
+        _isInputFocused = false;
+        _capturedTimestamp = null;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
+      body: Stack(
         children: [
-          // Waveform with controls and back button
-          Expanded(
-            flex: 5, // Larger proportion for the waveform
-            child: Stack(
-              children: [
-                // Waveform occupying all available space
-                AudioWaveformHeader(
-                  waveform: AudioCommentWaveformDisplay(
-                    trackId: widget.track.id,
-                  ),
-                  onBack: () => Navigator.of(context).pop(),
-                  onPlay:
-                      () => context.read<AudioPlayerBloc>().add(
-                        PlayAudioRequested(widget.track.id),
-                      ),
+          Column(
+            children: [
+              AudioCommentHeader(
+                waveform: AudioCommentWaveformDisplay(trackId: widget.track.id),
+                trackId: widget.track.id,
+              ),
+              Expanded(
+                child: AudioCommentCommentsList(
+                  collaborators: widget.collaborators,
                 ),
-
-                // Back button (top-left) - with SafeArea
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 16,
-                  left: 16,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(179), // 0.7 * 255 = 178.5
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Expanded(
-            flex: 3, // Proportion for comments
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: Container(
-              color: AppColors.background,
-              child: AudioCommentCommentsList(
-                collaborators: widget.collaborators,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C1C1E),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
               ),
-            ),
-          ),
-
-          // Persistent modal at the bottom (as in the screenshot)
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: AudioCommentInputComment(
-                  onSend: (text) {
-                    context.read<AudioCommentBloc>().add(
-                      AddAudioCommentEvent(
-                        widget.projectId,
-                        widget.track.id,
-                        text,
-                        Duration(milliseconds: 0),
-                      ),
-                    );
-                  },
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: AudioCommentInputComment(
+                    focusNode: _focusNode,
+                    header:
+                        _isInputFocused && _capturedTimestamp != null
+                            ? CommentInputHeader(timestamp: _capturedTimestamp!)
+                            : null,
+                    onSend: (text) {
+                      context.read<AudioCommentBloc>().add(
+                        AddAudioCommentEvent(
+                          widget.projectId,
+                          widget.track.id,
+                          text,
+                          _capturedTimestamp ?? Duration.zero,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Header widget for the input modal, shows the timestamp
+class CommentInputHeader extends StatelessWidget {
+  final Duration timestamp;
+  const CommentInputHeader({super.key, required this.timestamp});
+
+  @override
+  Widget build(BuildContext context) {
+    final minutes = timestamp.inMinutes
+        .remainder(60)
+        .toString()
+        .padLeft(2, '0');
+    final seconds = (timestamp.inSeconds % 60).toString().padLeft(2, '0');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        'Comment at $minutes:$seconds',
+        style: const TextStyle(
+          color: Colors.white70,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

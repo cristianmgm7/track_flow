@@ -1,8 +1,10 @@
+// This file contains the AudioCommentWaveformDisplay widget, responsible for rendering and interacting with the audio waveform only.
+// It should not contain any header or layout logic.
 import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_comment/presentation/bloc/waveform/audio_waveform_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
@@ -22,25 +24,34 @@ class _AudioCommentWaveformDisplayState
     extends State<AudioCommentWaveformDisplay> {
   bool _isDragging = false;
   bool _wasPlayingBeforeDrag = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AudioWaveformBloc>().add(LoadWaveform(widget.trackId));
-    });
-  }
+  double? _lastWidth;
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<
-      AudioWaveformBloc,
-      AudioWaveformState,
-      AudioWaveformState
-    >(
-      selector: (state) => state,
-      builder: (context, waveformState) {
-        return _buildWaveformBody(context, waveformState);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        if (_lastWidth == null || (_lastWidth! - width).abs() > 1) {
+          _lastWidth = width;
+          // Usar spacing similar al BLoC para calcular samples
+          const spacing = 3.0;
+          final noOfSamples = (width / spacing).floor();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<AudioWaveformBloc>().add(
+              LoadWaveform(widget.trackId, noOfSamples: noOfSamples),
+            );
+          });
+        }
+        return BlocSelector<
+          AudioWaveformBloc,
+          AudioWaveformState,
+          AudioWaveformState
+        >(
+          selector: (state) => state,
+          builder: (context, waveformState) {
+            return _buildWaveformBody(context, waveformState);
+          },
+        );
       },
     );
   }
@@ -51,114 +62,96 @@ class _AudioCommentWaveformDisplayState
   ) {
     switch (waveformState.status) {
       case WaveformStatus.loading:
-        return const Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text(
-                  'Cargando forma de onda...',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
-            ),
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Cargando forma de onda...',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
           ),
         );
       case WaveformStatus.error:
-        return Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, color: Colors.red, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  'Error: ${waveformState.errorMessage ?? "Desconocido"}',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                'Error: ${waveformState.errorMessage ?? "Desconocido"}',
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         );
       case WaveformStatus.ready:
         if (waveformState.playerController != null) {
-          return Expanded(
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return Center(
-                    child: AudioFileWaveforms(
-                      size: Size(
-                        constraints.maxWidth,
-                        constraints.maxHeight *
-                            0.8, // 80% de la altura disponible
+          return SizedBox.expand(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return AudioFileWaveforms(
+                  size: Size(constraints.maxWidth, constraints.maxHeight * 0.8),
+                  playerController: waveformState.playerController!,
+                  enableSeekGesture: true,
+                  waveformType: WaveformType.long,
+                  playerWaveStyle: PlayerWaveStyle(
+                    fixedWaveColor: Colors.grey[400]!,
+                    liveWaveColor: Colors.blue,
+                    spacing: 3,
+                    waveThickness: 2,
+                    showSeekLine: true,
+                    seekLineColor: Colors.red,
+                    seekLineThickness: 1.5,
+                    scaleFactor: 600,
+                    waveCap: StrokeCap.round,
+                  ),
+                  // 🎵 Gestos sincronizados con AudioPlayerBloc
+                  onDragStart:
+                      (details) => _handleDragStart(
+                        context,
+                        details,
+                        waveformState.playerController!,
                       ),
-                      playerController: waveformState.playerController!,
-                      enableSeekGesture: true,
-                      waveformType: WaveformType.fitWidth,
-                      playerWaveStyle: PlayerWaveStyle(
-                        fixedWaveColor: Colors.grey[400]!,
-                        liveWaveColor: Colors.blue,
-                        spacing: 10,
-                        waveThickness: 5, // Definitivamente menor que spacing
-                        showSeekLine: true,
-                        seekLineColor: Colors.red,
-                        seekLineThickness: 4,
-                        waveCap: StrokeCap.round,
+                  onDragEnd:
+                      (details) => _handleDragEnd(
+                        context,
+                        details,
+                        waveformState.playerController!,
                       ),
-                      // 🎵 Gestos sincronizados con AudioPlayerBloc
-                      onDragStart:
-                          (details) => _handleDragStart(
-                            context,
-                            details,
-                            waveformState.playerController!,
-                          ),
-                      onDragEnd:
-                          (details) => _handleDragEnd(
-                            context,
-                            details,
-                            waveformState.playerController!,
-                          ),
-                      dragUpdateDetails:
-                          (details) => _handleDragUpdate(
-                            context,
-                            details,
-                            waveformState.playerController!,
-                          ),
-                      tapUpUpdateDetails:
-                          (details) => _handleTapUp(
-                            context,
-                            details,
-                            waveformState.playerController!,
-                          ),
-                    ),
-                  );
-                },
-              ),
+                  dragUpdateDetails:
+                      (details) => _handleDragUpdate(
+                        context,
+                        details,
+                        waveformState.playerController!,
+                      ),
+                  tapUpUpdateDetails:
+                      (details) => _handleTapUp(
+                        context,
+                        details,
+                        waveformState.playerController!,
+                      ),
+                );
+              },
             ),
           );
         }
-        return const Expanded(
-          child: Center(
-            child: Text(
-              'Preparando forma de onda...',
-              style: TextStyle(color: Colors.white),
-            ),
+        return const Center(
+          child: Text(
+            'Preparando forma de onda...',
+            style: TextStyle(color: Colors.white),
           ),
         );
       default:
-        return const Expanded(
-          child: Center(
-            child: Text(
-              'Inicializando...',
-              style: TextStyle(color: Colors.white),
-            ),
+        return const Center(
+          child: Text(
+            'Inicializando...',
+            style: TextStyle(color: Colors.white),
           ),
         );
     }
