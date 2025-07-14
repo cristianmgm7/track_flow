@@ -21,4 +21,15 @@ class AppColors {
   static const Color grey600 = Color(0xFF3A3A3A);
   static const Color grey400 = Color(0xFFB0B0B0);
   static const Color grey200 = Color(0xFFEFEFEF);
+
+  // Semantic colors
+  static const Color success = Color(0xFF4CAF50);
+  static const Color warning = Color(0xFFFF9800);
+  static const Color error = Color(0xFFE53E3E);
+  static const Color info = Color(0xFF2196F3);
+
+  // Action colors
+  static const Color accent = Color(0xFF00BCD4);
+  static const Color highlight = Color(0xFFFFEB3B);
+  static const Color disabled = Color(0xFF616161);
 }
