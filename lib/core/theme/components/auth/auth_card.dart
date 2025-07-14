@@ -10,12 +10,7 @@ class AuthCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
 
-  const AuthCard({
-    super.key,
-    required this.child,
-    this.padding,
-    this.margin,
-  });
+  const AuthCard({super.key, required this.child, this.padding, this.margin});
 
   @override
   Widget build(BuildContext context) {
@@ -46,10 +41,7 @@ class AuthHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        if (logo != null) ...[
-          logo!,
-          SizedBox(height: Dimensions.space16),
-        ],
+        if (logo != null) ...[logo!, SizedBox(height: Dimensions.space16)],
         Text(
           title,
           style: Theme.of(context).textTheme.displayLarge,
@@ -58,9 +50,9 @@ class AuthHeader extends StatelessWidget {
         SizedBox(height: Dimensions.space8),
         Text(
           subtitle,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ],
@@ -95,7 +87,7 @@ class _AuthFormState extends State<AuthForm> {
   void _submit() {
     final isValid = widget.formKey.currentState!.validate();
     if (!isValid) return;
-    
+
     widget.formKey.currentState!.save();
     widget.onSubmit(_email, _password);
   }
@@ -126,9 +118,7 @@ class _AuthFormState extends State<AuthForm> {
       decoration: InputDecoration(
         labelText: "Email",
         prefixIcon: Icon(Icons.email_outlined),
-        border: OutlineInputBorder(
-          borderRadius: AppBorders.medium,
-        ),
+        border: OutlineInputBorder(borderRadius: AppBorders.medium),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppBorders.medium,
           borderSide: BorderSide(color: AppColors.primary, width: 2),
@@ -152,9 +142,7 @@ class _AuthFormState extends State<AuthForm> {
       decoration: InputDecoration(
         labelText: "Password",
         prefixIcon: Icon(Icons.lock_outline),
-        border: OutlineInputBorder(
-          borderRadius: AppBorders.medium,
-        ),
+        border: OutlineInputBorder(borderRadius: AppBorders.medium),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppBorders.medium,
           borderSide: BorderSide(color: AppColors.primary, width: 2),
@@ -183,26 +171,27 @@ class _AuthFormState extends State<AuthForm> {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: AppBorders.medium,
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppBorders.medium),
         ),
         onPressed: widget.isLoading ? null : _submit,
-        child: widget.isLoading
-            ? SizedBox(
-                width: Dimensions.iconMedium,
-                height: Dimensions.iconMedium,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.onPrimary),
+        child:
+            widget.isLoading
+                ? SizedBox(
+                  width: Dimensions.iconMedium,
+                  height: Dimensions.iconMedium,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.onPrimary,
+                    ),
+                  ),
+                )
+                : Text(
+                  widget.isLogin ? "Sign in" : "Sign up",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: AppColors.onPrimary),
                 ),
-              )
-            : Text(
-                widget.isLogin ? "Sign in" : "Sign up",
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.onPrimary,
-                ),
-              ),
       ),
     );
   }
@@ -216,9 +205,9 @@ class _AuthFormState extends State<AuthForm> {
       ),
       child: Text(
         widget.isLogin ? "Create an account" : "I already have an account",
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: AppColors.primary,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(color: AppColors.primary),
       ),
     );
   }
@@ -249,20 +238,23 @@ class AuthSocialButton extends StatelessWidget {
           color: AppColors.surface,
         ),
         child: Center(
-          child: isLoading
-              ? SizedBox(
-                  width: Dimensions.iconMedium,
-                  height: Dimensions.iconMedium,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          child:
+              isLoading
+                  ? SizedBox(
+                    width: Dimensions.iconMedium,
+                    height: Dimensions.iconMedium,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary,
+                      ),
+                    ),
+                  )
+                  : Image.asset(
+                    assetPath,
+                    height: Dimensions.iconLarge,
+                    fit: BoxFit.contain,
                   ),
-                )
-              : Image.asset(
-                  assetPath,
-                  height: Dimensions.iconLarge,
-                  fit: BoxFit.contain,
-                ),
         ),
       ),
     );
@@ -272,10 +264,7 @@ class AuthSocialButton extends StatelessWidget {
 class AuthContainer extends StatelessWidget {
   final Widget child;
 
-  const AuthContainer({
-    super.key,
-    required this.child,
-  });
+  const AuthContainer({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +278,8 @@ class AuthContainer extends StatelessWidget {
               left: Dimensions.space16,
               right: Dimensions.space16,
               top: Dimensions.space16,
-              bottom: MediaQuery.of(context).viewInsets.bottom + Dimensions.space16,
+              bottom:
+                  MediaQuery.of(context).viewInsets.bottom + Dimensions.space16,
             ),
             child: child,
           ),

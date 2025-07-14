@@ -7,6 +7,8 @@ import '../playback_progress.dart';
 import '../queue_controls.dart';
 import 'track_info_widget.dart';
 import 'modal_presentation_service.dart';
+import '../../../../../core/theme/app_dimensions.dart';
+import '../../../../../core/theme/app_shadows.dart';
 
 class MiniAudioPlayerConfig {
   final double height;
@@ -17,8 +19,8 @@ class MiniAudioPlayerConfig {
   final bool showTrackInfo;
 
   const MiniAudioPlayerConfig({
-    this.height = 80.0,
-    this.padding = const EdgeInsets.all(12.0),
+    this.height = Dimensions.miniPlayerHeight,
+    this.padding = const EdgeInsets.all(Dimensions.space12),
     this.backgroundColor,
     this.showQueueControls = true,
     this.showProgress = true,
@@ -44,13 +46,7 @@ class MiniAudioPlayer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: config.backgroundColor ?? theme.cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: AppShadows.medium,
       ),
       child: Padding(
         padding: config.padding,
@@ -72,11 +68,11 @@ class MiniAudioPlayer extends StatelessWidget {
                         ),
                       ),
                     // audio controls
-                    const AudioControls(size: 20.0, showStop: false),
-                    const SizedBox(width: 8),
+                    const AudioControls(size: Dimensions.iconMedium, showStop: false),
+                    SizedBox(width: Dimensions.space8),
                     if (config.showQueueControls)
                       const QueueControls(
-                        size: 18.0,
+                        size: Dimensions.iconSmall,
                         showRepeatMode: false,
                         showShuffleMode: false,
                       ),
@@ -84,10 +80,10 @@ class MiniAudioPlayer extends StatelessWidget {
                 ),
                 // progress bar
                 if (config.showProgress) ...[
-                  const SizedBox(height: 8),
+                  SizedBox(height: Dimensions.space8),
                   const PlaybackProgress(
-                    height: 2.0,
-                    thumbRadius: 6.0,
+                    height: Dimensions.space2,
+                    thumbRadius: Dimensions.space6,
                     showTimeLabels: false,
                   ),
                 ],

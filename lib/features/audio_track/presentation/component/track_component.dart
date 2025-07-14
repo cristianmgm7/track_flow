@@ -65,9 +65,9 @@ class _TrackComponentState extends State<TrackComponent> {
             ),
             clipBehavior: Clip.antiAlias,
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 16.0,
+              padding: EdgeInsets.symmetric(
+                vertical: Dimensions.space8,
+                horizontal: Dimensions.space16,
               ),
               child: BlocBuilder<AudioContextBloc, AudioContextState>(
                 builder: (context, contextState) {
@@ -98,15 +98,15 @@ class _TrackComponentState extends State<TrackComponent> {
                             children: [
                               // Cover art placeholder
                               Container(
-                                width: 44.0,
-                                height: 44.0,
+                                width: Dimensions.space48,
+                                height: Dimensions.space48,
                                 decoration: BoxDecoration(
                                   color:
                                       Theme.of(
                                         context,
                                       ).colorScheme.secondaryContainer,
                                   borderRadius: BorderRadius.circular(
-                                    Dimensions.space4,
+                                    Dimensions.radiusMedium,
                                   ),
                                 ),
                                 child: Icon(
@@ -117,7 +117,7 @@ class _TrackComponentState extends State<TrackComponent> {
                                       ).colorScheme.onSecondaryContainer,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: Dimensions.space12),
                               // Track info section
                               TrackInfoSection(
                                 trackName: interactionHandler.trackName,
@@ -126,7 +126,7 @@ class _TrackComponentState extends State<TrackComponent> {
                                 ),
                                 statusBadge: Container(),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: Dimensions.space8),
                               // Duration
                               TrackDurationText(
                                 duration: interactionHandler.trackDuration,
@@ -135,13 +135,13 @@ class _TrackComponentState extends State<TrackComponent> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: Dimensions.space8),
                       // Actions section (cache + menu)
                       TrackActionsSection(
                         cacheIcon: SmartTrackCacheIcon(
                           trackId: interactionHandler.trackId,
                           audioUrl: interactionHandler.trackUrl,
-                          size: 20.0,
+                          size: Dimensions.iconMedium,
                           onSuccess:
                               (message) =>
                                   feedbackHandler.showSuccess(context, message),

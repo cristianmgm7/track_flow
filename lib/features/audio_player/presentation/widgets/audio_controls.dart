@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/audio_player_bloc.dart';
 import '../bloc/audio_player_event.dart';
 import '../bloc/audio_player_state.dart';
+import '../../../../core/theme/app_dimensions.dart';
 
 /// Pure audio control buttons (Play/Pause/Stop)
 /// NO business logic - only audio operations
@@ -10,10 +11,10 @@ import '../bloc/audio_player_state.dart';
 class AudioControls extends StatelessWidget {
   const AudioControls({
     super.key,
-    this.size = 24.0,
+    this.size = Dimensions.iconMedium,
     this.color,
     this.showStop = true,
-    this.spacing = 8.0,
+    this.spacing = Dimensions.space8,
   });
 
   final double size;
@@ -94,8 +95,8 @@ class AudioControls extends StatelessWidget {
         ),
         if (isLoading)
           SizedBox(
-            width: size + 8,
-            height: size + 8,
+            width: size + Dimensions.space8,
+            height: size + Dimensions.space8,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               color: iconColor.withValues(alpha: 0.6),

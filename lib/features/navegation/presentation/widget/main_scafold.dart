@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/core/theme/components/audio/app_mini_player.dart';
+import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
 import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
@@ -35,7 +35,7 @@ class MainScaffold extends StatelessWidget {
           BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
             builder: (context, state) {
               if (state is AudioPlayerSessionState) {
-                return const AppMiniPlayer();
+                return const MiniAudioPlayer();
               }
               return const SizedBox.shrink();
             },
