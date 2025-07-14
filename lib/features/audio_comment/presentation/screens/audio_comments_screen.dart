@@ -83,59 +83,69 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              AudioCommentHeader(
-                waveform: AudioCommentWaveformDisplay(trackId: widget.track.id),
-                trackId: widget.track.id,
-              ),
-              Expanded(
-                child: AudioCommentCommentsList(
-                  collaborators: widget.collaborators,
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                AudioCommentHeader(
+                  waveform: AudioCommentWaveformDisplay(
+                    trackId: widget.track.id,
+                  ),
+                  trackId: widget.track.id,
                 ),
-              ),
-            ],
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                Expanded(
+                  child: AudioCommentCommentsList(
+                    collaborators: widget.collaborators,
+                  ),
                 ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: AudioCommentInputComment(
-                    focusNode: _focusNode,
-                    header:
-                        _isInputFocused && _capturedTimestamp != null
-                            ? CommentInputHeader(timestamp: _capturedTimestamp!)
-                            : null,
-                    onSend: (text) {
-                      context.read<AudioCommentBloc>().add(
-                        AddAudioCommentEvent(
-                          widget.projectId,
-                          widget.track.id,
-                          text,
-                          _capturedTimestamp ?? Duration.zero,
-                        ),
-                      );
-                    },
+              ],
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1C1C1E),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: AudioCommentInputComment(
+                      focusNode: _focusNode,
+                      header:
+                          _isInputFocused && _capturedTimestamp != null
+                              ? CommentInputHeader(
+                                timestamp: _capturedTimestamp!,
+                              )
+                              : null,
+                      onSend: (text) {
+                        context.read<AudioCommentBloc>().add(
+                          AddAudioCommentEvent(
+                            widget.projectId,
+                            widget.track.id,
+                            text,
+                            _capturedTimestamp ?? Duration.zero,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

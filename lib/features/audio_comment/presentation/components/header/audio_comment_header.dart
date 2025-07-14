@@ -73,6 +73,35 @@ class AudioCommentHeader extends StatelessWidget {
                 },
               ),
             ),
+            // Playback time (bottom-left)
+            Positioned(
+              left: 16,
+              bottom: 24,
+              child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+                builder: (context, state) {
+                  Duration position = Duration.zero;
+                  if (state is AudioPlayerSessionState) {
+                    position = state.session.position;
+                  }
+                  final minutes = position.inMinutes
+                      .remainder(60)
+                      .toString()
+                      .padLeft(2, '0');
+                  final seconds = (position.inSeconds % 60).toString().padLeft(
+                    2,
+                    '0',
+                  );
+                  return Text(
+                    '$minutes:$seconds',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
