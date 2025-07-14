@@ -10,7 +10,7 @@ import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cac
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
-import 'package:trackflow/features/home/presentation/screens/dashboard.dart';
+import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
@@ -126,7 +126,7 @@ class AppRouter {
           routes: [
             GoRoute(
               path: AppRoutes.dashboard,
-              builder: (context, state) => const DashboardScreen(),
+              builder: (context, state) => const ProjectListScreen(),
             ),
             GoRoute(
               path: AppRoutes.projects,

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -51,14 +49,15 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
     return BlocListener<ProjectsBloc, ProjectsState>(
       listener: (context, state) {
         if (state is ProjectCreatedSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Project created!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          context.push(AppRoutes.projectDetails, extra: state.project);
           Navigator.of(context).pop();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Project created!'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
