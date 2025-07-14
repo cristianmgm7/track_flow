@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -50,9 +52,9 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
       listener: (context, state) {
         if (state is ProjectCreatedSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Project created!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Project created!'),
+              backgroundColor: AppColors.success,
             ),
           );
           context.push(AppRoutes.projectDetails, extra: state.project);
@@ -61,7 +63,7 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -84,7 +86,7 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
                 ).value.fold((l) => l.message, (r) => null);
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: Dimensions.space24),
             BlocBuilder<ProjectsBloc, ProjectsState>(
               builder: (context, state) {
                 final isLoading = state is ProjectsLoading;
@@ -96,15 +98,15 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
                           isLoading ? null : () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: Dimensions.space8),
                     ElevatedButton(
                       onPressed: isLoading ? null : _saveProject,
                       child:
                           isLoading
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
+                              ? SizedBox(
+                                height: Dimensions.iconMedium,
+                                width: Dimensions.iconMedium,
+                                child: const CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),
                               )

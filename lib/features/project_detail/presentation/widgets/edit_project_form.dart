@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
@@ -58,14 +60,14 @@ class _EditProjectFormState extends State<EditProjectForm> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: Colors.green,
+              backgroundColor: AppColors.success,
             ),
           );
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${state.message}'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -88,7 +90,7 @@ class _EditProjectFormState extends State<EditProjectForm> {
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: Dimensions.space16),
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
@@ -97,21 +99,21 @@ class _EditProjectFormState extends State<EditProjectForm> {
               ),
               maxLines: 3,
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: Dimensions.space20),
             BlocBuilder<ProjectsBloc, ProjectsState>(
               builder: (context, state) {
                 final isLoading = state is ProjectsLoading;
                 return ElevatedButton(
                   onPressed: isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
+                    minimumSize: Size(double.infinity, Dimensions.buttonHeight),
                   ),
                   child:
                       isLoading
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ? SizedBox(
+                            height: Dimensions.iconMedium,
+                            width: Dimensions.iconMedium,
+                            child: const CircularProgressIndicator(strokeWidth: 2),
                           )
                           : const Text('Save Changes'),
                 );
