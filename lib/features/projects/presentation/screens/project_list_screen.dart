@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
+import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
+import 'package:trackflow/core/theme/components/project/project_card.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
@@ -23,11 +26,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
     context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   void _openProjectActionsSheet() {
     showTrackFlowActionSheet(
       context: context,
@@ -38,60 +36,68 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Projects'),
+    return AppScaffold(
+      appBar: AppAppBar(
+        title: 'My Projects',
         actions: [
-          IconButton(
+          AppIconButton(
+            icon: Icons.add_rounded,
             onPressed: _openProjectActionsSheet,
-            icon: const Icon(Icons.add),
+            tooltip: 'Create new project',
           ),
         ],
       ),
       body: BlocBuilder<ProjectsBloc, ProjectsState>(
-        buildWhen:
-            (previous, current) =>
-                current is! ProjectOperationSuccess &&
-                current is! ProjectsError &&
-                current is! ProjectsLoading,
+        buildWhen: (previous, current) =>
+            current is! ProjectOperationSuccess &&
+            current is! ProjectsError &&
+            current is! ProjectsLoading,
         builder: (context, state) {
           if (state is ProjectsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppProjectLoadingState();
           }
           if (state is ProjectOperationSuccess) {
-            return Center(child: Text(state.message));
+            return AppProjectSuccessState(
+              message: state.message,
+            );
           }
           if (state is ProjectsError) {
-            return Center(
-              child: Text(state.message, style: TextStyle(color: Colors.red)),
+            return AppProjectErrorState(
+              message: state.message,
+              onRetry: () => context.read<ProjectsBloc>().add(StartWatchingProjects()),
             );
           }
           if (state is ProjectsLoaded) {
             final projects = state.projects;
             if (projects.isEmpty) {
-              return const Center(
-                child: Text(
-                  'No projects yet. Tap + to create your first project!',
+              return AppProjectEmptyState(
+                message: 'No projects yet',
+                subtitle: 'Create your first project to get started!',
+                icon: Icon(
+                  Icons.folder_outlined,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
+                actionText: 'Create Project',
+                onAction: _openProjectActionsSheet,
               );
             }
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: projects.length,
-              itemBuilder: (context, index) {
-                final project = projects[index];
-                return ProjectCard(
-                  project: project,
-                  onTap:
-                      () => context.push(
-                        AppRoutes.projectDetails,
-                        extra: project,
-                      ),
-                );
-              },
+            return AppProjectList(
+              projects: projects
+                  .map((project) => ProjectCard(
+                        project: project,
+                        onTap: () => context.push(
+                          AppRoutes.projectDetails,
+                          extra: project,
+                        ),
+                      ))
+                  .toList(),
             );
           }
-          return const Center(child: Text('No projects available'));
+          return const AppProjectEmptyState(
+            message: 'No projects available',
+            subtitle: 'Something went wrong. Please try again.',
+          );
         },
       ),
     );

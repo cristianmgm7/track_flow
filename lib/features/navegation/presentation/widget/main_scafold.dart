@@ -6,9 +6,6 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_b
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
-import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
-import 'package:trackflow/core/theme/components/navigation/bottom_nav.dart';
 
 class MainScaffold extends StatelessWidget {
   final Widget child;
@@ -19,30 +16,35 @@ class MainScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentTab = context.select((NavigationCubit cubit) => cubit.state);
 
-    return AppScaffold(
-      appBar: AppAppBar(
+    return Scaffold(
+      appBar: AppBar(
         actions: [
-          AppIconButton(
-            icon: Icons.settings_rounded,
+          IconButton(
+            icon: const Icon(Icons.settings),
             onPressed: () => context.go(AppRoutes.settings),
-            tooltip: 'Settings',
           ),
         ],
       ),
       body: Column(
         children: [
-          Expanded(child: child),
-          BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-            builder: (context, state) {
-              if (state is AudioPlayerSessionState) {
-                return const MiniAudioPlayer();
-              }
-              return const SizedBox.shrink();
-            },
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: child),
+                BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+                  builder: (context, state) {
+                    if (state is AudioPlayerSessionState) {
+                      return const MiniAudioPlayer();
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: AppBottomNavigation(
+      bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentTab.index,
         onTap: (index) {
           final tab = AppTab.values[index];
@@ -59,14 +61,9 @@ class MainScaffold extends StatelessWidget {
           }
         },
         items: const [
-          AppBottomNavigationItem(
-            icon: Icons.folder_outlined,
-            activeIcon: Icons.folder,
-            label: 'Projects',
-          ),
-          AppBottomNavigationItem(
-            icon: Icons.music_note_outlined,
-            activeIcon: Icons.music_note,
+          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Projects'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.music_note),
             label: 'My Music',
           ),
         ],

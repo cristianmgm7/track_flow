@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_text_style.dart';
+import 'package:trackflow/core/theme/components/loading/app_loading.dart';
+import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
+import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
+import 'package:trackflow/core/theme/components/project/project_card.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
@@ -43,38 +49,38 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           setState(() => _isUploadingTrack = false);
         }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.project.name.value.fold(
-              (failure) => 'Error loading project name',
-              (value) => value,
-            ),
+      child: AppScaffold(
+        appBar: AppAppBar(
+          title: widget.project.name.value.fold(
+            (failure) => 'Error loading project name',
+            (value) => value,
           ),
         ),
         body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
           builder: (context, state) {
             if (state.isLoadingProject && state.project == null) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: AppLoading(
+                  message: 'Loading project...',
+                ),
+              );
             }
 
             if (state.projectError != null && state.project == null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Error loading project: ${state.projectError}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ],
+              return AppProjectErrorState(
+                message: 'Error loading project: ${state.projectError}',
+                onRetry: () => context.read<ProjectDetailBloc>().add(
+                  WatchProjectDetail(project: widget.project),
                 ),
               );
             }
 
             final project = state.project;
             if (project == null) {
-              return const Center(child: Text('No project found'));
+              return const AppProjectEmptyState(
+                message: 'No project found',
+                subtitle: 'The project you are looking for does not exist.',
+              );
             }
 
             // getting the tracks to build the playlist
@@ -101,18 +107,23 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     ),
                   ),
                   if (_isUploadingTrack)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        vertical: Dimensions.space12,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           SizedBox(
-                            width: 20,
-                            height: 20,
+                            width: Dimensions.iconMedium,
+                            height: Dimensions.iconMedium,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                          SizedBox(width: 12),
-                          Text('Uploading track...'),
+                          SizedBox(width: Dimensions.space12),
+                          Text(
+                            'Uploading track...',
+                            style: AppTextStyle.bodyMedium,
+                          ),
                         ],
                       ),
                     ),
