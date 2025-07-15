@@ -9,7 +9,7 @@ import 'package:trackflow/features/audio_context/presentation/bloc/audio_context
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
-import 'package:trackflow/features/auth/presentation/screens/auth_screen.dart';
+import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
@@ -19,7 +19,6 @@ import 'package:trackflow/features/onboarding/presentation/screens/onboarding_sc
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
@@ -72,7 +71,7 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.auth,
-          builder: (context, state) => const AuthScreen(),
+          builder: (context, state) => const NewAuthScreen(),
         ),
         GoRoute(
           path: AppRoutes.magicLink,
