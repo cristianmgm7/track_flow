@@ -22,7 +22,7 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
-import 'package:trackflow/features/user_profile/presentation/user_profile_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
@@ -104,7 +104,7 @@ class AppRouter {
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
-            return UserProfileScreen(userId: UserId.fromUniqueString(userId));
+            return HeroUserProfileScreen(userId: UserId.fromUniqueString(userId));
           },
         ),
         GoRoute(
@@ -113,7 +113,7 @@ class AppRouter {
             // Get current user ID from auth state or context
             final authState = context.read<AuthBloc>().state;
             if (authState is AuthAuthenticated) {
-              return UserProfileScreen(userId: authState.user.id);
+              return HeroUserProfileScreen(userId: authState.user.id);
             }
             // Fallback - this shouldn't happen in normal flow
             return const Scaffold(

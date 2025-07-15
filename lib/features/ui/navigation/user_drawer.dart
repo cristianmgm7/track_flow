@@ -173,7 +173,7 @@ class UserDrawer extends StatelessWidget {
           ),
           onTap: () {
             Navigator.pop(context); // Close drawer
-            context.go(AppRoutes.userProfile);
+            context.push(AppRoutes.userProfile);
           },
         ),
         const Divider(color: AppColors.border),

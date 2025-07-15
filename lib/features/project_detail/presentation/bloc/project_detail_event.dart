@@ -26,3 +26,7 @@ class TracksUpdated extends ProjectDetailEvent {
   @override
   List<Object?> get props => [tracks];
 }
+
+class ClearProjectDetail extends ProjectDetailEvent {
+  const ClearProjectDetail();
+}

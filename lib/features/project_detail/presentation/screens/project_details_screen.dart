@@ -29,6 +29,7 @@ class ProjectDetailsScreen extends StatefulWidget {
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   bool _isUploadingTrack = false;
+  ProjectDetailBloc? _projectDetailBloc;
 
   @override
   void initState() {
@@ -36,6 +37,18 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     context.read<ProjectDetailBloc>().add(
       WatchProjectDetail(project: widget.project),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _projectDetailBloc ??= context.read<ProjectDetailBloc>();
+  }
+
+  @override
+  void dispose() {
+    _projectDetailBloc?.add(const ClearProjectDetail());
+    super.dispose();
   }
 
   @override

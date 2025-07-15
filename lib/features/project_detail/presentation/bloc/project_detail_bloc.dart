@@ -16,6 +16,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
   ProjectDetailBloc({required this.watchProjectDetail})
     : super(ProjectDetailState.initial()) {
     on<WatchProjectDetail>(_onWatchProjectDetail);
+    on<ClearProjectDetail>(_onClearProjectDetail);
   }
 
   Future<void> _onWatchProjectDetail(
@@ -23,11 +24,10 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     Emitter<ProjectDetailState> emit,
   ) async {
     emit(
-      state.copyWith(
+      ProjectDetailState.initial().copyWith(
+        project: event.project,
         isLoadingTracks: true,
         isLoadingCollaborators: true,
-        tracksError: null,
-        collaboratorsError: null,
       ),
     );
 
@@ -63,6 +63,14 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
         );
       },
     );
+  }
+
+  Future<void> _onClearProjectDetail(
+    ClearProjectDetail event,
+    Emitter<ProjectDetailState> emit,
+  ) async {
+    _detailSubscription?.cancel();
+    emit(ProjectDetailState.initial());
   }
 
   @override
