@@ -8,7 +8,8 @@ import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog
 import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'dart:io';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class UserProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -33,9 +34,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Artist Profile', style: AppTextStyle.titleMedium),
+        title: Text('Profile', style: AppTextStyle.titleMedium),
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
+        elevation: 0,
       ),
       body: BlocBuilder<UserProfileBloc, UserProfileState>(
         builder: (context, state) {
@@ -51,151 +53,254 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             );
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.all(Dimensions.space24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 56,
-                      backgroundColor: AppColors.grey600,
-                      backgroundImage: avatarProvider,
-                      child:
-                          avatarProvider == null
-                              ? Icon(
-                                Icons.person,
-                                size: 56,
-                                color: AppColors.textSecondary,
-                              )
-                              : null,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    profile.name,
-                    style: AppTextStyle.headlineLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    profile.email,
-                    style: AppTextStyle.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.grey700,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Text(
-                      'Creative Role: ${profile.creativeRole?.name ?? 'N/A'}',
-                      style: AppTextStyle.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.grey700,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Text(
-                      'Project Role: ${profile.role?.toShortString() ?? 'N/A'}',
-                      style: AppTextStyle.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('User ID:', style: AppTextStyle.labelMedium),
-                        const SizedBox(height: 4),
-                        Text(profile.id.value, style: AppTextStyle.bodySmall),
-                        const SizedBox(height: 12),
-                        Text('Joined:', style: AppTextStyle.labelMedium),
-                        const SizedBox(height: 4),
-                        Text(
-                          profile.createdAt.toLocal().toString().split(' ')[0],
-                          style: AppTextStyle.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        useRootNavigator: false,
-                        builder:
-                            (context) => EditProfileDialog(profile: profile),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      side: const BorderSide(color: AppColors.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                    ),
-                    child: Text(
-                      'Edit Profile',
-                      style: AppTextStyle.button.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
+                  // Profile Header
+                  _buildProfileHeader(profile, avatarProvider),
+
+                  SizedBox(height: Dimensions.space32),
+
+                  // Profile Information Cards
+                  _buildProfileInfo(profile),
+
+                  SizedBox(height: Dimensions.space32),
+
+                  // Edit Profile Button
+                  _buildEditButton(context, profile),
                 ],
               ),
             );
           }
           if (state is UserProfileError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    'An error occurred loading the profile.',
-                    style: AppTextStyle.bodyLarge.copyWith(
-                      color: AppColors.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
+            return _buildErrorState();
           }
           return const SizedBox.shrink();
         },
       ),
     );
+  }
+
+  Widget _buildProfileHeader(profile, ImageProvider? avatarProvider) {
+    return Column(
+      children: [
+        // Avatar
+        CircleAvatar(
+          radius: 64,
+          backgroundColor: AppColors.grey600,
+          backgroundImage: avatarProvider,
+          child:
+              avatarProvider == null
+                  ? Icon(Icons.person, size: 64, color: AppColors.textSecondary)
+                  : null,
+        ),
+        SizedBox(height: Dimensions.space20),
+
+        // Name
+        Text(
+          profile.name,
+          style: AppTextStyle.headlineLarge.copyWith(
+            color: AppColors.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+
+        SizedBox(height: Dimensions.space8),
+
+        // Email
+        Text(
+          profile.email,
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileInfo(profile) {
+    return Column(
+      children: [
+        // Roles Section
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(Dimensions.space16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Roles',
+                style: AppTextStyle.titleMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: Dimensions.space16),
+
+              // Creative Role
+              _buildInfoRow(
+                'Creative Role',
+                _getCreativeRoleName(profile.creativeRole),
+                Icons.brush,
+              ),
+
+              SizedBox(height: Dimensions.space12),
+
+              // Project Role
+              _buildInfoRow(
+                'Project Role',
+                profile.role?.toShortString() ?? 'Not specified',
+                Icons.work,
+              ),
+            ],
+          ),
+        ),
+
+        SizedBox(height: Dimensions.space16),
+
+        // Account Information
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(Dimensions.space16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Account Information',
+                style: AppTextStyle.titleMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: Dimensions.space16),
+
+              // User ID
+              _buildInfoRow('User ID', profile.id.value, Icons.fingerprint),
+
+              SizedBox(height: Dimensions.space12),
+
+              // Join Date
+              _buildInfoRow(
+                'Member Since',
+                profile.createdAt.toLocal().toString().split(' ')[0],
+                Icons.calendar_today,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: Dimensions.iconSmall, color: AppColors.textSecondary),
+        SizedBox(width: Dimensions.space12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyle.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: Dimensions.space4),
+              Text(
+                value,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditButton(BuildContext context, profile) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            useRootNavigator: false,
+            builder: (context) => EditProfileDialog(profile: profile),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.onPrimary,
+          padding: EdgeInsets.symmetric(vertical: Dimensions.space16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+          ),
+        ),
+        child: Text(
+          'Edit Profile',
+          style: AppTextStyle.button.copyWith(color: AppColors.onPrimary),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: AppColors.error),
+          SizedBox(height: Dimensions.space16),
+          Text(
+            'Unable to load profile',
+            style: AppTextStyle.titleMedium.copyWith(color: AppColors.error),
+          ),
+          SizedBox(height: Dimensions.space8),
+          Text(
+            'Please try again later',
+            style: AppTextStyle.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getCreativeRoleName(CreativeRole? role) {
+    if (role == null) return 'Not specified';
+
+    switch (role) {
+      case CreativeRole.producer:
+        return 'Producer';
+      case CreativeRole.composer:
+        return 'Composer';
+      case CreativeRole.mixingEngineer:
+        return 'Mixing Engineer';
+      case CreativeRole.masteringEngineer:
+        return 'Mastering Engineer';
+      case CreativeRole.vocalist:
+        return 'Vocalist';
+      case CreativeRole.instrumentalist:
+        return 'Instrumentalist';
+      case CreativeRole.other:
+        return 'Other';
+    }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_gradients.dart';
 import 'app_bar.dart';
 import 'bottom_nav.dart';
 
@@ -36,29 +36,63 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: appBar,
-      body: _buildBody(),
-      bottomNavigationBar: bottomNavigationBar,
-      drawer: drawer,
-      endDrawer: endDrawer,
-      floatingActionButton: floatingActionButton,
-      floatingActionButtonLocation: floatingActionButtonLocation,
-      extendBody: extendBody,
-      extendBodyBehindAppBar: extendBodyBehindAppBar,
-      backgroundColor: backgroundColor ?? AppColors.background,
-      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppGradients.glassmorphismBackground,
+      ),
+      child: Stack(
+        children: [
+          // Subtle texture overlay
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topRight,
+                  radius: 1.5,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.02),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.bottomLeft,
+                  radius: 1.2,
+                  colors: [
+                    Colors.blue.withValues(alpha: 0.01),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Main scaffold
+          Scaffold(
+            appBar: appBar,
+            body: _buildBody(),
+            bottomNavigationBar: bottomNavigationBar,
+            drawer: drawer,
+            endDrawer: endDrawer,
+            floatingActionButton: floatingActionButton,
+            floatingActionButtonLocation: floatingActionButtonLocation,
+            extendBody: extendBody,
+            extendBodyBehindAppBar: extendBodyBehindAppBar,
+            backgroundColor: Colors.transparent,
+            resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildBody() {
     if (persistentFooterWidget != null) {
-      return Column(
-        children: [
-          Expanded(child: body),
-          persistentFooterWidget!,
-        ],
-      );
+      return Column(children: [Expanded(child: body), persistentFooterWidget!]);
     }
     return body;
   }
@@ -67,16 +101,11 @@ class AppScaffold extends StatelessWidget {
 class AppScaffoldMessenger extends StatelessWidget {
   final Widget child;
 
-  const AppScaffoldMessenger({
-    super.key,
-    required this.child,
-  });
+  const AppScaffoldMessenger({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return ScaffoldMessenger(
-      child: child,
-    );
+    return ScaffoldMessenger(child: child);
   }
 }
 
@@ -138,7 +167,7 @@ class AppPadding extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     EdgeInsetsGeometry finalPadding;
-    
+
     if (padding != null) {
       finalPadding = padding!;
     } else if (all != null) {
@@ -152,10 +181,7 @@ class AppPadding extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: finalPadding,
-      child: child,
-    );
+    return Padding(padding: finalPadding, child: child);
   }
 }
 

@@ -13,7 +13,7 @@ import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dar
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
-import 'package:trackflow/features/navegation/presentation/widget/main_scafold.dart';
+import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -105,6 +105,20 @@ class AppRouter {
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
             return UserProfileScreen(userId: UserId.fromUniqueString(userId));
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.userProfile,
+          builder: (context, state) {
+            // Get current user ID from auth state or context
+            final authState = context.read<AuthBloc>().state;
+            if (authState is AuthAuthenticated) {
+              return UserProfileScreen(userId: authState.user.id);
+            }
+            // Fallback - this shouldn't happen in normal flow
+            return const Scaffold(
+              body: Center(child: Text('User not authenticated')),
+            );
           },
         ),
         ShellRoute(

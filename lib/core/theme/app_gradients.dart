@@ -67,6 +67,31 @@ class AppGradients {
       Color(0xFF0D0D0D),
     ],
   );
+
+  // Glassmorphism optimized backgrounds
+  static const LinearGradient glassmorphismBackground = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF2A2A2A), // Lighter top left
+      Color(0xFF1E1E1E), // Main background
+      Color(0xFF161616), // Darker middle
+      Color(0xFF0D0D0D), // Darkest bottom right
+    ],
+    stops: [0.0, 0.3, 0.7, 1.0],
+  );
+
+  static const LinearGradient glassmorphismSubtle = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF242424),
+      Color(0xFF1A1A1A),
+      Color(0xFF161616),
+      Color(0xFF121212),
+    ],
+    stops: [0.0, 0.4, 0.7, 1.0],
+  );
   
   // Accent gradients
   static LinearGradient get accent => LinearGradient(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:trackflow/core/theme/app_animations.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 
 class AppBottomNavigation extends StatelessWidget {
@@ -29,29 +29,53 @@ class AppBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: Dimensions.bottomNavHeight,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface,
-        boxShadow: showShadow ? AppShadows.appBar : null,
-      ),
-      child: Row(
-        children: items.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          final isSelected = index == currentIndex;
-          
-          return Expanded(
-            child: _AppBottomNavigationItemWidget(
-              item: item,
-              isSelected: isSelected,
-              onTap: () => onTap(index),
-              selectedItemColor: selectedItemColor ?? AppColors.primary,
-              unselectedItemColor: unselectedItemColor ?? AppColors.textSecondary,
-              showLabel: showLabels,
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+        child: Container(
+          height: Dimensions.bottomNavHeight,
+          decoration: BoxDecoration(
+            color: (backgroundColor ?? AppColors.surface).withValues(
+              alpha: 0.1,
             ),
-          );
-        }).toList(),
+            border: Border(
+              top: BorderSide(
+                color: AppColors.textPrimary.withValues(alpha: 0.1),
+                width: 0.5,
+              ),
+            ),
+            boxShadow:
+                showShadow
+                    ? [
+                      BoxShadow(
+                        color: AppColors.grey900.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ]
+                    : null,
+          ),
+          child: Row(
+            children:
+                items.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  final isSelected = index == currentIndex;
+
+                  return Expanded(
+                    child: _AppBottomNavigationItemWidget(
+                      item: item,
+                      isSelected: isSelected,
+                      onTap: () => onTap(index),
+                      selectedItemColor: selectedItemColor ?? AppColors.primary,
+                      unselectedItemColor:
+                          unselectedItemColor ?? AppColors.textSecondary,
+                      showLabel: showLabels,
+                    ),
+                  );
+                }).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -111,17 +135,18 @@ class _AppBottomNavigationItemWidgetState
     _scaleAnimation = Tween<double>(
       begin: AppAnimations.scaleNormal,
       end: AppAnimations.scaleDown,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: AppAnimations.easeOut,
-    ));
-    _opacityAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.7,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: AppAnimations.easeOut,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: AppAnimations.easeOut,
+      ),
+    );
+    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.7).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: AppAnimations.easeOut,
+      ),
+    );
   }
 
   @override
@@ -147,9 +172,10 @@ class _AppBottomNavigationItemWidgetState
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.isSelected
-        ? widget.selectedItemColor
-        : widget.unselectedItemColor;
+    final color =
+        widget.isSelected
+            ? widget.selectedItemColor
+            : widget.unselectedItemColor;
 
     return AnimatedBuilder(
       animation: _animationController,
@@ -182,7 +208,8 @@ class _AppBottomNavigationItemWidgetState
                             AnimatedSwitcher(
                               duration: AppAnimations.fast,
                               child: Icon(
-                                widget.isSelected && widget.item.activeIcon != null
+                                widget.isSelected &&
+                                        widget.item.activeIcon != null
                                     ? widget.item.activeIcon!
                                     : widget.item.icon,
                                 key: ValueKey(widget.isSelected),
@@ -204,9 +231,10 @@ class _AppBottomNavigationItemWidgetState
                             duration: AppAnimations.fast,
                             style: AppTextStyle.caption.copyWith(
                               color: color,
-                              fontWeight: widget.isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
+                              fontWeight:
+                                  widget.isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
                             ),
                             child: Text(
                               widget.item.label,
@@ -257,18 +285,19 @@ class AppBadge extends StatelessWidget {
         color: backgroundColor ?? AppColors.error,
         borderRadius: BorderRadius.circular(showDot ? 4 : 8),
       ),
-      child: showDot
-          ? null
-          : Center(
-              child: Text(
-                count! > 99 ? '99+' : count.toString(),
-                style: AppTextStyle.caption.copyWith(
-                  color: textColor ?? AppColors.onPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
+      child:
+          showDot
+              ? null
+              : Center(
+                child: Text(
+                  count! > 99 ? '99+' : count.toString(),
+                  style: AppTextStyle.caption.copyWith(
+                    color: textColor ?? AppColors.onPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
     );
   }
 }

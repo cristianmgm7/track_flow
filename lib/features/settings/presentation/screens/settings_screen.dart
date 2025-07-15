@@ -5,7 +5,6 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
-import 'package:trackflow/features/user_profile/presentation/components/user_profile_information_component.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -34,9 +33,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         body: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            const ProfileInformation(),
-            const SizedBox(height: 16),
-            const Divider(),
             // Preferences Card
             const Preferences(),
             const SizedBox(height: 16),

@@ -9,29 +9,37 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
+import 'package:trackflow/features/ui/navigation/user_drawer.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 
-class MainScaffold extends StatelessWidget {
+class MainScaffold extends StatefulWidget {
   final Widget child;
 
   const MainScaffold({super.key, required this.child});
+
+  @override
+  State<MainScaffold> createState() => _MainScaffoldState();
+}
+
+class _MainScaffoldState extends State<MainScaffold> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize user profile watching
+    context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
+  }
 
   @override
   Widget build(BuildContext context) {
     final currentTab = context.select((NavigationCubit cubit) => cubit.state);
 
     return AppScaffold(
-      appBar: AppAppBar(
-        actions: [
-          AppIconButton(
-            icon: Icons.settings_rounded,
-            onPressed: () => context.go(AppRoutes.settings),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
+      appBar: AppAppBar(),
+      drawer: const UserDrawer(),
       body: Column(
         children: [
-          Expanded(child: child),
+          Expanded(child: widget.child),
           BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
             builder: (context, state) {
               if (state is AudioPlayerSessionState) {
