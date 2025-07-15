@@ -15,5 +15,14 @@ abstract class AudioTrackRepository {
     required AudioTrack track,
   });
 
-  Future<Either<Failure, Unit>> deleteTrack(String trackId);
+  Future<Either<Failure, Unit>> deleteTrack(
+    AudioTrackId trackId,
+    ProjectId projectId,
+  );
+
+  Future<Either<Failure, Unit>> editTrackName({
+    required AudioTrackId trackId,
+    required ProjectId projectId,
+    required String newName,
+  });
 }

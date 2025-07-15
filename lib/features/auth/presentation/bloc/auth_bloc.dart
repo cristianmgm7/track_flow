@@ -88,8 +88,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    await signOut();
-    emit(AuthUnauthenticated());
+    final result = await signOut();
+    result.fold(
+      (failure) => emit(AuthError('Failed to sign out: ${failure.message}')),
+      (_) => emit(AuthUnauthenticated()),
+    );
   }
 
   Future<void> _onAuthGoogleSignInRequested(
@@ -109,13 +112,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     OnboardingMarkCompleted event,
     Emitter<AuthState> emit,
   ) async {
-    await onboarding.onboardingCompleted();
+    final result = await onboarding.onboardingCompleted();
+    result.fold(
+      (failure) => emit(AuthError('Failed to complete onboarding: ${failure.message}')),
+      (_) {}, // Success - no state change needed
+    );
   }
 
   Future<void> _welcomeScreenMarkCompleted(
     WelcomeScreenMarkCompleted event,
     Emitter<AuthState> emit,
   ) async {
-    await onboarding.welcomeScreenSeenCompleted();
+    final result = await onboarding.welcomeScreenSeenCompleted();
+    result.fold(
+      (failure) => emit(AuthError('Failed to mark welcome screen as seen: ${failure.message}')),
+      (_) {}, // Success - no state change needed
+    );
   }
 }

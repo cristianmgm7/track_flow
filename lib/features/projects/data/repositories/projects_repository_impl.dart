@@ -30,13 +30,13 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
-
     try {
-      final result = await _remoteDataSource.createProject(project);
+      final result = await _remoteDataSource.createProject(
+        ProjectDTO.fromDomain(project),
+      );
       return result.fold((failure) => Left(failure), (projectWithId) async {
-        final dto = ProjectDTO.fromDomain(projectWithId);
-        await _localDataSource.cacheProject(dto);
-        return Right(projectWithId);
+        await _localDataSource.cacheProject(projectWithId);
+        return Right(projectWithId.toDomain());
       });
     } catch (e) {
       return Left(DatabaseFailure('Failed to create project: ${e.toString()}'));
@@ -46,9 +46,8 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Unit>> updateProject(Project project) async {
     try {
-      await _remoteDataSource.updateProject(project);
-      final dto = ProjectDTO.fromDomain(project);
-      await _localDataSource.cacheProject(dto);
+      await _remoteDataSource.updateProject(ProjectDTO.fromDomain(project));
+      await _localDataSource.cacheProject(ProjectDTO.fromDomain(project));
       return Right(unit);
     } catch (e) {
       return Left(
@@ -58,35 +57,42 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteProject(UniqueId id) async {
+  Future<Either<Failure, Unit>> deleteProject(ProjectId projectId) async {
     try {
-      await _remoteDataSource.deleteProject(id);
-      await _localDataSource.removeCachedProject(id);
+      await _remoteDataSource.deleteProject(projectId.value);
+      await _localDataSource.removeCachedProject(projectId.value);
       return Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to delete project: ${e.toString()}'));
     }
   }
 
+  @override
+  Future<Either<Failure, Project>> getProjectById(ProjectId projectId) async {
+    final hasConnected = await _networkInfo.isConnected;
+    if (!hasConnected) {
+      return Left(DatabaseFailure('No internet connection'));
+    }
+    return await _remoteDataSource
+        .getProjectById(projectId.value)
+        .then(
+          (either) => either.fold(
+            (failure) => Left(failure),
+            (project) => Right(project.toDomain()),
+          ),
+        );
+  }
+
   // watching projects stream
   @override
   Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId) {
     return _localDataSource
-        .watchAllProjects(ownerId)
+        .watchAllProjects(ownerId.value)
         .map(
-          (projects) =>
-              Right(projects.map((project) => project.toDomain()).toList()),
-        );
-  }
-
-  @override
-  Stream<Either<Failure, List<Project>>> watchRemoteProjects(UserId userId) {
-    return _remoteDataSource
-        .watchProjectsByUser(userId)
-        .map<Either<Failure, List<Project>>>((projects) => Right(projects))
-        .handleError(
-          (error) =>
-              Left(DatabaseFailure('Remote sync error: ${error.toString()}')),
+          (either) => either.map(
+            (projects) =>
+                projects.map((project) => project.toDomain()).toList(),
+          ),
         );
   }
 }

@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
@@ -25,6 +26,8 @@ class ValidateMagicLinkUseCase {
   Future<Either<Failure, MagicLink>> call(
     ValidateMagicLinkParams params,
   ) async {
-    return await _repository.validateMagicLink(linkId: params.linkId);
+    return await _repository.validateMagicLink(
+      linkId: MagicLinkId.fromUniqueString(params.linkId),
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:equatable/equatable.dart';
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
@@ -31,8 +32,8 @@ class GenerateMagicLinkUseCase {
     return userIdOrFailure.fold(
       (failure) => Left(failure),
       (userId) => _repository.generateMagicLink(
-        projectId: params.projectId,
-        userId: userId,
+        projectId: ProjectId.fromUniqueString(params.projectId),
+        userId: UserId.fromUniqueString(userId),
       ),
     );
   }

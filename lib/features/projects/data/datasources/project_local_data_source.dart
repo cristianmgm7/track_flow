@@ -1,76 +1,116 @@
-import 'package:hive/hive.dart';
+import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
 import '../models/project_dto.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class ProjectsLocalDataSource {
-  Future<void> cacheProject(ProjectDTO project);
+  Future<Either<Failure, Unit>> cacheProject(ProjectDTO project);
 
-  Future<ProjectDTO?> getCachedProject(UniqueId id);
+  Future<Either<Failure, ProjectDTO?>> getCachedProject(String projectId);
 
-  Future<void> removeCachedProject(UniqueId id);
+  Future<Either<Failure, Unit>> removeCachedProject(String projectId);
 
-  Future<List<ProjectDTO>> getAllProjects();
+  Future<Either<Failure, List<ProjectDTO>>> getAllProjects();
 
-  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId);
+  Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(String ownerId);
+
+  Future<Either<Failure, Unit>> clearCache();
 }
 
 @LazySingleton(as: ProjectsLocalDataSource)
 class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
-  late final Box<Map> _box;
+  final Isar _isar;
 
-  ProjectsLocalDataSourceImpl({required Box<Map> box}) {
-    _box = box;
+  ProjectsLocalDataSourceImpl(this._isar);
+
+  @override
+  Future<Either<Failure, Unit>> cacheProject(ProjectDTO project) async {
+    try {
+      final projectDoc = ProjectDocument.fromDTO(project);
+      await _isar.writeTxn(() async {
+        await _isar.projectDocuments.put(projectDoc);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to cache project: $e'));
+    }
   }
 
   @override
-  Future<void> cacheProject(ProjectDTO project) async {
-    await _box.put(project.id, project.toMap());
+  Future<Either<Failure, ProjectDTO?>> getCachedProject(
+    String projectId,
+  ) async {
+    try {
+      final projectDoc = await _isar.projectDocuments.get(
+        fastHash(projectId),
+      );
+      return Right(projectDoc?.toDTO());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get cached project: $e'));
+    }
   }
 
   @override
-  Future<ProjectDTO?> getCachedProject(UniqueId id) async {
-    final data = _box.get(id.value);
-    if (data == null) return null;
-    return ProjectDTO.fromMap({
-      'id': id.value,
-      ...Map<String, dynamic>.from(data),
-    });
+  Future<Either<Failure, Unit>> removeCachedProject(String projectId) async {
+    try {
+      await _isar.writeTxn(() async {
+        final projectDoc = await _isar.projectDocuments.get(
+          fastHash(projectId),
+        );
+        if (projectDoc != null) {
+          projectDoc.isDeleted = true;
+          await _isar.projectDocuments.put(projectDoc);
+        }
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to remove cached project: $e'));
+    }
   }
 
   @override
-  Future<void> removeCachedProject(UniqueId id) async {
-    await _box.delete(id.value);
+  Future<Either<Failure, List<ProjectDTO>>> getAllProjects() async {
+    try {
+      final projectDocs = await _isar.projectDocuments.where().findAll();
+      return Right(projectDocs.map((doc) => doc.toDTO()).toList());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get all projects: $e'));
+    }
   }
 
   @override
-  Future<List<ProjectDTO>> getAllProjects() async {
-    return _box.values
-        .whereType<Map>() // only maps
-        .map((e) => ProjectDTO.fromMap(Map<String, dynamic>.from(e)))
-        .toList();
-  }
-
-  @override
-  Stream<List<ProjectDTO>> watchAllProjects(UserId ownerId) async* {
-    yield (await getAllProjects())
-        .where(
-          (dto) =>
-              dto.ownerId == ownerId.value ||
-              dto.collaborators.contains(ownerId.value),
+  Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(String ownerId) {
+    return _isar.projectDocuments
+        .where()
+        .filter()
+        .isDeletedEqualTo(false)
+        .and()
+        .group(
+          (q) => q
+              .ownerIdEqualTo(ownerId)
+              .or()
+              .collaboratorIdsElementEqualTo(ownerId),
         )
-        .toList();
+        .watch(fireImmediately: true)
+        .map(
+          (docs) => right<Failure, List<ProjectDTO>>(
+            docs.map((doc) => doc.toDTO()).toList(),
+          ),
+        )
+        .handleError((e) => left(CacheFailure('Failed to watch projects: $e')));
+  }
 
-    // Luego escuchar los cambios y filtrar también
-    yield* _box.watch().asyncMap((_) async {
-      final all = await getAllProjects();
-      return all
-          .where(
-            (dto) =>
-                dto.ownerId == ownerId.value ||
-                dto.collaborators.contains(ownerId.value),
-          )
-          .toList();
-    });
+  @override
+  Future<Either<Failure, Unit>> clearCache() async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.projectDocuments.clear();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to clear cache: $e'));
+    }
   }
 }

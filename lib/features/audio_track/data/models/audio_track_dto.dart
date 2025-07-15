@@ -10,6 +10,7 @@ class AudioTrackDTO {
   final ProjectId projectId;
   final UserId uploadedBy;
   final DateTime? createdAt;
+  final String extension;
 
   const AudioTrackDTO({
     required this.id,
@@ -19,6 +20,7 @@ class AudioTrackDTO {
     required this.projectId,
     required this.uploadedBy,
     this.createdAt,
+    required this.extension,
   });
 
   static const String collection = 'audio_tracks';
@@ -35,6 +37,7 @@ class AudioTrackDTO {
           json['createdAt'] is Timestamp
               ? (json['createdAt'] as Timestamp).toDate()
               : null,
+      extension: json['extension'] as String,
     );
   }
 
@@ -47,6 +50,7 @@ class AudioTrackDTO {
       'projectId': projectId.value,
       'uploadedBy': uploadedBy.value,
       'createdAt': createdAt,
+      'extension': extension,
     };
   }
 
@@ -62,7 +66,11 @@ class AudioTrackDTO {
     );
   }
 
-  static AudioTrackDTO fromDomain(AudioTrack track, {String? url}) {
+  static AudioTrackDTO fromDomain(
+    AudioTrack track, {
+    String? url,
+    required String extension,
+  }) {
     return AudioTrackDTO(
       projectId: track.projectId,
       uploadedBy: track.uploadedBy,
@@ -71,6 +79,7 @@ class AudioTrackDTO {
       url: url ?? track.url,
       duration: track.duration.inMilliseconds,
       createdAt: track.createdAt,
+      extension: extension,
     );
   }
 }

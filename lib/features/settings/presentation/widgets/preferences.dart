@@ -98,9 +98,7 @@ class _PreferencesState extends State<Preferences> {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],

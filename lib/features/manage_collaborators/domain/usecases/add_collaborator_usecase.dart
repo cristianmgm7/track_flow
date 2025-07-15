@@ -4,12 +4,15 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
+    as manage_collab_exc;
 
 class AddCollaboratorToProjectParams extends Equatable {
   final ProjectId projectId;
@@ -26,27 +29,27 @@ class AddCollaboratorToProjectParams extends Equatable {
 
 @lazySingleton
 class AddCollaboratorToProjectUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final ProjectsRepository _repositoryProjectDetail;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   AddCollaboratorToProjectUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionService,
   );
 
-  Future<Either<Failure, void>> call(
+  Future<Either<Failure, Project>> call(
     AddCollaboratorToProjectParams params,
   ) async {
     final userId = _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
-    // Obtener el proyecto del repositorio
+    // getting project from repository
     final projectResult = await _repositoryProjectDetail.getProjectById(
       params.projectId,
     );
-    return projectResult.fold((failure) => left(failure), (project) {
+    return projectResult.fold((failure) => left(failure), (project) async {
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
         orElse: () => throw UserNotCollaboratorException(),
@@ -64,8 +67,23 @@ class AddCollaboratorToProjectUseCase {
       );
 
       try {
-        project.addCollaborator(newCollaborator);
-        return _repositoryManageCollaborators.updateProject(project);
+        final result = await _collaboratorRepository.addCollaborator(
+          params.projectId,
+          params.collaboratorId,
+          newCollaborator.role,
+        );
+        return result.fold(
+          (failure) => left(failure),
+          (_) async {
+            // Return updated project after successful addition
+            final updatedProject = project.addCollaborator(newCollaborator);
+            return right(updatedProject);
+          },
+        );
+      } on manage_collab_exc.CollaboratorAlreadyExistsException catch (e) {
+        return left(
+          manage_collab_exc.ManageCollaboratorException(e.toString()),
+        );
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }

@@ -1,117 +1,73 @@
 import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/load_user_profile_collaborators_usecase.dart';
-import 'package:trackflow/features/project_detail/domain/usecases/get_project_by_id_usecase.dart';
+import 'package:trackflow/features/project_detail/domain/usecases/watch_project_detail_usecase.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
 
 @injectable
 class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
-  final GetProjectByIdUseCase getProjectById;
-  final WatchTracksByProjectIdUseCase watchTracksByProjectId;
-  final LoadUserProfileCollaboratorsUseCase loadUserProfileCollaborators;
+  final WatchProjectDetailUseCase watchProjectDetail;
 
-  StreamSubscription<Either<Failure, List<AudioTrack>>>? tracksSubscription;
+  StreamSubscription<Either<Failure, ProjectDetailBundle>>? _detailSubscription;
 
-  ProjectDetailBloc({
-    required this.getProjectById,
-    required this.watchTracksByProjectId,
-    required this.loadUserProfileCollaborators,
-  }) : super(ProjectDetailState.initial()) {
-    on<LoadProjectDetail>(onLoadProjectDetail);
-    on<TracksUpdated>(onTracksUpdated);
+  ProjectDetailBloc({required this.watchProjectDetail})
+    : super(ProjectDetailState.initial()) {
+    on<WatchProjectDetail>(_onWatchProjectDetail);
   }
 
-  Future<void> onLoadProjectDetail(
-    LoadProjectDetail event,
+  Future<void> _onWatchProjectDetail(
+    WatchProjectDetail event,
     Emitter<ProjectDetailState> emit,
   ) async {
-    // Start loading all three sections
     emit(
       state.copyWith(
-        isLoadingProject: true,
         isLoadingTracks: true,
         isLoadingCollaborators: true,
-        projectError: null,
         tracksError: null,
         collaboratorsError: null,
       ),
     );
 
-    // Load Project
-    final projectResult = await getProjectById(event.projectId);
-    projectResult.fold(
-      (failure) => emit(
-        state.copyWith(isLoadingProject: false, projectError: failure.message),
+    await emit.onEach<Either<Failure, ProjectDetailBundle>>(
+      watchProjectDetail.call(
+        projectId: event.project.id.value,
+        collaboratorIds:
+            event.project.collaborators.map((e) => e.userId.value).toList(),
       ),
-      (project) =>
-          emit(state.copyWith(project: project, isLoadingProject: false)),
-    );
-
-    // Load Collaborators
-    final collaboratorsResult = await loadUserProfileCollaborators.call(
-      ProjectWithCollaborators(
-        project: projectResult.fold(
-          (failure) => throw failure,
-          (project) => project,
-        ),
-      ),
-    );
-    collaboratorsResult.fold(
-      (failure) => emit(
-        state.copyWith(
-          isLoadingCollaborators: false,
-          collaboratorsError: failure.message,
-        ),
-      ),
-      (collaborators) => emit(
-        state.copyWith(
-          collaborators: collaborators,
-          isLoadingCollaborators: false,
-        ),
-      ),
-    );
-
-    // Subscribe to Tracks Stream
-    await tracksSubscription?.cancel();
-    tracksSubscription = watchTracksByProjectId
-        .call(WatchTracksByProjectIdParams(projectId: event.projectId))
-        .listen(
-          (tracks) => add(
-            TracksUpdated(
-              tracks.fold((failure) => throw failure, (tracks) => tracks),
-            ),
-          ),
-          onError: (error) {
+      onData: (either) {
+        either.fold(
+          (failure) {
             emit(
               state.copyWith(
                 isLoadingTracks: false,
-                tracksError: error.toString(),
+                isLoadingCollaborators: false,
+                tracksError: failure.message,
+                collaboratorsError: failure.message,
+              ),
+            );
+          },
+          (bundle) {
+            emit(
+              state.copyWith(
+                project: event.project,
+                tracks: bundle.tracks,
+                collaborators: bundle.collaborators,
+                isLoadingTracks: false,
+                isLoadingCollaborators: false,
               ),
             );
           },
         );
-  }
-
-  void onTracksUpdated(TracksUpdated event, Emitter<ProjectDetailState> emit) {
-    emit(
-      state.copyWith(
-        tracks: event.tracks,
-        isLoadingTracks: false,
-        tracksError: null,
-      ),
+      },
     );
   }
 
   @override
   Future<void> close() {
-    tracksSubscription?.cancel();
+    _detailSubscription?.cancel();
     return super.close();
   }
 }

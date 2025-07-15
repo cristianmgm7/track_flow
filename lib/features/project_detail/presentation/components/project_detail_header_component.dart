@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/project_detail_actions_sheet.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailHeaderComponent extends StatelessWidget {
   final Project project;
-  const ProjectDetailHeaderComponent({super.key, required this.project});
+  final BuildContext context;
+
+  const ProjectDetailHeaderComponent({
+    super.key,
+    required this.project,
+    required this.context,
+  });
+
+  void _openProjectDetailActionsSheet(Project project) {
+    showTrackFlowActionSheet(
+      title: 'Project Actions',
+      context: context,
+      actions: ProjectDetailActions.forProject(context, project),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,12 +29,23 @@ class ProjectDetailHeaderComponent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              project.name.value.fold(
-                (failure) => 'Error loading project name',
-                (value) => value,
-              ),
-              style: Theme.of(context).textTheme.headlineSmall,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    project.name.value.fold(
+                      (failure) => 'Error loading project name',
+                      (value) => value,
+                    ),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _openProjectDetailActionsSheet(project),
+                  icon: const Icon(Icons.more_vert),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(

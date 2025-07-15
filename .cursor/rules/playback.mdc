@@ -1,0 +1,99 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+🎯 MISSION CONTEXT
+
+You are assisting in the development of the audio playback system for a Flutter mobile application called TrackFlow. The app is a collaborative audio feedback tool, where users can comment on audio tracks inside projects. Your responsibility is to engineer a world-class playback experience, covering UI, state management, offline support, and collaborative interactions.
+
+⸻
+
+📜 TECHNICAL & SOFTWARE ENGINEERING RULES FOR AUDIO PLAYBACK SYSTEM (TrackFlow)
+
+✅ GENERAL ARCHITECTURE
+	1.	The audio player system must be controlled by a centralized PlaybackController (Bloc or service) that exposes the full playback state:
+	•	currentTrack
+	•	playbackQueue
+	•	isPlaying
+	•	playbackPosition
+	•	isShuffling
+	•	isLooping
+	•	bufferingState
+	2.	All player UIs (mini-player, full player, comment screen) must reactively consume this shared global state and must never manage audio logic locally.
+	3.	Only one AudioPlayer instance is allowed at runtime to ensure clean playback and synchronized state.
+	4.	Playback state must be persisted locally so that when the app restarts, it can:
+	•	Resume the previous track
+	•	Restore the playback queue
+	•	Seek to the last known position
+
+⸻
+
+🎧 PLAYBACK FUNCTIONALITY (OBLIGATORY)
+	5.	Track playback must support both:
+	•	Single track play
+	•	Sequential queue play (project playlist)
+	6.	When a track is played from a project list, the playback queue must be populated accordingly, starting from the selected track and maintaining the original order.
+	7.	The queue must support:
+	•	Skip to next / previous
+	•	Loop (single track or queue)
+	•	Shuffle mode
+	8.	If the user reaches the end of the queue, playback must stop or loop depending on the active mode.
+
+⸻
+
+🔁 STREAMING & CACHING (OBLIGATORY)
+	9.	A dedicated AudioSourceResolver service must determine if a track:
+	•	Is cached locally → play from cache
+	•	Is not cached → stream from remote URL and begin caching it in background
+	10.	Each track must have a flag isCached stored in local metadata.
+	11.	Playback should be transparent to the user—whether cached or streamed, the user experience must be seamless.
+	12.	Users must be able to:
+
+	•	Download a single track manually
+	•	Download all tracks of a project as a “batch download”
+
+	13.	The system must handle download progress per track and expose this as part of the local track state.
+	14.	If a download fails, the system must retry or expose a clear error state.
+
+⸻
+
+🎛️ PLAYER UI SYNC & EXPERIENCE (OBLIGATORY)
+	15.	All player UIs must reflect the playback state in real-time:
+
+	•	Current track info (title, artist, duration)
+	•	Playback progress and seek bar
+	•	Play/Pause/Next/Previous buttons
+	•	Cached/downloaded status indicator
+
+	16.	The currently playing track in a list must have a visual indicator. Suggestions:
+
+	•	Highlight (e.g. green title or icon)
+	•	Animated waveform or EQ bars
+	•	Bold text or progress overlay
+
+	17.	All playback UIs must smoothly transition between each other (e.g., expanding mini player into full screen player).
+	18.	Scrubbing must be supported on both standard progress bars and waveform visualizations (in the comment view).
+
+⸻
+
+💬 COLLABORATIVE COMMENTING (DIFFERENTIATOR)
+	19.	In the comment screen, audio playback must sync precisely with the waveform and user interaction.
+	20.	Users must be able to:
+
+	•	Leave time-stamped comments
+	•	Jump to specific timestamps via comment taps
+	•	Navigate timeline via waveform
+
+	21.	When the user presses “Comment on track,” the audio player must enter a “comment mode”, exposing:
+
+	•	Playback controls
+	•	Waveform visualization
+	•	Comment input anchored to the current playback time
+
+⸻
+
+🛜 OFFLINE-FIRST STRATEGY (OBLIGATORY)
+	22.	The app must support full playback and feedback interaction even in offline mode, provided the tracks are cached.
+	23.	Cached tracks must be verifiable and usable with no internet connection.
+	24.	All download and playback logic must be integrated with the app’s Startup Resource Manager to prepare offline resources on first project access.

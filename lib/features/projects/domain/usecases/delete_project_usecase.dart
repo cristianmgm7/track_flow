@@ -9,10 +9,10 @@ import 'package:trackflow/core/session/session_storage.dart';
 
 @lazySingleton
 class DeleteProjectUseCase {
-  final ProjectsRepository _repository;
+  final ProjectsRepository _projectsRepository;
   final SessionStorage _sessionStorage;
 
-  DeleteProjectUseCase(this._repository, this._sessionStorage);
+  DeleteProjectUseCase(this._projectsRepository, this._sessionStorage);
 
   Future<Either<Failure, Unit>> call(Project project) async {
     final userIdResult = _sessionStorage.getUserId();
@@ -23,7 +23,7 @@ class DeleteProjectUseCase {
       final updatedProject = project.deleteProject(
         requester: UserId.fromUniqueString(userIdResult),
       );
-      return _repository.updateProject(updatedProject);
+      return _projectsRepository.deleteProject(updatedProject.id);
     } on ProjectException catch (e) {
       return left(ProjectException(e.message));
     } catch (e) {

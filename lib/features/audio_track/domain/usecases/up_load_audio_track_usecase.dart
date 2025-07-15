@@ -6,7 +6,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 
 class UploadAudioTrackParams {
   final ProjectId projectId;
@@ -25,7 +25,7 @@ class UploadAudioTrackParams {
 @lazySingleton
 class UploadAudioTrackUseCase {
   final ProjectTrackService projectTrackService;
-  final ProjectDetailRepository projectDetailRepository;
+  final ProjectsRepository projectDetailRepository;
   final SessionStorage sessionStorage;
 
   UploadAudioTrackUseCase(

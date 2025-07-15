@@ -2,6 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -9,36 +11,89 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
-  final UserProfileRemoteDataSource _remoteDataSource;
+  final UserProfileRemoteDataSource _userProfileRemoteDataSource;
+  final UserProfileLocalDataSource _userProfileLocalDataSource;
+  final NetworkInfo _networkInfo;
 
-  UserProfileRepositoryImpl(this._remoteDataSource);
+  UserProfileRepositoryImpl(
+    this._userProfileRemoteDataSource,
+    this._userProfileLocalDataSource,
+    this._networkInfo,
+  );
 
   @override
-  Future<Either<Failure, UserProfile>> getUserProfile(UserId userId) async {
+  Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId) async* {
     try {
-      final userProfiles = await _remoteDataSource.getProfilesByIds(
+      await for (final dto in _userProfileLocalDataSource.watchUserProfile(
         userId.value,
-      );
-      return await userProfiles.fold((failure) => left(failure), (
-        userProfile,
-      ) async {
-        return right(userProfile);
-      });
+      )) {
+        try {
+          yield Right(dto?.toDomain());
+        } catch (e) {
+          yield Left(
+            ServerFailure(
+              'Failed to parse local user profile: ${e.toString()}',
+            ),
+          );
+        }
+      }
     } catch (e) {
-      return left(ServerFailure(e.toString()));
+      yield Left(ServerFailure(e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, void>> updateUserProfile(
+  Future<Either<Failure, Unit>> updateUserProfile(
     UserProfile userProfile,
   ) async {
     try {
       final userProfileDTO = UserProfileDTO.fromDomain(userProfile);
-      await _remoteDataSource.updateProfile(userProfileDTO);
-      return right(null);
+      final result = await _userProfileRemoteDataSource.updateProfile(
+        userProfileDTO,
+      );
+      return await result.fold((failure) => Left(failure), (updatedDTO) async {
+        await _userProfileLocalDataSource.cacheUserProfile(updatedDTO);
+        return const Right(unit);
+      });
     } catch (e) {
-      return left(ServerFailure(e.toString()));
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile?>> getUserProfile(UserId userId) async {
+    try {
+      final hasConnected = await _networkInfo.isConnected;
+      if (hasConnected) {
+        // Try remote first if connected
+        final remoteResult = await _userProfileRemoteDataSource.getProfileById(
+          userId.value,
+        );
+        return await remoteResult.fold(
+          (failure) async {
+            // Fallback to local if remote fails - using the first value from watch stream
+            final localStream = _userProfileLocalDataSource.watchUserProfile(
+              userId.value,
+            );
+            final localDTO = await localStream.first;
+            return Right(localDTO?.toDomain());
+          },
+          (userProfileDTO) async {
+            // Cache the remote result
+            await _userProfileLocalDataSource.cacheUserProfile(userProfileDTO);
+            return Right(userProfileDTO.toDomain());
+          },
+        );
+      } else {
+        // Use local data when offline - using the first value from watch stream
+        final localStream = _userProfileLocalDataSource.watchUserProfile(
+          userId.value,
+        );
+        final localDTO = await localStream.first;
+        return Right(localDTO?.toDomain());
+      }
+    } catch (e) {
+      return Left(ServerFailure('Failed to get user profile: $e'));
     }
   }
 }

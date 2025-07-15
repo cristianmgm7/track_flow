@@ -4,8 +4,9 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
@@ -20,24 +21,24 @@ class JoinProjectWithIdParams extends Equatable {
 
 @lazySingleton
 class JoinProjectWithIdUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final ProjectsRepository _repositoryProjectDetail;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionRepository;
 
   JoinProjectWithIdUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionRepository,
   );
 
-  Future<Either<Failure, void>> call(JoinProjectWithIdParams params) async {
+  Future<Either<Failure, Project>> call(JoinProjectWithIdParams params) async {
     final userId = _sessionRepository.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repositoryProjectDetail.getProjectById(
       params.projectId,
     );
-    return projectResult.fold((failure) => left(failure), (project) {
+    return projectResult.fold((failure) => left(failure), (project) async {
       final alreadyExists = project.collaborators.any(
         (c) => c.userId.value == userId,
       );
@@ -51,8 +52,18 @@ class JoinProjectWithIdUseCase {
       );
 
       try {
-        project.addCollaborator(newCollaborator);
-        return _repositoryManageCollaborators.updateProject(project);
+        final result = await _collaboratorRepository.joinProject(
+          params.projectId,
+          UserId.fromUniqueString(userId),
+        );
+        return result.fold(
+          (failure) => left(failure),
+          (_) async {
+            // Return updated project after successful join
+            final updatedProject = project.addCollaborator(newCollaborator);
+            return right(updatedProject);
+          },
+        );
       } catch (e) {
         return left(ServerFailure('Failed to join project: ${e.toString()}'));
       }

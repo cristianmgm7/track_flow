@@ -8,6 +8,7 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_tracks_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_track_usecase.dart';
+import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 
@@ -16,6 +17,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   final WatchTracksByProjectIdUseCase watchAudioTracksByProject;
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
+  final EditAudioTrackUseCase editAudioTrackUseCase;
 
   StreamSubscription<Either<Failure, List<AudioTrack>>>? _trackSubscription;
 
@@ -23,11 +25,13 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     required this.watchAudioTracksByProject,
     required this.deleteAudioTrack,
     required this.uploadAudioTrackUseCase,
+    required this.editAudioTrackUseCase,
   }) : super(AudioTrackInitial()) {
     on<WatchAudioTracksByProjectEvent>(_onWatchAudioTracksByProject);
     on<DeleteAudioTrackEvent>(_onDeleteAudioTrack);
     on<UploadAudioTrackEvent>(_onUploadAudioTrack);
     on<AudioTracksUpdated>(_onAudioTracksUpdated);
+    on<EditAudioTrackEvent>(_onEditAudioTrack);
   }
 
   Future<void> _onUploadAudioTrack(
@@ -54,14 +58,14 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     Emitter<AudioTrackState> emit,
   ) async {
     emit(AudioTrackLoading());
-    final result = await deleteAudioTrack(
+    final result = await deleteAudioTrack.call(
       DeleteAudioTrackParams(
         trackId: event.trackId,
         projectId: event.projectId,
       ),
     );
     result.fold(
-      (failure) => emit(AudioTrackError(message: 'Failed to delete track')),
+      (failure) => emit(AudioTrackError(message: failure.message)),
       (_) => emit(AudioTrackDeleteSuccess()),
     );
   }
@@ -73,11 +77,11 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     await _trackSubscription?.cancel();
     emit(AudioTrackLoading());
 
-    _trackSubscription = watchAudioTracksByProject(
-      WatchTracksByProjectIdParams(projectId: event.projectId),
-    ).listen((either) {
-      add(AudioTracksUpdated(either));
-    });
+    _trackSubscription = watchAudioTracksByProject
+        .call(WatchTracksByProjectIdParams(projectId: event.projectId))
+        .listen((either) {
+          add(AudioTracksUpdated(either));
+        });
   }
 
   void _onAudioTracksUpdated(
@@ -87,6 +91,24 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     event.tracks.fold(
       (failure) => emit(AudioTrackError(message: 'Failed to load tracks')),
       (tracks) => emit(AudioTrackLoaded(tracks: tracks)),
+    );
+  }
+
+  Future<void> _onEditAudioTrack(
+    EditAudioTrackEvent event,
+    Emitter<AudioTrackState> emit,
+  ) async {
+    emit(AudioTrackLoading());
+    final result = await editAudioTrackUseCase.call(
+      EditAudioTrackParams(
+        trackId: event.trackId,
+        projectId: event.projectId,
+        newName: event.newName,
+      ),
+    );
+    result.fold(
+      (failure) => emit(AudioTrackEditError(message: failure.message)),
+      (_) => emit(AudioTrackEditSuccess()),
     );
   }
 

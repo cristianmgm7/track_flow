@@ -8,19 +8,20 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
-import 'package:trackflow/features/navegation/presentation/cubit/naviegation_cubit.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/services/audio_player/audioplayer_bloc.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/core/app/startup_resource_manager.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
-    debugPrint('MyApp constructor called');
+    // App constructor called
   }
   @override
   Widget build(BuildContext context) {
@@ -35,11 +36,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),
         ),
-        BlocProvider<ProjectsBloc>(create: (context) => sl<ProjectsBloc>()),
         BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
-        BlocProvider<ProjectDetailBloc>(
-          create: (context) => sl<ProjectDetailBloc>(),
-        ),
         BlocProvider<ManageCollaboratorsBloc>(
           create: (context) => sl<ManageCollaboratorsBloc>(),
         ),
@@ -50,6 +47,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<AudioPlayerBloc>(
           create: (context) => sl<AudioPlayerBloc>(),
         ),
+        BlocProvider<AudioWaveformBloc>(
+          create: (context) => sl<AudioWaveformBloc>(),
+        ),
       ],
       child: _App(),
     );
@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
 
 class _App extends StatefulWidget {
   _App() {
-    debugPrint('App constructor called');
+    // App constructor called
   }
   @override
   State<_App> createState() => _AppState();
@@ -87,10 +87,17 @@ class _AppState extends State<_App> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TrackFlow',
-      theme: AppTheme.darkTheme,
-      routerConfig: _router,
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthAuthenticated) {
+          sl<StartupResourceManager>().initializeAppData();
+        }
+      },
+      child: MaterialApp.router(
+        title: 'TrackFlow',
+        theme: AppTheme.darkTheme,
+        routerConfig: _router,
+      ),
     );
   }
 }

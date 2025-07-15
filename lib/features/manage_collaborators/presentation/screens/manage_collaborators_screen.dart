@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_bloc.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_event.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collabolators_state.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
+import 'package:trackflow/core/presentation/widgets/trackflow_form_bottom_sheet.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/components/collaborator_component.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/widgets/remove_colaborator_dialog.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/manage_collaborators_actions.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/add_collaborator_form.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
-  final ProjectId projectId;
+  final Project project;
 
-  const ManageCollaboratorsScreen({super.key, required this.projectId});
+  const ManageCollaboratorsScreen({super.key, required this.project});
 
   @override
   State<ManageCollaboratorsScreen> createState() =>
@@ -22,37 +26,59 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   void initState() {
     super.initState();
     context.read<ManageCollaboratorsBloc>().add(
-      GetProjectWithUserProfiles(projectId: widget.projectId),
+      WatchCollaborators(project: widget.project),
     );
   }
 
-  void _removeCollaborator(
-    BuildContext context,
-    UserId userId,
-    String collaboratorName,
-  ) {
-    showDialog(
+  void _openCollaboratorActionsSheet(UserProfile collaborator) {
+    showTrackFlowActionSheet(
+      title: collaborator.name,
       context: context,
-      builder: (BuildContext context) {
-        return RemoveCollaboratorDialog(
-          projectId: widget.projectId,
-          collaboratorId: userId.value,
-          collaboratorName: collaboratorName,
-        );
-      },
+      actions: CollaboratorActions.forCollaborator(
+        context: context,
+        project: widget.project,
+        collaborator: collaborator,
+      ),
+    );
+  }
+
+  void _openAddCollaboratorSheet() {
+    showTrackFlowFormSheet(
+      title: 'Invite Collaborator',
+      context: context,
+      child: AddCollaboratorForm(project: widget.project),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
+      appBar: AppBar(
+        title: const Text('Collaborators'),
+        actions: [
+          IconButton(
+            onPressed: _openAddCollaboratorSheet,
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
+      body: BlocConsumer<ManageCollaboratorsBloc, ManageCollaboratorsState>(
+        listener: (context, state) {
+          if (state is ManageCollaboratorsError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is ManageCollaboratorsLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is ManageCollaboratorsLoaded) {
-            final project = state.projectWithUserProfiles.value1;
-            final collaborators = state.projectWithUserProfiles.value2;
+            final collaborators = state.userProfiles;
+            final project = state.project;
 
             return ListView.builder(
               itemCount: collaborators.length,
@@ -68,18 +94,12 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                   imageUrl: collaborator.avatarUrl,
                   role: projectCollaborator.role,
                   userId: collaborator.id,
-                  onRemove:
-                      () => _removeCollaborator(
-                        context,
-                        collaborator.id,
-                        collaborator.name,
-                      ),
+                  onTap: () => _openCollaboratorActionsSheet(collaborator),
                 );
               },
             );
-          } else if (state is ManageCollaboratorsError) {
-            return Center(child: Text(state.message));
           } else {
+            // Instead of showing the error, just show a fallback
             return const Center(child: Text('No data available'));
           }
         },

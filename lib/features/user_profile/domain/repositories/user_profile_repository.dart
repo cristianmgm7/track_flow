@@ -3,27 +3,15 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
+/// Repository responsible for individual user profile operations
+/// Follows Single Responsibility Principle - only handles single profile management
 abstract class UserProfileRepository {
-  Future<Either<Failure, UserProfile>> getUserProfile(UserId userId);
-  Future<Either<Failure, void>> updateUserProfile(UserProfile userProfile);
+  /// Update a user profile
+  Future<Either<Failure, Unit>> updateUserProfile(UserProfile userProfile);
 
-  //   // fetch user by id
-  //         // remote.fetchUserById
-  //         // local.saveUserProfile
-  //   // watch my user profile
-  //         // loca.watchUserById
+  /// Watch a user profile by ID (reactive, for real-time UI updates)
+  Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId);
 
-  //   //
+  /// Get a user profile by ID (one-time fetch)
+  Future<Either<Failure, UserProfile?>> getUserProfile(UserId userId);
 }
-
-
-// StartupResourceManager
-
-//  initializeAppData(){
-//   // 1. fetch user profile
-//   // 2. fetch projects
-//   // 3. fetch contacts
-//  }
-
-
-//  refresh()

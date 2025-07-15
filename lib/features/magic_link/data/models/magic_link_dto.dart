@@ -51,7 +51,7 @@ class MagicLinkDto {
 
   MagicLink toDomain() {
     return MagicLink(
-      id: id,
+      id: MagicLinkId.fromUniqueString(id),
       url: url,
       userId: UserId.fromUniqueString(userId),
       projectId: projectId,
@@ -88,7 +88,7 @@ class MagicLinkDto {
 
   factory MagicLinkDto.fromDomain(MagicLink magicLink) {
     return MagicLinkDto(
-      id: magicLink.id,
+      id: magicLink.id.value,
       url: magicLink.url,
       userId: magicLink.userId.value,
       projectId: magicLink.projectId,

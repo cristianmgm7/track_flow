@@ -5,9 +5,10 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 
@@ -27,17 +28,17 @@ class RemoveCollaboratorParams extends Equatable {
 
 @lazySingleton
 class RemoveCollaboratorUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final ProjectsRepository _repositoryProjectDetail;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   RemoveCollaboratorUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionService,
   );
 
-  Future<Either<Failure, void>> call(RemoveCollaboratorParams params) async {
+  Future<Either<Failure, Project>> call(RemoveCollaboratorParams params) async {
     final userId = _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
@@ -59,11 +60,19 @@ class RemoveCollaboratorUseCase {
       }
 
       try {
-        final updatedProject = project.removeCollaborator(
+        final result = await _collaboratorRepository.removeCollaborator(
+          params.projectId,
           params.collaboratorId,
         );
-        return await _repositoryManageCollaborators.updateProject(
-          updatedProject,
+        return result.fold(
+          (failure) => left(failure),
+          (_) async {
+            // Return updated project after successful removal
+            final updatedProject = project.removeCollaborator(
+              params.collaboratorId,
+            );
+            return right(updatedProject);
+          },
         );
       } on CollaboratorNotFoundException catch (e) {
         return left(ManageCollaboratorException(e.toString()));

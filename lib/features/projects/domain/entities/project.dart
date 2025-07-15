@@ -1,4 +1,5 @@
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -6,6 +7,13 @@ import 'package:trackflow/features/projects/domain/value_objects/project_descrip
 import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
 import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
+    as manage_collab_exc;
+import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+
+export 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
+export 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 
 class Project extends AggregateRoot<ProjectId> {
   @override
@@ -88,21 +96,20 @@ class Project extends AggregateRoot<ProjectId> {
   }
 
   Project addCollaborator(ProjectCollaborator collaborator) {
-    if (!collaborators.contains(collaborator)) {
-      final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
-        ..add(collaborator);
-      return copyWith(
-        collaborators: updatedCollaborators,
-        updatedAt: DateTime.now(),
-      );
-    } else {
-      throw Exception('Collaborator already exists');
+    if (collaborators.any((c) => c.userId == collaborator.userId)) {
+      throw const manage_collab_exc.CollaboratorAlreadyExistsException();
     }
+    final updatedCollaborators = List<ProjectCollaborator>.from(collaborators)
+      ..add(collaborator);
+    return copyWith(
+      collaborators: updatedCollaborators,
+      updatedAt: DateTime.now(),
+    );
   }
 
   Project removeCollaborator(UserId userId) {
     if (userId == ownerId) {
-      throw Exception('No se puede eliminar al owner del proyecto');
+      throw Exception('Cannot remove the project owner');
     }
     if (!collaborators.any((collaborator) => collaborator.userId == userId)) {
       throw CollaboratorNotFoundException();
@@ -140,5 +147,16 @@ class Project extends AggregateRoot<ProjectId> {
     } else {
       throw CollaboratorNotFoundException();
     }
+  }
+}
+
+extension ProjectPlaylist on Project {
+  Playlist toPlaylist(List<AudioTrack> tracks) {
+    return Playlist(
+      id: PlaylistId.fromUniqueString(id.value.toString()),
+      name: name.value.getOrElse(() => 'Project Playlist'),
+      trackIds: tracks.map((t) => t.id.value).toList(),
+      playlistSource: PlaylistSource.project,
+    );
   }
 }

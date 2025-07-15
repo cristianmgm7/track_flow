@@ -40,6 +40,11 @@ class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
 }
 
+/// Represents cache-related failures
+class CacheFailure extends Failure {
+  const CacheFailure(super.message);
+}
+
 /// Represents permission/access failures
 class PermissionFailure extends Failure {
   const PermissionFailure([super.message = 'Permission denied']);

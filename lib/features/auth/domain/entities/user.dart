@@ -1,7 +1,9 @@
-class User {
-  final String id;
+import 'package:trackflow/core/domain/entity.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+
+class User extends Entity<UserId> {
   final String email;
   final String? displayName;
 
-  User({required this.id, required this.email, this.displayName});
+  User({required UserId id, required this.email, this.displayName}) : super(id);
 }

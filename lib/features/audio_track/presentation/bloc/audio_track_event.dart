@@ -49,6 +49,21 @@ class DeleteAudioTrackEvent extends AudioTrackEvent {
   List<Object> get props => [trackId, projectId];
 }
 
+class EditAudioTrackEvent extends AudioTrackEvent {
+  final AudioTrackId trackId;
+  final ProjectId projectId;
+  final String newName;
+
+  const EditAudioTrackEvent({
+    required this.trackId,
+    required this.projectId,
+    required this.newName,
+  });
+
+  @override
+  List<Object> get props => [trackId, projectId, newName];
+}
+
 class AudioTracksUpdated extends AudioTrackEvent {
   final Either<Failure, List<AudioTrack>> tracks;
   const AudioTracksUpdated(this.tracks);

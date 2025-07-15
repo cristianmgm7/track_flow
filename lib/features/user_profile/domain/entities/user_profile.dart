@@ -1,3 +1,4 @@
+import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
@@ -11,8 +12,7 @@ enum CreativeRole {
   other,
 }
 
-class UserProfile {
-  final UserId id;
+class UserProfile extends AggregateRoot<UserId> {
   final String name;
   final String email;
   final String avatarUrl;
@@ -22,7 +22,7 @@ class UserProfile {
   final ProjectRole? role;
 
   const UserProfile({
-    required this.id,
+    required UserId id,
     required this.name,
     required this.email,
     required this.avatarUrl,
@@ -30,7 +30,8 @@ class UserProfile {
     this.updatedAt,
     this.creativeRole,
     this.role,
-  });
+  }) : super(id);
+
 
   UserProfile copyWith({
     UserId? id,

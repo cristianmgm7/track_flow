@@ -48,22 +48,28 @@ class UserProfileDTO {
   }
 
   factory UserProfileDTO.fromJson(Map<String, dynamic> json) {
+    DateTime? parsedCreatedAt;
+    if (json['createdAt'] is Timestamp) {
+      parsedCreatedAt = (json['createdAt'] as Timestamp).toDate();
+    } else if (json['createdAt'] is String) {
+      parsedCreatedAt = DateTime.tryParse(json['createdAt'] as String);
+    }
+
+    DateTime? parsedUpdatedAt;
+    if (json['updatedAt'] is Timestamp) {
+      parsedUpdatedAt = (json['updatedAt'] as Timestamp).toDate();
+    } else if (json['updatedAt'] is String) {
+      parsedUpdatedAt = DateTime.tryParse(json['updatedAt'] as String);
+    }
+
     return UserProfileDTO(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      avatarUrl: json['avatarUrl'] as String,
-      createdAt:
-          (json['createdAt'] is Timestamp)
-              ? (json['createdAt'] as Timestamp).toDate()
-              : DateTime.parse(json['createdAt'] as String),
-      updatedAt:
-          (json['updatedAt'] != null)
-              ? (json['updatedAt'] is Timestamp)
-                  ? (json['updatedAt'] as Timestamp).toDate()
-                  : DateTime.parse(json['updatedAt'] as String)
-              : null,
-      creativeRole: CreativeRole.values.byName(json['creativeRole'] as String),
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'No Name',
+      email: json['email'] as String? ?? '',
+      avatarUrl: json['avatarUrl'] as String? ?? '',
+      createdAt: parsedCreatedAt ?? DateTime.now(),
+      updatedAt: parsedUpdatedAt,
+      creativeRole: _parseCreativeRole(json['creativeRole'] as String?),
     );
   }
 
@@ -97,5 +103,16 @@ class UserProfileDTO {
       updatedAt: updatedAt ?? this.updatedAt,
       creativeRole: creativeRole ?? this.creativeRole,
     );
+  }
+}
+
+CreativeRole _parseCreativeRole(String? roleName) {
+  if (roleName == null) {
+    return CreativeRole.other;
+  }
+  try {
+    return CreativeRole.values.byName(roleName);
+  } catch (e) {
+    return CreativeRole.other;
   }
 }

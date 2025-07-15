@@ -2,13 +2,14 @@ import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
+import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
 
 class UpdateCollaboratorRoleParams extends Equatable {
   final ProjectId projectId;
@@ -27,17 +28,17 @@ class UpdateCollaboratorRoleParams extends Equatable {
 
 @lazySingleton
 class UpdateCollaboratorRoleUseCase {
-  final ProjectDetailRepository _repositoryProjectDetail;
-  final ManageCollaboratorsRepository _repositoryManageCollaborators;
+  final ProjectsRepository _repositoryProjectDetail;
+  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   UpdateCollaboratorRoleUseCase(
     this._repositoryProjectDetail,
-    this._repositoryManageCollaborators,
+    this._collaboratorRepository,
     this._sessionService,
   );
 
-  Future<Either<Failure, void>> call(
+  Future<Either<Failure, Project>> call(
     UpdateCollaboratorRoleParams params,
   ) async {
     final userId = _sessionService.getUserId();
@@ -46,7 +47,7 @@ class UpdateCollaboratorRoleUseCase {
     final projectResult = await _repositoryProjectDetail.getProjectById(
       params.projectId,
     );
-    return projectResult.fold((failure) => left(failure), (project) {
+    return projectResult.fold((failure) => left(failure), (project) async {
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
         orElse: () => throw UserNotCollaboratorException(),
@@ -63,8 +64,19 @@ class UpdateCollaboratorRoleUseCase {
       }
 
       try {
-        project.updateCollaboratorRole(params.userId, params.role);
-        return _repositoryManageCollaborators.updateProject(project);
+        final result = await _collaboratorRepository.updateCollaboratorRole(
+          params.projectId,
+          params.userId,
+          params.role,
+        );
+        return result.fold((failure) => left(failure), (_) async {
+          // Return updated project after successful role update
+          final updatedProject = project.updateCollaboratorRole(
+            params.userId,
+            params.role,
+          );
+          return right(updatedProject);
+        });
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }
