@@ -13,6 +13,8 @@ import 'package:trackflow/features/audio_cache/shared/domain/failures/cache_fail
     as _i5;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart'
     as _i3;
+import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart'
+    as _i9;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart'
     as _i6;
 import 'package:trackflow/features/audio_cache/track/domain/usecases/watch_cache_status.dart'
@@ -125,4 +127,31 @@ class MockWatchTrackCacheStatusUseCase extends _i1.Mock
         returnValue:
             _i4.Stream<_i2.Either<_i5.CacheFailure, _i8.CacheStatus>>.empty(),
       ) as _i4.Stream<_i2.Either<_i5.CacheFailure, _i8.CacheStatus>>);
+}
+
+/// A class which mocks [GetCachedTrackPathUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetCachedTrackPathUseCase extends _i1.Mock
+    implements _i9.GetCachedTrackPathUseCase {
+  MockGetCachedTrackPathUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.CacheFailure, String?>> call(String? trackId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #call,
+          [trackId],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.CacheFailure, String?>>.value(
+            _FakeEither_0<_i5.CacheFailure, String?>(
+          this,
+          Invocation.method(
+            #call,
+            [trackId],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.CacheFailure, String?>>);
 }

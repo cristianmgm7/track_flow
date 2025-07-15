@@ -3,6 +3,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart';
 
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
@@ -19,6 +20,7 @@ import 'track_cache_bloc_test.mocks.dart';
   CacheTrackUseCase,
   RemoveTrackCacheUseCase,
   status_usecase.WatchTrackCacheStatusUseCase,
+  GetCachedTrackPathUseCase,
 ])
 void main() {
   group('TrackCacheBloc', () {
@@ -26,16 +28,19 @@ void main() {
     late MockCacheTrackUseCase mockCacheTrackUseCase;
     late MockRemoveTrackCacheUseCase mockRemoveTrackCacheUseCase;
     late MockWatchTrackCacheStatusUseCase mockWatchTrackCacheStatusUseCase;
+    late MockGetCachedTrackPathUseCase mockGetCachedTrackPathUseCase;
 
     setUp(() {
       mockCacheTrackUseCase = MockCacheTrackUseCase();
       mockRemoveTrackCacheUseCase = MockRemoveTrackCacheUseCase();
       mockWatchTrackCacheStatusUseCase = MockWatchTrackCacheStatusUseCase();
+      mockGetCachedTrackPathUseCase = MockGetCachedTrackPathUseCase();
 
       bloc = TrackCacheBloc(
         cacheTrackUseCase: mockCacheTrackUseCase,
         watchTrackCacheStatusUseCase: mockWatchTrackCacheStatusUseCase,
         removeTrackCacheUseCase: mockRemoveTrackCacheUseCase,
+        getCachedTrackPathUseCase: mockGetCachedTrackPathUseCase,
       );
     });
 
