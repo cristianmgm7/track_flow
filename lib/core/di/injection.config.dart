@@ -195,8 +195,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.prefs,
       preResolve: true,
     );
-    gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
     gh.factory<_i254.AudioPlayerBloc>(() => _i254.AudioPlayerBloc());
+    gh.factory<_i508.NavigationCubit>(() => _i508.NavigationCubit());
     gh.singleton<_i559.DynamicLinkService>(() => _i559.DynamicLinkService());
     gh.lazySingleton<_i457.FirebaseStorage>(() => appModule.firebaseStorage);
     gh.lazySingleton<_i59.FirebaseAuth>(() => appModule.firebaseAuth);

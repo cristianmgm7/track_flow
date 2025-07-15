@@ -33,12 +33,12 @@ void main() {
         role: ProjectRole.owner,
       );
 
-      project.addCollaborator(collaborator);
+      final projectWithCollaborator = project.addCollaborator(collaborator);
 
       final newName = ProjectName('Updated Project Name');
       final newDescription = ProjectDescription('Updated project description.');
 
-      final updatedProject = project.updateProject(
+      final updatedProject = projectWithCollaborator.updateProject(
         requester: ownerId,
         newName: newName,
         newDescription: newDescription,
@@ -64,9 +64,9 @@ void main() {
         role: ProjectRole.owner,
       );
 
-      project.addCollaborator(collaborator);
+      final projectWithCollaborator = project.addCollaborator(collaborator);
 
-      final deletedProject = project.deleteProject(requester: ownerId);
+      final deletedProject = projectWithCollaborator.deleteProject(requester: ownerId);
 
       expect(deletedProject.isDeleted, isTrue);
       expect(deletedProject.updatedAt, isNotNull);
@@ -121,10 +121,10 @@ void main() {
         role: ProjectRole.viewer,
       );
 
-      project.addCollaborator(viewer);
+      final projectWithCollaborator = project.addCollaborator(viewer);
 
       expect(
-        () => project.deleteProject(requester: viewer.userId),
+        () => projectWithCollaborator.deleteProject(requester: viewer.userId),
         throwsA(isA<ProjectPermissionException>()),
       );
     });

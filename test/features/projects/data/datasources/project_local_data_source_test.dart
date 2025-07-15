@@ -24,22 +24,26 @@ void main() {
     expect(result, isNull);
   });
 
-  test('should return ProjectDTO list when projects are cached', () async {
+  test('should return ProjectDTO when project is cached', () async {
     final now = DateTime.now();
+    final projectId = UniqueId();
     final projectMap = {
-      'id1': {
-        'title': 'Test',
-        'description': 'Desc',
-        'userId': 'user1',
-        'status': 'draft',
-        'createdAt': now,
-      },
+      'id': projectId.value,
+      'name': 'Test Project',
+      'description': 'Test Description',
+      'ownerId': 'user1',
+      'createdAt': now.toIso8601String(),
+      'collaborators': [],
+      'collaboratorIds': [],
     };
-    when(mockBox.get(any)).thenReturn(projectMap);
+    when(mockBox.get(projectId.value)).thenReturn(projectMap);
 
-    final result = await dataSource.getCachedProject(UniqueId());
+    final result = await dataSource.getCachedProject(projectId);
 
-    expect(result, isA<ProjectDTO?>());
-    expect(result?.id, UniqueId());
+    expect(result, isA<ProjectDTO>());
+    expect(result?.id, projectId.value);
+    expect(result?.name, 'Test Project');
+    expect(result?.description, 'Test Description');
+    expect(result?.ownerId, 'user1');
   });
 }

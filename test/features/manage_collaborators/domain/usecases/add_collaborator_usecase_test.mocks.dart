@@ -12,6 +12,8 @@ import 'package:trackflow/core/error/failures.dart' as _i5;
 import 'package:trackflow/core/session/session_storage.dart' as _i9;
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart'
     as _i3;
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart'
+    as _i10;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i7;
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart'
@@ -168,4 +170,32 @@ class CustomMockSessionStorage extends _i1.Mock implements _i9.SessionStorage {
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+}
+
+/// A class which mocks [ProjectDetailRepository].
+///
+/// See the documentation for Mockito's code generation for more information.
+class CustomMockProjectDetailRepository extends _i1.Mock
+    implements _i10.ProjectDetailRepository {
+  CustomMockProjectDetailRepository() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i7.Project>> getProjectById(
+          _i6.ProjectId? projectId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getProjectById,
+          [projectId],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i7.Project>>.value(
+            _FakeEither_0<_i5.Failure, _i7.Project>(
+          this,
+          Invocation.method(
+            #getProjectById,
+            [projectId],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i7.Project>>);
 }

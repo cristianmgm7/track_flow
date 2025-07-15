@@ -6,6 +6,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart';
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
@@ -23,17 +25,24 @@ import 'remove_collaborator_usecase_test.mocks.dart';
       as: #CustomMockManageCollaboratorsRepository,
     ),
     MockSpec<SessionStorage>(as: #CustomMockSessionStorage),
+    MockSpec<ProjectDetailRepository>(as: #CustomMockProjectDetailRepository),
   ],
 )
 void main() {
   late RemoveCollaboratorUseCase useCase;
+  late ProjectDetailRepository mockProjectDetailRepository;
   late CustomMockManageCollaboratorsRepository mockRepository;
   late CustomMockSessionStorage mockSessionStorage;
 
   setUp(() {
     mockRepository = CustomMockManageCollaboratorsRepository();
     mockSessionStorage = CustomMockSessionStorage();
-    useCase = RemoveCollaboratorUseCase(mockRepository, mockSessionStorage);
+    mockProjectDetailRepository = CustomMockProjectDetailRepository();
+    useCase = RemoveCollaboratorUseCase(
+      mockProjectDetailRepository,
+      mockRepository,
+      mockSessionStorage,
+    );
   });
 
   final projectId = ProjectId.fromUniqueString('project-123');
@@ -63,7 +72,7 @@ void main() {
 
     when(mockSessionStorage.getUserId()).thenReturn(userId);
     when(
-      mockRepository.getProjectById(projectId),
+      mockProjectDetailRepository.getProjectById(projectId),
     ).thenAnswer((_) async => right(project));
     when(
       mockRepository.updateProject(any),
@@ -84,7 +93,7 @@ void main() {
   });
 
   test(
-    'should throw UserNotCollaboratorException if user is not a collaborator',
+    'should throw ManageCollaboratorException if user is not a collaborator',
     () async {
       final userId = 'user-123';
       final project = Project(
@@ -103,12 +112,12 @@ void main() {
 
       when(mockSessionStorage.getUserId()).thenReturn(userId);
       when(
-        mockRepository.getProjectById(projectId),
+        mockProjectDetailRepository.getProjectById(projectId),
       ).thenAnswer((_) async => right(project));
 
       expect(
         () => useCase(params),
-        throwsA(isA<UserNotCollaboratorException>()),
+        throwsA(isA<ManageCollaboratorException>()),
       );
     },
   );
@@ -138,7 +147,7 @@ void main() {
 
       when(mockSessionStorage.getUserId()).thenReturn(userId);
       when(
-        mockRepository.getProjectById(projectId),
+        mockProjectDetailRepository.getProjectById(projectId),
       ).thenAnswer((_) async => right(project));
 
       final result = await useCase(params);
@@ -148,7 +157,7 @@ void main() {
   );
 
   test(
-    'should return ServerFailure if collaborator to remove not found',
+    'should return ManageCollaboratorException if collaborator to remove not found',
     () async {
       final userId = 'user-123';
       final ownerId = UserId.fromUniqueString(userId);
@@ -165,13 +174,13 @@ void main() {
 
       when(mockSessionStorage.getUserId()).thenReturn(userId);
       when(
-        mockRepository.getProjectById(projectId),
+        mockProjectDetailRepository.getProjectById(projectId),
       ).thenAnswer((_) async => right(project));
 
       final result = await useCase(params);
 
       expect(result.isLeft(), true);
-      expect(result.fold((l) => l, (r) => null), isA<ServerFailure>());
+      expect(result.fold((l) => l, (r) => null), isA<ManageCollaboratorException>());
     },
   );
 }

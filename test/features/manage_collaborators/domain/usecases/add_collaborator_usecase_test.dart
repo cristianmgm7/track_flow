@@ -6,6 +6,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/manage_collaborators/domain/repositories/manage_collaborators_repository.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
+import 'package:trackflow/features/project_detail/domain/repositories/project_detail_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
@@ -23,17 +24,21 @@ import 'add_collaborator_usecase_test.mocks.dart';
       as: #CustomMockManageCollaboratorsRepository,
     ),
     MockSpec<SessionStorage>(as: #CustomMockSessionStorage),
+    MockSpec<ProjectDetailRepository>(as: #CustomMockProjectDetailRepository),
   ],
 )
 void main() {
   late AddCollaboratorToProjectUseCase useCase;
+  late ProjectDetailRepository mockProjectDetailRepository;
   late CustomMockManageCollaboratorsRepository mockRepository;
   late CustomMockSessionStorage mockSessionStorage;
 
   setUp(() {
     mockRepository = CustomMockManageCollaboratorsRepository();
     mockSessionStorage = CustomMockSessionStorage();
+    mockProjectDetailRepository = CustomMockProjectDetailRepository();
     useCase = AddCollaboratorToProjectUseCase(
+      mockProjectDetailRepository,
       mockRepository,
       mockSessionStorage,
     );
@@ -64,7 +69,7 @@ void main() {
 
     when(mockSessionStorage.getUserId()).thenReturn(userId);
     when(
-      mockRepository.getProjectById(projectId),
+      mockProjectDetailRepository.getProjectById(projectId),
     ).thenAnswer((_) async => right(project));
     when(
       mockRepository.updateProject(any),
@@ -99,7 +104,7 @@ void main() {
 
       when(mockSessionStorage.getUserId()).thenReturn(userId);
       when(
-        mockRepository.getProjectById(projectId),
+        mockProjectDetailRepository.getProjectById(projectId),
       ).thenAnswer((_) async => right(project));
 
       expect(
@@ -129,7 +134,7 @@ void main() {
 
       when(mockSessionStorage.getUserId()).thenReturn(userId);
       when(
-        mockRepository.getProjectById(projectId),
+        mockProjectDetailRepository.getProjectById(projectId),
       ).thenAnswer((_) async => right(project));
 
       final result = await useCase(params);
