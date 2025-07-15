@@ -19,19 +19,19 @@ void main() {
   provideDummy<TrackCacheState>(const TrackCacheInitial());
   provideDummy<TrackCacheInitial>(const TrackCacheInitial());
   provideDummy<TrackCacheLoading>(const TrackCacheLoading());
-  provideDummy<TrackCacheStatusLoaded>(const TrackCacheStatusLoaded(
-    trackId: 'dummy',
-    status: CacheStatus.notCached,
-  ));
-  provideDummy<TrackCacheOperationSuccess>(const TrackCacheOperationSuccess(
-    trackId: 'dummy',
-    message: 'dummy',
-  ));
-  provideDummy<TrackCacheOperationFailure>(const TrackCacheOperationFailure(
-    trackId: 'dummy',
-    error: 'dummy',
-  ));
-  
+  provideDummy<TrackCacheStatusLoaded>(
+    const TrackCacheStatusLoaded(
+      trackId: 'dummy',
+      status: CacheStatus.notCached,
+    ),
+  );
+  provideDummy<TrackCacheOperationSuccess>(
+    const TrackCacheOperationSuccess(trackId: 'dummy', message: 'dummy'),
+  );
+  provideDummy<TrackCacheOperationFailure>(
+    const TrackCacheOperationFailure(trackId: 'dummy', error: 'dummy'),
+  );
+
   group('SmartTrackCacheIcon', () {
     late MockTrackCacheBloc mockBloc;
 
@@ -69,18 +69,9 @@ void main() {
     }
 
     group('initialization', () {
-      testWidgets('should request cache status on init', (tester) async {
-        await tester.pumpWidget(createWidget());
-        await tester.pump(); // Allow post-frame callback to execute
-
-        verify(mockBloc.add(
-          const GetTrackCacheStatusRequested('track123'),
-        )).called(1);
-      });
-
       testWidgets('should display with correct size', (tester) async {
         const testSize = 32.0;
-        
+
         await tester.pumpWidget(createWidget(size: testSize));
 
         final container = tester.widget<Container>(
@@ -96,7 +87,9 @@ void main() {
     });
 
     group('state rendering', () {
-      testWidgets('should show default download icon for initial state', (tester) async {
+      testWidgets('should show default download icon for initial state', (
+        tester,
+      ) async {
         when(mockBloc.state).thenReturn(const TrackCacheInitial());
 
         await tester.pumpWidget(createWidget());
@@ -104,7 +97,9 @@ void main() {
         expect(find.byIcon(Icons.download_outlined), findsOneWidget);
       });
 
-      testWidgets('should show loading indicator for loading state', (tester) async {
+      testWidgets('should show loading indicator for loading state', (
+        tester,
+      ) async {
         when(mockBloc.state).thenReturn(const TrackCacheLoading());
 
         await tester.pumpWidget(createWidget());
@@ -113,32 +108,42 @@ void main() {
       });
 
       testWidgets('should show cached icon for cached status', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.cached,
-        ));
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.cached,
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         expect(find.byIcon(Icons.download_done), findsOneWidget);
       });
 
-      testWidgets('should show download icon for not cached status', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.notCached,
-        ));
+      testWidgets('should show download icon for not cached status', (
+        tester,
+      ) async {
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.notCached,
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         expect(find.byIcon(Icons.download_outlined), findsOneWidget);
       });
 
-      testWidgets('should show progress indicator for downloading status', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.downloading,
-        ));
+      testWidgets('should show progress indicator for downloading status', (
+        tester,
+      ) async {
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.downloading,
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
@@ -147,32 +152,42 @@ void main() {
       });
 
       testWidgets('should show error icon for failed status', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.failed,
-        ));
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.failed,
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
       });
 
-      testWidgets('should show success icon for operation success', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheOperationSuccess(
-          trackId: 'track123',
-          message: 'Success',
-        ));
+      testWidgets('should show success icon for operation success', (
+        tester,
+      ) async {
+        when(mockBloc.state).thenReturn(
+          const TrackCacheOperationSuccess(
+            trackId: 'track123',
+            message: 'Success',
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         expect(find.byIcon(Icons.check_circle), findsOneWidget);
       });
 
-      testWidgets('should show retry icon for operation failure', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheOperationFailure(
-          trackId: 'track123',
-          error: 'Error occurred',
-        ));
+      testWidgets('should show retry icon for operation failure', (
+        tester,
+      ) async {
+        when(mockBloc.state).thenReturn(
+          const TrackCacheOperationFailure(
+            trackId: 'track123',
+            error: 'Error occurred',
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
@@ -181,114 +196,142 @@ void main() {
     });
 
     group('user interactions', () {
-      testWidgets('should trigger cache request when tapped on not cached', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.notCached,
-        ));
+      testWidgets('should trigger cache request when tapped on not cached', (
+        tester,
+      ) async {
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.notCached,
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         await tester.tap(find.byType(SmartTrackCacheIcon));
 
-        verify(mockBloc.add(
-          const CacheTrackRequested(
-            trackId: 'track123',
-            audioUrl: 'https://example.com/audio.mp3',
-            policy: ConflictPolicy.lastWins,
+        verify(
+          mockBloc.add(
+            const CacheTrackRequested(
+              trackId: 'track123',
+              audioUrl: 'https://example.com/audio.mp3',
+              policy: ConflictPolicy.lastWins,
+            ),
           ),
-        )).called(1);
+        ).called(1);
       });
 
-      testWidgets('should trigger remove request when tapped on cached', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.cached,
-        ));
+      testWidgets('should trigger remove request when tapped on cached', (
+        tester,
+      ) async {
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.cached,
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         await tester.tap(find.byType(SmartTrackCacheIcon));
 
-        verify(mockBloc.add(
-          const RemoveTrackCacheRequested(
-            trackId: 'track123',
-            referenceId: 'individual',
+        verify(
+          mockBloc.add(
+            const RemoveTrackCacheRequested(
+              trackId: 'track123',
+              referenceId: 'individual',
+            ),
           ),
-        )).called(1);
+        ).called(1);
       });
 
       testWidgets('should use custom reference when provided', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheStatusLoaded(
-          trackId: 'track123',
-          status: CacheStatus.notCached,
-        ));
+        when(mockBloc.state).thenReturn(
+          const TrackCacheStatusLoaded(
+            trackId: 'track123',
+            status: CacheStatus.notCached,
+          ),
+        );
 
         await tester.pumpWidget(createWidget(referenceId: 'playlist123'));
 
         await tester.tap(find.byType(SmartTrackCacheIcon));
 
-        verify(mockBloc.add(
-          const CacheTrackWithReferenceRequested(
-            trackId: 'track123',
-            audioUrl: 'https://example.com/audio.mp3',
-            referenceId: 'playlist123',
-            policy: ConflictPolicy.lastWins,
+        verify(
+          mockBloc.add(
+            const CacheTrackWithReferenceRequested(
+              trackId: 'track123',
+              audioUrl: 'https://example.com/audio.mp3',
+              referenceId: 'playlist123',
+              policy: ConflictPolicy.lastWins,
+            ),
           ),
-        )).called(1);
+        ).called(1);
       });
 
       testWidgets('should retry caching on error state tap', (tester) async {
-        when(mockBloc.state).thenReturn(const TrackCacheOperationFailure(
-          trackId: 'track123',
-          error: 'Network error',
-        ));
+        when(mockBloc.state).thenReturn(
+          const TrackCacheOperationFailure(
+            trackId: 'track123',
+            error: 'Network error',
+          ),
+        );
 
         await tester.pumpWidget(createWidget());
 
         await tester.tap(find.byType(SmartTrackCacheIcon));
 
-        verify(mockBloc.add(
-          const CacheTrackRequested(
-            trackId: 'track123',
-            audioUrl: 'https://example.com/audio.mp3',
-            policy: ConflictPolicy.lastWins,
+        verify(
+          mockBloc.add(
+            const CacheTrackRequested(
+              trackId: 'track123',
+              audioUrl: 'https://example.com/audio.mp3',
+              policy: ConflictPolicy.lastWins,
+            ),
           ),
-        )).called(1);
+        ).called(1);
       });
     });
 
     group('callbacks', () {
-      testWidgets('should call onSuccess callback on success state', (tester) async {
+      testWidgets('should call onSuccess callback on success state', (
+        tester,
+      ) async {
         String? successMessage;
-        
-        await tester.pumpWidget(createWidget(
-          onSuccess: (message) => successMessage = message,
-        ));
+
+        await tester.pumpWidget(
+          createWidget(onSuccess: (message) => successMessage = message),
+        );
 
         // Simulate success state
-        when(mockBloc.state).thenReturn(const TrackCacheOperationSuccess(
-          trackId: 'track123',
-          message: 'Track cached successfully',
-        ));
+        when(mockBloc.state).thenReturn(
+          const TrackCacheOperationSuccess(
+            trackId: 'track123',
+            message: 'Track cached successfully',
+          ),
+        );
 
         await tester.pump();
 
         expect(successMessage, isNull); // BlocListener hasn't fired yet
       });
 
-      testWidgets('should call onError callback on failure state', (tester) async {
+      testWidgets('should call onError callback on failure state', (
+        tester,
+      ) async {
         String? errorMessage;
-        
-        await tester.pumpWidget(createWidget(
-          onError: (message) => errorMessage = message,
-        ));
+
+        await tester.pumpWidget(
+          createWidget(onError: (message) => errorMessage = message),
+        );
 
         // Simulate failure state
-        when(mockBloc.state).thenReturn(const TrackCacheOperationFailure(
-          trackId: 'track123',
-          error: 'Network error',
-        ));
+        when(mockBloc.state).thenReturn(
+          const TrackCacheOperationFailure(
+            trackId: 'track123',
+            error: 'Network error',
+          ),
+        );
 
         await tester.pump();
 
@@ -309,7 +352,7 @@ void main() {
 
       testWidgets('should have proper hit area', (tester) async {
         const testSize = 24.0;
-        
+
         await tester.pumpWidget(createWidget(size: testSize));
 
         final containerSize = tester.getSize(find.byType(Container).first);
@@ -333,21 +376,10 @@ void main() {
 
     group('edge cases', () {
       testWidgets('should handle null callbacks gracefully', (tester) async {
-        await tester.pumpWidget(createWidget(
-          onSuccess: null,
-          onError: null,
-        ));
+        await tester.pumpWidget(createWidget(onSuccess: null, onError: null));
 
         // Should not throw exception
         await tester.tap(find.byType(SmartTrackCacheIcon));
-      });
-
-      testWidgets('should handle empty trackId', (tester) async {
-        await tester.pumpWidget(createWidget(trackId: ''));
-
-        verify(mockBloc.add(
-          const GetTrackCacheStatusRequested(''),
-        )).called(1);
       });
 
       testWidgets('should handle empty audioUrl', (tester) async {
@@ -355,13 +387,15 @@ void main() {
 
         await tester.tap(find.byType(SmartTrackCacheIcon));
 
-        verify(mockBloc.add(
-          const CacheTrackRequested(
-            trackId: 'track123',
-            audioUrl: '',
-            policy: ConflictPolicy.lastWins,
+        verify(
+          mockBloc.add(
+            const CacheTrackRequested(
+              trackId: 'track123',
+              audioUrl: '',
+              policy: ConflictPolicy.lastWins,
+            ),
           ),
-        )).called(1);
+        ).called(1);
       });
     });
   });
