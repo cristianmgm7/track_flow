@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/components/dialogs/app_dialog.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
@@ -65,9 +67,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Edit Profile'),
-      content: SingleChildScrollView(
+    return AppDialog(
+      title: 'Edit Profile',
+      content: '',
+      customContent: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
@@ -92,10 +95,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                           : null,
                 ),
               ),
-              SizedBox(height: 12),
+              SizedBox(height: Dimensions.space12),
               TextFormField(
                 initialValue: _name,
-                decoration: InputDecoration(labelText: 'Name'),
+                decoration: const InputDecoration(labelText: 'Name'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your name';
@@ -104,9 +107,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 },
                 onSaved: (value) => _name = value ?? '',
               ),
+              SizedBox(height: Dimensions.space16),
               TextFormField(
                 initialValue: _email,
-                decoration: InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(labelText: 'Email'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
@@ -115,9 +119,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 },
                 onSaved: (value) => _email = value ?? '',
               ),
+              SizedBox(height: Dimensions.space16),
               DropdownButtonFormField<CreativeRole>(
                 value: _creativeRole,
-                decoration: InputDecoration(labelText: 'Creative Role'),
+                decoration: const InputDecoration(labelText: 'Creative Role'),
                 items:
                     CreativeRole.values.map((role) {
                       return DropdownMenuItem(
@@ -132,13 +137,10 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(onPressed: _updateProfile, child: Text('Save Changes')),
-      ],
+      primaryButtonText: 'Save Changes',
+      secondaryButtonText: 'Cancel',
+      onPrimaryPressed: _updateProfile,
+      onSecondaryPressed: () => Navigator.pop(context),
     );
   }
 }

@@ -25,6 +25,7 @@ class _ProfileInformationState extends State<ProfileInformation> {
   void _onEditProfile(BuildContext context, UserProfile profile) {
     showDialog(
       context: context,
+      useRootNavigator: false,
       builder: (context) => EditProfileDialog(profile: profile),
     );
   }

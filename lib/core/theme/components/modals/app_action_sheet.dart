@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/theme/components/modals/app_bottom_sheet.dart';
+import 'app_bottom_sheet.dart';
 
-// Convenience function that maintains backward compatibility
+/// TrackFlow Action Sheet - parte del sistema de diseño
+/// 
+/// Uso recomendado:
+/// ```dart
+/// showTrackFlowActionSheet(
+///   context: context,
+///   title: 'Opciones',
+///   actions: [
+///     TrackFlowActionItem(
+///       icon: Icons.add,
+///       title: 'Crear',
+///       subtitle: 'Crear algo nuevo',
+///       onTap: () => // acción
+///     ),
+///   ],
+/// );
+/// ```
 Future<void> showTrackFlowActionSheet({
   required BuildContext context,
   required List<TrackFlowActionItem> actions,
@@ -9,7 +25,7 @@ Future<void> showTrackFlowActionSheet({
   String? title,
   Widget? body,
 }) {
-  // Convert TrackFlowActionItem to AppBottomSheetAction
+  // Convertir TrackFlowActionItem a AppBottomSheetAction del sistema de diseño
   final convertedActions = actions.map((item) => AppBottomSheetAction(
     icon: item.icon,
     title: item.title,
@@ -18,6 +34,7 @@ Future<void> showTrackFlowActionSheet({
     childSheetBuilder: item.childSheetBuilder,
   )).toList();
 
+  // Usar el componente base del sistema de diseño
   return showAppActionSheet(
     context: context,
     actions: convertedActions,
@@ -27,7 +44,7 @@ Future<void> showTrackFlowActionSheet({
   );
 }
 
-// Keep backward compatibility with existing TrackFlowActionItem
+/// TrackFlow Action Item - compatible con el sistema de diseño
 class TrackFlowActionItem {
   final IconData icon;
   final String title;
@@ -35,7 +52,7 @@ class TrackFlowActionItem {
   final VoidCallback? onTap;
   final Widget Function(BuildContext)? childSheetBuilder;
 
-  TrackFlowActionItem({
+  const TrackFlowActionItem({
     required this.icon,
     required this.title,
     required this.subtitle,

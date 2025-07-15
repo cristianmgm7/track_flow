@@ -2,6 +2,39 @@ import 'package:flutter/material.dart';
 import '../../app_colors.dart';
 import '../../app_dimensions.dart';
 
+/// TrackFlow Form Sheet - parte del sistema de diseño
+/// 
+/// Uso recomendado:
+/// ```dart
+/// showTrackFlowFormSheet(
+///   context: context,
+///   title: 'Crear Proyecto',
+///   child: MyFormWidget(),
+/// );
+/// ```
+Future<T?> showTrackFlowFormSheet<T>({
+  required BuildContext context,
+  required Widget child,
+  String? title,
+  double initialChildSize = 0.9,
+  double minChildSize = 0.5,
+  double maxChildSize = 0.9,
+  bool isDismissible = true,
+  bool useRootNavigator = false,
+}) {
+  return showAppFormSheet<T>(
+    context: context,
+    child: child,
+    title: title,
+    initialChildSize: initialChildSize,
+    minChildSize: minChildSize,
+    maxChildSize: maxChildSize,
+    isDismissible: isDismissible,
+    useRootNavigator: useRootNavigator,
+  );
+}
+
+/// Función base del sistema de diseño (para uso interno)
 Future<T?> showAppFormSheet<T>({
   required BuildContext context,
   required Widget child,

@@ -98,6 +98,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     onPressed: () {
                       showDialog(
                         context: context,
+                        useRootNavigator: false,
                         builder:
                             (context) => EditProfileDialog(profile: profile),
                       );

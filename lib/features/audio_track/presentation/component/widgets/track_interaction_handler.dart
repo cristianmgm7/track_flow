@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
+import 'package:trackflow/core/theme/components/modals/app_action_sheet.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
