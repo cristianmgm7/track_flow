@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/theme/components/dialogs/app_dialog.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
+import 'package:trackflow/features/ui/dialogs/app_dialog.dart';
 
 class RemoveCollaboratorDialog extends StatelessWidget {
   final ProjectId projectId;
@@ -21,7 +21,8 @@ class RemoveCollaboratorDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppConfirmationDialog(
       title: 'Confirm Removal',
-      message: 'Are you sure you want to remove collaborator $collaboratorName?',
+      message:
+          'Are you sure you want to remove collaborator $collaboratorName?',
       confirmText: 'Yes',
       cancelText: 'Cancel',
       isDestructive: true,

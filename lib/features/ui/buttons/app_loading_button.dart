@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../app_dimensions.dart';
-import '../../app_colors.dart';
-import '../../app_text_style.dart';
-import '../../app_animations.dart';
+import '../../../core/theme/app_dimensions.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_style.dart';
+import '../../../core/theme/app_animations.dart';
 
 /// Button component with loading state following TrackFlow design system
 class AppLoadingButton extends StatelessWidget {
@@ -37,11 +37,13 @@ class AppLoadingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDisabled = !isEnabled || isLoading;
-    
-    final effectiveBackgroundColor = backgroundColor ?? 
+
+    final effectiveBackgroundColor =
+        backgroundColor ??
         (isDestructive ? AppColors.error : theme.colorScheme.primary);
-    
-    final effectiveForegroundColor = foregroundColor ?? 
+
+    final effectiveForegroundColor =
+        foregroundColor ??
         (isDestructive ? Colors.white : theme.colorScheme.onPrimary);
 
     return SizedBox(
@@ -49,21 +51,25 @@ class AppLoadingButton extends StatelessWidget {
       height: height ?? Dimensions.buttonHeight,
       child: ElevatedButton(
         onPressed: isDisabled ? null : onPressed,
-        style: style ?? ElevatedButton.styleFrom(
-          backgroundColor: effectiveBackgroundColor,
-          foregroundColor: effectiveForegroundColor,
-          disabledBackgroundColor: effectiveBackgroundColor.withValues(alpha: 0.5),
-          disabledForegroundColor: effectiveForegroundColor.withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-          ),
-          textStyle: AppTextStyle.labelLarge,
-        ),
+        style:
+            style ??
+            ElevatedButton.styleFrom(
+              backgroundColor: effectiveBackgroundColor,
+              foregroundColor: effectiveForegroundColor,
+              disabledBackgroundColor: effectiveBackgroundColor.withValues(
+                alpha: 0.5,
+              ),
+              disabledForegroundColor: effectiveForegroundColor.withValues(
+                alpha: 0.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+              ),
+              textStyle: AppTextStyle.labelLarge,
+            ),
         child: AnimatedSwitcher(
           duration: AppAnimations.fast,
-          child: isLoading
-              ? _buildLoadingContent()
-              : _buildButtonContent(),
+          child: isLoading ? _buildLoadingContent() : _buildButtonContent(),
         ),
       ),
     );
@@ -84,14 +90,10 @@ class AppLoadingButton extends StatelessWidget {
     if (icon != null) {
       return Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          icon!,
-          SizedBox(width: Dimensions.space8),
-          Text(text),
-        ],
+        children: [icon!, SizedBox(width: Dimensions.space8), Text(text)],
       );
     }
-    
+
     return Text(text);
   }
 }
@@ -155,7 +157,7 @@ class AppSecondaryLoadingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AppLoadingButton(
       text: text,
       onPressed: onPressed,
@@ -168,11 +170,10 @@ class AppSecondaryLoadingButton extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: theme.colorScheme.primary,
         disabledBackgroundColor: Colors.transparent,
-        disabledForegroundColor: theme.colorScheme.primary.withValues(alpha: 0.5),
-        side: BorderSide(
-          color: theme.colorScheme.primary,
-          width: 1,
+        disabledForegroundColor: theme.colorScheme.primary.withValues(
+          alpha: 0.5,
         ),
+        side: BorderSide(color: theme.colorScheme.primary, width: 1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
         ),

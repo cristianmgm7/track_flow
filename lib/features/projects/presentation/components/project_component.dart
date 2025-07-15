@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/theme/components/project/project_card.dart';
+import 'package:trackflow/features/ui/project/project_card.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectCard extends StatelessWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../app_dimensions.dart';
-import '../../app_colors.dart';
-import '../../app_text_style.dart';
-import '../../app_borders.dart';
+import '../../../core/theme/app_dimensions.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_style.dart';
+import '../../../core/theme/app_borders.dart';
 
 /// Enhanced form field component following TrackFlow design system
 class AppFormField extends StatelessWidget {
@@ -52,7 +52,7 @@ class AppFormField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -60,7 +60,7 @@ class AppFormField extends StatelessWidget {
           _buildLabel(theme),
           SizedBox(height: Dimensions.space8),
         ],
-        
+
         TextFormField(
           controller: controller,
           validator: validator,
@@ -84,9 +84,7 @@ class AppFormField extends StatelessWidget {
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             errorText: errorText,
-            errorStyle: AppTextStyle.bodySmall.copyWith(
-              color: AppColors.error,
-            ),
+            errorStyle: AppTextStyle.bodySmall.copyWith(color: AppColors.error),
             filled: true,
             fillColor: theme.colorScheme.surface,
             border: OutlineInputBorder(
@@ -152,9 +150,7 @@ class AppFormField extends StatelessWidget {
           if (isRequired)
             TextSpan(
               text: ' *',
-              style: AppTextStyle.labelMedium.copyWith(
-                color: AppColors.error,
-              ),
+              style: AppTextStyle.labelMedium.copyWith(color: AppColors.error),
             ),
         ],
       ),
@@ -260,22 +256,19 @@ class AppSearchField extends StatelessWidget {
       focusNode: focusNode,
       keyboardType: TextInputType.text,
       textInputAction: TextInputAction.search,
-      prefixIcon: Icon(
-        Icons.search,
-        size: Dimensions.iconMedium,
-      ),
-      suffixIcon: controller?.text.isNotEmpty == true
-          ? IconButton(
-              icon: Icon(
-                Icons.clear,
-                size: Dimensions.iconMedium,
-              ),
-              onPressed: onClear ?? () {
-                controller?.clear();
-                onChanged?.call('');
-              },
-            )
-          : null,
+      prefixIcon: Icon(Icons.search, size: Dimensions.iconMedium),
+      suffixIcon:
+          controller?.text.isNotEmpty == true
+              ? IconButton(
+                icon: Icon(Icons.clear, size: Dimensions.iconMedium),
+                onPressed:
+                    onClear ??
+                    () {
+                      controller?.clear();
+                      onChanged?.call('');
+                    },
+              )
+              : null,
     );
   }
 }

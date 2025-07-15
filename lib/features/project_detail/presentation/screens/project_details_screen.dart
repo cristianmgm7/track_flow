@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'package:trackflow/core/theme/components/loading/app_loading.dart';
-import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
-import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
-import 'package:trackflow/core/theme/components/project/project_card.dart';
+import 'package:trackflow/features/ui/loading/app_loading.dart';
+import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
+import 'package:trackflow/features/ui/navigation/app_bar.dart';
+import 'package:trackflow/features/ui/project/project_card.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
@@ -60,18 +60,17 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           builder: (context, state) {
             if (state.isLoadingProject && state.project == null) {
               return const Center(
-                child: AppLoading(
-                  message: 'Loading project...',
-                ),
+                child: AppLoading(message: 'Loading project...'),
               );
             }
 
             if (state.projectError != null && state.project == null) {
               return AppProjectErrorState(
                 message: 'Error loading project: ${state.projectError}',
-                onRetry: () => context.read<ProjectDetailBloc>().add(
-                  WatchProjectDetail(project: widget.project),
-                ),
+                onRetry:
+                    () => context.read<ProjectDetailBloc>().add(
+                      WatchProjectDetail(project: widget.project),
+                    ),
               );
             }
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../app_dimensions.dart';
-import '../../app_colors.dart';
-import '../../app_text_style.dart';
-import '../../app_borders.dart';
+import '../../../core/theme/app_dimensions.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_style.dart';
+import '../../../core/theme/app_borders.dart';
 
 /// Base dialog component following TrackFlow design system
 class AppDialog extends StatelessWidget {
@@ -32,9 +32,7 @@ class AppDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: AppBorders.large,
-      ),
+      shape: RoundedRectangleBorder(borderRadius: AppBorders.large),
       titlePadding: EdgeInsets.fromLTRB(
         Dimensions.space24,
         Dimensions.space24,
@@ -51,20 +49,13 @@ class AppDialog extends StatelessWidget {
         Dimensions.space24,
         Dimensions.space24,
       ),
-      title: Text(
-        title,
-        style: AppTextStyle.headlineMedium,
-      ),
-      content: customContent ?? 
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: Dimensions.dialogMaxWidth,
+      title: Text(title, style: AppTextStyle.headlineMedium),
+      content:
+          customContent ??
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: Dimensions.dialogMaxWidth),
+            child: Text(content, style: AppTextStyle.bodyMedium),
           ),
-          child: Text(
-            content,
-            style: AppTextStyle.bodyMedium,
-          ),
-        ),
       actions: _buildActions(),
     );
   }
@@ -82,10 +73,8 @@ class AppDialog extends StatelessWidget {
     }
 
     if (primaryButtonText != null) {
-      actions.add(
-        SizedBox(width: Dimensions.space12),
-      );
-      
+      actions.add(SizedBox(width: Dimensions.space12));
+
       actions.add(
         ElevatedButton(
           onPressed: isLoading ? null : onPrimaryPressed,
@@ -93,26 +82,24 @@ class AppDialog extends StatelessWidget {
             backgroundColor: isDestructive ? AppColors.error : null,
             foregroundColor: isDestructive ? Colors.white : null,
           ),
-          child: isLoading
-              ? SizedBox(
-                  height: Dimensions.iconMedium,
-                  width: Dimensions.iconMedium,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(primaryButtonText!),
+          child:
+              isLoading
+                  ? SizedBox(
+                    height: Dimensions.iconMedium,
+                    width: Dimensions.iconMedium,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                  : Text(primaryButtonText!),
         ),
       );
     }
 
-    return actions.isNotEmpty ? [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: actions,
-      ),
-    ] : [];
+    return actions.isNotEmpty
+        ? [Row(mainAxisAlignment: MainAxisAlignment.end, children: actions)]
+        : [];
   }
 }
 

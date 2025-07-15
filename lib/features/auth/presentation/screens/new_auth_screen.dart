@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/core/theme/components/auth/glassmorphism_card.dart';
+import 'package:trackflow/features/ui/auth/glassmorphism_card.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
-enum AuthStep { welcome, email, form }
+enum AuthStep { welcome, form }
 
 class NewAuthScreen extends StatefulWidget {
   const NewAuthScreen({super.key});
@@ -19,19 +19,13 @@ class NewAuthScreen extends StatefulWidget {
 class _NewAuthScreenState extends State<NewAuthScreen> {
   AuthStep _currentStep = AuthStep.welcome;
   bool _isLogin = true;
+  bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
-  String _email = '';
-  String _password = '';
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  void _goToEmailStep() {
+  void _goToFormStep() {
     setState(() {
-      _currentStep = AuthStep.email;
-    });
-  }
-
-  void _goToFormStep(String email) {
-    setState(() {
-      _email = email;
       _currentStep = AuthStep.form;
     });
   }
@@ -39,11 +33,8 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
   void _goBack() {
     setState(() {
       switch (_currentStep) {
-        case AuthStep.email:
-          _currentStep = AuthStep.welcome;
-          break;
         case AuthStep.form:
-          _currentStep = AuthStep.email;
+          _currentStep = AuthStep.welcome;
           break;
         case AuthStep.welcome:
           break;
@@ -51,17 +42,25 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
     });
   }
 
+  void _togglePasswordVisibility() {
+    setState(() {
+      _isPasswordVisible = !_isPasswordVisible;
+    });
+  }
+
   void _handleSubmit() {
     if (!_formKey.currentState!.validate()) return;
-    _formKey.currentState!.save();
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
     if (_isLogin) {
       context.read<AuthBloc>().add(
-        AuthSignInRequested(email: _email, password: _password),
+        AuthSignInRequested(email: email, password: password),
       );
     } else {
       context.read<AuthBloc>().add(
-        AuthSignUpRequested(email: _email, password: _password),
+        AuthSignUpRequested(email: email, password: password),
       );
     }
   }
@@ -135,8 +134,6 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                             switch (_currentStep) {
                               case AuthStep.welcome:
                                 return _buildWelcomeStep(isLoading);
-                              case AuthStep.email:
-                                return _buildEmailStep(isLoading);
                               case AuthStep.form:
                                 return _buildFormStep(isLoading);
                             }
@@ -212,7 +209,7 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
             children: [
               GlassmorphismButton(
                 text: 'Continue with Email',
-                onPressed: _goToEmailStep,
+                onPressed: _goToFormStep,
                 icon: const Icon(Icons.email, color: AppColors.textPrimary),
               ),
               SizedBox(height: Dimensions.space16),
@@ -224,99 +221,6 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                   Icons.g_mobiledata,
                   color: AppColors.textPrimary,
                 ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmailStep(bool isLoading) {
-    final emailController = TextEditingController();
-
-    return Column(
-      children: [
-        Text(
-          'Welcome Back',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-            shadows: [
-              Shadow(
-                color: AppColors.grey900.withValues(alpha: 0.5),
-                offset: const Offset(0, 2),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: Dimensions.space12),
-
-        Text(
-          'Enter your email to continue',
-          style: TextStyle(
-            fontSize: 16,
-            color: AppColors.textPrimary.withValues(alpha: 0.8),
-          ),
-        ),
-
-        SizedBox(height: Dimensions.space48),
-
-        GlassmorphismCard(
-          child: Column(
-            children: [
-              TextFormField(
-                controller: emailController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Email Address',
-                  labelStyle: TextStyle(
-                    color: AppColors.textPrimary.withValues(alpha: 0.7),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.email,
-                    color: AppColors.textPrimary.withValues(alpha: 0.7),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      Dimensions.radiusMedium,
-                    ),
-                    borderSide: BorderSide(
-                      color: AppColors.textPrimary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      Dimensions.radiusMedium,
-                    ),
-                    borderSide: BorderSide(
-                      color: AppColors.textPrimary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      Dimensions.radiusMedium,
-                    ),
-                    borderSide: BorderSide(
-                      color: AppColors.textPrimary,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                textCapitalization: TextCapitalization.none,
-              ),
-              SizedBox(height: Dimensions.space24),
-              GlassmorphismButton(
-                text: 'Continue',
-                onPressed: () {
-                  if (emailController.text.trim().isNotEmpty) {
-                    _goToFormStep(emailController.text.trim());
-                  }
-                },
               ),
             ],
           ),
@@ -346,7 +250,7 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
         SizedBox(height: Dimensions.space12),
 
         Text(
-          _email,
+          _isLogin ? 'Sign in to your account' : 'Create your new account',
           style: TextStyle(
             fontSize: 16,
             color: AppColors.textPrimary.withValues(alpha: 0.8),
@@ -360,15 +264,17 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
             key: _formKey,
             child: Column(
               children: [
+                // Email field
                 TextFormField(
+                  controller: _emailController,
                   style: const TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Email Address',
                     labelStyle: TextStyle(
                       color: AppColors.textPrimary.withValues(alpha: 0.7),
                     ),
                     prefixIcon: Icon(
-                      Icons.lock,
+                      Icons.email,
                       color: AppColors.textPrimary.withValues(alpha: 0.7),
                     ),
                     border: OutlineInputBorder(
@@ -397,7 +303,70 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                       ),
                     ),
                   ),
-                  obscureText: true,
+                  keyboardType: TextInputType.emailAddress,
+                  autocorrect: false,
+                  textCapitalization: TextCapitalization.none,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: Dimensions.space16),
+
+                // Password field
+                TextFormField(
+                  controller: _passwordController,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    labelStyle: TextStyle(
+                      color: AppColors.textPrimary.withValues(alpha: 0.7),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: AppColors.textPrimary.withValues(alpha: 0.7),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: AppColors.textPrimary.withValues(alpha: 0.7),
+                      ),
+                      onPressed: _togglePasswordVisibility,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        Dimensions.radiusMedium,
+                      ),
+                      borderSide: BorderSide(
+                        color: AppColors.textPrimary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        Dimensions.radiusMedium,
+                      ),
+                      borderSide: BorderSide(
+                        color: AppColors.textPrimary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        Dimensions.radiusMedium,
+                      ),
+                      borderSide: BorderSide(
+                        color: AppColors.textPrimary,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  obscureText: !_isPasswordVisible,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Password is required';
@@ -407,7 +376,6 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                     }
                     return null;
                   },
-                  onSaved: (value) => _password = value!,
                 ),
                 SizedBox(height: Dimensions.space24),
                 GlassmorphismButton(

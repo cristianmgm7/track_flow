@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../app_dimensions.dart';
-import '../../app_colors.dart';
+import '../../../core/theme/app_dimensions.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Glassmorphism card component for auth screens
 class GlassmorphismCard extends StatelessWidget {
@@ -31,18 +31,24 @@ class GlassmorphismCard extends StatelessWidget {
     return Container(
       margin: margin ?? EdgeInsets.all(Dimensions.space16),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(Dimensions.radiusLarge),
+        borderRadius:
+            borderRadius ?? BorderRadius.circular(Dimensions.radiusLarge),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: Container(
             padding: padding ?? EdgeInsets.all(Dimensions.space24),
             decoration: BoxDecoration(
-              color: backgroundColor ?? AppColors.textPrimary.withValues(alpha: opacity),
-              borderRadius: borderRadius ?? BorderRadius.circular(Dimensions.radiusLarge),
-              border: border ?? Border.all(
-                color: AppColors.textPrimary.withValues(alpha: 0.2),
-                width: 1,
-              ),
+              color:
+                  backgroundColor ??
+                  AppColors.textPrimary.withValues(alpha: opacity),
+              borderRadius:
+                  borderRadius ?? BorderRadius.circular(Dimensions.radiusLarge),
+              border:
+                  border ??
+                  Border.all(
+                    color: AppColors.textPrimary.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
             ),
             child: child,
           ),
@@ -86,7 +92,9 @@ class GlassmorphismButton extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: backgroundColor ?? AppColors.textPrimary.withValues(alpha: 0.2),
+              color:
+                  backgroundColor ??
+                  AppColors.textPrimary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
               border: Border.all(
                 color: AppColors.textPrimary.withValues(alpha: 0.3),
@@ -99,34 +107,35 @@ class GlassmorphismButton extends StatelessWidget {
                 onTap: isLoading ? null : onPressed,
                 borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
                 child: Center(
-                  child: isLoading
-                      ? SizedBox(
-                          width: Dimensions.iconMedium,
-                          height: Dimensions.iconMedium,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              textColor ?? AppColors.textPrimary,
-                            ),
-                          ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (icon != null) ...[
-                              icon!,
-                              SizedBox(width: Dimensions.space8),
-                            ],
-                            Text(
-                              text,
-                              style: TextStyle(
-                                color: textColor ?? AppColors.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                  child:
+                      isLoading
+                          ? SizedBox(
+                            width: Dimensions.iconMedium,
+                            height: Dimensions.iconMedium,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                textColor ?? AppColors.textPrimary,
                               ),
                             ),
-                          ],
-                        ),
+                          )
+                          : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (icon != null) ...[
+                                icon!,
+                                SizedBox(width: Dimensions.space8),
+                              ],
+                              Text(
+                                text,
+                                style: TextStyle(
+                                  color: textColor ?? AppColors.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                 ),
               ),
             ),

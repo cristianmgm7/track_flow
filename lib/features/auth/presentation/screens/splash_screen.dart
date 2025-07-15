@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/theme/components/loading/app_loading.dart';
+import 'package:trackflow/features/ui/loading/app_loading.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/theme/components/modals/app_action_sheet.dart';
-import 'package:trackflow/core/theme/components/modals/app_form_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';

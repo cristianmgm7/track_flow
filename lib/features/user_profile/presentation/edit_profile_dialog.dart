@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/components/dialogs/app_dialog.dart';
+import 'package:trackflow/features/ui/dialogs/app_dialog.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:trackflow/core/utils/image_utils.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
+import 'package:trackflow/core/theme/app_text_style.dart';
 import 'dart:io';
 
 class EditProfileDialog extends StatefulWidget {
@@ -39,13 +42,54 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _avatarFile = File(pickedFile.path);
-        _avatarUrl = pickedFile.path;
-      });
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512, // Limit image size for better performance
+        maxHeight: 512,
+        imageQuality: 85, // Compress image to reduce file size
+      );
+
+      if (pickedFile != null) {
+        // Copy the image to a permanent location
+        final permanentPath = await ImageUtils.copyImageToPermanentLocation(
+          pickedFile.path,
+        );
+
+        if (permanentPath != null) {
+          setState(() {
+            _avatarFile = File(permanentPath);
+            _avatarUrl = permanentPath;
+          });
+        } else {
+          // Fallback to original path if copying fails
+          setState(() {
+            _avatarFile = File(pickedFile.path);
+            _avatarUrl = pickedFile.path;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      // Show a snackbar or dialog to inform the user about the error
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error selecting image: ${e.toString()}',
+              style: AppTextStyle.bodyMedium.copyWith(
+                color: AppColors.onPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -78,27 +122,64 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
             children: [
               GestureDetector(
                 onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundImage:
-                      _avatarFile != null
-                          ? FileImage(_avatarFile!)
-                          : (_avatarUrl.isNotEmpty &&
-                              Uri.tryParse(_avatarUrl)?.isAbsolute == true)
-                          ? NetworkImage(_avatarUrl) as ImageProvider
-                          : null,
-                  child:
-                      (_avatarFile == null &&
-                              (_avatarUrl.isEmpty ||
-                                  Uri.tryParse(_avatarUrl)?.isAbsolute != true))
-                          ? Icon(Icons.person, size: 40)
-                          : null,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary, width: 2),
+                  ),
+                  child: CircleAvatar(
+                    radius: 40,
+                    backgroundColor: AppColors.grey600,
+                    backgroundImage:
+                        _avatarFile != null
+                            ? FileImage(_avatarFile!)
+                            : (_avatarUrl.isNotEmpty &&
+                                Uri.tryParse(_avatarUrl)?.isAbsolute == true)
+                            ? NetworkImage(_avatarUrl) as ImageProvider
+                            : null,
+                    child:
+                        (_avatarFile == null &&
+                                (_avatarUrl.isEmpty ||
+                                    Uri.tryParse(_avatarUrl)?.isAbsolute !=
+                                        true))
+                            ? Icon(
+                              Icons.person,
+                              size: 40,
+                              color: AppColors.textSecondary,
+                            )
+                            : null,
+                  ),
                 ),
               ),
               SizedBox(height: Dimensions.space12),
               TextFormField(
                 initialValue: _name,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  labelStyle: AppTextStyle.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.grey700,
+                ),
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your name';
@@ -110,7 +191,32 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               SizedBox(height: Dimensions.space16),
               TextFormField(
                 initialValue: _email,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: AppTextStyle.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.grey700,
+                ),
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
@@ -122,12 +228,43 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               SizedBox(height: Dimensions.space16),
               DropdownButtonFormField<CreativeRole>(
                 value: _creativeRole,
-                decoration: const InputDecoration(labelText: 'Creative Role'),
+                decoration: InputDecoration(
+                  labelText: 'Creative Role',
+                  labelStyle: AppTextStyle.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: AppColors.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.grey700,
+                ),
+                dropdownColor: AppColors.surface,
+                style: AppTextStyle.bodyMedium.copyWith(
+                  color: AppColors.textPrimary,
+                ),
                 items:
                     CreativeRole.values.map((role) {
                       return DropdownMenuItem(
                         value: role,
-                        child: Text(role.toString().split('.').last),
+                        child: Text(
+                          role.toString().split('.').last,
+                          style: AppTextStyle.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                       );
                     }).toList(),
                 onChanged: (value) => setState(() => _creativeRole = value),

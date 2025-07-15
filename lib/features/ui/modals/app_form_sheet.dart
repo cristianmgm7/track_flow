@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../app_colors.dart';
-import '../../app_dimensions.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimensions.dart';
 
 /// TrackFlow Form Sheet - parte del sistema de diseño
-/// 
+///
 /// Uso recomendado:
 /// ```dart
 /// showTrackFlowFormSheet(

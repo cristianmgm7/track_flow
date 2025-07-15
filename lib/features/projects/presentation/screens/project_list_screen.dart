@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/theme/components/modals/app_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_action_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
-import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
-import 'package:trackflow/core/theme/components/project/project_card.dart';
+import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
+import 'package:trackflow/features/ui/navigation/app_bar.dart';
+import 'package:trackflow/features/ui/project/project_card.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
@@ -48,23 +48,24 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         ],
       ),
       body: BlocBuilder<ProjectsBloc, ProjectsState>(
-        buildWhen: (previous, current) =>
-            current is! ProjectOperationSuccess &&
-            current is! ProjectsError &&
-            current is! ProjectsLoading,
+        buildWhen:
+            (previous, current) =>
+                current is! ProjectOperationSuccess &&
+                current is! ProjectsError &&
+                current is! ProjectsLoading,
         builder: (context, state) {
           if (state is ProjectsLoading) {
             return const AppProjectLoadingState();
           }
           if (state is ProjectOperationSuccess) {
-            return AppProjectSuccessState(
-              message: state.message,
-            );
+            return AppProjectSuccessState(message: state.message);
           }
           if (state is ProjectsError) {
             return AppProjectErrorState(
               message: state.message,
-              onRetry: () => context.read<ProjectsBloc>().add(StartWatchingProjects()),
+              onRetry:
+                  () =>
+                      context.read<ProjectsBloc>().add(StartWatchingProjects()),
             );
           }
           if (state is ProjectsLoaded) {
@@ -83,15 +84,19 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
               );
             }
             return AppProjectList(
-              projects: projects
-                  .map((project) => ProjectCard(
-                        project: project,
-                        onTap: () => context.push(
-                          AppRoutes.projectDetails,
-                          extra: project,
+              projects:
+                  projects
+                      .map(
+                        (project) => ProjectCard(
+                          project: project,
+                          onTap:
+                              () => context.push(
+                                AppRoutes.projectDetails,
+                                extra: project,
+                              ),
                         ),
-                      ))
-                  .toList(),
+                      )
+                      .toList(),
             );
           }
           return const AppProjectEmptyState(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/theme/components/modals/app_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_action_sheet.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/remove_colaborator_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';

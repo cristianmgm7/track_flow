@@ -6,9 +6,9 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_b
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/theme/components/navigation/app_scaffold.dart';
-import 'package:trackflow/core/theme/components/navigation/app_bar.dart';
-import 'package:trackflow/core/theme/components/navigation/bottom_nav.dart';
+import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
+import 'package:trackflow/features/ui/navigation/app_bar.dart';
+import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
 
 class MainScaffold extends StatelessWidget {
   final Widget child;

@@ -4,7 +4,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'package:trackflow/core/theme/components/cards/base_card.dart';
+import 'package:trackflow/features/ui/cards/base_card.dart';
 
 class AppProjectCard extends StatelessWidget {
   final String title;

@@ -17,7 +17,7 @@ lib/core/theme/components/modals/
 ### Para Action Sheets:
 
 ```dart
-import 'package:trackflow/core/theme/components/modals/app_action_sheet.dart';
+import 'package:trackflow/core/theme/ui/modals/app_action_sheet.dart';
 
 // ✅ Recomendado para nuevos desarrollos
 showTrackFlowActionSheet(
@@ -56,12 +56,14 @@ showTrackFlowFormSheet(
 ## Características importantes
 
 ### Action Sheets
+
 - ✅ Automáticamente mantiene contexto de BLoCs (`useRootNavigator: false`)
 - ✅ Diseño consistente con el sistema de diseño
 - ✅ Soporte para iconos, títulos y subtítulos
 - ✅ Navegación a sheets secundarios con `childSheetBuilder`
 
 ### Form Sheets
+
 - ✅ Automáticamente mantiene contexto de BLoCs (`useRootNavigator: false`)
 - ✅ DraggableScrollableSheet para UX mejorada
 - ✅ Tamaños configurables (initialChildSize, minChildSize, maxChildSize)
@@ -70,6 +72,7 @@ showTrackFlowFormSheet(
 ## Migración de código legacy
 
 ### Imports antiguos (mantienen compatibilidad):
+
 ```dart
 // ⚠️ Legacy - mantiene compatibilidad pero deprecated
 import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
@@ -77,15 +80,17 @@ import 'package:trackflow/core/presentation/widgets/trackflow_form_bottom_sheet.
 ```
 
 ### Imports nuevos (recomendados):
+
 ```dart
 // ✅ Nuevos imports recomendados
-import 'package:trackflow/core/theme/components/modals/app_action_sheet.dart';
+import 'package:trackflow/core/theme/ui/modals/app_action_sheet.dart';
 import 'package:trackflow/core/theme/components/modals/app_form_sheet.dart';
 ```
 
 ## Patrones de uso comunes
 
 ### 1. Project Actions:
+
 ```dart
 class ProjectActions {
   static List<TrackFlowActionItem> onProjectList(BuildContext context) => [
@@ -106,6 +111,7 @@ class ProjectActions {
 ```
 
 ### 2. Track Actions:
+
 ```dart
 class TrackActions {
   static List<TrackFlowActionItem> forTrack(/* params */) => [

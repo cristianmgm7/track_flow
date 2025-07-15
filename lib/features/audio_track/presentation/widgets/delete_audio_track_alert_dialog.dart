@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/theme/components/dialogs/app_dialog.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
+import 'package:trackflow/features/ui/dialogs/app_dialog.dart';
 
 class DeleteAudioTrackAlertDialog extends StatelessWidget {
   final ProjectId projectId;
@@ -20,7 +20,8 @@ class DeleteAudioTrackAlertDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppConfirmationDialog(
       title: 'Delete Track',
-      message: 'Are you sure you want to delete "${track.name}"? This action cannot be undone.',
+      message:
+          'Are you sure you want to delete "${track.name}"? This action cannot be undone.',
       confirmText: 'Delete',
       cancelText: 'Cancel',
       isDestructive: true,
