@@ -3,12 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/ui/forms/app_form_field.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class JoinAsCollaboratorDialog extends StatefulWidget {
   const JoinAsCollaboratorDialog({super.key});
@@ -20,26 +21,32 @@ class JoinAsCollaboratorDialog extends StatefulWidget {
 
 class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _projectIdController;
+  bool _isSubmitting = false;
+  TextEditingController? _inputController;
 
   @override
   void initState() {
     super.initState();
-    _projectIdController = TextEditingController();
+    _inputController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _projectIdController.dispose();
+    _inputController?.dispose();
     super.dispose();
   }
 
-  void _joinProject() {
-    if (!_formKey.currentState!.validate()) return;
-    final projectId = UniqueId.fromString(_projectIdController.text);
-    context.read<ManageCollaboratorsBloc>().add(
-      JoinProjectWithIdRequested(projectId),
-    );
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      final input = _inputController?.text;
+      setState(() => _isSubmitting = true);
+      final projectId = UniqueId.fromString(input!);
+      context.read<ManageCollaboratorsBloc>().add(
+        JoinProjectWithIdRequested(projectId),
+      );
+      setState(() => _isSubmitting = false);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -63,51 +70,47 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
           );
         }
       },
-      child: BottomSheet(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        onClosing: () => Navigator.of(context).pop(),
-        builder:
-            (context) =>
-                BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
-                  builder: (context, state) {
-                    return Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextFormField(
-                            controller: _projectIdController,
-                            decoration: const InputDecoration(
-                              labelText: 'Project ID',
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a project ID';
-                              }
-                              return null;
-                            },
-                          ),
-                          SizedBox(height: Dimensions.space16),
-                          ElevatedButton(
-                            onPressed:
-                                state is ProjectsLoading ? null : _joinProject,
-                            child:
-                                state is ProjectsLoading
-                                    ? SizedBox(
-                                      width: Dimensions.iconMedium,
-                                      height: Dimensions.iconMedium,
-                                      child: const CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                    : const Text('Join Project'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            AppFormField(
+              label: 'Your Info',
+              controller: _inputController,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please fill out this field';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: SecondaryButton(
+                    text: 'Cancel',
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                    isDisabled: _isSubmitting,
+                  ),
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Join',
+                    onPressed: _isSubmitting ? null : _submit,
+                    isLoading: _isSubmitting,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

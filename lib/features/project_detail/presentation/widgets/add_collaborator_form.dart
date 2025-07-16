@@ -5,6 +5,9 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/ui/forms/app_form_field.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class AddCollaboratorForm extends StatefulWidget {
   final Project project;
@@ -16,22 +19,33 @@ class AddCollaboratorForm extends StatefulWidget {
 
 class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _idController = TextEditingController();
+  bool _isSubmitting = false;
+  TextEditingController? _emailController;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+  }
 
   @override
   void dispose() {
-    _idController.dispose();
+    _emailController?.dispose();
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      final email = _emailController?.text;
+      setState(() => _isSubmitting = true);
       context.read<ManageCollaboratorsBloc>().add(
         AddCollaborator(
           projectId: widget.project.id,
-          collaboratorId: UserId.fromUniqueString(_idController.text.trim()),
+          collaboratorId: UserId.fromUniqueString(email!),
         ),
       );
+      setState(() => _isSubmitting = false);
+      Navigator.of(context).pop();
     }
   }
 
@@ -61,36 +75,41 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextFormField(
-              controller: _idController,
-              decoration: const InputDecoration(
-                labelText: 'Collaborator ID',
-                border: OutlineInputBorder(),
-              ),
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            AppFormField(
+              label: 'Collaborator Email',
+              controller: _emailController,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a collaborator ID';
+                if (value == null || value.isEmpty) {
+                  return 'Please enter an email';
                 }
+                // Add more email validation if needed
                 return null;
               },
             ),
             const SizedBox(height: 24),
-            BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
-              builder: (context, state) {
-                final isLoading = state is ManageCollaboratorsLoading;
-                return ElevatedButton(
-                  onPressed: isLoading ? null : _submit,
-                  child:
-                      isLoading
-                          ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Text('Invite'),
-                );
-              },
+            Row(
+              children: [
+                Expanded(
+                  child: SecondaryButton(
+                    text: 'Cancel',
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                    isDisabled: _isSubmitting,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Add',
+                    onPressed: _isSubmitting ? null : _submit,
+                    isLoading: _isSubmitting,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

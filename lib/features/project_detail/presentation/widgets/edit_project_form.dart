@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/ui/forms/app_form_field.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class EditProjectForm extends StatefulWidget {
   final Project project;
@@ -19,14 +21,15 @@ class EditProjectForm extends StatefulWidget {
 
 class _EditProjectFormState extends State<EditProjectForm> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
+  bool _isSubmitting = false;
+  TextEditingController? _nameController;
   late TextEditingController _descriptionController;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(
-      text: widget.project.name.value.getOrElse(() => ''),
+      text: widget.project.name.value.fold((failure) => '', (value) => value),
     );
     _descriptionController = TextEditingController(
       text: widget.project.description.value.getOrElse(() => ''),
@@ -35,18 +38,21 @@ class _EditProjectFormState extends State<EditProjectForm> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _nameController?.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = true);
       final updatedProject = widget.project.copyWith(
-        name: ProjectName(_nameController.text),
+        name: ProjectName(_nameController?.text ?? ''),
         description: ProjectDescription(_descriptionController.text),
       );
       context.read<ProjectsBloc>().add(UpdateProjectRequested(updatedProject));
+      setState(() => _isSubmitting = false);
+      Navigator.of(context).pop();
     }
   }
 
@@ -75,14 +81,12 @@ class _EditProjectFormState extends State<EditProjectForm> {
       child: Form(
         key: _formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
+          children: <Widget>[
+            AppFormField(
+              label: 'Project Name',
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Project Name',
-                border: OutlineInputBorder(),
-              ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a project name';
@@ -90,34 +94,28 @@ class _EditProjectFormState extends State<EditProjectForm> {
                 return null;
               },
             ),
-            SizedBox(height: Dimensions.space16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Project Description',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-            ),
-            SizedBox(height: Dimensions.space20),
-            BlocBuilder<ProjectsBloc, ProjectsState>(
-              builder: (context, state) {
-                final isLoading = state is ProjectsLoading;
-                return ElevatedButton(
-                  onPressed: isLoading ? null : _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, Dimensions.buttonHeight),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: SecondaryButton(
+                    text: 'Cancel',
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                    isDisabled: _isSubmitting,
                   ),
-                  child:
-                      isLoading
-                          ? SizedBox(
-                            height: Dimensions.iconMedium,
-                            width: Dimensions.iconMedium,
-                            child: const CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Text('Save Changes'),
-                );
-              },
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Save',
+                    onPressed: _isSubmitting ? null : _submit,
+                    isLoading: _isSubmitting,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -10,6 +10,9 @@ import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'dart:io';
+import 'package:trackflow/features/ui/forms/app_form_field.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class EditProfileDialog extends StatefulWidget {
   final UserProfile profile;
@@ -27,6 +30,9 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
   late String _avatarUrl;
   CreativeRole? _creativeRole;
   File? _avatarFile;
+  bool _isSubmitting = false;
+  TextEditingController? _nameController;
+  TextEditingController? _emailController;
 
   @override
   void initState() {
@@ -39,6 +45,15 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
       // No cargar File si es URL remota
       _avatarFile = null;
     }
+    _nameController = TextEditingController(text: _name);
+    _emailController = TextEditingController(text: _email);
+  }
+
+  @override
+  void dispose() {
+    _nameController?.dispose();
+    _emailController?.dispose();
+    super.dispose();
   }
 
   Future<void> _pickImage() async {
@@ -109,6 +124,25 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     }
   }
 
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      final name = _nameController?.text;
+      final email = _emailController?.text;
+      setState(() => _isSubmitting = true);
+      final updatedProfile = UserProfile(
+        id: widget.profile.id,
+        name: name ?? '',
+        email: email ?? '',
+        avatarUrl: _avatarUrl,
+        creativeRole: _creativeRole,
+        createdAt: DateTime.now(),
+      );
+      context.read<UserProfileBloc>().add(SaveUserProfile(updatedProfile));
+      setState(() => _isSubmitting = false);
+      Navigator.of(context).pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppDialog(
@@ -152,78 +186,27 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                 ),
               ),
               SizedBox(height: Dimensions.space12),
-              TextFormField(
-                initialValue: _name,
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  labelStyle: AppTextStyle.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.grey700,
-                ),
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+              AppFormField(
+                label: 'Name',
+                controller: _nameController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your name';
                   }
                   return null;
                 },
-                onSaved: (value) => _name = value ?? '',
               ),
               SizedBox(height: Dimensions.space16),
-              TextFormField(
-                initialValue: _email,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: AppTextStyle.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      color: AppColors.primary,
-                      width: 2,
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.grey700,
-                ),
-                style: AppTextStyle.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+              AppFormField(
+                label: 'Email',
+                controller: _emailController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
+                  // Add more email validation if needed
                   return null;
                 },
-                onSaved: (value) => _email = value ?? '',
               ),
               SizedBox(height: Dimensions.space16),
               DropdownButtonFormField<CreativeRole>(
@@ -269,6 +252,29 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                     }).toList(),
                 onChanged: (value) => setState(() => _creativeRole = value),
                 onSaved: (value) => _creativeRole = value,
+              ),
+              SizedBox(height: Dimensions.space24),
+              Row(
+                children: [
+                  Expanded(
+                    child: SecondaryButton(
+                      text: 'Cancel',
+                      onPressed:
+                          _isSubmitting
+                              ? null
+                              : () => Navigator.of(context).pop(),
+                      isDisabled: _isSubmitting,
+                    ),
+                  ),
+                  const SizedBox(width: Dimensions.space16),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Save',
+                      onPressed: _isSubmitting ? null : _submit,
+                      isLoading: _isSubmitting,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

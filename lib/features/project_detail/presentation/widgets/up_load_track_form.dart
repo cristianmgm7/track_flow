@@ -8,6 +8,9 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:trackflow/features/ui/forms/app_form_field.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class UploadTrackForm extends StatefulWidget {
   final Project project;
@@ -21,6 +24,20 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
   final _formKey = GlobalKey<FormState>();
   String? _trackTitle;
   PlatformFile? _file;
+  bool _isSubmitting = false;
+  TextEditingController? _titleController;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _titleController?.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.audio);
@@ -44,9 +61,10 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+      _trackTitle = _titleController?.text;
       final filePath = _file?.path;
       if (filePath != null) {
+        setState(() => _isSubmitting = true);
         final file = File(filePath);
         final duration = await _getAudioDuration(file);
 
@@ -58,6 +76,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
             projectId: widget.project.id,
           ),
         );
+        setState(() => _isSubmitting = false);
         Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,40 +97,39 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          TextFormField(
-            decoration: const InputDecoration(
-              labelText: 'Track Title',
-              hintText: 'Enter the title of your track',
-            ),
+          AppFormField(
+            label: 'Track Title',
+            hint: 'Enter the title of your track',
+            controller: _titleController,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter a track title';
               }
               return null;
             },
-            onSaved: (value) {
-              _trackTitle = value;
-            },
           ),
           const SizedBox(height: Dimensions.space24),
-          OutlinedButton.icon(
-            onPressed: _pickFile,
-            icon: const Icon(Icons.music_note),
-            label: Text(
-              _file == null ? 'Select Audio File' : 'Change Audio File',
-            ),
+          SecondaryButton(
+            text: _file == null ? 'Select Audio File' : 'Change Audio File',
+            icon: Icons.music_note,
+            onPressed: _isSubmitting ? null : _pickFile,
+            isDisabled: _isSubmitting,
           ),
           if (_file != null)
             Padding(
               padding: const EdgeInsets.only(top: Dimensions.space8),
               child: Text(
-                'Selected: ${_file!.name}',
+                'Selected:  [36m${_file!.name} [0m',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           const SizedBox(height: Dimensions.space32),
-          ElevatedButton(onPressed: _submit, child: const Text('Upload Track')),
+          PrimaryButton(
+            text: 'Upload Track',
+            onPressed: _isSubmitting ? null : _submit,
+            isLoading: _isSubmitting,
+          ),
         ],
       ),
     );
