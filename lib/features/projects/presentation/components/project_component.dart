@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
+import 'package:trackflow/features/ui/project/project_cover_art.dart';
 import '../../domain/entities/project.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -10,11 +11,19 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final projectName = project.name.value.fold((l) => '', (r) => r);
+    final projectDescription = project.description.value.fold((l) => '', (r) => r);
+    
     return AppProjectCard(
-      title: project.name.value.fold((l) => '', (r) => r),
-      description: project.description.value.fold((l) => '', (r) => r),
+      title: projectName,
+      description: projectDescription,
       createdAt: project.createdAt,
       onTap: onTap,
+      leading: ProjectCoverArtSizes.medium(
+        projectName: projectName,
+        projectDescription: projectDescription,
+        // In the future, we can add: imageUrl: project.coverArtUrl,
+      ),
     );
   }
 }

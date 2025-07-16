@@ -30,58 +30,58 @@ class AppProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BaseCard(
       onTap: onTap,
-      margin: EdgeInsets.only(bottom: Dimensions.space16),
-      padding: EdgeInsets.all(Dimensions.space16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      margin: EdgeInsets.zero,
+      borderRadius: BorderRadius.zero,
+      padding: EdgeInsets.symmetric(
+        horizontal: Dimensions.space16,
+        vertical: Dimensions.space8,
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              if (leading != null) ...[
-                leading!,
-                SizedBox(width: Dimensions.space12),
-              ],
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTextStyle.titleMedium,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (description != null && description!.isNotEmpty) ...[
-                      SizedBox(height: Dimensions.space8),
-                      Text(
-                        description!,
-                        style: AppTextStyle.bodyMedium,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
+          // Cover art on the left
+          if (leading != null) ...[
+            leading!,
+            SizedBox(width: Dimensions.space12),
+          ],
+          // Content stacked vertically on the right
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyle.titleMedium.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              if (trailing != null) ...[
-                SizedBox(width: Dimensions.space12),
-                trailing!,
+                SizedBox(height: Dimensions.space2),
+                Text(
+                  description?.isNotEmpty == true
+                      ? description!
+                      : 'Project • ${_getFormattedDuration(createdAt)} ago',
+                  style: AppTextStyle.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
-            ],
+            ),
           ),
-          SizedBox(height: Dimensions.space12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Created ${_getFormattedDuration(createdAt)} ago',
-                style: AppTextStyle.caption,
-              ),
-              if (actions != null) ...[
-                Row(mainAxisSize: MainAxisSize.min, children: actions!),
-              ],
-            ],
-          ),
+          // Trailing actions/icons on the far right
+          if (trailing != null) ...[
+            SizedBox(width: Dimensions.space8),
+            trailing!,
+          ],
+          if (actions != null) ...[
+            SizedBox(width: Dimensions.space8),
+            Row(mainAxisSize: MainAxisSize.min, children: actions!),
+          ],
         ],
       ),
     );
@@ -120,7 +120,7 @@ class AppProjectList extends StatelessWidget {
     return ListView(
       controller: controller,
       shrinkWrap: shrinkWrap,
-      padding: padding ?? EdgeInsets.all(Dimensions.space16),
+      padding: padding ?? EdgeInsets.zero,
       children: projects,
     );
   }
