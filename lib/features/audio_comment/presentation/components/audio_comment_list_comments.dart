@@ -118,14 +118,11 @@ class CommentComponent extends StatelessWidget {
 }
 
 class AudioCommentCommentsList extends StatelessWidget {
-  final List<UserProfile> collaborators;
-  
   const AudioCommentCommentsList({
     super.key,
-    required this.collaborators,
   });
 
-  Widget _buildCommentsList(List<AudioComment> comments) {
+  Widget _buildCommentsList(List<AudioComment> comments, List<UserProfile> collaborators) {
     if (comments.isEmpty) {
       return const Center(
         child: Text('No comments yet.', style: TextStyle(color: Colors.white)),
@@ -166,7 +163,7 @@ class AudioCommentCommentsList extends StatelessWidget {
           );
         }
         if (state is AudioCommentsLoaded) {
-          return _buildCommentsList(state.comments);
+          return _buildCommentsList(state.comments, state.collaborators);
         }
         if (state is AudioCommentOperationSuccess) {
           return Center(

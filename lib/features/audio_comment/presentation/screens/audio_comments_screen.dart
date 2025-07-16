@@ -10,7 +10,6 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_b
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_list_comments.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_input_comment_component.dart';
 
@@ -95,9 +94,7 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
                   trackId: widget.track.id,
                 ),
                 Expanded(
-                  child: AudioCommentCommentsList(
-                    collaborators: const <UserProfile>[],
-                  ),
+                  child: const AudioCommentCommentsList(),
                 ),
               ],
             ),

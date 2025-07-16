@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 abstract class AudioCommentState extends Equatable {
   const AudioCommentState();
@@ -35,8 +36,10 @@ class AudioCommentError extends AudioCommentState {
 
 class AudioCommentsLoaded extends AudioCommentState {
   final List<AudioComment> comments;
-  const AudioCommentsLoaded(this.comments);
+  final List<UserProfile> collaborators;
+  
+  const AudioCommentsLoaded(this.comments, this.collaborators);
 
   @override
-  List<Object?> get props => [comments];
+  List<Object?> get props => [comments, collaborators];
 }
