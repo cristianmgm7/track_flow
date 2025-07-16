@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_style.dart';
-import '../../../core/theme/app_borders.dart';
+import '../../../core/theme/app_shadows.dart';
+import '../buttons/primary_button.dart';
+import '../buttons/secondary_button.dart';
 
 /// Base dialog component following TrackFlow design system
 class AppDialog extends StatelessWidget {
@@ -31,32 +34,70 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: AppBorders.large),
-      titlePadding: EdgeInsets.fromLTRB(
-        Dimensions.space24,
-        Dimensions.space24,
-        Dimensions.space24,
-        Dimensions.space16,
-      ),
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: Dimensions.space24,
-        vertical: Dimensions.space8,
-      ),
-      actionsPadding: EdgeInsets.fromLTRB(
-        Dimensions.space24,
-        Dimensions.space16,
-        Dimensions.space24,
-        Dimensions.space24,
-      ),
-      title: Text(title, style: AppTextStyle.headlineMedium),
-      content:
-          customContent ??
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: Dimensions.dialogMaxWidth),
-            child: Text(content, style: AppTextStyle.bodyMedium),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: Dimensions.dialogMaxWidth,
+          minWidth: Dimensions.dialogMinWidth,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.textPrimary.withValues(alpha: 0.15),
+                    AppColors.textPrimary.withValues(alpha: 0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+                border: Border.all(
+                  color: AppColors.textPrimary.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+                boxShadow: AppShadows.modal,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(Dimensions.space24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyle.headlineMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: Dimensions.space16),
+                    customContent ??
+                        Text(
+                          content,
+                          style: AppTextStyle.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    if (_buildActions().isNotEmpty) ...[
+                      SizedBox(height: Dimensions.space24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: _buildActions(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
           ),
-      actions: _buildActions(),
+        ),
+      ),
     );
   }
 
@@ -65,9 +106,11 @@ class AppDialog extends StatelessWidget {
 
     if (secondaryButtonText != null) {
       actions.add(
-        TextButton(
+        SecondaryButton(
+          text: secondaryButtonText!,
           onPressed: isLoading ? null : onSecondaryPressed,
-          child: Text(secondaryButtonText!),
+          isDisabled: isLoading,
+          size: ButtonSize.small,
         ),
       );
     }
@@ -76,24 +119,55 @@ class AppDialog extends StatelessWidget {
       actions.add(SizedBox(width: Dimensions.space12));
 
       actions.add(
-        ElevatedButton(
-          onPressed: isLoading ? null : onPrimaryPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isDestructive ? AppColors.error : null,
-            foregroundColor: isDestructive ? Colors.white : null,
-          ),
-          child:
-              isLoading
-                  ? SizedBox(
-                    height: Dimensions.iconMedium,
-                    width: Dimensions.iconMedium,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                  : Text(primaryButtonText!),
-        ),
+        isDestructive
+            ? Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.error,
+                    AppColors.error.withValues(alpha: 0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                border: Border.all(
+                  color: AppColors.textPrimary.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: ElevatedButton(
+                onPressed: isLoading ? null : onPrimaryPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: AppColors.textPrimary,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Dimensions.space16,
+                    vertical: Dimensions.space12,
+                  ),
+                ),
+                child:
+                    isLoading
+                        ? SizedBox(
+                          height: Dimensions.iconMedium,
+                          width: Dimensions.iconMedium,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.textPrimary,
+                            ),
+                          ),
+                        )
+                        : Text(primaryButtonText!),
+              ),
+            )
+            : PrimaryButton(
+              text: primaryButtonText!,
+              onPressed: onPrimaryPressed,
+              isLoading: isLoading,
+              isDisabled: isLoading,
+              size: ButtonSize.small,
+            ),
       );
     }
 

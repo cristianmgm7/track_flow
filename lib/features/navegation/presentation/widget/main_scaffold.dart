@@ -7,9 +7,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_components/mini_audio_player.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
-import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
-import 'package:trackflow/features/ui/navigation/user_drawer.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 
@@ -35,8 +33,6 @@ class _MainScaffoldState extends State<MainScaffold> {
     final currentTab = context.select((NavigationCubit cubit) => cubit.state);
 
     return AppScaffold(
-      appBar: AppAppBar(),
-      drawer: const UserDrawer(),
       body: Column(
         children: [
           Expanded(child: widget.child),
@@ -64,6 +60,9 @@ class _MainScaffoldState extends State<MainScaffold> {
               // For now, we can navigate to a placeholder or the first project
               context.go(AppRoutes.projects);
               break;
+            case AppTab.settings:
+              context.go(AppRoutes.settings);
+              break;
           }
         },
         items: const [
@@ -76,6 +75,11 @@ class _MainScaffoldState extends State<MainScaffold> {
             icon: Icons.music_note_outlined,
             activeIcon: Icons.music_note,
             label: 'My Music',
+          ),
+          AppBottomNavigationItem(
+            icon: Icons.settings_outlined,
+            activeIcon: Icons.settings,
+            label: 'Settings',
           ),
         ],
       ),
