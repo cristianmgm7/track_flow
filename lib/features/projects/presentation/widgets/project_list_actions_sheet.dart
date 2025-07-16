@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/ui/modals/app_action_sheet.dart';
-import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
+import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/trackflow_form_sheet.dart';
 import 'package:trackflow/features/projects/presentation/widgets/join_as_collaborator_dialog.dart';
 import 'package:trackflow/features/projects/presentation/widgets/create_project_form.dart';
 

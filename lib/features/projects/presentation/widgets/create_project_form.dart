@@ -7,6 +7,9 @@ import 'package:trackflow/features/projects/domain/usecases/create_project_useca
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
+import 'package:trackflow/features/ui/forms/app_form_field.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class ProjectFormBottomSheet extends StatefulWidget {
   final Project? project;
@@ -73,12 +76,9 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextFormField(
+            AppFormField(
+              label: 'Name of project',
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Name of project',
-                border: OutlineInputBorder(),
-              ),
               validator: (value) {
                 return ProjectName(
                   value ?? '',
@@ -92,24 +92,17 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
+                    SecondaryButton(
+                      text: 'Cancel',
                       onPressed:
                           isLoading ? null : () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
+                      isDisabled: isLoading,
                     ),
                     SizedBox(width: Dimensions.space8),
-                    ElevatedButton(
+                    PrimaryButton(
+                      text: 'Create Project',
                       onPressed: isLoading ? null : _saveProject,
-                      child:
-                          isLoading
-                              ? SizedBox(
-                                height: Dimensions.iconMedium,
-                                width: Dimensions.iconMedium,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : const Text('Create Project'),
+                      isLoading: isLoading,
                     ),
                   ],
                 );

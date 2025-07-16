@@ -61,12 +61,14 @@ class AppBottomSheet extends StatelessWidget {
           if (title != null || header != null) _buildDivider(),
           Flexible(
             child: Container(
-              padding: padding ?? EdgeInsets.fromLTRB(
-                Dimensions.space16,
-                Dimensions.space0,
-                Dimensions.space16,
-                Dimensions.space32,
-              ),
+              padding:
+                  padding ??
+                  EdgeInsets.fromLTRB(
+                    Dimensions.space16,
+                    Dimensions.space0,
+                    Dimensions.space16,
+                    Dimensions.space32,
+                  ),
               child: child,
             ),
           ),
@@ -150,12 +152,15 @@ class AppBottomSheet extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        children: actions!
-            .map((action) => Padding(
-                  padding: EdgeInsets.only(left: Dimensions.space8),
-                  child: action,
-                ))
-            .toList(),
+        children:
+            actions!
+                .map(
+                  (action) => Padding(
+                    padding: EdgeInsets.only(left: Dimensions.space8),
+                    child: action,
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -261,13 +266,11 @@ class _AppBottomSheetListItem extends StatefulWidget {
   final AppBottomSheetAction action;
   final VoidCallback onTap;
 
-  const _AppBottomSheetListItem({
-    required this.action,
-    required this.onTap,
-  });
+  const _AppBottomSheetListItem({required this.action, required this.onTap});
 
   @override
-  State<_AppBottomSheetListItem> createState() => _AppBottomSheetListItemState();
+  State<_AppBottomSheetListItem> createState() =>
+      _AppBottomSheetListItemState();
 }
 
 class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
@@ -286,10 +289,12 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
     _scaleAnimation = Tween<double>(
       begin: AppAnimations.scaleNormal,
       end: AppAnimations.scaleDown,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: AppAnimations.easeOut,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: AppAnimations.easeOut,
+      ),
+    );
   }
 
   @override
@@ -316,7 +321,7 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
   @override
   Widget build(BuildContext context) {
     final isNavigable = widget.action.childSheetBuilder != null;
-    
+
     return AnimatedBuilder(
       animation: _scaleAnimation,
       builder: (context, child) {
@@ -340,7 +345,8 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
                       children: [
                         Icon(
                           widget.action.icon,
-                          color: widget.action.iconColor ?? AppColors.textPrimary,
+                          color:
+                              widget.action.iconColor ?? AppColors.textPrimary,
                           size: Dimensions.iconMedium,
                         ),
                         SizedBox(width: Dimensions.space16),
@@ -351,7 +357,9 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
                               Text(
                                 widget.action.title,
                                 style: AppTextStyle.bodyLarge.copyWith(
-                                  color: widget.action.textColor ?? AppColors.textPrimary,
+                                  color:
+                                      widget.action.textColor ??
+                                      AppColors.textPrimary,
                                 ),
                               ),
                               if (widget.action.subtitle != null) ...[
@@ -433,7 +441,7 @@ Future<T?> showAppBottomSheet<T>({
           },
         );
       }
-      
+
       return AppBottomSheet(
         title: title,
         header: header,
@@ -468,8 +476,13 @@ Future<T?> showAppActionSheet<T>({
   VoidCallback? onClose,
 }) {
   final itemCount = actions.length;
-  final calculatedInitialSize = initialChildSize ?? 
-    (itemCount <= 3 ? 0.3 : itemCount <= 6 ? 0.5 : 0.65);
+  final calculatedInitialSize =
+      initialChildSize ??
+      (itemCount <= 3
+          ? 0.3
+          : itemCount <= 6
+          ? 0.5
+          : 0.65);
 
   return showAppBottomSheet<T>(
     context: context,

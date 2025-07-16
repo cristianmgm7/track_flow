@@ -3,21 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/ui/cards/base_card.dart';
+import 'package:trackflow/features/ui/track/track_cover_art.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
-import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_state.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart'
-    as user_profile;
 
-import 'widgets/track_actions_section.dart';
-import 'widgets/track_duration_formatter.dart';
-import 'widgets/track_info_section.dart';
-import 'widgets/track_interaction_handler.dart';
+import 'track_duration_formatter.dart';
+import 'track_info_section.dart';
+import 'track_menu_button.dart';
 
 class TrackComponent extends StatefulWidget {
   final AudioTrack track;
@@ -50,152 +46,48 @@ class _TrackComponentState extends State<TrackComponent> {
                     ..add(LoadTrackContextRequested(widget.track.id)),
         ),
       ],
-      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-        builder: (context, playerState) {
-          final isCurrent = _isCurrentTrack(playerState);
-
-          return Card(
-            color:
-                isCurrent
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surface,
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Dimensions.space4),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                vertical: Dimensions.space8,
-                horizontal: Dimensions.space16,
-              ),
-              child: BlocBuilder<AudioContextBloc, AudioContextState>(
-                builder: (context, contextState) {
-                  final uploader = _getUploaderFromState(contextState);
-                  final interactionHandler = TrackInteractionHandler(
-                    config: TrackInteractionConfig(
-                      track: widget.track,
-                      uploader: uploader,
-                      projectId: widget.projectId,
-                      onPlay: widget.onPlay,
-                      onComment: widget.onComment,
-                    ),
-                  );
-                  final feedbackHandler = const TrackUIFeedbackHandler();
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            if (interactionHandler.isPlayButtonEnabled) {
-                              interactionHandler.handlePlayTrack(context);
-                            }
-                          },
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Cover art placeholder
-                              Container(
-                                width: Dimensions.space48,
-                                height: Dimensions.space48,
-                                decoration: BoxDecoration(
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(
-                                    Dimensions.radiusMedium,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.music_note_rounded,
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.onSecondaryContainer,
-                                ),
-                              ),
-                              SizedBox(width: Dimensions.space12),
-                              // Track info section
-                              TrackInfoSection(
-                                trackName: interactionHandler.trackName,
-                                uploaderName: _getUploaderNameFromState(
-                                  contextState,
-                                ),
-                                statusBadge: Container(),
-                              ),
-                              SizedBox(width: Dimensions.space8),
-                              // Duration
-                              TrackDurationText(
-                                duration: interactionHandler.trackDuration,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: Dimensions.space8),
-                      // Actions section (cache + menu)
-                      TrackActionsSection(
-                        cacheIcon: SmartTrackCacheIcon(
-                          trackId: interactionHandler.trackId,
-                          audioUrl: interactionHandler.trackUrl,
-                          size: Dimensions.iconMedium,
-                          onSuccess:
-                              (message) =>
-                                  feedbackHandler.showSuccess(context, message),
-                          onError:
-                              (message) =>
-                                  feedbackHandler.showError(context, message),
-                        ),
-                        onActionsPressed:
-                            () => interactionHandler.handleOpenActionsSheet(
-                              context,
-                            ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          );
+      child: BaseCard(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        padding: EdgeInsets.symmetric(
+          vertical: Dimensions.space8,
+          horizontal: Dimensions.space16,
+        ),
+        onTap: () {
+          if (widget.onPlay != null) {
+            widget.onPlay!();
+          }
         },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Track cover art with dynamic icons
+            TrackCoverArt(
+              track: widget.track,
+              size: Dimensions.avatarLarge,
+              // Future: imageUrl: track.coverArtUrl,
+            ),
+            SizedBox(width: Dimensions.space12),
+            TrackInfoSection(track: widget.track, statusBadge: Container()),
+            SizedBox(width: Dimensions.space8),
+            // Duration
+            TrackDurationText(duration: widget.track.duration),
+            SizedBox(width: Dimensions.space8),
+            // Cache icon
+            SmartTrackCacheIcon(
+              trackId: widget.track.id.value,
+              audioUrl: widget.track.url,
+              size: Dimensions.iconMedium,
+            ),
+            SizedBox(width: Dimensions.space8),
+            // Menu button
+            TrackMenuButton(
+              track: widget.track,
+              projectId: widget.projectId,
+              size: Dimensions.iconMedium,
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  bool _isCurrentTrack(AudioPlayerState playerState) {
-    return playerState is AudioPlayerSessionState &&
-        playerState.session.currentTrack?.id.value == widget.track.id.value;
-  }
-
-  user_profile.UserProfile? _getUploaderFromState(
-    AudioContextState contextState,
-  ) {
-    if (contextState is AudioContextLoaded) {
-      final collaborator = contextState.context.collaborator;
-      if (collaborator != null) {
-        return user_profile.UserProfile(
-          id: UserId.fromUniqueString(collaborator.id),
-          name: collaborator.name,
-          email: collaborator.email ?? '',
-          avatarUrl: collaborator.avatarUrl ?? '',
-          createdAt: DateTime.now(),
-        );
-      }
-    }
-    return null;
-  }
-
-  String _getUploaderNameFromState(AudioContextState contextState) {
-    if (contextState is AudioContextLoaded) {
-      return contextState.context.collaborator?.name ?? 'Unknown User';
-    } else if (contextState is AudioContextLoading) {
-      return 'Loading...';
-    } else if (contextState is AudioContextError) {
-      return 'Error';
-    }
-    return 'Unknown User';
   }
 }
