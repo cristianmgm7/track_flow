@@ -89,7 +89,6 @@ class AppRouter {
               child: AudioCommentsScreen(
                 projectId: args.projectId,
                 track: args.track,
-                collaborators: args.collaborators,
               ),
             );
           },
@@ -104,7 +103,9 @@ class AppRouter {
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
-            return HeroUserProfileScreen(userId: UserId.fromUniqueString(userId));
+            return HeroUserProfileScreen(
+              userId: UserId.fromUniqueString(userId),
+            );
           },
         ),
         GoRoute(
