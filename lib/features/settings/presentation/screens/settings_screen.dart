@@ -10,6 +10,8 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/settings/presentation/widgets/user_profile_section.dart';
 import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
+import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
+import 'package:trackflow/features/ui/navigation/app_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -32,18 +34,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           context.go(AppRoutes.auth); // or Navigator.pushReplacement...
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(
-            "Settings",
-            style: AppTextStyle.headlineMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          backgroundColor: AppColors.surface,
-          elevation: 0,
-          iconTheme: IconThemeData(color: AppColors.textPrimary),
+      child: AppScaffold(
+        appBar: AppAppBar(
+          title: "Settings",
+          centerTitle: true,
+          showShadow: true,
         ),
         body: ListView(
           padding: EdgeInsets.all(Dimensions.space16),

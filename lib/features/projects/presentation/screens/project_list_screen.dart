@@ -37,22 +37,20 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      appBar: AppAppBar(
+        title: 'My Projects',
+        centerTitle: true,
+        showShadow: true,
+        actions: [
+          AppIconButton(
+            icon: Icons.add_rounded,
+            onPressed: _openProjectActionsSheet,
+            tooltip: 'Create new project',
+          ),
+        ],
+      ),
       body: NestedScrollView(
-        headerSliverBuilder:
-            (context, innerBoxIsScrolled) => [
-              SliverAppBar(
-                title: const Text('My Projects'),
-                floating: true,
-                pinned: true,
-                actions: [
-                  AppIconButton(
-                    icon: Icons.add_rounded,
-                    onPressed: _openProjectActionsSheet,
-                    tooltip: 'Create new project',
-                  ),
-                ],
-              ),
-            ],
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [],
         body: BlocBuilder<ProjectsBloc, ProjectsState>(
           buildWhen:
               (previous, current) =>

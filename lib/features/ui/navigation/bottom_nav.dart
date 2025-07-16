@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
-import 'package:trackflow/core/theme/app_animations.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
@@ -29,51 +28,69 @@ class AppBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-        child: Container(
-          height: Dimensions.bottomNavHeight,
-          decoration: BoxDecoration(
-            color: (backgroundColor ?? AppColors.surface).withValues(
-              alpha: 0.1,
-            ),
-            border: Border(
-              top: BorderSide(
-                color: AppColors.textPrimary.withValues(alpha: 0.1),
-                width: 0.5,
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow:
+            showShadow
+                ? [
+                  BoxShadow(
+                    color: AppColors.grey900.withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, -10),
+                  ),
+                ]
+                : null,
+      ),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
+          child: Container(
+            height: 90, // Slightly taller for iOS feel
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.surface.withValues(alpha: 0.8),
+                  AppColors.background.withValues(alpha: 0.9),
+                ],
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.textPrimary.withValues(alpha: 0.05),
+                  width: 0.5,
+                ),
               ),
             ),
-            boxShadow:
-                showShadow
-                    ? [
-                      BoxShadow(
-                        color: AppColors.grey900.withValues(alpha: 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ]
-                    : null,
-          ),
-          child: Row(
-            children:
-                items.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final item = entry.value;
-                  final isSelected = index == currentIndex;
+            child: SafeArea(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: Dimensions.space8,
+                  vertical: Dimensions.space4,
+                ),
+                child: Row(
+                  children:
+                      items.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final item = entry.value;
+                        final isSelected = index == currentIndex;
 
-                  return Expanded(
-                    child: _AppBottomNavigationItemWidget(
-                      item: item,
-                      isSelected: isSelected,
-                      onTap: () => onTap(index),
-                      selectedItemColor: selectedItemColor ?? AppColors.primary,
-                      unselectedItemColor:
-                          unselectedItemColor ?? AppColors.textSecondary,
-                      showLabel: showLabels,
-                    ),
-                  );
-                }).toList(),
+                        return Expanded(
+                          child: _AppBottomNavigationItemWidget(
+                            item: item,
+                            isSelected: isSelected,
+                            onTap: () => onTap(index),
+                            selectedItemColor:
+                                selectedItemColor ?? AppColors.primary,
+                            unselectedItemColor:
+                                unselectedItemColor ?? AppColors.textSecondary,
+                            showLabel: showLabels,
+                          ),
+                        );
+                      }).toList(),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -119,134 +136,194 @@ class _AppBottomNavigationItemWidget extends StatefulWidget {
 
 class _AppBottomNavigationItemWidgetState
     extends State<_AppBottomNavigationItemWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+    with TickerProviderStateMixin {
+  late AnimationController _tapAnimationController;
+  late AnimationController _selectionAnimationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
-  bool _isPressed = false;
+  late Animation<double> _backgroundOpacityAnimation;
+  late Animation<double> _selectionAnimation;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: AppAnimations.fast,
+
+    // Tap animation controller
+    _tapAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 100),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(
-      begin: AppAnimations.scaleNormal,
-      end: AppAnimations.scaleDown,
-    ).animate(
+
+    // Selection animation controller
+    _selectionAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _tapAnimationController, curve: Curves.easeInOut),
+    );
+
+    _backgroundOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _animationController,
-        curve: AppAnimations.easeOut,
+        parent: _selectionAnimationController,
+        curve: Curves.easeInOut,
       ),
     );
-    _opacityAnimation = Tween<double>(begin: 1.0, end: 0.7).animate(
+
+    _selectionAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _animationController,
-        curve: AppAnimations.easeOut,
+        parent: _selectionAnimationController,
+        curve: Curves.elasticOut,
       ),
     );
+
+    // Initialize selection state
+    if (widget.isSelected) {
+      _selectionAnimationController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_AppBottomNavigationItemWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected != oldWidget.isSelected) {
+      if (widget.isSelected) {
+        _selectionAnimationController.forward();
+      } else {
+        _selectionAnimationController.reverse();
+      }
+    }
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _tapAnimationController.dispose();
+    _selectionAnimationController.dispose();
     super.dispose();
   }
 
   void _onTapDown(TapDownDetails details) {
-    setState(() => _isPressed = true);
-    _animationController.forward();
+    _tapAnimationController.forward();
   }
 
   void _onTapUp(TapUpDetails details) {
-    setState(() => _isPressed = false);
-    _animationController.reverse();
+    _tapAnimationController.reverse();
   }
 
   void _onTapCancel() {
-    setState(() => _isPressed = false);
-    _animationController.reverse();
+    _tapAnimationController.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        widget.isSelected
-            ? widget.selectedItemColor
-            : widget.unselectedItemColor;
-
     return AnimatedBuilder(
-      animation: _animationController,
+      animation: Listenable.merge([
+        _tapAnimationController,
+        _selectionAnimationController,
+      ]),
       builder: (context, child) {
+        final selectedColor = widget.selectedItemColor;
+        final unselectedColor = widget.unselectedItemColor;
+
+        // Interpolate colors based on selection state
+        final iconColor =
+            Color.lerp(
+              unselectedColor,
+              selectedColor,
+              _selectionAnimation.value,
+            )!;
+
+        final textColor =
+            Color.lerp(
+              unselectedColor,
+              selectedColor,
+              _selectionAnimation.value,
+            )!;
+
         return Transform.scale(
-          scale: _isPressed ? _scaleAnimation.value : AppAnimations.scaleNormal,
-          child: Opacity(
-            opacity: _isPressed ? _opacityAnimation.value : 1.0,
-            child: GestureDetector(
-              onTapDown: _onTapDown,
-              onTapUp: _onTapUp,
-              onTapCancel: _onTapCancel,
-              onTap: widget.onTap,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: widget.onTap,
-                  borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Dimensions.space8,
-                      vertical: Dimensions.space8,
+          scale: _scaleAnimation.value,
+          child: GestureDetector(
+            onTapDown: _onTapDown,
+            onTapUp: _onTapUp,
+            onTapCancel: _onTapCancel,
+            onTap: widget.onTap,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: Dimensions.space12,
+                vertical: Dimensions.space8,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon with selection background
+                  Container(
+                    padding: EdgeInsets.all(Dimensions.space6),
+                    decoration: BoxDecoration(
+                      color:
+                          widget.isSelected
+                              ? selectedColor.withValues(
+                                alpha: 0.1 * _backgroundOpacityAnimation.value,
+                              )
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(
+                        Dimensions.radiusLarge,
+                      ),
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Stack(
                       children: [
-                        Stack(
-                          children: [
-                            AnimatedSwitcher(
-                              duration: AppAnimations.fast,
-                              child: Icon(
-                                widget.isSelected &&
-                                        widget.item.activeIcon != null
-                                    ? widget.item.activeIcon!
-                                    : widget.item.icon,
-                                key: ValueKey(widget.isSelected),
-                                size: Dimensions.iconMedium,
-                                color: color,
-                              ),
-                            ),
-                            if (widget.item.badge != null)
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: widget.item.badge!,
-                              ),
-                          ],
-                        ),
-                        if (widget.showLabel) ...[
-                          SizedBox(height: Dimensions.space4),
-                          AnimatedDefaultTextStyle(
-                            duration: AppAnimations.fast,
-                            style: AppTextStyle.caption.copyWith(
-                              color: color,
-                              fontWeight:
-                                  widget.isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                            ),
-                            child: Text(
-                              widget.item.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          transitionBuilder: (
+                            Widget child,
+                            Animation<double> animation,
+                          ) {
+                            return ScaleTransition(
+                              scale: animation,
+                              child: child,
+                            );
+                          },
+                          child: Icon(
+                            widget.isSelected && widget.item.activeIcon != null
+                                ? widget.item.activeIcon!
+                                : widget.item.icon,
+                            key: ValueKey(widget.isSelected),
+                            size: 26, // Slightly larger for iOS feel
+                            color: iconColor,
                           ),
-                        ],
+                        ),
+                        if (widget.item.badge != null)
+                          Positioned(
+                            top: -2,
+                            right: -2,
+                            child: widget.item.badge!,
+                          ),
                       ],
                     ),
                   ),
-                ),
+
+                  // Label
+                  if (widget.showLabel) ...[
+                    SizedBox(height: Dimensions.space4),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 200),
+                      style: AppTextStyle.caption.copyWith(
+                        color: textColor,
+                        fontWeight:
+                            widget.isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                        fontSize: 11, // Slightly smaller for iOS feel
+                      ),
+                      child: Text(
+                        widget.item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
