@@ -17,23 +17,19 @@ import 'package:trackflow/features/audio_comment/presentation/components/audio_c
 class AudioCommentsScreenArgs {
   final ProjectId projectId;
   final AudioTrack track;
-  final List<UserProfile> collaborators;
   AudioCommentsScreenArgs({
     required this.projectId,
     required this.track,
-    required this.collaborators,
   });
 }
 
 class AudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
-  final List<UserProfile> collaborators;
   const AudioCommentsScreen({
     super.key,
     required this.projectId,
     required this.track,
-    required this.collaborators,
   });
   @override
   State<AudioCommentsScreen> createState() => _AudioCommentsScreenState();
@@ -100,7 +96,7 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
                 ),
                 Expanded(
                   child: AudioCommentCommentsList(
-                    collaborators: widget.collaborators,
+                    collaborators: const <UserProfile>[],
                   ),
                 ),
               ],

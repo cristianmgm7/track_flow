@@ -8,7 +8,6 @@ import 'package:trackflow/features/audio_comment/presentation/screens/audio_comm
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,7 +17,6 @@ class TrackActions {
     BuildContext context,
     ProjectId projectId,
     AudioTrack track,
-    List<UserProfile> collaborators,
   ) => [
     TrackFlowActionItem(
       icon: Icons.comment,
@@ -30,7 +28,6 @@ class TrackActions {
           extra: AudioCommentsScreenArgs(
             projectId: track.projectId,
             track: track,
-            collaborators: collaborators,
           ),
         );
       },
