@@ -4,7 +4,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
 import 'package:trackflow/features/ui/modals/trackflow_form_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/audio_comment/presentation/screens/audio_comments_screen.dart';
+import 'package:trackflow/features/ui/audio/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';

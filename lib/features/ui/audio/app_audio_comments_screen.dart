@@ -16,7 +16,6 @@ import '../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../audio_player/presentation/bloc/audio_player_event.dart';
 import '../../audio_player/presentation/bloc/audio_player_state.dart';
 import '../../audio_track/domain/entities/audio_track.dart';
-import '../../user_profile/domain/entities/user_profile.dart';
 import '../../audio_comment/presentation/components/audio_comment_list_comments.dart';
 import '../../audio_comment/presentation/components/audio_comment_input_comment_component.dart';
 
@@ -24,12 +23,10 @@ import '../../audio_comment/presentation/components/audio_comment_input_comment_
 class AudioCommentsScreenArgs {
   final ProjectId projectId;
   final AudioTrack track;
-  final List<UserProfile> collaborators;
 
   AudioCommentsScreenArgs({
     required this.projectId,
     required this.track,
-    required this.collaborators,
   });
 }
 
@@ -38,13 +35,11 @@ class AudioCommentsScreenArgs {
 class AppAudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
-  final List<UserProfile> collaborators;
 
   const AppAudioCommentsScreen({
     super.key,
     required this.projectId,
     required this.track,
-    required this.collaborators,
   });
 
   @override
@@ -132,9 +127,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
                     padding: EdgeInsets.symmetric(
                       horizontal: Dimensions.screenMarginSmall,
                     ),
-                    child: AudioCommentCommentsList(
-                      collaborators: widget.collaborators,
-                    ),
+                    child: const AudioCommentCommentsList(),
                   ),
                 ),
 
@@ -293,13 +286,11 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen>
 class AudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
-  final List<UserProfile> collaborators;
 
   const AudioCommentsScreen({
     super.key,
     required this.projectId,
     required this.track,
-    required this.collaborators,
   });
 
   @override
@@ -312,7 +303,6 @@ class _AudioCommentsScreenState extends State<AudioCommentsScreen> {
     return AppAudioCommentsScreen(
       projectId: widget.projectId,
       track: widget.track,
-      collaborators: widget.collaborators,
     );
   }
 }
