@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/ui/audio/app_audio_comments_screen.dart';
+import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
@@ -86,7 +86,7 @@ class AppRouter {
             final args = state.extra as AudioCommentsScreenArgs;
             return BlocProvider<TrackCacheBloc>(
               create: (context) => sl<TrackCacheBloc>(),
-              child: AudioCommentsScreen(
+              child: AppAudioCommentsScreen(
                 projectId: args.projectId,
                 track: args.track,
               ),
