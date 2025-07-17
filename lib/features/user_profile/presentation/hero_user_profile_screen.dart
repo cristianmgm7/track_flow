@@ -47,7 +47,80 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
               profile.avatarUrl,
             );
 
-            return _buildHeroProfileLayout(context, profile, avatarProvider);
+            return CustomScrollView(
+              slivers: [
+                // Header Sliver: background image + centered name
+                SliverAppBar(
+                  expandedHeight: MediaQuery.of(context).size.height * 0.35,
+                  floating: false,
+                  pinned: true,
+                  backgroundColor: AppColors.background,
+                  iconTheme: const IconThemeData(color: AppColors.textPrimary),
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Background image
+                        Container(
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image:
+                                  avatarProvider ??
+                                  const AssetImage(
+                                    'assets/images/default_profile_bg.jpg',
+                                  ),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        // Name at bottom left
+                        Positioned(
+                          left: 24,
+                          bottom: 24,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.background.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              profile.name,
+                              style: AppTextStyle.displayMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                                shadows: [
+                                  Shadow(
+                                    color: AppColors.background.withOpacity(
+                                      0.7,
+                                    ),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Info Section below header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 12.0,
+                    ),
+                    child: _buildInfoSection(context, profile),
+                  ),
+                ),
+              ],
+            );
           }
           if (state is UserProfileError) {
             return _buildErrorState();
@@ -58,148 +131,57 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
     );
   }
 
-  Widget _buildHeroProfileLayout(
-    BuildContext context,
-    profile,
-    ImageProvider? avatarProvider,
-  ) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final heroHeight = screenHeight * 0.75; // 3/4 de la pantalla
-
-    return CustomScrollView(
-      slivers: [
-        // Hero Header con imagen de fondo
-        SliverAppBar(
-          expandedHeight: heroHeight,
-          floating: false,
-          pinned: true,
-          backgroundColor: AppColors.background,
-          iconTheme: const IconThemeData(color: AppColors.textPrimary),
-          actions: [_buildPencilEditButton(context, profile)],
-          flexibleSpace: FlexibleSpaceBar(
-            background: _buildHeroBackground(
-              profile,
-              avatarProvider,
-              heroHeight,
-            ),
-          ),
-        ),
-        // Contenido inferior (tracks/información adicional)
-        SliverToBoxAdapter(child: _buildContentSection(context, profile)),
-      ],
-    );
-  }
-
-  Widget _buildHeroBackground(
-    profile,
-    ImageProvider? avatarProvider,
-    double heroHeight,
-  ) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Imagen de fondo (avatar del usuario o imagen por defecto)
-        Container(
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image:
-                  avatarProvider ??
-                  const AssetImage('assets/images/default_profile_bg.jpg'),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.black.withValues(alpha: 0.3), // Oscurecer ligeramente
-                BlendMode.multiply,
-              ),
-            ),
-          ),
-        ),
-
-        // Gradiente oscuro de arriba hacia abajo
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.black26,
-                Colors.black54,
-                Colors.black87,
+  Widget _buildInfoSection(BuildContext context, profile) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+      ),
+      elevation: 2,
+      color: AppColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Email
+                      Text(
+                        profile.email,
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          color: AppColors.textPrimary.withValues(alpha: 0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // Roles
+                      Row(
+                        children: [
+                          if (profile.creativeRole != null) ...[
+                            _buildGlassChip(
+                              _getCreativeRoleName(profile.creativeRole),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          if (profile.role != null)
+                            _buildGlassChip(profile.role!.toShortString()),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // Edit button (top right)
+                _buildPencilEditButton(context, profile),
               ],
-              stops: [0.0, 0.4, 0.7, 1.0],
             ),
-          ),
-        ),
-
-        // Información del usuario con glassmorphism (parte inferior)
-        Positioned(
-          bottom: Dimensions.space40,
-          left: Dimensions.space24,
-          right: Dimensions.space24,
-          child: _buildGlassmorphismUserInfo(profile),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGlassmorphismUserInfo(profile) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
-        child: Container(
-          padding: EdgeInsets.all(Dimensions.space24),
-          decoration: BoxDecoration(
-            color: AppColors.textPrimary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
-            border: Border.all(
-              color: AppColors.textPrimary.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Nombre del usuario
-              Text(
-                profile.name,
-                style: AppTextStyle.displayMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              SizedBox(height: Dimensions.space8),
-
-              // Email
-              Text(
-                profile.email,
-                style: AppTextStyle.bodyLarge.copyWith(
-                  color: AppColors.textPrimary.withValues(alpha: 0.8),
-                ),
-              ),
-
-              SizedBox(height: Dimensions.space16),
-
-              // Roles en chips
-              Row(
-                children: [
-                  if (profile.creativeRole != null) ...[
-                    _buildGlassChip(_getCreativeRoleName(profile.creativeRole)),
-                    SizedBox(width: Dimensions.space8),
-                  ],
-                  if (profile.role != null)
-                    _buildGlassChip(profile.role!.toShortString()),
-                ],
-              ),
-
-              SizedBox(height: Dimensions.space20),
-
-              // Account Information integrated in the same card
-              _buildAccountInfoSection(profile),
-            ],
-          ),
+            const SizedBox(height: 14),
+            // Account Information
+            _buildAccountInfoSection(profile),
+          ],
         ),
       ),
     );
@@ -319,39 +301,6 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildContentSection(BuildContext context, profile) {
-    return Container(
-      padding: EdgeInsets.all(Dimensions.space24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Título de la sección para futuros tracks/proyectos
-          Text(
-            'Tracks & Projects',
-            style: AppTextStyle.titleLarge.copyWith(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          SizedBox(height: Dimensions.space20),
-
-          // Placeholder para futuros tracks/proyectos
-          Center(
-            child: Text(
-              'Coming soon...',
-              style: AppTextStyle.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-
-          SizedBox(height: Dimensions.space40),
-        ],
-      ),
     );
   }
 

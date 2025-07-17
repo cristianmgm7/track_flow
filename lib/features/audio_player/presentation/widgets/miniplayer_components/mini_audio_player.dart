@@ -10,6 +10,8 @@ import 'track_info_widget.dart';
 import 'modal_presentation_service.dart';
 import '../../../../../core/theme/app_dimensions.dart';
 import '../../../../../core/theme/app_colors.dart';
+import 'package:trackflow/features/ui/track/track_cover_art.dart';
+import '../../../../../core/theme/app_borders.dart';
 
 class MiniAudioPlayerConfig {
   final double height;
@@ -44,6 +46,7 @@ class MiniAudioPlayer extends StatelessWidget {
     final modalPresentationService = modalService ?? ModalPresentationService();
 
     return ClipRRect(
+      borderRadius: AppBorders.large,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
         child: Container(
@@ -51,12 +54,7 @@ class MiniAudioPlayer extends StatelessWidget {
             color: (config.backgroundColor ?? AppColors.surface).withValues(
               alpha: 0.15,
             ),
-            border: Border(
-              top: BorderSide(
-                color: AppColors.textPrimary.withValues(alpha: 0.1),
-                width: 0.5,
-              ),
-            ),
+            borderRadius: AppBorders.large,
             boxShadow: [
               BoxShadow(
                 color: AppColors.grey900.withValues(alpha: 0.1),
@@ -65,15 +63,27 @@ class MiniAudioPlayer extends StatelessWidget {
               ),
             ],
           ),
-          child: Padding(
-            padding: config.padding,
-            child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-              builder: (context, state) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
+          child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+            builder: (context, state) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: config.padding,
+                    child: Row(
                       children: [
+                        // Cover art for AudioTrackMetadata
+                        if (state is AudioPlayerSessionState &&
+                            state.session.currentTrack != null)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              right: Dimensions.space12,
+                            ),
+                            child: TrackCoverArt(
+                              metadata: state.session.currentTrack,
+                              size: Dimensions.avatarLarge,
+                            ),
+                          ),
                         // track info
                         if (config.showTrackInfo)
                           Expanded(
@@ -98,19 +108,21 @@ class MiniAudioPlayer extends StatelessWidget {
                           ),
                       ],
                     ),
-                    // progress bar
-                    if (config.showProgress) ...[
-                      SizedBox(height: Dimensions.space8),
-                      const PlaybackProgress(
+                  ),
+                  // progress bar at the very bottom, full width
+                  if (config.showProgress)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 2),
+                      child: PlaybackProgress(
                         height: Dimensions.space2,
                         thumbRadius: Dimensions.space6,
                         showTimeLabels: false,
+                        // The progress bar will stretch to the card's width
                       ),
-                    ],
-                  ],
-                );
-              },
-            ),
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),

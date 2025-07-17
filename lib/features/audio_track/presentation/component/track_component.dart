@@ -47,16 +47,17 @@ class _TrackComponentState extends State<TrackComponent> {
         ),
       ],
       child: BaseCard(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        padding: EdgeInsets.symmetric(
-          vertical: Dimensions.space8,
-          horizontal: Dimensions.space16,
-        ),
         onTap: () {
           if (widget.onPlay != null) {
             widget.onPlay!();
           }
         },
+        margin: EdgeInsets.zero,
+        borderRadius: BorderRadius.zero,
+        padding: EdgeInsets.symmetric(
+          horizontal: Dimensions.space16,
+          vertical: Dimensions.space8,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

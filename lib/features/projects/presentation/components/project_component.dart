@@ -12,14 +12,17 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final projectName = project.name.value.fold((l) => '', (r) => r);
-    final projectDescription = project.description.value.fold((l) => '', (r) => r);
-    
+    final projectDescription = project.description.value.fold(
+      (l) => '',
+      (r) => r,
+    );
+
     return AppProjectCard(
       title: projectName,
       description: projectDescription,
       createdAt: project.createdAt,
       onTap: onTap,
-      leading: ProjectCoverArtSizes.medium(
+      leading: ProjectCoverArtSizes.large(
         projectName: projectName,
         projectDescription: projectDescription,
         // In the future, we can add: imageUrl: project.coverArtUrl,

@@ -4,10 +4,12 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_player/domain/entities/audio_track_metadata.dart';
 import 'dart:math' as math;
 
 class TrackCoverArt extends StatelessWidget {
-  final AudioTrack track;
+  final AudioTrack? track;
+  final AudioTrackMetadata? metadata;
   final double size;
   final String? imageUrl;
   final bool showShadow;
@@ -15,7 +17,8 @@ class TrackCoverArt extends StatelessWidget {
 
   const TrackCoverArt({
     super.key,
-    required this.track,
+    this.track,
+    this.metadata,
     this.size = 48,
     this.imageUrl,
     this.showShadow = false,
@@ -24,16 +27,14 @@ class TrackCoverArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If we have a real image URL, show it
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return _buildImageCover();
+    final String? url = imageUrl ?? metadata?.coverUrl;
+    if (url != null && url.isNotEmpty) {
+      return _buildImageCover(url);
     }
-
-    // Otherwise, show generated icon cover
     return _buildGeneratedCover(context);
   }
 
-  Widget _buildImageCover() {
+  Widget _buildImageCover(String url) {
     return Container(
       width: size,
       height: size,
@@ -44,7 +45,7 @@ class TrackCoverArt extends StatelessWidget {
       child: ClipRRect(
         borderRadius: borderRadius ?? AppBorders.medium,
         child: Image.network(
-          imageUrl!,
+          url,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return _buildGeneratedCover(context);
@@ -59,9 +60,9 @@ class TrackCoverArt extends StatelessWidget {
   }
 
   Widget _buildGeneratedCover(BuildContext context) {
-    final iconData = _generateIconFromTrack(track);
-    final backgroundColor = generateTrackCoverColor(track, context);
-
+    final String name = track?.name ?? metadata?.title ?? '';
+    final iconData = _generateIconFromName(name);
+    final backgroundColor = generateTrackCoverColorFromName(name, context);
     return Container(
       width: size,
       height: size,
@@ -102,13 +103,10 @@ class TrackCoverArt extends StatelessWidget {
     );
   }
 
-  IconData _generateIconFromTrack(AudioTrack track) {
-    // Generate a consistent icon based on track properties
-    final trackName = track.name.toLowerCase();
-    final hash = track.name.hashCode;
+  IconData _generateIconFromName(String name) {
+    final trackName = name.toLowerCase();
+    final hash = name.hashCode;
     final random = math.Random(hash);
-
-    // Genre-based icon selection based on track name keywords
     if (trackName.contains('piano') || trackName.contains('key')) {
       return Icons.piano;
     } else if (trackName.contains('guitar') || trackName.contains('string')) {
@@ -132,7 +130,6 @@ class TrackCoverArt extends StatelessWidget {
     } else if (trackName.contains('mix') || trackName.contains('master')) {
       return Icons.album_rounded;
     } else {
-      // Use hash to select from available icons for consistency
       final availableIcons = [
         Icons.music_note_rounded,
         Icons.audiotrack_rounded,
@@ -162,6 +159,23 @@ class TrackCoverArt extends StatelessWidget {
 /// Utility to generate a consistent background color for a track, used for cover art and backgrounds.
 Color generateTrackCoverColor(AudioTrack track, BuildContext context) {
   final hash = track.name.hashCode;
+  final random = math.Random(hash);
+  final colorOptions = [
+    Theme.of(context).colorScheme.primaryContainer,
+    Theme.of(context).colorScheme.secondaryContainer,
+    Theme.of(context).colorScheme.tertiaryContainer,
+    Theme.of(context).colorScheme.surfaceContainerHighest,
+    AppColors.primary.withValues(alpha: 0.1),
+    AppColors.accent.withValues(alpha: 0.1),
+    AppColors.success.withValues(alpha: 0.1),
+    AppColors.warning.withValues(alpha: 0.1),
+    AppColors.info.withValues(alpha: 0.1),
+  ];
+  return colorOptions[random.nextInt(colorOptions.length)];
+}
+
+Color generateTrackCoverColorFromName(String name, BuildContext context) {
+  final hash = name.hashCode;
   final random = math.Random(hash);
   final colorOptions = [
     Theme.of(context).colorScheme.primaryContainer,
