@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_e
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import '../../../../core/entities/unique_id.dart';
 import 'waveform.dart';
+import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
 
 /// Header widget for the audio comment feature.
 /// Complete header section with container styling, waveform, play controls, and time display.
@@ -37,11 +38,15 @@ class AudioCommentHeader extends StatelessWidget {
                 bottom: 24,
                 child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
                   builder: (context, state) {
-                    bool isPlaying = state is AudioPlayerPlaying;
-                    bool isBuffering = state is AudioPlayerBuffering;
-                    IconData icon = isPlaying ? Icons.pause : Icons.play_arrow;
-                    return IconButton(
-                      icon: Icon(icon, size: 32, color: Colors.black),
+                    final isPlaying = state is AudioPlayerPlaying;
+                    final isBuffering = state is AudioPlayerBuffering;
+                    return AudioPlayPauseButton(
+                      isPlaying: isPlaying,
+                      isBuffering: isBuffering,
+                      size: 60,
+                      iconSize: 36,
+                      backgroundColor: Colors.white,
+                      iconColor: Colors.black,
                       onPressed:
                           isBuffering
                               ? null

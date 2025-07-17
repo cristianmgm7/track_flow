@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
+import 'package:go_router/go_router.dart';
 
 class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -81,12 +82,14 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
                       )
                       : null),
               actions: actions?.map((action) => _wrapAction(action)).toList(),
-              leading: leading ?? (automaticallyImplyLeading && Navigator.canPop(context)
-                  ? AppIconButton(
-                      icon: Icons.arrow_back_ios_rounded, // iOS-style chevron
-                      onPressed: () => Navigator.pop(context),
-                    )
-                  : null),
+              leading:
+                  leading ??
+                  (automaticallyImplyLeading && Navigator.canPop(context)
+                      ? AppIconButton(
+                        icon: Icons.arrow_back_ios_rounded, // iOS-style chevron
+                        onPressed: () => GoRouter.of(context).pop(),
+                      )
+                      : null),
               automaticallyImplyLeading: automaticallyImplyLeading,
               centerTitle: centerTitle,
               backgroundColor: Colors.transparent,

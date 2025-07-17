@@ -36,21 +36,8 @@ class PlaylistControlsWidget extends StatelessWidget {
             );
 
         return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            PlayPauseButton(
-              isPlaying:
-                  isPlayingFromThisPlaylist &&
-                  playerState is AudioPlayerPlaying,
-              onPressed: () {
-                if (isPlayingFromThisPlaylist &&
-                    playerState is AudioPlayerPlaying) {
-                  player.add(PauseAudioRequested());
-                } else {
-                  player.add(PlayPlaylistRequested(tracks: tracks));
-                }
-              },
-            ),
-            const SizedBox(width: 8),
             ShuffleButton(
               isEnabled: session.queue.shuffleEnabled,
               onPressed: () => player.add(ToggleShuffleRequested()),
@@ -65,6 +52,23 @@ class PlaylistControlsWidget extends StatelessWidget {
               playlistId: playlist.id.value,
               trackIds: playlist.trackIds,
               size: 28.0,
+            ),
+            const SizedBox(width: 8),
+            PlayPauseButton(
+              isPlaying:
+                  isPlayingFromThisPlaylist &&
+                  playerState is AudioPlayerPlaying,
+              isBuffering:
+                  isPlayingFromThisPlaylist &&
+                  playerState is AudioPlayerBuffering,
+              onPressed: () {
+                if (isPlayingFromThisPlaylist &&
+                    playerState is AudioPlayerPlaying) {
+                  player.add(PauseAudioRequested());
+                } else {
+                  player.add(PlayPlaylistRequested(tracks: tracks));
+                }
+              },
             ),
           ],
         );
