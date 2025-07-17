@@ -98,6 +98,14 @@ class _CommentInputModalState extends State<CommentInputModal>
     }
   }
 
+  void _handleClose() {
+    _controller.clear();
+    _focusNode.unfocus();
+    // Resume audio when modal is closed
+    final audioPlayerBloc = context.read<AudioPlayerBloc>();
+    audioPlayerBloc.add(const ResumeAudioRequested());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -113,54 +121,29 @@ class _CommentInputModalState extends State<CommentInputModal>
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.all(Dimensions.space16),
+          padding: EdgeInsets.only(
+            left: Dimensions.space16,
+            right: Dimensions.space16,
+            top: Dimensions.space16,
+            bottom: Dimensions.space16,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: Dimensions.space48,
-                  height: Dimensions.space4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(Dimensions.radiusRound),
-                  ),
+              // Header with X button and timestamp (if focused)
+              if (_isInputFocused && _capturedTimestamp != null) ...[
+                _buildHeader(),
+                Divider(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withValues(alpha: 0.3),
+                  height: Dimensions.space8,
                 ),
-              ),
-              // Timestamp header (if focused)
-              if (_isInputFocused && _capturedTimestamp != null)
-                _buildTimestampHeader(),
+              ],
 
-              // Comment input or tap hint
-              if (!_isInputFocused)
-                GestureDetector(
-                  onTap: () => _focusNode.requestFocus(),
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Dimensions.space16,
-                      vertical: Dimensions.space12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                        width: AppBorders.widthThin,
-                      ),
-                    ),
-                    child: Text(
-                      'Tap to add a comment...',
-                      style: AppTextStyle.bodyMedium.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                )
-              else
-                _buildInputField(),
+              // Comment input field (always visible)
+              _buildInputField(),
             ],
           ),
         ),
@@ -168,7 +151,7 @@ class _CommentInputModalState extends State<CommentInputModal>
     );
   }
 
-  Widget _buildTimestampHeader() {
+  Widget _buildHeader() {
     if (_capturedTimestamp == null) return const SizedBox.shrink();
 
     final timestamp = _capturedTimestamp!;
@@ -178,37 +161,40 @@ class _CommentInputModalState extends State<CommentInputModal>
         .padLeft(2, '0');
     final seconds = (timestamp.inSeconds % 60).toString().padLeft(2, '0');
 
-    return AnimatedContainer(
-      duration: AppAnimations.fast,
-      margin: EdgeInsets.only(bottom: Dimensions.space12),
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.space12,
-        vertical: Dimensions.space8,
-      ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-          width: AppBorders.widthThin,
-        ),
-      ),
+    return SizedBox(
+      height: Dimensions.space40,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.schedule_rounded,
-            size: Dimensions.iconSmall,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          SizedBox(width: Dimensions.space8),
-          Text(
-            'Comment at $minutes:$seconds',
-            style: AppTextStyle.labelMedium.copyWith(
+          // X button to close
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints(
+              minWidth: Dimensions.space40,
+              minHeight: Dimensions.space40,
+            ),
+            icon: Icon(
+              Icons.close,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
+              size: Dimensions.iconMedium,
+            ),
+            onPressed: _handleClose,
+          ),
+
+          // Centered timestamp
+          Expanded(
+            child: Center(
+              child: Text(
+                'Comment at $minutes:$seconds',
+                style: AppTextStyle.labelLarge.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
+
+          // Spacer for symmetry
+          SizedBox(width: Dimensions.space40),
         ],
       ),
     );
@@ -224,7 +210,9 @@ class _CommentInputModalState extends State<CommentInputModal>
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.3),
                 width: AppBorders.widthThin,
               ),
             ),
@@ -235,7 +223,7 @@ class _CommentInputModalState extends State<CommentInputModal>
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: 'Leave a comment',
+                hintText: 'Add a comment',
                 hintStyle: AppTextStyle.bodyMedium.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

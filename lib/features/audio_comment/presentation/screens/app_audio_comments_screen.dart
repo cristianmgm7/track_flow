@@ -36,32 +36,44 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return AppScaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppAppBar(title: 'Comments'),
+      resizeToAvoidBottomInset: false,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Column(
+        child: Stack(
           children: [
-            // Header section with waveform, play controls, and time
-            AudioCommentHeader(trackId: widget.track.id),
+            // Main content
+            Column(
+              children: [
+                // Header section with waveform, play controls, and time
+                AudioCommentHeader(trackId: widget.track.id),
 
-            // Comments list section
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Dimensions.screenMarginSmall,
+                // Comments list section
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Dimensions.screenMarginSmall,
+                    ),
+                    child: CommentsSection(trackId: widget.track.id),
+                  ),
                 ),
-                child: CommentsSection(trackId: widget.track.id),
-              ),
+              ],
             ),
 
-            // Input modal section
-            CommentInputModal(
-              projectId: widget.projectId,
-              trackId: widget.track.id,
+            // Input modal positioned at bottom, above keyboard
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: keyboardHeight,
+              child: CommentInputModal(
+                projectId: widget.projectId,
+                trackId: widget.track.id,
+              ),
             ),
           ],
         ),

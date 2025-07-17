@@ -62,14 +62,23 @@ class AudioCommentComponent extends StatelessWidget {
   }
 
   Widget _buildAvatar(BuildContext context) {
+    ImageProvider? imageProvider;
+    try {
+      imageProvider =
+          collaborator.avatarUrl.isNotEmpty
+              ? ImageUtils.createSafeImageProvider(collaborator.avatarUrl)
+              : null;
+    } catch (e) {
+      // If image loading fails, use null to show text avatar
+      imageProvider = null;
+    }
+
     return CircleAvatar(
       radius: Dimensions.avatarMedium / 2,
-      backgroundImage: ImageUtils.createSafeImageProvider(
-        collaborator.avatarUrl,
-      ),
+      backgroundImage: imageProvider,
       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
       child:
-          collaborator.avatarUrl.isEmpty
+          (collaborator.avatarUrl.isEmpty || imageProvider == null)
               ? Text(
                 collaborator.name.isNotEmpty
                     ? collaborator.name.substring(0, 1).toUpperCase()

@@ -24,9 +24,14 @@ class _CommentsSectionState extends State<CommentsSection> {
   @override
   void initState() {
     super.initState();
-    context.read<AudioCommentBloc>().add(
-      WatchCommentsByTrackEvent(widget.trackId),
-    );
+    // Use addPostFrameCallback to ensure the widget is fully built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AudioCommentBloc>().add(
+          WatchCommentsByTrackEvent(widget.trackId),
+        );
+      }
+    });
   }
 
   @override
