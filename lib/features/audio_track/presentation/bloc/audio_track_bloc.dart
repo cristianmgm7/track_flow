@@ -38,7 +38,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     UploadAudioTrackEvent event,
     Emitter<AudioTrackState> emit,
   ) async {
-    emit(AudioTrackLoading());
+    emit(AudioTrackUploadLoading());
     final result = await uploadAudioTrackUseCase.call(
       UploadAudioTrackParams(
         file: event.file,
@@ -57,7 +57,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     DeleteAudioTrackEvent event,
     Emitter<AudioTrackState> emit,
   ) async {
-    emit(AudioTrackLoading());
+    emit(AudioTrackDeleteLoading());
     final result = await deleteAudioTrack.call(
       DeleteAudioTrackParams(
         trackId: event.trackId,
@@ -98,7 +98,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     EditAudioTrackEvent event,
     Emitter<AudioTrackState> emit,
   ) async {
-    emit(AudioTrackLoading());
+    emit(AudioTrackEditLoading());
     final result = await editAudioTrackUseCase.call(
       EditAudioTrackParams(
         trackId: event.trackId,

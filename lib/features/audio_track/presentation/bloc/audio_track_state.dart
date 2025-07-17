@@ -12,6 +12,12 @@ class AudioTrackInitial extends AudioTrackState {}
 
 class AudioTrackLoading extends AudioTrackState {}
 
+class AudioTrackUploadLoading extends AudioTrackState {}
+
+class AudioTrackEditLoading extends AudioTrackState {}
+
+class AudioTrackDeleteLoading extends AudioTrackState {}
+
 class AudioTrackLoaded extends AudioTrackState {
   final List<AudioTrack> tracks;
 

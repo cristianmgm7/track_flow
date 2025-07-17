@@ -11,6 +11,8 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
@@ -48,8 +50,28 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-        appBar: null, // Remove the default app bar
-        body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+      appBar: null, // Remove the default app bar
+      body: BlocListener<AudioTrackBloc, AudioTrackState>(
+        listener: (context, state) {
+          if (state is AudioTrackEditSuccess ||
+              state is AudioTrackDeleteSuccess ||
+              state is AudioTrackUploadSuccess) {
+            // Refresh project detail data when track operations complete
+            context.read<ProjectDetailBloc>().add(
+              WatchProjectDetail(project: widget.project),
+            );
+          } else if (state is AudioTrackError) {
+            // Show error message for track operation failures
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Track operation failed: ${state.message}'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+        },
+        child: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
           builder: (context, state) {
             if (state.isLoadingProject && state.project == null) {
               return const Center(
@@ -104,6 +126,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             );
           },
         ),
-      );
+      ),
+    );
   }
 }

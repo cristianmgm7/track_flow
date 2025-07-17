@@ -36,7 +36,7 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
   Widget build(BuildContext context) {
     return BlocListener<AudioTrackBloc, AudioTrackState>(
       listener: (context, state) {
-        if (state is AudioTrackLoading) {
+        if (state is AudioTrackUploadLoading) {
           setState(() => _isUploadingTrack = true);
         } else if (state is AudioTrackUploadSuccess || state is AudioTrackError) {
           setState(() => _isUploadingTrack = false);
