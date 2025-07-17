@@ -51,7 +51,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
             Column(
               children: [
                 // Header section with waveform, play controls, and time
-                AudioCommentHeader(trackId: widget.track.id),
+                AudioCommentHeader(track: widget.track),
 
                 // Comments list section
                 Expanded(

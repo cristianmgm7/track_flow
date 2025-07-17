@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_animations.dart';
-import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 
 /// A circular play/pause button for audio controls, supporting loading/buffering state.

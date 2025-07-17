@@ -60,8 +60,8 @@ class TrackCoverArt extends StatelessWidget {
 
   Widget _buildGeneratedCover(BuildContext context) {
     final iconData = _generateIconFromTrack(track);
-    final backgroundColor = _generateBackgroundColor(track, context);
-    
+    final backgroundColor = generateTrackCoverColor(track, context);
+
     return Container(
       width: size,
       height: size,
@@ -113,9 +113,13 @@ class TrackCoverArt extends StatelessWidget {
       return Icons.piano;
     } else if (trackName.contains('guitar') || trackName.contains('string')) {
       return Icons.music_note_rounded;
-    } else if (trackName.contains('vocal') || trackName.contains('sing') || trackName.contains('voice')) {
+    } else if (trackName.contains('vocal') ||
+        trackName.contains('sing') ||
+        trackName.contains('voice')) {
       return Icons.mic_rounded;
-    } else if (trackName.contains('drum') || trackName.contains('beat') || trackName.contains('rhythm')) {
+    } else if (trackName.contains('drum') ||
+        trackName.contains('beat') ||
+        trackName.contains('rhythm')) {
       return Icons.circle_rounded;
     } else if (trackName.contains('bass') || trackName.contains('low')) {
       return Icons.speaker_rounded;
@@ -144,27 +148,6 @@ class TrackCoverArt extends StatelessWidget {
     }
   }
 
-  Color _generateBackgroundColor(AudioTrack track, BuildContext context) {
-    // Generate a consistent background color based on track properties
-    final hash = track.name.hashCode;
-    final random = math.Random(hash);
-    
-    // Use theme-based colors for consistency
-    final colorOptions = [
-      Theme.of(context).colorScheme.primaryContainer,
-      Theme.of(context).colorScheme.secondaryContainer,
-      Theme.of(context).colorScheme.tertiaryContainer,
-      Theme.of(context).colorScheme.surfaceContainerHighest,
-      AppColors.primary.withValues(alpha: 0.1),
-      AppColors.accent.withValues(alpha: 0.1),
-      AppColors.success.withValues(alpha: 0.1),
-      AppColors.warning.withValues(alpha: 0.1),
-      AppColors.info.withValues(alpha: 0.1),
-    ];
-
-    return colorOptions[random.nextInt(colorOptions.length)];
-  }
-
   Color _getIconColor(Color backgroundColor) {
     // Calculate appropriate icon color based on background
     final brightness = backgroundColor.computeLuminance();
@@ -174,6 +157,24 @@ class TrackCoverArt extends StatelessWidget {
       return AppColors.grey200;
     }
   }
+}
+
+/// Utility to generate a consistent background color for a track, used for cover art and backgrounds.
+Color generateTrackCoverColor(AudioTrack track, BuildContext context) {
+  final hash = track.name.hashCode;
+  final random = math.Random(hash);
+  final colorOptions = [
+    Theme.of(context).colorScheme.primaryContainer,
+    Theme.of(context).colorScheme.secondaryContainer,
+    Theme.of(context).colorScheme.tertiaryContainer,
+    Theme.of(context).colorScheme.surfaceContainerHighest,
+    AppColors.primary.withValues(alpha: 0.1),
+    AppColors.accent.withValues(alpha: 0.1),
+    AppColors.success.withValues(alpha: 0.1),
+    AppColors.warning.withValues(alpha: 0.1),
+    AppColors.info.withValues(alpha: 0.1),
+  ];
+  return colorOptions[random.nextInt(colorOptions.length)];
 }
 
 // Factory methods for different sizes

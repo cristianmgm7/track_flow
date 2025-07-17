@@ -10,19 +10,22 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import '../../../../core/entities/unique_id.dart';
 import 'waveform.dart';
 import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/ui/track/track_cover_art.dart';
 
 /// Header widget for the audio comment feature.
 /// Complete header section with container styling, waveform, play controls, and time display.
 /// Handles navigation, play logic, and visual presentation internally.
 class AudioCommentHeader extends StatelessWidget {
-  final AudioTrackId trackId;
+  final AudioTrack track;
 
-  const AudioCommentHeader({super.key, required this.trackId});
+  const AudioCommentHeader({super.key, required this.track});
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = generateTrackCoverColor(track, context);
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      color: bgColor,
       child: SafeArea(
         child: SizedBox(
           height: 350, // Increased height for a more prominent waveform
@@ -30,7 +33,7 @@ class AudioCommentHeader extends StatelessWidget {
             children: [
               // Waveform fills the header
               Positioned.fill(
-                child: AudioCommentWaveformDisplay(trackId: trackId),
+                child: AudioCommentWaveformDisplay(trackId: track.id),
               ),
               // Play/Pause button (bottom-right)
               Positioned(

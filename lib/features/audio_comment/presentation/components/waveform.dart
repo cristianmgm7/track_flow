@@ -100,6 +100,7 @@ class _AudioCommentWaveformDisplayState
                   playerController: waveformState.playerController!,
                   enableSeekGesture: true,
                   waveformType: WaveformType.long,
+                  backgroundColor: Colors.transparent,
                   playerWaveStyle: PlayerWaveStyle(
                     fixedWaveColor: Colors.grey[400]!,
                     liveWaveColor: Colors.blue,
