@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
@@ -12,8 +10,6 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_sliver_header.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 
@@ -27,7 +23,6 @@ class ProjectDetailsScreen extends StatefulWidget {
 }
 
 class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
-  bool _isUploadingTrack = false;
   ProjectDetailBloc? _projectDetailBloc;
 
   @override
@@ -52,16 +47,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AudioTrackBloc, AudioTrackState>(
-      listener: (context, state) {
-        if (state is AudioTrackLoading) {
-          setState(() => _isUploadingTrack = true);
-        } else if (state is AudioTrackUploadSuccess ||
-            state is AudioTrackError) {
-          setState(() => _isUploadingTrack = false);
-        }
-      },
-      child: AppScaffold(
+    return AppScaffold(
         appBar: null, // Remove the default app bar
         body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
           builder: (context, state) {
@@ -109,29 +95,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           projectId: project.id.value,
                         ),
                       ),
-                      if (_isUploadingTrack)
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            vertical: Dimensions.space12,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: Dimensions.iconMedium,
-                                height: Dimensions.iconMedium,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: Dimensions.space12),
-                              Text(
-                                'Uploading track...',
-                                style: AppTextStyle.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        ),
                       // Collaborators Section
                       ProjectDetailCollaboratorsComponent(state: state),
                     ],
@@ -141,7 +104,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
             );
           },
         ),
-      ),
-    );
+      );
   }
 }

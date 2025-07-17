@@ -43,14 +43,14 @@ class UploadAudioTrackUseCase {
       params.projectId,
     );
     return project.fold((failure) => Left(failure), (project) async {
-      await projectTrackService.addTrackToProject(
+      final result = await projectTrackService.addTrackToProject(
         project: project,
         requester: UserId.fromUniqueString(userId),
         name: params.name,
         url: params.file.path,
         duration: params.duration,
       );
-      return Right(unit);
+      return result;
     });
   }
 }
