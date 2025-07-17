@@ -7,7 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import '../../../../../core/entities/unique_id.dart';
+import '../../../../core/entities/unique_id.dart';
 import 'waveform.dart';
 
 /// Header widget for the audio comment feature.

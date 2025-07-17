@@ -4,7 +4,7 @@ import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/navigation/app_bar.dart';
 import '../../../../core/entities/unique_id.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
-import '../components/header/audio_comment_header.dart';
+import '../components/audio_comment_header.dart';
 import '../components/comments_section.dart';
 import '../components/comment_input_modal.dart';
 
@@ -62,6 +62,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
                     child: CommentsSection(trackId: widget.track.id),
                   ),
                 ),
+                SizedBox(height: Dimensions.space32),
               ],
             ),
 
