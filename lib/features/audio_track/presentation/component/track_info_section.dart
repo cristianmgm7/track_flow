@@ -47,20 +47,44 @@ class TrackInfoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
       builder: (context, playerState) {
-        final isPlaying = playerState is AudioPlayerSessionState &&
+        final isCurrentTrack =
+            playerState is AudioPlayerSessionState &&
             playerState.session.currentTrack?.id.value == track.id.value;
-        
+        final isPlaying = playerState is AudioPlayerPlaying && isCurrentTrack;
+        final isPausedOrStopped =
+            (playerState is AudioPlayerPaused ||
+                playerState is AudioPlayerStopped) &&
+            isCurrentTrack;
+        final shouldShowSoundbar = isPlaying || isPausedOrStopped;
+        final shouldHighlight =
+            isCurrentTrack &&
+            (playerState is AudioPlayerPlaying ||
+                playerState is AudioPlayerPaused ||
+                playerState is AudioPlayerStopped);
+
         return BlocBuilder<AudioContextBloc, AudioContextState>(
           builder: (context, contextState) {
             final uploaderName = _getUploaderNameFromState(contextState);
-            return _buildTrackInfo(context, isPlaying, uploaderName);
+            return _buildTrackInfo(
+              context,
+              shouldShowSoundbar,
+              isPlaying,
+              shouldHighlight,
+              uploaderName,
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildTrackInfo(BuildContext context, bool isCurrentlyPlaying, String uploaderNameToUse) {
+  Widget _buildTrackInfo(
+    BuildContext context,
+    bool showSoundbar,
+    bool isPlaying,
+    bool shouldHighlight,
+    String uploaderNameToUse,
+  ) {
     final defaultTrackStyle = const TextStyle(
       fontWeight: FontWeight.bold,
       fontSize: 16,
@@ -77,10 +101,10 @@ class TrackInfoSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            // Soundbar animation when playing
-            if (isCurrentlyPlaying) ...[
+            // Soundbar animation when playing, static when paused/stopped
+            if (showSoundbar) ...[
               SoundbarAnimation(
-                isPlaying: isCurrentlyPlaying,
+                isPlaying: isPlaying,
                 size: 14,
                 color: AppColors.primary,
               ),
@@ -91,7 +115,7 @@ class TrackInfoSection extends StatelessWidget {
               child: Text(
                 track.name,
                 style: (config.trackNameStyle ?? defaultTrackStyle).copyWith(
-                  color: isCurrentlyPlaying ? AppColors.primary : null,
+                  color: shouldHighlight ? AppColors.primary : null,
                 ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: config.maxLines,
@@ -122,16 +146,17 @@ class TrackInfoSection extends StatelessWidget {
 
     return Expanded(
       flex: 3,
-      child: onTap != null
-          ? InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: child,
-              ),
-            )
-          : child,
+      child:
+          onTap != null
+              ? InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: child,
+                ),
+              )
+              : child,
     );
   }
 
