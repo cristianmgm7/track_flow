@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
+import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
@@ -36,9 +37,9 @@ class AudioCommentComponent extends StatelessWidget {
 
     return BaseCard(
       onTap: () {
-        context
-            .read<AudioPlayerBloc>()
-            .add(SeekToPositionRequested(comment.timestamp));
+        context.read<AudioPlayerBloc>().add(
+          SeekToPositionRequested(comment.timestamp),
+        );
       },
       margin: EdgeInsets.symmetric(
         horizontal: Dimensions.space12,
@@ -50,13 +51,11 @@ class AudioCommentComponent extends StatelessWidget {
         children: [
           // User avatar
           _buildAvatar(context),
-          
+
           SizedBox(width: Dimensions.space16),
-          
+
           // Comment content
-          Expanded(
-            child: _buildCommentContent(context, createdAtStr),
-          ),
+          Expanded(child: _buildCommentContent(context, createdAtStr)),
         ],
       ),
     );
@@ -65,21 +64,22 @@ class AudioCommentComponent extends StatelessWidget {
   Widget _buildAvatar(BuildContext context) {
     return CircleAvatar(
       radius: Dimensions.avatarMedium / 2,
-      backgroundImage: collaborator.avatarUrl.isNotEmpty
-          ? NetworkImage(collaborator.avatarUrl)
-          : null,
+      backgroundImage: ImageUtils.createSafeImageProvider(
+        collaborator.avatarUrl,
+      ),
       backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-      child: collaborator.avatarUrl.isEmpty
-          ? Text(
-              collaborator.name.isNotEmpty
-                  ? collaborator.name.substring(0, 1).toUpperCase()
-                  : comment.createdBy.value.substring(0, 1).toUpperCase(),
-              style: AppTextStyle.headlineSmall.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            )
-          : null,
+      child:
+          collaborator.avatarUrl.isEmpty
+              ? Text(
+                collaborator.name.isNotEmpty
+                    ? collaborator.name.substring(0, 1).toUpperCase()
+                    : comment.createdBy.value.substring(0, 1).toUpperCase(),
+                style: AppTextStyle.headlineSmall.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+              : null,
     );
   }
 
@@ -107,17 +107,14 @@ class AudioCommentComponent extends StatelessWidget {
             ),
           ],
         ),
-        
+
         SizedBox(height: Dimensions.space8),
-        
+
         // Comment text
-        Text(
-          comment.content,
-          style: AppTextStyle.bodyMedium,
-        ),
-        
+        Text(comment.content, style: AppTextStyle.bodyMedium),
+
         SizedBox(height: Dimensions.space8),
-        
+
         // Timestamp badge
         Align(
           alignment: Alignment.centerRight,
