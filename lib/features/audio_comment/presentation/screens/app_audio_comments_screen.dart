@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/theme/app_borders.dart';
-import '../../../../core/theme/app_shadows.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/navigation/app_bar.dart';
 import '../../../../core/entities/unique_id.dart';
-import '../components/header/audio_comment_header.dart';
-import '../components/header/waveform.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
+import '../components/header/audio_comment_header.dart';
 import '../components/comments_section.dart';
 import '../components/comment_input_modal.dart';
 
@@ -36,8 +33,6 @@ class AppAudioCommentsScreen extends StatefulWidget {
 }
 
 class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
-
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -48,62 +43,29 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Stack(
+        child: Column(
           children: [
-            // Main content
-            Column(
-              children: [
-                // Waveform header
-                _buildWaveformHeader(),
+            // Header section with waveform, play controls, and time
+            AudioCommentHeader(trackId: widget.track.id),
 
-                // Comments list
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Dimensions.screenMarginSmall,
-                    ),
-                    child: CommentsSection(trackId: widget.track.id),
-                  ),
+            // Comments list section
+            Expanded(
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: Dimensions.screenMarginSmall,
                 ),
-
-                // Space for input when visible
-                SizedBox(height: Dimensions.space80),
-              ],
+                child: CommentsSection(trackId: widget.track.id),
+              ),
             ),
 
-            // Floating comment input
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: CommentInputModal(
-                projectId: widget.projectId,
-                trackId: widget.track.id,
-              ),
+            // Input modal section
+            CommentInputModal(
+              projectId: widget.projectId,
+              trackId: widget.track.id,
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildWaveformHeader() {
-    return Container(
-      margin: EdgeInsets.all(Dimensions.screenMarginSmall),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: AppBorders.large,
-        boxShadow: AppShadows.medium,
-        border: AppBorders.subtleBorder(context),
-      ),
-      child: ClipRRect(
-        borderRadius: AppBorders.large,
-        child: AudioCommentHeader(
-          waveform: AudioCommentWaveformDisplay(trackId: widget.track.id),
-          trackId: widget.track.id,
-        ),
-      ),
-    );
-  }
-
 }

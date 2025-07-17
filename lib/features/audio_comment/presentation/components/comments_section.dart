@@ -7,13 +7,13 @@ import '../bloc/audio_comment_state.dart';
 import '../bloc/audio_comment_event.dart';
 import '../../domain/entities/audio_comment.dart';
 import '../../../user_profile/domain/entities/user_profile.dart';
-import 'audio_comment_component.dart';
+import 'audio_comment_card.dart';
 
 /// Comments section component that handles displaying the list of comments
 /// with proper state management and error handling
 class CommentsSection extends StatefulWidget {
   final AudioTrackId trackId;
-  
+
   const CommentsSection({super.key, required this.trackId});
 
   @override
@@ -47,7 +47,11 @@ class _CommentsSectionState extends State<CommentsSection> {
           );
         }
         if (state is AudioCommentsLoaded) {
-          return _buildCommentsListView(context, state.comments, state.collaborators);
+          return _buildCommentsListView(
+            context,
+            state.comments,
+            state.collaborators,
+          );
         }
         if (state is AudioCommentOperationSuccess) {
           return Center(
