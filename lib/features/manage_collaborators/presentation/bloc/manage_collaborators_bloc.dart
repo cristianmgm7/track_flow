@@ -166,7 +166,7 @@ class ManageCollaboratorsBloc
     );
     result.fold(
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
-      (_) => emit(ManageCollaboratorsLeaveSuccess()),
+      (project) => emit(ManageCollaboratorsLeaveSuccess()),
     );
   }
 

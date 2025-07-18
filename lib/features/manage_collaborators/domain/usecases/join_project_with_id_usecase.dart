@@ -1,14 +1,16 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
+
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
+    as manage_collab_exc;
 
 class JoinProjectWithIdParams extends Equatable {
   final ProjectId projectId;
@@ -22,12 +24,10 @@ class JoinProjectWithIdParams extends Equatable {
 @lazySingleton
 class JoinProjectWithIdUseCase {
   final ProjectsRepository _repositoryProjectDetail;
-  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionRepository;
 
   JoinProjectWithIdUseCase(
     this._repositoryProjectDetail,
-    this._collaboratorRepository,
     this._sessionRepository,
   );
 
@@ -52,18 +52,20 @@ class JoinProjectWithIdUseCase {
       );
 
       try {
-        final result = await _collaboratorRepository.joinProject(
-          params.projectId,
-          UserId.fromUniqueString(userId),
+        // Use domain logic to add collaborator
+        final updatedProject = project.addCollaborator(newCollaborator);
+
+        // Save the updated project using the projects repository
+        final saveResult = await _repositoryProjectDetail.updateProject(
+          updatedProject,
         );
-        return result.fold(
+
+        return saveResult.fold(
           (failure) => left(failure),
-          (_) async {
-            // Return updated project after successful join
-            final updatedProject = project.addCollaborator(newCollaborator);
-            return right(updatedProject);
-          },
+          (_) => right(updatedProject),
         );
+      } on manage_collab_exc.CollaboratorAlreadyExistsException catch (e) {
+        return left(ServerFailure('Failed to join project: ${e.toString()}'));
       } catch (e) {
         return left(ServerFailure('Failed to join project: ${e.toString()}'));
       }

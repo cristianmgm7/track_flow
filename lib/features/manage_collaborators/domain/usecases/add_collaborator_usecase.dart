@@ -4,7 +4,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/session/session_storage.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
+
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
@@ -30,12 +30,10 @@ class AddCollaboratorToProjectParams extends Equatable {
 @lazySingleton
 class AddCollaboratorToProjectUseCase {
   final ProjectsRepository _repositoryProjectDetail;
-  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   AddCollaboratorToProjectUseCase(
     this._repositoryProjectDetail,
-    this._collaboratorRepository,
     this._sessionService,
   );
 

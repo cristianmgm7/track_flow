@@ -1,18 +1,17 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart';
-import 'package:trackflow/features/manage_collaborators/domain/repositories/collaborator_repository.dart';
+import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/session_storage.dart';
+
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
+import 'package:trackflow/features/manage_collaborators/domain/exceptions/manage_collaborator_exception.dart'
+    as manage_collab_exc;
 
-@immutable
 class RemoveCollaboratorParams extends Equatable {
   final ProjectId projectId;
   final UserId collaboratorId;
@@ -29,12 +28,10 @@ class RemoveCollaboratorParams extends Equatable {
 @lazySingleton
 class RemoveCollaboratorUseCase {
   final ProjectsRepository _repositoryProjectDetail;
-  final CollaboratorRepository _collaboratorRepository;
   final SessionStorage _sessionService;
 
   RemoveCollaboratorUseCase(
     this._repositoryProjectDetail,
-    this._collaboratorRepository,
     this._sessionService,
   );
 
@@ -48,9 +45,7 @@ class RemoveCollaboratorUseCase {
     return projectResult.fold((failure) => left(failure), (project) async {
       final currentUserCollaborator = project.collaborators.firstWhere(
         (collaborator) => collaborator.userId.value == userId,
-        orElse:
-            () =>
-                throw ManageCollaboratorException('User is not a collaborator'),
+        orElse: () => throw UserNotCollaboratorException(),
       );
 
       if (!currentUserCollaborator.hasPermission(
@@ -60,22 +55,24 @@ class RemoveCollaboratorUseCase {
       }
 
       try {
-        final result = await _collaboratorRepository.removeCollaborator(
-          params.projectId,
+        // Use domain logic to remove collaborator
+        final updatedProject = project.removeCollaborator(
           params.collaboratorId,
         );
-        return result.fold(
+
+        // Save the updated project using the projects repository
+        final saveResult = await _repositoryProjectDetail.updateProject(
+          updatedProject,
+        );
+
+        return saveResult.fold(
           (failure) => left(failure),
-          (_) async {
-            // Return updated project after successful removal
-            final updatedProject = project.removeCollaborator(
-              params.collaboratorId,
-            );
-            return right(updatedProject);
-          },
+          (_) => right(updatedProject),
         );
       } on CollaboratorNotFoundException catch (e) {
-        return left(ManageCollaboratorException(e.toString()));
+        return left(
+          manage_collab_exc.ManageCollaboratorException(e.toString()),
+        );
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }
