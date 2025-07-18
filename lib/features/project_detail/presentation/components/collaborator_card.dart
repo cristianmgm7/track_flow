@@ -53,7 +53,7 @@ class CollaboratorCard extends StatelessWidget {
             children: [
               // Background avatar image
               _buildBackgroundImage(),
-              
+
               // Dark overlay for better text readability
               Container(
                 decoration: BoxDecoration(
@@ -69,7 +69,7 @@ class CollaboratorCard extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               // Glass filter overlay at bottom with collaborator info
               Positioned(
                 bottom: 0,
@@ -92,7 +92,7 @@ class CollaboratorCard extends StatelessWidget {
       } else {
         imageProvider = FileImage(File(avatarUrl));
       }
-      
+
       return Container(
         decoration: BoxDecoration(
           image: DecorationImage(
@@ -170,9 +170,9 @@ class CollaboratorCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
               SizedBox(height: Dimensions.space4),
-              
+
               // Email
               Text(
                 email,
@@ -182,9 +182,9 @@ class CollaboratorCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              
+
               SizedBox(height: Dimensions.space8),
-              
+
               // Roles row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,7 +199,9 @@ class CollaboratorCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.accent.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                          borderRadius: BorderRadius.circular(
+                            Dimensions.radiusSmall,
+                          ),
                           border: Border.all(
                             color: AppColors.accent.withValues(alpha: 0.3),
                             width: 0.5,
@@ -216,7 +218,7 @@ class CollaboratorCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                  
+
                   // Project role
                   Container(
                     padding: EdgeInsets.symmetric(
@@ -225,7 +227,9 @@ class CollaboratorCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+                      borderRadius: BorderRadius.circular(
+                        Dimensions.radiusSmall,
+                      ),
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.3),
                         width: 0.5,

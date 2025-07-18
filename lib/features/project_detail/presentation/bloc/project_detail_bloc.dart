@@ -23,6 +23,9 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     WatchProjectDetail event,
     Emitter<ProjectDetailState> emit,
   ) async {
+    // Cancel any existing subscription before creating a new one
+    _detailSubscription?.cancel();
+
     emit(
       ProjectDetailState.initial().copyWith(
         project: event.project,
@@ -31,12 +34,20 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
       ),
     );
 
+    final currentProjectId = event.project.id.value;
+
     await emit.onEach<Either<Failure, ProjectDetailBundle>>(
-      watchProjectDetail.call(
-        projectId: event.project.id.value,
-        collaboratorIds:
-            event.project.collaborators.map((e) => e.userId.value).toList(),
-      ),
+      watchProjectDetail
+          .call(
+            projectId: currentProjectId,
+            collaboratorIds:
+                event.project.collaborators.map((e) => e.userId.value).toList(),
+          )
+          .takeWhile(
+            (_) =>
+                // Continue stream only if this is still the current project
+                state.project?.id.value == currentProjectId,
+          ),
       onData: (either) {
         either.fold(
           (failure) {
@@ -69,8 +80,10 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     ClearProjectDetail event,
     Emitter<ProjectDetailState> emit,
   ) async {
-    _detailSubscription?.cancel();
+    // Emit initial state first to break any takeWhile conditions
     emit(ProjectDetailState.initial());
+    _detailSubscription?.cancel();
+    _detailSubscription = null;
   }
 
   @override
