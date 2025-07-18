@@ -20,3 +20,5 @@ class CreateUserProfile extends UserProfileEvent {
   final UserProfile profile;
   CreateUserProfile(this.profile);
 }
+
+class ClearUserProfile extends UserProfileEvent {}

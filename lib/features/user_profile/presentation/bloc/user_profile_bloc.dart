@@ -24,6 +24,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     on<WatchUserProfile>(_onWatchUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
     on<CreateUserProfile>(_onCreateUserProfile);
+    on<ClearUserProfile>(_onClearUserProfile);
   }
 
   Future<void> _onWatchUserProfile(
@@ -74,6 +75,16 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       (_) => emit(UserProfileSaved()),
     );
     add(WatchUserProfile(userId: event.profile.id.value));
+  }
+
+  Future<void> _onClearUserProfile(
+    ClearUserProfile event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    // Cancel any existing subscription
+    _profileSubscription?.cancel();
+    // Reset to initial state
+    emit(UserProfileInitial());
   }
 
   @override

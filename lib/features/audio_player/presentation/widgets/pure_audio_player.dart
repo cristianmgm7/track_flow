@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/audio_player_bloc.dart';
 import '../bloc/audio_player_event.dart';
@@ -8,11 +9,13 @@ import '../../../audio_context/presentation/bloc/audio_context_state.dart';
 import 'audio_controls.dart';
 import 'playback_progress.dart';
 import 'queue_controls.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_borders.dart';
 
 /// Pure audio player widget with full controls
 /// NO business logic - only audio playback features
 /// NO context dependency - works standalone
-/// Includes: volume, speed, repeat modes, shuffle, etc.
+/// Includes: volume, repeat modes, shuffle, etc.
 class PureAudioPlayer extends StatelessWidget {
   const PureAudioPlayer({
     super.key,
@@ -20,7 +23,6 @@ class PureAudioPlayer extends StatelessWidget {
     this.backgroundColor,
     this.borderRadius = 12.0,
     this.showVolumeControl = true,
-    this.showSpeedControl = true,
     this.showTrackInfo = true,
   });
 
@@ -28,7 +30,6 @@ class PureAudioPlayer extends StatelessWidget {
   final Color? backgroundColor;
   final double borderRadius;
   final bool showVolumeControl;
-  final bool showSpeedControl;
   final bool showTrackInfo;
 
   @override
@@ -36,95 +37,204 @@ class PureAudioPlayer extends StatelessWidget {
     final theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor ?? theme.scaffoldBackgroundColor,
-      ),
-      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-        builder: (context, state) {
-          return Column(
-            children: [
-              // Track info section - expanded to be more prominent
-              if (showTrackInfo) ...[
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: _buildExpandedTrackInfo(
-                      context,
-                      state,
-                      theme,
-                      screenSize,
+    // Check if this is being used inside a modal (transparent background)
+    final isInModal = backgroundColor == Colors.transparent;
+
+    if (isInModal) {
+      // When used inside a modal, don't apply glass effect
+      return Container(
+        decoration: BoxDecoration(color: Colors.transparent),
+        child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+          builder: (context, state) {
+            return Column(
+              children: [
+                // Track info section - expanded to be more prominent
+                if (showTrackInfo) ...[
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: _buildExpandedTrackInfo(
+                        context,
+                        state,
+                        theme,
+                        screenSize,
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 32),
+                ] else ...[
+                  const Spacer(flex: 3),
+                ],
+
+                // Progress bar section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: const PlaybackProgress(
+                    height: 4.0,
+                    thumbRadius: 10.0,
+                    showTimeLabels: true,
                   ),
                 ),
                 const SizedBox(height: 32),
-              ] else ...[
-                const Spacer(flex: 3),
-              ],
 
-              // Progress bar section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: const PlaybackProgress(
-                  height: 4.0,
-                  thumbRadius: 10.0,
-                  showTimeLabels: true,
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Main controls section - larger and more prominent
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // Queue controls
-                    const QueueControls(
-                      size: 32.0,
-                      spacing: 16.0,
-                      showRepeatMode: true,
-                      showShuffleMode: true,
-                    ),
-
-                    // Main audio controls - even larger for full screen
-                    const AudioControls(
-                      size: 48.0,
-                      showStop: false,
-                      spacing: 20.0,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Additional controls section
-              Expanded(
-                flex: 1,
-                child: Padding(
+                // Main controls section - larger and more prominent
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Column(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Volume control
-                      if (showVolumeControl) ...[
-                        _buildVolumeControl(context, state, theme),
-                        const SizedBox(height: 20),
-                      ],
+                      // Queue controls
+                      const QueueControls(
+                        size: 32.0,
+                        spacing: 16.0,
+                        showRepeatMode: true,
+                        showShuffleMode: true,
+                      ),
 
-                      // Speed control
-                      if (showSpeedControl)
-                        _buildSpeedControl(context, state, theme),
+                      // Main audio controls - even larger for full screen
+                      const AudioControls(
+                        size: 48.0,
+                        showStop: false,
+                        spacing: 20.0,
+                      ),
                     ],
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 40),
+
+                // Additional controls section
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        // Volume control
+                        if (showVolumeControl) ...[
+                          _buildVolumeControl(context, state, theme),
+                          const SizedBox(height: 20),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            );
+          },
+        ),
+      );
+    }
+
+    // When used standalone, apply glass effect
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
+        child: Container(
+          decoration: BoxDecoration(
+            color: (backgroundColor ?? AppColors.surface).withValues(
+              alpha: 0.15,
+            ),
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(
+              color: AppColors.border.withValues(alpha: 0.2),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.grey900.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
             ],
-          );
-        },
+          ),
+          child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+            builder: (context, state) {
+              return Column(
+                children: [
+                  // Track info section - expanded to be more prominent
+                  if (showTrackInfo) ...[
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: _buildExpandedTrackInfo(
+                          context,
+                          state,
+                          theme,
+                          screenSize,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ] else ...[
+                    const Spacer(flex: 3),
+                  ],
+
+                  // Progress bar section
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: const PlaybackProgress(
+                      height: 4.0,
+                      thumbRadius: 10.0,
+                      showTimeLabels: true,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Main controls section - larger and more prominent
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Queue controls
+                        const QueueControls(
+                          size: 32.0,
+                          spacing: 16.0,
+                          showRepeatMode: true,
+                          showShuffleMode: true,
+                        ),
+
+                        // Main audio controls - even larger for full screen
+                        const AudioControls(
+                          size: 48.0,
+                          showStop: false,
+                          spacing: 20.0,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Additional controls section
+                  Expanded(
+                    flex: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        children: [
+                          // Volume control
+                          if (showVolumeControl) ...[
+                            _buildVolumeControl(context, state, theme),
+                            const SizedBox(height: 20),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -187,14 +297,14 @@ class PureAudioPlayer extends StatelessWidget {
                       errorBuilder:
                           (context, error, stackTrace) => Icon(
                             Icons.music_note,
-                            color: theme.primaryColor,
+                            color: AppColors.primary,
                             size: albumArtSize * 0.3,
                           ),
                     ),
                   )
                   : Icon(
                     Icons.music_note,
-                    color: theme.primaryColor,
+                    color: AppColors.primary,
                     size: albumArtSize * 0.3,
                   ),
         ),
@@ -206,6 +316,7 @@ class PureAudioPlayer extends StatelessWidget {
           title,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
           maxLines: 2,
           textAlign: TextAlign.center,
@@ -218,17 +329,17 @@ class PureAudioPlayer extends StatelessWidget {
           BlocBuilder<AudioContextBloc, AudioContextState>(
             builder: (context, contextState) {
               String displayArtist = artist; // Fallback from audio metadata
-              
+
               // Override with context if available (more accurate user name)
-              if (contextState is AudioContextLoaded && 
+              if (contextState is AudioContextLoaded &&
                   contextState.collaborator != null) {
                 displayArtist = contextState.collaborator!.name;
               }
-              
+
               return Text(
                 displayArtist,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.textTheme.titleMedium?.color?.withValues(alpha: 0.7),
+                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
                 maxLines: 1,
@@ -241,7 +352,6 @@ class PureAudioPlayer extends StatelessWidget {
       ],
     );
   }
-
 
   Widget _buildVolumeControl(
     BuildContext context,
@@ -260,7 +370,7 @@ class PureAudioPlayer extends StatelessWidget {
         Icon(
           volume == 0 ? Icons.volume_off : Icons.volume_up,
           size: 20,
-          color: theme.primaryColor,
+          color: AppColors.primary,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -269,6 +379,9 @@ class PureAudioPlayer extends StatelessWidget {
               trackHeight: 2.0,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: AppColors.border,
+              thumbColor: AppColors.primary,
             ),
             child: Slider(
               value: volume,
@@ -278,48 +391,12 @@ class PureAudioPlayer extends StatelessWidget {
             ),
           ),
         ),
-        Text('${(volume * 100).round()}%', style: theme.textTheme.bodySmall),
-      ],
-    );
-  }
-
-  Widget _buildSpeedControl(
-    BuildContext context,
-    AudioPlayerState state,
-    ThemeData theme,
-  ) {
-    double speed = 1.0;
-
-    if (state is AudioPlayerSessionState) {
-      speed = state.session.playbackSpeed;
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.speed, size: 20, color: theme.primaryColor),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SliderTheme(
-            data: SliderThemeData(
-              trackHeight: 2.0,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-            ),
-            child: Slider(
-              value: speed,
-              min: 0.5,
-              max: 2.0,
-              divisions: 6, // 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0
-              onChanged: (value) {
-                context.read<AudioPlayerBloc>().add(
-                  SetPlaybackSpeedRequested(value),
-                );
-              },
-            ),
+        Text(
+          '${(volume * 100).round()}%',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: AppColors.textPrimary,
           ),
         ),
-        Text('${speed.toStringAsFixed(1)}x', style: theme.textTheme.bodySmall),
       ],
     );
   }
