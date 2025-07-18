@@ -10,6 +10,9 @@ import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 
 class MainScaffold extends StatefulWidget {
   final Widget child;
@@ -21,67 +24,111 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
+  bool _hasCheckedProfile = false;
+
   @override
   void initState() {
     super.initState();
     // Initialize user profile watching
     context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
+    _checkProfileCompleteness();
+  }
+
+  Future<void> _checkProfileCompleteness() async {
+    if (_hasCheckedProfile) return;
+    
+    // Add a small delay to ensure session is properly established
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    final checkProfileUseCase = sl<CheckProfileCompletenessUseCase>();
+    final result = await checkProfileUseCase.call();
+    
+    result.fold(
+      (failure) {
+        // Only redirect if it's specifically a profile completeness issue
+        // not a session issue
+        if (failure.message.contains('No user session found')) {
+          // Don't redirect if there's no session - let auth handle it
+          print('No user session found during profile check');
+        } else {
+          // Profile incomplete, redirect to creation
+          if (mounted) {
+            context.go(AppRoutes.profileCreation);
+          }
+        }
+      },
+      (isComplete) {
+        if (!isComplete && mounted) {
+          context.go(AppRoutes.profileCreation);
+        }
+      },
+    );
+    
+    _hasCheckedProfile = true;
   }
 
   @override
   Widget build(BuildContext context) {
     final currentTab = context.select((NavigationCubit cubit) => cubit.state);
 
-    return AppScaffold(
-      body: Column(
-        children: [
-          Expanded(child: widget.child),
-          BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-            builder: (context, state) {
-              if (state is AudioPlayerSessionState) {
-                return const MiniAudioPlayer();
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
-      ),
-      bottomNavigationBar: AppBottomNavigation(
-        currentIndex: currentTab.index,
-        onTap: (index) {
-          final tab = AppTab.values[index];
-          context.read<NavigationCubit>().setTab(tab);
-          switch (tab) {
-            case AppTab.projects:
-              context.go(AppRoutes.projects);
-              break;
-            case AppTab.myMusic:
-              // TODO: Create a dedicated route for playlists
-              // For now, we can navigate to a placeholder or the first project
-              context.go(AppRoutes.projects);
-              break;
-            case AppTab.settings:
-              context.go(AppRoutes.settings);
-              break;
-          }
-        },
-        items: const [
-          AppBottomNavigationItem(
-            icon: Icons.folder_outlined,
-            activeIcon: Icons.folder,
-            label: 'Projects',
-          ),
-          AppBottomNavigationItem(
-            icon: Icons.music_note_outlined,
-            activeIcon: Icons.music_note,
-            label: 'My Music',
-          ),
-          AppBottomNavigationItem(
-            icon: Icons.settings_outlined,
-            activeIcon: Icons.settings,
-            label: 'Settings',
-          ),
-        ],
+    return BlocListener<UserProfileBloc, UserProfileState>(
+      listener: (context, state) {
+        if (state is UserProfileSaved) {
+          // Profile was successfully created/updated, reset the check flag
+          _hasCheckedProfile = false;
+        }
+      },
+      child: AppScaffold(
+        body: Column(
+          children: [
+            Expanded(child: widget.child),
+            BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+              builder: (context, state) {
+                if (state is AudioPlayerSessionState) {
+                  return const MiniAudioPlayer();
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
+        bottomNavigationBar: AppBottomNavigation(
+          currentIndex: currentTab.index,
+          onTap: (index) {
+            final tab = AppTab.values[index];
+            context.read<NavigationCubit>().setTab(tab);
+            switch (tab) {
+              case AppTab.projects:
+                context.go(AppRoutes.projects);
+                break;
+              case AppTab.myMusic:
+                // TODO: Create a dedicated route for playlists
+                // For now, we can navigate to a placeholder or the first project
+                context.go(AppRoutes.projects);
+                break;
+              case AppTab.settings:
+                context.go(AppRoutes.settings);
+                break;
+            }
+          },
+          items: const [
+            AppBottomNavigationItem(
+              icon: Icons.folder_outlined,
+              activeIcon: Icons.folder,
+              label: 'Projects',
+            ),
+            AppBottomNavigationItem(
+              icon: Icons.music_note_outlined,
+              activeIcon: Icons.music_note,
+              label: 'My Music',
+            ),
+            AppBottomNavigationItem(
+              icon: Icons.settings_outlined,
+              activeIcon: Icons.settings,
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -78,7 +78,7 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             AppFormField(
-              label: 'Collaborator Email',
+              label: 'Collaborator id',
               controller: _emailController,
               validator: (value) {
                 if (value == null || value.isEmpty) {

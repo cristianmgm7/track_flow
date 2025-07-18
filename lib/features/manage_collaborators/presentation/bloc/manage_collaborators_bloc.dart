@@ -12,14 +12,12 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/update_c
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'manage_collaborators_event.dart';
 import 'manage_collaborators_state.dart';
-import 'package:trackflow/features/manage_collaborators/domain/services/add_collaborator_and_sync_profile_service.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 
 @injectable
 class ManageCollaboratorsBloc
     extends Bloc<ManageCollaboratorsEvent, ManageCollaboratorsState> {
-  final AddCollaboratorAndSyncProfileService
-  addCollaboratorAndSyncProfileService;
+  final AddCollaboratorToProjectUseCase addCollaboratorUseCase;
   final RemoveCollaboratorUseCase removeCollaboratorUseCase;
   final UpdateCollaboratorRoleUseCase updateCollaboratorRoleUseCase;
   final LeaveProjectUseCase leaveProjectUseCase;
@@ -29,7 +27,7 @@ class ManageCollaboratorsBloc
   ManageCollaboratorsLoaded? _lastLoadedState;
 
   ManageCollaboratorsBloc({
-    required this.addCollaboratorAndSyncProfileService,
+    required this.addCollaboratorUseCase,
     required this.removeCollaboratorUseCase,
     required this.updateCollaboratorRoleUseCase,
     required this.leaveProjectUseCase,
@@ -77,7 +75,7 @@ class ManageCollaboratorsBloc
     Emitter<ManageCollaboratorsState> emit,
   ) async {
     emit(ManageCollaboratorsLoading());
-    final result = await addCollaboratorAndSyncProfileService.call(
+    final result = await addCollaboratorUseCase(
       AddCollaboratorToProjectParams(
         projectId: event.projectId,
         collaboratorId: event.collaboratorId,

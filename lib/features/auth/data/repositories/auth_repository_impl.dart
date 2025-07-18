@@ -53,6 +53,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> _createOrSyncUserProfile(User user) async {
     final userRef = _firestore.collection('user_profile').doc(user.uid);
     try {
+      // Step 1: Create or check profile in Firestore
       await _firestore.runTransaction((transaction) async {
         final docSnapshot = await transaction.get(userRef);
         if (!docSnapshot.exists) {
@@ -71,16 +72,28 @@ class AuthRepositoryImpl implements AuthRepository {
           );
         }
       });
+
+      // Step 2: Get the final document and cache it locally
       final finalDoc = await userRef.get();
       if (finalDoc.exists) {
         final data = finalDoc.data();
         if (data != null) {
-          final remoteProfile = UserProfileDTO.fromJson(data);
-          await _userProfileLocalDataSource.cacheUserProfile(remoteProfile);
+          try {
+            final remoteProfile = UserProfileDTO.fromJson(data);
+            await _userProfileLocalDataSource.cacheUserProfile(remoteProfile);
+          } catch (cacheError) {
+            // Log the caching error but don't fail the entire auth process
+            print('Warning: Failed to cache user profile locally: $cacheError');
+            // The profile exists in Firestore, so the user can still use the app
+            // The profile creation screen will handle the missing local cache
+          }
         }
       }
     } catch (e) {
-      throw Exception(e);
+      // Log the error but don't fail the auth process
+      print('Warning: Failed to create/sync user profile: $e');
+      // The auth process should continue, and the profile creation screen
+      // will handle the missing profile
     }
   }
 
