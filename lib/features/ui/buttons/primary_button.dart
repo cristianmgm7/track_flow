@@ -16,6 +16,7 @@ class PrimaryButton extends StatefulWidget {
   final IconData? icon;
   final bool iconRight;
   final ButtonSize size;
+  final bool isDestructive;
 
   const PrimaryButton({
     super.key,
@@ -28,6 +29,7 @@ class PrimaryButton extends StatefulWidget {
     this.icon,
     this.iconRight = false,
     this.size = ButtonSize.medium,
+    this.isDestructive = false,
   });
 
   @override
@@ -138,7 +140,7 @@ class _PrimaryButtonState extends State<PrimaryButton>
               decoration: BoxDecoration(
                 color: _isDisabled 
                     ? AppColors.disabled 
-                    : AppColors.primary,
+                    : (widget.isDestructive ? AppColors.error : AppColors.primary),
                 borderRadius: AppBorders.medium,
                 boxShadow: _isDisabled 
                     ? AppShadows.none 

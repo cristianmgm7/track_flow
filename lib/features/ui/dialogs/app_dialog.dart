@@ -86,10 +86,7 @@ class AppDialog extends StatelessWidget {
                         ),
                     if (_buildActions().isNotEmpty) ...[
                       SizedBox(height: Dimensions.space24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: _buildActions(),
-                      ),
+                      ..._buildActions(),
                     ],
                   ],
                 ),
@@ -116,63 +113,32 @@ class AppDialog extends StatelessWidget {
     }
 
     if (primaryButtonText != null) {
-      actions.add(SizedBox(width: Dimensions.space12));
+      if (actions.isNotEmpty) {
+        actions.add(SizedBox(width: Dimensions.space12));
+      }
 
       actions.add(
-        isDestructive
-            ? Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.error,
-                    AppColors.error.withValues(alpha: 0.8),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                border: Border.all(
-                  color: AppColors.textPrimary.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: ElevatedButton(
-                onPressed: isLoading ? null : onPrimaryPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  foregroundColor: AppColors.textPrimary,
-                  shadowColor: Colors.transparent,
-                  elevation: 0,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: Dimensions.space16,
-                    vertical: Dimensions.space12,
-                  ),
-                ),
-                child:
-                    isLoading
-                        ? SizedBox(
-                          height: Dimensions.iconMedium,
-                          width: Dimensions.iconMedium,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.textPrimary,
-                            ),
-                          ),
-                        )
-                        : Text(primaryButtonText!),
-              ),
-            )
-            : PrimaryButton(
-              text: primaryButtonText!,
-              onPressed: onPrimaryPressed,
-              isLoading: isLoading,
-              isDisabled: isLoading,
-              size: ButtonSize.small,
-            ),
+        PrimaryButton(
+          text: primaryButtonText!,
+          onPressed: onPrimaryPressed,
+          isLoading: isLoading,
+          isDisabled: isLoading,
+          size: ButtonSize.small,
+          isDestructive: isDestructive,
+        ),
       );
     }
 
     return actions.isNotEmpty
-        ? [Row(mainAxisAlignment: MainAxisAlignment.end, children: actions)]
+        ? [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: actions,
+            ),
+          ),
+        ]
         : [];
   }
 }

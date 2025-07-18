@@ -108,22 +108,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
     }
   }
 
-  void _updateProfile() {
-    if (_formKey.currentState?.validate() ?? false) {
-      _formKey.currentState?.save();
-      final updatedProfile = UserProfile(
-        id: widget.profile.id,
-        name: _name,
-        email: _email,
-        avatarUrl: _avatarUrl,
-        creativeRole: _creativeRole,
-        createdAt: DateTime.now(),
-      );
-      context.read<UserProfileBloc>().add(SaveUserProfile(updatedProfile));
-      Navigator.pop(context);
-    }
-  }
-
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       final name = _nameController?.text;
@@ -280,10 +264,6 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           ),
         ),
       ),
-      primaryButtonText: 'Save Changes',
-      secondaryButtonText: 'Cancel',
-      onPrimaryPressed: _updateProfile,
-      onSecondaryPressed: () => Navigator.pop(context),
     );
   }
 }
