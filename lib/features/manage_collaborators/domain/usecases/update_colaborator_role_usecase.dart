@@ -8,7 +8,6 @@ import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 class UpdateCollaboratorRoleParams extends Equatable {
@@ -46,25 +45,11 @@ class UpdateCollaboratorRoleUseCase {
       params.projectId,
     );
     return projectResult.fold((failure) => left(failure), (project) async {
-      final currentUserCollaborator = project.collaborators.firstWhere(
-        (collaborator) => collaborator.userId.value == userId,
-        orElse: () => throw UserNotCollaboratorException(),
-      );
-
-      if (!currentUserCollaborator.hasPermission(
-        ProjectPermission.updateCollaboratorRole,
-      )) {
-        return left(ProjectPermissionException());
-      }
-
-      if (params.userId == currentUserCollaborator.userId) {
-        return left(ServerFailure("You can't change your own role."));
-      }
-
       try {
         // Use domain logic to update collaborator role
         final updatedProject = project.updateCollaboratorRole(
-          params.userId,
+          UserId.fromUniqueString(userId), // requester
+          params.userId, // target user
           params.role,
         );
 
@@ -77,8 +62,14 @@ class UpdateCollaboratorRoleUseCase {
           (failure) => left(failure),
           (_) => right(updatedProject),
         );
-      } on CollaboratorNotFoundException catch (e) {
-        return left(ServerFailure(e.toString()));
+      } on ProjectPermissionException {
+        return left(ProjectPermissionException());
+      } on UserNotCollaboratorException {
+        return left(
+          ServerFailure('User is not a collaborator in this project'),
+        );
+      } on CollaboratorNotFoundException {
+        return left(ServerFailure('Collaborator not found'));
       } catch (e) {
         return left(ServerFailure(e.toString()));
       }

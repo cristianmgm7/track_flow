@@ -123,30 +123,52 @@ class Project extends AggregateRoot<ProjectId> {
     );
   }
 
-  Project updateCollaboratorRole(UserId userId, ProjectRole role) {
+  Project updateCollaboratorRole(
+    UserId requester,
+    UserId userId,
+    ProjectRole role,
+  ) {
+    // Validate that the requester has permission to update collaborator roles
+    final requesterCollaborator = collaborators.firstWhere(
+      (collaborator) => collaborator.userId == requester,
+      orElse: () => throw UserNotCollaboratorException(),
+    );
+
+    if (!requesterCollaborator.hasPermission(
+      ProjectPermission.updateCollaboratorRole,
+    )) {
+      throw ProjectPermissionException();
+    }
+
+    // Prevent users from changing their own role
+    if (requester == userId) {
+      throw Exception('Cannot change your own role');
+    }
+
+    // Find the collaborator to update
     final collaborator = collaborators.firstWhere(
       (collaborator) => collaborator.userId == userId,
       orElse: () => throw CollaboratorNotFoundException(),
     );
 
-    if (collaborators.contains(collaborator)) {
-      final updatedCollaborator = ProjectCollaborator.rebuild(
-        id: collaborator.id,
-        userId: collaborator.userId,
-        role: role,
-        specificPermissions: collaborator.specificPermissions,
-      );
-      final updatedCollaborators =
-          List<ProjectCollaborator>.from(collaborators)
-            ..removeWhere((collaborator) => collaborator.userId == userId)
-            ..add(updatedCollaborator);
-      return copyWith(
-        collaborators: updatedCollaborators,
-        updatedAt: DateTime.now(),
-      );
-    } else {
-      throw CollaboratorNotFoundException();
-    }
+    // Create updated collaborator with new role
+    final updatedCollaborator = ProjectCollaborator.rebuild(
+      id: collaborator.id,
+      userId: collaborator.userId,
+      role: role,
+      specificPermissions: collaborator.specificPermissions,
+    );
+
+    // Update the collaborators list
+    final updatedCollaborators =
+        List<ProjectCollaborator>.from(collaborators)
+          ..removeWhere((collaborator) => collaborator.userId == userId)
+          ..add(updatedCollaborator);
+
+    return copyWith(
+      collaborators: updatedCollaborators,
+      updatedAt: DateTime.now(),
+    );
   }
 }
 

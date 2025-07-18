@@ -11,8 +11,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/components/project_component.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_list_actions_sheet.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});

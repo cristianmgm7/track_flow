@@ -53,7 +53,7 @@ class ManageCollaboratorsBloc
           (failure) => emit(ManageCollaboratorsError(failure.toString())),
           (profiles) {
             final loadedState = ManageCollaboratorsLoaded(
-              event.project,
+              event.project, // ✅ Usa el proyecto actualizado que se pasa
               profiles,
             );
             _lastLoadedState = loadedState;
@@ -82,7 +82,18 @@ class ManageCollaboratorsBloc
       ),
     );
     result.fold(
-      (failure) => emit(ManageCollaboratorsError(failure.toString())),
+      (failure) {
+        String errorMessage;
+        if (failure is ProjectPermissionException) {
+          errorMessage = 'you do not have permission to add collaborators.';
+        } else {
+          errorMessage = failure.toString();
+        }
+        emit(ManageCollaboratorsError(errorMessage));
+        if (_lastLoadedState != null) {
+          emit(_lastLoadedState!);
+        }
+      },
       (project) {
         emit(AddCollaboratorSuccess(project));
         add(WatchCollaborators(project: project));
@@ -148,6 +159,11 @@ class ManageCollaboratorsBloc
         }
       },
       (project) {
+        // Emit success state first
+        emit(
+          UpdateCollaboratorRoleSuccess(project, event.newRole.toShortString()),
+        );
+        // Then watch for updates
         add(WatchCollaborators(project: project));
       },
     );
