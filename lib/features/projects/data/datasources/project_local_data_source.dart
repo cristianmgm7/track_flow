@@ -28,12 +28,19 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<Either<Failure, Unit>> cacheProject(ProjectDTO project) async {
     try {
+      print(
+        'ProjectsLocalDataSource: Caching project: ${project.name} (${project.id})',
+      );
       final projectDoc = ProjectDocument.fromDTO(project);
       await _isar.writeTxn(() async {
         await _isar.projectDocuments.put(projectDoc);
       });
+      print(
+        'ProjectsLocalDataSource: Successfully cached project: ${project.name}',
+      );
       return const Right(unit);
     } catch (e) {
+      print('ProjectsLocalDataSource: Failed to cache project: $e');
       return Left(CacheFailure('Failed to cache project: $e'));
     }
   }
@@ -43,9 +50,7 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
     String projectId,
   ) async {
     try {
-      final projectDoc = await _isar.projectDocuments.get(
-        fastHash(projectId),
-      );
+      final projectDoc = await _isar.projectDocuments.get(fastHash(projectId));
       return Right(projectDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get cached project: $e'));
@@ -105,11 +110,14 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<Either<Failure, Unit>> clearCache() async {
     try {
+      print('ProjectsLocalDataSource: Clearing cache...');
       await _isar.writeTxn(() async {
         await _isar.projectDocuments.clear();
       });
+      print('ProjectsLocalDataSource: Cache cleared.');
       return const Right(unit);
     } catch (e) {
+      print('ProjectsLocalDataSource: Failed to clear cache: $e');
       return Left(CacheFailure('Failed to clear cache: $e'));
     }
   }

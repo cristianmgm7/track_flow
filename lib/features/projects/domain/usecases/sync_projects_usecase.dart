@@ -12,25 +12,44 @@ class SyncProjectsUseCase {
   SyncProjectsUseCase(this.remote, this.local, this.sessionStorage);
 
   Future<void> call() async {
+    print('SyncProjectsUseCase: Starting sync...');
     final userId = sessionStorage.getUserId();
+    print('SyncProjectsUseCase: userId from session storage: $userId');
+
     if (userId == null) {
+      print('SyncProjectsUseCase: No userId found, clearing cache');
       await local.clearCache();
       return;
     }
-    
+
+    print(
+      'SyncProjectsUseCase: Fetching projects from remote for user: $userId',
+    );
     final failureOrProjects = await remote.getUserProjects(userId);
+
     await failureOrProjects.fold(
       (failure) async {
         // Don't clear cache if remote fetch fails - preserve existing data
-        print('Error syncing projects: $failure');
-      }, 
+        print('SyncProjectsUseCase: Error syncing projects: $failure');
+      },
       (projects) async {
+        print(
+          'SyncProjectsUseCase: Received ${projects.length} projects from remote',
+        );
         // Only clear cache when we have new data to replace it
         await local.clearCache();
+        print('SyncProjectsUseCase: Cleared local cache');
+
         for (final project in projects) {
+          print(
+            'SyncProjectsUseCase: Caching project: ${project.name} (${project.id})',
+          );
           await local.cacheProject(project);
         }
-      }
+        print(
+          'SyncProjectsUseCase: Finished caching ${projects.length} projects',
+        );
+      },
     );
   }
 }

@@ -805,6 +805,8 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i76.SyncProjectsUseCase>(),
               gh<_i77.SyncUserProfileUseCase>(),
               gh<_i135.SyncUserProfileCollaboratorsUseCase>(),
+              gh<_i73.SessionStorage>(),
+              gh<_i97.AuthRepository>(),
             ));
     gh.factory<_i153.TrackCacheBloc>(() => _i153.TrackCacheBloc(
           cacheTrackUseCase: gh<_i104.CacheTrackUseCase>(),

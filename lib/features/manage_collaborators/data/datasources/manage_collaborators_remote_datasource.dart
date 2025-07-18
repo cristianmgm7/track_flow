@@ -146,7 +146,7 @@ class ManageCollaboratorsRemoteDataSourceImpl
         return Left(DatabaseFailure('Project not found'));
       }
       return Left(
-        DatabaseFailure('Failed to update collaborator role: \\${e.message}'),
+        DatabaseFailure('Failed to update collaborator role: ${e.message}'),
       );
     } catch (e) {
       return Left(

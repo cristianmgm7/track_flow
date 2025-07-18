@@ -152,6 +152,8 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
     String userId,
   ) async {
     try {
+      print('ProjectRemoteDataSource: Getting projects for user: $userId');
+
       // Query for projects owned by the user
       final ownedProjectsFuture =
           _firestore
@@ -166,29 +168,50 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
               .where('collaboratorIds', arrayContains: userId)
               .get();
 
+      print('ProjectRemoteDataSource: Executing queries...');
+
+      // Wait for both queries to complete
       final results = await Future.wait([
         ownedProjectsFuture,
         collaboratorProjectsFuture,
       ]);
 
-      final ownedProjectsSnapshot = results[0];
-      final collaboratorProjectsSnapshot = results[1];
+      final ownedProjects = results[0];
+      final collaboratorProjects = results[1];
 
-      final allProjects = <String, ProjectDTO>{};
+      print(
+        'ProjectRemoteDataSource: Found ${ownedProjects.docs.length} owned projects',
+      );
+      print(
+        'ProjectRemoteDataSource: Found ${collaboratorProjects.docs.length} collaborator projects',
+      );
 
-      for (var doc in ownedProjectsSnapshot.docs) {
-        final project = ProjectDTO.fromFirestore(doc);
-        allProjects[project.id] = project;
+      // Combine and deduplicate projects
+      final allProjects = <ProjectDTO>[];
+      final seenIds = <String>{};
+
+      // Add owned projects
+      for (final doc in ownedProjects.docs) {
+        if (!seenIds.contains(doc.id)) {
+          seenIds.add(doc.id);
+          allProjects.add(ProjectDTO.fromFirestore(doc));
+        }
       }
 
-      for (var doc in collaboratorProjectsSnapshot.docs) {
-        final project = ProjectDTO.fromFirestore(doc);
-        allProjects[project.id] = project;
+      // Add collaborator projects
+      for (final doc in collaboratorProjects.docs) {
+        if (!seenIds.contains(doc.id)) {
+          seenIds.add(doc.id);
+          allProjects.add(ProjectDTO.fromFirestore(doc));
+        }
       }
 
-      return Right(allProjects.values.toList());
+      print(
+        'ProjectRemoteDataSource: Total unique projects found: ${allProjects.length}',
+      );
+      return Right(allProjects);
     } catch (e) {
-      return Left(UnexpectedFailure('Failed to get user projects: $e'));
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

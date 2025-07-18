@@ -67,18 +67,17 @@ class AddCollaboratorToProjectUseCase {
       );
 
       try {
-        final result = await _collaboratorRepository.addCollaborator(
-          params.projectId,
-          params.collaboratorId,
-          newCollaborator.role,
+        // Use domain logic to add collaborator
+        final updatedProject = project.addCollaborator(newCollaborator);
+
+        // Save the updated project using the projects repository
+        final saveResult = await _repositoryProjectDetail.updateProject(
+          updatedProject,
         );
-        return result.fold(
+
+        return saveResult.fold(
           (failure) => left(failure),
-          (_) async {
-            // Return updated project after successful addition
-            final updatedProject = project.addCollaborator(newCollaborator);
-            return right(updatedProject);
-          },
+          (_) => right(updatedProject),
         );
       } on manage_collab_exc.CollaboratorAlreadyExistsException catch (e) {
         return left(
