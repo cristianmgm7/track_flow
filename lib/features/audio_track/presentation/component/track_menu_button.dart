@@ -40,7 +40,7 @@ class TrackMenuButton extends StatelessWidget {
       builder: (context, contextState) {
         return IconButton(
           icon: Icon(
-            Icons.more_vert,
+            Icons.more_horiz,
             size: size,
             color: color ?? AppColors.textSecondary,
           ),
