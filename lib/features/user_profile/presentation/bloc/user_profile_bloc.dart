@@ -35,9 +35,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     WatchUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
-    print(
-      '👤 PROFILE DEBUG: WatchUserProfile started for userId: ${event.userId}',
-    );
     emit(UserProfileLoading());
     final stream =
         event.userId == null
@@ -48,22 +45,18 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       onData: (eitherProfile) {
         eitherProfile.fold(
           (failure) {
-            print('👤 PROFILE DEBUG: Watch failed - ${failure.message}');
             emit(UserProfileError());
           },
           (profile) {
             if (profile != null) {
-              print('👤 PROFILE DEBUG: Profile loaded - ${profile.id.value}');
               emit(UserProfileLoaded(profile));
             } else {
-              print('👤 PROFILE DEBUG: Profile is null');
               emit(UserProfileError());
             }
           },
         );
       },
       onError: (error, stackTrace) {
-        print('👤 PROFILE DEBUG: Watch error - $error');
         emit(UserProfileError());
       },
     );
@@ -109,33 +102,20 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     CheckProfileCompleteness event,
     Emitter<UserProfileState> emit,
   ) async {
-    print('👤 PROFILE DEBUG: CheckProfileCompleteness started');
     emit(UserProfileLoading());
 
     try {
-      print('👤 PROFILE DEBUG: Calling checkProfileCompletenessUseCase');
       final result =
           await checkProfileCompletenessUseCase.getDetailedCompleteness();
 
-      print('👤 PROFILE DEBUG: Got result from use case');
       result.fold(
         (failure) {
-          print(
-            '👤 PROFILE DEBUG: Completeness check failed - ${failure.message}',
-          );
           emit(UserProfileError());
         },
         (completenessInfo) {
-          print(
-            '👤 PROFILE DEBUG: Completeness result - isComplete: ${completenessInfo.isComplete}, profile: ${completenessInfo.profile?.id.value}',
-          );
           if (completenessInfo.isComplete && completenessInfo.profile != null) {
-            print('👤 PROFILE DEBUG: Emitting ProfileComplete');
             emit(ProfileComplete(completenessInfo.profile!));
           } else {
-            print(
-              '👤 PROFILE DEBUG: Emitting ProfileIncomplete - reason: ${completenessInfo.reason}',
-            );
             emit(
               ProfileIncomplete(
                 profile: completenessInfo.profile,
@@ -146,7 +126,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         },
       );
     } catch (e) {
-      print('👤 PROFILE DEBUG: Exception in CheckProfileCompleteness - $e');
       emit(UserProfileError());
     }
   }

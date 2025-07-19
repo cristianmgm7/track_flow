@@ -24,6 +24,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
@@ -54,35 +55,27 @@ class AppRouter {
         userProfileBloc.stream,
       ),
       redirect: (context, state) {
-        final authState = authBloc.state;
-        final onboardingState = onboardingBloc.state;
-        final profileState = userProfileBloc.state;
+        final authState = context.read<AuthBloc>().state;
+        final onboardingState = context.read<OnboardingBloc>().state;
+        final profileState = context.read<UserProfileBloc>().state;
 
-        print('🔍 ROUTER DEBUG:');
-        print('  Current location: ${state.matchedLocation}');
-        print('  Auth state: ${authState.runtimeType}');
-        print('  Onboarding state: ${onboardingState.runtimeType}');
-        print('  Profile state: ${profileState.runtimeType}');
-
-        // Always show splash first
-        if (authState is AuthInitial) {
-          print('  ➡️ Redirecting to splash (AuthInitial)');
-          return AppRoutes.splash;
-        }
-
-        // If not authenticated, go to auth FIRST (correct UX flow)
+        // Handle unauthenticated users
         if (authState is AuthUnauthenticated) {
-          print('  ➡️ Redirecting to auth (AuthUnauthenticated)');
-          return AppRoutes.auth;
+          if (state.matchedLocation == AppRoutes.splash ||
+              state.matchedLocation == AppRoutes.onboarding ||
+              state.matchedLocation == AppRoutes.auth ||
+              state.matchedLocation == AppRoutes.profileCreation ||
+              state.matchedLocation == AppRoutes.dashboard ||
+              state.matchedLocation == AppRoutes.projects ||
+              state.matchedLocation == AppRoutes.settings) {
+            return AppRoutes.auth;
+          }
         }
 
-        // If authenticated, check onboarding THEN profile (correct order)
+        // Handle authenticated users
         if (authState is AuthAuthenticated) {
-          print('  ✅ User is authenticated');
-
           // First: Check if onboarding is needed (for new users)
           if (onboardingState is OnboardingIncomplete) {
-            print('  ➡️ Redirecting to onboarding (OnboardingIncomplete)');
             return AppRoutes.onboarding;
           }
 
@@ -91,15 +84,11 @@ class AppRouter {
             // Don't redirect to profile creation if profile is still loading or initial
             if (profileState is UserProfileLoading ||
                 profileState is UserProfileInitial) {
-              print('  ⏳ Profile is loading/initial, staying on current route');
               return null; // Stay on current route while loading
             }
 
             if (profileState is ProfileIncomplete ||
                 profileState is UserProfileError) {
-              print(
-                '  ➡️ Redirecting to profile creation (ProfileIncomplete/UserProfileError)',
-              );
               return AppRoutes.profileCreation;
             }
           }
@@ -112,13 +101,11 @@ class AppRouter {
                 state.matchedLocation == AppRoutes.onboarding ||
                 state.matchedLocation == AppRoutes.auth ||
                 state.matchedLocation == AppRoutes.profileCreation) {
-              print('  ➡️ Redirecting to dashboard (all complete)');
               return AppRoutes.dashboard;
             }
           }
         }
 
-        print('  ➡️ No redirect (staying on current route)');
         return null;
       },
       routes: [

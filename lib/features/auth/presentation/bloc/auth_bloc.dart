@@ -40,7 +40,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await emit.forEach(
       getAuthState(),
       onData: (user) {
-        return user != null ? AuthAuthenticated(user) : AuthUnauthenticated();
+        if (user != null) {
+          return AuthAuthenticated(user);
+        } else {
+          return AuthUnauthenticated();
+        }
       },
       onError: (_, __) {
         return AuthError('Failed to check auth state');
@@ -57,10 +61,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       EmailAddress(event.email),
       PasswordValue(event.password),
     );
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(AuthAuthenticated(user)),
-    );
+    result.fold((failure) => emit(AuthError(failure.message)), (user) {
+      emit(AuthAuthenticated(user));
+    });
   }
 
   Future<void> _onAuthSignUpRequested(
@@ -72,10 +75,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       EmailAddress(event.email),
       PasswordValue(event.password),
     );
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(AuthAuthenticated(user)),
-    );
+    result.fold((failure) => emit(AuthError(failure.message)), (user) {
+      emit(AuthAuthenticated(user));
+    });
   }
 
   Future<void> _onAuthSignOutRequested(

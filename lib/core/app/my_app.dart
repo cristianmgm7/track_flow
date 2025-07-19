@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
   MyApp({super.key}) {
     // App constructor called
   }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -104,8 +105,10 @@ class _AppState extends State<_App> {
         if (state is AuthAuthenticated && !_hasInitialized) {
           _hasInitialized = true;
           sl<StartupResourceManager>().initializeAppData();
-          // Initialize user profile check
-          context.read<UserProfileBloc>().add(CheckProfileCompleteness());
+          // Execute CheckProfileCompleteness after a small delay to allow session to be established
+          Future.delayed(const Duration(milliseconds: 100), () {
+            context.read<UserProfileBloc>().add(CheckProfileCompleteness());
+          });
         }
       },
       child: MaterialApp.router(
