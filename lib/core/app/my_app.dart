@@ -21,6 +21,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:trackflow/core/coordination/app_flow_coordinator.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -105,10 +106,7 @@ class _AppState extends State<_App> {
         if (state is AuthAuthenticated && !_hasInitialized) {
           _hasInitialized = true;
           sl<StartupResourceManager>().initializeAppData();
-          // Execute CheckProfileCompleteness after a small delay to allow session to be established
-          Future.delayed(const Duration(milliseconds: 100), () {
-            context.read<UserProfileBloc>().add(CheckProfileCompleteness());
-          });
+          // Coordinator will handle profile completeness check automatically
         }
       },
       child: MaterialApp.router(

@@ -96,7 +96,7 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                     ? 'Successfully signed in!'
                     : 'Account created successfully!',
               ),
-              backgroundColor: AppColors.success ?? Colors.green,
+              backgroundColor: AppColors.success ?? AppColors.success,
               duration: const Duration(seconds: 2),
             ),
           );

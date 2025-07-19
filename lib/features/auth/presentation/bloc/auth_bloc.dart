@@ -90,6 +90,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
     result.fold((failure) => emit(AuthError(failure.message)), (user) {
       emit(AuthAuthenticated(user));
+      // For new users, ensure onboarding is marked as incomplete
+      // This will be handled by the router logic
     });
   }
 

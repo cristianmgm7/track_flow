@@ -31,6 +31,7 @@ import 'package:trackflow/features/user_profile/presentation/screens/profile_cre
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:trackflow/core/coordination/app_flow_coordinator.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -55,55 +56,51 @@ class AppRouter {
         userProfileBloc.stream,
       ),
       redirect: (context, state) {
-        final authState = context.read<AuthBloc>().state;
-        final onboardingState = context.read<OnboardingBloc>().state;
-        final profileState = context.read<UserProfileBloc>().state;
+        // Use coordinator for clean flow logic
+        final authBloc = context.read<AuthBloc>();
+        final onboardingBloc = context.read<OnboardingBloc>();
+        final userProfileBloc = context.read<UserProfileBloc>();
 
-        // Handle unauthenticated users
-        if (authState is AuthUnauthenticated) {
-          if (state.matchedLocation == AppRoutes.splash ||
-              state.matchedLocation == AppRoutes.onboarding ||
-              state.matchedLocation == AppRoutes.auth ||
-              state.matchedLocation == AppRoutes.profileCreation ||
-              state.matchedLocation == AppRoutes.dashboard ||
-              state.matchedLocation == AppRoutes.projects ||
-              state.matchedLocation == AppRoutes.settings) {
-            return AppRoutes.auth;
-          }
-        }
+        // Create coordinator instance for this request
+        final coordinator = AppFlowCoordinator(
+          authBloc: authBloc,
+          onboardingBloc: onboardingBloc,
+          userProfileBloc: userProfileBloc,
+        );
 
-        // Handle authenticated users
-        if (authState is AuthAuthenticated) {
-          // First: Check if onboarding is needed (for new users)
-          if (onboardingState is OnboardingIncomplete) {
+        final flowState = coordinator.getCurrentFlowState();
+
+        switch (flowState) {
+          case AppFlowState.unauthenticated:
+            if (state.matchedLocation == AppRoutes.splash ||
+                state.matchedLocation == AppRoutes.onboarding ||
+                state.matchedLocation == AppRoutes.auth ||
+                state.matchedLocation == AppRoutes.profileCreation ||
+                state.matchedLocation == AppRoutes.dashboard ||
+                state.matchedLocation == AppRoutes.projects ||
+                state.matchedLocation == AppRoutes.settings) {
+              return AppRoutes.auth;
+            }
+            break;
+
+          case AppFlowState.needsOnboarding:
             return AppRoutes.onboarding;
-          }
 
-          // Second: Check if profile creation is needed
-          if (onboardingState is OnboardingCompleted) {
-            // Don't redirect to profile creation if profile is still loading or initial
-            if (profileState is UserProfileLoading ||
-                profileState is UserProfileInitial) {
-              return null; // Stay on current route while loading
-            }
+          case AppFlowState.needsProfileSetup:
+            return AppRoutes.profileCreation;
 
-            if (profileState is ProfileIncomplete ||
-                profileState is UserProfileError) {
-              return AppRoutes.profileCreation;
-            }
-          }
-
-          // Third: If everything is complete, go to dashboard
-          if (onboardingState is OnboardingCompleted &&
-              (profileState is ProfileComplete ||
-                  profileState is UserProfileLoaded)) {
+          case AppFlowState.ready:
             if (state.matchedLocation == AppRoutes.splash ||
                 state.matchedLocation == AppRoutes.onboarding ||
                 state.matchedLocation == AppRoutes.auth ||
                 state.matchedLocation == AppRoutes.profileCreation) {
               return AppRoutes.dashboard;
             }
-          }
+            break;
+
+          case AppFlowState.loading:
+            // Stay on current route while loading
+            return null;
         }
 
         return null;
