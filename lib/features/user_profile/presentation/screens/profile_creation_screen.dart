@@ -64,14 +64,22 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     // Try to get userId from session storage first
     final sessionStorage = sl<SessionStorage>();
     String? userId = sessionStorage.getUserId();
+    String? userEmail;
 
     // If session storage doesn't have userId, try to get it from auth state
     if (userId == null) {
       final authState = context.read<AuthBloc>().state;
       if (authState is AuthAuthenticated) {
         userId = authState.user.id.value;
+        userEmail = authState.user.email;
         // Save it to session storage for future use
         sessionStorage.saveUserId(userId);
+      }
+    } else {
+      // Get email from auth state even if we have userId
+      final authState = context.read<AuthBloc>().state;
+      if (authState is AuthAuthenticated) {
+        userEmail = authState.user.email;
       }
     }
 
@@ -91,7 +99,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     final profile = UserProfile(
       id: UserId.fromUniqueString(userId),
       name: _nameController.text.trim(),
-      email: '', // Will be populated by the usecase
+      email: userEmail ?? '', // Will be populated by the usecase
       avatarUrl: _avatarUrl,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

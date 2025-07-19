@@ -15,10 +15,13 @@ class UpdateUserProfileUseCase {
 
   Future<Either<Failure, void>> call(UserProfile userProfile) async {
     final userId = sessionStorage.getUserId();
+
     if (userId == null) {
       return left(UnexpectedFailure('User not found'));
     }
+
     userProfile = userProfile.copyWith(id: UserId.fromUniqueString(userId));
+
     return await repository.updateUserProfile(userProfile);
   }
 }

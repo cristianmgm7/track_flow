@@ -14,3 +14,5 @@ class MarkOnboardingCompleted extends OnboardingEvent {}
 class ResetOnboarding extends OnboardingEvent {}
 
 class ResetOnboardingStatus extends OnboardingEvent {}
+
+class ClearAllOnboardingData extends OnboardingEvent {}

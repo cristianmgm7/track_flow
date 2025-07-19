@@ -20,4 +20,8 @@ class OnboardingUseCase {
   Future<Either<Failure, Unit>> resetOnboarding() async {
     return await _onboardingRepository.resetOnboarding();
   }
+
+  Future<Either<Failure, Unit>> clearAllOnboardingData() async {
+    return await _onboardingRepository.clearAllOnboardingData();
+  }
 }

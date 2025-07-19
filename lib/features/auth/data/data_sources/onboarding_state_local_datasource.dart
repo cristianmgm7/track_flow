@@ -10,6 +10,7 @@ abstract class OnboardingStateLocalDataSource {
   Future<Either<Failure, bool>> isOnboardingCompleted();
   Future<Either<Failure, Unit>> setWelcomeScreenSeen(bool seen);
   Future<Either<Failure, bool>> isWelcomeScreenSeen();
+  Future<Either<Failure, Unit>> clearAllOnboardingData();
 }
 
 @LazySingleton(as: OnboardingStateLocalDataSource)
@@ -56,6 +57,16 @@ class OnboardingStateLocalDataSourceImpl
       return Right(seen);
     } catch (e) {
       return Left(CacheFailure('Failed to check welcome screen status: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> clearAllOnboardingData() async {
+    try {
+      await _prefs.clear();
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to clear onboarding data: $e'));
     }
   }
 }

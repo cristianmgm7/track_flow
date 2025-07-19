@@ -15,6 +15,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<MarkOnboardingCompleted>(_onMarkOnboardingCompleted);
     on<ResetOnboarding>(_onResetOnboarding);
     on<ResetOnboardingStatus>(_onResetOnboardingStatus);
+    on<ClearAllOnboardingData>(_onClearAllOnboardingData);
   }
 
   Future<void> _onCheckOnboardingStatus(
@@ -79,17 +80,34 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     try {
       final result = await _onboardingUseCase.resetOnboarding();
       result.fold(
-        (failure) {
-          emit(
-            OnboardingError('Failed to reset onboarding: ${failure.message}'),
-          );
-        },
-        (_) {
-          emit(OnboardingIncomplete(hasCompletedOnboarding: false));
-        },
+        (failure) => emit(
+          OnboardingError('Failed to reset onboarding: ${failure.message}'),
+        ),
+        (_) => emit(OnboardingIncomplete(hasCompletedOnboarding: false)),
       );
     } catch (e) {
       emit(OnboardingError('Failed to reset onboarding: $e'));
+    }
+  }
+
+  Future<void> _onClearAllOnboardingData(
+    ClearAllOnboardingData event,
+    Emitter<OnboardingState> emit,
+  ) async {
+    emit(OnboardingLoading());
+
+    try {
+      final result = await _onboardingUseCase.clearAllOnboardingData();
+      result.fold(
+        (failure) => emit(
+          OnboardingError(
+            'Failed to clear onboarding data: ${failure.message}',
+          ),
+        ),
+        (_) => emit(OnboardingIncomplete(hasCompletedOnboarding: false)),
+      );
+    } catch (e) {
+      emit(OnboardingError('Failed to clear onboarding data: $e'));
     }
   }
 }

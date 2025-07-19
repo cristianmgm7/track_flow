@@ -34,7 +34,7 @@ class ProfileCompletenessValidator {
   }
 
   static bool _hasCreativeRole(CreativeRole? creativeRole) {
-    return creativeRole != null && creativeRole != CreativeRole.other;
+    return creativeRole != null;
   }
 
   static bool _hasValidEmail(String email) {

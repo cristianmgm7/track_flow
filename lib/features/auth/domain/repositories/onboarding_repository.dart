@@ -12,4 +12,7 @@ abstract class OnboardingRepository {
 
   /// Reset onboarding status (for testing)
   Future<Either<Failure, Unit>> resetOnboarding();
+
+  /// Clear all onboarding data (for user deletion scenarios)
+  Future<Either<Failure, Unit>> clearAllOnboardingData();
 }
