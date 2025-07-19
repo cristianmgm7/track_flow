@@ -97,14 +97,11 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   ) async {
     emit(UserProfileLoading());
 
-    final result =
-        await checkProfileCompletenessUseCase.getDetailedCompleteness();
+    try {
+      final result =
+          await checkProfileCompletenessUseCase.getDetailedCompleteness();
 
-    result.fold(
-      (failure) {
-        emit(UserProfileError());
-      },
-      (completenessInfo) {
+      result.fold((failure) => emit(UserProfileError()), (completenessInfo) {
         if (completenessInfo.isComplete && completenessInfo.profile != null) {
           emit(ProfileComplete(completenessInfo.profile!));
         } else {
@@ -115,8 +112,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
             ),
           );
         }
-      },
-    );
+      });
+    } catch (e) {
+      emit(UserProfileError());
+    }
   }
 
   @override

@@ -48,6 +48,7 @@ class CheckProfileCompletenessUseCase {
   getDetailedCompleteness() async {
     try {
       final userId = _sessionStorage.getUserId();
+
       if (userId == null) {
         return Left(ServerFailure('No user session found'));
       }

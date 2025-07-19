@@ -73,6 +73,7 @@ class _App extends StatefulWidget {
 
 class _AppState extends State<_App> {
   late final GoRouter _router;
+  bool _hasInitialized = false;
 
   @override
   void initState() {
@@ -100,7 +101,8 @@ class _AppState extends State<_App> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is AuthAuthenticated) {
+        if (state is AuthAuthenticated && !_hasInitialized) {
+          _hasInitialized = true;
           sl<StartupResourceManager>().initializeAppData();
           // Initialize user profile check
           context.read<UserProfileBloc>().add(CheckProfileCompleteness());
