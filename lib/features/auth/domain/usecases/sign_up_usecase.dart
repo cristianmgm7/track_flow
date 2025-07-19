@@ -1,36 +1,28 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import '../entities/email.dart';
-import '../entities/password.dart';
-import '../entities/user.dart';
-import '../repositories/auth_repository.dart';
+import 'package:trackflow/features/auth/domain/entities/email.dart';
+import 'package:trackflow/features/auth/domain/entities/password.dart';
+import 'package:trackflow/features/auth/domain/entities/user.dart';
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 
 @lazySingleton
 class SignUpUseCase {
-  final AuthRepository repository;
-  SignUpUseCase(this.repository);
+  final AuthRepository _authRepository;
 
-  // call is a method that allow use the usecase as a function
+  SignUpUseCase(this._authRepository);
+
   Future<Either<Failure, User>> call(
     EmailAddress email,
     PasswordValue password,
   ) async {
-    if (email.value.isLeft()) {
-      return left(
-        email.value.swap().getOrElse(() => const InvalidEmailFailure()),
-      );
-    }
-    if (password.value.isLeft()) {
-      return left(
-        password.value.swap().getOrElse(() => const InvalidPasswordFailure()),
-      );
-    }
-
-    // getOrElse() is used to get the value from the Either object
-    return repository.signUpWithEmailAndPassword(
+    // ✅ Only authenticate user - no profile creation
+    // Profile will be created by the profile creation flow
+    final authResult = await _authRepository.signUpWithEmailAndPassword(
       email.value.getOrElse(() => ''),
       password.value.getOrElse(() => ''),
     );
+
+    return authResult.fold((failure) => Left(failure), (user) => Right(user));
   }
 }

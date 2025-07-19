@@ -64,7 +64,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     // Try to get userId from session storage first
     final sessionStorage = sl<SessionStorage>();
     String? userId = sessionStorage.getUserId();
-    
+
     // If session storage doesn't have userId, try to get it from auth state
     if (userId == null) {
       final authState = context.read<AuthBloc>().state;
@@ -74,7 +74,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         sessionStorage.saveUserId(userId);
       }
     }
-    
+
     if (userId == null) {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -106,7 +106,11 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     return BlocListener<UserProfileBloc, UserProfileState>(
       listener: (context, state) {
         if (state is UserProfileSaved) {
-          context.go(AppRoutes.projects);
+          // Profile was created successfully, trigger completeness check
+          context.read<UserProfileBloc>().add(CheckProfileCompleteness());
+        } else if (state is ProfileComplete) {
+          // Profile is complete, navigate to dashboard
+          context.go(AppRoutes.dashboard);
         } else if (state is UserProfileError) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -185,7 +189,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                   // Continue Button
                   SizedBox(height: Dimensions.space16),
                   PrimaryButton(
-                    text: 'Complete Profile',
+                    text: 'Complete Setup',
                     onPressed: _handleSubmit,
                     isLoading: _isLoading,
                     width: double.infinity,
@@ -204,7 +208,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome to TrackFlow! 🎵',
+          'Complete Your Profile 🎵',
           style: AppTextStyle.headlineLarge.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
@@ -212,7 +216,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         ),
         SizedBox(height: Dimensions.space8),
         Text(
-          'Let\'s set up your profile to get started with your music collaboration journey.',
+          'Great! You\'re almost ready to start collaborating. Let\'s personalize your profile so other musicians can connect with you.',
           style: AppTextStyle.bodyLarge.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -236,7 +240,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Profile Information',
+                  'Why This Matters',
                   style: AppTextStyle.labelMedium.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -244,7 +248,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                 ),
                 SizedBox(height: Dimensions.space4),
                 Text(
-                  'Your profile helps collaborators understand your role and expertise in music production.',
+                  'Your profile helps collaborators understand your role and expertise. This information will be visible to other musicians in the platform.',
                   style: AppTextStyle.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),

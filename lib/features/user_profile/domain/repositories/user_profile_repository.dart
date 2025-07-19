@@ -14,4 +14,9 @@ abstract class UserProfileRepository {
 
   /// Get a user profile by ID (one-time fetch)
   Future<Either<Failure, UserProfile?>> getUserProfile(UserId userId);
+
+  // New methods for profile management
+  Future<Either<Failure, UserProfile>> syncProfileFromRemote(UserId userId);
+  Future<Either<Failure, Unit>> clearProfileCache();
+  Future<Either<Failure, bool>> profileExists(UserId userId);
 }

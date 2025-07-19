@@ -32,33 +32,3 @@ class AuthError extends AuthState {
   @override
   List<Object> get props => [message];
 }
-
-// Onboarding States
-
-class OnboardingInitial extends AuthState {}
-
-class OnboardingLoading extends AuthState {}
-
-class WelcomeScreenInitial extends AuthState {}
-
-class OnboardingChecked extends AuthState {
-  final bool hasCompletedOnboarding;
-  final bool hasSeenLaunch;
-
-  const OnboardingChecked({
-    required this.hasCompletedOnboarding,
-    required this.hasSeenLaunch,
-  });
-
-  @override
-  List<Object?> get props => [hasCompletedOnboarding, hasSeenLaunch];
-}
-
-class OnboardingError extends AuthState {
-  final String message;
-
-  const OnboardingError(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}

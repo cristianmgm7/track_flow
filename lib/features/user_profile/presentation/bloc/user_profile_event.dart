@@ -22,3 +22,8 @@ class CreateUserProfile extends UserProfileEvent {
 }
 
 class ClearUserProfile extends UserProfileEvent {}
+
+class CheckProfileCompleteness extends UserProfileEvent {
+  final String? userId;
+  CheckProfileCompleteness({this.userId});
+}

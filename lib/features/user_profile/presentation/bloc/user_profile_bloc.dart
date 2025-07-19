@@ -7,6 +7,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
@@ -14,17 +15,20 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_s
 class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
+  final CheckProfileCompletenessUseCase checkProfileCompletenessUseCase;
 
   StreamSubscription<Either<Failure, UserProfile?>>? _profileSubscription;
 
   UserProfileBloc({
     required this.updateUserProfileUseCase,
     required this.watchUserProfileUseCase,
+    required this.checkProfileCompletenessUseCase,
   }) : super(UserProfileInitial()) {
     on<WatchUserProfile>(_onWatchUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
     on<CreateUserProfile>(_onCreateUserProfile);
     on<ClearUserProfile>(_onClearUserProfile);
+    on<CheckProfileCompleteness>(_onCheckProfileCompleteness);
   }
 
   Future<void> _onWatchUserProfile(
@@ -85,6 +89,29 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     _profileSubscription?.cancel();
     // Reset to initial state
     emit(UserProfileInitial());
+  }
+
+  Future<void> _onCheckProfileCompleteness(
+    CheckProfileCompleteness event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    emit(UserProfileLoading());
+
+    final result =
+        await checkProfileCompletenessUseCase.getDetailedCompleteness();
+
+    result.fold((failure) => emit(UserProfileError()), (completenessInfo) {
+      if (completenessInfo.isComplete && completenessInfo.profile != null) {
+        emit(ProfileComplete(completenessInfo.profile!));
+      } else {
+        emit(
+          ProfileIncomplete(
+            profile: completenessInfo.profile,
+            reason: completenessInfo.reason,
+          ),
+        );
+      }
+    });
   }
 
   @override

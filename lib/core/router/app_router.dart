@@ -14,13 +14,16 @@ import 'package:trackflow/features/projects/presentation/screens/project_list_sc
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
-import 'package:trackflow/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
@@ -37,34 +40,67 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(AuthBloc authBloc) {
+  static GoRouter router(
+    AuthBloc authBloc,
+    OnboardingBloc onboardingBloc,
+    UserProfileBloc userProfileBloc,
+  ) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: AppRoutes.dashboard,
-      refreshListenable: GoRouterRefreshStream(authBloc.stream),
+      initialLocation: AppRoutes.splash,
+      refreshListenable: GoRouterRefreshStream(
+        authBloc.stream,
+        onboardingBloc.stream,
+        userProfileBloc.stream,
+      ),
       redirect: (context, state) {
         final authState = authBloc.state;
-        if (authState is AuthInitial) return AppRoutes.splash;
-        if (authState is OnboardingInitial) return AppRoutes.onboarding;
-        if (authState is WelcomeScreenInitial) return AppRoutes.welcome;
-        if (authState is AuthUnauthenticated) return AppRoutes.auth;
-        if (authState is AuthAuthenticated &&
-            (state.matchedLocation == AppRoutes.splash ||
+        final onboardingState = onboardingBloc.state;
+        final profileState = userProfileBloc.state;
+
+        // Always show splash first
+        if (authState is AuthInitial) {
+          return AppRoutes.splash;
+        }
+
+        // If not authenticated, go to auth FIRST (correct UX flow)
+        if (authState is AuthUnauthenticated) {
+          return AppRoutes.auth;
+        }
+
+        // If authenticated, check onboarding THEN profile (correct order)
+        if (authState is AuthAuthenticated) {
+          // First: Check if onboarding is needed (for new users)
+          if (onboardingState is OnboardingIncomplete) {
+            return AppRoutes.onboarding;
+          }
+
+          // Second: Check if profile creation is needed
+          if (onboardingState is OnboardingCompleted) {
+            if (profileState is ProfileIncomplete) {
+              return AppRoutes.profileCreation;
+            }
+          }
+
+          // Third: If everything is complete, go to dashboard
+          if (onboardingState is OnboardingCompleted &&
+              (profileState is ProfileComplete ||
+                  profileState is UserProfileLoaded)) {
+            if (state.matchedLocation == AppRoutes.splash ||
                 state.matchedLocation == AppRoutes.onboarding ||
                 state.matchedLocation == AppRoutes.auth ||
-                state.matchedLocation == AppRoutes.welcome)) {
-          return AppRoutes.dashboard;
+                state.matchedLocation == AppRoutes.profileCreation) {
+              return AppRoutes.dashboard;
+            }
+          }
         }
+
         return null;
       },
       routes: [
         GoRoute(
           path: AppRoutes.splash,
           builder: (context, state) => const SplashScreen(),
-        ),
-        GoRoute(
-          path: AppRoutes.welcome,
-          builder: (context, state) => const WelcomeScreen(),
         ),
         GoRoute(
           path: AppRoutes.onboarding,
@@ -194,17 +230,36 @@ class AppRouter {
 }
 
 class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
+  GoRouterRefreshStream(
+    Stream<dynamic> authStream,
+    Stream<dynamic> onboardingStream,
+    Stream<dynamic> profileStream,
+  ) {
     notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
+
+    // Listen to all streams and notify when any changes
+    _authSubscription = authStream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+
+    _onboardingSubscription = onboardingStream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
+
+    _profileSubscription = profileStream.asBroadcastStream().listen(
       (dynamic _) => notifyListeners(),
     );
   }
-  late final StreamSubscription<dynamic> _subscription;
+
+  late final StreamSubscription<dynamic> _authSubscription;
+  late final StreamSubscription<dynamic> _onboardingSubscription;
+  late final StreamSubscription<dynamic> _profileSubscription;
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _authSubscription.cancel();
+    _onboardingSubscription.cancel();
+    _profileSubscription.cancel();
     super.dispose();
   }
 }

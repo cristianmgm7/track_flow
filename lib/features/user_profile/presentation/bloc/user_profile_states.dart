@@ -23,3 +23,20 @@ class UserProfileSaving extends UserProfileState {}
 class UserProfileSaved extends UserProfileState {}
 
 class UserProfileError extends UserProfileState {}
+
+class ProfileComplete extends UserProfileState {
+  final UserProfile profile;
+  ProfileComplete(this.profile);
+
+  @override
+  List<Object?> get props => [profile];
+}
+
+class ProfileIncomplete extends UserProfileState {
+  final UserProfile? profile;
+  final String reason;
+  ProfileIncomplete({this.profile, required this.reason});
+
+  @override
+  List<Object?> get props => [profile, reason];
+}

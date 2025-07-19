@@ -6,7 +6,10 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 abstract class UserProfileRemoteDataSource {
+  /// Get a SINGLE user profile by ID
   Future<Either<Failure, UserProfileDTO>> getProfileById(String userId);
+
+  /// Update a user profile
   Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile);
 
   /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)

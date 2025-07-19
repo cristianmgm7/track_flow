@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart';
@@ -18,7 +17,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignOutUseCase signOut;
   final GoogleSignInUseCase googleSignIn;
   final GetAuthStateUseCase getAuthState;
-  final OnboardingUseCase onboarding;
 
   AuthBloc({
     required this.signIn,
@@ -26,17 +24,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.signOut,
     required this.googleSignIn,
     required this.getAuthState,
-    required this.onboarding,
   }) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
     on<AuthGoogleSignInRequested>(_onAuthGoogleSignInRequested);
-
-    // Onboarding
-    on<OnboardingMarkCompleted>(_onboardingMarkCompleted);
-    on<WelcomeScreenMarkCompleted>(_welcomeScreenMarkCompleted);
   }
 
   Future<void> _onAuthCheckRequested(
@@ -104,29 +97,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(AuthError(failure.message)),
       (user) => emit(AuthAuthenticated(user)),
-    );
-  }
-
-  // Onboarding
-  Future<void> _onboardingMarkCompleted(
-    OnboardingMarkCompleted event,
-    Emitter<AuthState> emit,
-  ) async {
-    final result = await onboarding.onboardingCompleted();
-    result.fold(
-      (failure) => emit(AuthError('Failed to complete onboarding: ${failure.message}')),
-      (_) {}, // Success - no state change needed
-    );
-  }
-
-  Future<void> _welcomeScreenMarkCompleted(
-    WelcomeScreenMarkCompleted event,
-    Emitter<AuthState> emit,
-  ) async {
-    final result = await onboarding.welcomeScreenSeenCompleted();
-    result.fold(
-      (failure) => emit(AuthError('Failed to mark welcome screen as seen: ${failure.message}')),
-      (_) {}, // Success - no state change needed
     );
   }
 }

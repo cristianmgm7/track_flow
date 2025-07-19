@@ -7,6 +7,8 @@ import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
@@ -29,6 +31,10 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(
           create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
+        ),
+        BlocProvider<OnboardingBloc>(
+          create:
+              (context) => sl<OnboardingBloc>()..add(CheckOnboardingStatus()),
         ),
         BlocProvider<UserProfileBloc>(
           create: (context) => sl<UserProfileBloc>(),
@@ -70,7 +76,11 @@ class _AppState extends State<_App> {
   @override
   void initState() {
     super.initState();
-    _router = AppRouter.router(context.read<AuthBloc>());
+    _router = AppRouter.router(
+      context.read<AuthBloc>(),
+      context.read<OnboardingBloc>(),
+      context.read<UserProfileBloc>(),
+    );
 
     // Escuchar el dynamic link
     final dynamicLinkService = sl<DynamicLinkService>();

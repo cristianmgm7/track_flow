@@ -11,8 +11,6 @@ import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
-import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
@@ -26,47 +24,11 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  bool _hasCheckedProfile = false;
-
   @override
   void initState() {
     super.initState();
     // Initialize user profile watching
     context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
-    _checkProfileCompleteness();
-  }
-
-  Future<void> _checkProfileCompleteness() async {
-    if (_hasCheckedProfile) return;
-
-    // Add a small delay to ensure session is properly established
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    final checkProfileUseCase = sl<CheckProfileCompletenessUseCase>();
-    final result = await checkProfileUseCase.call();
-
-    result.fold(
-      (failure) {
-        // Only redirect if it's specifically a profile completeness issue
-        // not a session issue
-        if (failure.message.contains('No user session found')) {
-          // Don't redirect if there's no session - let auth handle it
-          print('No user session found during profile check');
-        } else {
-          // Profile incomplete, redirect to creation
-          if (mounted) {
-            context.go(AppRoutes.profileCreation);
-          }
-        }
-      },
-      (isComplete) {
-        if (!isComplete && mounted) {
-          context.go(AppRoutes.profileCreation);
-        }
-      },
-    );
-
-    _hasCheckedProfile = true;
   }
 
   @override
@@ -86,9 +48,10 @@ class _MainScaffoldState extends State<MainScaffold> {
       },
       child: BlocListener<UserProfileBloc, UserProfileState>(
         listener: (context, state) {
+          // Handle profile state changes if needed
           if (state is UserProfileSaved) {
-            // Profile was successfully created/updated, reset the check flag
-            _hasCheckedProfile = false;
+            // Profile was successfully created/updated
+            // The router will handle navigation based on profile completeness
           }
         },
         child: AppScaffold(

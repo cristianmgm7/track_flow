@@ -42,14 +42,7 @@ class _AvatarUploaderState extends State<AvatarUploader> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Center(
-          child: Stack(
-            children: [
-              _buildAvatar(),
-              _buildEditButton(),
-            ],
-          ),
-        ),
+        Center(child: Stack(children: [_buildAvatar(), _buildEditButton()])),
         SizedBox(height: Dimensions.space12),
         Text(
           'Profile Picture',
@@ -72,7 +65,7 @@ class _AvatarUploaderState extends State<AvatarUploader> {
 
   Widget _buildAvatar() {
     final avatarProvider = ImageUtils.createSafeImageProvider(_avatarUrl);
-    
+
     return Container(
       width: 120,
       height: 120,
@@ -94,13 +87,14 @@ class _AvatarUploaderState extends State<AvatarUploader> {
         radius: 58,
         backgroundColor: AppColors.surface,
         backgroundImage: avatarProvider,
-        child: avatarProvider == null
-            ? Icon(
-                Icons.person,
-                size: 60,
-                color: AppColors.textSecondary.withValues(alpha: 0.5),
-              )
-            : null,
+        child:
+            avatarProvider == null
+                ? Icon(
+                  Icons.person,
+                  size: 60,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                )
+                : null,
       ),
     );
   }
@@ -120,10 +114,7 @@ class _AvatarUploaderState extends State<AvatarUploader> {
             decoration: BoxDecoration(
               color: AppColors.primary,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.surface,
-                width: 3,
-              ),
+              border: Border.all(color: AppColors.surface, width: 3),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.grey900.withValues(alpha: 0.2),

@@ -3,26 +3,28 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
+import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
+    return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
-        if (state is OnboardingChecked && state.hasCompletedOnboarding) {
-          context.go(AppRoutes.auth);
+        if (state is OnboardingCompleted) {
+          // Navigate to profile creation after completing onboarding
+          // The router will handle the flow automatically
+          context.go(AppRoutes.profileCreation);
         } else if (state is OnboardingError) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
-      child: BlocBuilder<AuthBloc, AuthState>(
+      child: BlocBuilder<OnboardingBloc, OnboardingState>(
         builder: (context, state) {
           if (state is OnboardingLoading) {
             return const Scaffold(
@@ -34,7 +36,7 @@ class OnboardingScreen extends StatelessWidget {
             PageViewModel(
               title: "Welcome to TrackFlow",
               body:
-                  "The ultimate platform for artists, producers, and songwriters to collaborate on music projects.",
+                  "Now that you have your account, let's explore what you can do with TrackFlow - the ultimate platform for music collaboration.",
               image: const Icon(
                 Icons.music_note,
                 size: 120,
@@ -51,7 +53,7 @@ class OnboardingScreen extends StatelessWidget {
             PageViewModel(
               title: "Collaborate Seamlessly",
               body:
-                  "Work together with your team in real-time, share files, and track project progress.",
+                  "Work together with your team in real-time, share files, and track project progress with ease.",
               image: const Icon(Icons.group, size: 120, color: Colors.blue),
               decoration: const PageDecoration(
                 titleTextStyle: TextStyle(
@@ -64,7 +66,7 @@ class OnboardingScreen extends StatelessWidget {
             PageViewModel(
               title: "Stay Organized",
               body:
-                  "Keep all your projects, files, and communications in one place.",
+                  "Keep all your projects, files, and communications in one place. Never lose track of your music again.",
               image: const Icon(Icons.folder, size: 120, color: Colors.blue),
               decoration: const PageDecoration(
                 titleTextStyle: TextStyle(
@@ -79,11 +81,15 @@ class OnboardingScreen extends StatelessWidget {
           return IntroductionScreen(
             pages: pages,
             onDone:
-                () => context.read<AuthBloc>().add(OnboardingMarkCompleted()),
+                () => context.read<OnboardingBloc>().add(
+                  MarkOnboardingCompleted(),
+                ),
             showSkipButton: true,
             skip: const Text("Skip"),
             onSkip:
-                () => context.read<AuthBloc>().add(OnboardingMarkCompleted()),
+                () => context.read<OnboardingBloc>().add(
+                  MarkOnboardingCompleted(),
+                ),
             next: const Icon(Icons.arrow_forward),
             done: const Text(
               "Get Started",
