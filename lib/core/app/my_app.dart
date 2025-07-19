@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/coordination/app_flow_%20events.dart';
 import 'package:trackflow/core/theme/app_theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
@@ -18,10 +19,9 @@ import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audi
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/core/coordination/app_flow_coordinator.dart';
+import 'package:trackflow/core/coordination/app_flow_bloc.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -41,6 +41,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<UserProfileBloc>(
           create: (context) => sl<UserProfileBloc>(),
+        ),
+        BlocProvider<AppFlowBloc>(
+          create: (context) => sl<AppFlowBloc>()..add(CheckAppFlow()),
         ),
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),

@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:trackflow/main.dart' as app;
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
-import 'package:trackflow/core/router/app_routes.dart';
+
 import 'helpers/test_helpers.dart';
 
 void main() {

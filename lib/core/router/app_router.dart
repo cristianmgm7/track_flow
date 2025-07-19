@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/coordination/app_flow_%20events.dart';
+import 'package:trackflow/core/coordination/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
@@ -15,7 +17,6 @@ import 'package:trackflow/features/magic_link/presentation/screens/magic_link_ha
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -23,15 +24,13 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
-import 'package:trackflow/core/coordination/app_flow_coordinator.dart';
+import 'package:trackflow/core/coordination/app_flow_bloc.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -54,53 +53,44 @@ class AppRouter {
         authBloc.stream,
         onboardingBloc.stream,
         userProfileBloc.stream,
+        sl<AppFlowBloc>().stream,
       ),
       redirect: (context, state) {
-        // Use coordinator for clean flow logic
-        final authBloc = context.read<AuthBloc>();
-        final onboardingBloc = context.read<OnboardingBloc>();
-        final userProfileBloc = context.read<UserProfileBloc>();
+        // Use AppFlowBloc for clean flow logic
+        final appFlowBloc = context.read<AppFlowBloc>();
+        final flowState = appFlowBloc.state;
 
-        // Create coordinator instance for this request
-        final coordinator = AppFlowCoordinator(
-          authBloc: authBloc,
-          onboardingBloc: onboardingBloc,
-          userProfileBloc: userProfileBloc,
-        );
-
-        final flowState = coordinator.getCurrentFlowState();
-
-        switch (flowState) {
-          case AppFlowState.unauthenticated:
-            if (state.matchedLocation == AppRoutes.splash ||
-                state.matchedLocation == AppRoutes.onboarding ||
-                state.matchedLocation == AppRoutes.auth ||
-                state.matchedLocation == AppRoutes.profileCreation ||
-                state.matchedLocation == AppRoutes.dashboard ||
-                state.matchedLocation == AppRoutes.projects ||
-                state.matchedLocation == AppRoutes.settings) {
-              return AppRoutes.auth;
-            }
-            break;
-
-          case AppFlowState.needsOnboarding:
-            return AppRoutes.onboarding;
-
-          case AppFlowState.needsProfileSetup:
-            return AppRoutes.profileCreation;
-
-          case AppFlowState.ready:
-            if (state.matchedLocation == AppRoutes.splash ||
-                state.matchedLocation == AppRoutes.onboarding ||
-                state.matchedLocation == AppRoutes.auth ||
-                state.matchedLocation == AppRoutes.profileCreation) {
-              return AppRoutes.dashboard;
-            }
-            break;
-
-          case AppFlowState.loading:
-            // Stay on current route while loading
-            return null;
+        if (flowState is AppFlowUnauthenticated) {
+          if (state.matchedLocation == AppRoutes.splash ||
+              state.matchedLocation == AppRoutes.onboarding ||
+              state.matchedLocation == AppRoutes.auth ||
+              state.matchedLocation == AppRoutes.profileCreation ||
+              state.matchedLocation == AppRoutes.dashboard ||
+              state.matchedLocation == AppRoutes.projects ||
+              state.matchedLocation == AppRoutes.settings) {
+            return AppRoutes.auth;
+          }
+        } else if (flowState is AppFlowNeedsOnboarding) {
+          return AppRoutes.onboarding;
+        } else if (flowState is AppFlowNeedsProfileSetup) {
+          return AppRoutes.profileCreation;
+        } else if (flowState is AppFlowReady) {
+          if (state.matchedLocation == AppRoutes.splash ||
+              state.matchedLocation == AppRoutes.onboarding ||
+              state.matchedLocation == AppRoutes.auth ||
+              state.matchedLocation == AppRoutes.profileCreation) {
+            return AppRoutes.dashboard;
+          }
+        } else if (flowState is AppFlowLoading) {
+          // Stay on current route while loading
+          return null;
+        } else if (flowState is AppFlowError) {
+          // Handle error state - could redirect to error page
+          return null;
+        } else if (flowState is AppFlowInitial) {
+          // Trigger initial flow check
+          appFlowBloc.add(CheckAppFlow());
+          return null;
         }
 
         return null;
@@ -242,6 +232,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
     Stream<dynamic> authStream,
     Stream<dynamic> onboardingStream,
     Stream<dynamic> profileStream,
+    Stream<dynamic> appFlowStream,
   ) {
     notifyListeners();
 
@@ -257,17 +248,23 @@ class GoRouterRefreshStream extends ChangeNotifier {
     _profileSubscription = profileStream.asBroadcastStream().listen(
       (dynamic _) => notifyListeners(),
     );
+
+    _appFlowSubscription = appFlowStream.asBroadcastStream().listen(
+      (dynamic _) => notifyListeners(),
+    );
   }
 
   late final StreamSubscription<dynamic> _authSubscription;
   late final StreamSubscription<dynamic> _onboardingSubscription;
   late final StreamSubscription<dynamic> _profileSubscription;
+  late final StreamSubscription<dynamic> _appFlowSubscription;
 
   @override
   void dispose() {
     _authSubscription.cancel();
     _onboardingSubscription.cancel();
     _profileSubscription.cancel();
+    _appFlowSubscription.cancel();
     super.dispose();
   }
 }

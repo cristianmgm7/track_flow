@@ -105,8 +105,8 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     emit(UserProfileLoading());
 
     try {
-      final result =
-          await checkProfileCompletenessUseCase.getDetailedCompleteness();
+      final result = await checkProfileCompletenessUseCase
+          .getDetailedCompleteness(event.userId);
 
       result.fold(
         (failure) {

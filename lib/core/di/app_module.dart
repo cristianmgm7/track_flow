@@ -17,10 +17,6 @@ import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
 import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_document_unified.dart';
 import 'package:trackflow/features/audio_cache/shared/data/models/cache_reference_document.dart';
-import 'package:trackflow/core/coordination/app_flow_coordinator.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 
 @module
 abstract class AppModule {
@@ -66,6 +62,6 @@ abstract class AppModule {
   @lazySingleton
   Connectivity get connectivity => Connectivity();
 
-  // AppFlowCoordinator will be registered as a singleton in the BLoC providers
+  // AppFlowBloc and use cases will be registered as singletons
   // to avoid circular dependency issues
 }
