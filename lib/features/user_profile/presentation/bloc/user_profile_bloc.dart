@@ -100,18 +100,23 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     final result =
         await checkProfileCompletenessUseCase.getDetailedCompleteness();
 
-    result.fold((failure) => emit(UserProfileError()), (completenessInfo) {
-      if (completenessInfo.isComplete && completenessInfo.profile != null) {
-        emit(ProfileComplete(completenessInfo.profile!));
-      } else {
-        emit(
-          ProfileIncomplete(
-            profile: completenessInfo.profile,
-            reason: completenessInfo.reason,
-          ),
-        );
-      }
-    });
+    result.fold(
+      (failure) {
+        emit(UserProfileError());
+      },
+      (completenessInfo) {
+        if (completenessInfo.isComplete && completenessInfo.profile != null) {
+          emit(ProfileComplete(completenessInfo.profile!));
+        } else {
+          emit(
+            ProfileIncomplete(
+              profile: completenessInfo.profile,
+              reason: completenessInfo.reason,
+            ),
+          );
+        }
+      },
+    );
   }
 
   @override

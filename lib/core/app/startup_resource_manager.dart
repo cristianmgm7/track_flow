@@ -29,9 +29,6 @@ class StartupResourceManager {
 
   Future<void> initializeAppData() async {
     try {
-      // Clear session storage to ensure clean state
-      await sessionStorage.clearUserId();
-
       // Get the current authenticated user ID
       final userIdResult = await authRepository.getSignedInUserId();
 

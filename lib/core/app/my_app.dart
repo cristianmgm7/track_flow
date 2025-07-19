@@ -18,6 +18,7 @@ import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audi
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
@@ -101,6 +102,8 @@ class _AppState extends State<_App> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           sl<StartupResourceManager>().initializeAppData();
+          // Initialize user profile check
+          context.read<UserProfileBloc>().add(CheckProfileCompleteness());
         }
       },
       child: MaterialApp.router(

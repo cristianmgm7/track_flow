@@ -77,7 +77,8 @@ class AppRouter {
 
           // Second: Check if profile creation is needed
           if (onboardingState is OnboardingCompleted) {
-            if (profileState is ProfileIncomplete) {
+            if (profileState is ProfileIncomplete ||
+                profileState is UserProfileInitial) {
               return AppRoutes.profileCreation;
             }
           }

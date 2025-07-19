@@ -39,10 +39,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     await emit.forEach(
       getAuthState(),
-      onData:
-          (user) =>
-              user != null ? AuthAuthenticated(user) : AuthUnauthenticated(),
-      onError: (_, __) => AuthError('Failed to check auth state'),
+      onData: (user) {
+        return user != null ? AuthAuthenticated(user) : AuthUnauthenticated();
+      },
+      onError: (_, __) {
+        return AuthError('Failed to check auth state');
+      },
     );
   }
 
