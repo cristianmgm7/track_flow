@@ -77,6 +77,11 @@ class AppRouter {
 
           // Second: Check if profile creation is needed
           if (onboardingState is OnboardingCompleted) {
+            // Don't redirect to profile creation if profile is still loading
+            if (profileState is UserProfileLoading) {
+              return null; // Stay on current route while loading
+            }
+
             if (profileState is ProfileIncomplete ||
                 profileState is UserProfileInitial ||
                 profileState is UserProfileError) {
