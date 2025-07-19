@@ -35,6 +35,9 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     WatchUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
+    print(
+      '👤 PROFILE DEBUG: WatchUserProfile started for userId: ${event.userId}',
+    );
     emit(UserProfileLoading());
     final stream =
         event.userId == null
@@ -43,15 +46,26 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     await emit.onEach<Either<Failure, UserProfile?>>(
       stream,
       onData: (eitherProfile) {
-        eitherProfile.fold((failure) => emit(UserProfileError()), (profile) {
-          if (profile != null) {
-            emit(UserProfileLoaded(profile));
-          } else {
+        eitherProfile.fold(
+          (failure) {
+            print('👤 PROFILE DEBUG: Watch failed - ${failure.message}');
             emit(UserProfileError());
-          }
-        });
+          },
+          (profile) {
+            if (profile != null) {
+              print('👤 PROFILE DEBUG: Profile loaded - ${profile.id.value}');
+              emit(UserProfileLoaded(profile));
+            } else {
+              print('👤 PROFILE DEBUG: Profile is null');
+              emit(UserProfileError());
+            }
+          },
+        );
       },
-      onError: (error, stackTrace) => emit(UserProfileError()),
+      onError: (error, stackTrace) {
+        print('👤 PROFILE DEBUG: Watch error - $error');
+        emit(UserProfileError());
+      },
     );
   }
 

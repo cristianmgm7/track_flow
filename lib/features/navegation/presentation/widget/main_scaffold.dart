@@ -27,8 +27,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   @override
   void initState() {
     super.initState();
-    // Initialize user profile watching
-    context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
+    // Profile watching is handled by CheckProfileCompleteness in my_app.dart
   }
 
   @override
@@ -37,11 +36,8 @@ class _MainScaffoldState extends State<MainScaffold> {
 
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, authState) {
-        // Refresh UserProfileBloc when auth state changes
-        if (authState is AuthAuthenticated) {
-          // User signed in, refresh profile watching
-          context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
-        } else if (authState is AuthUnauthenticated) {
+        // Profile management is handled by my_app.dart
+        if (authState is AuthUnauthenticated) {
           // User signed out, clear profile state
           context.read<UserProfileBloc>().add(ClearUserProfile());
         }
