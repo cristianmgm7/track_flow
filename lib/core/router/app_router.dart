@@ -58,33 +58,48 @@ class AppRouter {
         final onboardingState = onboardingBloc.state;
         final profileState = userProfileBloc.state;
 
+        print('🔍 ROUTER DEBUG:');
+        print('  Current location: ${state.matchedLocation}');
+        print('  Auth state: ${authState.runtimeType}');
+        print('  Onboarding state: ${onboardingState.runtimeType}');
+        print('  Profile state: ${profileState.runtimeType}');
+
         // Always show splash first
         if (authState is AuthInitial) {
+          print('  ➡️ Redirecting to splash (AuthInitial)');
           return AppRoutes.splash;
         }
 
         // If not authenticated, go to auth FIRST (correct UX flow)
         if (authState is AuthUnauthenticated) {
+          print('  ➡️ Redirecting to auth (AuthUnauthenticated)');
           return AppRoutes.auth;
         }
 
         // If authenticated, check onboarding THEN profile (correct order)
         if (authState is AuthAuthenticated) {
+          print('  ✅ User is authenticated');
+
           // First: Check if onboarding is needed (for new users)
           if (onboardingState is OnboardingIncomplete) {
+            print('  ➡️ Redirecting to onboarding (OnboardingIncomplete)');
             return AppRoutes.onboarding;
           }
 
           // Second: Check if profile creation is needed
           if (onboardingState is OnboardingCompleted) {
-            // Don't redirect to profile creation if profile is still loading
-            if (profileState is UserProfileLoading) {
+            // Don't redirect to profile creation if profile is still loading or initial
+            if (profileState is UserProfileLoading ||
+                profileState is UserProfileInitial) {
+              print('  ⏳ Profile is loading/initial, staying on current route');
               return null; // Stay on current route while loading
             }
 
             if (profileState is ProfileIncomplete ||
-                profileState is UserProfileInitial ||
                 profileState is UserProfileError) {
+              print(
+                '  ➡️ Redirecting to profile creation (ProfileIncomplete/UserProfileError)',
+              );
               return AppRoutes.profileCreation;
             }
           }
@@ -97,11 +112,13 @@ class AppRouter {
                 state.matchedLocation == AppRoutes.onboarding ||
                 state.matchedLocation == AppRoutes.auth ||
                 state.matchedLocation == AppRoutes.profileCreation) {
+              print('  ➡️ Redirecting to dashboard (all complete)');
               return AppRoutes.dashboard;
             }
           }
         }
 
+        print('  ➡️ No redirect (staying on current route)');
         return null;
       },
       routes: [

@@ -95,25 +95,44 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     CheckProfileCompleteness event,
     Emitter<UserProfileState> emit,
   ) async {
+    print('👤 PROFILE DEBUG: CheckProfileCompleteness started');
     emit(UserProfileLoading());
 
     try {
+      print('👤 PROFILE DEBUG: Calling checkProfileCompletenessUseCase');
       final result =
           await checkProfileCompletenessUseCase.getDetailedCompleteness();
 
-      result.fold((failure) => emit(UserProfileError()), (completenessInfo) {
-        if (completenessInfo.isComplete && completenessInfo.profile != null) {
-          emit(ProfileComplete(completenessInfo.profile!));
-        } else {
-          emit(
-            ProfileIncomplete(
-              profile: completenessInfo.profile,
-              reason: completenessInfo.reason,
-            ),
+      print('👤 PROFILE DEBUG: Got result from use case');
+      result.fold(
+        (failure) {
+          print(
+            '👤 PROFILE DEBUG: Completeness check failed - ${failure.message}',
           );
-        }
-      });
+          emit(UserProfileError());
+        },
+        (completenessInfo) {
+          print(
+            '👤 PROFILE DEBUG: Completeness result - isComplete: ${completenessInfo.isComplete}, profile: ${completenessInfo.profile?.id.value}',
+          );
+          if (completenessInfo.isComplete && completenessInfo.profile != null) {
+            print('👤 PROFILE DEBUG: Emitting ProfileComplete');
+            emit(ProfileComplete(completenessInfo.profile!));
+          } else {
+            print(
+              '👤 PROFILE DEBUG: Emitting ProfileIncomplete - reason: ${completenessInfo.reason}',
+            );
+            emit(
+              ProfileIncomplete(
+                profile: completenessInfo.profile,
+                reason: completenessInfo.reason,
+              ),
+            );
+          }
+        },
+      );
     } catch (e) {
+      print('👤 PROFILE DEBUG: Exception in CheckProfileCompleteness - $e');
       emit(UserProfileError());
     }
   }
