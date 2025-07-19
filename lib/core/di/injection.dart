@@ -7,6 +7,11 @@ final GetIt sl = GetIt.instance;
 @InjectableInit()
 Future<void> configureDependencies() async => sl.init();
 
+/// Reset all dependencies - useful for testing
+Future<void> resetDependencies() async {
+  await sl.reset();
+}
+
 // Register ProjectDetailBloc and WatchProjectDetailUseCase
 // If using injectable, annotate ProjectDetailBloc and WatchProjectDetailUseCase with @injectable or @lazySingleton as needed.
 // If using manual registration, add:

@@ -18,7 +18,7 @@ class NewAuthScreen extends StatefulWidget {
 
 class _NewAuthScreenState extends State<NewAuthScreen> {
   AuthStep _currentStep = AuthStep.welcome;
-  bool _isLogin = true;
+  bool _isLogin = false; // Default to signup mode for better UX
   bool _isPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();

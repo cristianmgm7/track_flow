@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:trackflow/main.dart' as app;
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group('Startup Debug Test', () {
+    testWidgets('Debug app startup process', (WidgetTester tester) async {
+      print('=== STARTING APP STARTUP DEBUG ===');
+
+      // Start the app
+      app.main();
+      await tester.pumpAndSettle();
+
+      print('Initial pump completed');
+
+      // Wait and check multiple times to see the progression
+      for (int i = 1; i <= 10; i++) {
+        await Future.delayed(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+
+        print('\n--- Check $i (${i}s after start) ---');
+
+        final textWidgets = find.byType(Text).evaluate();
+        print('Text widgets found: ${textWidgets.length}');
+
+        for (final widget in textWidgets) {
+          final text = widget.widget as Text;
+          print('  - "${text.data}"');
+        }
+
+        // Check for specific screens
+        final hasTrackFlow = find.text('TrackFlow').evaluate().isNotEmpty;
+        final hasWelcomeToTrackFlow =
+            find.text('Welcome to TrackFlow').evaluate().isNotEmpty;
+        final hasContinueWithEmail =
+            find.text('Continue with Email').evaluate().isNotEmpty;
+        final hasProjects =
+            find.textContaining('Projects').evaluate().isNotEmpty;
+
+        print('Has "TrackFlow": $hasTrackFlow');
+        print('Has "Welcome to TrackFlow": $hasWelcomeToTrackFlow');
+        print('Has "Continue with Email": $hasContinueWithEmail');
+        print('Has "Projects": $hasProjects');
+
+        // If we find the auth screen, we're good
+        if (hasTrackFlow && hasContinueWithEmail) {
+          print('✅ Auth screen loaded successfully!');
+          break;
+        }
+
+        // If we find the dashboard, that's also good
+        if (hasProjects) {
+          print('✅ Dashboard loaded successfully!');
+          break;
+        }
+
+        // If we find the splash screen, that's expected
+        if (hasWelcomeToTrackFlow) {
+          print('📱 Splash screen is showing (expected)');
+        }
+      }
+
+      print('\n=== STARTUP DEBUG COMPLETED ===');
+    });
+  });
+}
