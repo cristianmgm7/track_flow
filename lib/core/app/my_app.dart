@@ -83,11 +83,7 @@ class _AppState extends State<_App> {
   @override
   void initState() {
     super.initState();
-    _router = AppRouter.router(
-      context.read<AuthBloc>(),
-      context.read<OnboardingBloc>(),
-      context.read<UserProfileBloc>(),
-    );
+    _router = AppRouter.router(context.read<AppFlowBloc>());
 
     // Escuchar el dynamic link
     final dynamicLinkService = sl<DynamicLinkService>();

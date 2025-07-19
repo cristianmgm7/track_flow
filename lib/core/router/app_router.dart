@@ -41,23 +41,13 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 );
 
 class AppRouter {
-  static GoRouter router(
-    AuthBloc authBloc,
-    OnboardingBloc onboardingBloc,
-    UserProfileBloc userProfileBloc,
-  ) {
+  static GoRouter router(AppFlowBloc appFlowBloc) {
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: AppRoutes.splash,
-      refreshListenable: GoRouterRefreshStream(
-        authBloc.stream,
-        onboardingBloc.stream,
-        userProfileBloc.stream,
-        sl<AppFlowBloc>().stream,
-      ),
+      refreshListenable: GoRouterRefreshStream(appFlowBloc.stream),
       redirect: (context, state) {
         // Use AppFlowBloc for clean flow logic
-        final appFlowBloc = context.read<AppFlowBloc>();
         final flowState = appFlowBloc.state;
 
         if (flowState is AppFlowUnauthenticated) {
@@ -228,42 +218,19 @@ class AppRouter {
 }
 
 class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(
-    Stream<dynamic> authStream,
-    Stream<dynamic> onboardingStream,
-    Stream<dynamic> profileStream,
-    Stream<dynamic> appFlowStream,
-  ) {
+  GoRouterRefreshStream(Stream<dynamic> appFlowStream) {
     notifyListeners();
 
-    // Listen to all streams and notify when any changes
-    _authSubscription = authStream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-
-    _onboardingSubscription = onboardingStream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-
-    _profileSubscription = profileStream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-
+    // Listen to app flow stream and notify when it changes
     _appFlowSubscription = appFlowStream.asBroadcastStream().listen(
       (dynamic _) => notifyListeners(),
     );
   }
 
-  late final StreamSubscription<dynamic> _authSubscription;
-  late final StreamSubscription<dynamic> _onboardingSubscription;
-  late final StreamSubscription<dynamic> _profileSubscription;
   late final StreamSubscription<dynamic> _appFlowSubscription;
 
   @override
   void dispose() {
-    _authSubscription.cancel();
-    _onboardingSubscription.cancel();
-    _profileSubscription.cancel();
     _appFlowSubscription.cancel();
     super.dispose();
   }
