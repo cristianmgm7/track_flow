@@ -82,6 +82,29 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
             ),
           );
         }
+
+        // Handle successful authentication
+        if (state is AuthAuthenticated) {
+          // Clear any existing error messages
+          ScaffoldMessenger.of(context).clearSnackBars();
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _isLogin
+                    ? 'Successfully signed in!'
+                    : 'Account created successfully!',
+              ),
+              backgroundColor: AppColors.success ?? Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+
+          // Clear form fields after successful auth
+          _emailController.clear();
+          _passwordController.clear();
+        }
       },
       child: Scaffold(
         body: Container(
@@ -382,6 +405,7 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                   text: _isLogin ? 'Sign In' : 'Create Account',
                   onPressed: isLoading ? null : _handleSubmit,
                   isLoading: isLoading,
+                  // Disable button during loading to prevent multiple submissions
                 ),
                 SizedBox(height: Dimensions.space16),
                 TextButton(
