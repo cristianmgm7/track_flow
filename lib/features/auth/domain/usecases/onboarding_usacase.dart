@@ -16,4 +16,8 @@ class OnboardingUseCase {
   Future<Either<Failure, bool>> checkOnboardingCompleted() async {
     return await _onboardingRepository.checkOnboardingCompleted();
   }
+
+  Future<Either<Failure, Unit>> resetOnboarding() async {
+    return await _onboardingRepository.resetOnboarding();
+  }
 }

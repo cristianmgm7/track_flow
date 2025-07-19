@@ -14,6 +14,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<CheckOnboardingStatus>(_onCheckOnboardingStatus);
     on<MarkOnboardingCompleted>(_onMarkOnboardingCompleted);
     on<ResetOnboarding>(_onResetOnboarding);
+    on<ResetOnboardingStatus>(_onResetOnboardingStatus);
   }
 
   Future<void> _onCheckOnboardingStatus(
@@ -67,5 +68,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) async {
     emit(OnboardingInitial());
+  }
+
+  Future<void> _onResetOnboardingStatus(
+    ResetOnboardingStatus event,
+    Emitter<OnboardingState> emit,
+  ) async {
+    emit(OnboardingLoading());
+
+    try {
+      final result = await _onboardingUseCase.resetOnboarding();
+      result.fold(
+        (failure) {
+          emit(
+            OnboardingError('Failed to reset onboarding: ${failure.message}'),
+          );
+        },
+        (_) {
+          emit(OnboardingIncomplete(hasCompletedOnboarding: false));
+        },
+      );
+    } catch (e) {
+      emit(OnboardingError('Failed to reset onboarding: $e'));
+    }
   }
 }

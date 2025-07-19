@@ -9,4 +9,7 @@ abstract class OnboardingRepository {
 
   /// Check if onboarding is completed
   Future<Either<Failure, bool>> checkOnboardingCompleted();
+
+  /// Reset onboarding status (for testing)
+  Future<Either<Failure, Unit>> resetOnboarding();
 }

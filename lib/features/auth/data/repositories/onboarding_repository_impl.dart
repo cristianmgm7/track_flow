@@ -19,4 +19,9 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   Future<Either<Failure, bool>> checkOnboardingCompleted() async {
     return await _onboardingStateDataSource.isOnboardingCompleted();
   }
+
+  @override
+  Future<Either<Failure, Unit>> resetOnboarding() async {
+    return await _onboardingStateDataSource.setOnboardingCompleted(false);
+  }
 }
