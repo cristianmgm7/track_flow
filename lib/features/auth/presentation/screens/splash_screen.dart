@@ -7,7 +7,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppSplashScreen(
-      message: 'Welcome to TrackFlow',
+      message: 'Initializing TrackFlow...',
       logo: Image.asset('assets/images/logo.png', height: 100),
     );
   }

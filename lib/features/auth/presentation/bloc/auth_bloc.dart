@@ -37,19 +37,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    await emit.forEach(
-      getAuthState(),
-      onData: (user) {
-        if (user != null) {
-          return AuthAuthenticated(user);
-        } else {
-          return AuthUnauthenticated();
-        }
-      },
-      onError: (_, __) {
-        return AuthError('Failed to check auth state');
-      },
-    );
+
+    try {
+      // Add timeout to prevent infinite waiting
+      await emit.forEach(
+        getAuthState().timeout(
+          const Duration(seconds: 15),
+          onTimeout: (sink) {
+            sink.add(null);
+            sink.close();
+          },
+        ),
+        onData: (user) {
+          if (user != null) {
+            return AuthAuthenticated(user);
+          } else {
+            return AuthUnauthenticated();
+          }
+        },
+        onError: (_, __) {
+          return AuthError('Failed to check auth state');
+        },
+      );
+    } catch (e) {
+      // If timeout or other error, default to unauthenticated
+      emit(AuthUnauthenticated());
+    }
   }
 
   Future<void> _onAuthSignInRequested(
