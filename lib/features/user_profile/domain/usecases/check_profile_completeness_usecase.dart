@@ -121,8 +121,13 @@ class CheckProfileCompletenessUseCase {
     print('  - hasEmail: $hasEmail (${profile.email})');
     print('  - hasAvatar: $hasAvatar (${profile.avatarUrl})');
 
-    final isComplete = hasName && hasEmail && hasAvatar;
-    print('🔍 _isProfileComplete - Result: $isComplete');
+    // TEMPORARY: Only require name and avatar, skip email requirement
+    // TODO: Re-enable email requirement after fixing auth state
+    final isComplete = hasName && hasAvatar; // Removed hasEmail requirement
+
+    print(
+      '🔍 _isProfileComplete - Result: $isComplete (TEMPORARY: email not required)',
+    );
 
     return isComplete;
   }
