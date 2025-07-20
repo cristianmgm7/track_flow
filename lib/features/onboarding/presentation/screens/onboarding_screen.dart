@@ -6,18 +6,37 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
+import 'package:trackflow/core/coordination/app_flow_bloc.dart';
+import 'package:trackflow/core/coordination/app_flow_%20events.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Check onboarding status when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final onboardingBloc = context.read<OnboardingBloc>();
+      if (onboardingBloc.state is OnboardingInitial) {
+        onboardingBloc.add(CheckOnboardingStatus());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
         if (state is OnboardingCompleted) {
-          // Navigate to profile creation after completing onboarding
-          // The router will handle the flow automatically
-          context.go(AppRoutes.profileCreation);
+          // Notify AppFlowBloc that onboarding is completed
+          // This will trigger a re-evaluation of the app flow
+          context.read<AppFlowBloc>().add(UserAuthenticated());
         } else if (state is OnboardingError) {
           ScaffoldMessenger.of(
             context,

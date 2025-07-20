@@ -35,10 +35,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<AuthBloc>(
           create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
         ),
-        BlocProvider<OnboardingBloc>(
-          create:
-              (context) => sl<OnboardingBloc>()..add(CheckOnboardingStatus()),
-        ),
+        BlocProvider<OnboardingBloc>(create: (context) => sl<OnboardingBloc>()),
         BlocProvider<UserProfileBloc>(
           create: (context) => sl<UserProfileBloc>(),
         ),

@@ -1,3 +1,4 @@
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
 import '../entities/user.dart';
@@ -30,5 +31,5 @@ abstract class AuthRepository {
   Future<Either<Failure, bool>> isLoggedIn();
 
   /// Get the signed in user id
-  Future<Either<Failure, String>> getSignedInUserId();
+  Future<Either<Failure, UserId?>> getSignedInUserId();
 }
