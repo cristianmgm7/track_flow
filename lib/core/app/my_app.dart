@@ -39,9 +39,7 @@ class MyApp extends StatelessWidget {
         BlocProvider<UserProfileBloc>(
           create: (context) => sl<UserProfileBloc>(),
         ),
-        BlocProvider<AppFlowBloc>(
-          create: (context) => sl<AppFlowBloc>()..add(CheckAppFlow()),
-        ),
+        BlocProvider<AppFlowBloc>(create: (context) => sl<AppFlowBloc>()),
         BlocProvider<NavigationCubit>(
           create: (context) => sl<NavigationCubit>(),
         ),
@@ -101,8 +99,24 @@ class _AppState extends State<_App> {
       listener: (context, state) {
         if (state is AuthAuthenticated && !_hasInitialized) {
           _hasInitialized = true;
-          sl<StartupResourceManager>().initializeAppData();
-          // Coordinator will handle profile completeness check automatically
+          // First sync all data, then check app flow
+          sl<StartupResourceManager>()
+              .initializeAppData()
+              .then((_) {
+                // After syncing is complete, trigger app flow check
+                context.read<AppFlowBloc>().add(CheckAppFlow());
+              })
+              .catchError((error) {
+                // If sync fails, still check app flow
+                print(
+                  'Warning: Sync failed, but continuing with app flow: $error',
+                );
+                context.read<AppFlowBloc>().add(CheckAppFlow());
+              });
+        } else if (state is AuthUnauthenticated && !_hasInitialized) {
+          _hasInitialized = true;
+          // For unauthenticated users, check app flow immediately
+          context.read<AppFlowBloc>().add(CheckAppFlow());
         }
       },
       child: MaterialApp.router(

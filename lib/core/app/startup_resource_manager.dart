@@ -22,13 +22,18 @@ class StartupResourceManager {
   );
 
   Future<void> initializeAppData() async {
-    // Sync all user data for offline-first functionality
-    // Each sync use case handles its own user ID retrieval from session storage
-    await syncProjects();
-    await syncAudioTracks();
-    await syncUserProfile(); // Add missing user profile sync
-    await syncUserProfileCollaborators();
-    await syncAudioComments();
+    try {
+      // Sync all user data for offline-first functionality
+      // Each sync use case handles its own user ID retrieval from session storage
+      await syncProjects();
+      await syncAudioTracks();
+      await syncUserProfile(); // Add missing user profile sync
+      await syncUserProfileCollaborators();
+      await syncAudioComments();
+    } catch (e) {
+      // Log error but don't fail the app initialization
+      print('Warning: Failed to initialize app data: $e');
+    }
   }
 
   Future<void> refreshAppData() async {
