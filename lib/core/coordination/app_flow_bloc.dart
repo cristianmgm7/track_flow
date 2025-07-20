@@ -89,8 +89,10 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         return;
       }
 
-      // Check profile completeness
-      final profileResult = await _profileUseCase.getDetailedCompleteness();
+      // Check profile completeness for specific user
+      final profileResult = await _profileUseCase.getDetailedCompleteness(
+        userId.value,
+      );
 
       await profileResult.fold(
         (failure) async {

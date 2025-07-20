@@ -22,8 +22,11 @@ class StartupResourceManager {
   );
 
   Future<void> initializeAppData() async {
+    // Sync all user data for offline-first functionality
+    // Each sync use case handles its own user ID retrieval from session storage
     await syncProjects();
     await syncAudioTracks();
+    await syncUserProfile(); // Add missing user profile sync
     await syncUserProfileCollaborators();
     await syncAudioComments();
   }
