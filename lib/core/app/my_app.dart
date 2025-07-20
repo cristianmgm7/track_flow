@@ -118,7 +118,6 @@ class _AppState extends State<_App> {
           context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is AuthUnauthenticated && _hasInitialized) {
           // User signed out after initialization, notify AppFlowBloc
-          print('🔄 MyApp - User signed out, notifying AppFlowBloc');
           context.read<AppFlowBloc>().add(UserSignedOut());
         }
       },

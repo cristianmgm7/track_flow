@@ -149,7 +149,6 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
           print('✅ ProfileCreationScreen - Profile saved successfully');
           // Profile was created successfully, notify AppFlowBloc
           // This will trigger a re-evaluation of the app flow
-          print('🔄 ProfileCreationScreen - Notifying AppFlowBloc...');
           context.read<AppFlowBloc>().add(UserAuthenticated());
         } else if (state is UserProfileError) {
           print('❌ ProfileCreationScreen - Profile save failed');
