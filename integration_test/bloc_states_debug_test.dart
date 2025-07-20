@@ -8,8 +8,6 @@ void main() {
 
   group('BLoC States Debug Test', () {
     testWidgets('Debug BLoC states after signup', (WidgetTester tester) async {
-      print('=== DEBUGGING BLOC STATES AFTER SIGNUP ===');
-
       // Start the app
       app.main();
       await tester.pumpAndSettle();
@@ -21,8 +19,6 @@ void main() {
       // Navigate to auth screen
       final authText = find.text('TrackFlow');
       if (authText.evaluate().isNotEmpty) {
-        print('✅ Auth screen loaded');
-
         // Click "Continue with Email"
         await tester.tap(find.text('Continue with Email'));
         await tester.pumpAndSettle();
@@ -35,15 +31,11 @@ void main() {
         await tester.enterText(passwordField, 'password123');
         await tester.pumpAndSettle();
 
-        print('✅ Form filled');
-
         // Tap Create Account button (find by text and tap the first one)
         final createAccountButtons = find.text('Create Account');
         if (createAccountButtons.evaluate().isNotEmpty) {
           await tester.tap(createAccountButtons.first);
           await tester.pumpAndSettle();
-
-          print('✅ Create Account button tapped');
 
           // Wait for auth to complete
           await Future.delayed(const Duration(seconds: 5));
@@ -56,28 +48,18 @@ void main() {
           final successText = find.text('Account created successfully!');
 
           if (onboardingText.evaluate().isNotEmpty) {
-            print('✅ Navigated to onboarding screen - COORDINATOR WORKING!');
+            // Navigated to onboarding screen
           } else if (dashboardText.evaluate().isNotEmpty) {
-            print('✅ Navigated to dashboard - COORDINATOR WORKING!');
+            // Navigated to dashboard
           } else if (authStillText.evaluate().isNotEmpty) {
-            print('❌ Still on auth screen - navigation failed');
-
+            // Still on auth screen
             if (successText.evaluate().isNotEmpty) {
-              print('✅ Success message shown but no navigation');
-            } else {
-              print('❌ No success message shown');
+              // Success message shown but no navigation
             }
           } else {
-            print('✅ Navigated to different screen - COORDINATOR WORKING!');
-            print(
-              '   (App is no longer on auth screen, which means navigation succeeded)',
-            );
+            // Navigated to different screen
           }
-        } else {
-          print('❌ Create Account button not found');
         }
-      } else {
-        print('❌ Auth screen not loaded');
       }
     });
   });

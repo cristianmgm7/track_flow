@@ -23,16 +23,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Just verify the app doesn't crash
-      print('App started successfully without crashes');
-
       // Check if any text is visible
       final textWidgets = find.byType(Text).evaluate();
-      print('Found ${textWidgets.length} text widgets');
-
-      for (final widget in textWidgets) {
-        final text = widget.widget as Text;
-        print('Text: "${text.data}"');
-      }
     });
   });
 }
