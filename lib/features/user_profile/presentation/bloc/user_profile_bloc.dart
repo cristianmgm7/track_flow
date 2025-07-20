@@ -79,11 +79,25 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     CreateUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
+    print('🔄 UserProfileBloc - Creating user profile: ${event.profile.name}');
     emit(UserProfileSaving());
+
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
-      (failure) => emit(UserProfileError()),
-      (_) => emit(UserProfileSaved()),
+      (failure) {
+        print(
+          '❌ UserProfileBloc - Profile creation failed: ${failure.message}',
+        );
+        emit(UserProfileError());
+      },
+      (_) {
+        print('✅ UserProfileBloc - Profile created successfully');
+        emit(UserProfileSaved());
+      },
+    );
+
+    print(
+      '🔄 UserProfileBloc - Starting to watch profile: ${event.profile.id.value}',
     );
     add(WatchUserProfile(userId: event.profile.id.value));
   }

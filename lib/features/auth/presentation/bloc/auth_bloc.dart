@@ -36,6 +36,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🔄 AuthBloc - AuthCheckRequested started');
     emit(AuthLoading());
 
     try {
@@ -44,22 +45,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         getAuthState().timeout(
           const Duration(seconds: 15),
           onTimeout: (sink) {
+            print('⏰ AuthBloc - Auth state check timed out');
             sink.add(null);
             sink.close();
           },
         ),
         onData: (user) {
+          print('🔍 AuthBloc - Auth state data received: ${user?.email}');
           if (user != null) {
+            print('✅ AuthBloc - User authenticated: ${user.email}');
             return AuthAuthenticated(user);
           } else {
+            print('❌ AuthBloc - No user found, unauthenticated');
             return AuthUnauthenticated();
           }
         },
-        onError: (_, __) {
+        onError: (error, stackTrace) {
+          print('❌ AuthBloc - Auth state error: $error');
           return AuthError('Failed to check auth state');
         },
       );
     } catch (e) {
+      print('❌ AuthBloc - Auth check exception: $e');
       // If timeout or other error, default to unauthenticated
       emit(AuthUnauthenticated());
     }

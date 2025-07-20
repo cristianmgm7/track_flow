@@ -68,24 +68,38 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     String? userId = sessionStorage.getUserId();
     String? userEmail;
 
+    print('🔍 ProfileCreationScreen - Getting user info for profile creation');
+    print('🔍 ProfileCreationScreen - Session storage userId: $userId');
+
     // If session storage doesn't have userId, try to get it from auth state
     if (userId == null) {
       final authState = context.read<AuthBloc>().state;
+      print('🔍 ProfileCreationScreen - Auth state: $authState');
+
       if (authState is AuthAuthenticated) {
         userId = authState.user.id.value;
         userEmail = authState.user.email;
+        print(
+          '🔍 ProfileCreationScreen - Got from auth state - userId: $userId, email: $userEmail',
+        );
         // Save it to session storage for future use
         sessionStorage.saveUserId(userId);
       }
     } else {
       // Get email from auth state even if we have userId
       final authState = context.read<AuthBloc>().state;
+      print('🔍 ProfileCreationScreen - Auth state (with userId): $authState');
+
       if (authState is AuthAuthenticated) {
         userEmail = authState.user.email;
+        print(
+          '🔍 ProfileCreationScreen - Got email from auth state: $userEmail',
+        );
       }
     }
 
     if (userId == null) {
+      print('❌ ProfileCreationScreen - No userId found');
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -98,6 +112,13 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       return;
     }
 
+    // Set default avatar if none selected
+    if (_avatarUrl.isEmpty) {
+      _avatarUrl =
+          'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=${_nameController.text.trim().substring(0, 1).toUpperCase()}';
+      print('🔍 ProfileCreationScreen - Set default avatar: $_avatarUrl');
+    }
+
     final profile = UserProfile(
       id: UserId.fromUniqueString(userId),
       name: _nameController.text.trim(),
@@ -108,6 +129,13 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       creativeRole: _selectedRole,
     );
 
+    print('🔍 ProfileCreationScreen - Creating profile:');
+    print('  - id: ${profile.id.value}');
+    print('  - name: ${profile.name}');
+    print('  - email: ${profile.email}');
+    print('  - avatarUrl: ${profile.avatarUrl}');
+    print('  - creativeRole: ${profile.creativeRole}');
+
     context.read<UserProfileBloc>().add(CreateUserProfile(profile));
   }
 
@@ -115,11 +143,16 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   Widget build(BuildContext context) {
     return BlocListener<UserProfileBloc, UserProfileState>(
       listener: (context, state) {
+        print('🔍 ProfileCreationScreen - State changed: $state');
+
         if (state is UserProfileSaved) {
+          print('✅ ProfileCreationScreen - Profile saved successfully');
           // Profile was created successfully, notify AppFlowBloc
           // This will trigger a re-evaluation of the app flow
+          print('🔄 ProfileCreationScreen - Notifying AppFlowBloc...');
           context.read<AppFlowBloc>().add(UserAuthenticated());
         } else if (state is UserProfileError) {
+          print('❌ ProfileCreationScreen - Profile save failed');
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

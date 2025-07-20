@@ -49,8 +49,13 @@ class AppRouter {
       redirect: (context, state) {
         // Use AppFlowBloc for clean flow logic
         final flowState = appFlowBloc.state;
+        print(
+          '🔄 AppRouter - Redirect called. Current location: ${state.matchedLocation}',
+        );
+        print('🔄 AppRouter - Flow state: $flowState');
 
         if (flowState is AppFlowUnauthenticated) {
+          print('🔄 AppRouter - User unauthenticated, redirecting to auth');
           if (state.matchedLocation == AppRoutes.splash ||
               state.matchedLocation == AppRoutes.onboarding ||
               state.matchedLocation == AppRoutes.auth ||
@@ -61,10 +66,17 @@ class AppRouter {
             return AppRoutes.auth;
           }
         } else if (flowState is AppFlowNeedsOnboarding) {
+          print(
+            '🔄 AppRouter - User needs onboarding, redirecting to onboarding',
+          );
           return AppRoutes.onboarding;
         } else if (flowState is AppFlowNeedsProfileSetup) {
+          print(
+            '🔄 AppRouter - User needs profile setup, redirecting to profile creation',
+          );
           return AppRoutes.profileCreation;
         } else if (flowState is AppFlowReady) {
+          print('🔄 AppRouter - User ready, redirecting to dashboard');
           if (state.matchedLocation == AppRoutes.splash ||
               state.matchedLocation == AppRoutes.onboarding ||
               state.matchedLocation == AppRoutes.auth ||
@@ -72,17 +84,21 @@ class AppRouter {
             return AppRoutes.dashboard;
           }
         } else if (flowState is AppFlowLoading) {
+          print('🔄 AppRouter - App flow loading, staying on current route');
           // Stay on current route while loading
           return null;
         } else if (flowState is AppFlowError) {
+          print('🔄 AppRouter - App flow error: ${flowState.message}');
           // Handle error state - could redirect to error page
           return null;
         } else if (flowState is AppFlowInitial) {
+          print('🔄 AppRouter - App flow initial, triggering check');
           // Trigger initial flow check
           appFlowBloc.add(CheckAppFlow());
           return null;
         }
 
+        print('🔄 AppRouter - No redirect needed');
         return null;
       },
       routes: [

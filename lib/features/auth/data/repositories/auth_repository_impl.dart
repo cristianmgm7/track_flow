@@ -38,9 +38,16 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Stream<domain.User?> get authState {
+    print('🔄 AuthRepository - authState stream requested');
     return _remote.authStateChanges().map((user) {
-      if (user == null) return null;
-      return AuthDto.fromFirebase(user).toDomain();
+      print('🔍 AuthRepository - Firebase auth state changed: ${user?.email}');
+      if (user == null) {
+        print('❌ AuthRepository - No Firebase user, returning null');
+        return null;
+      }
+      final domainUser = AuthDto.fromFirebase(user).toDomain();
+      print('✅ AuthRepository - Converted to domain user: ${domainUser.email}');
+      return domainUser;
     });
   }
 
