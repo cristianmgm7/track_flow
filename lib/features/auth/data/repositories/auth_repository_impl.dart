@@ -24,10 +24,16 @@ class AuthRepositoryImpl implements AuthRepository {
        _networkInfo = networkInfo;
 
   @override
-  Future<Either<Failure, String>> getSignedInUserId() async {
-    final user = await _remote.getCurrentUser();
-    if (user == null) return Left(AuthenticationFailure('No user found'));
-    return Right(user.uid);
+  Future<Either<Failure, UserId?>> getSignedInUserId() async {
+    try {
+      final userId = _sessionStorage.getUserId();
+      if (userId == null) return Right(null);
+      return Right(UserId.fromUniqueString(userId));
+    } catch (e) {
+      return Left(
+        AuthenticationFailure('Failed to get user ID from session: $e'),
+      );
+    }
   }
 
   @override
@@ -55,7 +61,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final user = await _remote.signInWithEmailAndPassword(email, password);
       if (user != null) {
-        // ✅ SOLO gestión de sesión - responsabilidad única
         await _sessionStorage.saveUserId(user.uid);
       }
 
@@ -85,7 +90,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final user = await _remote.signUpWithEmailAndPassword(email, password);
       if (user != null) {
-        // ✅ SOLO gestión de sesión - responsabilidad única
         await _sessionStorage.saveUserId(user.uid);
       }
 
@@ -137,7 +141,6 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(unit);
       }
 
-      // ✅ SOLO cerrar sesión de autenticación
       await _remote.signOut();
       await _sessionStorage.clearUserId();
       return const Right(unit);
@@ -155,6 +158,14 @@ class AuthRepositoryImpl implements AuthRepository {
             _sessionStorage.getBool('has_credentials') ?? false;
         return Right(hasCredentials);
       }
+
+      // Check session storage first (faster)
+      final userId = _sessionStorage.getUserId();
+      if (userId != null) {
+        return Right(true);
+      }
+
+      // Fallback to remote check if no session data
       final user = await _remote.getCurrentUser();
       return Right(user != null);
     } catch (e) {

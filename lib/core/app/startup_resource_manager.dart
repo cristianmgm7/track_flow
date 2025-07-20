@@ -45,7 +45,7 @@ class StartupResourceManager {
       final userId = userIdResult.getOrElse(
         () => throw Exception('No user ID available'),
       );
-      await sessionStorage.saveUserId(userId);
+      await sessionStorage.saveUserId(userId!.value);
 
       await syncProjects();
       await syncAudioTracks();

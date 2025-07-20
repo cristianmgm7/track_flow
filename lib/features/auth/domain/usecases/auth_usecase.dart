@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 
@@ -15,7 +16,7 @@ class AuthUseCase {
   }
 
   /// Get current authenticated user ID
-  Future<Either<Failure, String?>> getCurrentUserId() async {
+  Future<Either<Failure, UserId?>> getCurrentUserId() async {
     final result = await _authRepository.getSignedInUserId();
     return result.fold((failure) => Left(failure), (userId) => Right(userId));
   }

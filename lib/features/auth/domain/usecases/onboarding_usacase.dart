@@ -9,16 +9,20 @@ class OnboardingUseCase {
 
   OnboardingUseCase(this._onboardingRepository);
 
-  Future<Either<Failure, Unit>> onboardingCompleted() async {
-    return await _onboardingRepository.onboardingCompleted();
+  Future<Either<Failure, Unit>> onboardingCompleted(String userId) async {
+    return await _onboardingRepository.onboardingCompleted(userId);
   }
 
-  Future<Either<Failure, bool>> checkOnboardingCompleted() async {
-    return await _onboardingRepository.checkOnboardingCompleted();
+  Future<Either<Failure, bool>> checkOnboardingCompleted(String userId) async {
+    return await _onboardingRepository.checkOnboardingCompleted(userId);
   }
 
-  Future<Either<Failure, Unit>> resetOnboarding() async {
-    return await _onboardingRepository.resetOnboarding();
+  Future<Either<Failure, Unit>> resetOnboarding(String userId) async {
+    return await _onboardingRepository.resetOnboarding(userId);
+  }
+
+  Future<Either<Failure, Unit>> clearUserOnboardingData(String userId) async {
+    return await _onboardingRepository.clearUserOnboardingData(userId);
   }
 
   Future<Either<Failure, Unit>> clearAllOnboardingData() async {

@@ -33,7 +33,7 @@ class GenerateMagicLinkUseCase {
       (failure) => Left(failure),
       (userId) => _repository.generateMagicLink(
         projectId: ProjectId.fromUniqueString(params.projectId),
-        userId: UserId.fromUniqueString(userId),
+        userId: userId!,
       ),
     );
   }

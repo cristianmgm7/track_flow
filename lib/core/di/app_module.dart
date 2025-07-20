@@ -61,7 +61,4 @@ abstract class AppModule {
 
   @lazySingleton
   Connectivity get connectivity => Connectivity();
-
-  // AppFlowBloc and use cases will be registered as singletons
-  // to avoid circular dependency issues
 }

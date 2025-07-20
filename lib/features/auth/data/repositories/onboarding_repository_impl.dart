@@ -11,18 +11,29 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   OnboardingRepositoryImpl(this._onboardingStateDataSource);
 
   @override
-  Future<Either<Failure, Unit>> onboardingCompleted() async {
-    return await _onboardingStateDataSource.setOnboardingCompleted(true);
+  Future<Either<Failure, Unit>> onboardingCompleted(String userId) async {
+    return await _onboardingStateDataSource.setOnboardingCompleted(
+      userId,
+      true,
+    );
   }
 
   @override
-  Future<Either<Failure, bool>> checkOnboardingCompleted() async {
-    return await _onboardingStateDataSource.isOnboardingCompleted();
+  Future<Either<Failure, bool>> checkOnboardingCompleted(String userId) async {
+    return await _onboardingStateDataSource.isOnboardingCompleted(userId);
   }
 
   @override
-  Future<Either<Failure, Unit>> resetOnboarding() async {
-    return await _onboardingStateDataSource.setOnboardingCompleted(false);
+  Future<Either<Failure, Unit>> resetOnboarding(String userId) async {
+    return await _onboardingStateDataSource.setOnboardingCompleted(
+      userId,
+      false,
+    );
+  }
+
+  @override
+  Future<Either<Failure, Unit>> clearUserOnboardingData(String userId) async {
+    return await _onboardingStateDataSource.clearUserOnboardingData(userId);
   }
 
   @override

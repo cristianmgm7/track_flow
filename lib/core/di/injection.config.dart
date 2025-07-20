@@ -676,6 +676,7 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i129.SignOutUseCase>(() => _i129.SignOutUseCase(
           gh<_i95.AuthRepository>(),
           gh<_i51.UserProfileRepository>(),
+          gh<_i118.OnboardingUseCase>(),
         ));
     gh.lazySingleton<_i130.SignUpUseCase>(
         () => _i130.SignUpUseCase(gh<_i95.AuthRepository>()));
@@ -763,8 +764,10 @@ extension GetItInjectableX on _i1.GetIt {
           leaveProjectUseCase: gh<_i113.LeaveProjectUseCase>(),
           watchUserProfilesUseCase: gh<_i86.WatchUserProfilesUseCase>(),
         ));
-    gh.factory<_i146.OnboardingBloc>(() =>
-        _i146.OnboardingBloc(onboardingUseCase: gh<_i118.OnboardingUseCase>()));
+    gh.factory<_i146.OnboardingBloc>(() => _i146.OnboardingBloc(
+          onboardingUseCase: gh<_i118.OnboardingUseCase>(),
+          authUseCase: gh<_i97.AuthUseCase>(),
+        ));
     gh.factory<_i147.PlaylistCacheBloc>(() => _i147.PlaylistCacheBloc(
           cachePlaylistUseCase: gh<_i102.CachePlaylistUseCase>(),
           getPlaylistCacheStatusUseCase:

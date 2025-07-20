@@ -1,10 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/di/injection.config.dart';
-import 'package:trackflow/core/coordination/app_flow_bloc.dart';
-import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
-import 'package:trackflow/features/onboarding/domain/usecases/onboarding_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 
 final GetIt sl = GetIt.instance;
 

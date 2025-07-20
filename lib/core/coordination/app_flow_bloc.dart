@@ -37,41 +37,57 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
       final authEither = await authResult.fold(
         (failure) async {
-          emit(AppFlowUnauthenticated());
-          return null;
+          // Don't emit here, return failure to handle below
+          return false;
         },
         (isAuthenticated) async {
-          if (!isAuthenticated) {
-            emit(AppFlowUnauthenticated());
-            return null;
-          }
           return isAuthenticated;
         },
       );
 
-      // If auth failed or user not authenticated, return early
-      if (authEither == null) return;
+      // If not authenticated, emit and return
+      if (!authEither) {
+        emit(AppFlowUnauthenticated());
+        return;
+      }
 
-      // Check onboarding status
-      final onboardingResult =
-          await _onboardingUseCase.checkOnboardingCompleted();
+      // Get current user ID for user-specific onboarding check
+      final userIdResult = await _authUseCase.getCurrentUserId();
+      final userId = await userIdResult.fold((failure) async {
+        emit(AppFlowError('Failed to get user ID: ${failure.message}'));
+        return null;
+      }, (userId) async => userId);
+
+      if (userId == null) {
+        emit(AppFlowUnauthenticated());
+        return;
+      }
+
+      // Check onboarding status for specific user
+      final onboardingResult = await _onboardingUseCase
+          .checkOnboardingCompleted(userId.value);
 
       final onboardingEither = await onboardingResult.fold(
         (failure) async {
-          emit(AppFlowError('Failed to check onboarding: ${failure.message}'));
+          // Don't emit here, return null to handle below
           return null;
         },
         (onboardingCompleted) async {
-          if (!onboardingCompleted) {
-            emit(AppFlowNeedsOnboarding());
-            return null;
-          }
           return onboardingCompleted;
         },
       );
 
-      // If onboarding failed or not completed, return early
-      if (onboardingEither == null) return;
+      // If onboarding failed, emit error and return
+      if (onboardingEither == null) {
+        emit(AppFlowError('Failed to check onboarding status'));
+        return;
+      }
+
+      // If onboarding not completed, emit and return
+      if (!onboardingEither) {
+        emit(AppFlowNeedsOnboarding());
+        return;
+      }
 
       // Check profile completeness
       final profileResult = await _profileUseCase.getDetailedCompleteness();

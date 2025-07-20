@@ -14,7 +14,6 @@ class UniqueId extends ValueObject<String> {
   static UniqueId fromString(String projectId) {
     return UniqueId.fromUniqueString(projectId);
   }
-
 }
 
 class UserId extends UniqueId {
@@ -23,6 +22,11 @@ class UserId extends UniqueId {
   factory UserId.fromUniqueString(String input) {
     assert(input.isNotEmpty);
     return UserId._(input);
+  }
+
+  factory UserId.fromNullableString(String? input) {
+    if (input == null) return UserId();
+    return UserId.fromUniqueString(input);
   }
 
   const UserId._(super.value) : super._();
