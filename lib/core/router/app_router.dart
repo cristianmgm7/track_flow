@@ -22,8 +22,6 @@ import 'package:trackflow/features/project_detail/presentation/screens/project_d
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';

@@ -10,7 +10,6 @@ import 'audio_controls.dart';
 import 'playback_progress.dart';
 import 'queue_controls.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_borders.dart';
 
 /// Pure audio player widget with full controls
 /// NO business logic - only audio playback features

@@ -62,8 +62,6 @@ void main() {
               // Check if button is disabled during loading
               final button = find.byType(ElevatedButton);
               if (button.evaluate().isNotEmpty) {
-                final buttonWidget =
-                    button.evaluate().first.widget as ElevatedButton;
                 // Button enabled: ${buttonWidget.onPressed != null}
               }
             }

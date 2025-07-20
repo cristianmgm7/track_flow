@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:trackflow/main.dart' as app;
@@ -19,8 +18,6 @@ void main() {
 
         // Check for specific screens
         final hasTrackFlow = find.text('TrackFlow').evaluate().isNotEmpty;
-        final hasWelcomeToTrackFlow =
-            find.text('Welcome to TrackFlow').evaluate().isNotEmpty;
         final hasContinueWithEmail =
             find.text('Continue with Email').evaluate().isNotEmpty;
         final hasProjects =

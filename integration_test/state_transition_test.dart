@@ -88,7 +88,6 @@ Future<void> _verifyInitialStates(WidgetTester tester) async {
   await TestUserFlow.waitForNavigation(tester);
 
   // Verify AuthBloc initial state
-  final authBloc = tester.binding.defaultBinaryMessenger;
   // In a real test, you'd access the BLoC and verify its state
   // For now, we'll verify the UI reflects the expected state
 
@@ -255,7 +254,6 @@ Future<void> _completeSignUp(WidgetTester tester) async {
 
 Future<void> _completeOnboarding(WidgetTester tester) async {
   final nextButton = find.textContaining('Next');
-  final skipButton = find.textContaining('Skip');
 
   while (nextButton.evaluate().isNotEmpty) {
     await tester.tap(nextButton);

@@ -187,7 +187,6 @@ Future<void> _completeProfileCreation(WidgetTester tester) async {
 Future<void> _completeOnboarding(WidgetTester tester) async {
   // Navigate through onboarding screens
   final nextButton = find.textContaining('Next');
-  final skipButton = find.textContaining('Skip');
 
   // Complete all onboarding steps or skip
   while (nextButton.evaluate().isNotEmpty) {

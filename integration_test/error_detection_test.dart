@@ -164,7 +164,6 @@ Future<void> _testAuthIncompleteOnboardingIncompleteProfile(
   // But we shouldn't be on dashboard if onboarding is incomplete
 
   final onboardingScreen = find.textContaining('Welcome');
-  final profileScreen = find.textContaining('Create Profile');
   final dashboardScreen = find.textContaining('Projects');
 
   // Verify we're not on dashboard if onboarding is incomplete
@@ -363,7 +362,6 @@ Future<void> _completeSignUp(WidgetTester tester) async {
 
 Future<void> _completeOnboarding(WidgetTester tester) async {
   final nextButton = find.textContaining('Next');
-  final skipButton = find.textContaining('Skip');
 
   while (nextButton.evaluate().isNotEmpty) {
     await tester.tap(nextButton);
