@@ -36,12 +36,7 @@ class CheckProfileCompletenessUseCase {
   Future<Either<Failure, ProfileCompletenessInfo>> getDetailedCompleteness([
     String? userId,
   ]) async {
-    print(
-      '🔍 CheckProfileCompletenessUseCase - Checking profile for userId: $userId',
-    );
-
     if (userId == null) {
-      print('❌ CheckProfileCompletenessUseCase - No userId provided');
       return Right(
         ProfileCompletenessInfo(
           isComplete: false,
@@ -52,63 +47,39 @@ class CheckProfileCompletenessUseCase {
     }
 
     final userIdObj = UserId.fromUniqueString(userId);
-    print(
-      '🔍 CheckProfileCompletenessUseCase - Getting profile from repository',
-    );
     final result = await _repository.getUserProfile(userIdObj);
 
-    return result.fold(
-      (failure) {
-        print(
-          '❌ CheckProfileCompletenessUseCase - Repository failed: ${failure.message}',
+    return result.fold((failure) => Left(failure), (profile) {
+      if (profile == null) {
+        return Right(
+          ProfileCompletenessInfo(
+            isComplete: false,
+            profile: null,
+            reason: 'Profile not found',
+          ),
         );
-        return Left(failure);
-      },
-      (profile) {
-        print(
-          '🔍 CheckProfileCompletenessUseCase - Profile found: ${profile?.name}',
-        );
+      }
 
-        if (profile == null) {
-          print('❌ CheckProfileCompletenessUseCase - No profile found');
-          return Right(
-            ProfileCompletenessInfo(
-              isComplete: false,
-              profile: null,
-              reason: 'Profile not found',
-            ),
-          );
-        }
+      final isComplete = _isProfileComplete(profile);
 
-        final isComplete = _isProfileComplete(profile);
-        print(
-          '🔍 CheckProfileCompletenessUseCase - Profile complete: $isComplete',
+      if (isComplete) {
+        return Right(
+          ProfileCompletenessInfo(
+            isComplete: true,
+            profile: profile,
+            reason: 'Profile is complete',
+          ),
         );
-        print(
-          '🔍 CheckProfileCompletenessUseCase - Profile details: name=${profile.name}, email=${profile.email}, avatar=${profile.avatarUrl}',
+      } else {
+        return Right(
+          ProfileCompletenessInfo(
+            isComplete: false,
+            profile: profile,
+            reason: 'Profile is incomplete',
+          ),
         );
-
-        if (isComplete) {
-          print('✅ CheckProfileCompletenessUseCase - Profile is complete');
-          return Right(
-            ProfileCompletenessInfo(
-              isComplete: true,
-              profile: profile,
-              reason: 'Profile is complete',
-            ),
-          );
-        } else {
-          print('❌ CheckProfileCompletenessUseCase - Profile is incomplete');
-          return Right(
-            ProfileCompletenessInfo(
-              isComplete: false,
-              profile: profile,
-              reason: 'Profile is incomplete',
-            ),
-          );
-        }
-      },
-    );
+      }
+    });
   }
 
   bool _isProfileComplete(UserProfile profile) {
