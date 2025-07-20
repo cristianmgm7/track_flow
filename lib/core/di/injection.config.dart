@@ -676,7 +676,6 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i129.SignOutUseCase>(() => _i129.SignOutUseCase(
           gh<_i95.AuthRepository>(),
           gh<_i51.UserProfileRepository>(),
-          gh<_i118.OnboardingUseCase>(),
         ));
     gh.lazySingleton<_i130.SignUpUseCase>(
         () => _i130.SignUpUseCase(gh<_i95.AuthRepository>()));

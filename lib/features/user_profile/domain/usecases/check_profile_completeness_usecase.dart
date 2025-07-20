@@ -87,9 +87,8 @@ class CheckProfileCompletenessUseCase {
     final hasEmail = profile.email.isNotEmpty;
     final hasAvatar = profile.avatarUrl.isNotEmpty;
 
-    // TEMPORARY: Only require name and avatar, skip email requirement
-    // TODO: Re-enable email requirement after fixing auth state
-    final isComplete = hasName && hasAvatar; // Removed hasEmail requirement
+    // Re-enabled email requirement now that auth state is fixed
+    final isComplete = hasName && hasEmail && hasAvatar;
 
     return isComplete;
   }
