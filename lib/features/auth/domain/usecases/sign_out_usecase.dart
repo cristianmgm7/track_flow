@@ -34,15 +34,9 @@ class SignOutUseCase {
         print('Warning: Failed to clear profile cache during sign out: $e');
       }
 
-      // 3. ✅ Clear user-specific onboarding data if we have a user ID
-      if (userId != null) {
-        try {
-          await _onboardingUseCase.clearUserOnboardingData(userId.value);
-        } catch (e) {
-          // Don't fail logout if onboarding data clearing fails
-          print('Warning: Failed to clear onboarding data during sign out: $e');
-        }
-      }
+      // 3. ❌ REMOVED: Don't clear onboarding data on sign out
+      // Onboarding is a one-time experience that shouldn't be repeated
+      // The user has already completed onboarding and shouldn't have to do it again
 
       // 4. ✅ Sign out user (AuthRepository responsibility)
       return await _authRepository.signOut();

@@ -110,7 +110,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     final result = await signOut();
     result.fold(
       (failure) => emit(AuthError('Failed to sign out: ${failure.message}')),
-      (_) => emit(AuthUnauthenticated()),
+      (_) {
+        print('🔄 AuthBloc - User signed out successfully');
+        emit(AuthUnauthenticated());
+        // Note: AppFlowBloc will be notified via the router's redirect logic
+        // when it detects the auth state change
+      },
     );
   }
 
