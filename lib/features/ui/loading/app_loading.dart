@@ -10,6 +10,8 @@ class AppLoading extends StatefulWidget {
   final Color? color;
   final double? size;
   final bool showMessage;
+  final double? progress; // New: for sync progress
+  final bool showProgress; // New: to show progress indicator
 
   const AppLoading({
     super.key,
@@ -18,6 +20,8 @@ class AppLoading extends StatefulWidget {
     this.color,
     this.size,
     this.showMessage = true,
+    this.progress,
+    this.showProgress = false,
   });
 
   @override
@@ -37,23 +41,17 @@ class _AppLoadingState extends State<AppLoading>
       duration: AppAnimations.slow,
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-    
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.elasticOut,
-    ));
-    
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
+
     _controller.forward();
   }
 
@@ -96,7 +94,10 @@ class _AppLoadingState extends State<AppLoading>
         SizedBox(height: Dimensions.space32),
         FadeTransition(
           opacity: _fadeAnimation,
-          child: _buildLoadingIndicator(),
+          child:
+              widget.showProgress && widget.progress != null
+                  ? _buildProgressIndicator()
+                  : _buildLoadingIndicator(),
         ),
       ],
     );
@@ -110,11 +111,7 @@ class _AppLoadingState extends State<AppLoading>
         color: AppColors.primary,
         shape: BoxShape.circle,
       ),
-      child: Icon(
-        Icons.music_note,
-        size: 50,
-        color: AppColors.onPrimary,
-      ),
+      child: Icon(Icons.music_note, size: 50, color: AppColors.onPrimary),
     );
   }
 
@@ -130,18 +127,46 @@ class _AppLoadingState extends State<AppLoading>
       ),
     );
   }
+
+  Widget _buildProgressIndicator() {
+    return Column(
+      children: [
+        SizedBox(
+          width: 200,
+          child: LinearProgressIndicator(
+            value: widget.progress,
+            backgroundColor: AppColors.grey700,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              widget.color ?? AppColors.primary,
+            ),
+          ),
+        ),
+        SizedBox(height: Dimensions.space8),
+        Text(
+          '${(widget.progress! * 100).toInt()}%',
+          style: AppTextStyle.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class AppSplashScreen extends StatelessWidget {
   final String? message;
   final Widget? logo;
   final Color? backgroundColor;
+  final double? progress; // New: for sync progress
+  final bool showProgress; // New: to show progress indicator
 
   const AppSplashScreen({
     super.key,
     this.message,
     this.logo,
     this.backgroundColor,
+    this.progress,
+    this.showProgress = false,
   });
 
   @override
@@ -155,6 +180,8 @@ class AppSplashScreen extends StatelessWidget {
             child: AppLoading(
               message: message,
               logo: logo,
+              progress: progress,
+              showProgress: showProgress,
             ),
           ),
         ),
@@ -220,18 +247,19 @@ class AppLoadingButton extends StatelessWidget {
       height: height ?? Dimensions.buttonHeight,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
-        child: isLoading
-            ? SizedBox(
-                width: Dimensions.iconMedium,
-                height: Dimensions.iconMedium,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.onPrimary,
+        child:
+            isLoading
+                ? SizedBox(
+                  width: Dimensions.iconMedium,
+                  height: Dimensions.iconMedium,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppColors.onPrimary,
+                    ),
                   ),
-                ),
-              )
-            : child,
+                )
+                : child,
       ),
     );
   }
@@ -267,15 +295,12 @@ class _AppShimmerState extends State<AppShimmer>
       duration: Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _animation = Tween<double>(
       begin: -1.0,
       end: 2.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-    
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
     if (widget.isLoading) {
       _controller.repeat();
     }
@@ -318,11 +343,7 @@ class _AppShimmerState extends State<AppShimmer>
                 widget.highlightColor ?? AppColors.grey600,
                 widget.baseColor ?? AppColors.grey700,
               ],
-              stops: [
-                0.0,
-                0.5,
-                1.0,
-              ],
+              stops: [0.0, 0.5, 1.0],
               transform: _SlidingGradientTransform(_animation.value),
             ).createShader(bounds);
           },
@@ -336,7 +357,7 @@ class _AppShimmerState extends State<AppShimmer>
 class _SlidingGradientTransform extends GradientTransform {
   final double slidePercent;
 
-  _SlidingGradientTransform(this.slidePercent);
+  const _SlidingGradientTransform(this.slidePercent);
 
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {

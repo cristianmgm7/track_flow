@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/coordination/app_flow_%20events.dart';
 import 'package:trackflow/core/coordination/app_flow_state.dart';
 import 'package:trackflow/core/coordination/sync_state_manager.dart';
+import 'package:trackflow/core/coordination/sync_state.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
@@ -13,6 +15,8 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final OnboardingUseCase _onboardingUseCase;
   final CheckProfileCompletenessUseCase _profileUseCase;
   final SyncStateManager _syncStateManager;
+
+  StreamSubscription<SyncState>? _syncSubscription;
 
   AppFlowBloc({
     required AuthUseCase authUseCase,
@@ -27,6 +31,12 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     on<CheckAppFlow>(_onCheckAppFlow);
     on<UserAuthenticated>(_onUserAuthenticated);
     on<UserSignedOut>(_onUserSignedOut);
+  }
+
+  @override
+  Future<void> close() {
+    _syncSubscription?.cancel();
+    return super.close();
   }
 
   Future<void> _onUserAuthenticated(
@@ -71,22 +81,30 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
       // Step 3: Initialize data sync with progress updates
       try {
+        // Cancel any existing subscription
+        await _syncSubscription?.cancel();
+
         // Listen to sync progress and update state accordingly
-        final syncSubscription = _syncStateManager.syncState.listen((syncState) {
-          if (syncState.isSyncing) {
-            emit(AppFlowSyncing(syncState.progress));
-          }
-        });
+        _syncSubscription = _syncStateManager.syncState.listen(
+          (syncState) {
+            if (syncState.isSyncing) {
+              emit(AppFlowSyncing(syncState.progress));
+            }
+          },
+          onError: (error) {
+            emit(AppFlowError('Sync failed: $error'));
+          },
+        );
 
         // Start sync and wait for completion
         await _syncStateManager.initializeIfNeeded();
-        
-        // Cancel subscription after sync is complete
-        await syncSubscription.cancel();
-        
       } catch (syncError) {
         emit(AppFlowError('Data sync failed: $syncError'));
         return;
+      } finally {
+        // Clean up subscription
+        await _syncSubscription?.cancel();
+        _syncSubscription = null;
       }
 
       // Step 4: Check onboarding status (after sync is complete)
@@ -125,7 +143,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
           }
         },
       );
-      
     } catch (e) {
       emit(AppFlowError('Unexpected error: $e'));
     }
@@ -135,6 +152,10 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     UserSignedOut event,
     Emitter<AppFlowState> emit,
   ) async {
+    // Cancel any ongoing sync subscription
+    await _syncSubscription?.cancel();
+    _syncSubscription = null;
+
     // Reset sync state when user signs out
     _syncStateManager.reset();
     emit(AppFlowUnauthenticated());
