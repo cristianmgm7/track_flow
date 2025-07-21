@@ -458,6 +458,59 @@ Future<T?> showAppBottomSheet<T>({
   );
 }
 
+// Convenience function to show content-based modal that sizes to content
+Future<T?> showAppContentModal<T>({
+  required BuildContext context,
+  required Widget child,
+  String? title,
+  Widget? header,
+  List<Widget>? actions,
+  bool showHandle = true,
+  bool showCloseButton = false,
+  bool isDismissible = true,
+  bool enableDrag = true,
+  VoidCallback? onClose,
+  EdgeInsetsGeometry? padding,
+  Color? backgroundColor,
+  BorderRadius? borderRadius,
+  double? maxHeight,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    isDismissible: isDismissible,
+    enableDrag: enableDrag,
+    useRootNavigator: true,
+    builder: (context) {
+      return Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight ?? MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: IntrinsicHeight(
+            child: AppBottomSheet(
+              title: title,
+              header: header,
+              actions: actions,
+              showHandle: showHandle,
+              showCloseButton: showCloseButton,
+              onClose: onClose,
+              padding: padding,
+              backgroundColor: backgroundColor,
+              borderRadius: borderRadius,
+              child: child,
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
 // Convenience function to show action sheet
 Future<T?> showAppActionSheet<T>({
   required BuildContext context,
@@ -484,6 +537,21 @@ Future<T?> showAppActionSheet<T>({
           ? 0.5
           : 0.65);
 
+  // If body is provided, use content-based modal instead of draggable
+  if (body != null) {
+    return showAppContentModal<T>(
+      context: context,
+      title: title,
+      header: header,
+      showHandle: showHandle,
+      showCloseButton: showCloseButton,
+      isDismissible: isDismissible,
+      enableDrag: enableDrag,
+      onClose: onClose,
+      child: body,
+    );
+  }
+
   return showAppBottomSheet<T>(
     context: context,
     title: title,
@@ -491,12 +559,12 @@ Future<T?> showAppActionSheet<T>({
     showHandle: showHandle,
     showCloseButton: showCloseButton,
     isScrollControlled: isScrollControlled,
-    initialChildSize: body != null ? 0.6 : calculatedInitialSize,
+    initialChildSize: calculatedInitialSize,
     minChildSize: minChildSize,
     maxChildSize: maxChildSize,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     onClose: onClose,
-    child: body ?? AppBottomSheetList(actions: actions),
+    child: AppBottomSheetList(actions: actions),
   );
 }
