@@ -69,8 +69,8 @@ class AppRouter {
               state.matchedLocation == AppRoutes.profileCreation) {
             return AppRoutes.dashboard;
           }
-        } else if (flowState is AppFlowLoading) {
-          // Stay on current route while loading
+        } else if (flowState is AppFlowLoading || flowState is AppFlowSyncing) {
+          // Stay on current route while loading or syncing
           return null;
         } else if (flowState is AppFlowError) {
           // Handle error state - could redirect to error page

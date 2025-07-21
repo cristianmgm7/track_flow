@@ -18,7 +18,6 @@ import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audi
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/core/app/startup_resource_manager.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/core/coordination/app_flow_bloc.dart';
 
@@ -98,20 +97,8 @@ class _AppState extends State<_App> {
       listener: (context, state) {
         if (state is AuthAuthenticated && !_hasInitialized) {
           _hasInitialized = true;
-          // First sync all data, then check app flow
-          sl<StartupResourceManager>()
-              .initializeAppData()
-              .then((_) {
-                // After syncing is complete, trigger app flow check
-                context.read<AppFlowBloc>().add(CheckAppFlow());
-              })
-              .catchError((error) {
-                // If sync fails, still check app flow
-                print(
-                  'Warning: Sync failed, but continuing with app flow: $error',
-                );
-                context.read<AppFlowBloc>().add(CheckAppFlow());
-              });
+          // AppFlowBloc now handles sync internally - just trigger the flow
+          context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is AuthUnauthenticated && !_hasInitialized) {
           _hasInitialized = true;
           // For unauthenticated users, check app flow immediately

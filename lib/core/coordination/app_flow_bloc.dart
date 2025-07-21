@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/coordination/app_flow_%20events.dart';
 import 'package:trackflow/core/coordination/app_flow_state.dart';
+import 'package:trackflow/core/coordination/sync_state_manager.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
@@ -11,14 +12,17 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final AuthUseCase _authUseCase;
   final OnboardingUseCase _onboardingUseCase;
   final CheckProfileCompletenessUseCase _profileUseCase;
+  final SyncStateManager _syncStateManager;
 
   AppFlowBloc({
     required AuthUseCase authUseCase,
     required OnboardingUseCase onboardingUseCase,
     required CheckProfileCompletenessUseCase profileUseCase,
+    required SyncStateManager syncStateManager,
   }) : _authUseCase = authUseCase,
        _onboardingUseCase = onboardingUseCase,
        _profileUseCase = profileUseCase,
+       _syncStateManager = syncStateManager,
        super(AppFlowInitial()) {
     on<CheckAppFlow>(_onCheckAppFlow);
     on<UserAuthenticated>(_onUserAuthenticated);
@@ -39,21 +43,21 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     emit(AppFlowLoading());
 
     try {
-      // Check auth status
+      // Step 1: Check auth status
       final authResult = await _authUseCase.isAuthenticated();
-
-      final authEither = await authResult.fold(
+      final isAuthenticated = await authResult.fold(
         (failure) async => false,
-        (isAuthenticated) async => isAuthenticated,
+        (isAuth) async => isAuth,
       );
 
-      // If not authenticated, emit and return
-      if (!authEither) {
+      // If not authenticated, reset sync and emit unauthenticated
+      if (!isAuthenticated) {
+        _syncStateManager.reset();
         emit(AppFlowUnauthenticated());
         return;
       }
 
-      // Get current user ID for user-specific onboarding check
+      // Step 2: Get current user ID
       final userIdResult = await _authUseCase.getCurrentUserId();
       final userId = await userIdResult.fold((failure) async {
         emit(AppFlowError('Failed to get user ID: ${failure.message}'));
@@ -65,28 +69,46 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         return;
       }
 
-      // Check onboarding status for specific user
+      // Step 3: Initialize data sync with progress updates
+      try {
+        // Listen to sync progress and update state accordingly
+        final syncSubscription = _syncStateManager.syncState.listen((syncState) {
+          if (syncState.isSyncing) {
+            emit(AppFlowSyncing(syncState.progress));
+          }
+        });
+
+        // Start sync and wait for completion
+        await _syncStateManager.initializeIfNeeded();
+        
+        // Cancel subscription after sync is complete
+        await syncSubscription.cancel();
+        
+      } catch (syncError) {
+        emit(AppFlowError('Data sync failed: $syncError'));
+        return;
+      }
+
+      // Step 4: Check onboarding status (after sync is complete)
       final onboardingResult = await _onboardingUseCase
           .checkOnboardingCompleted(userId.value);
 
-      final onboardingEither = await onboardingResult.fold(
+      final onboardingCompleted = await onboardingResult.fold(
         (failure) async => null,
-        (onboardingCompleted) async => onboardingCompleted,
+        (completed) async => completed,
       );
 
-      // If onboarding failed, emit error and return
-      if (onboardingEither == null) {
+      if (onboardingCompleted == null) {
         emit(AppFlowError('Failed to check onboarding status'));
         return;
       }
 
-      // If onboarding not completed, emit and return
-      if (!onboardingEither) {
+      if (!onboardingCompleted) {
         emit(AppFlowNeedsOnboarding());
         return;
       }
 
-      // Check profile completeness for specific user
+      // Step 5: Check profile completeness (after sync is complete)
       final profileResult = await _profileUseCase.getDetailedCompleteness(
         userId.value,
       );
@@ -103,6 +125,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
           }
         },
       );
+      
     } catch (e) {
       emit(AppFlowError('Unexpected error: $e'));
     }
@@ -112,6 +135,8 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     UserSignedOut event,
     Emitter<AppFlowState> emit,
   ) async {
+    // Reset sync state when user signs out
+    _syncStateManager.reset();
     emit(AppFlowUnauthenticated());
   }
 }

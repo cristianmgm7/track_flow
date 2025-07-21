@@ -21,18 +21,41 @@ class StartupResourceManager {
     this.syncUserProfileCollaborators,
   );
 
-  Future<void> initializeAppData() async {
+  /// Initializes app data with optional progress reporting
+  /// 
+  /// Syncs data in optimal order:
+  /// 1. User profile first (required by other syncs)
+  /// 2. Projects and collaborators in parallel (both depend on profile)
+  /// 3. Audio tracks and comments in parallel (depend on projects)
+  Future<void> initializeAppData({
+    void Function(double progress)? onProgress,
+  }) async {
     try {
-      // Sync all user data for offline-first functionality
-      // Each sync use case handles its own user ID retrieval from session storage
-      await syncProjects();
-      await syncAudioTracks();
-      await syncUserProfile(); // Add missing user profile sync
-      await syncUserProfileCollaborators();
-      await syncAudioComments();
+      // Step 1: Sync user profile first (other syncs may depend on it)
+      onProgress?.call(0.2);
+      await syncUserProfile();
+      
+      // Step 2 & 3: Sync projects and collaborators in parallel
+      onProgress?.call(0.4);
+      await Future.wait([
+        syncProjects(),
+        syncUserProfileCollaborators(),
+      ]);
+      
+      // Step 4 & 5: Sync content that depends on projects
+      onProgress?.call(0.8);
+      await Future.wait([
+        syncAudioTracks(),
+        syncAudioComments(),
+      ]);
+      
+      // Complete
+      onProgress?.call(1.0);
+      
     } catch (e) {
-      // Log error but don't fail the app initialization
-      print('Warning: Failed to initialize app data: $e');
+      // Log error and rethrow for proper error handling upstream
+      print('Error: Failed to initialize app data: $e');
+      rethrow;
     }
   }
 
