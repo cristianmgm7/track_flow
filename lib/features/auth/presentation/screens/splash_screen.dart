@@ -11,7 +11,12 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AppFlowBloc, AppFlowState>(
       builder: (context, state) {
+        print('🔄 [SplashScreen] Building with state: ${state.runtimeType}');
+
         if (state is AppFlowSyncing) {
+          print(
+            '🔄 [SplashScreen] Showing sync progress: ${(state.progress * 100).toInt()}%',
+          );
           // Show sync progress with progress bar
           return AppSplashScreen(
             message: _getSyncMessage(state.progress),
@@ -20,12 +25,14 @@ class SplashScreen extends StatelessWidget {
             showProgress: true,
           );
         } else if (state is AppFlowLoading) {
+          print('🔄 [SplashScreen] Showing general loading');
           // Show general loading
           return AppSplashScreen(
             message: 'Initializing TrackFlow...',
             logo: Image.asset('assets/images/logo.png', height: 100),
           );
         } else {
+          print('🔄 [SplashScreen] Showing default splash');
           // Default splash
           return AppSplashScreen(
             message: 'Welcome to TrackFlow',

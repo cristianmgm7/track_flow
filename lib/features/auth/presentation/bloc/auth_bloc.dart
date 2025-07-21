@@ -36,32 +36,44 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🔄 [AuthBloc] _onAuthCheckRequested() started');
     emit(AuthLoading());
+    print('🔄 [AuthBloc] Emitted AuthLoading');
 
     try {
       // Add timeout to prevent infinite waiting
+      print('🔄 [AuthBloc] Starting auth state check with 60s timeout');
       await emit.forEach(
         getAuthState().timeout(
-          const Duration(seconds: 15),
+          const Duration(seconds: 60), // Increased from 15s to 60s
           onTimeout: (sink) {
+            print(
+              '🔄 [AuthBloc] TIMEOUT: Auth state check timed out after 60s',
+            );
             sink.add(null);
             sink.close();
           },
         ),
         onData: (user) {
           if (user != null) {
+            print('🔄 [AuthBloc] User authenticated: ${user.email}');
             return AuthAuthenticated(user);
           } else {
+            print('🔄 [AuthBloc] User not authenticated (null user)');
             return AuthUnauthenticated();
           }
         },
         onError: (error, stackTrace) {
+          print('❌ [AuthBloc] Auth state check error: $error');
           return AuthError('Failed to check auth state');
         },
       );
+      print('🔄 [AuthBloc] Auth state check completed');
     } catch (e) {
       // If timeout or other error, default to unauthenticated
+      print('❌ [AuthBloc] Auth state check exception: $e');
       emit(AuthUnauthenticated());
+      print('🔄 [AuthBloc] Emitted AuthUnauthenticated due to exception');
     }
   }
 
@@ -69,41 +81,64 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🔄 [AuthBloc] _onAuthSignInRequested() started');
     emit(AuthLoading());
     final result = await signIn(
       EmailAddress(event.email),
       PasswordValue(event.password),
     );
-    result.fold((failure) => emit(AuthError(failure.message)), (user) {
-      emit(AuthAuthenticated(user));
-    });
+    result.fold(
+      (failure) {
+        print('❌ [AuthBloc] Sign in failed: ${failure.message}');
+        emit(AuthError(failure.message));
+      },
+      (user) {
+        print('🔄 [AuthBloc] Sign in successful: ${user.email}');
+        emit(AuthAuthenticated(user));
+      },
+    );
   }
 
   Future<void> _onAuthSignUpRequested(
     AuthSignUpRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🔄 [AuthBloc] _onAuthSignUpRequested() started');
     emit(AuthLoading());
     final result = await signUp(
       EmailAddress(event.email),
       PasswordValue(event.password),
     );
-    result.fold((failure) => emit(AuthError(failure.message)), (user) {
-      emit(AuthAuthenticated(user));
-      // For new users, ensure onboarding is marked as incomplete
-      // This will be handled by the router logic
-    });
+    result.fold(
+      (failure) {
+        print('❌ [AuthBloc] Sign up failed: ${failure.message}');
+        emit(AuthError(failure.message));
+      },
+      (user) {
+        print('🔄 [AuthBloc] Sign up successful: ${user.email}');
+        emit(AuthAuthenticated(user));
+        // For new users, ensure onboarding is marked as incomplete
+        // This will be handled by the router logic
+      },
+    );
   }
 
   Future<void> _onAuthSignOutRequested(
     AuthSignOutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🔄 [AuthBloc] _onAuthSignOutRequested() started');
     emit(AuthLoading());
     final result = await signOut();
     result.fold(
-      (failure) => emit(AuthError('Failed to sign out: ${failure.message}')),
-      (_) => emit(AuthUnauthenticated()),
+      (failure) {
+        print('❌ [AuthBloc] Sign out failed: ${failure.message}');
+        emit(AuthError('Failed to sign out: ${failure.message}'));
+      },
+      (_) {
+        print('🔄 [AuthBloc] Sign out successful');
+        emit(AuthUnauthenticated());
+      },
     );
   }
 
@@ -111,11 +146,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthGoogleSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🔄 [AuthBloc] _onAuthGoogleSignInRequested() started');
     emit(AuthLoading());
     final result = await googleSignIn();
     result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(AuthAuthenticated(user)),
+      (failure) {
+        print('❌ [AuthBloc] Google sign in failed: ${failure.message}');
+        emit(AuthError(failure.message));
+      },
+      (user) {
+        print('🔄 [AuthBloc] Google sign in successful: ${user.email}');
+        emit(AuthAuthenticated(user));
+      },
     );
   }
 }

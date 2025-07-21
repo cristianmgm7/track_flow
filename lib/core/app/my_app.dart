@@ -76,6 +76,7 @@ class _AppState extends State<_App> {
   @override
   void initState() {
     super.initState();
+    print('🔄 [MyApp] initState() called');
     _router = AppRouter.router(context.read<AppFlowBloc>());
 
     // Escuchar el dynamic link
@@ -93,19 +94,36 @@ class _AppState extends State<_App> {
 
   @override
   Widget build(BuildContext context) {
+    print('🔄 [MyApp] build() called');
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        print('🔄 [MyApp] AuthBloc state changed: ${state.runtimeType}');
+        print('🔄 [MyApp] _hasInitialized: $_hasInitialized');
+
         if (state is AuthAuthenticated && !_hasInitialized) {
+          print(
+            '🔄 [MyApp] User authenticated and not initialized, triggering AppFlow',
+          );
           _hasInitialized = true;
           // AppFlowBloc now handles sync internally - just trigger the flow
           context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is AuthUnauthenticated && !_hasInitialized) {
+          print(
+            '🔄 [MyApp] User unauthenticated and not initialized, triggering AppFlow',
+          );
           _hasInitialized = true;
           // For unauthenticated users, check app flow immediately
           context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is AuthUnauthenticated && _hasInitialized) {
+          print(
+            '🔄 [MyApp] User signed out after initialization, notifying AppFlowBloc',
+          );
           // User signed out after initialization, notify AppFlowBloc
           context.read<AppFlowBloc>().add(UserSignedOut());
+        } else {
+          print(
+            '🔄 [MyApp] State change ignored: ${state.runtimeType} with _hasInitialized: $_hasInitialized',
+          );
         }
       },
       child: MaterialApp.router(
