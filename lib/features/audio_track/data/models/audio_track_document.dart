@@ -24,13 +24,12 @@ class AudioTrackDocument {
   late DateTime createdAt;
   late String extension;
 
-  /// Sync metadata for offline-first functionality  
-  @embedded
+  /// Sync metadata for offline-first functionality
   SyncMetadataDocument? syncMetadata;
 
   AudioTrackDocument();
 
-  factory AudioTrackDocument.fromDTO(AudioTrackDTO dto) {
+  factory AudioTrackDocument.fromDTO(AudioTrackDTO dto, {SyncMetadataDocument? syncMeta}) {
     return AudioTrackDocument()
       ..id = dto.id.value
       ..name = dto.name
@@ -39,7 +38,42 @@ class AudioTrackDocument {
       ..projectId = dto.projectId.value
       ..uploadedBy = dto.uploadedBy.value
       ..createdAt = dto.createdAt ?? DateTime.now()
-      ..extension = dto.extension;
+      ..extension = dto.extension
+      ..syncMetadata = syncMeta ?? SyncMetadataDocument.initial();
+  }
+
+  /// Create from DTO for remote data (already synced)
+  factory AudioTrackDocument.fromRemoteDTO(AudioTrackDTO dto, {
+    int? version,
+    DateTime? lastModified,
+  }) {
+    return AudioTrackDocument()
+      ..id = dto.id.value
+      ..name = dto.name
+      ..url = dto.url
+      ..duration = dto.duration
+      ..projectId = dto.projectId.value
+      ..uploadedBy = dto.uploadedBy.value
+      ..createdAt = dto.createdAt ?? DateTime.now()
+      ..extension = dto.extension
+      ..syncMetadata = SyncMetadataDocument.fromRemote(
+        version: version ?? 1,
+        lastModified: lastModified ?? DateTime.now(),
+      );
+  }
+
+  /// Create for local upload (pending sync)
+  factory AudioTrackDocument.forUpload(AudioTrackDTO dto) {
+    return AudioTrackDocument()
+      ..id = dto.id.value
+      ..name = dto.name
+      ..url = dto.url
+      ..duration = dto.duration
+      ..projectId = dto.projectId.value
+      ..uploadedBy = dto.uploadedBy.value
+      ..createdAt = dto.createdAt ?? DateTime.now()
+      ..extension = dto.extension
+      ..syncMetadata = SyncMetadataDocument.initial();
   }
 
   AudioTrackDTO toDTO() {

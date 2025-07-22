@@ -20,11 +20,29 @@ class AudioTrackDeleteLoading extends AudioTrackState {}
 
 class AudioTrackLoaded extends AudioTrackState {
   final List<AudioTrack> tracks;
+  final bool isSyncing;
+  final double? syncProgress;
 
-  const AudioTrackLoaded({required this.tracks});
+  const AudioTrackLoaded({
+    required this.tracks,
+    this.isSyncing = false,
+    this.syncProgress,
+  });
+
+  AudioTrackLoaded copyWith({
+    List<AudioTrack>? tracks,
+    bool? isSyncing,
+    double? syncProgress,
+  }) {
+    return AudioTrackLoaded(
+      tracks: tracks ?? this.tracks,
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncProgress: syncProgress ?? this.syncProgress,
+    );
+  }
 
   @override
-  List<Object> get props => [tracks];
+  List<Object> get props => [tracks, isSyncing, syncProgress ?? 0.0];
 }
 
 class AudioTrackError extends AudioTrackState {

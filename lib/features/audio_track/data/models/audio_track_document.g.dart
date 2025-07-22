@@ -48,13 +48,19 @@ const AudioTrackDocumentSchema = CollectionSchema(
       name: r'projectId',
       type: IsarType.string,
     ),
-    r'uploadedBy': PropertySchema(
+    r'syncMetadata': PropertySchema(
       id: 6,
+      name: r'syncMetadata',
+      type: IsarType.object,
+      target: r'SyncMetadataDocument',
+    ),
+    r'uploadedBy': PropertySchema(
+      id: 7,
       name: r'uploadedBy',
       type: IsarType.string,
     ),
     r'url': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'url',
       type: IsarType.string,
     )
@@ -93,7 +99,7 @@ const AudioTrackDocumentSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'SyncMetadataDocument': SyncMetadataDocumentSchema},
   getId: _audioTrackDocumentGetId,
   getLinks: _audioTrackDocumentGetLinks,
   attach: _audioTrackDocumentAttach,
@@ -110,6 +116,14 @@ int _audioTrackDocumentEstimateSize(
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.projectId.length * 3;
+  {
+    final value = object.syncMetadata;
+    if (value != null) {
+      bytesCount += 3 +
+          SyncMetadataDocumentSchema.estimateSize(
+              value, allOffsets[SyncMetadataDocument]!, allOffsets);
+    }
+  }
   bytesCount += 3 + object.uploadedBy.length * 3;
   bytesCount += 3 + object.url.length * 3;
   return bytesCount;
@@ -127,8 +141,14 @@ void _audioTrackDocumentSerialize(
   writer.writeString(offsets[3], object.id);
   writer.writeString(offsets[4], object.name);
   writer.writeString(offsets[5], object.projectId);
-  writer.writeString(offsets[6], object.uploadedBy);
-  writer.writeString(offsets[7], object.url);
+  writer.writeObject<SyncMetadataDocument>(
+    offsets[6],
+    allOffsets,
+    SyncMetadataDocumentSchema.serialize,
+    object.syncMetadata,
+  );
+  writer.writeString(offsets[7], object.uploadedBy);
+  writer.writeString(offsets[8], object.url);
 }
 
 AudioTrackDocument _audioTrackDocumentDeserialize(
@@ -144,8 +164,13 @@ AudioTrackDocument _audioTrackDocumentDeserialize(
   object.id = reader.readString(offsets[3]);
   object.name = reader.readString(offsets[4]);
   object.projectId = reader.readString(offsets[5]);
-  object.uploadedBy = reader.readString(offsets[6]);
-  object.url = reader.readString(offsets[7]);
+  object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
+    offsets[6],
+    SyncMetadataDocumentSchema.deserialize,
+    allOffsets,
+  );
+  object.uploadedBy = reader.readString(offsets[7]);
+  object.url = reader.readString(offsets[8]);
   return object;
 }
 
@@ -169,8 +194,14 @@ P _audioTrackDocumentDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readObjectOrNull<SyncMetadataDocument>(
+        offset,
+        SyncMetadataDocumentSchema.deserialize,
+        allOffsets,
+      )) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1130,6 +1161,24 @@ extension AudioTrackDocumentQueryFilter
   }
 
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      syncMetadataIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      syncMetadataIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
       uploadedByEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1403,7 +1452,14 @@ extension AudioTrackDocumentQueryFilter
 }
 
 extension AudioTrackDocumentQueryObject
-    on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QFilterCondition> {}
+    on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QFilterCondition> {
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      syncMetadata(FilterQuery<SyncMetadataDocument> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'syncMetadata');
+    });
+  }
+}
 
 extension AudioTrackDocumentQueryLinks
     on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QFilterCondition> {}
@@ -1755,6 +1811,13 @@ extension AudioTrackDocumentQueryProperty
       projectIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'projectId');
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, SyncMetadataDocument?, QQueryOperations>
+      syncMetadataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncMetadata');
     });
   }
 

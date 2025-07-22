@@ -11,13 +11,17 @@ import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_tra
 import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
+import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
+import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
 
 @injectable
-class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
+class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> 
+    with SyncAwareMixin {
   final WatchTracksByProjectIdUseCase watchAudioTracksByProject;
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
   final EditAudioTrackUseCase editAudioTrackUseCase;
+  final SyncStateManager _syncStateManager;
 
   StreamSubscription<Either<Failure, List<AudioTrack>>>? _trackSubscription;
 
@@ -26,7 +30,10 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     required this.deleteAudioTrack,
     required this.uploadAudioTrackUseCase,
     required this.editAudioTrackUseCase,
-  }) : super(AudioTrackInitial()) {
+    required SyncStateManager syncStateManager,
+  }) : _syncStateManager = syncStateManager,
+       super(AudioTrackInitial()) {
+    initializeSyncAwareness(_syncStateManager);
     on<WatchAudioTracksByProjectEvent>(_onWatchAudioTracksByProject);
     on<DeleteAudioTrackEvent>(_onDeleteAudioTrack);
     on<UploadAudioTrackEvent>(_onUploadAudioTrack);
@@ -77,6 +84,36 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     await _trackSubscription?.cancel();
     emit(AudioTrackLoading());
 
+    // Set up sync state listening for this session
+    listenToSyncState(
+      onSyncStarted: () {
+        if (state is AudioTrackLoaded) {
+          emit((state as AudioTrackLoaded).copyWith(isSyncing: true));
+        }
+      },
+      onSyncProgress: (progress) {
+        if (state is AudioTrackLoaded) {
+          emit((state as AudioTrackLoaded).copyWith(
+            isSyncing: true, 
+            syncProgress: progress,
+          ));
+        }
+      },
+      onSyncCompleted: () {
+        if (state is AudioTrackLoaded) {
+          emit((state as AudioTrackLoaded).copyWith(
+            isSyncing: false,
+            syncProgress: 1.0,
+          ));
+        }
+      },
+      onSyncError: (error) {
+        if (state is AudioTrackLoaded) {
+          emit((state as AudioTrackLoaded).copyWith(isSyncing: false));
+        }
+      },
+    );
+
     _trackSubscription = watchAudioTracksByProject
         .call(WatchTracksByProjectIdParams(projectId: event.projectId))
         .listen((either) {
@@ -90,7 +127,17 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   ) {
     event.tracks.fold(
       (failure) => emit(AudioTrackError(message: 'Failed to load tracks')),
-      (tracks) => emit(AudioTrackLoaded(tracks: tracks)),
+      (tracks) {
+        // Preserve sync state when updating tracks
+        final currentSyncState = state is AudioTrackLoaded ? 
+          (state as AudioTrackLoaded) : null;
+        
+        emit(AudioTrackLoaded(
+          tracks: tracks,
+          isSyncing: currentSyncState?.isSyncing ?? isSyncing,
+          syncProgress: currentSyncState?.syncProgress,
+        ));
+      },
     );
   }
 

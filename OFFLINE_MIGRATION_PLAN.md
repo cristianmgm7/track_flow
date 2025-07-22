@@ -4,7 +4,7 @@
 
 **Objetivo**: Migrar todas las funcionalidades de TrackFlow a la arquitectura offline-first completa, eliminando bloqueos por conectividad y garantizando 100% de funcionalidad offline.
 
-**Estado actual**: Solo **Projects** está completamente migrado. Las demás funcionalidades siguen patrones legacy network-first que bloquean la UI.
+**Estado actual**: **Projects** y **AudioTrack** están completamente migrados a offline-first con NetworkStateManager. AudioComment, UserProfile y Auth mantienen patrones legacy.
 
 **Impacto esperado**: 
 - ✅ 0% de bloqueos por red
@@ -26,28 +26,31 @@
 - `lib/features/audio_track/data/models/audio_track_document.dart`
 - `lib/features/audio_track/data/repositories/audio_track_repository_impl.dart`
 
-**Tasks**:
-- [ ] **1.1.1** Agregar `SyncMetadataDocument` a `AudioTrackDocument`
+**Tasks**: ✅ **COMPLETED**
+- [x] **1.1.1** ✅ Agregar `SyncMetadataDocument` a `AudioTrackDocument`
   ```dart
-  @embedded
+  /// Sync metadata for offline-first functionality
   SyncMetadataDocument? syncMetadata;
   ```
-- [ ] **1.1.2** Eliminar `return Left(ServerFailure('No network connection'))`
-- [ ] **1.1.3** Implementar patrón cache-aside en `watchAudioTracks()`
+- [x] **1.1.2** ✅ Eliminar `return Left(ServerFailure('No network connection'))`
+- [x] **1.1.3** ✅ Implementar patrón cache-aside en `watchTracksByProject()`
   ```dart
-  return _isar.audioTracks.watch(fireImmediately: true).asyncMap((localTracks) async {
-    if (await _networkInfo.isConnected) {
-      _backgroundSyncCoordinator.triggerBackgroundSync(syncKey: 'audio_tracks');
-    }
-    return localTracks;
-  });
+  return localDataSource.watchTracksByProject(projectId.value)
+    .asyncMap((localResult) async {
+      if (await _networkStateManager.isConnected) {
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${projectId.value}',
+        );
+      }
+      return localResult.fold(...);
+    });
   ```
-- [ ] **1.1.4** Convertir operaciones CUD a offline-queue
-  - `uploadTrack()` → Queue para sync posterior
-  - `updateTrack()` → Update local + queue sync
+- [x] **1.1.4** ✅ Convertir operaciones CUD a offline-queue pattern
+  - `uploadAudioTrack()` → Cache local + PendingOperationsManager queue  
+  - `editTrackName()` → Update local + queue sync
   - `deleteTrack()` → Soft delete local + queue sync
-- [ ] **1.1.5** Integrar `BackgroundSyncCoordinator` para sync no-bloqueante
-- [ ] **1.1.6** Agregar manejo de archivos offline (importante para uploads)
+- [x] **1.1.5** ✅ Integrar `BackgroundSyncCoordinator` para sync no-bloqueante
+- [x] **1.1.6** ✅ **BONUS**: Migración completa de NetworkInfo → NetworkStateManager
 
 #### **1.2 BLoC Integration con SyncAwareMixin**
 **Problema**: No hay feedback de estado de sync en la UI  
@@ -159,73 +162,98 @@
 
 ## 🔧 Arquitectura de Referencia
 
-### **Patrón Cache-Aside (Projects como referencia)**
+### **Patrón Cache-Aside (Projects + AudioTrack implementados)**
 ```dart
-// ✅ CORRECTO - Patrón implementado en ProjectsRepository
+// ✅ CORRECTO - Patrón implementado en AudioTrackRepository
 @override
-Stream<List<Project>> watchProjects() {
-  return _isar.projects.watch(fireImmediately: true).asyncMap((localProjects) async {
-    if (await _networkInfo.isConnected) {
-      _backgroundSyncCoordinator.triggerBackgroundSync(syncKey: 'projects');
-    }
-    return localProjects; // Retorna datos locales INMEDIATAMENTE
-  });
+Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
+  ProjectId projectId,
+) {
+  return localDataSource.watchTracksByProject(projectId.value)
+    .asyncMap((localResult) async {
+      // Trigger background sync if connected (non-blocking)
+      if (await _networkStateManager.isConnected) {
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${projectId.value}',
+        );
+      }
+      
+      // Return local data immediately
+      return localResult.fold(
+        (failure) => Left(failure),
+        (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
+      );
+    });
 }
 ```
 
 ### **Operaciones Offline-First**
 ```dart
-// ✅ CORRECTO - Queue offline operations
-@override  
-Future<Either<Failure, AudioTrack>> uploadTrack(AudioTrack track) async {
+// ✅ CORRECTO - Implementado en AudioTrackRepository
+@override
+Future<Either<Failure, Unit>> uploadAudioTrack({
+  required File file,
+  required AudioTrack track,
+}) async {
   try {
-    // 1. Guardar localmente PRIMERO
-    final localTrack = track.copyWith(
-      syncMetadata: SyncMetadata.pendingUpload(),
-    );
-    await _isar.writeTxn(() => _isar.audioTracks.put(localTrack));
+    // 1. OFFLINE-FIRST: Save locally IMMEDIATELY
+    final dto = AudioTrackDTO.fromDomain(track, extension: file.path.split('.').last);
+    final localResult = await localDataSource.cacheTrack(dto);
     
-    // 2. Queue para sync posterior
+    // 2. Queue for background sync
     await _pendingOperationsManager.addOperation(
-      SyncOperation.upload(entityType: 'audio_track', entityId: track.id),
+      entityType: 'audio_track',
+      entityId: track.id.value,
+      operationType: 'upload',
+      priority: SyncPriority.high,
+      data: {'filePath': file.path},
     );
     
-    // 3. Trigger background sync si hay conexión
-    if (await _networkInfo.isConnected) {
-      _backgroundSyncCoordinator.triggerBackgroundSync(syncKey: 'audio_tracks');
+    // 3. Trigger background sync if connected
+    if (await _networkStateManager.isConnected) {
+      _backgroundSyncCoordinator.triggerBackgroundSync(
+        syncKey: 'audio_tracks_upload',
+      );
     }
     
-    return Right(localTrack); // ✅ Éxito inmediato
+    return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
   } catch (e) {
-    return Left(LocalFailure('Failed to queue track upload'));
+    return Left(DatabaseFailure('Failed to prepare track upload: $e'));
   }
 }
 ```
 
 ### **Document Model con Sync Metadata**
 ```dart
-// ✅ CORRECTO - AudioTrackDocument actualizado
+// ✅ IMPLEMENTADO - AudioTrackDocument con sync metadata
 @collection  
 class AudioTrackDocument {
   Id id = Isar.autoIncrement;
   String? trackId;
   String? name;
   String? filePath;
+  String? projectId;
+  String? userId;
   
-  // 🆕 AGREGAR - Sync metadata
-  @embedded
+  /// Sync metadata for offline-first functionality
   SyncMetadataDocument? syncMetadata;
   
-  // Factory methods
-  factory AudioTrackDocument.fromRemote(AudioTrack track) => AudioTrackDocument()
-    ..trackId = track.id
-    ..name = track.name
-    ..syncMetadata = SyncMetadataDocument.synced();
-    
-  factory AudioTrackDocument.forUpload(AudioTrack track) => AudioTrackDocument()
-    ..trackId = track.id  
-    ..name = track.name
-    ..syncMetadata = SyncMetadataDocument.pendingUpload();
+  // Factory methods implementados
+  factory AudioTrackDocument.fromRemoteDTO(AudioTrackDTO dto, {
+    int? version,
+    DateTime? lastModified,
+  }) {
+    return AudioTrackDocument()
+      ..syncMetadata = SyncMetadataDocument.fromRemote(
+        version: version ?? 1,
+        lastModified: lastModified ?? DateTime.now(),
+      );
+  }
+  
+  factory AudioTrackDocument.forLocalCreation() {
+    return AudioTrackDocument()
+      ..syncMetadata = SyncMetadataDocument.forLocalCreation();
+  }
 }
 ```
 

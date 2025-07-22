@@ -47,8 +47,27 @@ class ProjectDetailsLoaded extends ProjectsState {
 
 class ProjectsLoaded extends ProjectsState {
   final List<Project> projects;
-  const ProjectsLoaded(this.projects);
+  final bool isSyncing;
+  final double? syncProgress;
+
+  const ProjectsLoaded({
+    required this.projects,
+    this.isSyncing = false,
+    this.syncProgress,
+  });
+
+  ProjectsLoaded copyWith({
+    List<Project>? projects,
+    bool? isSyncing,
+    double? syncProgress,
+  }) {
+    return ProjectsLoaded(
+      projects: projects ?? this.projects,
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncProgress: syncProgress ?? this.syncProgress,
+    );
+  }
 
   @override
-  List<Object?> get props => [projects];
+  List<Object?> get props => [projects, isSyncing, syncProgress ?? 0.0];
 }

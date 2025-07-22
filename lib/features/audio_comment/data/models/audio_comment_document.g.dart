@@ -43,13 +43,19 @@ const AudioCommentDocumentSchema = CollectionSchema(
       name: r'projectId',
       type: IsarType.string,
     ),
-    r'timestamp': PropertySchema(
+    r'syncMetadata': PropertySchema(
       id: 5,
+      name: r'syncMetadata',
+      type: IsarType.object,
+      target: r'SyncMetadataDocument',
+    ),
+    r'timestamp': PropertySchema(
+      id: 6,
       name: r'timestamp',
       type: IsarType.long,
     ),
     r'trackId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'trackId',
       type: IsarType.string,
     )
@@ -101,7 +107,7 @@ const AudioCommentDocumentSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'SyncMetadataDocument': SyncMetadataDocumentSchema},
   getId: _audioCommentDocumentGetId,
   getLinks: _audioCommentDocumentGetLinks,
   attach: _audioCommentDocumentAttach,
@@ -118,6 +124,14 @@ int _audioCommentDocumentEstimateSize(
   bytesCount += 3 + object.createdBy.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.projectId.length * 3;
+  {
+    final value = object.syncMetadata;
+    if (value != null) {
+      bytesCount += 3 +
+          SyncMetadataDocumentSchema.estimateSize(
+              value, allOffsets[SyncMetadataDocument]!, allOffsets);
+    }
+  }
   bytesCount += 3 + object.trackId.length * 3;
   return bytesCount;
 }
@@ -133,8 +147,14 @@ void _audioCommentDocumentSerialize(
   writer.writeString(offsets[2], object.createdBy);
   writer.writeString(offsets[3], object.id);
   writer.writeString(offsets[4], object.projectId);
-  writer.writeLong(offsets[5], object.timestamp);
-  writer.writeString(offsets[6], object.trackId);
+  writer.writeObject<SyncMetadataDocument>(
+    offsets[5],
+    allOffsets,
+    SyncMetadataDocumentSchema.serialize,
+    object.syncMetadata,
+  );
+  writer.writeLong(offsets[6], object.timestamp);
+  writer.writeString(offsets[7], object.trackId);
 }
 
 AudioCommentDocument _audioCommentDocumentDeserialize(
@@ -149,8 +169,13 @@ AudioCommentDocument _audioCommentDocumentDeserialize(
   object.createdBy = reader.readString(offsets[2]);
   object.id = reader.readString(offsets[3]);
   object.projectId = reader.readString(offsets[4]);
-  object.timestamp = reader.readLong(offsets[5]);
-  object.trackId = reader.readString(offsets[6]);
+  object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
+    offsets[5],
+    SyncMetadataDocumentSchema.deserialize,
+    allOffsets,
+  );
+  object.timestamp = reader.readLong(offsets[6]);
+  object.trackId = reader.readString(offsets[7]);
   return object;
 }
 
@@ -172,8 +197,14 @@ P _audioCommentDocumentDeserializeProp<P>(
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readLong(offset)) as P;
+      return (reader.readObjectOrNull<SyncMetadataDocument>(
+        offset,
+        SyncMetadataDocumentSchema.deserialize,
+        allOffsets,
+      )) as P;
     case 6:
+      return (reader.readLong(offset)) as P;
+    case 7:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1130,6 +1161,24 @@ extension AudioCommentDocumentQueryFilter on QueryBuilder<AudioCommentDocument,
   }
 
   QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> syncMetadataIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> syncMetadataIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
       QAfterFilterCondition> timestampEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1325,7 +1374,14 @@ extension AudioCommentDocumentQueryFilter on QueryBuilder<AudioCommentDocument,
 }
 
 extension AudioCommentDocumentQueryObject on QueryBuilder<AudioCommentDocument,
-    AudioCommentDocument, QFilterCondition> {}
+    AudioCommentDocument, QFilterCondition> {
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> syncMetadata(FilterQuery<SyncMetadataDocument> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'syncMetadata');
+    });
+  }
+}
 
 extension AudioCommentDocumentQueryLinks on QueryBuilder<AudioCommentDocument,
     AudioCommentDocument, QFilterCondition> {}
@@ -1637,6 +1693,13 @@ extension AudioCommentDocumentQueryProperty on QueryBuilder<
       projectIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'projectId');
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, SyncMetadataDocument?, QQueryOperations>
+      syncMetadataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncMetadata');
     });
   }
 

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/background_sync_coordinator.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
@@ -15,23 +15,23 @@ import 'package:trackflow/core/entities/unique_id.dart';
 class ProjectsRepositoryImpl implements ProjectsRepository {
   final ProjectRemoteDataSource _remoteDataSource;
   final ProjectsLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
+  final NetworkStateManager _networkStateManager;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
 
   ProjectsRepositoryImpl({
     required ProjectRemoteDataSource remoteDataSource,
     required ProjectsLocalDataSource localDataSource,
-    required NetworkInfo networkInfo,
+    required NetworkStateManager networkStateManager,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
-       _networkInfo = networkInfo,
+       _networkStateManager = networkStateManager,
        _backgroundSyncCoordinator = backgroundSyncCoordinator;
 
   @override
   Future<Either<Failure, Project>> createProject(Project project) async {
     try {
-      final hasConnected = await _networkInfo.isConnected;
+      final hasConnected = await _networkStateManager.isConnected;
       
       if (hasConnected) {
         // Online: Create on remote and cache locally
@@ -63,7 +63,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Unit>> updateProject(Project project) async {
     try {
-      final hasConnected = await _networkInfo.isConnected;
+      final hasConnected = await _networkStateManager.isConnected;
       
       // Always cache locally first for immediate UI updates
       final projectDto = ProjectDTO.fromDomain(project);
@@ -96,7 +96,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Unit>> deleteProject(ProjectId projectId) async {
     try {
-      final hasConnected = await _networkInfo.isConnected;
+      final hasConnected = await _networkStateManager.isConnected;
       
       if (hasConnected) {
         // Online: Delete from remote first, then local
@@ -146,7 +146,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     }
     
     // 4. If not in cache and we have network, fetch from remote
-    final hasConnected = await _networkInfo.isConnected;
+    final hasConnected = await _networkStateManager.isConnected;
     if (!hasConnected) {
       return Left(DatabaseFailure('Project not found in cache and no internet connection'));
     }
