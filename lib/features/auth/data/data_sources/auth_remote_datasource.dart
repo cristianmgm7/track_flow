@@ -24,8 +24,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Stream<User?> authStateChanges() {
-    return _auth.authStateChanges();
+  Stream<User?> authStateChanges() async* {
+    // First emit current user immediately (fixes hot reload timeouts)
+    yield _auth.currentUser;
+    
+    // Then listen to future auth state changes
+    await for (final user in _auth.authStateChanges()) {
+      yield user;
+    }
   }
 
   @override

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/coordination/app_flow_%20events.dart';
-import 'package:trackflow/core/coordination/app_flow_state.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/coordination/sync_state_manager.dart';
 import 'package:trackflow/core/coordination/sync_state.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
-import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart';
+import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 
 @injectable

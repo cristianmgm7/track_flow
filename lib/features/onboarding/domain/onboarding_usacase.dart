@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/auth/domain/repositories/onboarding_repository.dart';
+import 'package:trackflow/features/onboarding/domain/repository/onboarding_repository.dart';
 
 @lazySingleton
 class OnboardingUseCase {

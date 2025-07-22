@@ -25,57 +25,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.googleSignIn,
     required this.getAuthState,
   }) : super(AuthInitial()) {
-    on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
     on<AuthGoogleSignInRequested>(_onAuthGoogleSignInRequested);
   }
 
-  Future<void> _onAuthCheckRequested(
-    AuthCheckRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    print('🔄 [AuthBloc] _onAuthCheckRequested() started');
-    emit(AuthLoading());
-    print('🔄 [AuthBloc] Emitted AuthLoading');
-
-    try {
-      // Add timeout to prevent infinite waiting
-      print('🔄 [AuthBloc] Starting auth state check with 60s timeout');
-      await emit.forEach(
-        getAuthState().timeout(
-          const Duration(seconds: 60), // Increased from 15s to 60s
-          onTimeout: (sink) {
-            print(
-              '🔄 [AuthBloc] TIMEOUT: Auth state check timed out after 60s',
-            );
-            sink.add(null);
-            sink.close();
-          },
-        ),
-        onData: (user) {
-          if (user != null) {
-            print('🔄 [AuthBloc] User authenticated: ${user.email}');
-            return AuthAuthenticated(user);
-          } else {
-            print('🔄 [AuthBloc] User not authenticated (null user)');
-            return AuthUnauthenticated();
-          }
-        },
-        onError: (error, stackTrace) {
-          print('❌ [AuthBloc] Auth state check error: $error');
-          return AuthError('Failed to check auth state');
-        },
-      );
-      print('🔄 [AuthBloc] Auth state check completed');
-    } catch (e) {
-      // If timeout or other error, default to unauthenticated
-      print('❌ [AuthBloc] Auth state check exception: $e');
-      emit(AuthUnauthenticated());
-      print('🔄 [AuthBloc] Emitted AuthUnauthenticated due to exception');
-    }
-  }
 
   Future<void> _onAuthSignInRequested(
     AuthSignInRequested event,
@@ -160,4 +115,5 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       },
     );
   }
+
 }

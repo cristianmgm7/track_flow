@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/core/coordination/app_flow_%20events.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/theme/app_theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
@@ -18,8 +18,8 @@ import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audi
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/core/coordination/app_flow_bloc.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {
@@ -30,9 +30,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (context) => sl<AuthBloc>()..add(AuthCheckRequested()),
-        ),
+        BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
         BlocProvider<OnboardingBloc>(create: (context) => sl<OnboardingBloc>()),
         BlocProvider<UserProfileBloc>(
           create: (context) => sl<UserProfileBloc>(),
@@ -71,13 +69,15 @@ class _App extends StatefulWidget {
 
 class _AppState extends State<_App> {
   late final GoRouter _router;
-  bool _hasInitialized = false;
 
   @override
   void initState() {
     super.initState();
     print('🔄 [MyApp] initState() called');
     _router = AppRouter.router(context.read<AppFlowBloc>());
+
+    // Start app flow check immediately - AppFlowBloc handles all verification
+    context.read<AppFlowBloc>().add(CheckAppFlow());
 
     // Escuchar el dynamic link
     final dynamicLinkService = sl<DynamicLinkService>();
@@ -95,42 +95,10 @@ class _AppState extends State<_App> {
   @override
   Widget build(BuildContext context) {
     print('🔄 [MyApp] build() called');
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) {
-        print('🔄 [MyApp] AuthBloc state changed: ${state.runtimeType}');
-        print('🔄 [MyApp] _hasInitialized: $_hasInitialized');
-
-        if (state is AuthAuthenticated && !_hasInitialized) {
-          print(
-            '🔄 [MyApp] User authenticated and not initialized, triggering AppFlow',
-          );
-          _hasInitialized = true;
-          // AppFlowBloc now handles sync internally - just trigger the flow
-          context.read<AppFlowBloc>().add(CheckAppFlow());
-        } else if (state is AuthUnauthenticated && !_hasInitialized) {
-          print(
-            '🔄 [MyApp] User unauthenticated and not initialized, triggering AppFlow',
-          );
-          _hasInitialized = true;
-          // For unauthenticated users, check app flow immediately
-          context.read<AppFlowBloc>().add(CheckAppFlow());
-        } else if (state is AuthUnauthenticated && _hasInitialized) {
-          print(
-            '🔄 [MyApp] User signed out after initialization, notifying AppFlowBloc',
-          );
-          // User signed out after initialization, notify AppFlowBloc
-          context.read<AppFlowBloc>().add(UserSignedOut());
-        } else {
-          print(
-            '🔄 [MyApp] State change ignored: ${state.runtimeType} with _hasInitialized: $_hasInitialized',
-          );
-        }
-      },
-      child: MaterialApp.router(
-        title: 'TrackFlow',
-        theme: AppTheme.darkTheme,
-        routerConfig: _router,
-      ),
+    return MaterialApp.router(
+      title: 'TrackFlow',
+      theme: AppTheme.darkTheme,
+      routerConfig: _router,
     );
   }
 }
