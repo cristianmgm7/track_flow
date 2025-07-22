@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
+import 'package:trackflow/core/sync/data/models/sync_metadata_document.dart';
 
 part 'audio_track_document.g.dart';
 
@@ -22,6 +23,10 @@ class AudioTrackDocument {
   late String uploadedBy;
   late DateTime createdAt;
   late String extension;
+
+  /// Sync metadata for offline-first functionality  
+  @embedded
+  SyncMetadataDocument? syncMetadata;
 
   AudioTrackDocument();
 

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/core/navigation/navigation_service.dart';
+import 'package:trackflow/core/router/navigation_service.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
@@ -42,19 +42,20 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 class AppRouter {
   static GoRouter router(AppFlowBloc appFlowBloc) {
     final navigationService = sl<NavigationService>();
-    
+
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: navigationService.getInitialRoute(),
       refreshListenable: GoRouterRefreshStream(appFlowBloc.stream),
       redirect: (context, state) {
         final flowState = appFlowBloc.state;
-        
+
         // Special handling for loading state to trigger initial check
-        if (flowState is AppFlowLoading && state.matchedLocation == AppRoutes.splash) {
+        if (flowState is AppFlowLoading &&
+            state.matchedLocation == AppRoutes.splash) {
           appFlowBloc.add(CheckAppFlow());
         }
-        
+
         // Use NavigationService for clean routing logic
         return navigationService.getRouteForFlowState(
           flowState,
