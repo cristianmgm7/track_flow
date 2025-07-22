@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 
-import '../entities/user.dart';
-import '../repositories/auth_repository.dart';
+import 'package:trackflow/features/auth/domain/entities/user.dart';
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 
 @lazySingleton
 class GetAuthStateUseCase {

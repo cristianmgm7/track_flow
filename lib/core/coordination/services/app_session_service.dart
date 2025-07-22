@@ -5,7 +5,7 @@ import 'package:trackflow/core/coordination/domain/usecases/check_authentication
 import 'package:trackflow/core/coordination/domain/usecases/get_current_user_usecase.dart';
 import 'package:trackflow/core/coordination/sync_state_manager.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart';
+import 'package:trackflow/core/coordination/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 

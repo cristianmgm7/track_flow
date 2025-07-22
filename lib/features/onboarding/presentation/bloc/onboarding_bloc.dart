@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
+import 'package:trackflow/core/coordination/domain/usecases/get_current_user_id_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'onboarding_event.dart';
 import 'onboarding_state.dart';
@@ -8,13 +8,13 @@ import 'onboarding_state.dart';
 @injectable
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final OnboardingUseCase _onboardingUseCase;
-  final AuthUseCase _authUseCase;
+  final GetCurrentUserIdUseCase _getCurrentUserIdUseCase;
 
   OnboardingBloc({
     required OnboardingUseCase onboardingUseCase,
-    required AuthUseCase authUseCase,
+    required GetCurrentUserIdUseCase getCurrentUserIdUseCase,
   }) : _onboardingUseCase = onboardingUseCase,
-       _authUseCase = authUseCase,
+       _getCurrentUserIdUseCase = getCurrentUserIdUseCase,
        super(OnboardingInitial()) {
     on<CheckOnboardingStatus>(_onCheckOnboardingStatus);
     on<MarkOnboardingCompleted>(_onMarkOnboardingCompleted);
@@ -31,7 +31,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
     try {
       // Get current user ID
-      final userIdResult = await _authUseCase.getCurrentUserId();
+      final userIdResult = await _getCurrentUserIdUseCase();
       final userId = await userIdResult.fold((failure) async {
         emit(OnboardingError('Failed to get user ID: ${failure.message}'));
         return null;
@@ -68,7 +68,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
     try {
       // Get current user ID
-      final userIdResult = await _authUseCase.getCurrentUserId();
+      final userIdResult = await _getCurrentUserIdUseCase();
       final userId = await userIdResult.fold((failure) async {
         emit(OnboardingError('Failed to get user ID: ${failure.message}'));
         return null;
@@ -108,7 +108,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
     try {
       // Get current user ID
-      final userIdResult = await _authUseCase.getCurrentUserId();
+      final userIdResult = await _getCurrentUserIdUseCase();
       final userId = await userIdResult.fold((failure) async {
         emit(OnboardingError('Failed to get user ID: ${failure.message}'));
         return null;
