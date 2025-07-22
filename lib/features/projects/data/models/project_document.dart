@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'package:trackflow/core/sync/data/models/sync_metadata_document.dart';
 
 part 'project_document.g.dart';
 
@@ -19,9 +20,12 @@ class ProjectDocument {
   @Index()
   bool isDeleted = false;
 
+  // NEW: Sync metadata for conflict resolution
+  late SyncMetadataDocument syncMetadata;
+
   ProjectDocument();
 
-  factory ProjectDocument.fromDTO(ProjectDTO dto) {
+  factory ProjectDocument.fromDTO(ProjectDTO dto, {SyncMetadataDocument? syncMeta}) {
     return ProjectDocument()
       ..id = dto.id
       ..ownerId = dto.ownerId
@@ -32,7 +36,30 @@ class ProjectDocument {
       ..collaboratorIds = dto.collaboratorIds
       ..collaborators =
           dto.collaborators.map((c) => CollaboratorDocument.fromMap(c)).toList()
-      ..isDeleted = dto.isDeleted;
+      ..isDeleted = dto.isDeleted
+      ..syncMetadata = syncMeta ?? SyncMetadataDocument.initial();
+  }
+
+  /// Create from DTO for remote data (already synced)
+  factory ProjectDocument.fromRemoteDTO(ProjectDTO dto, {
+    int? version,
+    DateTime? lastModified,
+  }) {
+    return ProjectDocument()
+      ..id = dto.id
+      ..ownerId = dto.ownerId
+      ..name = dto.name
+      ..description = dto.description
+      ..createdAt = dto.createdAt
+      ..updatedAt = dto.updatedAt
+      ..collaboratorIds = dto.collaboratorIds
+      ..collaborators =
+          dto.collaborators.map((c) => CollaboratorDocument.fromMap(c)).toList()
+      ..isDeleted = dto.isDeleted
+      ..syncMetadata = SyncMetadataDocument.fromRemote(
+        version: version ?? 1,
+        lastModified: lastModified ?? dto.updatedAt ?? dto.createdAt,
+      );
   }
 
   ProjectDTO toDTO() {

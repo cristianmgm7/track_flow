@@ -5,17 +5,22 @@ import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/session_manager/services/app_session_service.dart';
 import 'package:trackflow/core/session_manager/domain/entities/app_session.dart';
+import 'package:trackflow/core/sync/background_sync_coordinator.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final AppSessionService _sessionService;
+  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
 
   StreamSubscription<AppSession>? _sessionSubscription;
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
 
-  AppFlowBloc({required AppSessionService sessionService})
-    : _sessionService = sessionService,
-      super(AppFlowInitial()) {
+  AppFlowBloc({
+    required AppSessionService sessionService,
+    required BackgroundSyncCoordinator backgroundSyncCoordinator,
+  })  : _sessionService = sessionService,
+        _backgroundSyncCoordinator = backgroundSyncCoordinator,
+        super(AppFlowInitial()) {
     on<CheckAppFlow>(_onCheckAppFlow);
     on<SignOutRequested>(_onSignOutRequested); // New event for logout
   }
@@ -52,12 +57,15 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
           // Map session state to app flow state
           final flowState = _mapSessionToFlowState(session);
 
-          // If user needs sync, start sync process
+          // CHANGE: Always emit ready state immediately for navigation
+          emit(flowState);
+
+          // If user needs sync, trigger background sync (non-blocking)
           if (session.status == SessionStatus.ready &&
               !session.isSyncComplete) {
-            await _handleDataSync(session, emit);
-          } else {
-            emit(flowState);
+            _backgroundSyncCoordinator.triggerBackgroundSync(
+              syncKey: 'app_initialization',
+            );
           }
         },
       );
@@ -94,34 +102,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
   }
 
-  /// Handles data synchronization with progress updates
-  Future<void> _handleDataSync(
-    AppSession session,
-    Emitter<AppFlowState> emit,
-  ) async {
-    try {
-      // Cancel any existing subscription
-      await _sessionSubscription?.cancel();
-
-      // Listen to sync progress
-      _sessionSubscription = _sessionService
-          .initializeDataSync(session)
-          .listen(
-            (updatedSession) {
-              final flowState = _mapSessionToFlowState(updatedSession);
-              emit(flowState);
-            },
-            onError: (error) {
-              emit(AppFlowError('Data sync failed: $error'));
-            },
-            onDone: () {
-              // Sync completed
-            },
-          );
-    } catch (e) {
-      emit(AppFlowError('Failed to setup data sync: $e'));
-    }
-  }
+  // Removed _handleDataSync - now using BackgroundSyncCoordinator for non-blocking sync
 
   /// Handle user sign out requests
   Future<void> _onSignOutRequested(

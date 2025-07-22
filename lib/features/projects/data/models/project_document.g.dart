@@ -58,8 +58,14 @@ const ProjectDocumentSchema = CollectionSchema(
       name: r'ownerId',
       type: IsarType.string,
     ),
-    r'updatedAt': PropertySchema(
+    r'syncMetadata': PropertySchema(
       id: 8,
+      name: r'syncMetadata',
+      type: IsarType.object,
+      target: r'SyncMetadataDocument',
+    ),
+    r'updatedAt': PropertySchema(
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -98,7 +104,10 @@ const ProjectDocumentSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {r'CollaboratorDocument': CollaboratorDocumentSchema},
+  embeddedSchemas: {
+    r'CollaboratorDocument': CollaboratorDocumentSchema,
+    r'SyncMetadataDocument': SyncMetadataDocumentSchema
+  },
   getId: _projectDocumentGetId,
   getLinks: _projectDocumentGetLinks,
   attach: _projectDocumentAttach,
@@ -131,6 +140,9 @@ int _projectDocumentEstimateSize(
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.ownerId.length * 3;
+  bytesCount += 3 +
+      SyncMetadataDocumentSchema.estimateSize(
+          object.syncMetadata, allOffsets[SyncMetadataDocument]!, allOffsets);
   return bytesCount;
 }
 
@@ -153,7 +165,13 @@ void _projectDocumentSerialize(
   writer.writeBool(offsets[5], object.isDeleted);
   writer.writeString(offsets[6], object.name);
   writer.writeString(offsets[7], object.ownerId);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeObject<SyncMetadataDocument>(
+    offsets[8],
+    allOffsets,
+    SyncMetadataDocumentSchema.serialize,
+    object.syncMetadata,
+  );
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 ProjectDocument _projectDocumentDeserialize(
@@ -177,7 +195,13 @@ ProjectDocument _projectDocumentDeserialize(
   object.isDeleted = reader.readBool(offsets[5]);
   object.name = reader.readString(offsets[6]);
   object.ownerId = reader.readString(offsets[7]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
+  object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
+        offsets[8],
+        SyncMetadataDocumentSchema.deserialize,
+        allOffsets,
+      ) ??
+      SyncMetadataDocument();
+  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
   return object;
 }
 
@@ -211,6 +235,13 @@ P _projectDocumentDeserializeProp<P>(
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readObjectOrNull<SyncMetadataDocument>(
+            offset,
+            SyncMetadataDocumentSchema.deserialize,
+            allOffsets,
+          ) ??
+          SyncMetadataDocument()) as P;
+    case 9:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1528,6 +1559,13 @@ extension ProjectDocumentQueryObject
       return query.object(q, r'collaborators');
     });
   }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      syncMetadata(FilterQuery<SyncMetadataDocument> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'syncMetadata');
+    });
+  }
 }
 
 extension ProjectDocumentQueryLinks
@@ -1856,6 +1894,13 @@ extension ProjectDocumentQueryProperty
   QueryBuilder<ProjectDocument, String, QQueryOperations> ownerIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'ownerId');
+    });
+  }
+
+  QueryBuilder<ProjectDocument, SyncMetadataDocument, QQueryOperations>
+      syncMetadataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncMetadata');
     });
   }
 
