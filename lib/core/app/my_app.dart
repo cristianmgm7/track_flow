@@ -71,7 +71,6 @@ class _AppState extends State<_App> {
   @override
   void initState() {
     super.initState();
-    print('🔄 [MyApp] initState() called');
     _router = AppRouter.router(context.read<AppFlowBloc>());
 
     // Start app flow check immediately - AppFlowBloc handles all verification
@@ -92,7 +91,6 @@ class _AppState extends State<_App> {
 
   @override
   Widget build(BuildContext context) {
-    print('🔄 [MyApp] build() called');
     return MaterialApp.router(
       title: 'TrackFlow',
       theme: AppTheme.darkTheme,

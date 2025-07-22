@@ -2,13 +2,13 @@
 enum SyncStatus {
   /// App has not started syncing data yet
   initial,
-  
+
   /// Data synchronization is in progress
   syncing,
-  
+
   /// Data synchronization completed successfully
   complete,
-  
+
   /// Data synchronization failed
   error,
 }
@@ -31,23 +31,19 @@ class SyncState {
   static const SyncState initial = SyncState(status: SyncStatus.initial);
 
   /// Creates a syncing state with progress
-  static SyncState syncing(double progress) => SyncState(
-        status: SyncStatus.syncing,
-        progress: progress,
-      );
+  static SyncState syncing(double progress) =>
+      SyncState(status: SyncStatus.syncing, progress: progress);
 
   /// Creates a completed sync state
   static SyncState complete() => SyncState(
-        status: SyncStatus.complete,
-        progress: 1.0,
-        lastSyncTime: DateTime.now(),
-      );
+    status: SyncStatus.complete,
+    progress: 1.0,
+    lastSyncTime: DateTime.now(),
+  );
 
   /// Creates an error sync state
-  static SyncState error(String message) => SyncState(
-        status: SyncStatus.error,
-        errorMessage: message,
-      );
+  static SyncState error(String message) =>
+      SyncState(status: SyncStatus.error, errorMessage: message);
 
   /// Returns true if sync is complete and data is ready
   bool get isComplete => status == SyncStatus.complete;
