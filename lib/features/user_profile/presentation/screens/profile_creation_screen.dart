@@ -126,7 +126,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         if (state is UserProfileSaved) {
           // Profile was created successfully, notify AppFlowBloc
           // This will trigger a re-evaluation of the app flow
-          context.read<AppFlowBloc>().add(UserAuthenticated());
+          context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is UserProfileError) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(

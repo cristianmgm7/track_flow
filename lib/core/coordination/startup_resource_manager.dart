@@ -22,7 +22,7 @@ class StartupResourceManager {
   );
 
   /// Initializes app data with optional progress reporting
-  /// 
+  ///
   /// Syncs data in optimal order:
   /// 1. User profile first (required by other syncs)
   /// 2. Projects and collaborators in parallel (both depend on profile)
@@ -34,27 +34,19 @@ class StartupResourceManager {
       // Step 1: Sync user profile first (other syncs may depend on it)
       onProgress?.call(0.2);
       await syncUserProfile();
-      
+
       // Step 2 & 3: Sync projects and collaborators in parallel
       onProgress?.call(0.4);
-      await Future.wait([
-        syncProjects(),
-        syncUserProfileCollaborators(),
-      ]);
-      
+      await Future.wait([syncProjects(), syncUserProfileCollaborators()]);
+
       // Step 4 & 5: Sync content that depends on projects
       onProgress?.call(0.8);
-      await Future.wait([
-        syncAudioTracks(),
-        syncAudioComments(),
-      ]);
-      
+      await Future.wait([syncAudioTracks(), syncAudioComments()]);
+
       // Complete
       onProgress?.call(1.0);
-      
     } catch (e) {
       // Log error and rethrow for proper error handling upstream
-      print('Error: Failed to initialize app data: $e');
       rethrow;
     }
   }
