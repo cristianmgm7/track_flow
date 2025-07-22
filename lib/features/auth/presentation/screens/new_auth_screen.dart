@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/coordination/app_flow_%20events.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/auth/glassmorphism_card.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/core/coordination/app_flow_bloc.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
 
 enum AuthStep { welcome, form }
 
@@ -108,7 +108,7 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
           _passwordController.clear();
 
           // Trigger AppFlowBloc for proper state coordination
-          context.read<AppFlowBloc>().add(UserAuthenticated());
+          context.read<AppFlowBloc>().add(CheckAppFlow());
         }
       },
       child: Scaffold(

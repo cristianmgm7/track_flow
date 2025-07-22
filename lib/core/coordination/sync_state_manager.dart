@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:trackflow/core/app/startup_resource_manager.dart';
+import 'package:trackflow/core/coordination/startup_resource_manager.dart';
 import 'package:trackflow/core/coordination/sync_state.dart';
 
 /// Manages the state of data synchronization across the app

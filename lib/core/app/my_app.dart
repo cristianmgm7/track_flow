@@ -7,7 +7,6 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
@@ -19,7 +18,6 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key}) {

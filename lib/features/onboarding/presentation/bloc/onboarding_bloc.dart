@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
-import 'package:trackflow/features/auth/domain/usecases/onboarding_usacase.dart';
+import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'onboarding_event.dart';
 import 'onboarding_state.dart';
 

@@ -20,8 +20,8 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/core/coordination/app_flow_bloc.dart';
-import 'package:trackflow/core/coordination/app_flow_%20events.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});
@@ -124,9 +124,9 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     return BlocListener<UserProfileBloc, UserProfileState>(
       listener: (context, state) {
         if (state is UserProfileSaved) {
-          // Profile was created successfully, notify AppFlowBloc
-          // This will trigger a re-evaluation of the app flow
-          context.read<AppFlowBloc>().add(UserAuthenticated());
+          // Profile was created successfully, trigger app flow re-check
+          // This will re-evaluate the complete session state
+          context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is UserProfileError) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(

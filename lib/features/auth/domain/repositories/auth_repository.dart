@@ -32,4 +32,7 @@ abstract class AuthRepository {
 
   /// Get the signed in user id
   Future<Either<Failure, UserId?>> getSignedInUserId();
+
+  /// Get the current authenticated user
+  Future<Either<Failure, User?>> getCurrentUser();
 }

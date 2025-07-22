@@ -3,41 +3,30 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/coordination/presentation/bloc/app_flow_state.dart';
-import 'package:trackflow/core/coordination/sync_state_manager.dart';
-import 'package:trackflow/core/coordination/sync_state.dart';
-import 'package:trackflow/features/auth/domain/usecases/auth_usecase.dart';
-import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
+import 'package:trackflow/core/coordination/services/app_session_service.dart';
+import 'package:trackflow/core/coordination/domain/entities/app_session.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
-  final AuthUseCase _authUseCase;
-  final OnboardingUseCase _onboardingUseCase;
-  final CheckProfileCompletenessUseCase _profileUseCase;
-  final SyncStateManager _syncStateManager;
+  final AppSessionService _sessionService;
 
-  StreamSubscription<SyncState>? _syncSubscription;
+  StreamSubscription<AppSession>? _sessionSubscription;
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
 
   AppFlowBloc({
-    required AuthUseCase authUseCase,
-    required OnboardingUseCase onboardingUseCase,
-    required CheckProfileCompletenessUseCase profileUseCase,
-    required SyncStateManager syncStateManager,
-  }) : _authUseCase = authUseCase,
-       _onboardingUseCase = onboardingUseCase,
-       _profileUseCase = profileUseCase,
-       _syncStateManager = syncStateManager,
+    required AppSessionService sessionService,
+  }) : _sessionService = sessionService,
        super(AppFlowInitial()) {
     on<CheckAppFlow>(_onCheckAppFlow);
     on<UserAuthenticated>(_onUserAuthenticated);
     on<UserSignedOut>(_onUserSignedOut);
+    on<SignOutRequested>(_onSignOutRequested); // New event for logout
   }
 
   @override
   Future<void> close() {
     print('🔄 [AppFlowBloc] close() called');
-    _syncSubscription?.cancel();
+    _sessionSubscription?.cancel();
     return super.close();
   }
 
@@ -65,128 +54,28 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     print('🔄 [AppFlowBloc] Emitted AppFlowLoading');
 
     try {
-      // Step 1: Check auth status
-      print('🔄 [AppFlowBloc] Step 1: Checking auth status');
-      final authResult = await _authUseCase.isAuthenticated();
-      final isAuthenticated = await authResult.fold(
-        (failure) async => false,
-        (isAuth) async => isAuth,
-      );
-      print('🔄 [AppFlowBloc] Auth result: $isAuthenticated');
+      // Initialize session using the service
+      print('🔄 [AppFlowBloc] Calling session service to initialize');
+      final sessionResult = await _sessionService.initializeSession();
 
-      // If not authenticated, reset sync and emit unauthenticated
-      if (!isAuthenticated) {
-        print('🔄 [AppFlowBloc] User not authenticated, resetting sync');
-        _syncStateManager.reset();
-        emit(AppFlowUnauthenticated());
-        print('🔄 [AppFlowBloc] Emitted AppFlowUnauthenticated');
-        return;
-      }
-
-      // Step 2: Get current user ID
-      print('🔄 [AppFlowBloc] Step 2: Getting current user ID');
-      final userIdResult = await _authUseCase.getCurrentUserId();
-      final userId = await userIdResult.fold((failure) async {
-        print('❌ [AppFlowBloc] Failed to get user ID: ${failure.message}');
-        emit(AppFlowError('Failed to get user ID: ${failure.message}'));
-        return null;
-      }, (userId) async => userId);
-
-      if (userId == null) {
-        print('🔄 [AppFlowBloc] User ID is null, emitting unauthenticated');
-        emit(AppFlowUnauthenticated());
-        return;
-      }
-      print('🔄 [AppFlowBloc] User ID: ${userId.value}');
-
-      // Step 3: Initialize data sync with progress updates
-      print('🔄 [AppFlowBloc] Step 3: Starting data sync');
-      try {
-        // Cancel any existing subscription
-        await _syncSubscription?.cancel();
-
-        // Listen to sync progress and update state accordingly
-        print('🔄 [AppFlowBloc] Setting up sync subscription');
-        _syncSubscription = _syncStateManager.syncState.listen(
-          (syncState) {
-            print(
-              '🔄 [AppFlowBloc] Sync state update: ${syncState.status} - ${(syncState.progress * 100).toInt()}%',
-            );
-            if (syncState.isSyncing) {
-              emit(AppFlowSyncing(syncState.progress));
-              print(
-                '🔄 [AppFlowBloc] Emitted AppFlowSyncing(${syncState.progress})',
-              );
-            }
-          },
-          onError: (error) {
-            print('❌ [AppFlowBloc] Sync subscription error: $error');
-            emit(AppFlowError('Sync failed: $error'));
-          },
-        );
-
-        // Start sync and wait for completion
-        print('🔄 [AppFlowBloc] Calling SyncStateManager.initializeIfNeeded()');
-        await _syncStateManager.initializeIfNeeded();
-        print('🔄 [AppFlowBloc] Sync completed');
-      } catch (syncError) {
-        print('❌ [AppFlowBloc] Sync error: $syncError');
-        emit(AppFlowError('Data sync failed: $syncError'));
-        return;
-      } finally {
-        // Clean up subscription
-        print('🔄 [AppFlowBloc] Cleaning up sync subscription');
-        await _syncSubscription?.cancel();
-        _syncSubscription = null;
-      }
-
-      // Step 4: Check onboarding status (after sync is complete)
-      print('🔄 [AppFlowBloc] Step 4: Checking onboarding status');
-      final onboardingResult = await _onboardingUseCase
-          .checkOnboardingCompleted(userId.value);
-
-      final onboardingCompleted = await onboardingResult.fold(
-        (failure) async => null,
-        (completed) async => completed,
-      );
-      print('🔄 [AppFlowBloc] Onboarding completed: $onboardingCompleted');
-
-      if (onboardingCompleted == null) {
-        print('❌ [AppFlowBloc] Failed to check onboarding status');
-        emit(AppFlowError('Failed to check onboarding status'));
-        return;
-      }
-
-      if (!onboardingCompleted) {
-        print('🔄 [AppFlowBloc] User needs onboarding');
-        emit(AppFlowNeedsOnboarding());
-        print('🔄 [AppFlowBloc] Emitted AppFlowNeedsOnboarding');
-        return;
-      }
-
-      // Step 5: Check profile completeness (after sync is complete)
-      print('🔄 [AppFlowBloc] Step 5: Checking profile completeness');
-      final profileResult = await _profileUseCase.getDetailedCompleteness(
-        userId.value,
-      );
-
-      await profileResult.fold(
+      await sessionResult.fold(
         (failure) async {
-          print('❌ [AppFlowBloc] Failed to check profile: ${failure.message}');
-          emit(AppFlowError('Failed to check profile: ${failure.message}'));
+          print('❌ [AppFlowBloc] Session initialization failed: ${failure.message}');
+          emit(AppFlowError('Failed to initialize session: ${failure.message}'));
         },
-        (completenessInfo) async {
-          print(
-            '🔄 [AppFlowBloc] Profile completeness: ${completenessInfo.isComplete}',
-          );
-          if (completenessInfo.isComplete) {
-            print('🔄 [AppFlowBloc] User profile is complete, emitting ready');
-            emit(AppFlowReady());
-            print('🔄 [AppFlowBloc] Emitted AppFlowReady');
+        (session) async {
+          print('🔄 [AppFlowBloc] Session initialized: ${session.status}');
+          
+          // Map session state to app flow state
+          final flowState = _mapSessionToFlowState(session);
+          
+          // If user needs sync, start sync process
+          if (session.status == SessionStatus.ready && !session.isSyncComplete) {
+            print('🔄 [AppFlowBloc] Starting data sync process');
+            await _handleDataSync(session, emit);
           } else {
-            print('🔄 [AppFlowBloc] User needs profile setup');
-            emit(AppFlowNeedsProfileSetup());
-            print('🔄 [AppFlowBloc] Emitted AppFlowNeedsProfileSetup');
+            print('🔄 [AppFlowBloc] Emitting flow state: ${flowState.runtimeType}');
+            emit(flowState);
           }
         },
       );
@@ -198,18 +87,90 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
   }
 
+  /// Maps AppSession state to AppFlowState
+  AppFlowState _mapSessionToFlowState(AppSession session) {
+    switch (session.status) {
+      case SessionStatus.initial:
+        return AppFlowInitial();
+      case SessionStatus.loading:
+        return AppFlowLoading();
+      case SessionStatus.unauthenticated:
+        return AppFlowUnauthenticated();
+      case SessionStatus.authenticatedIncomplete:
+        if (!session.isOnboardingCompleted) {
+          return AppFlowNeedsOnboarding();
+        } else if (!session.isProfileComplete) {
+          return AppFlowNeedsProfileSetup();
+        }
+        // Fallback - should not happen
+        return AppFlowReady();
+      case SessionStatus.syncing:
+        return AppFlowSyncing(session.syncProgress);
+      case SessionStatus.ready:
+        return AppFlowReady();
+      case SessionStatus.error:
+        return AppFlowError(session.errorMessage ?? 'Unknown error');
+    }
+  }
+
+  /// Handles data synchronization with progress updates
+  Future<void> _handleDataSync(AppSession session, Emitter<AppFlowState> emit) async {
+    try {
+      print('🔄 [AppFlowBloc] Setting up sync stream');
+      
+      // Cancel any existing subscription
+      await _sessionSubscription?.cancel();
+      
+      // Listen to sync progress
+      _sessionSubscription = _sessionService.initializeDataSync(session).listen(
+        (updatedSession) {
+          print('🔄 [AppFlowBloc] Sync progress: ${(updatedSession.syncProgress * 100).toInt()}%');
+          final flowState = _mapSessionToFlowState(updatedSession);
+          emit(flowState);
+        },
+        onError: (error) {
+          print('❌ [AppFlowBloc] Sync error: $error');
+          emit(AppFlowError('Data sync failed: $error'));
+        },
+        onDone: () {
+          print('🔄 [AppFlowBloc] Sync completed');
+        },
+      );
+    } catch (e) {
+      print('❌ [AppFlowBloc] Sync setup error: $e');
+      emit(AppFlowError('Failed to setup data sync: $e'));
+    }
+  }
+
+  /// Handle user sign out requests
+  Future<void> _onSignOutRequested(
+    SignOutRequested event,
+    Emitter<AppFlowState> emit,
+  ) async {
+    print('🔄 [AppFlowBloc] _onSignOutRequested() called');
+    emit(AppFlowLoading());
+    
+    final result = await _sessionService.signOut();
+    result.fold(
+      (failure) {
+        print('❌ [AppFlowBloc] Sign out failed: ${failure.message}');
+        emit(AppFlowError('Sign out failed: ${failure.message}'));
+      },
+      (session) {
+        print('🔄 [AppFlowBloc] Sign out successful');
+        emit(AppFlowUnauthenticated());
+      },
+    );
+  }
+
   Future<void> _onUserSignedOut(
     UserSignedOut event,
     Emitter<AppFlowState> emit,
   ) async {
     print('🔄 [AppFlowBloc] _onUserSignedOut() called');
-    // Cancel any ongoing sync subscription
-    await _syncSubscription?.cancel();
-    _syncSubscription = null;
-
-    // Reset sync state when user signs out
-    _syncStateManager.reset();
+    // This is triggered by external logout (e.g., from auth screens)
+    // Just emit unauthenticated state
     emit(AppFlowUnauthenticated());
-    print('🔄 [AppFlowBloc] Emitted AppFlowUnauthenticated after sign out');
+    print('🔄 [AppFlowBloc] Emitted AppFlowUnauthenticated after external sign out');
   }
 }

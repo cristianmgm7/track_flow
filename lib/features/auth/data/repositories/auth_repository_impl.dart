@@ -175,4 +175,35 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(AuthenticationFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, domain.User?>> getCurrentUser() async {
+    try {
+      final isConnected = await _networkInfo.isConnected;
+      if (!isConnected) {
+        // In offline mode, try to get user from session storage
+        final userId = _sessionStorage.getUserId();
+        final offlineEmail = _sessionStorage.getString('offline_email');
+        if (userId != null && offlineEmail != null) {
+          return Right(
+            domain.User(
+              id: UserId.fromUniqueString(userId),
+              email: offlineEmail,
+            ),
+          );
+        }
+        return Right(null);
+      }
+
+      // Get user from remote
+      final user = await _remote.getCurrentUser();
+      if (user == null) {
+        return Right(null);
+      }
+      
+      return Right(AuthDto.fromFirebase(user).toDomain());
+    } catch (e) {
+      return Left(AuthenticationFailure('Failed to get current user: $e'));
+    }
+  }
 }
