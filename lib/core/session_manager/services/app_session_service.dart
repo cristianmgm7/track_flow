@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session_manager/domain/entities/app_session.dart';
 import 'package:trackflow/core/session_manager/domain/usecases/check_authentication_status_usecase.dart';
 import 'package:trackflow/core/session_manager/domain/usecases/get_current_user_usecase.dart';
-import 'package:trackflow/core/session_manager/sync_state_manager.dart';
+import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session_manager/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/session_manager/sync_state_manager.dart';
-import 'package:trackflow/core/session_manager/sync_state.dart';
+import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
+import 'package:trackflow/core/session_manager/domain/entities/sync_state.dart';
 
 /// Mixin for BLoCs that need to be aware of sync state
 ///
