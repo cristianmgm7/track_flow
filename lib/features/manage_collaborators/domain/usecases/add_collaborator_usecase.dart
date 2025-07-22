@@ -40,7 +40,7 @@ class AddCollaboratorToProjectUseCase {
   Future<Either<Failure, Project>> call(
     AddCollaboratorToProjectParams params,
   ) async {
-    final userId = _sessionService.getUserId();
+    final userId = await _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
     // getting project from repository

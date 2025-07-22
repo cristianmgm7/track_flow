@@ -20,7 +20,7 @@ class UpdateProjectUseCase {
     ProjectName? newName,
     ProjectDescription? newDescription,
   }) async {
-    final userIdResult = _sessionStorage.getUserId();
+    final userIdResult = await _sessionStorage.getUserId();
     if (userIdResult == null) {
       return left(AuthenticationFailure('User ID not found'));
     }

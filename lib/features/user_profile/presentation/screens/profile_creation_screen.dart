@@ -56,7 +56,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     return null;
   }
 
-  void _handleSubmit() {
+  void _handleSubmit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -65,7 +65,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
     // Try to get userId from session storage first
     final sessionStorage = sl<SessionStorage>();
-    String? userId = sessionStorage.getUserId();
+    String? userId = await sessionStorage.getUserId();
     String? userEmail;
 
     // If session storage doesn't have userId, try to get it from auth state

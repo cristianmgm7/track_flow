@@ -12,9 +12,9 @@ class SyncUserProfileUseCase {
   SyncUserProfileUseCase(this.remote, this.local, this.sessionStorage);
 
   Future<void> call() async {
-    final userId = sessionStorage.getUserId();
+    final userId = await sessionStorage.getUserId(); // Now async - prevents race conditions
     if (userId == null) {
-      await local.clearCache();
+      // DON'T clear cache - preserve existing data when no userId
       return;
     }
 

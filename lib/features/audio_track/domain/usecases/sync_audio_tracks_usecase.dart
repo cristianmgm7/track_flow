@@ -20,10 +20,9 @@ class SyncAudioTracksUseCase {
   );
 
   Future<void> call() async {
-    final userId = sessionStorage.getUserId();
+    final userId = await sessionStorage.getUserId(); // Now async - prevents race conditions
     if (userId == null) {
-      // No user signed in, clear local tracks.
-      await local.deleteAllTracks();
+      // DON'T delete tracks - preserve existing data when no userId
       return;
     }
 

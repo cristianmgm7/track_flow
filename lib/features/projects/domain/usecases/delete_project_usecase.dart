@@ -15,7 +15,7 @@ class DeleteProjectUseCase {
   DeleteProjectUseCase(this._projectsRepository, this._sessionStorage);
 
   Future<Either<Failure, Unit>> call(Project project) async {
-    final userIdResult = _sessionStorage.getUserId();
+    final userIdResult = await _sessionStorage.getUserId();
     if (userIdResult == null) {
       return left(AuthenticationFailure('User ID not found'));
     }

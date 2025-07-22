@@ -13,19 +13,20 @@ class WatchAllProjectsUseCase {
 
   WatchAllProjectsUseCase(this._projectsRepository, this._sessionStorage);
 
-  Stream<Either<Failure, List<Project>>> call() {
-    final userId = _sessionStorage.getUserId();
+  Stream<Either<Failure, List<Project>>> call() async* {
+    final userId = await _sessionStorage.getUserId();
     if (userId == null) {
-      return Stream.value(left(ServerFailure('No user found')));
+      yield left(ServerFailure('No user found'));
+      return;
     }
     final stream = _projectsRepository.watchLocalProjects(
       UserId.fromUniqueString(userId),
     );
-    return stream.map(
-      (either) => either.fold(
+    await for (final either in stream) {
+      yield either.fold(
         (failure) => left(failure),
         (projects) => right(projects),
-      ),
-    );
+      );
+    }
   }
 }

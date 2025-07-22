@@ -32,7 +32,7 @@ class JoinProjectWithIdUseCase {
   );
 
   Future<Either<Failure, Project>> call(JoinProjectWithIdParams params) async {
-    final userId = _sessionRepository.getUserId();
+    final userId = await _sessionRepository.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repositoryProjectDetail.getProjectById(

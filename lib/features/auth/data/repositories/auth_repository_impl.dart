@@ -26,7 +26,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserId?>> getSignedInUserId() async {
     try {
-      final userId = _sessionStorage.getUserId();
+      final userId = await _sessionStorage.getUserId();
       if (userId == null) return Right(null);
       return Right(UserId.fromUniqueString(userId));
     } catch (e) {
@@ -158,12 +158,12 @@ class AuthRepositoryImpl implements AuthRepository {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
         final hasCredentials =
-            _sessionStorage.getBool('has_credentials') ?? false;
+            await _sessionStorage.getBool('has_credentials') ?? false;
         return Right(hasCredentials);
       }
 
       // Check session storage first (faster)
-      final userId = _sessionStorage.getUserId();
+      final userId = await _sessionStorage.getUserId();
       if (userId != null) {
         return Right(true);
       }
@@ -182,13 +182,13 @@ class AuthRepositoryImpl implements AuthRepository {
       final isConnected = await _networkInfo.isConnected;
       if (!isConnected) {
         // In offline mode, try to get user from session storage
-        final userId = _sessionStorage.getUserId();
-        final offlineEmail = _sessionStorage.getString('offline_email');
+        final userId = await _sessionStorage.getUserId();
+        final offlineEmail = await _sessionStorage.getString('offline_email');
         if (userId != null && offlineEmail != null) {
           return Right(
             domain.User(
               id: UserId.fromUniqueString(userId),
-              email: offlineEmail,
+              email: offlineEmail ?? '',
             ),
           );
         }
@@ -200,7 +200,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         return Right(null);
       }
-      
+
       return Right(AuthDto.fromFirebase(user).toDomain());
     } catch (e) {
       return Left(AuthenticationFailure('Failed to get current user: $e'));

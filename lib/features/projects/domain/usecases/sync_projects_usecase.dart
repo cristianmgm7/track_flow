@@ -13,12 +13,12 @@ class SyncProjectsUseCase {
 
   Future<void> call() async {
     print('SyncProjectsUseCase: Starting sync...');
-    final userId = sessionStorage.getUserId();
+    final userId = await sessionStorage.getUserId(); // Now async - prevents race conditions
     print('SyncProjectsUseCase: userId from session storage: $userId');
 
     if (userId == null) {
-      print('SyncProjectsUseCase: No userId found, clearing cache');
-      await local.clearCache();
+      print('SyncProjectsUseCase: No userId found, skipping sync (preserving cache)');
+      // DON'T clear cache - preserve existing data when no userId
       return;
     }
 

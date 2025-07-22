@@ -14,7 +14,7 @@ class UpdateUserProfileUseCase {
   UpdateUserProfileUseCase(this.repository, this.sessionStorage);
 
   Future<Either<Failure, void>> call(UserProfile userProfile) async {
-    final userId = sessionStorage.getUserId();
+    final userId = await sessionStorage.getUserId();
 
     if (userId == null) {
       return left(UnexpectedFailure('User not found'));

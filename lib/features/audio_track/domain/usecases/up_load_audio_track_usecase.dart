@@ -35,7 +35,7 @@ class UploadAudioTrackUseCase {
   );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
-    final userId = sessionStorage.getUserId();
+    final userId = await sessionStorage.getUserId();
     if (userId == null) {
       return Left(ServerFailure('User not found'));
     }

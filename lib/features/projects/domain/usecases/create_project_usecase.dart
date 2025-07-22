@@ -28,7 +28,7 @@ class CreateProjectUseCase {
   CreateProjectUseCase(this._projectsRepository, this._sessionStorage);
 
   Future<Either<Failure, Project>> call(CreateProjectParams params) async {
-    final userId = _sessionStorage.getUserId() ?? '';
+    final userId = (await _sessionStorage.getUserId()) ?? '';
     return await _projectsRepository.createProject(
       Project(
         id: ProjectId(),

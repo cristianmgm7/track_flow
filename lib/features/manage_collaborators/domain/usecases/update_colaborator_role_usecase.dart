@@ -38,7 +38,7 @@ class UpdateCollaboratorRoleUseCase {
   Future<Either<Failure, Project>> call(
     UpdateCollaboratorRoleParams params,
   ) async {
-    final userId = _sessionService.getUserId();
+    final userId = await _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repositoryProjectDetail.getProjectById(

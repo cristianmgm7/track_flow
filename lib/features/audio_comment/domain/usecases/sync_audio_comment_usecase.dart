@@ -22,9 +22,9 @@ class SyncAudioCommentsUseCase {
   );
 
   Future<void> call() async {
-    final userId = _sessionStorage.getUserId();
+    final userId = await _sessionStorage.getUserId(); // Now async - prevents race conditions
     if (userId == null) {
-      await _audioCommentLocalDataSource.deleteAllComments();
+      // DON'T delete comments - preserve existing data when no userId
       return;
     }
 

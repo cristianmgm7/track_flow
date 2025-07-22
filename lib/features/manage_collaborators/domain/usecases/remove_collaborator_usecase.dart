@@ -36,7 +36,7 @@ class RemoveCollaboratorUseCase {
   );
 
   Future<Either<Failure, Project>> call(RemoveCollaboratorParams params) async {
-    final userId = _sessionService.getUserId();
+    final userId = await _sessionService.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repositoryProjectDetail.getProjectById(

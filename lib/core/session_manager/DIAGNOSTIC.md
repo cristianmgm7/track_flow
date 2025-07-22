@@ -571,6 +571,138 @@ With these improvements, the app will achieve true offline-first functionality w
 
 ---
 
+## 🚀 Implementation Plan - Optimal Order
+
+### **PHASE 1: Critical Foundation** (Week 1 - MUST complete first) 🚨
+
+#### **1A. Fix SessionStorage Race Conditions** ⚡
+```dart
+// Priority: CRITICAL - Solves main problem
+// Effort: 2-3 hours
+// Risk: Low
+```
+**Why first**: This is the root cause of your main problem. Without this, sync will continue deleting data.
+
+#### **1B. Update SessionStorage Callers** ⚡  
+```dart
+// All use cases that call sessionStorage.getUserId()
+// Effort: 1-2 hours
+// Risk: Low (mechanical changes)
+```
+
+#### **1C. Add Initialization Waiting** ⚡
+```dart
+// Completer pattern to guarantee complete initialization
+// Effort: 1 hour  
+// Risk: Low
+```
+
+### **PHASE 2: Cache-Aside Implementation** (Week 2)
+
+#### **2A. NetworkStateManager** 🌐
+```dart
+// Real connectivity + network change streams
+// Effort: 3-4 hours
+// Risk: Medium
+```
+
+#### **2B. BackgroundSyncCoordinator** 🔄
+```dart
+// Non-blocking sync + queue management  
+// Effort: 4-6 hours
+// Risk: Medium-High
+```
+
+#### **2C. Cache-Aside Repositories** 💾
+```dart
+// Immediate local data + background sync trigger
+// Effort: 6-8 hours
+// Risk: High (important architectural change)
+```
+
+### **PHASE 3: Conflict Resolution** (Week 3)
+
+#### **3A. Sync Metadata in Entities** 📊
+```dart
+// version, needsSync, lastModified fields
+// Effort: 2-3 hours
+// Risk: Medium (schema changes)
+```
+
+#### **3B. Conflict Resolution Strategy** ⚔️
+```dart
+// Version-based merging + user choices
+// Effort: 8-10 hours  
+// Risk: High (complex logic)
+```
+
+#### **3C. Pending Operations Queue** 📝
+```dart
+// Isar-based queue for offline changes
+// Effort: 6-8 hours
+// Risk: Medium-High
+```
+
+### **PHASE 4: Advanced Features** (Week 4)
+
+#### **4A. Retry Logic & Error Handling** 🔄
+#### **4B. Sync Batching & Optimization** 📦  
+#### **4C. Data Compression & Storage** 🗜️
+
+---
+
+## 🎯 Why This Order is Optimal
+
+### **1. Minimizes Regression Risk**
+- Phase 1 solves critical problem without breaking existing functionality
+- Each phase builds on the previous without conflicts
+
+### **2. Maximum Early Value**  
+- Phase 1 = 80% of benefit with 20% of effort
+- Users see immediate improvement in reliability
+
+### **3. Dependency Management**
+```mermaid
+graph TD
+    A[Fix SessionStorage] --> B[Network Management]
+    B --> C[Background Sync]  
+    C --> D[Cache-Aside Pattern]
+    D --> E[Sync Metadata]
+    E --> F[Conflict Resolution]
+    F --> G[Pending Queue]
+```
+
+### **4. Testing & Validation Strategy**
+- **Phase 1**: Test startup flow + session persistence
+- **Phase 2**: Test offline scenarios + network switches  
+- **Phase 3**: Test conflict scenarios + data integrity
+
+---
+
+## 📅 Realistic Timeline
+
+| Phase | Duration | Total Effort | Risk |
+|-------|----------|-------------|------|
+| **Phase 1** | 1-2 days | 4-6 hours | 🟢 Low |
+| **Phase 2** | 3-4 days | 13-18 hours | 🟡 Medium |  
+| **Phase 3** | 5-6 days | 16-21 hours | 🟡 Medium-High |
+| **Phase 4** | 3-5 days | 10-15 hours | 🟢 Low |
+
+---
+
+## 🚨 Recommendation: Start NOW with Phase 1
+
+**Phase 1A** is especially critical because:
+
+1. **Zero Breaking Changes**: Only changes method signature
+2. **Immediate Impact**: Eliminates race conditions immediately  
+3. **Quick Win**: 2-3 hours of work = main problem solved
+4. **Foundation**: Everything else depends on this
+
+**Next Step**: Implement SessionStorage race condition fix as the immediate priority.
+
+---
+
 ## 📚 Additional Resources
 
 - [Flutter Offline-First Architecture Guide](https://docs.flutter.dev/data-and-backend/state-mgmt/patterns)

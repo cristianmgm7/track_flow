@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -5,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Provides a clean contract for session management
 abstract class SessionStorage {
   Future<void> saveUserId(String userId);
-  String? getUserId();
+  Future<String?> getUserId(); // Now async to prevent race conditions
   Future<void> clearUserId();
   Future<void> clearAll();
   void debugPrintAllValues();
@@ -13,30 +14,37 @@ abstract class SessionStorage {
   // Methods for offline credentials
   Future<void> setBool(String key, bool value);
   Future<void> setString(String key, String value);
-  String? getString(String key);
-  bool? getBool(String key);
+  Future<String?> getString(String key); // Also make async for consistency
+  Future<bool?> getBool(String key); // Also make async for consistency
   Future<void> remove(String key);
 }
 
 @LazySingleton(as: SessionStorage)
 class SessionStorageImpl implements SessionStorage {
   final SharedPreferences _prefs;
+  final Completer<void> _initializationCompleter = Completer<void>();
 
-  SessionStorageImpl({required SharedPreferences prefs}) : _prefs = prefs;
+  SessionStorageImpl({required SharedPreferences prefs}) : _prefs = prefs {
+    // Mark as initialized immediately since SharedPreferences is already ready
+    _initializationCompleter.complete();
+  }
 
   @override
   Future<void> saveUserId(String userId) async {
+    await _initializationCompleter.future; // Ensure initialization
     await _prefs.setString('user_id', userId);
   }
 
   @override
-  String? getUserId() {
-    final userId = _prefs.getString('user_id');
-    return userId;
+  Future<String?> getUserId() async {
+    // Wait for initialization to complete - prevents race conditions
+    await _initializationCompleter.future;
+    return _prefs.getString('user_id');
   }
 
   @override
   Future<void> clearUserId() async {
+    await _initializationCompleter.future; // Ensure initialization
     await _prefs.remove('user_id');
   }
 
@@ -52,31 +60,37 @@ class SessionStorageImpl implements SessionStorage {
 
   @override
   Future<void> clearAll() async {
+    await _initializationCompleter.future; // Ensure initialization
     await _prefs.clear();
   }
 
   @override
   Future<void> setBool(String key, bool value) async {
+    await _initializationCompleter.future; // Ensure initialization
     await _prefs.setBool(key, value);
   }
 
   @override
   Future<void> setString(String key, String value) async {
+    await _initializationCompleter.future; // Ensure initialization
     await _prefs.setString(key, value);
   }
 
   @override
-  String? getString(String key) {
+  Future<String?> getString(String key) async {
+    await _initializationCompleter.future; // Ensure initialization
     return _prefs.getString(key);
   }
 
   @override
-  bool? getBool(String key) {
+  Future<bool?> getBool(String key) async {
+    await _initializationCompleter.future; // Ensure initialization
     return _prefs.getBool(key);
   }
 
   @override
   Future<void> remove(String key) async {
+    await _initializationCompleter.future; // Ensure initialization
     await _prefs.remove(key);
   }
 }

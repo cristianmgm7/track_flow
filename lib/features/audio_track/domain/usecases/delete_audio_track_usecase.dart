@@ -27,7 +27,7 @@ class DeleteAudioTrack {
   );
 
   Future<Either<Failure, Unit>> call(DeleteAudioTrackParams params) async {
-    final userId = sessionStorage.getUserId();
+    final userId = await sessionStorage.getUserId();
     if (userId == null) {
       return Future.value(Left(ServerFailure('User not found')));
     }

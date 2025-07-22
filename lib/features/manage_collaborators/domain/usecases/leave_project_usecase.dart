@@ -26,7 +26,7 @@ class LeaveProjectUseCase {
   LeaveProjectUseCase(this._repositoryProjectDetail, this._sessionStorage);
 
   Future<Either<Failure, Project>> call(LeaveProjectParams params) async {
-    final userId = _sessionStorage.getUserId();
+    final userId = await _sessionStorage.getUserId();
     if (userId == null) return left(ServerFailure('No user found'));
 
     final projectResult = await _repositoryProjectDetail.getProjectById(
