@@ -21,3 +21,4 @@ targets:
       injectable_generator|injectable_config_builder:
         generate_for:
           - "lib/core/di/injection.dart" 
+          
