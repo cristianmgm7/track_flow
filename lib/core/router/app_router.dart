@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_state.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
@@ -28,7 +28,7 @@ import 'package:trackflow/features/user_profile/presentation/screens/profile_cre
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_bloc.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',

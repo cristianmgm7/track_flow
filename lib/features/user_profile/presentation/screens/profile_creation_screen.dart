@@ -20,8 +20,8 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/session/session_storage.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});

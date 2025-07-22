@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';

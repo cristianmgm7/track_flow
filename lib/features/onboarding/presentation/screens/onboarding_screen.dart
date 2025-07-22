@@ -4,8 +4,8 @@ import 'package:introduction_screen/introduction_screen.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/coordination/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
