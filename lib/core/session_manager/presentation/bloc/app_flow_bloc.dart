@@ -20,7 +20,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
   })  : _sessionService = sessionService,
         _backgroundSyncCoordinator = backgroundSyncCoordinator,
-        super(AppFlowInitial()) {
+        super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
     on<SignOutRequested>(_onSignOutRequested); // New event for logout
   }
@@ -76,25 +76,18 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
   }
 
-  /// Maps AppSession state to AppFlowState
+  /// Maps AppSession state to AppFlowState (simplified)
   AppFlowState _mapSessionToFlowState(AppSession session) {
     switch (session.status) {
-      case SessionStatus.initial:
-        return AppFlowInitial();
       case SessionStatus.loading:
-        return AppFlowLoading();
+        return AppFlowLoading(progress: session.syncProgress);
       case SessionStatus.unauthenticated:
         return AppFlowUnauthenticated();
-      case SessionStatus.authenticatedIncomplete:
-        if (!session.isOnboardingCompleted) {
-          return AppFlowNeedsOnboarding();
-        } else if (!session.isProfileComplete) {
-          return AppFlowNeedsProfileSetup();
-        }
-        // Fallback - should not happen
-        return AppFlowReady();
-      case SessionStatus.syncing:
-        return AppFlowSyncing(session.syncProgress);
+      case SessionStatus.authenticated:
+        return AppFlowAuthenticated(
+          needsOnboarding: !session.isOnboardingCompleted,
+          needsProfileSetup: session.isOnboardingCompleted && !session.isProfileComplete,
+        );
       case SessionStatus.ready:
         return AppFlowReady();
       case SessionStatus.error:

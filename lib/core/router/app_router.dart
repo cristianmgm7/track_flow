@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/navigation/navigation_service.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
@@ -40,48 +41,25 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 
 class AppRouter {
   static GoRouter router(AppFlowBloc appFlowBloc) {
+    final navigationService = sl<NavigationService>();
+    
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: AppRoutes.splash,
+      initialLocation: navigationService.getInitialRoute(),
       refreshListenable: GoRouterRefreshStream(appFlowBloc.stream),
       redirect: (context, state) {
-        // Use AppFlowBloc for clean flow logic
         final flowState = appFlowBloc.state;
-
-        if (flowState is AppFlowUnauthenticated) {
-          if (state.matchedLocation == AppRoutes.splash ||
-              state.matchedLocation == AppRoutes.onboarding ||
-              state.matchedLocation == AppRoutes.auth ||
-              state.matchedLocation == AppRoutes.profileCreation ||
-              state.matchedLocation == AppRoutes.dashboard ||
-              state.matchedLocation == AppRoutes.projects ||
-              state.matchedLocation == AppRoutes.settings) {
-            return AppRoutes.auth;
-          }
-        } else if (flowState is AppFlowNeedsOnboarding) {
-          return AppRoutes.onboarding;
-        } else if (flowState is AppFlowNeedsProfileSetup) {
-          return AppRoutes.profileCreation;
-        } else if (flowState is AppFlowReady) {
-          if (state.matchedLocation == AppRoutes.splash ||
-              state.matchedLocation == AppRoutes.onboarding ||
-              state.matchedLocation == AppRoutes.auth ||
-              state.matchedLocation == AppRoutes.profileCreation) {
-            return AppRoutes.dashboard;
-          }
-        } else if (flowState is AppFlowLoading || flowState is AppFlowSyncing) {
-          // Stay on current route while loading or syncing
-          return null;
-        } else if (flowState is AppFlowError) {
-          // Handle error state - could redirect to error page
-          return null;
-        } else if (flowState is AppFlowInitial) {
-          // Trigger initial flow check
+        
+        // Special handling for loading state to trigger initial check
+        if (flowState is AppFlowLoading && state.matchedLocation == AppRoutes.splash) {
           appFlowBloc.add(CheckAppFlow());
-          return null;
         }
-
-        return null;
+        
+        // Use NavigationService for clean routing logic
+        return navigationService.getRouteForFlowState(
+          flowState,
+          state.matchedLocation,
+        );
       },
       routes: [
         GoRoute(

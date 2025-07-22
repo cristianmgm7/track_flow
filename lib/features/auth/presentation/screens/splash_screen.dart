@@ -13,7 +13,7 @@ class SplashScreen extends StatelessWidget {
       builder: (context, state) {
         print('🔄 [SplashScreen] Building with state: ${state.runtimeType}');
 
-        if (state is AppFlowSyncing) {
+        if (state is AppFlowLoading && state.progress > 0) {
           print(
             '🔄 [SplashScreen] Showing sync progress: ${(state.progress * 100).toInt()}%',
           );

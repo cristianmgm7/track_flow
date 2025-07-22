@@ -21,14 +21,14 @@ class AppSession extends Equatable {
     this.errorMessage,
   });
 
-  /// Factory for initial/uninitialized state
-  const AppSession.initial()
-      : status = SessionStatus.initial,
+  /// Factory for loading state (combines initial, loading, syncing)
+  const AppSession.loading({double progress = 0.0})
+      : status = SessionStatus.loading,
         currentUser = null,
         isOnboardingCompleted = false,
         isProfileComplete = false,
         isSyncComplete = false,
-        syncProgress = 0.0,
+        syncProgress = progress,
         errorMessage = null;
 
   /// Factory for unauthenticated state
@@ -41,33 +41,21 @@ class AppSession extends Equatable {
         syncProgress = 0.0,
         errorMessage = null;
 
-  /// Factory for authenticated but incomplete session
-  AppSession.authenticatedIncomplete({
+  /// Factory for authenticated session (may need setup completion)
+  const AppSession.authenticated({
     required User user,
-    required bool onboardingComplete,
-    required bool profileComplete,
-  }) : status = SessionStatus.authenticatedIncomplete,
+    bool onboardingComplete = false,
+    bool profileComplete = false,
+    this.syncProgress = 0.0,
+  }) : status = SessionStatus.authenticated,
         currentUser = user,
         isOnboardingCompleted = onboardingComplete,
         isProfileComplete = profileComplete,
         isSyncComplete = false,
-        syncProgress = 0.0,
-        errorMessage = null;
-
-  /// Factory for syncing state
-  AppSession.syncing({
-    required User user,
-    required double progress,
-  }) : status = SessionStatus.syncing,
-        currentUser = user,
-        isOnboardingCompleted = true,
-        isProfileComplete = true,
-        isSyncComplete = false,
-        syncProgress = progress,
         errorMessage = null;
 
   /// Factory for ready state
-  AppSession.ready({
+  const AppSession.ready({
     required User user,
   }) : status = SessionStatus.ready,
         currentUser = user,
@@ -78,7 +66,7 @@ class AppSession extends Equatable {
         errorMessage = null;
 
   /// Factory for error state
-  AppSession.error({
+  const AppSession.error({
     required String error,
     User? user,
   }) : status = SessionStatus.error,
@@ -131,11 +119,9 @@ class AppSession extends Equatable {
 }
 
 enum SessionStatus {
-  initial,
   loading,
   unauthenticated,
-  authenticatedIncomplete,
-  syncing,
+  authenticated,
   ready,
   error,
 }

@@ -36,9 +36,10 @@ class AppSessionService {
 
   /// Initialize application session by checking all required states
   /// Returns the complete session state with all verification results
+  /// OPTIMIZED: Parallelizes independent verification checks for faster startup
   Future<Either<Failure, AppSession>> initializeSession() async {
     try {
-      // Step 1: Check authentication status
+      // Step 1: Check authentication status (must be first)
       final authResult = await _checkAuthUseCase();
       final isAuthenticated = await authResult.fold((failure) async {
         return false;
@@ -48,7 +49,7 @@ class AppSessionService {
         return Right(const AppSession.unauthenticated());
       }
 
-      // Step 2: Get current user
+      // Step 2: Get current user (depends on auth)
       final userResult = await _getCurrentUserUseCase();
       final user = await userResult.fold((failure) async {
         return null;
@@ -58,9 +59,16 @@ class AppSessionService {
         return Right(const AppSession.unauthenticated());
       }
 
-      // Step 3: Check onboarding status
-      final onboardingResult = await _onboardingUseCase
-          .checkOnboardingCompleted(user.id.value);
+      // Steps 3 & 4: PARALLEL execution - Check onboarding and profile simultaneously
+      final parallelResults = await Future.wait([
+        _onboardingUseCase.checkOnboardingCompleted(user.id.value),
+        _profileUseCase.getDetailedCompleteness(user.id.value),
+      ]);
+
+      final onboardingResult = parallelResults[0] as Either<Failure, bool>;
+      final profileResult = parallelResults[1] as Either<Failure, ProfileCompletenessInfo>;
+
+      // Process onboarding result
       final onboardingCompleted = await onboardingResult.fold((failure) async {
         return null;
       }, (completed) async => completed);
@@ -69,11 +77,7 @@ class AppSessionService {
         return Left(ServerFailure('Failed to check onboarding status'));
       }
 
-      // Step 4: Check profile completeness
-      final profileResult = await _profileUseCase.getDetailedCompleteness(
-        user.id.value,
-      );
-
+      // Process profile result
       return await profileResult.fold(
         (failure) async {
           return Left(failure);
@@ -82,10 +86,8 @@ class AppSessionService {
           // Create session based on completeness
           if (!onboardingCompleted || !completenessInfo.isComplete) {
             // User needs to complete onboarding or profile
-            // Note: We'd need to get the actual User entity here
-            // For now, we'll return incomplete session
             return Right(
-              AppSession.authenticatedIncomplete(
+              AppSession.authenticated(
                 user: user,
                 onboardingComplete: onboardingCompleted,
                 profileComplete: completenessInfo.isComplete,
@@ -118,9 +120,9 @@ class AppSessionService {
       // Listen to sync progress and emit session updates
       await for (final syncState in _syncStateManager.syncState) {
         if (syncState.isSyncing) {
-          yield AppSession.syncing(
-            user: currentSession.currentUser!,
-            progress: syncState.progress,
+          yield currentSession.copyWith(
+            status: SessionStatus.loading,
+            syncProgress: syncState.progress,
           );
         } else if (syncState.isComplete) {
           yield AppSession.ready(user: currentSession.currentUser!);
