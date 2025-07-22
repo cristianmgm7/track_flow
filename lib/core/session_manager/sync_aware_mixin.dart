@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/coordination/sync_state_manager.dart';
-import 'package:trackflow/core/coordination/sync_state.dart';
+import 'package:trackflow/core/session_manager/sync_state_manager.dart';
+import 'package:trackflow/core/session_manager/sync_state.dart';
 
 /// Mixin for BLoCs that need to be aware of sync state
-/// 
+///
 /// This mixin provides utilities for BLoCs to:
 /// - Know when data sync is complete before loading data
 /// - React to sync state changes
@@ -28,7 +28,7 @@ mixin SyncAwareMixin<Event, State> on Bloc<Event, State> {
   SyncState? get syncState => _syncStateManager?.currentState;
 
   /// Waits for sync to complete before executing the given action
-  /// 
+  ///
   /// If sync is already complete, executes immediately
   /// If sync is in progress, waits for completion
   /// If sync fails, the future completes with an error
@@ -54,7 +54,7 @@ mixin SyncAwareMixin<Event, State> on Bloc<Event, State> {
     // Wait for sync completion
     final completer = Completer<void>();
     late StreamSubscription<SyncState> subscription;
-    
+
     subscription = syncManager.syncState.listen(
       (state) {
         if (state.isComplete) {
@@ -85,7 +85,7 @@ mixin SyncAwareMixin<Event, State> on Bloc<Event, State> {
     void Function(String error)? onSyncError,
   }) {
     _syncSubscription?.cancel();
-    
+
     if (_syncStateManager == null) return;
 
     _syncSubscription = _syncStateManager!.syncState.listen(
