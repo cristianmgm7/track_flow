@@ -52,22 +52,22 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   ) {
     try {
       // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
-      return _localDataSource
-          .watchCommentsByTrack(trackId.value)
-          .asyncMap((localResult) async {
-            // Trigger background sync if connected (non-blocking)
-            if (await _networkStateManager.isConnected) {
-              _backgroundSyncCoordinator.triggerBackgroundSync(
-                syncKey: 'audio_comments_${trackId.value}',
-              );
-            }
+      return _localDataSource.watchCommentsByTrack(trackId.value).asyncMap((
+        localResult,
+      ) async {
+        // Trigger background sync if connected (non-blocking)
+        if (await _networkStateManager.isConnected) {
+          _backgroundSyncCoordinator.triggerBackgroundSync(
+            syncKey: 'audio_comments_${trackId.value}',
+          );
+        }
 
-            // Return local data immediately
-            return localResult.fold(
-              (failure) => Left(failure),
-              (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
-            );
-          });
+        // Return local data immediately
+        return localResult.fold(
+          (failure) => Left(failure),
+          (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
+        );
+      });
     } catch (e) {
       return Stream.value(
         Left(DatabaseFailure('Failed to watch audio comments')),
@@ -81,9 +81,12 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       // 1. OFFLINE-FIRST: Save locally IMMEDIATELY
       final dto = AudioCommentDTO.fromDomain(comment);
       final localResult = await _localDataSource.cacheComment(dto);
-      
+
       await localResult.fold(
-        (failure) => throw Exception('Failed to cache comment locally: ${failure.message}'),
+        (failure) =>
+            throw Exception(
+              'Failed to cache comment locally: ${failure.message}',
+            ),
         (success) async {
           // 2. Queue for background sync
           await _pendingOperationsManager.addOperation(

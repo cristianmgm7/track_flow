@@ -6,8 +6,7 @@ import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_co
 import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
-import 'package:trackflow/core/sync/domain/services/sync_status_provider.dart';
-import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
+
 import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -20,7 +19,6 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   final WatchCommentsByTrackUseCase watchCommentsByTrackUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
-  final SyncStatusProvider _syncStatusProvider;
 
   StreamSubscription<Either<Failure, List<AudioComment>>>?
   _commentsSubscription;
@@ -35,10 +33,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
     required this.watchUserProfilesUseCase,
-    required SyncStatusProvider syncStatusProvider,
-  }) : _syncStatusProvider = syncStatusProvider,
-       super(AudioCommentInitial()) {
-    _initializeSyncAwareness();
+  }) : super(AudioCommentInitial()) {
     on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
@@ -89,40 +84,6 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     await _commentsSubscription?.cancel();
     emit(AudioCommentLoading());
 
-    // Set up sync state listening for this session
-    listenToSyncState(
-      onSyncStarted: () {
-        if (state is AudioCommentsLoaded) {
-          emit((state as AudioCommentsLoaded).copyWith(isSyncing: true));
-        }
-      },
-      onSyncProgress: (progress) {
-        if (state is AudioCommentsLoaded) {
-          emit(
-            (state as AudioCommentsLoaded).copyWith(
-              isSyncing: true,
-              syncProgress: progress,
-            ),
-          );
-        }
-      },
-      onSyncCompleted: () {
-        if (state is AudioCommentsLoaded) {
-          emit(
-            (state as AudioCommentsLoaded).copyWith(
-              isSyncing: false,
-              syncProgress: 1.0,
-            ),
-          );
-        }
-      },
-      onSyncError: (error) {
-        if (state is AudioCommentsLoaded) {
-          emit((state as AudioCommentsLoaded).copyWith(isSyncing: false));
-        }
-      },
-    );
-
     _commentsSubscription = watchCommentsByTrackUseCase
         .call(WatchCommentsByTrackParams(trackId: event.trackId))
         .listen((either) {
@@ -140,17 +101,13 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
       _currentComments = comments;
       _loadCollaboratorsFromComments(comments);
 
-      // Preserve sync state when updating comments
-      final currentSyncState =
-          state is AudioCommentsLoaded ? (state as AudioCommentsLoaded) : null;
-
       // Emit initial state with empty collaborators, will be updated when they load
       emit(
         AudioCommentsLoaded(
           comments: _currentComments,
           collaborators: _currentCollaborators,
-          isSyncing: currentSyncState?.isSyncing ?? isSyncing,
-          syncProgress: currentSyncState?.syncProgress,
+          isSyncing: false,
+          syncProgress: null,
         ),
       );
     });
@@ -192,34 +149,5 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     _commentsSubscription?.cancel();
     _collaboratorsSubscription?.cancel();
     return super.close();
-  }
-
-  /// Initialize sync awareness with the SyncStatusProvider
-  void _initializeSyncAwareness() {
-    // Listen to sync state changes for UI updates
-    _syncStatusProvider.watchSyncState().listen((syncState) {
-      // Handle sync state changes
-      if (syncState.status == SyncStatus.syncing) {
-        // Sync is in progress
-        if (state is AudioCommentsLoaded) {
-          emit(
-            (state as AudioCommentsLoaded).copyWith(
-              isSyncing: true,
-              syncProgress: syncState.progress,
-            ),
-          );
-        }
-      } else if (syncState.status == SyncStatus.complete) {
-        // Sync completed
-        if (state is AudioCommentsLoaded) {
-          emit(
-            (state as AudioCommentsLoaded).copyWith(
-              isSyncing: false,
-              syncProgress: 1.0,
-            ),
-          );
-        }
-      }
-    });
   }
 }

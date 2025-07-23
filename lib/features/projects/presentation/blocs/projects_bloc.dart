@@ -90,21 +90,23 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       if (state is ProjectsLoaded) {
         switch (syncState.status) {
           case SyncStatus.syncing:
-            emit((state as ProjectsLoaded).copyWith(
-              isSyncing: true,
-              syncProgress: syncState.progress,
-            ));
+            emit(
+              (state as ProjectsLoaded).copyWith(
+                isSyncing: true,
+                syncProgress: syncState.progress,
+              ),
+            );
             break;
           case SyncStatus.complete:
-            emit((state as ProjectsLoaded).copyWith(
-              isSyncing: false,
-              syncProgress: 1.0,
-            ));
+            emit(
+              (state as ProjectsLoaded).copyWith(
+                isSyncing: false,
+                syncProgress: 1.0,
+              ),
+            );
             break;
           case SyncStatus.error:
-            emit((state as ProjectsLoaded).copyWith(
-              isSyncing: false,
-            ));
+            emit((state as ProjectsLoaded).copyWith(isSyncing: false));
             break;
           case SyncStatus.initial:
             break;
@@ -125,7 +127,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
             emit(
               ProjectsLoaded(
                 projects: projects,
-                isSyncing: currentSyncState?.isSyncing ?? isSyncing,
+                isSyncing: currentSyncState?.isSyncing ?? false,
                 syncProgress: currentSyncState?.syncProgress,
               ),
             );

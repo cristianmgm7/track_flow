@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/session/domain/entities/session_state.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart';
 
 /// Represents the current user session state
@@ -89,19 +90,4 @@ class UserSession extends Equatable {
     isProfileComplete,
     errorMessage,
   ];
-}
-
-/// Represents the possible states of a user session
-enum SessionState {
-  /// User is not authenticated
-  unauthenticated,
-
-  /// User is authenticated but may need setup completion
-  authenticated,
-
-  /// User is fully authenticated and ready to use the app
-  ready,
-
-  /// Session has encountered an error
-  error,
 }
