@@ -8,7 +8,7 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_remo
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/core/sync/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'dart:io';
@@ -120,6 +120,8 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
           'name': track.name,
           'duration': track.duration.inMilliseconds,
           'extension': file.path.split('.').last,
+          'uploadedBy': track.uploadedBy.value,
+          'createdAt': track.createdAt.toIso8601String(),
         },
         priority: SyncPriority.high,
       );

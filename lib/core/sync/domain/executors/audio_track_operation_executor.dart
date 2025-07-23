@@ -7,7 +7,7 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_remo
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
 /// Handles sync operations for AudioTrack entities
-/// 
+///
 /// This executor is responsible for translating sync operations
 /// into appropriate calls to the AudioTrackRemoteDataSource.
 @injectable
@@ -21,31 +21,34 @@ class AudioTrackOperationExecutor implements OperationExecutor {
 
   @override
   Future<void> execute(SyncOperationDocument operation) async {
-    final operationData = operation.operationData != null 
-        ? jsonDecode(operation.operationData!) as Map<String, dynamic>
-        : <String, dynamic>{};
+    final operationData =
+        operation.operationData != null
+            ? jsonDecode(operation.operationData!) as Map<String, dynamic>
+            : <String, dynamic>{};
 
     switch (operation.operationType) {
-      case 'upload':
-        await _executeUpload(operation, operationData);
+      case 'create':
+        await _executeCreate(operation, operationData);
         break;
-        
+
       case 'update':
         await _executeUpdate(operation, operationData);
         break;
-        
+
       case 'delete':
         await _executeDelete(operation);
         break;
-        
+
       default:
-        throw UnsupportedError('Unknown audio track operation: ${operation.operationType}');
+        throw UnsupportedError(
+          'Unknown audio track operation: ${operation.operationType}',
+        );
     }
   }
 
-  /// Execute audio track upload
-  Future<void> _executeUpload(
-    SyncOperationDocument operation, 
+  /// Execute audio track creation (upload)
+  Future<void> _executeCreate(
+    SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
     final audioTrackDto = AudioTrackDTO(
@@ -55,12 +58,13 @@ class AudioTrackOperationExecutor implements OperationExecutor {
       duration: operationData['duration'] ?? 0,
       projectId: ProjectId.fromUniqueString(operationData['projectId'] ?? ''),
       uploadedBy: UserId.fromUniqueString(operationData['uploadedBy'] ?? ''),
-      createdAt: operationData['createdAt'] != null 
-          ? DateTime.parse(operationData['createdAt'])
-          : DateTime.now(),
+      createdAt:
+          operationData['createdAt'] != null
+              ? DateTime.parse(operationData['createdAt'])
+              : DateTime.now(),
       extension: operationData['extension'] ?? 'mp3',
     );
-    
+
     final result = await _remoteDataSource.uploadAudioTrack(audioTrackDto);
     result.fold(
       (failure) => throw Exception('Upload failed: ${failure.message}'),
@@ -72,13 +76,13 @@ class AudioTrackOperationExecutor implements OperationExecutor {
 
   /// Execute audio track update (edit name)
   Future<void> _executeUpdate(
-    SyncOperationDocument operation, 
+    SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
     final trackId = operation.entityId;
     final projectId = operationData['projectId'] ?? '';
     final newName = operationData['name'] ?? '';
-    
+
     await _remoteDataSource.editTrackName(trackId, projectId, newName);
   }
 
