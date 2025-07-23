@@ -36,14 +36,40 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   Future<Either<Failure, AudioComment>> getCommentById(
     AudioCommentId commentId,
   ) async {
-    final comment = await _localDataSource.getCommentById(commentId.value);
-    return comment.fold(
-      (failure) => Left(failure),
-      (dto) =>
-          dto != null
-              ? Right(dto.toDomain())
-              : Left(ServerFailure('No comment found')),
-    );
+    try {
+      // 1. ALWAYS try local cache first
+      final result = await _localDataSource.getCommentById(commentId.value);
+
+      final localComment = result.fold(
+        (failure) => null,
+        (dto) => dto?.toDomain(),
+      );
+
+      // 2. If found locally, return it and trigger background refresh
+      if (localComment != null) {
+        // Trigger background sync for fresh data (non-blocking)
+        unawaited(
+          _backgroundSyncCoordinator.triggerBackgroundSync(
+            syncKey: 'audio_comment_${commentId.value}',
+          ),
+        );
+
+        return Right(localComment);
+      }
+
+      // 3. Not found locally - trigger background fetch and return not found
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_comment_${commentId.value}',
+        ),
+      );
+
+      return Left(DatabaseFailure('Audio comment not found in local cache'));
+    } catch (e) {
+      return Left(
+        DatabaseFailure('Failed to access local cache: ${e.toString()}'),
+      );
+    }
   }
 
   @override
@@ -51,18 +77,18 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     AudioTrackId trackId,
   ) {
     try {
-      // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
-      return _localDataSource.watchCommentsByTrack(trackId.value).asyncMap((
-        localResult,
-      ) async {
-        // Trigger background sync if connected (non-blocking)
-        if (await _networkStateManager.isConnected) {
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'audio_comments_${trackId.value}',
-          );
-        }
+      // Trigger background sync when method is called
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_comments_${trackId.value}',
+        ),
+      );
 
-        // Return local data immediately
+      // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
+      return _localDataSource.watchCommentsByTrack(trackId.value).map((
+        localResult,
+      ) {
+        // Always return local data immediately
         return localResult.fold(
           (failure) => Left(failure),
           (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
@@ -70,7 +96,9 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       });
     } catch (e) {
       return Stream.value(
-        Left(DatabaseFailure('Failed to watch audio comments')),
+        Left(
+          DatabaseFailure('Failed to watch audio comments: ${e.toString()}'),
+        ),
       );
     }
   }
@@ -78,68 +106,72 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   @override
   Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
     try {
-      // 1. OFFLINE-FIRST: Save locally IMMEDIATELY
       final dto = AudioCommentDTO.fromDomain(comment);
-      final localResult = await _localDataSource.cacheComment(dto);
 
-      await localResult.fold(
-        (failure) =>
-            throw Exception(
-              'Failed to cache comment locally: ${failure.message}',
-            ),
-        (success) async {
-          // 2. Queue for background sync
-          await _pendingOperationsManager.addOperation(
-            entityType: 'audio_comment',
-            entityId: comment.id.value,
-            operationType: 'create',
-            priority: SyncPriority.high,
-            data: {
-              'trackId': comment.trackId.value,
-              'projectId': comment.projectId.value,
-            },
-          );
+      // 1. ALWAYS save locally first (ignore minor cache errors)
+      await _localDataSource.cacheComment(dto);
 
-          // 3. Trigger background sync if connected
-          if (await _networkStateManager.isConnected) {
-            _backgroundSyncCoordinator.triggerBackgroundSync(
-              syncKey: 'audio_comments_create',
-            );
-          }
+      // 2. ALWAYS queue for background sync
+      await _pendingOperationsManager.addCreateOperation(
+        entityType: 'audio_comment',
+        entityId: comment.id.value,
+        data: {
+          'trackId': comment.trackId.value,
+          'projectId': comment.projectId.value,
+          'createdBy': comment.createdBy.value,
+          'content': comment.content,
+          'timestamp': comment.timestamp.inMilliseconds,
+          'createdAt': comment.createdAt.toIso8601String(),
         },
+        priority: SyncPriority.high,
       );
 
-      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
+      // 3. Trigger background sync (no condition check - coordinator handles it)
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_comments_create',
+        ),
+      );
+
+      // 4. ALWAYS return success immediately
+      return const Right(unit);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to add comment: $e'));
+      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
     }
   }
 
   @override
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId) async {
     try {
-      // 1. OFFLINE-FIRST: Delete locally IMMEDIATELY (soft delete)
+      // 1. ALWAYS soft delete locally first
       await _localDataSource.deleteCachedComment(commentId.value);
 
-      // 2. Queue for background sync
-      await _pendingOperationsManager.addOperation(
+      // 2. ALWAYS queue for background sync
+      await _pendingOperationsManager.addDeleteOperation(
         entityType: 'audio_comment',
         entityId: commentId.value,
-        operationType: 'delete',
         priority: SyncPriority.high,
-        data: {},
       );
 
-      // 3. Trigger background sync if connected
-      if (await _networkStateManager.isConnected) {
+      // 3. Trigger background sync
+      unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_comments_delete',
-        );
-      }
+        ),
+      );
 
-      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
+      // 4. ALWAYS return success immediately
+      return const Right(unit);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to delete comment: $e'));
+      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
     }
+  }
+
+  // Helper method for fire-and-forget background operations
+  void unawaited(Future future) {
+    future.catchError((error) {
+      // Log error but don't propagate - this is background operation
+      print('Background sync trigger failed: $error');
+    });
   }
 }

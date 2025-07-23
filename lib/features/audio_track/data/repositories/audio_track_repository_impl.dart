@@ -32,16 +32,38 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   @override
   Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id) async {
     try {
+      // 1. ALWAYS try local cache first
       final result = await localDataSource.getTrackById(id.value);
-      return result.fold(
-        (failure) => Left(failure), // Pass failure through without wrapping
-        (dto) =>
-            dto != null
-                ? Right(dto.toDomain())
-                : Left(ServerFailure('Track not found')),
+
+      final localTrack = result.fold(
+        (failure) => null,
+        (dto) => dto?.toDomain(),
       );
+
+      // 2. If found locally, return it and trigger background refresh
+      if (localTrack != null) {
+        // Trigger background sync for fresh data (non-blocking)
+        unawaited(
+          _backgroundSyncCoordinator.triggerBackgroundSync(
+            syncKey: 'audio_track_${id.value}',
+          ),
+        );
+
+        return Right(localTrack);
+      }
+
+      // 3. Not found locally - trigger background fetch and return not found
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_track_${id.value}',
+        ),
+      );
+
+      return Left(DatabaseFailure('Audio track not found in local cache'));
     } catch (e) {
-      return Left(ServerFailure(e.toString()));
+      return Left(
+        DatabaseFailure('Failed to access local cache: ${e.toString()}'),
+      );
     }
   }
 
@@ -50,25 +72,27 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     ProjectId projectId,
   ) {
     try {
-      // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
-      return localDataSource
-          .watchTracksByProject(projectId.value)
-          .asyncMap((localResult) async {
-            // Trigger background sync if connected (non-blocking)
-            if (await _networkStateManager.isConnected) {
-              _backgroundSyncCoordinator.triggerBackgroundSync(
-                syncKey: 'audio_tracks_${projectId.value}',
-              );
-            }
+      // Trigger background sync when method is called
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${projectId.value}',
+        ),
+      );
 
-            // Return local data immediately
-            return localResult.fold(
-              (failure) => Left(failure),
-              (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
-            );
-          });
+      // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
+      return localDataSource.watchTracksByProject(projectId.value).map((
+        localResult,
+      ) {
+        // Always return local data immediately
+        return localResult.fold(
+          (failure) => Left(failure),
+          (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
+        );
+      });
     } catch (e) {
-      return Stream.value(Left(DatabaseFailure('Failed to watch audio tracks')));
+      return Stream.value(
+        Left(DatabaseFailure('Failed to watch audio tracks: ${e.toString()}')),
+      );
     }
   }
 
@@ -78,34 +102,39 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     required AudioTrack track,
   }) async {
     try {
-      // 1. OFFLINE-FIRST: Save locally IMMEDIATELY
-      final dto = AudioTrackDTO.fromDomain(track, extension: file.path.split('.').last);
-      final localResult = await localDataSource.cacheTrack(dto);
-      
-      await localResult.fold(
-        (failure) => throw Exception('Failed to cache track locally: ${failure.message}'),
-        (success) async {
-          // 2. Queue for background sync
-          await _pendingOperationsManager.addOperation(
-            entityType: 'audio_track',
-            entityId: track.id.value,
-            operationType: 'upload',
-            priority: SyncPriority.high,
-            data: {'filePath': file.path}, // Store file path for later upload
-          );
-
-          // 3. Trigger background sync if connected
-          if (await _networkStateManager.isConnected) {
-            _backgroundSyncCoordinator.triggerBackgroundSync(
-              syncKey: 'audio_tracks_upload',
-            );
-          }
-        },
+      final dto = AudioTrackDTO.fromDomain(
+        track,
+        extension: file.path.split('.').last,
       );
 
-      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
+      // 1. ALWAYS save locally first (ignore minor cache errors)
+      await localDataSource.cacheTrack(dto);
+
+      // 2. ALWAYS queue for background sync
+      await _pendingOperationsManager.addCreateOperation(
+        entityType: 'audio_track',
+        entityId: track.id.value,
+        data: {
+          'filePath': file.path,
+          'projectId': track.projectId.value,
+          'name': track.name,
+          'duration': track.duration.inMilliseconds,
+          'extension': file.path.split('.').last,
+        },
+        priority: SyncPriority.high,
+      );
+
+      // 3. Trigger background sync (no condition check - coordinator handles it)
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_upload',
+        ),
+      );
+
+      // 4. ALWAYS return success immediately
+      return const Right(unit);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to prepare track upload: $e'));
+      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
     }
   }
 
@@ -115,28 +144,27 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     ProjectId projectId,
   ) async {
     try {
-      // 1. OFFLINE-FIRST: Mark as deleted locally IMMEDIATELY (soft delete)
+      // 1. ALWAYS soft delete locally first
       await localDataSource.deleteTrack(trackId.value);
 
-      // 2. Queue for background sync
-      await _pendingOperationsManager.addOperation(
+      // 2. ALWAYS queue for background sync
+      await _pendingOperationsManager.addDeleteOperation(
         entityType: 'audio_track',
         entityId: trackId.value,
-        operationType: 'delete',
         priority: SyncPriority.high,
-        data: {'projectId': projectId.value},
       );
 
-      // 3. Trigger background sync if connected
-      if (await _networkStateManager.isConnected) {
+      // 3. Trigger background sync
+      unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_tracks_delete',
-        );
-      }
+        ),
+      );
 
-      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
+      // 4. ALWAYS return success immediately
+      return const Right(unit);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to delete track: $e'));
+      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
     }
   }
 
@@ -147,32 +175,40 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     required String newName,
   }) async {
     try {
-      // 1. OFFLINE-FIRST: Update locally IMMEDIATELY
+      // 1. ALWAYS update locally first
       await localDataSource.updateTrackName(trackId.value, newName);
 
-      // 2. Queue for background sync
-      await _pendingOperationsManager.addOperation(
+      // 2. ALWAYS queue for background sync
+      await _pendingOperationsManager.addUpdateOperation(
         entityType: 'audio_track',
         entityId: trackId.value,
-        operationType: 'update',
-        priority: SyncPriority.medium,
         data: {
           'projectId': projectId.value,
           'newName': newName,
           'field': 'name',
         },
+        priority: SyncPriority.medium,
       );
 
-      // 3. Trigger background sync if connected
-      if (await _networkStateManager.isConnected) {
+      // 3. Trigger background sync
+      unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_tracks_update',
-        );
-      }
+        ),
+      );
 
-      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
+      // 4. ALWAYS return success immediately
+      return const Right(unit);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to update track name: $e'));
+      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
     }
+  }
+
+  // Helper method for fire-and-forget background operations
+  void unawaited(Future future) {
+    future.catchError((error) {
+      // Log error but don't propagate - this is background operation
+      print('Background sync trigger failed: $error');
+    });
   }
 }
