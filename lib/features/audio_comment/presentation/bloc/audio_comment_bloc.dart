@@ -6,8 +6,7 @@ import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_co
 import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
-import 'package:trackflow/core/sync/presentation/mixins/sync_aware_mixin.dart';
-import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/services/sync_status_provider.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 import 'dart:async';
 import 'package:dartz/dartz.dart';
@@ -16,13 +15,12 @@ import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.d
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @injectable
-class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
-    with SyncAwareMixin {
+class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   final AddAudioCommentUseCase addAudioCommentUseCase;
   final WatchCommentsByTrackUseCase watchCommentsByTrackUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
-  final SyncService _syncService;
+  final SyncStatusProvider _syncStatusProvider;
 
   StreamSubscription<Either<Failure, List<AudioComment>>>?
   _commentsSubscription;
@@ -37,8 +35,8 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
     required this.watchUserProfilesUseCase,
-    required SyncService syncService,
-  }) : _syncService = syncService,
+    required SyncStatusProvider syncStatusProvider,
+  }) : _syncStatusProvider = syncStatusProvider,
        super(AudioCommentInitial()) {
     _initializeSyncAwareness();
     on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
@@ -196,10 +194,10 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
     return super.close();
   }
 
-  /// Initialize sync awareness with the new SyncService
+  /// Initialize sync awareness with the SyncStatusProvider
   void _initializeSyncAwareness() {
-    // Listen to sync state changes from the new service
-    _syncService.watchSyncState().listen((syncState) {
+    // Listen to sync state changes for UI updates
+    _syncStatusProvider.watchSyncState().listen((syncState) {
       // Handle sync state changes
       if (syncState.status == SyncStatus.syncing) {
         // Sync is in progress

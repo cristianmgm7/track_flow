@@ -5,7 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/domain/entities/session_state.dart';
 import 'package:trackflow/core/session/domain/services/session_service.dart';
 import 'package:trackflow/core/session/domain/entities/user_session.dart';
-import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/services/sync_data_manager.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 
 /// Coordinates application flow by combining session and sync information
@@ -15,13 +15,13 @@ import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 @lazySingleton
 class AppFlowCoordinator {
   final SessionService _sessionService;
-  final SyncService _syncService;
+  final SyncDataManager _syncDataManager;
 
   AppFlowCoordinator({
     required SessionService sessionService,
-    required SyncService syncService,
+    required SyncDataManager syncDataManager,
   }) : _sessionService = sessionService,
-       _syncService = syncService;
+       _syncDataManager = syncDataManager;
 
   /// Determine the current application flow state
   ///
@@ -32,7 +32,7 @@ class AppFlowCoordinator {
       // Get current session and sync state in parallel
       final results = await Future.wait([
         _sessionService.getCurrentSession(),
-        _syncService.getCurrentSyncState(),
+        _syncDataManager.getCurrentSyncState(),
       ]);
 
       final sessionResult = results[0] as Either<Failure, UserSession>;
@@ -119,7 +119,7 @@ class AppFlowCoordinator {
       session,
     ) async {
       if (session.state == SessionState.ready) {
-        return await _syncService.triggerBackgroundSync();
+        return await _syncDataManager.performIncrementalSync();
       }
       return const Right(unit);
     });
@@ -135,7 +135,7 @@ class AppFlowCoordinator {
       final sessionResult = await _sessionService.signOut();
 
       // Reset sync state (regardless of session result)
-      await _syncService.resetSync();
+      await _syncDataManager.resetSyncState();
 
       return sessionResult;
     } catch (e) {

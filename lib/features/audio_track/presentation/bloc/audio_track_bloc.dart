@@ -11,18 +11,16 @@ import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_tra
 import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
-import 'package:trackflow/core/sync/presentation/mixins/sync_aware_mixin.dart';
-import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/services/sync_status_provider.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 
 @injectable
-class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
-    with SyncAwareMixin {
+class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   final WatchTracksByProjectIdUseCase watchAudioTracksByProject;
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
   final EditAudioTrackUseCase editAudioTrackUseCase;
-  final SyncService _syncService;
+  final SyncStatusProvider _syncStatusProvider;
 
   StreamSubscription<Either<Failure, List<AudioTrack>>>? _trackSubscription;
 
@@ -31,8 +29,8 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
     required this.deleteAudioTrack,
     required this.uploadAudioTrackUseCase,
     required this.editAudioTrackUseCase,
-    required SyncService syncService,
-  }) : _syncService = syncService,
+    required SyncStatusProvider syncStatusProvider,
+  }) : _syncStatusProvider = syncStatusProvider,
        super(AudioTrackInitial()) {
     // Initialize sync awareness with the new service
     _initializeSyncAwareness();
@@ -173,11 +171,10 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
     return super.close();
   }
 
-  /// Initialize sync awareness with the new SyncService
+  /// Initialize sync awareness with SyncStatusProvider
   void _initializeSyncAwareness() {
-    // For now, we'll use a simple approach
-    // In the future, we can enhance this to use the SyncService streams
-    _syncService.watchSyncState().listen((syncState) {
+    // Listen to sync state changes for UI updates
+    _syncStatusProvider.watchSyncState().listen((syncState) {
       // Handle sync state changes
       if (syncState.status == SyncStatus.syncing) {
         // Sync is in progress

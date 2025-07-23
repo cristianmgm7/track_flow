@@ -1,19 +1,21 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
-import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/services/sync_data_manager.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 
-/// Coordinates background sync operations without blocking the UI
+/// Coordinates unified background sync operations without blocking the UI
 ///
-/// This service manages non-blocking sync operations that are triggered
-/// when data is accessed (cache-aside pattern) or when network connectivity
-/// is restored. It prevents duplicate sync operations and ensures sync
-/// happens intelligently based on network conditions.
+/// This coordinator manages the complete offline-first sync architecture:
+/// 1. UPSTREAM SYNC: Pending local changes → Remote (via PendingOperationsManager)
+/// 2. DOWNSTREAM SYNC: Remote data → Local cache (via SyncDataManager)
+///
+/// It prevents duplicate sync operations and ensures sync happens intelligently
+/// based on network conditions. Operations are non-blocking and fire-and-forget.
 @lazySingleton
 class BackgroundSyncCoordinator {
   final NetworkStateManager _networkStateManager;
-  final SyncService _syncService;
+  final SyncDataManager _syncDataManager;
   final PendingOperationsManager _pendingOperationsManager;
 
   // Track ongoing background sync operations
@@ -24,7 +26,7 @@ class BackgroundSyncCoordinator {
 
   BackgroundSyncCoordinator(
     this._networkStateManager,
-    this._syncService,
+    this._syncDataManager,
     this._pendingOperationsManager,
   ) {
     _initializeNetworkListener();
@@ -96,7 +98,11 @@ class BackgroundSyncCoordinator {
     });
   }
 
-  /// Perform the actual background sync operation
+  /// Perform the actual unified background sync operation
+  /// 
+  /// This method executes the complete offline-first sync cycle:
+  /// 1. UPSTREAM: Push pending local changes to remote
+  /// 2. DOWNSTREAM: Pull fresh data from remote to local cache
   Future<void> _performBackgroundSync(String syncKey) async {
     try {
       // Only proceed if we have good network connection
@@ -104,11 +110,25 @@ class BackgroundSyncCoordinator {
         return;
       }
 
-      // 1. Process pending operations first
+      // PHASE 1: UPSTREAM SYNC - Push pending local changes first
+      // This ensures local changes are preserved before pulling fresh data
       await _pendingOperationsManager.processPendingOperations();
 
-      // 2. Perform the sync using SyncService
-      await _syncService.triggerBackgroundSync();
+      // PHASE 2: DOWNSTREAM SYNC - Pull fresh data from remote
+      // This updates local cache with latest remote data
+      final syncResult = await _syncDataManager.performIncrementalSync();
+      
+      // Log sync result (but don't throw on failure - this is background)
+      syncResult.fold(
+        (failure) {
+          // TODO: Replace with proper logging framework
+          // print('BackgroundSyncCoordinator: Downstream sync failed: ${failure.message}');
+        },
+        (_) {
+          // TODO: Replace with proper logging framework  
+          // print('BackgroundSyncCoordinator: Background sync completed successfully for $syncKey');
+        },
+      );
     } catch (e) {
       // Log error but don't throw - this is background operation
       // TODO: Replace with proper logging framework

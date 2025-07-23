@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:isar/isar.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
+import 'package:trackflow/core/sync/data/datasources/pending_operations_local_datasource.dart';
 
 /// Repository for managing pending sync operations
 abstract class PendingOperationsRepository {
@@ -19,16 +19,14 @@ abstract class PendingOperationsRepository {
 
 @LazySingleton(as: PendingOperationsRepository)
 class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
-  final Isar _isar;
+  final PendingOperationsLocalDataSource _localDataSource;
 
-  PendingOperationsRepositoryImpl(this._isar);
+  PendingOperationsRepositoryImpl(this._localDataSource);
 
   @override
   Future<Either<Failure, Unit>> addOperation(SyncOperationDocument operation) async {
     try {
-      await _isar.writeTxn(() async {
-        await _isar.syncOperationDocuments.put(operation);
-      });
+      await _localDataSource.insertOperation(operation);
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to add sync operation: $e'));
@@ -38,12 +36,7 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   @override
   Future<Either<Failure, List<SyncOperationDocument>>> getPendingOperations() async {
     try {
-      final operations = await _isar.syncOperationDocuments
-          .where()
-          .isCompletedEqualTo(false)
-          .sortByTimestamp()
-          .findAll();
-      
+      final operations = await _localDataSource.getPendingOperations();
       return Right(operations);
     } catch (e) {
       return Left(DatabaseFailure('Failed to get pending operations: $e'));
@@ -55,14 +48,7 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
     SyncPriority priority,
   ) async {
     try {
-      final operations = await _isar.syncOperationDocuments
-          .where()
-          .isCompletedEqualTo(false)
-          .filter()
-          .priorityEqualTo(priority.name)
-          .sortByTimestamp()
-          .findAll();
-      
+      final operations = await _localDataSource.getOperationsByPriority(priority.name);
       return Right(operations);
     } catch (e) {
       return Left(DatabaseFailure('Failed to get operations by priority: $e'));
@@ -72,13 +58,10 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   @override
   Future<Either<Failure, Unit>> markOperationCompleted(int operationId) async {
     try {
-      await _isar.writeTxn(() async {
-        final operation = await _isar.syncOperationDocuments.get(operationId);
-        if (operation != null) {
-          operation.markAsCompleted();
-          await _isar.syncOperationDocuments.put(operation);
-        }
-      });
+      final operations = await _localDataSource.getPendingOperations();
+      final operation = operations.firstWhere((op) => op.id == operationId);
+      operation.markAsCompleted();
+      await _localDataSource.updateOperation(operation);
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to mark operation completed: $e'));
@@ -88,13 +71,10 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   @override
   Future<Either<Failure, Unit>> markOperationFailed(int operationId, String error) async {
     try {
-      await _isar.writeTxn(() async {
-        final operation = await _isar.syncOperationDocuments.get(operationId);
-        if (operation != null) {
-          operation.markAsFailed(error);
-          await _isar.syncOperationDocuments.put(operation);
-        }
-      });
+      final operations = await _localDataSource.getPendingOperations();
+      final operation = operations.firstWhere((op) => op.id == operationId);
+      operation.markAsFailed(error);
+      await _localDataSource.updateOperation(operation);
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to mark operation failed: $e'));
@@ -104,9 +84,7 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   @override
   Future<Either<Failure, Unit>> deleteOperation(int operationId) async {
     try {
-      await _isar.writeTxn(() async {
-        await _isar.syncOperationDocuments.delete(operationId);
-      });
+      await _localDataSource.deleteOperation(operationId);
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to delete operation: $e'));
@@ -116,15 +94,7 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   @override
   Future<Either<Failure, Unit>> clearCompletedOperations() async {
     try {
-      await _isar.writeTxn(() async {
-        final completedOperations = await _isar.syncOperationDocuments
-            .where()
-            .isCompletedEqualTo(true)
-            .findAll();
-        
-        final ids = completedOperations.map((op) => op.id).toList();
-        await _isar.syncOperationDocuments.deleteAll(ids);
-      });
+      await _localDataSource.deleteCompletedOperations();
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to clear completed operations: $e'));
@@ -134,11 +104,7 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   @override
   Future<Either<Failure, int>> getPendingOperationsCount() async {
     try {
-      final count = await _isar.syncOperationDocuments
-          .where()
-          .isCompletedEqualTo(false)
-          .count();
-      
+      final count = await _localDataSource.getPendingOperationsCount();
       return Right(count);
     } catch (e) {
       return Left(DatabaseFailure('Failed to get pending operations count: $e'));
@@ -147,10 +113,6 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
 
   @override
   Stream<List<SyncOperationDocument>> watchPendingOperations() {
-    return _isar.syncOperationDocuments
-        .where()
-        .isCompletedEqualTo(false)
-        .sortByTimestamp()
-        .watch(fireImmediately: true);
+    return _localDataSource.watchPendingOperations();
   }
 }
