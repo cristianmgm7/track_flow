@@ -1,72 +1,17 @@
 import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/executors/project_operation_executor.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
-// Simple manual mock for testing
-class MockProjectRemoteDataSource implements ProjectRemoteDataSource {
-  final List<String> callLog = [];
-  final Map<String, dynamic> responses = {};
+import 'project_operation_executor_test.mocks.dart';
 
-  void setResponse(String method, dynamic response) {
-    responses[method] = response;
-  }
-
-  @override
-  Future<Either<Failure, ProjectDTO>> createProject(ProjectDTO project) async {
-    callLog.add('createProject: ${project.id}');
-    if (responses.containsKey('createProject')) {
-      final response = responses['createProject'];
-      if (response is ProjectDTO) {
-        return Right(response);
-      } else if (response is Failure) {
-        return Left(response);
-      }
-    }
-    return Right(project);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> updateProject(ProjectDTO project) async {
-    callLog.add('updateProject: ${project.id}');
-    if (responses.containsKey('updateProject')) {
-      final response = responses['updateProject'];
-      if (response is Failure) {
-        return Left(response);
-      }
-    }
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> deleteProject(String projectId) async {
-    callLog.add('deleteProject: $projectId');
-    if (responses.containsKey('deleteProject')) {
-      final response = responses['deleteProject'];
-      if (response is Failure) {
-        return Left(response);
-      }
-    }
-    return const Right(unit);
-  }
-
-  @override
-  Future<Either<Failure, ProjectDTO>> getProjectById(String projectId) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<Either<Failure, List<ProjectDTO>>> getUserProjects(
-    String userId,
-  ) async {
-    throw UnimplementedError();
-  }
-}
-
+@GenerateMocks([ProjectRemoteDataSource])
 void main() {
   late ProjectOperationExecutor executor;
   late MockProjectRemoteDataSource mockRemoteDataSource;
@@ -104,14 +49,28 @@ void main() {
           operationData: jsonEncode(operationData),
         );
 
+        when(
+          mockRemoteDataSource.createProject(any),
+        ).thenAnswer((_) async => const Right(unit));
+
         // Act
         await executor.execute(operation);
 
         // Assert
-        expect(
-          mockRemoteDataSource.callLog,
-          contains('createProject: $testEntityId'),
-        );
+        verify(mockRemoteDataSource.createProject(any)).called(1);
+
+        // Verify the ProjectDTO was created correctly
+        final capturedDto =
+            verify(
+                  mockRemoteDataSource.createProject(captureAny),
+                ).captured.first
+                as ProjectDTO;
+
+        expect(capturedDto.id, equals(testEntityId));
+        expect(capturedDto.name, equals(testProjectName));
+        expect(capturedDto.description, equals(testProjectDescription));
+        expect(capturedDto.ownerId, equals(testOwnerId));
+        expect(capturedDto.updatedAt, isNull);
       });
 
       test('should handle missing optional fields gracefully', () async {
@@ -130,23 +89,26 @@ void main() {
           operationData: jsonEncode(operationData),
         );
 
+        when(
+          mockRemoteDataSource.createProject(any),
+        ).thenAnswer((_) async => const Right(unit));
+
         // Act
         await executor.execute(operation);
 
         // Assert
-        expect(
-          mockRemoteDataSource.callLog,
-          contains('createProject: $testEntityId'),
-        );
+        final capturedDto =
+            verify(
+                  mockRemoteDataSource.createProject(captureAny),
+                ).captured.first
+                as ProjectDTO;
+
+        expect(capturedDto.description, equals(''));
+        expect(capturedDto.createdAt, isNotNull);
       });
 
       test('should throw exception when remote creation fails', () async {
         // Arrange
-        mockRemoteDataSource.setResponse(
-          'createProject',
-          const ServerFailure('Creation failed'),
-        );
-
         final operationData = {'name': testProjectName, 'ownerId': testOwnerId};
 
         final operation = SyncOperationDocument.create(
@@ -156,6 +118,10 @@ void main() {
           priority: SyncPriority.high,
           operationData: jsonEncode(operationData),
         );
+
+        when(
+          mockRemoteDataSource.createProject(any),
+        ).thenAnswer((_) async => const Left(ServerFailure('Creation failed')));
 
         // Act & Assert
         expect(() => executor.execute(operation), throwsA(isA<Exception>()));
@@ -180,14 +146,46 @@ void main() {
           operationData: jsonEncode(operationData),
         );
 
+        when(
+          mockRemoteDataSource.updateProject(any),
+        ).thenAnswer((_) async => const Right(unit));
+
         // Act
         await executor.execute(operation);
 
         // Assert
-        expect(
-          mockRemoteDataSource.callLog,
-          contains('updateProject: $testEntityId'),
+        verify(mockRemoteDataSource.updateProject(any)).called(1);
+
+        final capturedDto =
+            verify(
+                  mockRemoteDataSource.updateProject(captureAny),
+                ).captured.first
+                as ProjectDTO;
+
+        expect(capturedDto.id, equals(testEntityId));
+        expect(capturedDto.name, equals('Updated Project Name'));
+        expect(capturedDto.description, equals('Updated Description'));
+        expect(capturedDto.updatedAt, isNotNull);
+      });
+
+      test('should throw exception when remote update fails', () async {
+        // Arrange
+        final operationData = {'name': 'Updated Name', 'ownerId': testOwnerId};
+
+        final operation = SyncOperationDocument.create(
+          entityType: 'project',
+          entityId: testEntityId,
+          operationType: 'update',
+          priority: SyncPriority.medium,
+          operationData: jsonEncode(operationData),
         );
+
+        when(
+          mockRemoteDataSource.updateProject(any),
+        ).thenAnswer((_) async => const Left(ServerFailure('Update failed')));
+
+        // Act & Assert
+        expect(() => executor.execute(operation), throwsA(isA<Exception>()));
       });
     });
 
@@ -201,14 +199,32 @@ void main() {
           priority: SyncPriority.medium,
         );
 
+        when(
+          mockRemoteDataSource.deleteProject(any),
+        ).thenAnswer((_) async => const Right(unit));
+
         // Act
         await executor.execute(operation);
 
         // Assert
-        expect(
-          mockRemoteDataSource.callLog,
-          contains('deleteProject: $testEntityId'),
+        verify(mockRemoteDataSource.deleteProject(testEntityId)).called(1);
+      });
+
+      test('should throw exception when remote deletion fails', () async {
+        // Arrange
+        final operation = SyncOperationDocument.create(
+          entityType: 'project',
+          entityId: testEntityId,
+          operationType: 'delete',
+          priority: SyncPriority.medium,
         );
+
+        when(
+          mockRemoteDataSource.deleteProject(any),
+        ).thenAnswer((_) async => const Left(ServerFailure('Deletion failed')));
+
+        // Act & Assert
+        expect(() => executor.execute(operation), throwsA(isA<Exception>()));
       });
     });
 
@@ -241,14 +257,25 @@ void main() {
           operationData: null,
         );
 
+        when(
+          mockRemoteDataSource.createProject(any),
+        ).thenAnswer((_) async => const Right(unit));
+
         // Act
         await executor.execute(operation);
 
         // Assert
-        expect(
-          mockRemoteDataSource.callLog,
-          contains('createProject: $testEntityId'),
-        );
+        verify(mockRemoteDataSource.createProject(any)).called(1);
+
+        final capturedDto =
+            verify(
+                  mockRemoteDataSource.createProject(captureAny),
+                ).captured.first
+                as ProjectDTO;
+
+        expect(capturedDto.name, equals(''));
+        expect(capturedDto.description, equals(''));
+        expect(capturedDto.ownerId, equals(''));
       });
     });
   });

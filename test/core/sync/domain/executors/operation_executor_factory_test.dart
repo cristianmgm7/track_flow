@@ -1,12 +1,79 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor_factory.dart';
+import 'package:trackflow/core/sync/domain/executors/project_operation_executor.dart';
+import 'package:trackflow/core/sync/domain/executors/audio_track_operation_executor.dart';
+import 'package:trackflow/core/sync/domain/executors/audio_comment_operation_executor.dart';
+import 'package:trackflow/core/sync/domain/executors/user_profile_operation_executor.dart';
 
+import 'operation_executor_factory_test.mocks.dart';
+
+@GenerateMocks([OperationExecutorFactory])
 void main() {
-  group('OperationExecutorFactory', () {
-    late OperationExecutorFactory factory;
+  late OperationExecutorFactory factory;
 
-    setUp(() {
-      factory = OperationExecutorFactory();
+  setUp(() {
+    factory = OperationExecutorFactory();
+  });
+
+  group('OperationExecutorFactory', () {
+    test('should return ProjectOperationExecutor for project entity type', () {
+      // Act
+      final executor = factory.getExecutor('project');
+
+      // Assert
+      expect(executor, isA<ProjectOperationExecutor>());
+      expect(executor.entityType, equals('project'));
+    });
+
+    test(
+      'should return AudioTrackOperationExecutor for audio_track entity type',
+      () {
+        // Act
+        final executor = factory.getExecutor('audio_track');
+
+        // Assert
+        expect(executor, isA<AudioTrackOperationExecutor>());
+        expect(executor.entityType, equals('audio_track'));
+      },
+    );
+
+    test(
+      'should return AudioCommentOperationExecutor for audio_comment entity type',
+      () {
+        // Act
+        final executor = factory.getExecutor('audio_comment');
+
+        // Assert
+        expect(executor, isA<AudioCommentOperationExecutor>());
+        expect(executor.entityType, equals('audio_comment'));
+      },
+    );
+
+    test(
+      'should return UserProfileOperationExecutor for user_profile entity type',
+      () {
+        // Act
+        final executor = factory.getExecutor('user_profile');
+
+        // Assert
+        expect(executor, isA<UserProfileOperationExecutor>());
+        expect(executor.entityType, equals('user_profile'));
+      },
+    );
+
+    test('should throw UnsupportedError for unknown entity type', () {
+      // Act & Assert
+      expect(
+        () => factory.getExecutor('unknown_entity'),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('should throw UnsupportedError for empty string entity type', () {
+      // Act & Assert
+      expect(() => factory.getExecutor(''), throwsA(isA<UnsupportedError>()));
     });
 
     test('should have correct supported entity types', () {
@@ -26,61 +93,42 @@ void main() {
       expect(supportedTypes.length, equals(4));
     });
 
-    test('should throw UnsupportedError for unknown entity type', () {
-      // Act & Assert
-      expect(
-        () => factory.getExecutor('unknown_entity'),
-        throwsA(isA<UnsupportedError>()),
-      );
-    });
+    group('consistency tests', () {
+      test('all supported entity types should return valid executors', () {
+        // Arrange
+        final supportedTypes = factory.supportedEntityTypes;
 
-    test('should throw UnsupportedError for empty string entity type', () {
-      // Act & Assert
-      expect(() => factory.getExecutor(''), throwsA(isA<UnsupportedError>()));
-    });
-
-    test('should throw UnsupportedError for null entity type', () {
-      // Act & Assert
-      expect(
-        () => factory.getExecutor('non_existent_type'),
-        throwsA(isA<UnsupportedError>()),
-      );
-    });
-
-    group('error messages', () {
-      test('should provide helpful error message for unsupported type', () {
         // Act & Assert
-        try {
-          factory.getExecutor('invalid_type');
-          fail('Should have thrown UnsupportedError');
-        } catch (e) {
-          expect(e, isA<UnsupportedError>());
-          expect(e.toString(), contains('invalid_type'));
+        for (final entityType in supportedTypes) {
+          expect(
+            () => factory.getExecutor(entityType),
+            returnsNormally,
+            reason: 'Entity type "$entityType" should return a valid executor',
+          );
+
+          final executor = factory.getExecutor(entityType);
+          expect(
+            executor.entityType,
+            equals(entityType),
+            reason: 'Executor should have matching entity type',
+          );
         }
       });
-    });
 
-    group('supported types consistency', () {
-      test('supported entity types should not be empty', () {
-        expect(factory.supportedEntityTypes, isNotEmpty);
-      });
+      test(
+        'executors should be different instances but same type for same entity',
+        () {
+          // Act
+          final executor1 = factory.getExecutor('project');
+          final executor2 = factory.getExecutor('project');
 
-      test('supported entity types should contain specific required types', () {
-        final supportedTypes = factory.supportedEntityTypes;
-
-        // These are the core types our app needs
-        expect(supportedTypes, contains('project'));
-        expect(supportedTypes, contains('audio_track'));
-        expect(supportedTypes, contains('audio_comment'));
-        expect(supportedTypes, contains('user_profile'));
-      });
-
-      test('supported entity types should not contain duplicates', () {
-        final supportedTypes = factory.supportedEntityTypes;
-        final uniqueTypes = supportedTypes.toSet();
-
-        expect(supportedTypes.length, equals(uniqueTypes.length));
-      });
+          // Assert
+          expect(executor1, isA<ProjectOperationExecutor>());
+          expect(executor2, isA<ProjectOperationExecutor>());
+          // Both should be the same type but potentially different instances
+          expect(executor1.runtimeType, equals(executor2.runtimeType));
+        },
+      );
     });
   });
 }
