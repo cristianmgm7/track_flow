@@ -28,7 +28,7 @@ class SyncUserProfileCollaboratorsUseCase {
       await userProfileCacheRepo.clearCache();
       return;
     }
-    
+
     final collaboratorIdObjects =
         collaboratorIds.map((id) => UserId.fromUniqueString(id)).toList();
     final result = await userProfileCacheRepo.getUserProfilesByIds(

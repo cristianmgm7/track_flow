@@ -2,18 +2,18 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
-import 'package:trackflow/features/audio_comment/domain/usecases/sync_audio_comment_usecase.dart';
-import 'package:trackflow/features/audio_track/domain/usecases/sync_audio_tracks_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/sync_projects_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/sync_user_frofile_collaborators.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/sync_user_profile_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_audio_comments_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_audio_tracks_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_projects_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_collaborators_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_usecase.dart';
 
 /// Manages downstream data synchronization (Remote → Local)
-/// 
+///
 /// This service is responsible for pulling data from remote sources
 /// and caching it locally. It uses existing sync use cases and provides
 /// a unified interface for background sync operations.
-/// 
+///
 /// Key responsibilities:
 /// - Pull fresh data from remote sources
 /// - Cache data locally via sync use cases
@@ -40,7 +40,7 @@ class SyncDataManager {
        _syncUserProfileCollaborators = syncUserProfileCollaborators;
 
   /// Perform full data synchronization with progress reporting
-  /// 
+  ///
   /// This method coordinates the sync order based on data dependencies:
   /// 1. User profile first (required by other syncs)
   /// 2. Projects and collaborators in parallel
@@ -56,17 +56,11 @@ class SyncDataManager {
       onProgress?.call(0.2);
 
       // Step 2: Sync projects and collaborators in parallel
-      await Future.wait([
-        _syncProjects(), 
-        _syncUserProfileCollaborators(),
-      ]);
+      await Future.wait([_syncProjects(), _syncUserProfileCollaborators()]);
       onProgress?.call(0.6);
 
       // Step 3: Sync audio tracks and comments in parallel
-      await Future.wait([
-        _syncAudioTracks(), 
-        _syncAudioComments(),
-      ]);
+      await Future.wait([_syncAudioTracks(), _syncAudioComments()]);
       onProgress?.call(1.0);
 
       return const Right(unit);
@@ -76,7 +70,7 @@ class SyncDataManager {
   }
 
   /// Perform incremental sync (lighter operation)
-  /// 
+  ///
   /// This method performs a lighter sync operation,
   /// typically used for background refreshes.
   Future<Either<Failure, Unit>> performIncrementalSync() async {

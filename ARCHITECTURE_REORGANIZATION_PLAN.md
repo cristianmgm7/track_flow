@@ -1,298 +1,428 @@
-# 🏗️ Architecture Reorganization Plan - SOLID Principles
+# 🏗️ Architecture Status & Sync Implementation Plan - TrackFlow
 
-## 📋 **Problema Identificado**
+## 📊 **Estado Actual de la Arquitectura (Enero 2025)**
 
-La arquitectura actual viola principios SOLID:
+### **✅ LO QUE YA ESTÁ IMPLEMENTADO**
 
-### **🚨 Violaciones Críticas**
-
-1. **SRP (Single Responsibility)**: `session_manager` y `sync` mezclan responsabilidades
-2. **DIP (Dependency Inversion)**: Dependencias directas entre capas
-3. **ISP (Interface Segregation)**: Interfaces con responsabilidades mezcladas
-4. **OCP (Open/Closed)**: Difícil extender sin modificar código existente
-
----
-
-## 🎯 **Solución: Separación Clara de Responsabilidades**
-
-### **📁 Nueva Estructura de Directorios**
+#### **🏗️ Estructura Core Existente**
 
 ```
 lib/core/
-├── session/                    # 🎭 GESTIÓN DE SESIÓN PURA
+├── session/                    # ✅ IMPLEMENTADO
 │   ├── domain/
 │   │   ├── entities/
-│   │   │   ├── user_session.dart
-│   │   │   └── session_state.dart
-│   │   ├── repositories/
-│   │   │   └── session_repository.dart
-│   │   └── usecases/
-│   │       ├── initialize_session_usecase.dart
-│   │       ├── check_authentication_usecase.dart
-│   │       └── sign_out_usecase.dart
-│   ├── data/
-│   │   ├── repositories/
-│   │   │   └── session_repository_impl.dart
-│   │   └── datasources/
-│   │       └── session_storage.dart
-│   └── presentation/
-│       ├── bloc/
-│       │   ├── session_bloc.dart
-│       │   ├── session_events.dart
-│       │   └── session_state.dart
-│       └── mixins/
-│           └── session_aware_mixin.dart
+│   │   │   └── user_session.dart         # ✅ Entidad completa
+│   │   ├── repositories/                  # ✅ Abstracciones definidas
+│   │   └── usecases/                     # ✅ Use cases básicos
+│   └── data/
+│       └── repositories/                  # ✅ Implementación básica
 │
-├── sync/                       # 🔄 SINCRONIZACIÓN PURA
+├── sync/                       # 🟡 PARCIALMENTE IMPLEMENTADO
 │   ├── domain/
-│   │   ├── entities/
-│   │   │   ├── sync_state.dart
-│   │   │   ├── sync_metadata.dart
-│   │   │   └── sync_conflict.dart
-│   │   ├── repositories/
-│   │   │   ├── sync_repository.dart
-│   │   │   └── pending_operations_repository.dart
-│   │   └── usecases/
-│   │       ├── initialize_sync_usecase.dart
-│   │       ├── trigger_background_sync_usecase.dart
-│   │       └── resolve_conflict_usecase.dart
+│   │   ├── entities/                     # ✅ Entidades base definidas
+│   │   ├── repositories/                 # ✅ Interfaces definidas
+│   │   ├── services/
+│   │   │   └── pending_operations_manager.dart  # ✅ Interface completa
+│   │   └── usecases/                     # 🚨 PROBLEMA: Full sync únicamente
 │   ├── data/
-│   │   ├── repositories/
-│   │   │   ├── sync_repository_impl.dart
-│   │   │   └── pending_operations_repository_impl.dart
 │   │   ├── models/
-│   │   │   ├── sync_metadata_document.dart
-│   │   │   └── sync_operation_document.dart
+│   │   │   └── sync_operation_document.dart     # ✅ Modelo completo
+│   │   ├── repositories/                 # ✅ Implementaciones base
 │   │   └── services/
-│   │       ├── background_sync_coordinator.dart
-│   │       ├── conflict_resolution_service.dart
-│   │       └── network_state_manager.dart
-│   └── presentation/
-│       ├── bloc/
-│       │   ├── sync_bloc.dart
-│       │   ├── sync_events.dart
-│       │   └── sync_state.dart
-│       └── mixins/
-│           └── sync_aware_mixin.dart
+│   │       └── pending_operations_manager_impl.dart # 🚨 Executors incompletos
+│   └── background_sync_coordinator.dart  # 🚨 Implementación placeholder
 │
-├── app_flow/                   # 🚀 ORQUESTACIÓN DE FLUJO
-│   ├── domain/
-│   │   ├── entities/
-│   │   │   └── app_flow_state.dart
-│   │   └── usecases/
-│   │       └── determine_app_flow_usecase.dart
-│   ├── data/
-│   │   └── services/
-│   │       └── app_flow_coordinator.dart
-│   └── presentation/
-│       ├── bloc/
-│       │   ├── app_flow_bloc.dart
-│   │   │   ├── app_flow_events.dart
-│   │   │   └── app_flow_state.dart
-│       └── services/
-│           └── navigation_service.dart
+└── network/
+    └── network_state_manager.dart        # ✅ Manejo de conectividad
+```
+
+#### **🎯 Repositorios Migrados a Offline-First**
+
+```
+✅ ProjectsRepositoryImpl          # Completamente migrado
+✅ AudioTrackRepositoryImpl        # Completamente migrado
+✅ AudioCommentRepositoryImpl      # Completamente migrado
+🟡 PlaylistRepositoryImpl          # Necesita migración
+🟡 UserProfileRepositoryImpl       # Necesita migración
+❌ AuthRepositoryImpl              # No requiere offline-first
+❌ MagicLinkRepositoryImpl         # No requiere offline-first
 ```
 
 ---
 
-## 🔧 **Implementación Paso a Paso**
+## 🚨 **PROBLEMAS CRÍTICOS IDENTIFICADOS**
 
-### **FASE 1: Separar Entidades (SRP)**
+### **1. Downstream Sync Ineficiente (Remote → Local)**
 
-#### **1.1 Crear UserSession Pura**
-
-```dart
-// lib/core/session/domain/entities/user_session.dart
-class UserSession {
-  final User? currentUser;
-  final bool isOnboardingCompleted;
-  final bool isProfileComplete;
-  final SessionState state;
-  final String? errorMessage;
-
-  // NO incluye información de sync
-  // NO incluye syncProgress
-  // NO incluye isSyncComplete
-}
-```
-
-#### **1.2 Crear SyncState Pura**
+#### **🔥 Problema: Full Sync en cada sincronización**
 
 ```dart
-// lib/core/sync/domain/entities/sync_state.dart
-class SyncState {
-  final SyncStatus status;
-  final double progress;
-  final DateTime? lastSyncTime;
-  final String? errorMessage;
+// ❌ ACTUAL: SyncProjectsUseCase hace FULL SYNC
+Future<void> call() async {
+  final failureOrProjects = await remote.getUserProjects(userId);
 
-  // NO incluye información de usuario
-  // NO incluye información de sesión
-}
-```
+  // 🚨 BORRA TODO el cache local
+  await local.clearCache();
 
-### **FASE 2: Crear Abstracciones (DIP)**
-
-#### **2.1 Session Repository Interface**
-
-```dart
-// lib/core/session/domain/repositories/session_repository.dart
-abstract class SessionRepository {
-  Future<Either<Failure, UserSession>> getCurrentSession();
-  Future<Either<Failure, Unit>> signOut();
-  Stream<UserSession> watchSession();
-}
-```
-
-#### **2.2 Sync Repository Interface**
-
-```dart
-// lib/core/sync/domain/repositories/sync_repository.dart
-abstract class SyncRepository {
-  Future<Either<Failure, SyncState>> getCurrentSyncState();
-  Future<Either<Failure, Unit>> triggerBackgroundSync();
-  Stream<SyncState> watchSyncState();
-}
-```
-
-### **FASE 3: Orquestador de Flujo (OCP)**
-
-#### **3.1 App Flow Coordinator**
-
-```dart
-// lib/core/app_flow/data/services/app_flow_coordinator.dart
-@lazySingleton
-class AppFlowCoordinator {
-  final SessionRepository _sessionRepository;
-  final SyncRepository _syncRepository;
-
-  // Coordina pero NO implementa lógica de negocio
-  Future<AppFlowState> determineAppFlow() async {
-    final session = await _sessionRepository.getCurrentSession();
-    final syncState = await _syncRepository.getCurrentSyncState();
-
-    return _mapToAppFlowState(session, syncState);
+  // 🚨 Descarga TODO de nuevo
+  for (final project in projects) {
+    await local.cacheProject(project);
   }
 }
 ```
 
-### **FASE 4: BLoCs Especializados (SRP)**
+#### **💔 Impacto:**
 
-#### **4.1 Session BLoC (Solo Sesión)**
+- **Ancho de banda desperdiciado**: Descarga datos que no han cambiado
+- **Latencia alta**: Operaciones lentas e innecesarias
+- **Batería**: Consumo excesivo en móviles
+- **Experiencia**: UI que se congela durante sync
+
+### **2. Upstream Sync Incompleto (Local → Remote)**
+
+#### **🔥 Operation Executors sin implementar**
 
 ```dart
-// lib/core/session/presentation/bloc/session_bloc.dart
-@injectable
-class SessionBloc extends Bloc<SessionEvent, SessionState> {
-  final SessionRepository _sessionRepository;
+// ❌ ACTUAL: Métodos placeholder en PendingOperationsManagerImpl
+Future<Either<Failure, Unit>> _executeCreate(SyncOperationDocument operation) async {
+  // TODO: Implement create operation execution
+  return Right(unit);
+}
 
-  // Solo maneja eventos de sesión
-  // NO maneja sync
-  // NO maneja navegación
+Future<Either<Failure, Unit>> _executeUpdate(SyncOperationDocument operation) async {
+  // TODO: Implement update operation execution
+  return Right(unit);
 }
 ```
 
-#### **4.2 Sync BLoC (Solo Sincronización)**
+#### **💔 Impacto:**
+
+- **Operaciones perdidas**: Cambios locales nunca llegan al servidor
+- **Inconsistencia**: Estados diferentes entre local y remoto
+- **Frustración**: Usuarios que pierden trabajo
+
+### **3. Metadatos de Sincronización Ausentes**
+
+#### **🔥 Sin timestamps de sincronización**
 
 ```dart
-// lib/core/sync/presentation/bloc/sync_bloc.dart
-@injectable
-class SyncBloc extends Bloc<SyncEvent, SyncState> {
-  final SyncRepository _syncRepository;
-
-  // Solo maneja eventos de sync
-  // NO maneja sesión
-  // NO maneja navegación
-}
-```
-
-#### **4.3 App Flow BLoC (Solo Orquestación)**
-
-```dart
-// lib/core/app_flow/presentation/bloc/app_flow_bloc.dart
-@injectable
-class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
-  final AppFlowCoordinator _coordinator;
-
-  // Solo orquesta el flujo
-  // NO implementa lógica de negocio
-  // NO maneja sync directamente
-  // NO maneja sesión directamente
+// ❌ FALTA: lastUpdatedAt en entidades
+class Project {
+  // NO HAY lastUpdatedAt
+  // NO HAY syncVersion
+  // NO HAY conflictResolution
 }
 ```
 
 ---
 
-## 🎯 **Beneficios de la Nueva Arquitectura**
+## 🎯 **PLAN DE IMPLEMENTACIÓN COMPLETA**
 
-### **✅ Principios SOLID Respetados**
+### **FASE 1: Metadatos de Sincronización (Semana 1-2)**
 
-1. **SRP**: Cada clase tiene una sola responsabilidad
-2. **OCP**: Fácil extender sin modificar código existente
-3. **LSP**: Interfaces consistentes y predecibles
-4. **ISP**: Interfaces pequeñas y específicas
-5. **DIP**: Dependencias a través de abstracciones
+#### **1.1 Agregar Sync Metadata a Entidades**
 
-### **✅ Separación de Responsabilidades**
+```dart
+// ✅ IMPLEMENTAR: lib/core/sync/domain/entities/sync_metadata.dart
+class SyncMetadata {
+  final DateTime lastUpdatedAt;
+  final DateTime? lastSyncedAt;
+  final int syncVersion;
+  final String? etag;
+  final SyncStatus syncStatus;
+  final List<String> pendingOperations;
+}
 
-- **Session**: Solo gestión de sesión de usuario
-- **Sync**: Solo sincronización de datos
-- **App Flow**: Solo orquestación de flujo de la app
+// ✅ IMPLEMENTAR: Actualizar entidades principales
+class Project {
+  // ... campos existentes ...
+  final SyncMetadata syncMetadata;
+}
+```
 
-### **✅ Testabilidad Mejorada**
+#### **1.2 Database Schema Migration**
 
-- Cada componente se puede testear de forma aislada
-- Mocks más simples y específicos
-- Tests más rápidos y confiables
+```dart
+// ✅ IMPLEMENTAR: Migrations para Isar
+@collection
+class ProjectDocument {
+  // ... campos existentes ...
 
-### **✅ Mantenibilidad**
+  // Nuevos campos de sync
+  late DateTime lastUpdatedAt;
+  DateTime? lastSyncedAt;
+  late int syncVersion;
+  String? etag;
+  @enumerated
+  late SyncStatus syncStatus;
+  late List<String> pendingOperations;
+}
+```
 
-- Cambios en sync no afectan session
-- Cambios en session no afectan sync
-- Código más fácil de entender y modificar
+### **FASE 2: Incremental Sync Implementation (Semana 3-4)**
+
+#### **2.1 Remote API Endpoints para Incremental Sync**
+
+```dart
+// ✅ IMPLEMENTAR: Endpoints que soporten lastModified
+abstract class ProjectRemoteDataSource {
+  // Sync incremental por timestamp
+  Future<Either<Failure, List<ProjectDTO>>> getProjectsModifiedSince({
+    required String userId,
+    required DateTime lastSyncDate,
+  });
+
+  // Sync por lotes con ETags
+  Future<Either<Failure, SyncBatchResponse<ProjectDTO>>> syncProjectsBatch({
+    required String userId,
+    required List<SyncBatchRequest> requests,
+  });
+}
+```
+
+#### **2.2 Incremental Sync Use Cases**
+
+```dart
+// ✅ IMPLEMENTAR: lib/core/sync/domain/usecases/incremental_sync_usecase.dart
+@injectable
+class IncrementalSyncUseCase {
+  Future<Either<Failure, SyncResult>> call({
+    required String entityType,
+    required String userId,
+  }) async {
+    // 1. Obtener último timestamp de sync
+    final lastSync = await _syncMetadataRepository.getLastSync(entityType, userId);
+
+    // 2. Fetch solo datos modificados
+    final modifiedData = await _remoteSource.getModifiedSince(lastSync);
+
+    // 3. Merge inteligente con resolución de conflictos
+    final mergeResult = await _conflictResolver.merge(localData, modifiedData);
+
+    // 4. Actualizar timestamps
+    await _syncMetadataRepository.updateLastSync(entityType, DateTime.now());
+
+    return Right(mergeResult);
+  }
+}
+```
+
+### **FASE 3: Conflict Resolution System (Semana 5)**
+
+#### **3.1 Conflict Detection & Resolution**
+
+```dart
+// ✅ IMPLEMENTAR: lib/core/sync/domain/services/conflict_resolver.dart
+@injectable
+class ConflictResolver {
+  Future<Either<Failure, MergeResult<T>>> resolveConflicts<T>({
+    required T localEntity,
+    required T remoteEntity,
+    required ConflictResolutionStrategy strategy,
+  }) async {
+    // Strategies: LastWriteWins, ManualResolution, FieldLevel
+    switch (strategy) {
+      case ConflictResolutionStrategy.lastWriteWins:
+        return _resolveByTimestamp(localEntity, remoteEntity);
+      case ConflictResolutionStrategy.fieldLevel:
+        return _resolveFieldByField(localEntity, remoteEntity);
+      case ConflictResolutionStrategy.manual:
+        return _queueForManualResolution(localEntity, remoteEntity);
+    }
+  }
+}
+```
+
+### **FASE 4: Operation Executors Completos (Semana 6-7)**
+
+#### **4.1 Implementar Operation Executors**
+
+```dart
+// ✅ IMPLEMENTAR: Executors completos por entity type
+class ProjectOperationExecutor implements OperationExecutor {
+  @override
+  Future<Either<Failure, Unit>> executeCreate(Map<String, dynamic> data) async {
+    try {
+      final projectDto = ProjectDTO.fromMap(data);
+      final result = await _remoteDataSource.createProject(projectDto);
+
+      return result.fold(
+        (failure) => Left(failure),
+        (createdProject) async {
+          // Actualizar local con ID del servidor
+          await _localDataSource.updateProjectId(
+            localId: data['localId'],
+            serverId: createdProject.id,
+          );
+          return Right(unit);
+        },
+      );
+    } catch (e) {
+      return Left(OperationExecutionFailure('Create failed: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> executeUpdate(Map<String, dynamic> data) async {
+    // Implementación completa para updates
+  }
+
+  @override
+  Future<Either<Failure, Unit>> executeDelete(Map<String, dynamic> data) async {
+    // Implementación completa para deletes
+  }
+}
+```
+
+#### **4.2 Operation Executor Registry**
+
+```dart
+// ✅ IMPLEMENTAR: Registry para mapear entity types a executors
+@lazySingleton
+class OperationExecutorRegistry {
+  final Map<String, OperationExecutor> _executors = {
+    'project': GetIt.instance<ProjectOperationExecutor>(),
+    'audio_track': GetIt.instance<AudioTrackOperationExecutor>(),
+    'audio_comment': GetIt.instance<AudioCommentOperationExecutor>(),
+    'playlist': GetIt.instance<PlaylistOperationExecutor>(),
+  };
+
+  OperationExecutor? getExecutor(String entityType) => _executors[entityType];
+}
+```
+
+### **FASE 5: Background Sync Profesional (Semana 8)**
+
+#### **5.1 Background Sync Coordinator Completo**
+
+```dart
+// ✅ IMPLEMENTAR: Coordinator robusto con retry logic
+@lazySingleton
+class BackgroundSyncCoordinator {
+  Future<Either<Failure, SyncResult>> triggerBackgroundSync({
+    String? syncKey,
+    SyncPriority priority = SyncPriority.normal,
+  }) async {
+    if (!await _networkStateManager.isConnected) {
+      return Right(SyncResult.skipped('No network connection'));
+    }
+
+    try {
+      // 1. Process pending operations (upstream)
+      final upstreamResult = await _processPendingOperations();
+
+      // 2. Incremental sync (downstream)
+      final downstreamResult = await _performIncrementalSync();
+
+      // 3. Conflict resolution if needed
+      if (upstreamResult.hasConflicts || downstreamResult.hasConflicts) {
+        await _resolveConflicts();
+      }
+
+      return Right(SyncResult.success());
+    } catch (e) {
+      return Left(SyncFailure('Background sync failed: $e'));
+    }
+  }
+}
+```
+
+### **FASE 6: Performance & Monitoring (Semana 9)**
+
+#### **6.1 Sync Analytics & Monitoring**
+
+```dart
+// ✅ IMPLEMENTAR: Analytics para optimización
+@injectable
+class SyncAnalytics {
+  void trackSyncPerformance({
+    required String operation,
+    required Duration duration,
+    required int itemsProcessed,
+    required bool success,
+  });
+
+  void trackConflictResolution({
+    required String entityType,
+    required ConflictResolutionStrategy strategy,
+    required bool resolved,
+  });
+
+  Future<SyncHealthReport> generateHealthReport() async {
+    // Métricas de rendimiento, errores, etc.
+  }
+}
+```
 
 ---
 
-## 🚀 **Plan de Migración**
+## 📋 **CHECKLIST DE IMPLEMENTACIÓN**
 
-### **Semana 1: Separar Entidades**
+### **🔥 CRÍTICO - Inmediato (Esta semana)**
 
-1. Crear `UserSession` pura
-2. Crear `SyncState` pura
-3. Actualizar `AppSession` para usar composición
+- [ ] **Implementar Operation Executors completos**
+  - [ ] `ProjectOperationExecutor`
+  - [ ] `AudioTrackOperationExecutor`
+  - [ ] `AudioCommentOperationExecutor`
+- [ ] **Agregar sync metadata a entidades principales**
+  - [ ] `Project` con `lastUpdatedAt`, `syncVersion`
+  - [ ] `AudioTrack` con sync metadata
+  - [ ] `AudioComment` con sync metadata
 
-### **Semana 2: Crear Abstracciones**
+### **⚡ ALTA PRIORIDAD - Próximas 2 semanas**
 
-1. Definir interfaces de repositorios
-2. Implementar repositorios especializados
-3. Actualizar use cases
+- [ ] **Endpoints de incremental sync**
+  - [ ] Projects: `getProjectsModifiedSince()`
+  - [ ] AudioTracks: `getTracksModifiedSince()`
+  - [ ] AudioComments: `getCommentsModifiedSince()`
+- [ ] **IncrementalSyncUseCase por feature**
+- [ ] **Conflict Resolution básico (LastWriteWins)**
 
-### **Semana 3: Orquestador de Flujo**
+### **📈 MEDIANA PRIORIDAD - Mes 1**
 
-1. Crear `AppFlowCoordinator`
-2. Refactorizar `AppFlowBloc`
-3. Actualizar navegación
+- [ ] **Migrar repositorios restantes**
+  - [ ] `PlaylistRepositoryImpl`
+  - [ ] `UserProfileRepositoryImpl`
+- [ ] **Background Sync robusto con retry**
+- [ ] **Sync health monitoring**
 
-### **Semana 4: BLoCs Especializados**
+### **🎯 OPTIMIZACIÓN - Mes 2**
 
-1. Crear `SessionBloc`
-2. Crear `SyncBloc`
-3. Migrar mixins
-
-### **Semana 5: Testing y Limpieza**
-
-1. Actualizar tests
-2. Limpiar imports
-3. Documentar nueva arquitectura
+- [ ] **Field-level conflict resolution**
+- [ ] **Sync performance analytics**
+- [ ] **Batch sync para operaciones masivas**
+- [ ] **Delta sync para archivos grandes**
 
 ---
 
-## 📊 **Métricas de Éxito**
+## 🎯 **MÉTRICAS DE ÉXITO POST-IMPLEMENTACIÓN**
 
-- **Reducción de acoplamiento**: < 3 dependencias por clase
-- **Tiempo de compilación**: -20%
-- **Cobertura de tests**: > 90%
-- **Complejidad ciclomática**: < 10 por método
-- **Líneas de código por clase**: < 200
+### **📊 Performance**
 
-Esta reorganización transformará tu código en una arquitectura profesional, mantenible y escalable.
+- **Tiempo de sync inicial**: < 5 segundos para 100 projects
+- **Sync incremental**: < 2 segundos para cambios típicos
+- **Ancho de banda**: 80% reducción vs full sync
+- **Operaciones perdidas**: 0%
+
+### **🔧 Reliability**
+
+- **Conflict resolution**: 95% automática
+- **Network failures**: Retry automático 3x
+- **Data consistency**: 99.9% entre local/remote
+
+### **👥 User Experience**
+
+- **Tiempo de respuesta UI**: < 300ms para operaciones locales
+- **Sync status**: Feedback visual en tiempo real
+- **Offline capability**: 100% funcional sin conexión
+
+---
+
+## 🚀 **PRÓXIMOS PASOS INMEDIATOS**
+
+1. **Implementar Operation Executors** (Este sprint)
+2. **Agregar sync metadata a entidades** (Este sprint)
+3. **Crear endpoints de incremental sync** (Próximo sprint)
+4. **Implementar conflict resolution básico** (Próximo sprint)
+
+¿Comenzamos con los **Operation Executors** para que el upstream sync funcione correctamente?
