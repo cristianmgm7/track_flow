@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
@@ -20,7 +20,9 @@ class SyncAudioTracksUseCase {
   );
 
   Future<void> call() async {
-    final userId = await sessionStorage.getUserId(); // Now async - prevents race conditions
+    final userId =
+        await sessionStorage
+            .getUserId(); // Now async - prevents race conditions
     if (userId == null) {
       // DON'T delete tracks - preserve existing data when no userId
       return;

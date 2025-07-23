@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 
 class SplashScreen extends StatelessWidget {

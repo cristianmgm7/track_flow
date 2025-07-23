@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session_manager/domain/usecases/get_current_user_id_usecase.dart';
+import 'package:trackflow/core/session/domain/usecases/get_current_user_id_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'onboarding_event.dart';
 import 'onboarding_state.dart';

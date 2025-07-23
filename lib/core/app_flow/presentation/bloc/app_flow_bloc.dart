@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
-import 'package:trackflow/core/app_flow/data/services/app_flow_coordinator.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
+import 'package:trackflow/core/app_flow/domain/services/app_flow_coordinator.dart';
 import 'package:trackflow/core/app_flow/domain/entities/app_flow_state.dart'
     as coordinator_state;
 
@@ -11,7 +11,7 @@ import 'package:trackflow/core/app_flow/domain/entities/app_flow_state.dart'
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final AppFlowCoordinator _coordinator;
 
-  StreamSubscription<AppFlowState>? _flowSubscription;
+  StreamSubscription<coordinator_state.AppFlowState>? _flowSubscription;
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
 
   AppFlowBloc({required AppFlowCoordinator coordinator})
@@ -31,15 +31,14 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     CheckAppFlow event,
     Emitter<AppFlowState> emit,
   ) async {
-    // Prevent multiple simultaneous checks
-    if (_isCheckingFlow) {
-      return;
-    }
+    if (_isCheckingFlow) return; // Prevent multiple simultaneous checks
 
     _isCheckingFlow = true;
-    emit(AppFlowLoading());
 
     try {
+      // Emit loading state immediately
+      emit(AppFlowLoading());
+
       // Use the coordinator to determine app flow
       final result = await _coordinator.determineAppFlow();
 
@@ -63,9 +62,30 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         },
       );
     } catch (e) {
-      emit(AppFlowError('Unexpected error: $e'));
+      emit(AppFlowError('Unexpected error during app flow check: $e'));
     } finally {
       _isCheckingFlow = false;
+    }
+  }
+
+  Future<void> _onSignOutRequested(
+    SignOutRequested event,
+    Emitter<AppFlowState> emit,
+  ) async {
+    try {
+      emit(AppFlowLoading());
+      final result = await _coordinator.signOut();
+
+      result.fold(
+        (failure) {
+          emit(AppFlowError('Sign out failed: ${failure.message}'));
+        },
+        (_) {
+          emit(AppFlowUnauthenticated());
+        },
+      );
+    } catch (e) {
+      emit(AppFlowError('Sign out failed: $e'));
     }
   }
 
@@ -80,36 +100,13 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         return AppFlowUnauthenticated();
       case coordinator_state.AppFlowStatus.authenticated:
         return AppFlowAuthenticated(
-          needsOnboarding: !coordinatorState.session.isOnboardingCompleted,
-          needsProfileSetup: !coordinatorState.session.isProfileComplete,
+          needsOnboarding: coordinatorState.needsOnboarding,
+          needsProfileSetup: coordinatorState.needsProfileSetup,
         );
       case coordinator_state.AppFlowStatus.ready:
         return AppFlowReady();
       case coordinator_state.AppFlowStatus.error:
         return AppFlowError(coordinatorState.errorMessage ?? 'Unknown error');
-    }
-  }
-
-  /// Handle user sign out requests
-  Future<void> _onSignOutRequested(
-    SignOutRequested event,
-    Emitter<AppFlowState> emit,
-  ) async {
-    emit(AppFlowLoading());
-
-    try {
-      final result = await _coordinator.signOut();
-
-      result.fold(
-        (failure) {
-          emit(AppFlowError('Sign out failed: ${failure.message}'));
-        },
-        (_) {
-          emit(AppFlowUnauthenticated());
-        },
-      );
-    } catch (e) {
-      emit(AppFlowError('Sign out failed: $e'));
     }
   }
 }

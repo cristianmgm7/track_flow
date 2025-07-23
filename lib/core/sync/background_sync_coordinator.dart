@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
-import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
+import 'package:trackflow/core/sync/data/services/sync_service.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 
 /// Coordinates background sync operations without blocking the UI
@@ -13,25 +13,25 @@ import 'package:trackflow/core/sync/domain/services/pending_operations_manager.d
 @lazySingleton
 class BackgroundSyncCoordinator {
   final NetworkStateManager _networkStateManager;
-  final SyncStateManager _syncStateManager;
+  final SyncService _syncService;
   final PendingOperationsManager _pendingOperationsManager;
-  
+
   // Track ongoing background sync operations
   final Set<String> _ongoingSyncs = {};
-  
+
   // Subscription to network changes for auto-sync
   StreamSubscription<bool>? _networkSubscription;
-  
+
   BackgroundSyncCoordinator(
     this._networkStateManager,
-    this._syncStateManager,
+    this._syncService,
     this._pendingOperationsManager,
   ) {
     _initializeNetworkListener();
   }
 
   /// Triggers a background sync operation if conditions are met
-  /// 
+  ///
   /// This is the main method called by repositories when implementing
   /// the cache-aside pattern. It ensures sync happens in background
   /// without blocking data access.
@@ -49,11 +49,6 @@ class BackgroundSyncCoordinator {
       return;
     }
 
-    // Skip if global sync is already in progress
-    if (_syncStateManager.isSyncing && !force) {
-      return;
-    }
-
     // Mark this sync operation as ongoing
     _ongoingSyncs.add(syncKey);
 
@@ -67,24 +62,18 @@ class BackgroundSyncCoordinator {
   }
 
   /// Triggers sync when network connectivity is restored
-  /// 
+  ///
   /// This method is automatically called when the device
   /// regains network connectivity after being offline.
   Future<void> triggerConnectivitySync() async {
-    await triggerBackgroundSync(
-      syncKey: 'connectivity_restored',
-      force: true,
-    );
+    await triggerBackgroundSync(syncKey: 'connectivity_restored', force: true);
   }
 
   /// Force a full background sync regardless of current state
-  /// 
+  ///
   /// Useful for pull-to-refresh or user-initiated sync operations
   Future<void> forceBackgroundSync() async {
-    await triggerBackgroundSync(
-      syncKey: 'forced',
-      force: true,
-    );
+    await triggerBackgroundSync(syncKey: 'forced', force: true);
   }
 
   /// Check if any background sync is currently in progress
@@ -95,16 +84,16 @@ class BackgroundSyncCoordinator {
 
   /// Initialize network connectivity listener for auto-sync
   void _initializeNetworkListener() {
-    _networkSubscription = _networkStateManager.onConnectivityChanged.listen(
-      (bool isConnected) async {
-        if (isConnected) {
-          // Network restored - trigger sync after a brief delay
-          // to allow network to stabilize
-          await Future.delayed(const Duration(milliseconds: 1500));
-          await triggerConnectivitySync();
-        }
-      },
-    );
+    _networkSubscription = _networkStateManager.onConnectivityChanged.listen((
+      bool isConnected,
+    ) async {
+      if (isConnected) {
+        // Network restored - trigger sync after a brief delay
+        // to allow network to stabilize
+        await Future.delayed(const Duration(milliseconds: 1500));
+        await triggerConnectivitySync();
+      }
+    });
   }
 
   /// Perform the actual background sync operation
@@ -118,9 +107,8 @@ class BackgroundSyncCoordinator {
       // 1. Process pending operations first
       await _pendingOperationsManager.processPendingOperations();
 
-      // 2. Perform the sync using SyncStateManager
-      await _syncStateManager.initializeIfNeeded();
-      
+      // 2. Perform the sync using SyncService
+      await _syncService.triggerBackgroundSync();
     } catch (e) {
       // Log error but don't throw - this is background operation
       // TODO: Replace with proper logging framework

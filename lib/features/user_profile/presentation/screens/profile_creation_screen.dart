@@ -17,11 +17,11 @@ import 'package:trackflow/features/user_profile/presentation/components/creative
 import 'package:trackflow/features/user_profile/presentation/components/avatar_uploader.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});

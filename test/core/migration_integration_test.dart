@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trackflow/core/app_flow/data/services/app_flow_coordinator.dart';
+import 'package:trackflow/core/app_flow/domain/services/app_flow_coordinator.dart';
 import 'package:trackflow/core/session/domain/services/session_service.dart';
 import 'package:trackflow/core/sync/data/services/sync_service.dart';
 

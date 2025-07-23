@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:dartz/dartz.dart';

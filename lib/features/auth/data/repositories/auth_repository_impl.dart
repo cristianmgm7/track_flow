@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/network/network_info.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';

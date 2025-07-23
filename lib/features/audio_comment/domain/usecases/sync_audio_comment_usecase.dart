@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
@@ -22,7 +22,9 @@ class SyncAudioCommentsUseCase {
   );
 
   Future<void> call() async {
-    final userId = await _sessionStorage.getUserId(); // Now async - prevents race conditions
+    final userId =
+        await _sessionStorage
+            .getUserId(); // Now async - prevents race conditions
     if (userId == null) {
       // DON'T delete comments - preserve existing data when no userId
       return;

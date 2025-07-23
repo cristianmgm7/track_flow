@@ -20,19 +20,7 @@ import 'package:trackflow/features/audio_cache/shared/data/models/cache_referenc
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 
 // NEW SERVICES - SOLID Architecture
-import 'package:trackflow/core/session/domain/services/session_service.dart';
-import 'package:trackflow/core/sync/data/services/sync_service.dart';
-import 'package:trackflow/core/app_flow/data/services/app_flow_coordinator.dart';
-import 'package:trackflow/core/session/domain/usecases/check_authentication_status_usecase.dart';
-import 'package:trackflow/core/session/domain/usecases/get_current_user_usecase.dart';
-import 'package:trackflow/core/session/domain/usecases/sign_out_usecase.dart';
-import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
-import 'package:trackflow/features/projects/domain/usecases/sync_projects_usecase.dart';
-import 'package:trackflow/features/audio_track/domain/usecases/sync_audio_tracks_usecase.dart';
-import 'package:trackflow/features/audio_comment/domain/usecases/sync_audio_comment_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/sync_user_profile_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/sync_user_frofile_collaborators.dart';
+// These imports are used by the generated injection.config.dart
 
 @module
 abstract class AppModule {

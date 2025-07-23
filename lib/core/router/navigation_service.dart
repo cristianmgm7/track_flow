@@ -1,12 +1,11 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 
 /// Centralized navigation service that handles routing logic based on app flow state
 /// Removes business logic from router redirect function for cleaner architecture
 @injectable
 class NavigationService {
-  
   /// Determines the appropriate route based on the current app flow state
   /// Returns null if no redirect is needed (stay on current route)
   String? getRouteForFlowState(AppFlowState flowState, String currentLocation) {
@@ -21,7 +20,7 @@ class NavigationService {
     } else if (flowState is AppFlowError) {
       return _handleErrorState(flowState, currentLocation);
     }
-    
+
     return null;
   }
 
@@ -45,7 +44,10 @@ class NavigationService {
   }
 
   /// Handle routing for authenticated but incomplete users
-  String? _handleAuthenticatedState(AppFlowAuthenticated state, String currentLocation) {
+  String? _handleAuthenticatedState(
+    AppFlowAuthenticated state,
+    String currentLocation,
+  ) {
     // Priority: onboarding first, then profile setup
     if (state.needsOnboarding) {
       return AppRoutes.onboarding;
@@ -88,7 +90,7 @@ class NavigationService {
   String? _handleLoadingState(String currentLocation) {
     // Trigger flow check if on splash screen
     // Note: This will be handled by the router's redirect function
-    
+
     return null; // Stay on current route while loading
   }
 

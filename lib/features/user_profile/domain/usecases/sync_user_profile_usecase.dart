@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 
@@ -12,7 +12,9 @@ class SyncUserProfileUseCase {
   SyncUserProfileUseCase(this.remote, this.local, this.sessionStorage);
 
   Future<void> call() async {
-    final userId = await sessionStorage.getUserId(); // Now async - prevents race conditions
+    final userId =
+        await sessionStorage
+            .getUserId(); // Now async - prevents race conditions
     if (userId == null) {
       // DON'T clear cache - preserve existing data when no userId
       return;

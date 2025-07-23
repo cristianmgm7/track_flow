@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/app_flow/domain/entities/app_flow_state.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/session/domain/entities/session_state.dart';
 import 'package:trackflow/core/session/domain/services/session_service.dart';
 import 'package:trackflow/core/session/domain/entities/user_session.dart';
 import 'package:trackflow/core/sync/data/services/sync_service.dart';

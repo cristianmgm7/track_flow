@@ -11,7 +11,7 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
-import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
+import 'package:trackflow/core/sync/presentation/mixins/sync_aware_mixin.dart';
 import 'package:trackflow/core/sync/data/services/sync_service.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 

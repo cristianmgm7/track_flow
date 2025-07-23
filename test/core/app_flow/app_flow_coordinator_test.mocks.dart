@@ -8,10 +8,10 @@ import 'dart:async' as _i4;
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/error/failures.dart' as _i5;
-import 'package:trackflow/core/session/domain/services/session_service.dart'
-    as _i3;
 import 'package:trackflow/core/session/domain/entities/user_session.dart'
     as _i6;
+import 'package:trackflow/core/session/domain/services/session_service.dart'
+    as _i3;
 import 'package:trackflow/core/sync/data/services/sync_service.dart' as _i7;
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart' as _i8;
 
@@ -29,8 +29,13 @@ import 'package:trackflow/core/sync/domain/entities/sync_state.dart' as _i8;
 // ignore_for_file: subtype_of_sealed_class
 
 class _FakeEither_0<L, R> extends _i1.SmartFake implements _i2.Either<L, R> {
-  _FakeEither_0(Object parent, Invocation parentInvocation)
-    : super(parent, parentInvocation);
+  _FakeEither_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
 }
 
 /// A class which mocks [SessionService].
@@ -44,68 +49,87 @@ class MockSessionService extends _i1.Mock implements _i3.SessionService {
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i6.UserSession>> getCurrentSession() =>
       (super.noSuchMethod(
-            Invocation.method(#getCurrentSession, []),
-            returnValue:
-                _i4.Future<_i2.Either<_i5.Failure, _i6.UserSession>>.value(
-                  _FakeEither_0<_i5.Failure, _i6.UserSession>(
-                    this,
-                    Invocation.method(#getCurrentSession, []),
-                  ),
-                ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i6.UserSession>>);
+        Invocation.method(
+          #getCurrentSession,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i6.UserSession>>.value(
+            _FakeEither_0<_i5.Failure, _i6.UserSession>(
+          this,
+          Invocation.method(
+            #getCurrentSession,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i6.UserSession>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> signOut() =>
       (super.noSuchMethod(
-            Invocation.method(#signOut, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-              _FakeEither_0<_i5.Failure, _i2.Unit>(
-                this,
-                Invocation.method(#signOut, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+        Invocation.method(
+          #signOut,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #signOut,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, bool>> isAuthenticated() =>
       (super.noSuchMethod(
-            Invocation.method(#isAuthenticated, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, bool>>.value(
-              _FakeEither_0<_i5.Failure, bool>(
-                this,
-                Invocation.method(#isAuthenticated, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, bool>>);
+        Invocation.method(
+          #isAuthenticated,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, bool>>.value(
+            _FakeEither_0<_i5.Failure, bool>(
+          this,
+          Invocation.method(
+            #isAuthenticated,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, bool>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, String?>> getCurrentUserId() =>
       (super.noSuchMethod(
-            Invocation.method(#getCurrentUserId, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, String?>>.value(
-              _FakeEither_0<_i5.Failure, String?>(
-                this,
-                Invocation.method(#getCurrentUserId, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, String?>>);
+        Invocation.method(
+          #getCurrentUserId,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, String?>>.value(
+            _FakeEither_0<_i5.Failure, String?>(
+          this,
+          Invocation.method(
+            #getCurrentUserId,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, String?>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> clearSession() =>
       (super.noSuchMethod(
-            Invocation.method(#clearSession, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-              _FakeEither_0<_i5.Failure, _i2.Unit>(
-                this,
-                Invocation.method(#clearSession, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+        Invocation.method(
+          #clearSession,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #clearSession,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 }
 
 /// A class which mocks [SyncService].
@@ -119,72 +143,89 @@ class MockSyncService extends _i1.Mock implements _i7.SyncService {
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i8.SyncState>> getCurrentSyncState() =>
       (super.noSuchMethod(
-            Invocation.method(#getCurrentSyncState, []),
-            returnValue:
-                _i4.Future<_i2.Either<_i5.Failure, _i8.SyncState>>.value(
-                  _FakeEither_0<_i5.Failure, _i8.SyncState>(
-                    this,
-                    Invocation.method(#getCurrentSyncState, []),
-                  ),
-                ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i8.SyncState>>);
+        Invocation.method(
+          #getCurrentSyncState,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i8.SyncState>>.value(
+            _FakeEither_0<_i5.Failure, _i8.SyncState>(
+          this,
+          Invocation.method(
+            #getCurrentSyncState,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i8.SyncState>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> triggerBackgroundSync() =>
       (super.noSuchMethod(
-            Invocation.method(#triggerBackgroundSync, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-              _FakeEither_0<_i5.Failure, _i2.Unit>(
-                this,
-                Invocation.method(#triggerBackgroundSync, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+        Invocation.method(
+          #triggerBackgroundSync,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #triggerBackgroundSync,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> forceSync() =>
       (super.noSuchMethod(
-            Invocation.method(#forceSync, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-              _FakeEither_0<_i5.Failure, _i2.Unit>(
-                this,
-                Invocation.method(#forceSync, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+        Invocation.method(
+          #forceSync,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #forceSync,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
   _i4.Future<void> initializeAppData({void Function(double)? onProgress}) =>
       (super.noSuchMethod(
-            Invocation.method(#initializeAppData, [], {
-              #onProgress: onProgress,
-            }),
-            returnValue: _i4.Future<void>.value(),
-            returnValueForMissingStub: _i4.Future<void>.value(),
-          )
-          as _i4.Future<void>);
+        Invocation.method(
+          #initializeAppData,
+          [],
+          {#onProgress: onProgress},
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>> resetSync() =>
       (super.noSuchMethod(
-            Invocation.method(#resetSync, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
-              _FakeEither_0<_i5.Failure, _i2.Unit>(
-                this,
-                Invocation.method(#resetSync, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
+        Invocation.method(
+          #resetSync,
+          [],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i5.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #resetSync,
+            [],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, _i2.Unit>>);
 
   @override
-  _i4.Stream<_i8.SyncState> watchSyncState() =>
-      (super.noSuchMethod(
-            Invocation.method(#watchSyncState, []),
-            returnValue: _i4.Stream<_i8.SyncState>.empty(),
-          )
-          as _i4.Stream<_i8.SyncState>);
+  _i4.Stream<_i8.SyncState> watchSyncState() => (super.noSuchMethod(
+        Invocation.method(
+          #watchSyncState,
+          [],
+        ),
+        returnValue: _i4.Stream<_i8.SyncState>.empty(),
+      ) as _i4.Stream<_i8.SyncState>);
 }

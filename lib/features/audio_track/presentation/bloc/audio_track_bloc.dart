@@ -11,7 +11,7 @@ import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_tra
 import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
-import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
+import 'package:trackflow/core/sync/presentation/mixins/sync_aware_mixin.dart';
 import 'package:trackflow/core/sync/data/services/sync_service.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 

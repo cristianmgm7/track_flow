@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session/session_storage.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 
@@ -13,11 +13,15 @@ class SyncProjectsUseCase {
 
   Future<void> call() async {
     print('SyncProjectsUseCase: Starting sync...');
-    final userId = await sessionStorage.getUserId(); // Now async - prevents race conditions
+    final userId =
+        await sessionStorage
+            .getUserId(); // Now async - prevents race conditions
     print('SyncProjectsUseCase: userId from session storage: $userId');
 
     if (userId == null) {
-      print('SyncProjectsUseCase: No userId found, skipping sync (preserving cache)');
+      print(
+        'SyncProjectsUseCase: No userId found, skipping sync (preserving cache)',
+      );
       // DON'T clear cache - preserve existing data when no userId
       return;
     }

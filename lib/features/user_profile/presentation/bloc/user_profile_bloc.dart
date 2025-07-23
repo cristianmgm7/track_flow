@@ -10,7 +10,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profi
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
-import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
+import 'package:trackflow/core/sync/presentation/mixins/sync_aware_mixin.dart';
 import 'package:trackflow/core/sync/data/services/sync_service.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 
