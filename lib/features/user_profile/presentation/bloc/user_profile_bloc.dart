@@ -10,12 +10,16 @@ import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profi
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
+import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
 
 @injectable
-class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
+class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> 
+    with SyncAwareMixin {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
   final CheckProfileCompletenessUseCase checkProfileCompletenessUseCase;
+  final SyncStateManager _syncStateManager;
 
   StreamSubscription<Either<Failure, UserProfile?>>? _profileSubscription;
 
@@ -23,7 +27,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     required this.updateUserProfileUseCase,
     required this.watchUserProfileUseCase,
     required this.checkProfileCompletenessUseCase,
-  }) : super(UserProfileInitial()) {
+    required SyncStateManager syncStateManager,
+  }) : _syncStateManager = syncStateManager,
+       super(UserProfileInitial()) {
+    initializeSyncAwareness(_syncStateManager);
     on<WatchUserProfile>(_onWatchUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
     on<CreateUserProfile>(_onCreateUserProfile);
@@ -36,10 +43,54 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
-    final stream =
-        event.userId == null
-            ? watchUserProfileUseCase.call()
-            : watchUserProfileUseCase.call(event.userId!);
+    
+    // Set up sync state listening for this session
+    listenToSyncState(
+      onSyncStarted: () {
+        if (state is UserProfileLoaded) {
+          emit((state as UserProfileLoaded).copyWith(isSyncing: true));
+        } else if (state is ProfileComplete) {
+          emit((state as ProfileComplete).copyWith(isSyncing: true));
+        }
+      },
+      onSyncProgress: (progress) {
+        if (state is UserProfileLoaded) {
+          emit((state as UserProfileLoaded).copyWith(
+            isSyncing: true,
+            syncProgress: progress,
+          ));
+        } else if (state is ProfileComplete) {
+          emit((state as ProfileComplete).copyWith(
+            isSyncing: true,
+            syncProgress: progress,
+          ));
+        }
+      },
+      onSyncCompleted: () {
+        if (state is UserProfileLoaded) {
+          emit((state as UserProfileLoaded).copyWith(
+            isSyncing: false,
+            syncProgress: 1.0,
+          ));
+        } else if (state is ProfileComplete) {
+          emit((state as ProfileComplete).copyWith(
+            isSyncing: false,
+            syncProgress: 1.0,
+          ));
+        }
+      },
+      onSyncError: (error) {
+        if (state is UserProfileLoaded) {
+          emit((state as UserProfileLoaded).copyWith(isSyncing: false));
+        } else if (state is ProfileComplete) {
+          emit((state as ProfileComplete).copyWith(isSyncing: false));
+        }
+      },
+    );
+
+    final stream = event.userId == null
+        ? watchUserProfileUseCase.call()
+        : watchUserProfileUseCase.call(event.userId!);
     await emit.onEach<Either<Failure, UserProfile?>>(
       stream,
       onData: (eitherProfile) {
@@ -49,7 +100,16 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
           },
           (profile) {
             if (profile != null) {
-              emit(UserProfileLoaded(profile));
+              // Preserve sync state when updating profile
+              final currentSyncState = (state is UserProfileLoaded)
+                  ? (state as UserProfileLoaded)
+                  : null;
+              
+              emit(UserProfileLoaded(
+                profile: profile,
+                isSyncing: currentSyncState?.isSyncing ?? isSyncing,
+                syncProgress: currentSyncState?.syncProgress,
+              ));
             } else {
               emit(UserProfileError());
             }
@@ -128,7 +188,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         },
         (completenessInfo) {
           if (completenessInfo.isComplete && completenessInfo.profile != null) {
-            emit(ProfileComplete(completenessInfo.profile!));
+            emit(ProfileComplete(profile: completenessInfo.profile!));
           } else {
             emit(
               ProfileIncomplete(

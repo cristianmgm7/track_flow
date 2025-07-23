@@ -37,9 +37,30 @@ class AudioCommentError extends AudioCommentState {
 class AudioCommentsLoaded extends AudioCommentState {
   final List<AudioComment> comments;
   final List<UserProfile> collaborators;
+  final bool isSyncing;
+  final double? syncProgress;
   
-  const AudioCommentsLoaded(this.comments, this.collaborators);
+  const AudioCommentsLoaded({
+    required this.comments,
+    required this.collaborators,
+    this.isSyncing = false,
+    this.syncProgress,
+  });
+
+  AudioCommentsLoaded copyWith({
+    List<AudioComment>? comments,
+    List<UserProfile>? collaborators,
+    bool? isSyncing,
+    double? syncProgress,
+  }) {
+    return AudioCommentsLoaded(
+      comments: comments ?? this.comments,
+      collaborators: collaborators ?? this.collaborators,
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncProgress: syncProgress ?? this.syncProgress,
+    );
+  }
 
   @override
-  List<Object?> get props => [comments, collaborators];
+  List<Object?> get props => [comments, collaborators, isSyncing, syncProgress ?? 0.0];
 }

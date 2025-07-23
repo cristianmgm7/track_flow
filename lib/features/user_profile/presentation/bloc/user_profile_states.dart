@@ -12,10 +12,29 @@ class UserProfileLoading extends UserProfileState {}
 
 class UserProfileLoaded extends UserProfileState {
   final UserProfile profile;
-  UserProfileLoaded(this.profile);
+  final bool isSyncing;
+  final double? syncProgress;
+  
+  UserProfileLoaded({
+    required this.profile,
+    this.isSyncing = false,
+    this.syncProgress,
+  });
+
+  UserProfileLoaded copyWith({
+    UserProfile? profile,
+    bool? isSyncing,
+    double? syncProgress,
+  }) {
+    return UserProfileLoaded(
+      profile: profile ?? this.profile,
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncProgress: syncProgress ?? this.syncProgress,
+    );
+  }
 
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [profile, isSyncing, syncProgress ?? 0.0];
 }
 
 class UserProfileSaving extends UserProfileState {}
@@ -26,10 +45,29 @@ class UserProfileError extends UserProfileState {}
 
 class ProfileComplete extends UserProfileState {
   final UserProfile profile;
-  ProfileComplete(this.profile);
+  final bool isSyncing;
+  final double? syncProgress;
+  
+  ProfileComplete({
+    required this.profile,
+    this.isSyncing = false,
+    this.syncProgress,
+  });
+
+  ProfileComplete copyWith({
+    UserProfile? profile,
+    bool? isSyncing,
+    double? syncProgress,
+  }) {
+    return ProfileComplete(
+      profile: profile ?? this.profile,
+      isSyncing: isSyncing ?? this.isSyncing,
+      syncProgress: syncProgress ?? this.syncProgress,
+    );
+  }
 
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [profile, isSyncing, syncProgress ?? 0.0];
 }
 
 class ProfileIncomplete extends UserProfileState {

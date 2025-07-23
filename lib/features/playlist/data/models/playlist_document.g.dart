@@ -27,13 +27,19 @@ const PlaylistDocumentSchema = CollectionSchema(
       name: r'playlistSource',
       type: IsarType.string,
     ),
-    r'trackIds': PropertySchema(
+    r'syncMetadata': PropertySchema(
       id: 2,
+      name: r'syncMetadata',
+      type: IsarType.object,
+      target: r'SyncMetadataDocument',
+    ),
+    r'trackIds': PropertySchema(
+      id: 3,
       name: r'trackIds',
       type: IsarType.stringList,
     ),
     r'uuid': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'uuid',
       type: IsarType.string,
     )
@@ -59,7 +65,7 @@ const PlaylistDocumentSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'SyncMetadataDocument': SyncMetadataDocumentSchema},
   getId: _playlistDocumentGetId,
   getLinks: _playlistDocumentGetLinks,
   attach: _playlistDocumentAttach,
@@ -74,6 +80,14 @@ int _playlistDocumentEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.name.length * 3;
   bytesCount += 3 + object.playlistSource.length * 3;
+  {
+    final value = object.syncMetadata;
+    if (value != null) {
+      bytesCount += 3 +
+          SyncMetadataDocumentSchema.estimateSize(
+              value, allOffsets[SyncMetadataDocument]!, allOffsets);
+    }
+  }
   bytesCount += 3 + object.trackIds.length * 3;
   {
     for (var i = 0; i < object.trackIds.length; i++) {
@@ -93,8 +107,14 @@ void _playlistDocumentSerialize(
 ) {
   writer.writeString(offsets[0], object.name);
   writer.writeString(offsets[1], object.playlistSource);
-  writer.writeStringList(offsets[2], object.trackIds);
-  writer.writeString(offsets[3], object.uuid);
+  writer.writeObject<SyncMetadataDocument>(
+    offsets[2],
+    allOffsets,
+    SyncMetadataDocumentSchema.serialize,
+    object.syncMetadata,
+  );
+  writer.writeStringList(offsets[3], object.trackIds);
+  writer.writeString(offsets[4], object.uuid);
 }
 
 PlaylistDocument _playlistDocumentDeserialize(
@@ -107,8 +127,13 @@ PlaylistDocument _playlistDocumentDeserialize(
   object.id = id;
   object.name = reader.readString(offsets[0]);
   object.playlistSource = reader.readString(offsets[1]);
-  object.trackIds = reader.readStringList(offsets[2]) ?? [];
-  object.uuid = reader.readString(offsets[3]);
+  object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
+    offsets[2],
+    SyncMetadataDocumentSchema.deserialize,
+    allOffsets,
+  );
+  object.trackIds = reader.readStringList(offsets[3]) ?? [];
+  object.uuid = reader.readString(offsets[4]);
   return object;
 }
 
@@ -124,8 +149,14 @@ P _playlistDocumentDeserializeProp<P>(
     case 1:
       return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readObjectOrNull<SyncMetadataDocument>(
+        offset,
+        SyncMetadataDocumentSchema.deserialize,
+        allOffsets,
+      )) as P;
     case 3:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 4:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -655,6 +686,24 @@ extension PlaylistDocumentQueryFilter
   }
 
   QueryBuilder<PlaylistDocument, PlaylistDocument, QAfterFilterCondition>
+      syncMetadataIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<PlaylistDocument, PlaylistDocument, QAfterFilterCondition>
+      syncMetadataIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<PlaylistDocument, PlaylistDocument, QAfterFilterCondition>
       trackIdsElementEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1017,7 +1066,14 @@ extension PlaylistDocumentQueryFilter
 }
 
 extension PlaylistDocumentQueryObject
-    on QueryBuilder<PlaylistDocument, PlaylistDocument, QFilterCondition> {}
+    on QueryBuilder<PlaylistDocument, PlaylistDocument, QFilterCondition> {
+  QueryBuilder<PlaylistDocument, PlaylistDocument, QAfterFilterCondition>
+      syncMetadata(FilterQuery<SyncMetadataDocument> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'syncMetadata');
+    });
+  }
+}
 
 extension PlaylistDocumentQueryLinks
     on QueryBuilder<PlaylistDocument, PlaylistDocument, QFilterCondition> {}
@@ -1171,6 +1227,13 @@ extension PlaylistDocumentQueryProperty
       playlistSourceProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'playlistSource');
+    });
+  }
+
+  QueryBuilder<PlaylistDocument, SyncMetadataDocument?, QQueryOperations>
+      syncMetadataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncMetadata');
     });
   }
 

@@ -4,6 +4,8 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
+import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
@@ -17,44 +19,56 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   final ProjectsLocalDataSource _localDataSource;
   final NetworkStateManager _networkStateManager;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
+  final PendingOperationsManager _pendingOperationsManager;
 
   ProjectsRepositoryImpl({
     required ProjectRemoteDataSource remoteDataSource,
     required ProjectsLocalDataSource localDataSource,
     required NetworkStateManager networkStateManager,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
+    required PendingOperationsManager pendingOperationsManager,
   }) : _remoteDataSource = remoteDataSource,
        _localDataSource = localDataSource,
        _networkStateManager = networkStateManager,
-       _backgroundSyncCoordinator = backgroundSyncCoordinator;
+       _backgroundSyncCoordinator = backgroundSyncCoordinator,
+       _pendingOperationsManager = pendingOperationsManager;
 
   @override
   Future<Either<Failure, Project>> createProject(Project project) async {
     try {
-      final hasConnected = await _networkStateManager.isConnected;
+      // 1. OFFLINE-FIRST: Save locally IMMEDIATELY
+      final projectDto = ProjectDTO.fromDomain(project);
+      final cacheResult = await _localDataSource.cacheProject(projectDto);
       
-      if (hasConnected) {
-        // Online: Create on remote and cache locally
-        final result = await _remoteDataSource.createProject(
-          ProjectDTO.fromDomain(project),
-        );
-        return result.fold(
-          (failure) => Left(failure), 
-          (projectWithId) async {
-            await _localDataSource.cacheProject(projectWithId);
-            return Right(projectWithId.toDomain());
-          }
-        );
-      } else {
-        // Offline: Cache locally with pending sync flag
-        // TODO: Add sync metadata for offline operations
-        final projectDto = ProjectDTO.fromDomain(project);
-        final cacheResult = await _localDataSource.cacheProject(projectDto);
+      if (cacheResult.isLeft()) {
         return cacheResult.fold(
           (failure) => Left(failure),
-          (unit) => Right(project),
+          (_) => Right(project), // This won't execute but needed for type
         );
       }
+      
+      // 2. Queue for background sync
+      await _pendingOperationsManager.addOperation(
+        entityType: 'project',
+        entityId: project.id.value,
+        operationType: 'create',
+        priority: SyncPriority.high,
+        data: {
+          'name': project.name,
+          'description': project.description,
+          'ownerId': project.ownerId.value,
+          'createdAt': project.createdAt.toIso8601String(),
+        },
+      );
+      
+      // 3. Trigger background sync if connected
+      if (await _networkStateManager.isConnected) {
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'projects_create',
+        );
+      }
+      
+      return Right(project); // ✅ IMMEDIATE SUCCESS - no network blocking
     } catch (e) {
       return Left(DatabaseFailure('Failed to create project: ${e.toString()}'));
     }
@@ -63,31 +77,39 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Unit>> updateProject(Project project) async {
     try {
-      final hasConnected = await _networkStateManager.isConnected;
-      
-      // Always cache locally first for immediate UI updates
+      // 1. OFFLINE-FIRST: Update locally IMMEDIATELY
       final projectDto = ProjectDTO.fromDomain(project);
-      await _localDataSource.cacheProject(projectDto);
+      final cacheResult = await _localDataSource.cacheProject(projectDto);
       
-      if (hasConnected) {
-        // Online: Sync to remote immediately
-        try {
-          await _remoteDataSource.updateProject(projectDto);
-        } catch (e) {
-          // If remote update fails, keep local changes and trigger background sync
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'update_project_${project.id.value}',
-          );
-        }
-      } else {
-        // Offline: Mark for sync when connection is restored
-        // TODO: Add sync metadata for offline operations
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'update_project_${project.id.value}',
+      if (cacheResult.isLeft()) {
+        return cacheResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(unit), // This won't execute but needed for type
         );
       }
       
-      return Right(unit);
+      // 2. Queue for background sync
+      await _pendingOperationsManager.addOperation(
+        entityType: 'project',
+        entityId: project.id.value,
+        operationType: 'update',
+        priority: SyncPriority.medium,
+        data: {
+          'name': project.name,
+          'description': project.description,
+          'ownerId': project.ownerId.value,
+          'updatedAt': DateTime.now().toIso8601String(),
+        },
+      );
+      
+      // 3. Trigger background sync if connected
+      if (await _networkStateManager.isConnected) {
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'projects_update',
+        );
+      }
+      
+      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
     } catch (e) {
       return Left(DatabaseFailure('Failed to update project: ${e.toString()}'));
     }
@@ -96,30 +118,33 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   @override
   Future<Either<Failure, Unit>> deleteProject(ProjectId projectId) async {
     try {
-      final hasConnected = await _networkStateManager.isConnected;
+      // 1. OFFLINE-FIRST: Delete locally IMMEDIATELY (soft delete with sync metadata)
+      final deleteResult = await _localDataSource.removeCachedProject(projectId.value);
       
-      if (hasConnected) {
-        // Online: Delete from remote first, then local
-        try {
-          await _remoteDataSource.deleteProject(projectId.value);
-          await _localDataSource.removeCachedProject(projectId.value);
-        } catch (e) {
-          // If remote delete fails, mark for background sync
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'delete_project_${projectId.value}',
-          );
-          rethrow; // Re-throw to indicate failure
-        }
-      } else {
-        // Offline: Mark as deleted locally, sync when online
-        // TODO: Implement soft delete with sync metadata
-        await _localDataSource.removeCachedProject(projectId.value);
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'delete_project_${projectId.value}',
+      if (deleteResult.isLeft()) {
+        return deleteResult.fold(
+          (failure) => Left(failure),
+          (_) => Right(unit), // This won't execute but needed for type
         );
       }
       
-      return Right(unit);
+      // 2. Queue for background sync
+      await _pendingOperationsManager.addOperation(
+        entityType: 'project',
+        entityId: projectId.value,
+        operationType: 'delete',
+        priority: SyncPriority.medium,
+        data: {},
+      );
+      
+      // 3. Trigger background sync if connected
+      if (await _networkStateManager.isConnected) {
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'projects_delete',
+        );
+      }
+      
+      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
     } catch (e) {
       return Left(DatabaseFailure('Failed to delete project: ${e.toString()}'));
     }

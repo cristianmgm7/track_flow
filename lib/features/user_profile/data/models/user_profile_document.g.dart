@@ -49,8 +49,14 @@ const UserProfileDocumentSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'updatedAt': PropertySchema(
+    r'syncMetadata': PropertySchema(
       id: 6,
+      name: r'syncMetadata',
+      type: IsarType.object,
+      target: r'SyncMetadataDocument',
+    ),
+    r'updatedAt': PropertySchema(
+      id: 7,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -89,7 +95,7 @@ const UserProfileDocumentSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'SyncMetadataDocument': SyncMetadataDocumentSchema},
   getId: _userProfileDocumentGetId,
   getLinks: _userProfileDocumentGetLinks,
   attach: _userProfileDocumentAttach,
@@ -107,6 +113,14 @@ int _userProfileDocumentEstimateSize(
   bytesCount += 3 + object.email.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.syncMetadata;
+    if (value != null) {
+      bytesCount += 3 +
+          SyncMetadataDocumentSchema.estimateSize(
+              value, allOffsets[SyncMetadataDocument]!, allOffsets);
+    }
+  }
   return bytesCount;
 }
 
@@ -122,7 +136,13 @@ void _userProfileDocumentSerialize(
   writer.writeString(offsets[3], object.email);
   writer.writeString(offsets[4], object.id);
   writer.writeString(offsets[5], object.name);
-  writer.writeDateTime(offsets[6], object.updatedAt);
+  writer.writeObject<SyncMetadataDocument>(
+    offsets[6],
+    allOffsets,
+    SyncMetadataDocumentSchema.serialize,
+    object.syncMetadata,
+  );
+  writer.writeDateTime(offsets[7], object.updatedAt);
 }
 
 UserProfileDocument _userProfileDocumentDeserialize(
@@ -140,7 +160,12 @@ UserProfileDocument _userProfileDocumentDeserialize(
   object.email = reader.readString(offsets[3]);
   object.id = reader.readString(offsets[4]);
   object.name = reader.readString(offsets[5]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
+    offsets[6],
+    SyncMetadataDocumentSchema.deserialize,
+    allOffsets,
+  );
+  object.updatedAt = reader.readDateTimeOrNull(offsets[7]);
   return object;
 }
 
@@ -166,6 +191,12 @@ P _userProfileDocumentDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readObjectOrNull<SyncMetadataDocument>(
+        offset,
+        SyncMetadataDocumentSchema.deserialize,
+        allOffsets,
+      )) as P;
+    case 7:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1277,6 +1308,24 @@ extension UserProfileDocumentQueryFilter on QueryBuilder<UserProfileDocument,
   }
 
   QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      syncMetadataIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      syncMetadataIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncMetadata',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
       updatedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1352,7 +1401,14 @@ extension UserProfileDocumentQueryFilter on QueryBuilder<UserProfileDocument,
 }
 
 extension UserProfileDocumentQueryObject on QueryBuilder<UserProfileDocument,
-    UserProfileDocument, QFilterCondition> {}
+    UserProfileDocument, QFilterCondition> {
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      syncMetadata(FilterQuery<SyncMetadataDocument> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'syncMetadata');
+    });
+  }
+}
 
 extension UserProfileDocumentQueryLinks on QueryBuilder<UserProfileDocument,
     UserProfileDocument, QFilterCondition> {}
@@ -1669,6 +1725,13 @@ extension UserProfileDocumentQueryProperty
   QueryBuilder<UserProfileDocument, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, SyncMetadataDocument?, QQueryOperations>
+      syncMetadataProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncMetadata');
     });
   }
 

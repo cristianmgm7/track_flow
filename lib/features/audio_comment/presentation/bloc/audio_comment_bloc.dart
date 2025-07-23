@@ -6,6 +6,8 @@ import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_co
 import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
+import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
+import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
 import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -13,11 +15,13 @@ import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.d
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @injectable
-class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
+class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> 
+    with SyncAwareMixin {
   final AddAudioCommentUseCase addAudioCommentUseCase;
   final WatchCommentsByTrackUseCase watchCommentsByTrackUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
+  final SyncStateManager _syncStateManager;
 
   StreamSubscription<Either<Failure, List<AudioComment>>>?
   _commentsSubscription;
@@ -32,7 +36,10 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
     required this.watchUserProfilesUseCase,
-  }) : super(AudioCommentInitial()) {
+    required SyncStateManager syncStateManager,
+  }) : _syncStateManager = syncStateManager,
+       super(AudioCommentInitial()) {
+    initializeSyncAwareness(_syncStateManager);
     on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
@@ -83,6 +90,36 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     await _commentsSubscription?.cancel();
     emit(AudioCommentLoading());
 
+    // Set up sync state listening for this session
+    listenToSyncState(
+      onSyncStarted: () {
+        if (state is AudioCommentsLoaded) {
+          emit((state as AudioCommentsLoaded).copyWith(isSyncing: true));
+        }
+      },
+      onSyncProgress: (progress) {
+        if (state is AudioCommentsLoaded) {
+          emit((state as AudioCommentsLoaded).copyWith(
+            isSyncing: true,
+            syncProgress: progress,
+          ));
+        }
+      },
+      onSyncCompleted: () {
+        if (state is AudioCommentsLoaded) {
+          emit((state as AudioCommentsLoaded).copyWith(
+            isSyncing: false,
+            syncProgress: 1.0,
+          ));
+        }
+      },
+      onSyncError: (error) {
+        if (state is AudioCommentsLoaded) {
+          emit((state as AudioCommentsLoaded).copyWith(isSyncing: false));
+        }
+      },
+    );
+
     _commentsSubscription = watchCommentsByTrackUseCase
         .call(WatchCommentsByTrackParams(trackId: event.trackId))
         .listen((either) {
@@ -99,8 +136,18 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
       (comments) {
         _currentComments = comments;
         _loadCollaboratorsFromComments(comments);
+        
+        // Preserve sync state when updating comments
+        final currentSyncState = state is AudioCommentsLoaded ? 
+          (state as AudioCommentsLoaded) : null;
+        
         // Emit initial state with empty collaborators, will be updated when they load
-        emit(AudioCommentsLoaded(_currentComments, _currentCollaborators));
+        emit(AudioCommentsLoaded(
+          comments: _currentComments,
+          collaborators: _currentCollaborators,
+          isSyncing: currentSyncState?.isSyncing ?? isSyncing,
+          syncProgress: currentSyncState?.syncProgress,
+        ));
       },
     );
   }
