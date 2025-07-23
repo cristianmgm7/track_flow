@@ -3,31 +3,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/session_manager/presentation/bloc/app_flow_state.dart';
-import 'package:trackflow/core/session_manager/services/app_session_service.dart';
-import 'package:trackflow/core/session_manager/domain/entities/app_session.dart';
-import 'package:trackflow/core/sync/background_sync_coordinator.dart';
+import 'package:trackflow/core/app_flow/data/services/app_flow_coordinator.dart';
+import 'package:trackflow/core/app_flow/domain/entities/app_flow_state.dart'
+    as coordinator_state;
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
-  final AppSessionService _sessionService;
-  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
+  final AppFlowCoordinator _coordinator;
 
-  StreamSubscription<AppSession>? _sessionSubscription;
+  StreamSubscription<AppFlowState>? _flowSubscription;
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
 
-  AppFlowBloc({
-    required AppSessionService sessionService,
-    required BackgroundSyncCoordinator backgroundSyncCoordinator,
-  })  : _sessionService = sessionService,
-        _backgroundSyncCoordinator = backgroundSyncCoordinator,
-        super(AppFlowLoading()) {
+  AppFlowBloc({required AppFlowCoordinator coordinator})
+    : _coordinator = coordinator,
+      super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
     on<SignOutRequested>(_onSignOutRequested); // New event for logout
   }
 
   @override
   Future<void> close() {
-    _sessionSubscription?.cancel();
+    _flowSubscription?.cancel();
     return super.close();
   }
 
@@ -44,28 +40,25 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     emit(AppFlowLoading());
 
     try {
-      // Initialize session using the service
-      final sessionResult = await _sessionService.initializeSession();
+      // Use the coordinator to determine app flow
+      final result = await _coordinator.determineAppFlow();
 
-      await sessionResult.fold(
+      await result.fold(
         (failure) async {
           emit(
-            AppFlowError('Failed to initialize session: ${failure.message}'),
+            AppFlowError('Failed to determine app flow: ${failure.message}'),
           );
         },
-        (session) async {
-          // Map session state to app flow state
-          final flowState = _mapSessionToFlowState(session);
+        (flowState) async {
+          // Map coordinator state to BLoC state
+          final blocState = _mapCoordinatorStateToBlocState(flowState);
 
-          // CHANGE: Always emit ready state immediately for navigation
-          emit(flowState);
+          // Emit the state immediately for navigation
+          emit(blocState);
 
-          // If user needs sync, trigger background sync (non-blocking)
-          if (session.status == SessionStatus.ready &&
-              !session.isSyncComplete) {
-            _backgroundSyncCoordinator.triggerBackgroundSync(
-              syncKey: 'app_initialization',
-            );
+          // Trigger background sync if user is ready (non-blocking)
+          if (flowState.status == coordinator_state.AppFlowStatus.ready) {
+            await _coordinator.triggerBackgroundSyncIfReady();
           }
         },
       );
@@ -76,26 +69,26 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
   }
 
-  /// Maps AppSession state to AppFlowState (simplified)
-  AppFlowState _mapSessionToFlowState(AppSession session) {
-    switch (session.status) {
-      case SessionStatus.loading:
-        return AppFlowLoading(progress: session.syncProgress);
-      case SessionStatus.unauthenticated:
+  /// Maps AppFlowCoordinator state to AppFlowBloc state
+  AppFlowState _mapCoordinatorStateToBlocState(
+    coordinator_state.AppFlowState coordinatorState,
+  ) {
+    switch (coordinatorState.status) {
+      case coordinator_state.AppFlowStatus.loading:
+        return AppFlowLoading();
+      case coordinator_state.AppFlowStatus.unauthenticated:
         return AppFlowUnauthenticated();
-      case SessionStatus.authenticated:
+      case coordinator_state.AppFlowStatus.authenticated:
         return AppFlowAuthenticated(
-          needsOnboarding: !session.isOnboardingCompleted,
-          needsProfileSetup: session.isOnboardingCompleted && !session.isProfileComplete,
+          needsOnboarding: !coordinatorState.session.isOnboardingCompleted,
+          needsProfileSetup: !coordinatorState.session.isProfileComplete,
         );
-      case SessionStatus.ready:
+      case coordinator_state.AppFlowStatus.ready:
         return AppFlowReady();
-      case SessionStatus.error:
-        return AppFlowError(session.errorMessage ?? 'Unknown error');
+      case coordinator_state.AppFlowStatus.error:
+        return AppFlowError(coordinatorState.errorMessage ?? 'Unknown error');
     }
   }
-
-  // Removed _handleDataSync - now using BackgroundSyncCoordinator for non-blocking sync
 
   /// Handle user sign out requests
   Future<void> _onSignOutRequested(
@@ -104,14 +97,19 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   ) async {
     emit(AppFlowLoading());
 
-    final result = await _sessionService.signOut();
-    result.fold(
-      (failure) {
-        emit(AppFlowError('Sign out failed: ${failure.message}'));
-      },
-      (session) {
-        emit(AppFlowUnauthenticated());
-      },
-    );
+    try {
+      final result = await _coordinator.signOut();
+
+      result.fold(
+        (failure) {
+          emit(AppFlowError('Sign out failed: ${failure.message}'));
+        },
+        (_) {
+          emit(AppFlowUnauthenticated());
+        },
+      );
+    } catch (e) {
+      emit(AppFlowError('Sign out failed: $e'));
+    }
   }
 }

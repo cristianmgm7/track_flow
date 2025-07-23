@@ -12,16 +12,17 @@ import 'package:trackflow/features/projects/domain/usecases/delete_project_useca
 import 'projects_event.dart';
 import 'projects_state.dart';
 import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
-import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
+import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 
 @injectable
-class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> 
+class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState>
     with SyncAwareMixin {
   final CreateProjectUseCase createProject;
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
   final WatchAllProjectsUseCase watchAllProjects;
-  final SyncStateManager _syncStateManager;
+  final SyncService _syncService;
 
   StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
 
@@ -31,10 +32,10 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState>
     required this.updateProject,
     required this.deleteProject,
     required this.watchAllProjects,
-    required SyncStateManager syncStateManager,
-  }) : _syncStateManager = syncStateManager,
+    required SyncService syncService,
+  }) : _syncService = syncService,
        super(ProjectsInitial()) {
-    initializeSyncAwareness(_syncStateManager);
+    _initializeSyncAwareness();
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
@@ -85,7 +86,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState>
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    
+
     // Set up sync state listening for this session
     listenToSyncState(
       onSyncStarted: () {
@@ -95,18 +96,22 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState>
       },
       onSyncProgress: (progress) {
         if (state is ProjectsLoaded) {
-          emit((state as ProjectsLoaded).copyWith(
-            isSyncing: true,
-            syncProgress: progress,
-          ));
+          emit(
+            (state as ProjectsLoaded).copyWith(
+              isSyncing: true,
+              syncProgress: progress,
+            ),
+          );
         }
       },
       onSyncCompleted: () {
         if (state is ProjectsLoaded) {
-          emit((state as ProjectsLoaded).copyWith(
-            isSyncing: false,
-            syncProgress: 1.0,
-          ));
+          emit(
+            (state as ProjectsLoaded).copyWith(
+              isSyncing: false,
+              syncProgress: 1.0,
+            ),
+          );
         }
       },
       onSyncError: (error) {
@@ -123,14 +128,16 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState>
           (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
           (projects) {
             // Preserve sync state when updating projects
-            final currentSyncState = state is ProjectsLoaded ? 
-              (state as ProjectsLoaded) : null;
-            
-            emit(ProjectsLoaded(
-              projects: projects,
-              isSyncing: currentSyncState?.isSyncing ?? isSyncing,
-              syncProgress: currentSyncState?.syncProgress,
-            ));
+            final currentSyncState =
+                state is ProjectsLoaded ? (state as ProjectsLoaded) : null;
+
+            emit(
+              ProjectsLoaded(
+                projects: projects,
+                isSyncing: currentSyncState?.isSyncing ?? isSyncing,
+                syncProgress: currentSyncState?.syncProgress,
+              ),
+            );
           },
         );
       },
@@ -166,5 +173,34 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState>
       return "An unexpected error occurred. Please try again later.";
     }
     return "An unknown error occurred.";
+  }
+
+  /// Initialize sync awareness with the new SyncService
+  void _initializeSyncAwareness() {
+    // Listen to sync state changes from the new service
+    _syncService.watchSyncState().listen((syncState) {
+      // Handle sync state changes
+      if (syncState.status == SyncStatus.syncing) {
+        // Sync is in progress
+        if (state is ProjectsLoaded) {
+          emit(
+            (state as ProjectsLoaded).copyWith(
+              isSyncing: true,
+              syncProgress: syncState.progress,
+            ),
+          );
+        }
+      } else if (syncState.status == SyncStatus.complete) {
+        // Sync completed
+        if (state is ProjectsLoaded) {
+          emit(
+            (state as ProjectsLoaded).copyWith(
+              isSyncing: false,
+              syncProgress: 1.0,
+            ),
+          );
+        }
+      }
+    });
   }
 }

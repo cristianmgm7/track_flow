@@ -19,14 +19,24 @@ import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_d
 import 'package:trackflow/features/audio_cache/shared/data/models/cache_reference_document.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 
+// NEW SERVICES - SOLID Architecture
+import 'package:trackflow/core/session/domain/services/session_service.dart';
+import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/app_flow/data/services/app_flow_coordinator.dart';
+import 'package:trackflow/core/session/domain/usecases/check_authentication_status_usecase.dart';
+import 'package:trackflow/core/session/domain/usecases/get_current_user_usecase.dart';
+import 'package:trackflow/core/session/domain/usecases/sign_out_usecase.dart';
+import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/sync_projects_usecase.dart';
+import 'package:trackflow/features/audio_track/domain/usecases/sync_audio_tracks_usecase.dart';
+import 'package:trackflow/features/audio_comment/domain/usecases/sync_audio_comment_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/sync_user_profile_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/sync_user_frofile_collaborators.dart';
+
 @module
 abstract class AppModule {
-  @preResolve
-  Future<Directory> get cacheDir async => await getTemporaryDirectory();
-
-  @lazySingleton
-  FirebaseStorage get firebaseStorage => FirebaseStorage.instance;
-
+  // Firebase
   @lazySingleton
   FirebaseAuth get firebaseAuth => FirebaseAuth.instance;
 
@@ -34,33 +44,44 @@ abstract class AppModule {
   FirebaseFirestore get firebaseFirestore => FirebaseFirestore.instance;
 
   @lazySingleton
+  FirebaseStorage get firebaseStorage => FirebaseStorage.instance;
+
+  // Google Sign In
+  @lazySingleton
   GoogleSignIn get googleSignIn => GoogleSignIn();
 
-  @preResolve
-  Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
-
+  // Network
   @lazySingleton
   InternetConnectionChecker get internetConnectionChecker =>
       InternetConnectionChecker();
 
+  @lazySingleton
+  Connectivity get connectivity => Connectivity();
+
+  // Storage
+  @preResolve
+  Future<SharedPreferences> get prefs => SharedPreferences.getInstance();
+
   @preResolve
   Future<Isar> get isar async {
     final dir = await getApplicationDocumentsDirectory();
-    //if (Isar.instanceNames.isEmpty) {
     return await Isar.open([
       ProjectDocumentSchema,
-      AudioCommentDocumentSchema,
       AudioTrackDocumentSchema,
-      UserProfileDocumentSchema,
+      AudioCommentDocumentSchema,
       PlaylistDocumentSchema,
+      UserProfileDocumentSchema,
       CachedAudioDocumentUnifiedSchema,
       CacheReferenceDocumentSchema,
       SyncOperationDocumentSchema,
     ], directory: dir.path);
-    //}
-    //return Future.value(Isar.getInstance());
   }
 
-  @lazySingleton
-  Connectivity get connectivity => Connectivity();
+  @preResolve
+  Future<Directory> get cacheDir async {
+    return await getTemporaryDirectory();
+  }
+
+  // NEW SERVICES - SOLID Architecture
+  // These will be registered as factories in the generated injection.config.dart
 }

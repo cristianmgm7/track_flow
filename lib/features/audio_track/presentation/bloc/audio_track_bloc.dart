@@ -12,16 +12,17 @@ import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
-import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
+import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 
 @injectable
-class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> 
+class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
     with SyncAwareMixin {
   final WatchTracksByProjectIdUseCase watchAudioTracksByProject;
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
   final EditAudioTrackUseCase editAudioTrackUseCase;
-  final SyncStateManager _syncStateManager;
+  final SyncService _syncService;
 
   StreamSubscription<Either<Failure, List<AudioTrack>>>? _trackSubscription;
 
@@ -30,10 +31,11 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
     required this.deleteAudioTrack,
     required this.uploadAudioTrackUseCase,
     required this.editAudioTrackUseCase,
-    required SyncStateManager syncStateManager,
-  }) : _syncStateManager = syncStateManager,
+    required SyncService syncService,
+  }) : _syncService = syncService,
        super(AudioTrackInitial()) {
-    initializeSyncAwareness(_syncStateManager);
+    // Initialize sync awareness with the new service
+    _initializeSyncAwareness();
     on<WatchAudioTracksByProjectEvent>(_onWatchAudioTracksByProject);
     on<DeleteAudioTrackEvent>(_onDeleteAudioTrack);
     on<UploadAudioTrackEvent>(_onUploadAudioTrack);
@@ -93,18 +95,22 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
       },
       onSyncProgress: (progress) {
         if (state is AudioTrackLoaded) {
-          emit((state as AudioTrackLoaded).copyWith(
-            isSyncing: true, 
-            syncProgress: progress,
-          ));
+          emit(
+            (state as AudioTrackLoaded).copyWith(
+              isSyncing: true,
+              syncProgress: progress,
+            ),
+          );
         }
       },
       onSyncCompleted: () {
         if (state is AudioTrackLoaded) {
-          emit((state as AudioTrackLoaded).copyWith(
-            isSyncing: false,
-            syncProgress: 1.0,
-          ));
+          emit(
+            (state as AudioTrackLoaded).copyWith(
+              isSyncing: false,
+              syncProgress: 1.0,
+            ),
+          );
         }
       },
       onSyncError: (error) {
@@ -129,14 +135,16 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
       (failure) => emit(AudioTrackError(message: 'Failed to load tracks')),
       (tracks) {
         // Preserve sync state when updating tracks
-        final currentSyncState = state is AudioTrackLoaded ? 
-          (state as AudioTrackLoaded) : null;
-        
-        emit(AudioTrackLoaded(
-          tracks: tracks,
-          isSyncing: currentSyncState?.isSyncing ?? isSyncing,
-          syncProgress: currentSyncState?.syncProgress,
-        ));
+        final currentSyncState =
+            state is AudioTrackLoaded ? (state as AudioTrackLoaded) : null;
+
+        emit(
+          AudioTrackLoaded(
+            tracks: tracks,
+            isSyncing: currentSyncState?.isSyncing ?? isSyncing,
+            syncProgress: currentSyncState?.syncProgress,
+          ),
+        );
       },
     );
   }
@@ -163,5 +171,35 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState>
   Future<void> close() {
     _trackSubscription?.cancel();
     return super.close();
+  }
+
+  /// Initialize sync awareness with the new SyncService
+  void _initializeSyncAwareness() {
+    // For now, we'll use a simple approach
+    // In the future, we can enhance this to use the SyncService streams
+    _syncService.watchSyncState().listen((syncState) {
+      // Handle sync state changes
+      if (syncState.status == SyncStatus.syncing) {
+        // Sync is in progress
+        if (state is AudioTrackLoaded) {
+          emit(
+            (state as AudioTrackLoaded).copyWith(
+              isSyncing: true,
+              syncProgress: syncState.progress,
+            ),
+          );
+        }
+      } else if (syncState.status == SyncStatus.complete) {
+        // Sync completed
+        if (state is AudioTrackLoaded) {
+          emit(
+            (state as AudioTrackLoaded).copyWith(
+              isSyncing: false,
+              syncProgress: 1.0,
+            ),
+          );
+        }
+      }
+    });
   }
 }

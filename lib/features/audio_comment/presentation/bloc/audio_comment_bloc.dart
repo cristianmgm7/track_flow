@@ -7,7 +7,8 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_us
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
 import 'package:trackflow/core/session_manager/sync_aware_mixin.dart';
-import 'package:trackflow/core/session_manager/services/sync_state_manager.dart';
+import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -15,19 +16,19 @@ import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.d
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 @injectable
-class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> 
+class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
     with SyncAwareMixin {
   final AddAudioCommentUseCase addAudioCommentUseCase;
   final WatchCommentsByTrackUseCase watchCommentsByTrackUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
-  final SyncStateManager _syncStateManager;
+  final SyncService _syncService;
 
   StreamSubscription<Either<Failure, List<AudioComment>>>?
   _commentsSubscription;
   StreamSubscription<Either<Failure, List<UserProfile>>>?
   _collaboratorsSubscription;
-  
+
   List<AudioComment> _currentComments = [];
   List<UserProfile> _currentCollaborators = [];
 
@@ -36,10 +37,10 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
     required this.watchUserProfilesUseCase,
-    required SyncStateManager syncStateManager,
-  }) : _syncStateManager = syncStateManager,
+    required SyncService syncService,
+  }) : _syncService = syncService,
        super(AudioCommentInitial()) {
-    initializeSyncAwareness(_syncStateManager);
+    _initializeSyncAwareness();
     on<WatchCommentsByTrackEvent>(_onWatchCommentsByTrack);
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
@@ -99,18 +100,22 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
       },
       onSyncProgress: (progress) {
         if (state is AudioCommentsLoaded) {
-          emit((state as AudioCommentsLoaded).copyWith(
-            isSyncing: true,
-            syncProgress: progress,
-          ));
+          emit(
+            (state as AudioCommentsLoaded).copyWith(
+              isSyncing: true,
+              syncProgress: progress,
+            ),
+          );
         }
       },
       onSyncCompleted: () {
         if (state is AudioCommentsLoaded) {
-          emit((state as AudioCommentsLoaded).copyWith(
-            isSyncing: false,
-            syncProgress: 1.0,
-          ));
+          emit(
+            (state as AudioCommentsLoaded).copyWith(
+              isSyncing: false,
+              syncProgress: 1.0,
+            ),
+          );
         }
       },
       onSyncError: (error) {
@@ -131,58 +136,57 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
     AudioCommentsUpdated event,
     Emitter<AudioCommentState> emit,
   ) {
-    event.comments.fold(
-      (failure) => emit(AudioCommentError(failure.message)),
-      (comments) {
-        _currentComments = comments;
-        _loadCollaboratorsFromComments(comments);
-        
-        // Preserve sync state when updating comments
-        final currentSyncState = state is AudioCommentsLoaded ? 
-          (state as AudioCommentsLoaded) : null;
-        
-        // Emit initial state with empty collaborators, will be updated when they load
-        emit(AudioCommentsLoaded(
+    event.comments.fold((failure) => emit(AudioCommentError(failure.message)), (
+      comments,
+    ) {
+      _currentComments = comments;
+      _loadCollaboratorsFromComments(comments);
+
+      // Preserve sync state when updating comments
+      final currentSyncState =
+          state is AudioCommentsLoaded ? (state as AudioCommentsLoaded) : null;
+
+      // Emit initial state with empty collaborators, will be updated when they load
+      emit(
+        AudioCommentsLoaded(
           comments: _currentComments,
           collaborators: _currentCollaborators,
           isSyncing: currentSyncState?.isSyncing ?? isSyncing,
           syncProgress: currentSyncState?.syncProgress,
-        ));
-      },
-    );
+        ),
+      );
+    });
   }
-  
+
   void _loadCollaboratorsFromComments(List<AudioComment> comments) {
     if (comments.isEmpty) {
       _currentCollaborators = [];
       return;
     }
-    
+
     // Extract unique user IDs from comments
-    final userIds = comments
-        .map((comment) => comment.createdBy.value)
-        .toSet()
-        .toList();
-    
+    final userIds =
+        comments.map((comment) => comment.createdBy.value).toSet().toList();
+
     // Watch user profiles for these IDs
     _collaboratorsSubscription?.cancel();
-    _collaboratorsSubscription = watchUserProfilesUseCase.call(userIds).listen(
-      (either) {
-        either.fold(
-          (failure) {
-            // If collaborators fail to load, use empty list
-            _currentCollaborators = [];
-          },
-          (collaborators) {
-            _currentCollaborators = collaborators;
-          },
-        );
-        // Trigger a new event to update UI with loaded collaborators
-        if (!isClosed) {
-          add(AudioCommentsUpdated(Right(_currentComments)));
-        }
-      },
-    );
+    _collaboratorsSubscription = watchUserProfilesUseCase.call(userIds).listen((
+      either,
+    ) {
+      either.fold(
+        (failure) {
+          // If collaborators fail to load, use empty list
+          _currentCollaborators = [];
+        },
+        (collaborators) {
+          _currentCollaborators = collaborators;
+        },
+      );
+      // Trigger a new event to update UI with loaded collaborators
+      if (!isClosed) {
+        add(AudioCommentsUpdated(Right(_currentComments)));
+      }
+    });
   }
 
   @override
@@ -190,5 +194,34 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState>
     _commentsSubscription?.cancel();
     _collaboratorsSubscription?.cancel();
     return super.close();
+  }
+
+  /// Initialize sync awareness with the new SyncService
+  void _initializeSyncAwareness() {
+    // Listen to sync state changes from the new service
+    _syncService.watchSyncState().listen((syncState) {
+      // Handle sync state changes
+      if (syncState.status == SyncStatus.syncing) {
+        // Sync is in progress
+        if (state is AudioCommentsLoaded) {
+          emit(
+            (state as AudioCommentsLoaded).copyWith(
+              isSyncing: true,
+              syncProgress: syncState.progress,
+            ),
+          );
+        }
+      } else if (syncState.status == SyncStatus.complete) {
+        // Sync completed
+        if (state is AudioCommentsLoaded) {
+          emit(
+            (state as AudioCommentsLoaded).copyWith(
+              isSyncing: false,
+              syncProgress: 1.0,
+            ),
+          );
+        }
+      }
+    });
   }
 }
