@@ -12,6 +12,11 @@ class AudioTrackDTO {
   final DateTime? createdAt;
   final String extension;
 
+  // ⭐ NEW: Sync metadata fields for proper offline-first sync
+  final int version;
+  final DateTime? lastSyncTime;
+  final DateTime? lastModified;
+
   const AudioTrackDTO({
     required this.id,
     required this.name,
@@ -21,6 +26,10 @@ class AudioTrackDTO {
     required this.uploadedBy,
     this.createdAt,
     required this.extension,
+    // ⭐ NEW: Sync metadata fields
+    this.version = 1,
+    this.lastSyncTime,
+    this.lastModified,
   });
 
   static const String collection = 'audio_tracks';
@@ -36,8 +45,18 @@ class AudioTrackDTO {
       createdAt:
           json['createdAt'] is Timestamp
               ? (json['createdAt'] as Timestamp).toDate()
-              : null,
+              : DateTime.tryParse(json['createdAt'] as String? ?? ''),
       extension: json['extension'] as String,
+      // ⭐ NEW: Parse sync metadata from JSON
+      version: json['version'] as int? ?? 1,
+      lastSyncTime:
+          json['lastSyncTime'] is Timestamp
+              ? (json['lastSyncTime'] as Timestamp).toDate()
+              : DateTime.tryParse(json['lastSyncTime'] as String? ?? ''),
+      lastModified:
+          json['lastModified'] is Timestamp
+              ? (json['lastModified'] as Timestamp).toDate()
+              : DateTime.tryParse(json['lastModified'] as String? ?? ''),
     );
   }
 
@@ -49,8 +68,12 @@ class AudioTrackDTO {
       'duration': duration,
       'projectId': projectId.value,
       'uploadedBy': uploadedBy.value,
-      'createdAt': createdAt,
+      'createdAt': createdAt?.toIso8601String(),
       'extension': extension,
+      // ⭐ NEW: Include sync metadata in JSON
+      'version': version,
+      'lastSyncTime': lastSyncTime?.toIso8601String(),
+      'lastModified': lastModified?.toIso8601String(),
     };
   }
 
@@ -80,6 +103,10 @@ class AudioTrackDTO {
       duration: track.duration.inMilliseconds,
       createdAt: track.createdAt,
       extension: extension,
+      // ⭐ NEW: Include sync metadata for new tracks
+      version: 1, // Initial version for new tracks
+      lastModified: track.createdAt, // Use createdAt as initial lastModified
+      lastSyncTime: null, // Will be set when synced
     );
   }
 }

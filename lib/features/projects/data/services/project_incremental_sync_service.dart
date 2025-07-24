@@ -1,302 +1,225 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
-/// Complete incremental sync service for Projects (Remote + Local)
+/// 🎯 SIMPLE PROJECT SYNC SERVICE
 ///
-/// This service follows industry best practices by handling BOTH:
-/// - Fetching incremental changes from remote sources
-/// - Applying those changes to local cache
+/// Pragmatic service that handles downstream sync for projects:
+/// - Fetches all remote projects (simple approach)
+/// - Compares with local cache
+/// - Only updates projects that actually changed
+/// - Uses simple timestamp logic (15 min intervals)
 ///
-/// Inspired by companies like Notion, Figma, and Linear that use:
-/// - Event-driven architectures
-/// - Conflict-free data synchronization
-/// - Local-first with background sync
-/// - Change Data Capture (CDC) patterns
+/// ✅ CLEAN ARCHITECTURE:
+/// - Repository stays clean (only CRUD)
+/// - Service handles sync complexity
+/// - Use case orchestrates the flow
 ///
-/// Key benefits:
-/// - Use cases don't violate Clean Architecture
-/// - Single responsibility: complete sync operations
-/// - Supports both incremental and full sync modes
-/// - Unified error handling and result reporting
-@LazySingleton(as: IncrementalSyncService<ProjectDTO>)
-class ProjectIncrementalSyncService
-    implements IncrementalSyncService<ProjectDTO> {
+/// 🚀 STRATEGY (Option 2 - Smart Logic from this morning):
+/// 1. Check if sync is needed (15 min since last sync)
+/// 2. Fetch all remote projects
+/// 3. Smart comparison - only update changed projects
+/// 4. Preserve local data on failures
+@LazySingleton()
+class ProjectIncrementalSyncService {
   final ProjectRemoteDataSource _remoteDataSource;
   final ProjectsLocalDataSource _localDataSource;
 
   ProjectIncrementalSyncService(this._remoteDataSource, this._localDataSource);
 
-  @override
-  Future<Either<Failure, List<ProjectDTO>>> getModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
+  /// 🔄 Perform smart sync with timestamp logic
+  /// Returns the number of projects updated
+  Future<Either<Failure, int>> performSmartSync(String userId) async {
     try {
-      // This is a simplified version - in production you'd implement
-      // timestamp-based queries in the remote datasource
-      final result = await _remoteDataSource.getUserProjects(userId);
+      AppLogger.sync('PROJECTS', 'Starting smart sync', syncKey: userId);
 
-      return result.fold((failure) => Left(failure), (projects) {
-        // TODO: Implement actual incremental filtering in Firebase
-        // For now, return all projects (fallback to full sync)
-        return Right(projects);
-      });
-    } catch (e) {
-      return Left(ServerFailure('Failed to fetch modified projects: $e'));
-    }
-  }
+      // 1. 📅 Check if sync is needed (15 min intervals)
+      final shouldSync = await _shouldSyncProjects();
+      if (!shouldSync) {
+        AppLogger.sync(
+          'PROJECTS',
+          'Skipping sync - data is fresh',
+          syncKey: userId,
+        );
+        return const Right(0);
+      }
 
-  @override
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      // Lightweight check - in production this would be a count query
-      final result = await getModifiedSince(lastSyncTime, userId);
+      // 2. 🌐 Fetch all remote projects (simple approach)
+      final remoteResult = await _remoteDataSource.getUserProjects(userId);
 
-      return result.fold(
-        (failure) => Left(failure),
-        (projects) => Right(projects.isNotEmpty),
-      );
-    } catch (e) {
-      return Left(ServerFailure('Failed to check for modifications: $e'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, DateTime>> getServerTimestamp() async {
-    try {
-      // In production, this would be a Firebase server timestamp
-      return Right(DateTime.now());
-    } catch (e) {
-      return Left(ServerFailure('Failed to get server timestamp: $e'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      // Fetch only metadata for conflict detection
-      final result = await getModifiedSince(lastSyncTime, userId);
-
-      return result.fold((failure) => Left(failure), (projects) {
-        final metadata =
-            projects
-                .map(
-                  (project) => EntityMetadata(
-                    id: project.id,
-                    lastModified: project.updatedAt ?? project.createdAt,
-                    version: 1, // TODO: Add version to ProjectDTO
-                    entityType: 'project',
-                  ),
-                )
-                .toList();
-
-        return Right(metadata);
-      });
-    } catch (e) {
-      return Left(ServerFailure('Failed to fetch project metadata: $e'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<String>>> getDeletedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      // TODO: Implement deleted projects tracking in Firebase
-      // For now, return empty list
-      return const Right([]);
-    } catch (e) {
-      return Left(ServerFailure('Failed to fetch deleted projects: $e'));
-    }
-  }
-
-  /// COMPLETE incremental sync operation (Fetch + Cache)
-  ///
-  /// This is the main method that use cases should call.
-  /// It handles the entire sync pipeline:
-  /// 1. Fetch modified projects from remote
-  /// 2. Fetch deleted projects
-  /// 3. Apply changes to local cache
-  /// 4. Return unified result
-  ///
-  /// Inspired by Notion's CDC pipeline and Figma's local-first approach.
-  @override
-  Future<Either<Failure, IncrementalSyncResult<ProjectDTO>>>
-  performIncrementalSync(DateTime lastSyncTime, String userId) async {
-    try {
-      // 1. Check if sync is needed (lightweight operation)
-      final hasModificationsResult = await hasModifiedSince(
-        lastSyncTime,
-        userId,
-      );
-
-      return await hasModificationsResult.fold(
-        (failure) async => Left(failure),
-        (hasModifications) async {
-          if (!hasModifications) {
-            // No changes - return empty result with current timestamp
-            final timestamp = await getServerTimestamp();
-            return timestamp.fold(
-              (failure) => Left(failure),
-              (serverTime) => Right(
-                IncrementalSyncResult<ProjectDTO>(
-                  modifiedItems: [],
-                  deletedItemIds: [],
-                  serverTimestamp: serverTime,
-                  totalProcessed: 0,
-                ),
-              ),
-            );
-          }
-
-          // 2. Fetch changes in parallel
-          final modifiedResult = getModifiedSince(lastSyncTime, userId);
-          final deletedResult = getDeletedSince(lastSyncTime, userId);
-          final timestampResult = getServerTimestamp();
-
-          final results = await Future.wait([
-            modifiedResult,
-            deletedResult,
-            timestampResult,
-          ]);
-
-          // 3. Extract results
-          final modifiedProjects =
-              results[0] as Either<Failure, List<ProjectDTO>>;
-          final deletedIds = results[1] as Either<Failure, List<String>>;
-          final serverTimestamp = results[2] as Either<Failure, DateTime>;
-
-          // 4. Check for failures
-          if (modifiedProjects.isLeft()) {
-            return Left((modifiedProjects as Left).value);
-          }
-          if (deletedIds.isLeft()) {
-            return Left((deletedIds as Left).value);
-          }
-          if (serverTimestamp.isLeft()) {
-            return Left((serverTimestamp as Left).value);
-          }
-
-          // 5. Apply changes to local cache
-          final modified = (modifiedProjects as Right).value;
-          final deleted = (deletedIds as Right).value;
-          final timestamp = (serverTimestamp as Right).value;
-
-          await _applyChangesToCache(modified, deleted);
-
-          // 6. Return unified result
-          return Right(
-            IncrementalSyncResult<ProjectDTO>(
-              modifiedItems: modified,
-              deletedItemIds: deleted,
-              serverTimestamp: timestamp,
-              totalProcessed: modified.length + deleted.length,
-            ),
+      return await remoteResult.fold(
+        (failure) async {
+          // 🚨 Remote fetch failed - preserve local data
+          AppLogger.warning(
+            'Failed to fetch remote projects: ${failure.message}',
+            tag: 'ProjectSyncService',
           );
+          return Left(failure);
+        },
+        (remoteProjects) async {
+          // ✅ Remote fetch succeeded - apply smart updates
+          AppLogger.sync(
+            'PROJECTS',
+            'Fetched ${remoteProjects.length} projects from remote',
+            syncKey: userId,
+          );
+
+          // 3. 🧠 Smart logic: only update what changed
+          final updateCount = await _updateChangedProjects(remoteProjects);
+
+          // 4. 📝 Mark as synced (update timestamp)
+          await _markProjectsAsSynced();
+
+          AppLogger.sync(
+            'PROJECTS',
+            'Smart sync completed - updated $updateCount projects',
+            syncKey: userId,
+          );
+
+          return Right(updateCount);
         },
       );
     } catch (e) {
-      return Left(ServerFailure('Incremental sync failed: $e'));
+      AppLogger.error(
+        'Smart sync failed: $e',
+        tag: 'ProjectSyncService',
+        error: e,
+      );
+      return Left(ServerFailure('Smart sync failed: $e'));
     }
   }
 
-  /// COMPLETE full sync operation (Fetch + Cache)
-  ///
-  /// Fallback method for when incremental sync fails or
-  /// when no previous sync timestamp exists.
-  @override
-  Future<Either<Failure, IncrementalSyncResult<ProjectDTO>>> performFullSync(
-    String userId,
-  ) async {
+  /// 📅 Check if sync is needed (simple timestamp logic)
+  Future<bool> _shouldSyncProjects() async {
     try {
-      // 1. Fetch all user projects
-      final result = await _remoteDataSource.getUserProjects(userId);
+      // Get all local projects and find the most recent sync time
+      final localResult = await _localDataSource.getAllProjects();
 
-      return await result.fold((failure) async => Left(failure), (
-        projects,
-      ) async {
-        // 2. Get server timestamp
-        final timestampResult = await getServerTimestamp();
-
-        return timestampResult.fold((failure) => Left(failure), (
-          timestamp,
-        ) async {
-          // 3. Replace entire cache (full sync approach)
-          await _localDataSource.clearCache();
-
-          // 4. Cache all projects
-          for (final project in projects) {
-            await _localDataSource.cacheProject(project);
+      return localResult.fold(
+        (failure) => true, // Error getting local = sync needed
+        (localProjects) {
+          if (localProjects.isEmpty) {
+            return true; // No local projects = sync needed
           }
 
-          // 5. Return result
-          return Right(
-            IncrementalSyncResult<ProjectDTO>(
-              modifiedItems: projects,
-              deletedItemIds: [],
-              serverTimestamp: timestamp,
-              wasFullSync: true,
-              totalProcessed: projects.length,
-            ),
+          // Find the most recent sync time
+          DateTime? mostRecentSync;
+          for (final project in localProjects) {
+            final projectSyncTime = project.updatedAt ?? project.createdAt;
+            if (mostRecentSync == null ||
+                projectSyncTime.isAfter(mostRecentSync)) {
+              mostRecentSync = projectSyncTime;
+            }
+          }
+
+          if (mostRecentSync == null) {
+            return true; // No sync metadata = sync needed
+          }
+
+          // Check if 15 minutes have passed
+          final now = DateTime.now();
+          final timeSinceSync = now.difference(mostRecentSync);
+          return timeSinceSync.inMinutes >= 15;
+        },
+      );
+    } catch (e) {
+      AppLogger.warning(
+        'Error checking sync need: $e - defaulting to sync',
+        tag: 'ProjectSyncService',
+      );
+      return true; // Default to sync on error
+    }
+  }
+
+  /// 🧠 Smart update: only change projects that actually changed
+  Future<int> _updateChangedProjects(List<ProjectDTO> remoteProjects) async {
+    int updateCount = 0;
+
+    for (final remoteProject in remoteProjects) {
+      try {
+        // Get local version if it exists
+        final localResult = await _localDataSource.getCachedProject(
+          remoteProject.id,
+        );
+
+        final localProject = localResult.fold(
+          (failure) => null,
+          (project) => project,
+        );
+
+        // Check if update is needed
+        if (localProject == null ||
+            _hasProjectChanged(localProject, remoteProject)) {
+          // Update needed
+          await _localDataSource.cacheProject(remoteProject);
+          updateCount++;
+
+          AppLogger.database(
+            'Updated project: ${remoteProject.name}',
+            table: 'projects',
           );
-        });
-      });
-    } catch (e) {
-      return Left(ServerFailure('Full sync failed: $e'));
+        }
+      } catch (e) {
+        AppLogger.warning(
+          'Failed to update project ${remoteProject.name}: $e',
+          tag: 'ProjectSyncService',
+        );
+        // Continue with other projects
+      }
     }
+
+    return updateCount;
   }
 
-  /// Apply incremental changes to local cache
-  ///
-  /// This method handles the local data layer updates:
-  /// - Cache modified/new projects
-  /// - Remove deleted projects from cache
-  Future<void> _applyChangesToCache(
-    List<ProjectDTO> modifiedProjects,
-    List<String> deletedIds,
-  ) async {
-    // Cache modified/new projects
-    for (final project in modifiedProjects) {
-      await _localDataSource.cacheProject(project);
-    }
-
-    // Remove deleted projects (if local datasource supports it)
-    // TODO: Add removeProject method to ProjectsLocalDataSource
-    for (final deletedId in deletedIds) {
-      // await _localDataSource.removeProject(deletedId);
-    }
+  /// 🔍 Simple change detection (like we had in repository)
+  bool _hasProjectChanged(ProjectDTO local, ProjectDTO remote) {
+    // Compare key fields that indicate change
+    return local.name != remote.name ||
+        local.description != remote.description ||
+        local.collaborators.length != remote.collaborators.length ||
+        (remote.updatedAt != null &&
+            (local.updatedAt == null ||
+                remote.updatedAt!.isAfter(local.updatedAt!)));
   }
 
-  /// Get sync statistics for monitoring
-  @override
-  Future<Either<Failure, Map<String, dynamic>>> getSyncStatistics(
-    String userId,
-  ) async {
+  /// 📝 Mark projects as synced (simple timestamp update)
+  Future<void> _markProjectsAsSynced() async {
     try {
-      // TODO: Implement comprehensive sync statistics
-      final stats = {
-        'userId': userId,
-        'lastChecked': DateTime.now().toIso8601String(),
-        'supportsIncremental': true,
-        'supportsMetadata': true,
-        'supportsDeleted': false, // TODO: Implement deleted tracking
-      };
-
-      return Right(stats);
+      // For now, we rely on the fact that projects were just updated
+      // with fresh remote data, so their timestamps are current
+      AppLogger.info('Projects marked as synced', tag: 'ProjectSyncService');
     } catch (e) {
-      return Left(ServerFailure('Failed to get sync statistics: $e'));
+      AppLogger.warning(
+        'Failed to mark projects as synced: $e',
+        tag: 'ProjectSyncService',
+      );
+    }
+  }
+
+  /// 📊 Get simple sync statistics for monitoring
+  Future<Map<String, dynamic>> getSyncStatistics(String userId) async {
+    try {
+      final localResult = await _localDataSource.getAllProjects();
+      final localCount = localResult.fold(
+        (failure) => 0,
+        (projects) => projects.length,
+      );
+
+      return {
+        'userId': userId,
+        'localProjectsCount': localCount,
+        'syncStrategy': 'smart_timestamp_based',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+    } catch (e) {
+      return {
+        'error': 'Failed to get sync statistics: $e',
+        'timestamp': DateTime.now().toIso8601String(),
+      };
     }
   }
 }

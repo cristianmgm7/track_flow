@@ -11,6 +11,11 @@ class UserProfileDTO {
   final DateTime? updatedAt;
   final CreativeRole creativeRole;
 
+  // ⭐ NEW: Sync metadata fields for proper offline-first sync
+  final int version;
+  final DateTime? lastSyncTime;
+  final DateTime? lastModified;
+
   UserProfileDTO({
     required this.id,
     required this.name,
@@ -19,6 +24,10 @@ class UserProfileDTO {
     required this.createdAt,
     this.updatedAt,
     required this.creativeRole,
+    // ⭐ NEW: Sync metadata fields
+    this.version = 1,
+    this.lastSyncTime,
+    this.lastModified,
   });
 
   static const String collection = 'user_profile';
@@ -32,6 +41,12 @@ class UserProfileDTO {
       createdAt: userProfile.createdAt,
       updatedAt: userProfile.updatedAt,
       creativeRole: userProfile.creativeRole ?? CreativeRole.other,
+      // ⭐ NEW: Include sync metadata for user profiles
+      version: 1, // Initial version for new user profiles
+      lastModified:
+          userProfile.updatedAt ??
+          userProfile.createdAt, // Use updatedAt or createdAt
+      lastSyncTime: null, // Will be set when synced
     );
   }
 
@@ -70,6 +85,16 @@ class UserProfileDTO {
       createdAt: parsedCreatedAt ?? DateTime.now(),
       updatedAt: parsedUpdatedAt,
       creativeRole: _parseCreativeRole(json['creativeRole'] as String?),
+      // ⭐ NEW: Parse sync metadata from JSON
+      version: json['version'] as int? ?? 1,
+      lastSyncTime:
+          json['lastSyncTime'] != null
+              ? DateTime.tryParse(json['lastSyncTime'] as String)
+              : null,
+      lastModified:
+          json['lastModified'] != null
+              ? DateTime.tryParse(json['lastModified'] as String)
+              : null,
     );
   }
 
@@ -82,6 +107,10 @@ class UserProfileDTO {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'creativeRole': creativeRole.name,
+      // ⭐ NEW: Include sync metadata in JSON
+      'version': version,
+      'lastSyncTime': lastSyncTime?.toIso8601String(),
+      'lastModified': lastModified?.toIso8601String(),
     };
   }
 
@@ -93,6 +122,9 @@ class UserProfileDTO {
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
+    int? version,
+    DateTime? lastSyncTime,
+    DateTime? lastModified,
   }) {
     return UserProfileDTO(
       id: id ?? this.id,
@@ -102,6 +134,10 @@ class UserProfileDTO {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       creativeRole: creativeRole ?? this.creativeRole,
+      // ⭐ NEW: Include sync metadata in copyWith
+      version: version ?? this.version,
+      lastSyncTime: lastSyncTime ?? this.lastSyncTime,
+      lastModified: lastModified ?? this.lastModified,
     );
   }
 }

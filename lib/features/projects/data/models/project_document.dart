@@ -25,7 +25,10 @@ class ProjectDocument {
 
   ProjectDocument();
 
-  factory ProjectDocument.fromDTO(ProjectDTO dto, {SyncMetadataDocument? syncMeta}) {
+  factory ProjectDocument.fromDTO(
+    ProjectDTO dto, {
+    SyncMetadataDocument? syncMeta,
+  }) {
     return ProjectDocument()
       ..id = dto.id
       ..ownerId = dto.ownerId
@@ -37,11 +40,18 @@ class ProjectDocument {
       ..collaborators =
           dto.collaborators.map((c) => CollaboratorDocument.fromMap(c)).toList()
       ..isDeleted = dto.isDeleted
-      ..syncMetadata = syncMeta ?? SyncMetadataDocument.initial();
+      // ⭐ NEW: Use sync metadata from DTO if available (from remote)
+      ..syncMetadata =
+          syncMeta ??
+          SyncMetadataDocument.fromRemote(
+            version: dto.version,
+            lastModified: dto.lastModified ?? dto.updatedAt ?? dto.createdAt,
+          );
   }
 
   /// Create from DTO for remote data (already synced)
-  factory ProjectDocument.fromRemoteDTO(ProjectDTO dto, {
+  factory ProjectDocument.fromRemoteDTO(
+    ProjectDTO dto, {
     int? version,
     DateTime? lastModified,
   }) {
@@ -73,6 +83,10 @@ class ProjectDocument {
       collaboratorIds: collaboratorIds,
       collaborators: collaborators.map((c) => c.toMap()).toList(),
       isDeleted: isDeleted,
+      // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
+      version: syncMetadata.version,
+      lastSyncTime: syncMetadata.lastSyncTime,
+      lastModified: syncMetadata.lastModified,
     );
   }
 }

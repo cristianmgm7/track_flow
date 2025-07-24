@@ -28,7 +28,10 @@ class AudioCommentDocument {
 
   AudioCommentDocument();
 
-  factory AudioCommentDocument.fromDTO(AudioCommentDTO dto) {
+  factory AudioCommentDocument.fromDTO(
+    AudioCommentDTO dto, {
+    SyncMetadataDocument? syncMeta,
+  }) {
     return AudioCommentDocument()
       ..id = dto.id
       ..projectId = dto.projectId
@@ -36,11 +39,19 @@ class AudioCommentDocument {
       ..createdBy = dto.createdBy
       ..content = dto.content
       ..timestamp = dto.timestamp
-      ..createdAt = DateTime.parse(dto.createdAt);
+      ..createdAt = DateTime.parse(dto.createdAt)
+      // ⭐ NEW: Use sync metadata from DTO if available (from remote)
+      ..syncMetadata =
+          syncMeta ??
+          SyncMetadataDocument.fromRemote(
+            version: dto.version,
+            lastModified: dto.lastModified ?? DateTime.parse(dto.createdAt),
+          );
   }
 
   /// Create AudioCommentDocument from remote DTO with sync metadata
-  factory AudioCommentDocument.fromRemoteDTO(AudioCommentDTO dto, {
+  factory AudioCommentDocument.fromRemoteDTO(
+    AudioCommentDTO dto, {
     int? version,
     DateTime? lastModified,
   }) {
@@ -87,6 +98,10 @@ class AudioCommentDocument {
       content: content,
       timestamp: timestamp,
       createdAt: createdAt.toIso8601String(),
+      // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
+      version: syncMetadata?.version ?? 1,
+      lastSyncTime: syncMetadata?.lastSyncTime,
+      lastModified: syncMetadata?.lastModified ?? createdAt,
     );
   }
 }

@@ -29,7 +29,10 @@ class AudioTrackDocument {
 
   AudioTrackDocument();
 
-  factory AudioTrackDocument.fromDTO(AudioTrackDTO dto, {SyncMetadataDocument? syncMeta}) {
+  factory AudioTrackDocument.fromDTO(
+    AudioTrackDTO dto, {
+    SyncMetadataDocument? syncMeta,
+  }) {
     return AudioTrackDocument()
       ..id = dto.id.value
       ..name = dto.name
@@ -39,11 +42,18 @@ class AudioTrackDocument {
       ..uploadedBy = dto.uploadedBy.value
       ..createdAt = dto.createdAt ?? DateTime.now()
       ..extension = dto.extension
-      ..syncMetadata = syncMeta ?? SyncMetadataDocument.initial();
+      // ⭐ NEW: Use sync metadata from DTO if available (from remote)
+      ..syncMetadata =
+          syncMeta ??
+          SyncMetadataDocument.fromRemote(
+            version: dto.version,
+            lastModified: dto.lastModified ?? dto.createdAt ?? DateTime.now(),
+          );
   }
 
   /// Create from DTO for remote data (already synced)
-  factory AudioTrackDocument.fromRemoteDTO(AudioTrackDTO dto, {
+  factory AudioTrackDocument.fromRemoteDTO(
+    AudioTrackDTO dto, {
     int? version,
     DateTime? lastModified,
   }) {
@@ -86,6 +96,10 @@ class AudioTrackDocument {
       uploadedBy: UserId.fromUniqueString(_cleanId(uploadedBy)),
       createdAt: createdAt,
       extension: extension.isNotEmpty ? extension : '',
+      // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
+      version: syncMetadata?.version ?? 1,
+      lastSyncTime: syncMetadata?.lastSyncTime,
+      lastModified: syncMetadata?.lastModified ?? createdAt,
     );
   }
 

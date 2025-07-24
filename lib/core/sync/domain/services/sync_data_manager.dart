@@ -2,9 +2,9 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
-import 'package:trackflow/core/sync/domain/usecases/sync_projects_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_projects_using_simple_service_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_audio_comments_usecase.dart';
-import 'package:trackflow/core/sync/domain/usecases/sync_audio_tracks_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_audio_tracks_using_simple_service_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -22,15 +22,15 @@ import 'package:trackflow/core/utils/app_logger.dart';
 /// 5. ⚡ SMART: Each use case handles its own timing and changes
 @injectable
 class SyncDataManager {
-  final SyncProjectsUseCase _syncProjects;
-  final SyncAudioTracksUseCase _syncAudioTracks;
+  final SyncProjectsUsingSimpleServiceUseCase _syncProjects;
+  final SyncAudioTracksUsingSimpleServiceUseCase _syncAudioTracks;
   final SyncAudioCommentsUseCase _syncAudioComments;
   final SyncUserProfileUseCase _syncUserProfile;
   final SyncUserProfileCollaboratorsUseCase _syncUserProfileCollaborators;
 
   SyncDataManager({
-    required SyncProjectsUseCase syncProjects,
-    required SyncAudioTracksUseCase syncAudioTracks,
+    required SyncProjectsUsingSimpleServiceUseCase syncProjects,
+    required SyncAudioTracksUsingSimpleServiceUseCase syncAudioTracks,
     required SyncAudioCommentsUseCase syncAudioComments,
     required SyncUserProfileUseCase syncUserProfile,
     required SyncUserProfileCollaboratorsUseCase syncUserProfileCollaborators,
@@ -59,7 +59,7 @@ class SyncDataManager {
       // - Only updating data that changed
       // - Preserving local data on failures
 
-      await Future.wait([
+      await Future.wait<void>([
         // Projects: Smart sync with SyncMetadata (15 min intervals)
         _syncProjects(),
 
@@ -107,10 +107,13 @@ class SyncDataManager {
       await _syncUserProfile();
       onProgress?.call(0.3);
 
-      await Future.wait([_syncProjects(), _syncUserProfileCollaborators()]);
+      await Future.wait<void>([
+        _syncProjects(),
+        _syncUserProfileCollaborators(),
+      ]);
       onProgress?.call(0.7);
 
-      await Future.wait([_syncAudioTracks(), _syncAudioComments()]);
+      await Future.wait<void>([_syncAudioTracks(), _syncAudioComments()]);
       onProgress?.call(1.0);
 
       final duration = DateTime.now().difference(startTime);

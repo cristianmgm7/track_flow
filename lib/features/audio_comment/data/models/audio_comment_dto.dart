@@ -10,6 +10,11 @@ class AudioCommentDTO {
   final int timestamp;
   final String createdAt;
 
+  // ⭐ NEW: Sync metadata fields for proper offline-first sync
+  final int version;
+  final DateTime? lastSyncTime;
+  final DateTime? lastModified;
+
   AudioCommentDTO({
     required this.id,
     required this.projectId,
@@ -18,6 +23,10 @@ class AudioCommentDTO {
     required this.content,
     required this.timestamp,
     required this.createdAt,
+    // ⭐ NEW: Sync metadata fields
+    this.version = 1,
+    this.lastSyncTime,
+    this.lastModified,
   });
 
   static const String collection = 'audio_comments';
@@ -31,6 +40,11 @@ class AudioCommentDTO {
       content: audioComment.content,
       timestamp: audioComment.timestamp.inMilliseconds,
       createdAt: audioComment.createdAt.toIso8601String(),
+      // ⭐ NEW: Include sync metadata for new comments
+      version: 1, // Initial version for new comments
+      lastModified:
+          audioComment.createdAt, // Use createdAt as initial lastModified
+      lastSyncTime: null, // Will be set when synced
     );
   }
 
@@ -55,6 +69,10 @@ class AudioCommentDTO {
       'content': content,
       'timestamp': timestamp,
       'createdAt': createdAt,
+      // ⭐ NEW: Include sync metadata in JSON
+      'version': version,
+      'lastSyncTime': lastSyncTime?.toIso8601String(),
+      'lastModified': lastModified?.toIso8601String(),
     };
   }
 
@@ -67,6 +85,16 @@ class AudioCommentDTO {
       content: json['content'] as String,
       timestamp: json['timestamp'] as int,
       createdAt: json['createdAt'] as String,
+      // ⭐ NEW: Parse sync metadata from JSON
+      version: json['version'] as int? ?? 1,
+      lastSyncTime:
+          json['lastSyncTime'] != null
+              ? DateTime.tryParse(json['lastSyncTime'] as String)
+              : null,
+      lastModified:
+          json['lastModified'] != null
+              ? DateTime.tryParse(json['lastModified'] as String)
+              : null,
     );
   }
 }

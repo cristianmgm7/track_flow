@@ -19,16 +19,27 @@ class PlaylistDocument {
 
   PlaylistDocument();
 
-  factory PlaylistDocument.fromDTO(PlaylistDto dto) {
+  factory PlaylistDocument.fromDTO(
+    PlaylistDto dto, {
+    SyncMetadataDocument? syncMeta,
+  }) {
     return PlaylistDocument()
       ..uuid = dto.id
       ..name = dto.name
       ..trackIds = dto.trackIds
-      ..playlistSource = dto.playlistSource;
+      ..playlistSource = dto.playlistSource
+      // ⭐ NEW: Use sync metadata from DTO if available (from remote)
+      ..syncMetadata =
+          syncMeta ??
+          SyncMetadataDocument.fromRemote(
+            version: dto.version,
+            lastModified: dto.lastModified ?? DateTime.now(),
+          );
   }
 
   /// Create PlaylistDocument from remote DTO with sync metadata
-  factory PlaylistDocument.fromRemoteDTO(PlaylistDto dto, {
+  factory PlaylistDocument.fromRemoteDTO(
+    PlaylistDto dto, {
     int? version,
     DateTime? lastModified,
   }) {
@@ -64,6 +75,10 @@ class PlaylistDocument {
       name: name,
       trackIds: trackIds,
       playlistSource: playlistSource,
+      // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
+      version: syncMetadata?.version ?? 1,
+      lastSyncTime: syncMetadata?.lastSyncTime,
+      lastModified: syncMetadata?.lastModified ?? DateTime.now(),
     );
   }
 }

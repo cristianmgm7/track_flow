@@ -18,6 +18,10 @@ class ProjectDTO {
     this.collaborators = const [], // userId, role
     this.collaboratorIds = const [],
     this.isDeleted = false,
+    // ⭐ NEW: Sync metadata fields for proper offline-first sync
+    this.version = 1,
+    this.lastSyncTime,
+    this.lastModified,
   });
 
   final String id;
@@ -29,6 +33,11 @@ class ProjectDTO {
   final List<String> collaboratorIds;
   final List<Map<String, dynamic>> collaborators; // userId, role
   final bool isDeleted;
+
+  // ⭐ NEW: Sync metadata fields (now included in remote storage)
+  final int version;
+  final DateTime? lastSyncTime;
+  final DateTime? lastModified;
 
   static const String collection = 'projects';
 
@@ -53,6 +62,10 @@ class ProjectDTO {
             .toList(),
     collaboratorIds: project.collaborators.map((c) => c.userId.value).toList(),
     isDeleted: project.isDeleted,
+    // ⭐ NEW: Include sync metadata for proper offline-first sync
+    version: 1, // Initial version for new projects
+    lastModified: project.updatedAt ?? project.createdAt,
+    lastSyncTime: null, // Will be set when synced
   );
 
   Project toDomain() => Project(
@@ -92,6 +105,10 @@ class ProjectDTO {
     'collaborators': collaborators,
     'collaboratorIds': collaboratorIds,
     'isDeleted': isDeleted,
+    // ⭐ NEW: Include sync metadata in JSON
+    'version': version,
+    'lastSyncTime': lastSyncTime?.toIso8601String(),
+    'lastModified': lastModified?.toIso8601String(),
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -119,6 +136,16 @@ class ProjectDTO {
             .toList() ??
         [],
     isDeleted: json['isDeleted'] as bool? ?? false,
+    // ⭐ NEW: Parse sync metadata from JSON
+    version: json['version'] as int? ?? 1,
+    lastSyncTime:
+        json['lastSyncTime'] is Timestamp
+            ? (json['lastSyncTime'] as Timestamp).toDate()
+            : DateTime.tryParse(json['lastSyncTime'] as String? ?? ''),
+    lastModified:
+        json['lastModified'] is Timestamp
+            ? (json['lastModified'] as Timestamp).toDate()
+            : DateTime.tryParse(json['lastModified'] as String? ?? ''),
   );
 
   /// Creates a ProjectDTO from a Firestore document.
@@ -138,6 +165,20 @@ class ProjectDTO {
             : updatedAtRaw is DateTime
             ? updatedAtRaw
             : DateTime.tryParse(updatedAtRaw.toString());
+    final lastSyncTimeRaw = data['lastSyncTime'];
+    final lastSyncTime =
+        lastSyncTimeRaw is Timestamp
+            ? lastSyncTimeRaw.toDate()
+            : lastSyncTimeRaw is DateTime
+            ? lastSyncTimeRaw
+            : DateTime.tryParse(lastSyncTimeRaw?.toString() ?? '');
+    final lastModifiedRaw = data['lastModified'];
+    final lastModified =
+        lastModifiedRaw is Timestamp
+            ? lastModifiedRaw.toDate()
+            : lastModifiedRaw is DateTime
+            ? lastModifiedRaw
+            : DateTime.tryParse(lastModifiedRaw?.toString() ?? '');
     return ProjectDTO(
       id: data['id'] as String? ?? '',
       ownerId: data['ownerId'] as String? ?? '',
@@ -156,6 +197,10 @@ class ProjectDTO {
               .toList() ??
           [],
       isDeleted: data['isDeleted'] as bool? ?? false,
+      // ⭐ NEW: Parse sync metadata from Firestore
+      version: data['version'] as int? ?? 1,
+      lastSyncTime: lastSyncTime,
+      lastModified: lastModified,
     );
   }
 
@@ -171,6 +216,12 @@ class ProjectDTO {
       'collaborators': collaborators,
       'collaboratorIds': collaboratorIds,
       'isDeleted': isDeleted,
+      // ⭐ NEW: Include sync metadata in Firestore (CRITICAL for offline-first)
+      'version': version,
+      'lastSyncTime':
+          lastSyncTime != null ? Timestamp.fromDate(lastSyncTime!) : null,
+      'lastModified':
+          lastModified != null ? Timestamp.fromDate(lastModified!) : null,
     };
   }
 
@@ -185,6 +236,9 @@ class ProjectDTO {
     List<Map<String, dynamic>>? collaborators,
     List<String>? collaboratorIds,
     bool? isDeleted,
+    int? version,
+    DateTime? lastSyncTime,
+    DateTime? lastModified,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -196,6 +250,10 @@ class ProjectDTO {
       collaborators: collaborators ?? this.collaborators,
       collaboratorIds: collaboratorIds ?? this.collaboratorIds,
       isDeleted: isDeleted ?? this.isDeleted,
+      // ⭐ NEW: Include sync metadata in copyWith
+      version: version ?? this.version,
+      lastSyncTime: lastSyncTime ?? this.lastSyncTime,
+      lastModified: lastModified ?? this.lastModified,
     );
   }
 
@@ -215,6 +273,20 @@ class ProjectDTO {
             : updatedAtRaw is DateTime
             ? updatedAtRaw
             : DateTime.tryParse(updatedAtRaw.toString());
+    final lastSyncTimeRaw = data['lastSyncTime'];
+    final lastSyncTime =
+        lastSyncTimeRaw is Timestamp
+            ? lastSyncTimeRaw.toDate()
+            : lastSyncTimeRaw is DateTime
+            ? lastSyncTimeRaw
+            : DateTime.tryParse(lastSyncTimeRaw?.toString() ?? '');
+    final lastModifiedRaw = data['lastModified'];
+    final lastModified =
+        lastModifiedRaw is Timestamp
+            ? lastModifiedRaw.toDate()
+            : lastModifiedRaw is DateTime
+            ? lastModifiedRaw
+            : DateTime.tryParse(lastModifiedRaw?.toString() ?? '');
     return ProjectDTO(
       id: data['id'] as String? ?? '',
       ownerId: data['ownerId'] as String? ?? '',
@@ -233,6 +305,10 @@ class ProjectDTO {
               .toList() ??
           [],
       isDeleted: data['isDeleted'] as bool? ?? false,
+      // ⭐ NEW: Parse sync metadata from map
+      version: data['version'] as int? ?? 1,
+      lastSyncTime: lastSyncTime,
+      lastModified: lastModified,
     );
   }
 
@@ -248,6 +324,10 @@ class ProjectDTO {
       'collaborators': collaborators,
       'collaboratorIds': collaboratorIds,
       'isDeleted': isDeleted,
+      // ⭐ NEW: Include sync metadata in map
+      'version': version,
+      'lastSyncTime': lastSyncTime?.toIso8601String(),
+      'lastModified': lastModified?.toIso8601String(),
     };
   }
 
@@ -263,7 +343,11 @@ class ProjectDTO {
         other.updatedAt == updatedAt &&
         listEquals(other.collaborators, collaborators) &&
         listEquals(other.collaboratorIds, collaboratorIds) &&
-        other.isDeleted == isDeleted;
+        other.isDeleted == isDeleted &&
+        // ⭐ NEW: Include sync metadata in equality
+        other.version == version &&
+        other.lastSyncTime == lastSyncTime &&
+        other.lastModified == lastModified;
   }
 
   @override
@@ -276,5 +360,9 @@ class ProjectDTO {
       updatedAt.hashCode ^
       collaborators.hashCode ^
       collaboratorIds.hashCode ^
-      isDeleted.hashCode;
+      isDeleted.hashCode ^
+      // ⭐ NEW: Include sync metadata in hashCode
+      version.hashCode ^
+      lastSyncTime.hashCode ^
+      lastModified.hashCode;
 }

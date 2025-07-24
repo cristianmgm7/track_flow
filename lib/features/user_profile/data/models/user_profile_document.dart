@@ -30,7 +30,10 @@ class UserProfileDocument {
 
   UserProfileDocument();
 
-  factory UserProfileDocument.fromDTO(UserProfileDTO dto) {
+  factory UserProfileDocument.fromDTO(
+    UserProfileDTO dto, {
+    SyncMetadataDocument? syncMeta,
+  }) {
     return UserProfileDocument()
       ..id = dto.id
       ..name = dto.name
@@ -38,11 +41,19 @@ class UserProfileDocument {
       ..avatarUrl = dto.avatarUrl
       ..createdAt = dto.createdAt
       ..updatedAt = dto.updatedAt
-      ..creativeRole = dto.creativeRole;
+      ..creativeRole = dto.creativeRole
+      // ⭐ NEW: Use sync metadata from DTO if available (from remote)
+      ..syncMetadata =
+          syncMeta ??
+          SyncMetadataDocument.fromRemote(
+            version: dto.version,
+            lastModified: dto.lastModified ?? dto.updatedAt ?? dto.createdAt,
+          );
   }
 
   /// Create UserProfileDocument from remote DTO with sync metadata
-  factory UserProfileDocument.fromRemoteDTO(UserProfileDTO dto, {
+  factory UserProfileDocument.fromRemoteDTO(
+    UserProfileDTO dto, {
     int? version,
     DateTime? lastModified,
   }) {
@@ -90,6 +101,10 @@ class UserProfileDocument {
       createdAt: createdAt,
       updatedAt: updatedAt,
       creativeRole: creativeRole,
+      // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
+      version: syncMetadata?.version ?? 1,
+      lastSyncTime: syncMetadata?.lastSyncTime,
+      lastModified: syncMetadata?.lastModified ?? updatedAt ?? createdAt,
     );
   }
 }

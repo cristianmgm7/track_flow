@@ -7,11 +7,20 @@ class PlaylistDto {
   final List<String> trackIds;
   final String playlistSource;
 
+  // ⭐ NEW: Sync metadata fields for proper offline-first sync
+  final int version;
+  final DateTime? lastSyncTime;
+  final DateTime? lastModified;
+
   PlaylistDto({
     required this.id,
     required this.name,
     required this.trackIds,
     required this.playlistSource,
+    // ⭐ NEW: Sync metadata fields
+    this.version = 1,
+    this.lastSyncTime,
+    this.lastModified,
   });
 
   Map<String, dynamic> toJson() => {
@@ -19,6 +28,10 @@ class PlaylistDto {
     'name': name,
     'trackIds': trackIds,
     'playlistSource': playlistSource,
+    // ⭐ NEW: Include sync metadata in JSON
+    'version': version,
+    'lastSyncTime': lastSyncTime?.toIso8601String(),
+    'lastModified': lastModified?.toIso8601String(),
   };
 
   factory PlaylistDto.fromJson(Map<String, dynamic> json) {
@@ -27,6 +40,16 @@ class PlaylistDto {
       name: json['name'] as String,
       trackIds: List<String>.from(json['trackIds']),
       playlistSource: json['playlistSource'] as String,
+      // ⭐ NEW: Parse sync metadata from JSON
+      version: json['version'] as int? ?? 1,
+      lastSyncTime:
+          json['lastSyncTime'] != null
+              ? DateTime.tryParse(json['lastSyncTime'] as String)
+              : null,
+      lastModified:
+          json['lastModified'] != null
+              ? DateTime.tryParse(json['lastModified'] as String)
+              : null,
     );
   }
 
@@ -45,6 +68,10 @@ class PlaylistDto {
       name: playlist.name,
       trackIds: playlist.trackIds,
       playlistSource: playlist.playlistSource.name,
+      // ⭐ NEW: Include sync metadata for new playlists
+      version: 1, // Initial version for new playlists
+      lastModified: DateTime.now(), // Current time as initial lastModified
+      lastSyncTime: null, // Will be set when synced
     );
   }
 
