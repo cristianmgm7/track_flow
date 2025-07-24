@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/domain/services/sync_data_manager.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Coordinates unified background sync operations without blocking the UI
 ///
@@ -99,7 +100,7 @@ class BackgroundSyncCoordinator {
   }
 
   /// Perform the actual unified background sync operation
-  /// 
+  ///
   /// This method executes the complete offline-first sync cycle:
   /// 1. UPSTREAM: Push pending local changes to remote
   /// 2. DOWNSTREAM: Pull fresh data from remote to local cache
@@ -107,32 +108,80 @@ class BackgroundSyncCoordinator {
     try {
       // Only proceed if we have good network connection
       if (!await _networkStateManager.hasGoodConnection()) {
+        AppLogger.warning(
+          'Skipping sync ($syncKey) - poor network connection',
+          tag: 'BackgroundSyncCoordinator',
+        );
         return;
       }
 
+      AppLogger.sync('INIT', 'Starting background sync', syncKey: syncKey);
+
       // PHASE 1: UPSTREAM SYNC - Push pending local changes first
       // This ensures local changes are preserved before pulling fresh data
+      AppLogger.sync(
+        'UPSTREAM',
+        'Starting upstream sync (pending operations)',
+        syncKey: syncKey,
+      );
+      final upstreamStartTime = DateTime.now();
+
       await _pendingOperationsManager.processPendingOperations();
+
+      final upstreamDuration = DateTime.now().difference(upstreamStartTime);
+      AppLogger.sync(
+        'UPSTREAM',
+        'Upstream sync completed',
+        syncKey: syncKey,
+        duration: upstreamDuration.inMilliseconds,
+      );
 
       // PHASE 2: DOWNSTREAM SYNC - Pull fresh data from remote
       // This updates local cache with latest remote data
+      AppLogger.sync(
+        'DOWNSTREAM',
+        'Starting downstream sync (remote → local)',
+        syncKey: syncKey,
+      );
+      final downstreamStartTime = DateTime.now();
+
       final syncResult = await _syncDataManager.performIncrementalSync();
-      
+
+      final downstreamDuration = DateTime.now().difference(downstreamStartTime);
+
       // Log sync result (but don't throw on failure - this is background)
       syncResult.fold(
         (failure) {
-          // TODO: Replace with proper logging framework
-          // print('BackgroundSyncCoordinator: Downstream sync failed: ${failure.message}');
+          AppLogger.sync(
+            'DOWNSTREAM',
+            'Downstream sync failed: ${failure.message}',
+            syncKey: syncKey,
+            duration: downstreamDuration.inMilliseconds,
+          );
         },
         (_) {
-          // TODO: Replace with proper logging framework  
-          // print('BackgroundSyncCoordinator: Background sync completed successfully for $syncKey');
+          AppLogger.sync(
+            'DOWNSTREAM',
+            'Downstream sync completed',
+            syncKey: syncKey,
+            duration: downstreamDuration.inMilliseconds,
+          );
+          AppLogger.sync(
+            'COMPLETE',
+            'Full background sync completed successfully',
+            syncKey: syncKey,
+          );
         },
       );
     } catch (e) {
       // Log error but don't throw - this is background operation
-      // TODO: Replace with proper logging framework
-      // print('BackgroundSyncCoordinator: Background sync failed for $syncKey: $e');
+      AppLogger.error(
+        'Background sync failed: $e',
+        tag: 'BackgroundSyncCoordinator',
+        error: e,
+      );
+      // TODO: Send to error monitoring service
+      // ErrorMonitoringService.reportError(e, context: 'background_sync_failure', syncKey: syncKey);
     } finally {
       // Always remove from ongoing syncs
       _ongoingSyncs.remove(syncKey);
@@ -149,7 +198,7 @@ class BackgroundSyncCoordinator {
 /// Helper extension to fire-and-forget futures safely
 extension FireAndForget on Future {
   void get unawaited => catchError((error) {
-    // Log error but don't propagate - TODO: Use proper logging
-    // print('Unawaited future error: $error');
+    // Log error but don't propagate
+    AppLogger.warning('Unawaited future error: $error', tag: 'FireAndForget');
   });
 }

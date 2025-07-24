@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
-import 'package:trackflow/core/sync/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
@@ -64,28 +64,37 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       // 1. OFFLINE-FIRST: Update locally IMMEDIATELY
       final dto = UserProfileDTO.fromDomain(profile);
       await _localDataSource.cacheUserProfile(dto);
-      
-      // 2. Queue for background sync
-      await _pendingOperationsManager.addOperation(
+
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
         entityType: 'user_profile',
         entityId: profile.id.value,
-        operationType: 'update',
-        priority: SyncPriority.medium,
         data: {
           'name': profile.name,
           'creativeRole': profile.creativeRole?.name ?? 'unknown',
           'avatarUrl': profile.avatarUrl,
         },
+        priority: SyncPriority.medium,
       );
 
-      // 3. Trigger background sync if connected
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync if connected
       if (await _networkStateManager.isConnected) {
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'user_profile_update',
         );
       }
 
-      return Right(unit); // ✅ IMMEDIATE SUCCESS - no network blocking
+      return Right(unit); // ✅ SUCCESS after successful queue
     } catch (e) {
       return Left(DatabaseFailure('Failed to update user profile: $e'));
     }
@@ -102,7 +111,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             syncKey: 'user_profile_${userId.value}',
           );
         }
-        
+
         // Return local data immediately
         yield Right(dto?.toDomain());
       }
@@ -152,7 +161,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       // OFFLINE-FIRST: Check local cache first
       final localStream = _localDataSource.watchUserProfile(userId.value);
       final localProfile = await localStream.first;
-      
+
       if (localProfile != null) {
         // Profile exists locally, trigger background sync to verify remote state
         if (await _networkStateManager.isConnected) {

@@ -4,12 +4,21 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/sync/data/repositories/pending_operations_repository.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor_factory.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
-/// Manages pending sync operations queue for offline changes
-/// 
-/// This manager coordinates the execution of pending operations
-/// by delegating to appropriate operation executors via the factory pattern.
-/// It maintains single responsibility by focusing on queue management and coordination.
+/// 🧠 CEREBRO DEL UPSTREAM SYNC
+///
+/// Manages pending sync operations queue for offline changes.
+/// Garantiza que ninguna operación offline se pierda y que eventualmente
+/// todas lleguen al servidor.
+///
+/// RESPONSABILIDADES:
+/// 1. 📥 ENCOLAR: Recibe operaciones de repositories y las guarda en Isar
+/// 2. ⚡ PROCESAR: Ejecuta operaciones pendientes cuando hay red
+/// 3. 🔄 RETRY: Reintenta operaciones fallidas hasta máximo de intentos
+/// 4. 🧹 LIMPIAR: Elimina operaciones completadas y que exceden retry limit
 @lazySingleton
 class PendingOperationsManager {
   final PendingOperationsRepository _repository;
@@ -22,8 +31,13 @@ class PendingOperationsManager {
     this._executorFactory,
   );
 
-  /// Add a new operation to the pending queue
-  Future<void> addOperation({
+  // ============================================================================
+  // 📥 Queue Operations (Called by Repositories)
+  // ============================================================================
+
+  /// Core method para agregar cualquier operación a la queue
+  /// Repositories use the specific helpers below this method
+  Future<Either<Failure, Unit>> addOperation({
     required String entityType,
     required String entityId,
     required String operationType,
@@ -39,25 +53,21 @@ class PendingOperationsManager {
     );
 
     final result = await _repository.addOperation(operation);
-    result.fold(
-      (failure) {
-        // Log error - TODO: Use proper logging
-        // print('Failed to add pending operation: ${failure.message}');
-      },
-      (success) {
-        // Operation added successfully
-      },
+    return result.fold(
+      (failure) =>
+          Left(failure), // ❌ Queue failed - Repository must handle this
+      (success) => Right(unit), // ✅ Queued successfully
     );
   }
 
-  /// Add create operation
-  Future<void> addCreateOperation({
+  /// 🔧 HELPER: Repositories call this when user creates entities offline
+  Future<Either<Failure, Unit>> addCreateOperation({
     required String entityType,
     required String entityId,
     required Map<String, dynamic> data,
     SyncPriority priority = SyncPriority.medium,
   }) async {
-    await addOperation(
+    return await addOperation(
       entityType: entityType,
       entityId: entityId,
       operationType: 'create',
@@ -66,14 +76,14 @@ class PendingOperationsManager {
     );
   }
 
-  /// Add update operation
-  Future<void> addUpdateOperation({
+  /// 📝 HELPER: Repositories call this when user updates entities offline
+  Future<Either<Failure, Unit>> addUpdateOperation({
     required String entityType,
     required String entityId,
     required Map<String, dynamic> data,
     SyncPriority priority = SyncPriority.medium,
   }) async {
-    await addOperation(
+    return await addOperation(
       entityType: entityType,
       entityId: entityId,
       operationType: 'update',
@@ -82,13 +92,13 @@ class PendingOperationsManager {
     );
   }
 
-  /// Add delete operation
-  Future<void> addDeleteOperation({
+  /// 🗑️ HELPER: Repositories call this when user deletes entities offline
+  Future<Either<Failure, Unit>> addDeleteOperation({
     required String entityType,
     required String entityId,
     SyncPriority priority = SyncPriority.medium,
   }) async {
-    await addOperation(
+    return await addOperation(
       entityType: entityType,
       entityId: entityId,
       operationType: 'delete',
@@ -96,38 +106,93 @@ class PendingOperationsManager {
     );
   }
 
-  /// Process all pending operations
+  // ============================================================================
+  // ⚡ Processing Operations (Called by BackgroundSyncCoordinator)
+  // ============================================================================
+
+  /// 🚀 MAIN ENTRY POINT: BackgroundSyncCoordinator calls this
+  /// Procesa todas las operaciones pendientes cuando hay red disponible
   Future<void> processPendingOperations() async {
-    // Check network connectivity
+    // 📶 Solo procesar si hay conexión
     if (!await _networkStateManager.isConnected) {
       return;
     }
 
-    final result = await _repository.getPendingOperations();
-    await result.fold(
-      (failure) async {
-        // Handle error
-      },
-      (operations) async {
-        // Process operations by priority
-        await _processOperationsByPriority(operations);
-      },
-    );
+    // 🔄 Retry logic for getting pending operations
+    const maxRetries = 3;
+    const retryDelay = Duration(seconds: 2);
+
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      final result = await _repository.getPendingOperations();
+
+      await result.fold(
+        (failure) async {
+          // 💥 Error getting operations from local database
+          final errorMsg =
+              'Failed to get pending operations (attempt $attempt/$maxRetries): ${failure.message}';
+
+          AppLogger.error(errorMsg, tag: 'PendingOperationsManager');
+
+          // 🔄 Retry logic
+          if (attempt < maxRetries) {
+            // Wait before retrying
+            await Future.delayed(retryDelay);
+            return; // Continue to next retry attempt
+          }
+
+          // 💀 All retries exhausted - this is a serious issue
+          AppLogger.critical(
+            'Exhausted retries getting pending operations. Database may have issues.',
+            tag: 'PendingOperationsManager',
+          );
+          // ErrorMonitoringService.reportError(failure, context: 'upstream_sync_db_failure');
+        },
+        (operations) async {
+          try {
+            // ✅ Got operations - process them by priority
+            await _processOperationsByPriority(operations);
+
+            // 📈 Success logging
+            if (operations.isNotEmpty) {
+              AppLogger.info(
+                'Successfully processed ${operations.length} pending operations',
+                tag: 'PendingOperationsManager',
+              );
+            }
+
+            return; // Success - exit retry loop
+          } catch (e) {
+            // 💥 Error during operation processing
+            AppLogger.error(
+              'Error processing operations: $e',
+              tag: 'PendingOperationsManager',
+            );
+
+            // Don't retry processing errors - individual operations have their own retry logic
+            return;
+          }
+        },
+      );
+
+      // If we reach here, we had a failure and need to retry
+      // (only happens if we're in the failure case and attempt < maxRetries)
+    }
   }
 
-  /// Process operations grouped by priority
+  /// 📊 Procesa operaciones agrupadas por prioridad
+  /// ORDEN: Critical → High → Medium → Low
   Future<void> _processOperationsByPriority(
     List<SyncOperationDocument> operations,
   ) async {
-    // Group operations by priority
+    // 🗂️ Group operations by priority
     final operationsByPriority = <SyncPriority, List<SyncOperationDocument>>{};
-    
+
     for (final operation in operations) {
       final priority = _getPriorityEnum(operation.priority);
       operationsByPriority.putIfAbsent(priority, () => []).add(operation);
     }
 
-    // Process in priority order
+    // ⚡ Process in priority order: most important first
     final priorities = [
       SyncPriority.critical,
       SyncPriority.high,
@@ -143,54 +208,140 @@ class PendingOperationsManager {
     }
   }
 
-  /// Process a single operation
+  /// 🔄 Procesa UNA operación individual
+  /// FLUJO: Check retry limit → Execute → Mark completed/failed
   Future<void> _processOperation(SyncOperationDocument operation) async {
-    // Check if operation can be retried
+    // 🚫 Skip if operation exceeded retry limit
     if (!operation.canRetry()) {
       await _repository.deleteOperation(operation.id);
       return;
     }
 
     try {
-      // Execute the operation based on type
+      // ⚡ Execute the operation (calls remote API)
       await _executeOperation(operation);
-      
-      // Mark as completed
+
+      // ✅ Success: Mark as completed (will be cleaned up later)
       await _repository.markOperationCompleted(operation.id);
-      
     } catch (e) {
-      // Mark as failed
+      // ❌ Failed: Increment retry count, will retry later
       await _repository.markOperationFailed(operation.id, e.toString());
     }
   }
 
-  /// Execute the actual operation by delegating to appropriate executor
+  /// 🎯 Delegates execution to appropriate OperationExecutor
+  /// Executor handles the actual API call for each entity type
   Future<void> _executeOperation(SyncOperationDocument operation) async {
     final executor = _executorFactory.getExecutor(operation.entityType);
     await executor.execute(operation);
   }
 
+  // ============================================================================
+  // 📊 MONITORING & STATISTICS (Called by BackgroundSyncCoordinator)
+  // ============================================================================
 
-  /// Get count of pending operations
+  /// 📈 Count pending operations for UI progress indicators
   Future<int> getPendingOperationsCount() async {
     final result = await _repository.getPendingOperationsCount();
-    return result.fold(
-      (failure) => 0,
-      (count) => count,
-    );
+    return result.fold((failure) => 0, (count) => count);
   }
 
-  /// Watch pending operations stream
+  /// 👀 Stream pending operations for real-time UI updates
   Stream<List<SyncOperationDocument>> watchPendingOperations() {
     return _repository.watchPendingOperations();
   }
 
-  /// Clear completed operations (cleanup)
+  /// 🏥 Get upstream sync health status for monitoring and debugging
+  /// Returns information about queue health, error rates, and processing status
+  Future<Map<String, dynamic>> getUpstreamSyncHealth() async {
+    try {
+      final pendingResult = await _repository.getPendingOperations();
+
+      return await pendingResult.fold(
+        (failure) async {
+          // 🚨 Database access failed - critical issue
+          return {
+            'status': 'critical',
+            'canAccessDatabase': false,
+            'error': failure.message,
+            'pendingCount': 0,
+            'failedCount': 0,
+            'oldestPendingAge': null,
+            'timestamp': DateTime.now().toIso8601String(),
+          };
+        },
+        (operations) async {
+          // ✅ Database accessible - analyze operations
+          final now = DateTime.now();
+          final failed = operations.where((op) => !op.canRetry()).length;
+          final pending = operations.length - failed;
+
+          // Find oldest pending operation
+          DateTime? oldestTimestamp;
+          if (operations.isNotEmpty) {
+            oldestTimestamp = operations
+                .map((op) => op.timestamp)
+                .reduce((a, b) => a.isBefore(b) ? a : b);
+          }
+
+          final oldestAge =
+              oldestTimestamp != null
+                  ? now.difference(oldestTimestamp).inMinutes
+                  : null;
+
+          // Determine health status
+          String status;
+          if (failed > 0 && pending == 0) {
+            status = 'degraded'; // Only failed operations
+          } else if (oldestAge != null && oldestAge > 60) {
+            status = 'degraded'; // Operations stuck for > 1 hour
+          } else if (pending > 50) {
+            status = 'degraded'; // Too many pending operations
+          } else {
+            status = 'healthy';
+          }
+
+          return {
+            'status': status,
+            'canAccessDatabase': true,
+            'pendingCount': pending,
+            'failedCount': failed,
+            'totalCount': operations.length,
+            'oldestPendingAge': oldestAge,
+            'networkConnected': await _networkStateManager.isConnected,
+            'timestamp': DateTime.now().toIso8601String(),
+          };
+        },
+      );
+    } catch (e) {
+      // 💥 Unexpected error
+      return {
+        'status': 'critical',
+        'canAccessDatabase': false,
+        'error': e.toString(),
+        'pendingCount': 0,
+        'failedCount': 0,
+        'oldestPendingAge': null,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+    }
+  }
+
+  // ============================================================================
+  // 🧹 CLEANUP (Called by BackgroundSyncCoordinator)
+  // ============================================================================
+
+  /// 🗑️ Remove completed operations to keep queue manageable
+  /// BackgroundSyncCoordinator calls this periodically
   Future<void> clearCompletedOperations() async {
     await _repository.clearCompletedOperations();
   }
 
-  /// Get priority enum from string
+  // ============================================================================
+  // 🔧 HELPERS
+  // ============================================================================
+
+  /// Parse priority string to enum
   SyncPriority _getPriorityEnum(String priority) {
     return SyncPriority.values.firstWhere(
       (p) => p.name == priority,

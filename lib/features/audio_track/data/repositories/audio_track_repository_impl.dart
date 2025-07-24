@@ -110,8 +110,8 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       // 1. ALWAYS save locally first (ignore minor cache errors)
       await localDataSource.cacheTrack(dto);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addCreateOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addCreateOperation(
         entityType: 'audio_track',
         entityId: track.id.value,
         data: {
@@ -126,14 +126,24 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         priority: SyncPriority.high,
       );
 
-      // 3. Trigger background sync (no condition check - coordinator handles it)
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync (no condition check - coordinator handles it)
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_tracks_upload',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -149,21 +159,31 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       // 1. ALWAYS soft delete locally first
       await localDataSource.deleteTrack(trackId.value);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addDeleteOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addDeleteOperation(
         entityType: 'audio_track',
         entityId: trackId.value,
         priority: SyncPriority.high,
       );
 
-      // 3. Trigger background sync
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_tracks_delete',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -180,8 +200,8 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       // 1. ALWAYS update locally first
       await localDataSource.updateTrackName(trackId.value, newName);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addUpdateOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
         entityType: 'audio_track',
         entityId: trackId.value,
         data: {
@@ -192,14 +212,24 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         priority: SyncPriority.medium,
       );
 
-      // 3. Trigger background sync
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_tracks_update',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));

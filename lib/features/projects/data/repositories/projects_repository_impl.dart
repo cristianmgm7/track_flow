@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
-import 'package:trackflow/core/sync/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
@@ -41,22 +41,33 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       // 1. ALWAYS save locally first (ignore minor cache errors)
       await _localDataSource.cacheProject(projectDto);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addCreateOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addCreateOperation(
         entityType: 'project',
         entityId: project.id.value,
         data: projectDto.toMap(), // Use complete DTO data
         priority: SyncPriority.high,
       );
 
-      // 3. Trigger background sync (no condition check - coordinator handles it)
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        // ❌ CRITICAL: Failed to queue - this is a serious issue
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync (no condition check - coordinator handles it)
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'projects_create',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return Right(project);
     } catch (e) {
       // Only fail for critical storage errors (disk full, etc.)
@@ -72,22 +83,32 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       // 1. ALWAYS update locally first
       await _localDataSource.cacheProject(projectDto);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addUpdateOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
         entityType: 'project',
         entityId: project.id.value,
         data: projectDto.toMap(),
         priority: SyncPriority.medium,
       );
 
-      // 3. Trigger background sync
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'projects_update',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -100,21 +121,31 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       // 1. ALWAYS soft delete locally first
       await _localDataSource.removeCachedProject(projectId.value);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addDeleteOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addDeleteOperation(
         entityType: 'project',
         entityId: projectId.value,
         priority: SyncPriority.medium,
       );
 
-      // 3. Trigger background sync
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'projects_delete',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -187,13 +218,5 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
             DatabaseFailure('Local projects stream error: $error'),
           );
         });
-  }
-
-  // Helper method for fire-and-forget background operations
-  void unawaited(Future future) {
-    future.catchError((error) {
-      // Log error but don't propagate - this is background operation
-      print('Background sync trigger failed: $error');
-    });
   }
 }

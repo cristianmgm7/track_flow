@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
-import 'package:trackflow/core/sync/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
@@ -111,8 +111,8 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       // 1. ALWAYS save locally first (ignore minor cache errors)
       await _localDataSource.cacheComment(dto);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addCreateOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addCreateOperation(
         entityType: 'audio_comment',
         entityId: comment.id.value,
         data: {
@@ -126,14 +126,24 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         priority: SyncPriority.high,
       );
 
-      // 3. Trigger background sync (no condition check - coordinator handles it)
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync (no condition check - coordinator handles it)
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_comments_create',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -146,21 +156,31 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       // 1. ALWAYS soft delete locally first
       await _localDataSource.deleteCachedComment(commentId.value);
 
-      // 2. ALWAYS queue for background sync
-      await _pendingOperationsManager.addDeleteOperation(
+      // 2. Try to queue for background sync
+      final queueResult = await _pendingOperationsManager.addDeleteOperation(
         entityType: 'audio_comment',
         entityId: commentId.value,
         priority: SyncPriority.high,
       );
 
-      // 3. Trigger background sync
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger background sync
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_comments_delete',
         ),
       );
 
-      // 4. ALWAYS return success immediately
+      // 5. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
