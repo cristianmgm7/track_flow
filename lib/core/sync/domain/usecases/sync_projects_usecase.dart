@@ -1,213 +1,275 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/sync/domain/services/sync_metadata_manager.dart';
-import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
-import 'package:trackflow/core/session/domain/services/session_service.dart';
+import 'package:isar/isar.dart';
+import 'package:trackflow/core/session/data/session_storage.dart';
+import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
+import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
+import 'package:trackflow/features/projects/data/models/project_document.dart';
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
-/// Use case for synchronizing projects from remote to local cache
+/// 📋 SIMPLE PROJECTS SYNC USE CASE
 ///
-/// ✅ CLEAN ARCHITECTURE VERSION that follows industry best practices:
-/// - Only depends on domain abstractions (no datasources)
-/// - Uses intelligent sync decisions via SyncMetadataManager
-/// - Leverages complete IncrementalSyncService for all sync operations
-/// - Implements patterns used by Notion, Figma, Linear, and other offline-first apps
+/// Synchronizes projects from remote to local cache using a simple,
+/// non-destructive approach with smart change detection.
 ///
-/// Key improvements:
-/// ✅ No Clean Architecture violations
-/// ✅ Separation of concerns: use case only handles business logic
-/// ✅ Infrastructure concerns handled by services
-/// ✅ Supports both incremental and full sync modes
-/// ✅ Intelligent sync intervals to avoid excessive network usage
-/// ✅ Comprehensive error handling and fallback strategies
+/// STRATEGY (Option 2 - Smart Logic):
+/// 1. 📅 CHECK: Use SyncMetadata timestamps to determine if sync needed
+/// 2. 🌐 FETCH: Get all user projects using existing method
+/// 3. 🧠 SMART: Only update projects that actually changed
+/// 4. 💾 PRESERVE: Never clear cache until we have new data
+/// 5. ⚡ EFFICIENT: Skip sync if data is fresh (15 min interval)
 @lazySingleton
 class SyncProjectsUseCase {
-  final IncrementalSyncService<ProjectDTO> _incrementalSyncService;
-  final SyncMetadataManager _syncMetadataManager;
-  final SessionService _sessionService;
+  final ProjectRemoteDataSource _remote;
+  final ProjectsLocalDataSource _local;
+  final SessionStorage _sessionStorage;
+  final Isar _isar;
 
   SyncProjectsUseCase(
-    this._incrementalSyncService,
-    this._syncMetadataManager,
-    this._sessionService,
+    this._remote,
+    this._local,
+    this._sessionStorage,
+    this._isar,
   );
 
-  /// Execute projects synchronization with intelligent sync decisions
-  ///
-  /// This method implements the complete offline-first sync pattern:
-  /// 1. Validates user session
-  /// 2. Checks if sync is needed based on intervals
-  /// 3. Attempts incremental sync first (efficient)
-  /// 4. Falls back to full sync if needed
-  /// 5. Updates sync metadata on successful completion
-  /// 6. Preserves local data integrity on failures
-  Future<void> call({bool force = false}) async {
-    // 1. Get current user session
-    final sessionResult = await _sessionService.getCurrentSession();
-    final session = sessionResult.fold((failure) => null, (session) => session);
-
-    if (session?.currentUser?.id.value == null) {
+  /// 🚀 Execute projects synchronization with smart logic
+  /// Uses existing getUserProjects() method with intelligent change detection
+  Future<void> call() async {
+    final userId = await _sessionStorage.getUserId();
+    if (userId == null) {
+      AppLogger.warning(
+        'No user ID available - skipping projects sync',
+        tag: 'SyncProjectsUseCase',
+      );
       return;
     }
 
-    final userId = session!.currentUser!.id.value;
-
-    // 2. Check if sync is needed based on configured intervals
-    if (!force && !_syncMetadataManager.shouldSync('projects', userId)) {
+    // 1. 📅 Check if sync is needed based on interval
+    final shouldSync = await _shouldSyncProjects();
+    if (!shouldSync) {
+      AppLogger.sync(
+        'PROJECTS',
+        'Skipping sync - data is fresh (< 15 min)',
+        syncKey: userId,
+      );
       return;
     }
+
+    AppLogger.sync('PROJECTS', 'Starting smart projects sync', syncKey: userId);
+    final startTime = DateTime.now();
 
     try {
-      // 3. Determine sync strategy and execute
-      final lastSyncTime = _syncMetadataManager.getLastSyncTime(
-        'projects',
-        userId,
+      // 2. 🌐 Fetch all projects from remote (using existing method)
+      final projectsResult = await _remote.getUserProjects(userId);
+
+      await projectsResult.fold(
+        (failure) async {
+          // 🚨 Remote fetch failed - preserve local data
+          AppLogger.warning(
+            'Failed to fetch projects from remote: ${failure.message}',
+            tag: 'SyncProjectsUseCase',
+          );
+          // DON'T clear local cache - preserve existing data
+        },
+        (remoteProjects) async {
+          // ✅ Remote fetch succeeded - apply smart updates
+          AppLogger.sync(
+            'PROJECTS',
+            'Fetched ${remoteProjects.length} projects from remote',
+            syncKey: userId,
+          );
+
+          // 3. 🧠 Smart logic: only update what actually changed
+          final updateCount = await _updateChangedProjects(remoteProjects);
+
+          // 4. 📝 Update sync timestamp on success
+          await _updateSyncTimestamp();
+
+          final duration = DateTime.now().difference(startTime);
+          AppLogger.sync(
+            'PROJECTS',
+            'Smart sync completed - updated $updateCount projects',
+            syncKey: userId,
+            duration: duration.inMilliseconds,
+          );
+        },
       );
+    } catch (e) {
+      AppLogger.error(
+        'Unexpected error during projects sync: $e',
+        tag: 'SyncProjectsUseCase',
+        error: e,
+      );
+      // Don't rethrow - this is a background operation
+    }
+  }
 
-      if (lastSyncTime != null && !force) {
-        // Attempt incremental sync first
-        final incrementalResult = await _attemptIncrementalSync(
-          lastSyncTime,
-          userId,
-        );
+  /// 📅 Check if projects sync is needed based on timestamp interval
+  Future<bool> _shouldSyncProjects() async {
+    try {
+      // Get all projects and find the most recently synced one
+      final allProjects = await _isar.projectDocuments.where().findAll();
 
-        if (incrementalResult) {
-          // Incremental sync succeeded
-          _syncMetadataManager.updateLastSyncTime('projects', userId);
-          return;
+      DateTime? lastSyncTime;
+      if (allProjects.isNotEmpty) {
+        // Find the most recent sync time among all projects
+        for (final project in allProjects) {
+          final projectSyncTime = project.syncMetadata.lastSyncTime;
+          if (projectSyncTime != null) {
+            if (lastSyncTime == null || projectSyncTime.isAfter(lastSyncTime)) {
+              lastSyncTime = projectSyncTime;
+            }
+          }
         }
       }
 
-      // 4. Fallback to full sync
-      await _performFullSync(userId);
-      _syncMetadataManager.updateLastSyncTime('projects', userId);
-    } catch (e) {
-      // Don't update sync metadata on failure - ensures retry on next attempt
-      rethrow;
-    }
-  }
-
-  /// Attempt incremental synchronization
-  ///
-  /// Returns true if incremental sync succeeded, false if fallback needed.
-  /// This method implements the efficient sync pattern used by modern
-  /// offline-first applications.
-  Future<bool> _attemptIncrementalSync(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      final result = await _incrementalSyncService.performIncrementalSync(
-        lastSyncTime,
-        userId,
-      );
-
-      return result.fold(
-        (failure) {
-          // Incremental sync failed - will fallback to full sync
-          return false;
-        },
-        (syncResult) {
-          // Incremental sync succeeded
-          return true;
-        },
-      );
-    } catch (e) {
-      // Exception during incremental sync - fallback to full sync
-      return false;
-    }
-  }
-
-  /// Perform full synchronization
-  ///
-  /// This is the fallback method that replaces the entire local cache
-  /// with fresh data from remote. Used when:
-  /// - No previous sync exists
-  /// - Incremental sync fails
-  /// - Force flag is set
-  Future<void> _performFullSync(String userId) async {
-    final result = await _incrementalSyncService.performFullSync(userId);
-
-    result.fold(
-      (failure) => throw Exception('Full sync failed: ${failure.message}'),
-      (syncResult) {
-        // Full sync completed successfully
-        // SyncMetadataManager will be updated by the caller
-      },
-    );
-  }
-
-  /// Get sync statistics for monitoring and debugging
-  ///
-  /// Returns comprehensive information about sync status for the current user
-  Future<Map<String, dynamic>?> getSyncStatistics() async {
-    final sessionResult = await _sessionService.getCurrentSession();
-    return sessionResult.fold((failure) => null, (session) async {
-      final userId = session.currentUser?.id.value;
-      if (userId == null) return null;
-
-      // Combine metadata and service statistics
-      final metadataStats = _syncMetadataManager.getSyncStatistics(userId);
-      final serviceStatsResult = await _incrementalSyncService
-          .getSyncStatistics(userId);
-
-      final serviceStats = serviceStatsResult.fold(
-        (failure) => <String, dynamic>{},
-        (stats) => stats,
-      );
-
-      return {
-        'metadata': metadataStats,
-        'service': serviceStats,
-        'combinedAt': DateTime.now().toIso8601String(),
-      };
-    });
-  }
-
-  /// Force reset sync metadata (for testing/debugging)
-  ///
-  /// This will force the next sync to be a full sync regardless of intervals
-  Future<void> resetSyncMetadata() async {
-    final sessionResult = await _sessionService.getCurrentSession();
-    sessionResult.fold((failure) => null, (session) {
-      final userId = session.currentUser?.id.value;
-      if (userId != null) {
-        _syncMetadataManager.resetSyncTime('projects', userId);
+      if (lastSyncTime == null) {
+        // Never synced before - definitely need sync
+        return true;
       }
-    });
+
+      // Check if 15 minutes have passed since last sync
+      final now = DateTime.now();
+      final timeSinceSync = now.difference(lastSyncTime);
+
+      return timeSinceSync.inMinutes >= 15; // 15 minute interval
+    } catch (e) {
+      AppLogger.warning(
+        'Error checking sync timestamp: $e - defaulting to sync',
+        tag: 'SyncProjectsUseCase',
+      );
+      return true; // Default to sync on error
+    }
   }
 
-  /// Check if sync should be performed for current user
-  ///
-  /// Returns true if sync is needed based on intervals and metadata
-  Future<bool> shouldSync({bool force = false}) async {
-    if (force) return true;
+  /// 🧠 Smart update: only modify projects that actually changed
+  Future<int> _updateChangedProjects(List<ProjectDTO> remoteProjects) async {
+    int updateCount = 0;
 
-    final sessionResult = await _sessionService.getCurrentSession();
-    return sessionResult.fold((failure) => false, (session) {
-      final userId = session.currentUser?.id.value;
-      if (userId == null) return false;
+    for (final remoteProject in remoteProjects) {
+      try {
+        // Get local version if it exists
+        final localResult = await _local.getCachedProject(remoteProject.id);
+        final localProject = localResult.fold(
+          (failure) => null,
+          (project) => project,
+        );
 
-      return _syncMetadataManager.shouldSync('projects', userId);
-    });
+        // Check if update is needed
+        if (localProject == null ||
+            _hasProjectChanged(localProject, remoteProject)) {
+          // Update needed - create document with sync metadata
+          await _isar.writeTxn(() async {
+            final doc = ProjectDocument.fromRemoteDTO(
+              remoteProject,
+              version: 1,
+              lastModified: remoteProject.updatedAt ?? remoteProject.createdAt,
+            );
+            doc.syncMetadata.markAsSynced();
+            await _isar.projectDocuments.put(doc);
+          });
+
+          updateCount++;
+
+          AppLogger.database(
+            'Updated project: ${remoteProject.name}',
+            table: 'projects',
+          );
+        }
+      } catch (e) {
+        AppLogger.warning(
+          'Failed to update project ${remoteProject.name}: $e',
+          tag: 'SyncProjectsUseCase',
+        );
+        // Continue with other projects
+      }
+    }
+
+    return updateCount;
   }
 
-  /// Get last sync information for monitoring
-  Future<Map<String, dynamic>?> getLastSyncInfo() async {
-    final sessionResult = await _sessionService.getCurrentSession();
-    return sessionResult.fold((failure) => null, (session) {
-      final userId = session.currentUser?.id.value;
-      if (userId == null) return null;
+  /// 🔍 Check if remote project is different from local version
+  bool _hasProjectChanged(ProjectDTO local, ProjectDTO remote) {
+    // Compare key fields that indicate changes
+    return local.name != remote.name ||
+        local.description != remote.description ||
+        local.updatedAt != remote.updatedAt ||
+        !_listsEqual(local.collaboratorIds, remote.collaboratorIds);
+  }
 
-      final lastSync = _syncMetadataManager.getLastSyncTime('projects', userId);
-      final interval = _syncMetadataManager.getSyncInterval('projects');
-      final shouldSyncNow = _syncMetadataManager.shouldSync('projects', userId);
+  /// Helper to compare lists for equality
+  bool _listsEqual<T>(List<T> a, List<T> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  /// 📝 Update sync timestamp for projects
+  Future<void> _updateSyncTimestamp() async {
+    try {
+      // Update timestamp on any existing project (they all sync together)
+      final anyProject = await _isar.projectDocuments.where().findFirst();
+
+      if (anyProject != null) {
+        await _isar.writeTxn(() async {
+          anyProject.syncMetadata.markAsSynced();
+          await _isar.projectDocuments.put(anyProject);
+        });
+      }
+    } catch (e) {
+      AppLogger.warning(
+        'Failed to update sync timestamp: $e',
+        tag: 'SyncProjectsUseCase',
+      );
+    }
+  }
+
+  /// 📊 Get sync statistics for monitoring
+  Future<Map<String, dynamic>> getSyncStatistics() async {
+    try {
+      final userId = await _sessionStorage.getUserId();
+      if (userId == null) {
+        return {'error': 'No user ID available'};
+      }
+
+      final localResult = await _local.getAllProjects();
+      final localCount = localResult.fold(
+        (failure) => 0,
+        (projects) => projects.length,
+      );
+
+      // Get last sync time from any project
+      final allProjects = await _isar.projectDocuments.where().findAll();
+      DateTime? lastSync;
+
+      for (final project in allProjects) {
+        final projectSyncTime = project.syncMetadata.lastSyncTime;
+        if (projectSyncTime != null) {
+          if (lastSync == null || projectSyncTime.isAfter(lastSync)) {
+            lastSync = projectSyncTime;
+          }
+        }
+      }
+      final shouldSync = await _shouldSyncProjects();
 
       return {
-        'lastSyncTime': lastSync?.toIso8601String(),
-        'intervalMinutes': interval,
-        'shouldSync': shouldSyncNow,
         'userId': userId,
+        'localProjectsCount': localCount,
+        'lastSyncTime': lastSync?.toIso8601String(),
+        'shouldSync': shouldSync,
+        'minutesSinceLastSync':
+            lastSync != null
+                ? DateTime.now().difference(lastSync).inMinutes
+                : null,
+        'timestamp': DateTime.now().toIso8601String(),
       };
-    });
+    } catch (e) {
+      return {
+        'error': e.toString(),
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+    }
   }
 }
