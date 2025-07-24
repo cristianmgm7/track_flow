@@ -41,24 +41,44 @@ class PlayPlaylistUseCase {
     try {
       List<AudioTrack> trackList = [];
       if (playlistId != null) {
-        final playlist = await _playlistRepository.getPlaylistById(playlistId);
-        if (playlist == null) {
-          return Left(
-            PlaylistFailure('Playlist not found: [${playlistId.value}'),
-          );
+        final playlistResult = await _playlistRepository.getPlaylistById(playlistId);
+        
+        // Handle the Either result properly
+        final playlistError = playlistResult.fold(
+          (failure) => failure.message,
+          (playlist) {
+            if (playlist == null) {
+              return 'Playlist not found: ${playlistId.value}';
+            }
+            if (playlist.trackIds.isEmpty) {
+              return 'Playlist is empty: ${playlistId.value}';
+            }
+            
+            // Success case - store playlist for processing
+            return null; // null means no error
+          },
+        );
+        
+        if (playlistError != null) {
+          return Left(PlaylistFailure(playlistError));
         }
-        if (playlist.trackIds.isEmpty) {
-          return Left(
-            PlaylistFailure('Playlist is empty: ${playlistId.value}'),
-          );
-        }
-        for (final trackId in playlist.trackIds) {
-          final trackOrFailure = await _audioTrackRepository.getTrackById(
-            AudioTrackId.fromUniqueString(trackId),
-          );
-          trackOrFailure.fold((failure) {}, (track) {
-            trackList.add(track);
-          });
+        
+        // Extract playlist from Either
+        final playlist = playlistResult.fold(
+          (failure) => null,
+          (playlist) => playlist,
+        );
+        
+        if (playlist != null) {
+          // Load tracks from playlist
+          for (final trackId in playlist.trackIds) {
+            final trackOrFailure = await _audioTrackRepository.getTrackById(
+              AudioTrackId.fromUniqueString(trackId),
+            );
+            trackOrFailure.fold((failure) {}, (track) {
+              trackList.add(track);
+            });
+          }
         }
       } else if (tracks != null) {
         trackList = tracks;
