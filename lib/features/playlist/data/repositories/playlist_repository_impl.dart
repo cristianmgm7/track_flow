@@ -2,7 +2,6 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
@@ -10,26 +9,19 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import '../../domain/entities/playlist.dart';
 import '../../domain/repositories/playlist_repository.dart';
 import '../datasources/playlist_local_data_source.dart';
-import '../datasources/playlist_remote_data_source.dart';
 import '../models/playlist_dto.dart';
 
 @LazySingleton(as: PlaylistRepository)
 class PlaylistRepositoryImpl implements PlaylistRepository {
   final PlaylistLocalDataSource _localDataSource;
-  final PlaylistRemoteDataSource _remoteDataSource;
-  final NetworkStateManager _networkStateManager;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
   PlaylistRepositoryImpl({
     required PlaylistLocalDataSource localDataSource,
-    required PlaylistRemoteDataSource remoteDataSource,
-    required NetworkStateManager networkStateManager,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
   }) : _localDataSource = localDataSource,
-       _remoteDataSource = remoteDataSource,
-       _networkStateManager = networkStateManager,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
        _pendingOperationsManager = pendingOperationsManager;
 

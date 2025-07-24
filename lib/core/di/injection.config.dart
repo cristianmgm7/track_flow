@@ -668,8 +668,6 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i121.PlaylistRepository>(
         () => _i122.PlaylistRepositoryImpl(
               localDataSource: gh<_i37.PlaylistLocalDataSource>(),
-              remoteDataSource: gh<_i38.PlaylistRemoteDataSource>(),
-              networkStateManager: gh<_i29.NetworkStateManager>(),
               backgroundSyncCoordinator: gh<_i120.BackgroundSyncCoordinator>(),
               pendingOperationsManager: gh<_i71.PendingOperationsManager>(),
             ));
@@ -730,9 +728,7 @@ extension GetItInjectableX on _i1.GetIt {
             ));
     gh.lazySingleton<_i135.AudioTrackRepository>(
         () => _i136.AudioTrackRepositoryImpl(
-              gh<_i60.AudioTrackRemoteDataSource>(),
               gh<_i59.AudioTrackLocalDataSource>(),
-              gh<_i29.NetworkStateManager>(),
               gh<_i120.BackgroundSyncCoordinator>(),
               gh<_i71.PendingOperationsManager>(),
             ));

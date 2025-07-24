@@ -132,6 +132,7 @@ class ProjectIncrementalSyncService
   /// 4. Return unified result
   ///
   /// Inspired by Notion's CDC pipeline and Figma's local-first approach.
+  @override
   Future<Either<Failure, IncrementalSyncResult<ProjectDTO>>>
   performIncrementalSync(DateTime lastSyncTime, String userId) async {
     try {
@@ -215,6 +216,7 @@ class ProjectIncrementalSyncService
   ///
   /// Fallback method for when incremental sync fails or
   /// when no previous sync timestamp exists.
+  @override
   Future<Either<Failure, IncrementalSyncResult<ProjectDTO>>> performFullSync(
     String userId,
   ) async {
@@ -278,6 +280,7 @@ class ProjectIncrementalSyncService
   }
 
   /// Get sync statistics for monitoring
+  @override
   Future<Either<Failure, Map<String, dynamic>>> getSyncStatistics(
     String userId,
   ) async {

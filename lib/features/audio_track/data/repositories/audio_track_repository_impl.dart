@@ -2,9 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
-import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
@@ -15,16 +13,12 @@ import 'dart:io';
 
 @LazySingleton(as: AudioTrackRepository)
 class AudioTrackRepositoryImpl implements AudioTrackRepository {
-  final AudioTrackRemoteDataSource remoteDataSource;
   final AudioTrackLocalDataSource localDataSource;
-  final NetworkStateManager _networkStateManager;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
   AudioTrackRepositoryImpl(
-    this.remoteDataSource,
     this.localDataSource,
-    this._networkStateManager,
     this._backgroundSyncCoordinator,
     this._pendingOperationsManager,
   );

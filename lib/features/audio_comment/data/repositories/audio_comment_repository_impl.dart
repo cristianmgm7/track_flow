@@ -14,9 +14,7 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 
 @LazySingleton(as: AudioCommentRepository)
 class AudioCommentRepositoryImpl implements AudioCommentRepository {
-  final AudioCommentRemoteDataSource _remoteDataSource;
   final AudioCommentLocalDataSource _localDataSource;
-  final NetworkStateManager _networkStateManager;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
@@ -26,9 +24,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     required NetworkStateManager networkStateManager,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
-  }) : _remoteDataSource = remoteDataSource,
-       _localDataSource = localDataSource,
-       _networkStateManager = networkStateManager,
+  }) : _localDataSource = localDataSource,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
        _pendingOperationsManager = pendingOperationsManager;
 
