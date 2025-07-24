@@ -14,7 +14,6 @@ class AudioTrackDTO {
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
-  final DateTime? lastSyncTime;
   final DateTime? lastModified;
 
   const AudioTrackDTO({
@@ -28,7 +27,6 @@ class AudioTrackDTO {
     required this.extension,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
-    this.lastSyncTime,
     this.lastModified,
   });
 
@@ -49,10 +47,6 @@ class AudioTrackDTO {
       extension: json['extension'] as String,
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
-      lastSyncTime:
-          json['lastSyncTime'] is Timestamp
-              ? (json['lastSyncTime'] as Timestamp).toDate()
-              : DateTime.tryParse(json['lastSyncTime'] as String? ?? ''),
       lastModified:
           json['lastModified'] is Timestamp
               ? (json['lastModified'] as Timestamp).toDate()
@@ -72,7 +66,6 @@ class AudioTrackDTO {
       'extension': extension,
       // ⭐ NEW: Include sync metadata in JSON
       'version': version,
-      'lastSyncTime': lastSyncTime?.toIso8601String(),
       'lastModified': lastModified?.toIso8601String(),
     };
   }
@@ -106,7 +99,6 @@ class AudioTrackDTO {
       // ⭐ NEW: Include sync metadata for new tracks
       version: 1, // Initial version for new tracks
       lastModified: track.createdAt, // Use createdAt as initial lastModified
-      lastSyncTime: null, // Will be set when synced
     );
   }
 }

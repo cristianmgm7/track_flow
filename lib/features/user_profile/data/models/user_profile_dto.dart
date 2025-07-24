@@ -13,7 +13,6 @@ class UserProfileDTO {
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
-  final DateTime? lastSyncTime;
   final DateTime? lastModified;
 
   UserProfileDTO({
@@ -26,7 +25,6 @@ class UserProfileDTO {
     required this.creativeRole,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
-    this.lastSyncTime,
     this.lastModified,
   });
 
@@ -46,7 +44,6 @@ class UserProfileDTO {
       lastModified:
           userProfile.updatedAt ??
           userProfile.createdAt, // Use updatedAt or createdAt
-      lastSyncTime: null, // Will be set when synced
     );
   }
 
@@ -87,10 +84,6 @@ class UserProfileDTO {
       creativeRole: _parseCreativeRole(json['creativeRole'] as String?),
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
-      lastSyncTime:
-          json['lastSyncTime'] != null
-              ? DateTime.tryParse(json['lastSyncTime'] as String)
-              : null,
       lastModified:
           json['lastModified'] != null
               ? DateTime.tryParse(json['lastModified'] as String)
@@ -109,7 +102,6 @@ class UserProfileDTO {
       'creativeRole': creativeRole.name,
       // ⭐ NEW: Include sync metadata in JSON
       'version': version,
-      'lastSyncTime': lastSyncTime?.toIso8601String(),
       'lastModified': lastModified?.toIso8601String(),
     };
   }
@@ -123,7 +115,6 @@ class UserProfileDTO {
     DateTime? updatedAt,
     CreativeRole? creativeRole,
     int? version,
-    DateTime? lastSyncTime,
     DateTime? lastModified,
   }) {
     return UserProfileDTO(
@@ -136,7 +127,6 @@ class UserProfileDTO {
       creativeRole: creativeRole ?? this.creativeRole,
       // ⭐ NEW: Include sync metadata in copyWith
       version: version ?? this.version,
-      lastSyncTime: lastSyncTime ?? this.lastSyncTime,
       lastModified: lastModified ?? this.lastModified,
     );
   }

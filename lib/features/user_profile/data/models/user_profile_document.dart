@@ -103,7 +103,6 @@ class UserProfileDocument {
       creativeRole: creativeRole,
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata?.version ?? 1,
-      lastSyncTime: syncMetadata?.lastSyncTime,
       lastModified: syncMetadata?.lastModified ?? updatedAt ?? createdAt,
     );
   }

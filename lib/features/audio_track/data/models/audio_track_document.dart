@@ -98,7 +98,6 @@ class AudioTrackDocument {
       extension: extension.isNotEmpty ? extension : '',
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata?.version ?? 1,
-      lastSyncTime: syncMetadata?.lastSyncTime,
       lastModified: syncMetadata?.lastModified ?? createdAt,
     );
   }

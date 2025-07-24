@@ -100,7 +100,6 @@ class AudioCommentDocument {
       createdAt: createdAt.toIso8601String(),
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata?.version ?? 1,
-      lastSyncTime: syncMetadata?.lastSyncTime,
       lastModified: syncMetadata?.lastModified ?? createdAt,
     );
   }

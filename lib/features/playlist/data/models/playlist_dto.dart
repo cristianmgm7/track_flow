@@ -9,7 +9,6 @@ class PlaylistDto {
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
-  final DateTime? lastSyncTime;
   final DateTime? lastModified;
 
   PlaylistDto({
@@ -19,7 +18,6 @@ class PlaylistDto {
     required this.playlistSource,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
-    this.lastSyncTime,
     this.lastModified,
   });
 
@@ -30,7 +28,6 @@ class PlaylistDto {
     'playlistSource': playlistSource,
     // ⭐ NEW: Include sync metadata in JSON
     'version': version,
-    'lastSyncTime': lastSyncTime?.toIso8601String(),
     'lastModified': lastModified?.toIso8601String(),
   };
 
@@ -42,10 +39,6 @@ class PlaylistDto {
       playlistSource: json['playlistSource'] as String,
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
-      lastSyncTime:
-          json['lastSyncTime'] != null
-              ? DateTime.tryParse(json['lastSyncTime'] as String)
-              : null,
       lastModified:
           json['lastModified'] != null
               ? DateTime.tryParse(json['lastModified'] as String)
@@ -71,7 +64,6 @@ class PlaylistDto {
       // ⭐ NEW: Include sync metadata for new playlists
       version: 1, // Initial version for new playlists
       lastModified: DateTime.now(), // Current time as initial lastModified
-      lastSyncTime: null, // Will be set when synced
     );
   }
 

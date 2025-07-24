@@ -85,7 +85,6 @@ class ProjectDocument {
       isDeleted: isDeleted,
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata.version,
-      lastSyncTime: syncMetadata.lastSyncTime,
       lastModified: syncMetadata.lastModified,
     );
   }

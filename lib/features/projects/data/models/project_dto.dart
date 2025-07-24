@@ -20,7 +20,6 @@ class ProjectDTO {
     this.isDeleted = false,
     // ⭐ NEW: Sync metadata fields for proper offline-first sync
     this.version = 1,
-    this.lastSyncTime,
     this.lastModified,
   });
 
@@ -36,7 +35,6 @@ class ProjectDTO {
 
   // ⭐ NEW: Sync metadata fields (now included in remote storage)
   final int version;
-  final DateTime? lastSyncTime;
   final DateTime? lastModified;
 
   static const String collection = 'projects';
@@ -65,7 +63,6 @@ class ProjectDTO {
     // ⭐ NEW: Include sync metadata for proper offline-first sync
     version: 1, // Initial version for new projects
     lastModified: project.updatedAt ?? project.createdAt,
-    lastSyncTime: null, // Will be set when synced
   );
 
   Project toDomain() => Project(
@@ -107,7 +104,6 @@ class ProjectDTO {
     'isDeleted': isDeleted,
     // ⭐ NEW: Include sync metadata in JSON
     'version': version,
-    'lastSyncTime': lastSyncTime?.toIso8601String(),
     'lastModified': lastModified?.toIso8601String(),
   };
 
@@ -138,10 +134,6 @@ class ProjectDTO {
     isDeleted: json['isDeleted'] as bool? ?? false,
     // ⭐ NEW: Parse sync metadata from JSON
     version: json['version'] as int? ?? 1,
-    lastSyncTime:
-        json['lastSyncTime'] is Timestamp
-            ? (json['lastSyncTime'] as Timestamp).toDate()
-            : DateTime.tryParse(json['lastSyncTime'] as String? ?? ''),
     lastModified:
         json['lastModified'] is Timestamp
             ? (json['lastModified'] as Timestamp).toDate()
@@ -165,13 +157,6 @@ class ProjectDTO {
             : updatedAtRaw is DateTime
             ? updatedAtRaw
             : DateTime.tryParse(updatedAtRaw.toString());
-    final lastSyncTimeRaw = data['lastSyncTime'];
-    final lastSyncTime =
-        lastSyncTimeRaw is Timestamp
-            ? lastSyncTimeRaw.toDate()
-            : lastSyncTimeRaw is DateTime
-            ? lastSyncTimeRaw
-            : DateTime.tryParse(lastSyncTimeRaw?.toString() ?? '');
     final lastModifiedRaw = data['lastModified'];
     final lastModified =
         lastModifiedRaw is Timestamp
@@ -199,7 +184,6 @@ class ProjectDTO {
       isDeleted: data['isDeleted'] as bool? ?? false,
       // ⭐ NEW: Parse sync metadata from Firestore
       version: data['version'] as int? ?? 1,
-      lastSyncTime: lastSyncTime,
       lastModified: lastModified,
     );
   }
@@ -218,8 +202,6 @@ class ProjectDTO {
       'isDeleted': isDeleted,
       // ⭐ NEW: Include sync metadata in Firestore (CRITICAL for offline-first)
       'version': version,
-      'lastSyncTime':
-          lastSyncTime != null ? Timestamp.fromDate(lastSyncTime!) : null,
       'lastModified':
           lastModified != null ? Timestamp.fromDate(lastModified!) : null,
     };
@@ -237,7 +219,6 @@ class ProjectDTO {
     List<String>? collaboratorIds,
     bool? isDeleted,
     int? version,
-    DateTime? lastSyncTime,
     DateTime? lastModified,
   }) {
     return ProjectDTO(
@@ -252,7 +233,6 @@ class ProjectDTO {
       isDeleted: isDeleted ?? this.isDeleted,
       // ⭐ NEW: Include sync metadata in copyWith
       version: version ?? this.version,
-      lastSyncTime: lastSyncTime ?? this.lastSyncTime,
       lastModified: lastModified ?? this.lastModified,
     );
   }
@@ -273,13 +253,6 @@ class ProjectDTO {
             : updatedAtRaw is DateTime
             ? updatedAtRaw
             : DateTime.tryParse(updatedAtRaw.toString());
-    final lastSyncTimeRaw = data['lastSyncTime'];
-    final lastSyncTime =
-        lastSyncTimeRaw is Timestamp
-            ? lastSyncTimeRaw.toDate()
-            : lastSyncTimeRaw is DateTime
-            ? lastSyncTimeRaw
-            : DateTime.tryParse(lastSyncTimeRaw?.toString() ?? '');
     final lastModifiedRaw = data['lastModified'];
     final lastModified =
         lastModifiedRaw is Timestamp
@@ -307,7 +280,6 @@ class ProjectDTO {
       isDeleted: data['isDeleted'] as bool? ?? false,
       // ⭐ NEW: Parse sync metadata from map
       version: data['version'] as int? ?? 1,
-      lastSyncTime: lastSyncTime,
       lastModified: lastModified,
     );
   }
@@ -326,7 +298,6 @@ class ProjectDTO {
       'isDeleted': isDeleted,
       // ⭐ NEW: Include sync metadata in map
       'version': version,
-      'lastSyncTime': lastSyncTime?.toIso8601String(),
       'lastModified': lastModified?.toIso8601String(),
     };
   }
@@ -346,7 +317,6 @@ class ProjectDTO {
         other.isDeleted == isDeleted &&
         // ⭐ NEW: Include sync metadata in equality
         other.version == version &&
-        other.lastSyncTime == lastSyncTime &&
         other.lastModified == lastModified;
   }
 
@@ -363,6 +333,5 @@ class ProjectDTO {
       isDeleted.hashCode ^
       // ⭐ NEW: Include sync metadata in hashCode
       version.hashCode ^
-      lastSyncTime.hashCode ^
       lastModified.hashCode;
 }

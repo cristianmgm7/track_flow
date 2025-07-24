@@ -77,7 +77,6 @@ class PlaylistDocument {
       playlistSource: playlistSource,
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata?.version ?? 1,
-      lastSyncTime: syncMetadata?.lastSyncTime,
       lastModified: syncMetadata?.lastModified ?? DateTime.now(),
     );
   }

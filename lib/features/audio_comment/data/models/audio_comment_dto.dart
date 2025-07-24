@@ -12,7 +12,6 @@ class AudioCommentDTO {
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
-  final DateTime? lastSyncTime;
   final DateTime? lastModified;
 
   AudioCommentDTO({
@@ -25,7 +24,6 @@ class AudioCommentDTO {
     required this.createdAt,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
-    this.lastSyncTime,
     this.lastModified,
   });
 
@@ -44,7 +42,6 @@ class AudioCommentDTO {
       version: 1, // Initial version for new comments
       lastModified:
           audioComment.createdAt, // Use createdAt as initial lastModified
-      lastSyncTime: null, // Will be set when synced
     );
   }
 
@@ -71,7 +68,6 @@ class AudioCommentDTO {
       'createdAt': createdAt,
       // ⭐ NEW: Include sync metadata in JSON
       'version': version,
-      'lastSyncTime': lastSyncTime?.toIso8601String(),
       'lastModified': lastModified?.toIso8601String(),
     };
   }
@@ -87,10 +83,6 @@ class AudioCommentDTO {
       createdAt: json['createdAt'] as String,
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
-      lastSyncTime:
-          json['lastSyncTime'] != null
-              ? DateTime.tryParse(json['lastSyncTime'] as String)
-              : null,
       lastModified:
           json['lastModified'] != null
               ? DateTime.tryParse(json['lastModified'] as String)
