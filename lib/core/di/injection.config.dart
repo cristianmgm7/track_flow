@@ -900,6 +900,8 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i168.AppBootstrap>(() => _i168.AppBootstrap(
           sessionService: gh<_i167.SessionService>(),
           performanceCollector: gh<_i32.PerformanceMetricsCollector>(),
+          dynamicLinkService: gh<_i12.DynamicLinkService>(),
+          databaseHealthMonitor: gh<_i63.DatabaseHealthMonitor>(),
         ));
     gh.factory<_i169.AppFlowBloc>(() => _i169.AppFlowBloc(
           appBootstrap: gh<_i168.AppBootstrap>(),

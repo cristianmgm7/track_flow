@@ -1,6 +1,4 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/core/services/database_health_monitor.dart';
 import 'package:trackflow/core/services/performance_metrics_collector.dart';
@@ -17,17 +15,23 @@ import 'package:trackflow/core/session/domain/entities/session_state.dart';
 class AppBootstrap {
   final SessionService _sessionService;
   final PerformanceMetricsCollector _performanceCollector;
+  final DynamicLinkService _dynamicLinkService;
+  final DatabaseHealthMonitor _databaseHealthMonitor;
 
   AppBootstrap({
     required SessionService sessionService,
     required PerformanceMetricsCollector performanceCollector,
+    required DynamicLinkService dynamicLinkService,
+    required DatabaseHealthMonitor databaseHealthMonitor,
   }) : _sessionService = sessionService,
-       _performanceCollector = performanceCollector;
+       _performanceCollector = performanceCollector,
+       _dynamicLinkService = dynamicLinkService,
+       _databaseHealthMonitor = databaseHealthMonitor;
 
   /// Initialize the app with minimal, essential services only
   ///
   /// This method performs only the critical initialization steps:
-  /// 1. Firebase + DI setup
+  /// 1. Firebase + DI setup (already done in main.dart)
   /// 2. Simple auth check
   /// 3. Returns initial state immediately
   ///
@@ -40,29 +44,7 @@ class AppBootstrap {
         tag: 'APP_BOOTSTRAP',
       );
 
-      // Phase 1: Essential Firebase and DI initialization
-      await _performanceCollector.timeOperation('firebase_init', () async {
-        AppLogger.info('Initializing Firebase...', tag: 'APP_BOOTSTRAP');
-        await Firebase.initializeApp();
-        AppLogger.info(
-          'Firebase initialized successfully',
-          tag: 'APP_BOOTSTRAP',
-        );
-      });
-
-      await _performanceCollector.timeOperation(
-        'dependency_injection',
-        () async {
-          AppLogger.info('Configuring dependencies...', tag: 'APP_BOOTSTRAP');
-          await configureDependencies();
-          AppLogger.info(
-            'Dependencies configured successfully',
-            tag: 'APP_BOOTSTRAP',
-          );
-        },
-      );
-
-      // Phase 2: Essential services initialization
+      // Phase 1: Essential services initialization (DI already configured)
       await _performanceCollector.timeOperation('essential_services', () async {
         AppLogger.info(
           'Initializing essential services...',
@@ -70,12 +52,12 @@ class AppBootstrap {
         );
 
         // Initialize dynamic link service
-        await DynamicLinkService().init();
+        await _dynamicLinkService.init();
 
         // Quick database health check (non-blocking if possible)
         try {
-          final healthMonitor = sl<DatabaseHealthMonitor>();
-          final healthResult = await healthMonitor.performStartupHealthCheck();
+          final healthResult =
+              await _databaseHealthMonitor.performStartupHealthCheck();
 
           if (!healthResult.isHealthy) {
             AppLogger.warning(
@@ -95,7 +77,7 @@ class AppBootstrap {
         AppLogger.info('Essential services initialized', tag: 'APP_BOOTSTRAP');
       });
 
-      // Phase 3: Simple auth check (no complex coordination)
+      // Phase 2: Simple auth check (no complex coordination)
       final authState = await _performanceCollector.timeOperation(
         'auth_check',
         () async {
