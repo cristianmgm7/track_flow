@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
@@ -13,12 +13,12 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
   final UserProfileRemoteDataSource _remoteDataSource;
   final UserProfileLocalDataSource _localDataSource;
-  final NetworkInfo _networkInfo;
+  final NetworkStateManager _networkStateManager;
 
   UserProfileCacheRepositoryImpl(
     this._remoteDataSource,
     this._localDataSource,
-    this._networkInfo,
+    this._networkStateManager,
   );
 
   @override
@@ -55,7 +55,7 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
   Future<Either<Failure, List<UserProfile>>> getUserProfilesByIds(
     List<UserId> userIds,
   ) async {
-    final hasConnected = await _networkInfo.isConnected;
+    final hasConnected = await _networkStateManager.isConnected;
     if (!hasConnected) {
       return Left(DatabaseFailure('No internet connection'));
     }
@@ -82,7 +82,7 @@ class UserProfileCacheRepositoryImpl implements UserProfileCacheRepository {
   @override
   Future<Either<Failure, Unit>> preloadProfiles(List<UserId> userIds) async {
     try {
-      final hasConnected = await _networkInfo.isConnected;
+      final hasConnected = await _networkStateManager.isConnected;
       if (!hasConnected) {
         return Left(DatabaseFailure('No internet connection'));
       }

@@ -1,7 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/network/network_info.dart';
+import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/session/data/session_storage.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart' as domain;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
@@ -13,15 +13,15 @@ import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
   final SessionStorage _sessionStorage;
-  final NetworkInfo _networkInfo;
+  final NetworkStateManager _networkStateManager;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
     required SessionStorage sessionStorage,
-    required NetworkInfo networkInfo,
+    required NetworkStateManager networkStateManager,
   }) : _remote = remote,
        _sessionStorage = sessionStorage,
-       _networkInfo = networkInfo;
+       _networkStateManager = networkStateManager;
 
   @override
   Future<Either<Failure, UserId?>> getSignedInUserId() async {
@@ -53,7 +53,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String password,
   ) async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
         await _sessionStorage.setString('offline_email', email);
         await _sessionStorage.setBool('has_credentials', true);
@@ -82,7 +82,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String password,
   ) async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
         await _sessionStorage.setString('offline_email', email);
         await _sessionStorage.setBool('has_credentials', true);
@@ -108,7 +108,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, domain.User>> signInWithGoogle() async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
         return Left(
           AuthenticationFailure(
@@ -137,7 +137,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, Unit>> signOut() async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
         await _sessionStorage.setBool('has_credentials', false);
         await _sessionStorage.remove('offline_email');
@@ -155,7 +155,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, bool>> isLoggedIn() async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
         final hasCredentials =
             await _sessionStorage.getBool('has_credentials') ?? false;
@@ -179,7 +179,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, domain.User?>> getCurrentUser() async {
     try {
-      final isConnected = await _networkInfo.isConnected;
+      final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
         // In offline mode, try to get user from session storage
         final userId = await _sessionStorage.getUserId();
@@ -188,7 +188,7 @@ class AuthRepositoryImpl implements AuthRepository {
           return Right(
             domain.User(
               id: UserId.fromUniqueString(userId),
-              email: offlineEmail ?? '',
+              email: offlineEmail,
             ),
           );
         }

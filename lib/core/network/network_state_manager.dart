@@ -12,21 +12,18 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class NetworkStateManager {
   final InternetConnectionChecker _connectionChecker;
   final Connectivity _connectivity;
-  
+
   // Stream controller for connectivity changes
-  final StreamController<bool> _connectivityController = 
+  final StreamController<bool> _connectivityController =
       StreamController<bool>.broadcast();
-  
+
   // Cache the last known state to avoid redundant checks
   bool? _lastKnownState;
-  
+
   // Subscription to connectivity changes
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
-  
-  NetworkStateManager(
-    this._connectionChecker,
-    this._connectivity,
-  ) {
+
+  NetworkStateManager(this._connectionChecker, this._connectivity) {
     _initializeConnectivityMonitoring();
   }
 
@@ -77,7 +74,7 @@ class NetworkStateManager {
   /// Check if we have a "good" connection suitable for sync operations
   Future<bool> hasGoodConnection() async {
     if (!await isConnected) return false;
-    
+
     // For now, any internet connection is considered "good"
     // Future enhancement: could check connection speed/quality
     return true;
@@ -86,12 +83,12 @@ class NetworkStateManager {
   /// Initialize connectivity monitoring
   void _initializeConnectivityMonitoring() {
     // Listen to connectivity changes from the device
-    _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
-      (ConnectivityResult result) async {
-        // When connectivity changes, verify actual internet access
-        await checkConnectivity();
-      },
-    );
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      ConnectivityResult result,
+    ) async {
+      // When connectivity changes, verify actual internet access
+      await checkConnectivity();
+    });
 
     // Perform initial connectivity check
     checkConnectivity();
@@ -110,20 +107,4 @@ class NetworkStateManager {
     _connectivitySubscription?.cancel();
     _connectivityController.close();
   }
-}
-
-/// Legacy NetworkInfo interface compatibility
-/// Provides backward compatibility while migrating to NetworkStateManager
-abstract class NetworkInfo {
-  Future<bool> get isConnected;
-}
-
-@LazySingleton(as: NetworkInfo)
-class NetworkInfoImpl implements NetworkInfo {
-  final NetworkStateManager _networkStateManager;
-
-  NetworkInfoImpl(this._networkStateManager);
-
-  @override
-  Future<bool> get isConnected => _networkStateManager.isConnected;
 }
