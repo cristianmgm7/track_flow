@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/session/data/session_storage.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';

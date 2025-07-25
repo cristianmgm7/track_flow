@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session/data/session_storage.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 

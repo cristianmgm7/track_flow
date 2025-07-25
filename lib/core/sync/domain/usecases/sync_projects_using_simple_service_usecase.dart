@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/session/data/session_storage.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 

@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/session/data/session_storage.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/features/audio_comment/domain/services/project_comment_service.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 
