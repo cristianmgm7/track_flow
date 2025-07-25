@@ -4,6 +4,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 class ProfileCompletenessInfo {
   final bool isComplete;
@@ -37,6 +38,10 @@ class CheckProfileCompletenessUseCase {
     String? userId,
   ]) async {
     if (userId == null) {
+      AppLogger.warning(
+        'getDetailedCompleteness called with null userId',
+        tag: 'PROFILE_COMPLETENESS',
+      );
       return Right(
         ProfileCompletenessInfo(
           isComplete: false,
@@ -46,40 +51,81 @@ class CheckProfileCompletenessUseCase {
       );
     }
 
+    AppLogger.info(
+      'Checking profile completeness for user: $userId',
+      tag: 'PROFILE_COMPLETENESS',
+    );
+
     final userIdObj = UserId.fromUniqueString(userId);
     final result = await _repository.getUserProfile(userIdObj);
 
-    return result.fold((failure) => Left(failure), (profile) {
-      if (profile == null) {
-        return Right(
-          ProfileCompletenessInfo(
-            isComplete: false,
-            profile: null,
-            reason: 'Profile not found',
-          ),
-        );
-      }
+    return result.fold(
+      (failure) {
+        // Handle the case where profile doesn't exist (normal for new users)
+        if (failure.message.contains('not found') ||
+            failure.message.contains('Profile not found')) {
+          AppLogger.info(
+            'Profile not found for user $userId - this is normal for new users',
+            tag: 'PROFILE_COMPLETENESS',
+          );
+          return Right(
+            ProfileCompletenessInfo(
+              isComplete: false,
+              profile: null,
+              reason: 'Profile not found - user needs to create profile',
+            ),
+          );
+        }
 
-      final isComplete = _isProfileComplete(profile);
+        // For other failures, return the failure
+        AppLogger.error(
+          'Profile completeness check failed: ${failure.message}',
+          tag: 'PROFILE_COMPLETENESS',
+          error: failure,
+        );
+        return Left(failure);
+      },
+      (profile) {
+        if (profile == null) {
+          AppLogger.info(
+            'Profile is null for user $userId - user needs to create profile',
+            tag: 'PROFILE_COMPLETENESS',
+          );
+          return Right(
+            ProfileCompletenessInfo(
+              isComplete: false,
+              profile: null,
+              reason: 'Profile not found - user needs to create profile',
+            ),
+          );
+        }
 
-      if (isComplete) {
-        return Right(
-          ProfileCompletenessInfo(
-            isComplete: true,
-            profile: profile,
-            reason: 'Profile is complete',
-          ),
+        final isComplete = _isProfileComplete(profile);
+
+        AppLogger.info(
+          'Profile completeness result: $isComplete for user $userId',
+          tag: 'PROFILE_COMPLETENESS',
         );
-      } else {
-        return Right(
-          ProfileCompletenessInfo(
-            isComplete: false,
-            profile: profile,
-            reason: 'Profile is incomplete',
-          ),
-        );
-      }
-    });
+
+        if (isComplete) {
+          return Right(
+            ProfileCompletenessInfo(
+              isComplete: true,
+              profile: profile,
+              reason: 'Profile is complete',
+            ),
+          );
+        } else {
+          return Right(
+            ProfileCompletenessInfo(
+              isComplete: false,
+              profile: profile,
+              reason: 'Profile is incomplete - missing required fields',
+            ),
+          );
+        }
+      },
+    );
   }
 
   bool _isProfileComplete(UserProfile profile) {
@@ -89,6 +135,17 @@ class CheckProfileCompletenessUseCase {
 
     // Re-enabled email requirement now that auth state is fixed
     final isComplete = hasName && hasEmail && hasAvatar;
+
+    AppLogger.debug(
+      'Profile completeness check: name=$hasName, email=$hasEmail, avatar=$hasAvatar, complete=$isComplete',
+      tag: 'PROFILE_COMPLETENESS',
+    );
+
+    // Add detailed logging to see actual values
+    AppLogger.info(
+      'Profile completeness details - name: "${profile.name}", email: "${profile.email}", avatar: "${profile.avatarUrl}"',
+      tag: 'PROFILE_COMPLETENESS',
+    );
 
     return isComplete;
   }

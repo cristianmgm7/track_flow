@@ -8,6 +8,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 enum AuthStep { welcome, form }
 
@@ -75,7 +76,17 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        AppLogger.info(
+          'Auth screen received state: ${state.runtimeType}',
+          tag: 'AUTH_SCREEN',
+        );
+
         if (state is AuthError) {
+          AppLogger.warning(
+            'Auth error received: ${state.message}',
+            tag: 'AUTH_SCREEN',
+          );
+
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -87,6 +98,11 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
 
         // Handle successful authentication
         if (state is AuthAuthenticated) {
+          AppLogger.info(
+            'Auth successful! User: ${state.user.email} (ID: ${state.user.id})',
+            tag: 'AUTH_SCREEN',
+          );
+
           // Clear any existing error messages
           ScaffoldMessenger.of(context).clearSnackBars();
 
@@ -108,6 +124,11 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
           _passwordController.clear();
 
           // Trigger AppFlowBloc for proper state coordination
+          AppLogger.info(
+            'Triggering AppFlowBloc.checkAppFlow() after successful auth',
+            tag: 'AUTH_SCREEN',
+          );
+
           context.read<AppFlowBloc>().add(CheckAppFlow());
         }
       },

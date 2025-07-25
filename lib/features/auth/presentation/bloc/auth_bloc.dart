@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 import 'package:trackflow/features/auth/domain/entities/email.dart';
@@ -28,19 +29,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('🔄 [AuthBloc] _onAuthSignInRequested() started');
+    AppLogger.info(
+      'Starting sign in process for email: ${event.email}',
+      tag: 'AUTH_BLOC',
+    );
+
     emit(AuthLoading());
+
     final result = await signIn(
       EmailAddress(event.email),
       PasswordValue(event.password),
     );
+
     result.fold(
       (failure) {
-        print('❌ [AuthBloc] Sign in failed: ${failure.message}');
+        AppLogger.error(
+          'Sign in failed: ${failure.message}',
+          tag: 'AUTH_BLOC',
+          error: failure,
+        );
         emit(AuthError(failure.message));
       },
       (user) {
-        print('🔄 [AuthBloc] Sign in successful: ${user.email}');
+        AppLogger.info(
+          'Sign in successful for user: ${user.email} (ID: ${user.id})',
+          tag: 'AUTH_BLOC',
+        );
         emit(AuthAuthenticated(user));
       },
     );
@@ -50,19 +64,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignUpRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('🔄 [AuthBloc] _onAuthSignUpRequested() started');
+    AppLogger.info(
+      'Starting sign up process for email: ${event.email}',
+      tag: 'AUTH_BLOC',
+    );
+
     emit(AuthLoading());
+
     final result = await signUp(
       EmailAddress(event.email),
       PasswordValue(event.password),
     );
+
     result.fold(
       (failure) {
-        print('❌ [AuthBloc] Sign up failed: ${failure.message}');
+        AppLogger.error(
+          'Sign up failed: ${failure.message}',
+          tag: 'AUTH_BLOC',
+          error: failure,
+        );
         emit(AuthError(failure.message));
       },
       (user) {
-        print('🔄 [AuthBloc] Sign up successful: ${user.email}');
+        AppLogger.info(
+          'Sign up successful for new user: ${user.email} (ID: ${user.id})',
+          tag: 'AUTH_BLOC',
+        );
         emit(AuthAuthenticated(user));
         // For new users, ensure onboarding is marked as incomplete
         // This will be handled by the router logic
@@ -70,21 +97,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
-
   Future<void> _onAuthGoogleSignInRequested(
     AuthGoogleSignInRequested event,
     Emitter<AuthState> emit,
   ) async {
-    print('🔄 [AuthBloc] _onAuthGoogleSignInRequested() started');
+    AppLogger.info('Starting Google sign in process', tag: 'AUTH_BLOC');
+
     emit(AuthLoading());
+
     final result = await googleSignIn();
+
     result.fold(
       (failure) {
-        print('❌ [AuthBloc] Google sign in failed: ${failure.message}');
+        AppLogger.error(
+          'Google sign in failed: ${failure.message}',
+          tag: 'AUTH_BLOC',
+          error: failure,
+        );
         emit(AuthError(failure.message));
       },
       (user) {
-        print('🔄 [AuthBloc] Google sign in successful: ${user.email}');
+        AppLogger.info(
+          'Google sign in successful for user: ${user.email} (ID: ${user.id})',
+          tag: 'AUTH_BLOC',
+        );
         emit(AuthAuthenticated(user));
       },
     );

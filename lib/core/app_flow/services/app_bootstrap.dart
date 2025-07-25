@@ -5,6 +5,7 @@ import 'package:trackflow/core/services/performance_metrics_collector.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/session/domain/services/session_service.dart';
 import 'package:trackflow/core/session/domain/entities/session_state.dart';
+import 'package:trackflow/core/session/domain/entities/user_session.dart';
 
 /// Simple app bootstrap that replaces complex initialization coordination
 ///
@@ -36,7 +37,7 @@ class AppBootstrap {
   /// 3. Returns initial state immediately
   ///
   /// Sync and other non-critical operations are deferred to background.
-  Future<AppInitialState> initialize() async {
+  Future<AppBootstrapResult> initialize() async {
     try {
       _performanceCollector.startAppInitialization();
       AppLogger.info(
@@ -78,7 +79,7 @@ class AppBootstrap {
       });
 
       // Phase 2: Simple auth check (no complex coordination)
-      final authState = await _performanceCollector.timeOperation(
+      final authResult = await _performanceCollector.timeOperation(
         'auth_check',
         () async {
           AppLogger.info(
@@ -94,7 +95,10 @@ class AppBootstrap {
                 'Auth check failed: ${failure.message}',
                 tag: 'APP_BOOTSTRAP',
               );
-              return AppInitialState.auth;
+              return AppBootstrapResult(
+                state: AppInitialState.auth,
+                userSession: null,
+              );
             },
             (session) {
               AppLogger.info(
@@ -104,13 +108,25 @@ class AppBootstrap {
 
               switch (session.state) {
                 case SessionState.unauthenticated:
-                  return AppInitialState.auth;
+                  return AppBootstrapResult(
+                    state: AppInitialState.auth,
+                    userSession: null,
+                  );
                 case SessionState.authenticated:
-                  return AppInitialState.setup;
+                  return AppBootstrapResult(
+                    state: AppInitialState.setup,
+                    userSession: session,
+                  );
                 case SessionState.ready:
-                  return AppInitialState.dashboard;
+                  return AppBootstrapResult(
+                    state: AppInitialState.dashboard,
+                    userSession: session,
+                  );
                 case SessionState.error:
-                  return AppInitialState.error;
+                  return AppBootstrapResult(
+                    state: AppInitialState.error,
+                    userSession: null,
+                  );
               }
             },
           );
@@ -126,7 +142,7 @@ class AppBootstrap {
         tag: 'APP_BOOTSTRAP',
       );
 
-      return authState;
+      return authResult;
     } catch (error, stackTrace) {
       AppLogger.error(
         'App bootstrap failed: $error',
@@ -136,7 +152,10 @@ class AppBootstrap {
       );
 
       _performanceCollector.completeAppInitialization();
-      return AppInitialState.error;
+      return AppBootstrapResult(
+        state: AppInitialState.error,
+        userSession: null,
+      );
     }
   }
 
@@ -188,4 +207,12 @@ extension AppInitialStateExtension on AppInitialState {
         return 'Error';
     }
   }
+}
+
+/// Result of app bootstrap containing both state and session info
+class AppBootstrapResult {
+  final AppInitialState state;
+  final UserSession? userSession;
+
+  const AppBootstrapResult({required this.state, this.userSession});
 }

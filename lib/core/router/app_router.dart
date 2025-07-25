@@ -30,6 +30,7 @@ import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -50,17 +51,40 @@ class AppRouter {
       redirect: (context, state) {
         final flowState = appFlowBloc.state;
 
+        AppLogger.info(
+          'AppRouter: Redirect called - flowState: ${flowState.runtimeType}, currentLocation: ${state.matchedLocation}',
+          tag: 'APP_ROUTER',
+        );
+
         // Special handling for loading state to trigger initial check
         if (flowState is AppFlowLoading &&
             state.matchedLocation == AppRoutes.splash) {
+          AppLogger.info(
+            'AppRouter: Triggering CheckAppFlow from splash screen',
+            tag: 'APP_ROUTER',
+          );
           appFlowBloc.add(CheckAppFlow());
         }
 
         // Use NavigationService for clean routing logic
-        return navigationService.getRouteForFlowState(
+        final redirectRoute = navigationService.getRouteForFlowState(
           flowState,
           state.matchedLocation,
         );
+
+        if (redirectRoute != null) {
+          AppLogger.info(
+            'AppRouter: Redirecting from ${state.matchedLocation} to $redirectRoute',
+            tag: 'APP_ROUTER',
+          );
+        } else {
+          AppLogger.info(
+            'AppRouter: No redirect needed, staying on ${state.matchedLocation}',
+            tag: 'APP_ROUTER',
+          );
+        }
+
+        return redirectRoute;
       },
       routes: [
         GoRoute(

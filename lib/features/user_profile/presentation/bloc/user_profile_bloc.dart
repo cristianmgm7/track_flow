@@ -8,6 +8,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/get_current_user_data_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
@@ -16,6 +17,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
   final CheckProfileCompletenessUseCase checkProfileCompletenessUseCase;
+  final GetCurrentUserDataUseCase getCurrentUserDataUseCase;
 
   StreamSubscription<Either<Failure, UserProfile?>>? _profileSubscription;
 
@@ -23,12 +25,14 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     required this.updateUserProfileUseCase,
     required this.watchUserProfileUseCase,
     required this.checkProfileCompletenessUseCase,
+    required this.getCurrentUserDataUseCase,
   }) : super(UserProfileInitial()) {
     on<WatchUserProfile>(_onWatchUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
     on<CreateUserProfile>(_onCreateUserProfile);
     on<ClearUserProfile>(_onClearUserProfile);
     on<CheckProfileCompleteness>(_onCheckProfileCompleteness);
+    on<GetCurrentUserData>(_onGetCurrentUserData);
   }
 
   Future<void> _onWatchUserProfile(
@@ -77,7 +81,9 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     emit(UserProfileLoading());
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold((failure) => emit(UserProfileError()), (profile) {
-      add(WatchUserProfile());
+      // FIXED: Emit UserProfileSaved instead of calling WatchUserProfile
+      // This prevents the infinite loop and properly notifies the UI
+      emit(UserProfileSaved());
     });
   }
 
@@ -92,7 +98,9 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         emit(UserProfileError());
       },
       (profile) {
-        add(WatchUserProfile());
+        // FIXED: Emit UserProfileSaved instead of calling WatchUserProfile
+        // This prevents the infinite loop and properly notifies the UI
+        emit(UserProfileSaved());
       },
     );
   }
@@ -125,6 +133,30 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     } else {
       emit(ProfileIncomplete(reason: 'Profile is not complete'));
     }
+  }
+
+  Future<void> _onGetCurrentUserData(
+    GetCurrentUserData event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    emit(UserProfileLoading());
+
+    final result = await getCurrentUserDataUseCase.call();
+
+    result.fold(
+      (failure) {
+        emit(UserDataError(failure.message));
+      },
+      (userData) {
+        if (userData.userId != null && userData.email != null) {
+          emit(
+            UserDataLoaded(userId: userData.userId!, email: userData.email!),
+          );
+        } else {
+          emit(UserDataError('User data not available'));
+        }
+      },
+    );
   }
 
   @override

@@ -27,3 +27,5 @@ class CheckProfileCompleteness extends UserProfileEvent {
   final String? userId;
   CheckProfileCompleteness({this.userId});
 }
+
+class GetCurrentUserData extends UserProfileEvent {}

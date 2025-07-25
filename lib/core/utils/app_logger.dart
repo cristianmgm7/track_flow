@@ -1,10 +1,13 @@
+import 'package:flutter/foundation.dart';
+
 /// Simple logging abstraction for the app
 ///
 /// This provides a consistent logging interface that can be easily
 /// replaced with a proper logging framework (like logger, firebase_crashlytics, etc.)
 /// in the future without changing code throughout the app.
 class AppLogger {
-  static const bool _isDebugMode = true; // TODO: Use kDebugMode from foundation
+  // Use Flutter's built-in debug mode detection
+  static bool get _isDebugMode => kDebugMode;
 
   /// Log debug information (only in debug mode)
   static void debug(String message, {String? tag}) {
@@ -102,6 +105,42 @@ class AppLogger {
       final tableInfo = table != null ? ' [$table]' : '';
       final countInfo = count != null ? ' ($count items)' : '';
       print('💾 DATABASE$tableInfo: $message$countInfo');
+    }
+  }
+
+  /// Log structured data for better debugging
+  static void structured(
+    String message, {
+    String? tag,
+    Map<String, dynamic>? data,
+  }) {
+    if (_isDebugMode) {
+      final tagPrefix = tag != null ? '[$tag] ' : '';
+      print('📊 STRUCTURED: $tagPrefix$message');
+      if (data != null) {
+        data.forEach((key, value) {
+          print('   $key: $value');
+        });
+      }
+    }
+  }
+
+  /// Log performance metrics
+  static void performance(
+    String operation, {
+    String? tag,
+    int? durationMs,
+    Map<String, dynamic>? metadata,
+  }) {
+    if (_isDebugMode) {
+      final tagPrefix = tag != null ? '[$tag] ' : '';
+      final durationInfo = durationMs != null ? ' (${durationMs}ms)' : '';
+      print('⚡ PERFORMANCE$durationInfo: $tagPrefix$operation');
+      if (metadata != null) {
+        metadata.forEach((key, value) {
+          print('   $key: $value');
+        });
+      }
     }
   }
 }

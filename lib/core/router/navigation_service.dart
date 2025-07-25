@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Centralized navigation service that handles routing logic based on app flow state
 /// Removes business logic from router redirect function for cleaner architecture
@@ -8,24 +9,121 @@ import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 class NavigationService {
   /// Determines the appropriate route based on the current app flow state
   /// Returns null if no redirect is needed (stay on current route)
-  String? getRouteForFlowState(AppFlowState flowState, String currentLocation) {
-    if (flowState is AppFlowUnauthenticated) {
-      return _handleUnauthenticatedState(currentLocation);
-    } else if (flowState is AppFlowAuthenticated) {
-      return _handleAuthenticatedState(flowState, currentLocation);
-    } else if (flowState is AppFlowReady) {
-      return _handleReadyState(currentLocation);
-    } else if (flowState is AppFlowLoading) {
-      return _handleLoadingState(currentLocation);
-    } else if (flowState is AppFlowError) {
-      return _handleErrorState(flowState, currentLocation);
-    }
+  String? getRouteForFlowState(AppFlowState state, String currentLocation) {
+    AppLogger.info(
+      'NavigationService: Evaluating route for state $state at location: $currentLocation',
+      tag: 'NAVIGATION',
+    );
 
-    return null;
+    switch (state.runtimeType) {
+      case AppFlowLoading:
+        AppLogger.info(
+          'NavigationService: Handling loading state at: $currentLocation',
+          tag: 'NAVIGATION',
+        );
+        if (currentLocation != '/') {
+          AppLogger.info(
+            'NavigationService: Redirecting from protected route during loading to splash',
+            tag: 'NAVIGATION',
+          );
+          return '/';
+        }
+        return null;
+
+      case AppFlowUnauthenticated:
+        AppLogger.info(
+          'NavigationService: Handling unauthenticated state at: $currentLocation',
+          tag: 'NAVIGATION',
+        );
+        if (currentLocation != AppRoutes.auth) {
+          AppLogger.info(
+            'NavigationService: Redirecting to auth',
+            tag: 'NAVIGATION',
+          );
+          return AppRoutes.auth;
+        }
+        return null;
+
+      case AppFlowAuthenticated:
+        final authenticatedState = state as AppFlowAuthenticated;
+        AppLogger.info(
+          'NavigationService: Handling authenticated state - needsOnboarding: ${authenticatedState.needsOnboarding}, needsProfileSetup: ${authenticatedState.needsProfileSetup} at: $currentLocation',
+          tag: 'NAVIGATION',
+        );
+
+        if (authenticatedState.needsOnboarding) {
+          if (currentLocation != AppRoutes.onboarding) {
+            AppLogger.info(
+              'NavigationService: Redirecting to onboarding (needs onboarding)',
+              tag: 'NAVIGATION',
+            );
+            return AppRoutes.onboarding;
+          }
+        } else if (authenticatedState.needsProfileSetup) {
+          if (currentLocation != AppRoutes.profileCreation) {
+            AppLogger.info(
+              'NavigationService: Redirecting to profile setup (needs profile setup)',
+              tag: 'NAVIGATION',
+            );
+            return AppRoutes.profileCreation;
+          }
+        } else {
+          // User is fully set up, go to dashboard
+          if (currentLocation != AppRoutes.dashboard) {
+            AppLogger.info(
+              'NavigationService: Redirecting to dashboard (fully set up)',
+              tag: 'NAVIGATION',
+            );
+            return AppRoutes.dashboard;
+          }
+        }
+        return null;
+
+      case AppFlowReady:
+        AppLogger.info(
+          'NavigationService: Handling ready state at: $currentLocation',
+          tag: 'NAVIGATION',
+        );
+        if (currentLocation != AppRoutes.dashboard) {
+          AppLogger.info(
+            'NavigationService: Redirecting to dashboard',
+            tag: 'NAVIGATION',
+          );
+          return AppRoutes.dashboard;
+        }
+        return null;
+
+      case AppFlowError:
+        final errorState = state as AppFlowError;
+        AppLogger.error(
+          'NavigationService: Handling error state: ${errorState.message} at: $currentLocation',
+          tag: 'NAVIGATION',
+        );
+        if (currentLocation != '/error') {
+          AppLogger.info(
+            'NavigationService: Redirecting to error screen',
+            tag: 'NAVIGATION',
+          );
+          return '/error';
+        }
+        return null;
+
+      default:
+        AppLogger.warning(
+          'NavigationService: Unknown state type: ${state.runtimeType}',
+          tag: 'NAVIGATION',
+        );
+        return null;
+    }
   }
 
   /// Handle routing for unauthenticated users
   String? _handleUnauthenticatedState(String currentLocation) {
+    AppLogger.info(
+      'NavigationService: Handling unauthenticated state at: $currentLocation',
+      tag: 'NAVIGATION',
+    );
+
     // Redirect authenticated routes to auth screen
     final protectedRoutes = [
       AppRoutes.splash,
@@ -37,9 +135,17 @@ class NavigationService {
     ];
 
     if (protectedRoutes.contains(currentLocation)) {
+      AppLogger.info(
+        'NavigationService: Redirecting from protected route $currentLocation to auth',
+        tag: 'NAVIGATION',
+      );
       return AppRoutes.auth;
     }
 
+    AppLogger.info(
+      'NavigationService: Staying on current route (not protected): $currentLocation',
+      tag: 'NAVIGATION',
+    );
     return null; // Stay on current route
   }
 
@@ -48,57 +154,120 @@ class NavigationService {
     AppFlowAuthenticated state,
     String currentLocation,
   ) {
-    // Priority: onboarding first, then profile setup
+    AppLogger.info(
+      'NavigationService: Handling authenticated state - needsOnboarding: ${state.needsOnboarding}, needsProfileSetup: ${state.needsProfileSetup} at: $currentLocation',
+      tag: 'NAVIGATION',
+    );
+
+    // If user needs onboarding, redirect to onboarding
     if (state.needsOnboarding) {
-      return AppRoutes.onboarding;
-    } else if (state.needsProfileSetup) {
-      return AppRoutes.profileCreation;
+      if (currentLocation != AppRoutes.onboarding) {
+        AppLogger.info(
+          'NavigationService: Redirecting to onboarding (needs onboarding)',
+          tag: 'NAVIGATION',
+        );
+        return AppRoutes.onboarding;
+      }
+      return null; // Already on onboarding
     }
 
-    // User is authenticated and setup is complete, navigate to dashboard
-    final setupRoutes = [
-      AppRoutes.splash,
-      AppRoutes.onboarding,
-      AppRoutes.auth,
-      AppRoutes.profileCreation,
-    ];
+    // If user needs profile setup, redirect to profile creation
+    if (state.needsProfileSetup) {
+      if (currentLocation != AppRoutes.profileCreation) {
+        AppLogger.info(
+          'NavigationService: Redirecting to profile creation (needs profile setup)',
+          tag: 'NAVIGATION',
+        );
+        return AppRoutes.profileCreation;
+      }
+      return null; // Already on profile creation
+    }
 
-    if (setupRoutes.contains(currentLocation)) {
+    // User is authenticated and complete, redirect to dashboard
+    if (currentLocation != AppRoutes.dashboard) {
+      AppLogger.info(
+        'NavigationService: Redirecting to dashboard (authenticated and complete)',
+        tag: 'NAVIGATION',
+      );
       return AppRoutes.dashboard;
     }
 
-    return null; // Stay on current route
+    return null; // Already on dashboard
   }
 
-  /// Handle routing for fully ready users
+  /// Handle routing for ready users
   String? _handleReadyState(String currentLocation) {
-    final setupRoutes = [
-      AppRoutes.splash,
-      AppRoutes.onboarding,
-      AppRoutes.auth,
-      AppRoutes.profileCreation,
+    AppLogger.info(
+      'NavigationService: Handling ready state at: $currentLocation',
+      tag: 'NAVIGATION',
+    );
+
+    // Ready users should be on dashboard or projects
+    final allowedRoutes = [
+      AppRoutes.dashboard,
+      AppRoutes.projects,
+      AppRoutes.settings,
     ];
 
-    if (setupRoutes.contains(currentLocation)) {
+    if (!allowedRoutes.contains(currentLocation)) {
+      AppLogger.info(
+        'NavigationService: Redirecting ready user to dashboard from: $currentLocation',
+        tag: 'NAVIGATION',
+      );
       return AppRoutes.dashboard;
+    }
+
+    AppLogger.info(
+      'NavigationService: Ready user staying on current route: $currentLocation',
+      tag: 'NAVIGATION',
+    );
+    return null; // Stay on current route
+  }
+
+  /// Handle routing for loading state
+  String? _handleLoadingState(String currentLocation) {
+    AppLogger.info(
+      'NavigationService: Handling loading state at: $currentLocation',
+      tag: 'NAVIGATION',
+    );
+
+    // During loading, stay on current route unless it's a protected route
+    final protectedRoutes = [
+      AppRoutes.onboarding,
+      AppRoutes.profileCreation,
+      AppRoutes.dashboard,
+      AppRoutes.projects,
+      AppRoutes.settings,
+    ];
+
+    if (protectedRoutes.contains(currentLocation)) {
+      AppLogger.info(
+        'NavigationService: Redirecting from protected route during loading to splash',
+        tag: 'NAVIGATION',
+      );
+      return AppRoutes.splash;
     }
 
     return null; // Stay on current route
   }
 
-  /// Handle routing during loading states
-  String? _handleLoadingState(String currentLocation) {
-    // Trigger flow check if on splash screen
-    // Note: This will be handled by the router's redirect function
-
-    return null; // Stay on current route while loading
-  }
-
-  /// Handle routing for error states
+  /// Handle routing for error state
   String? _handleErrorState(AppFlowError state, String currentLocation) {
-    // Could redirect to error page in the future
-    // For now, stay on current route to allow error display
-    return null;
+    AppLogger.error(
+      'NavigationService: Handling error state: ${state.message} at: $currentLocation',
+      tag: 'NAVIGATION',
+    );
+
+    // On error, redirect to auth screen
+    if (currentLocation != AppRoutes.auth) {
+      AppLogger.info(
+        'NavigationService: Redirecting to auth due to error',
+        tag: 'NAVIGATION',
+      );
+      return AppRoutes.auth;
+    }
+
+    return null; // Already on auth screen
   }
 
   /// Check if a route requires authentication

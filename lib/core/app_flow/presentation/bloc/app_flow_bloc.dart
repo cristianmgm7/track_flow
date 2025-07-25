@@ -6,6 +6,7 @@ import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/session/domain/entities/user_session.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
@@ -28,7 +29,13 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     CheckAppFlow event,
     Emitter<AppFlowState> emit,
   ) async {
-    if (_isCheckingFlow) return; // Prevent multiple simultaneous checks
+    if (_isCheckingFlow) {
+      AppLogger.info(
+        'App flow check already in progress, skipping...',
+        tag: 'APP_FLOW_BLOC',
+      );
+      return; // Prevent multiple simultaneous checks
+    }
 
     _isCheckingFlow = true;
 
@@ -42,21 +49,34 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       );
 
       // Use AppBootstrap for simple, direct initialization
-      final initialState = await _appBootstrap.initialize();
+      final bootstrapResult = await _appBootstrap.initialize();
+
+      AppLogger.info(
+        'AppBootstrap result: ${bootstrapResult.state.displayName}',
+        tag: 'APP_FLOW_BLOC',
+      );
 
       // Map AppInitialState directly to AppFlowState
-      final blocState = _mapInitialStateToBlocState(initialState);
+      final blocState = _mapInitialStateToBlocState(
+        bootstrapResult.state,
+        userSession: bootstrapResult.userSession,
+      );
+
+      AppLogger.info(
+        'Mapped to AppFlowState: $blocState',
+        tag: 'APP_FLOW_BLOC',
+      );
 
       // Emit the state immediately for navigation
       emit(blocState);
 
       // Trigger background sync if user is ready (non-blocking)
-      if (initialState == AppInitialState.dashboard) {
+      if (bootstrapResult.state == AppInitialState.dashboard) {
         _triggerBackgroundSync();
       }
 
       AppLogger.info(
-        'App flow check completed: ${initialState.displayName}',
+        'App flow check completed: ${bootstrapResult.state.displayName}',
         tag: 'APP_FLOW_BLOC',
       );
     } catch (e) {
@@ -86,17 +106,42 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   }
 
   /// Maps AppInitialState directly to AppFlowState (no complex mapping)
-  AppFlowState _mapInitialStateToBlocState(AppInitialState initialState) {
+  AppFlowState _mapInitialStateToBlocState(
+    AppInitialState initialState, {
+    UserSession? userSession,
+  }) {
+    AppLogger.info(
+      'Mapping AppInitialState: $initialState, UserSession: ${userSession?.state}',
+      tag: 'APP_FLOW_BLOC',
+    );
+
     switch (initialState) {
       case AppInitialState.splash:
         return AppFlowLoading();
       case AppInitialState.auth:
         return AppFlowUnauthenticated();
       case AppInitialState.setup:
-        return AppFlowAuthenticated(
-          needsOnboarding: true,
-          needsProfileSetup: true,
-        );
+        // Use actual onboarding/profile flags from session
+        if (userSession != null) {
+          AppLogger.info(
+            'User session details - needsOnboarding: ${userSession.needsOnboarding}, needsProfileSetup: ${userSession.needsProfileSetup}',
+            tag: 'APP_FLOW_BLOC',
+          );
+          return AppFlowAuthenticated(
+            needsOnboarding: userSession.needsOnboarding,
+            needsProfileSetup: userSession.needsProfileSetup,
+          );
+        } else {
+          // Fallback for cases where session is not available
+          AppLogger.warning(
+            'No user session available, using fallback values',
+            tag: 'APP_FLOW_BLOC',
+          );
+          return AppFlowAuthenticated(
+            needsOnboarding: true,
+            needsProfileSetup: true,
+          );
+        }
       case AppInitialState.dashboard:
         return AppFlowReady();
       case AppInitialState.error:

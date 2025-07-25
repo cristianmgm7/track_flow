@@ -6,6 +6,7 @@ import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_event
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,10 +19,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    AppLogger.info(
+      'OnboardingScreen: initState called',
+      tag: 'ONBOARDING_SCREEN',
+    );
+
     // Check onboarding status when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final onboardingBloc = context.read<OnboardingBloc>();
+      AppLogger.info(
+        'OnboardingScreen: Checking onboarding status, current state: ${onboardingBloc.state.runtimeType}',
+        tag: 'ONBOARDING_SCREEN',
+      );
+
       if (onboardingBloc.state is OnboardingInitial) {
+        AppLogger.info(
+          'OnboardingScreen: Triggering CheckOnboardingStatus',
+          tag: 'ONBOARDING_SCREEN',
+        );
         onboardingBloc.add(CheckOnboardingStatus());
       }
     });
@@ -31,11 +46,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return BlocListener<OnboardingBloc, OnboardingState>(
       listener: (context, state) {
+        AppLogger.info(
+          'OnboardingScreen: Received state: ${state.runtimeType}',
+          tag: 'ONBOARDING_SCREEN',
+        );
+
         if (state is OnboardingCompleted) {
+          AppLogger.info(
+            'OnboardingScreen: Onboarding completed, triggering AppFlowBloc.checkAppFlow()',
+            tag: 'ONBOARDING_SCREEN',
+          );
           // Notify AppFlowBloc that onboarding is completed
           // This will trigger a re-evaluation of the app flow
           context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is OnboardingError) {
+          AppLogger.error(
+            'OnboardingScreen: Onboarding error: ${state.message}',
+            tag: 'ONBOARDING_SCREEN',
+          );
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
@@ -43,70 +71,90 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       },
       child: BlocBuilder<OnboardingBloc, OnboardingState>(
         builder: (context, state) {
+          AppLogger.info(
+            'OnboardingScreen: Building with state: ${state.runtimeType}',
+            tag: 'ONBOARDING_SCREEN',
+          );
+
           if (state is OnboardingLoading) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
           }
 
-          final List<PageViewModel> pages = [
+          if (state is OnboardingError) {
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error: ${state.message}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        AppLogger.info(
+                          'OnboardingScreen: Retrying onboarding check',
+                          tag: 'ONBOARDING_SCREEN',
+                        );
+                        context.read<OnboardingBloc>().add(
+                          CheckOnboardingStatus(),
+                        );
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // Default onboarding content
+          final pages = [
             PageViewModel(
               title: "Welcome to TrackFlow",
-              body:
-                  "Now that you have your account, let's explore what you can do with TrackFlow - the ultimate platform for music collaboration.",
-              image: const Icon(
-                Icons.music_note,
-                size: 120,
-                color: Colors.blue,
-              ),
-              decoration: const PageDecoration(
-                titleTextStyle: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                bodyTextStyle: TextStyle(fontSize: 18),
-              ),
+              body: "Your collaborative audio workspace",
+              image: const Icon(Icons.music_note, size: 100),
             ),
             PageViewModel(
-              title: "Collaborate Seamlessly",
-              body:
-                  "Work together with your team in real-time, share files, and track project progress with ease.",
-              image: const Icon(Icons.group, size: 120, color: Colors.blue),
-              decoration: const PageDecoration(
-                titleTextStyle: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                bodyTextStyle: TextStyle(fontSize: 18),
-              ),
+              title: "Collaborate",
+              body: "Work together with your team on audio projects",
+              image: const Icon(Icons.group, size: 100),
             ),
             PageViewModel(
-              title: "Stay Organized",
-              body:
-                  "Keep all your projects, files, and communications in one place. Never lose track of your music again.",
-              image: const Icon(Icons.folder, size: 120, color: Colors.blue),
-              decoration: const PageDecoration(
-                titleTextStyle: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                bodyTextStyle: TextStyle(fontSize: 18),
-              ),
+              title: "Organize",
+              body: "Keep your audio files organized and accessible",
+              image: const Icon(Icons.folder, size: 100),
             ),
           ];
 
           return IntroductionScreen(
             pages: pages,
-            onDone:
-                () => context.read<OnboardingBloc>().add(
-                  MarkOnboardingCompleted(),
-                ),
+            onDone: () {
+              AppLogger.info(
+                'OnboardingScreen: "Get Started" button pressed, triggering MarkOnboardingCompleted',
+                tag: 'ONBOARDING_SCREEN',
+              );
+              context.read<OnboardingBloc>().add(MarkOnboardingCompleted());
+            },
             showSkipButton: true,
             skip: const Text("Skip"),
-            onSkip:
-                () => context.read<OnboardingBloc>().add(
-                  MarkOnboardingCompleted(),
-                ),
+            onSkip: () {
+              AppLogger.info(
+                'OnboardingScreen: "Skip" button pressed, triggering MarkOnboardingCompleted',
+                tag: 'ONBOARDING_SCREEN',
+              );
+              context.read<OnboardingBloc>().add(MarkOnboardingCompleted());
+            },
             next: const Icon(Icons.arrow_forward),
             done: const Text(
               "Get Started",

@@ -14,7 +14,7 @@ class UserProfileLoaded extends UserProfileState {
   final UserProfile profile;
   final bool isSyncing;
   final double? syncProgress;
-  
+
   UserProfileLoaded({
     required this.profile,
     this.isSyncing = false,
@@ -47,7 +47,7 @@ class ProfileComplete extends UserProfileState {
   final UserProfile profile;
   final bool isSyncing;
   final double? syncProgress;
-  
+
   ProfileComplete({
     required this.profile,
     this.isSyncing = false,
@@ -77,4 +77,23 @@ class ProfileIncomplete extends UserProfileState {
 
   @override
   List<Object?> get props => [profile, reason];
+}
+
+class UserDataLoaded extends UserProfileState {
+  final String userId;
+  final String email;
+
+  UserDataLoaded({required this.userId, required this.email});
+
+  @override
+  List<Object?> get props => [userId, email];
+}
+
+class UserDataError extends UserProfileState {
+  final String message;
+
+  UserDataError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

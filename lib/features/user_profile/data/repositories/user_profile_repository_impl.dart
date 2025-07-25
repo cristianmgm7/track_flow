@@ -12,6 +12,7 @@ import 'package:trackflow/features/user_profile/data/datasources/user_profile_re
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
@@ -65,36 +66,37 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       final dto = UserProfileDTO.fromDomain(profile);
       await _localDataSource.cacheUserProfile(dto);
 
-      // 2. Try to queue for background sync
-      final queueResult = await _pendingOperationsManager.addUpdateOperation(
-        entityType: 'user_profile',
-        entityId: profile.id.value,
-        data: {
-          'name': profile.name,
-          'creativeRole': profile.creativeRole?.name ?? 'unknown',
-          'avatarUrl': profile.avatarUrl,
-        },
-        priority: SyncPriority.medium,
-      );
-
-      // 3. Handle queue failure
-      if (queueResult.isLeft()) {
-        final failure = queueResult.fold((l) => l, (r) => null);
-        return Left(
-          DatabaseFailure(
-            'Failed to queue sync operation: ${failure?.message}',
-          ),
+      // 2. TEMPORARY FIX: Direct sync instead of background queue
+      // This avoids the infinite loop issue with the sync system
+      try {
+        final isConnected = await _networkStateManager.isConnected;
+        if (isConnected) {
+          final remoteResult = await _remoteDataSource.updateProfile(dto);
+          remoteResult.fold(
+            (failure) {
+              AppLogger.warning(
+                'Failed to sync profile to remote: ${failure.message}',
+                tag: 'UserProfileRepository',
+              );
+              // Don't fail the operation - local save was successful
+            },
+            (_) {
+              AppLogger.info(
+                'Profile synced to remote successfully',
+                tag: 'UserProfileRepository',
+              );
+            },
+          );
+        }
+      } catch (e) {
+        AppLogger.warning(
+          'Background sync failed, but local save was successful: $e',
+          tag: 'UserProfileRepository',
         );
+        // Don't fail the operation - local save was successful
       }
 
-      // 4. Trigger background sync if connected
-      if (await _networkStateManager.isConnected) {
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'user_profile_update',
-        );
-      }
-
-      return Right(unit); // ✅ SUCCESS after successful queue
+      return Right(unit); // ✅ SUCCESS after local save
     } catch (e) {
       return Left(DatabaseFailure('Failed to update user profile: $e'));
     }
@@ -103,16 +105,10 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId) async* {
     try {
-      // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
+      // CACHE-ASIDE PATTERN: Return local data immediately
+      // TEMPORARY FIX: Disabled background sync to avoid infinite loop
       await for (final dto in _localDataSource.watchUserProfile(userId.value)) {
-        // Trigger background sync if connected (non-blocking)
-        if (await _networkStateManager.isConnected) {
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'user_profile_${userId.value}',
-          );
-        }
-
-        // Return local data immediately
+        // Return local data immediately without triggering background sync
         yield Right(dto?.toDomain());
       }
     } catch (e) {
@@ -163,12 +159,8 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       final localProfile = await localStream.first;
 
       if (localProfile != null) {
-        // Profile exists locally, trigger background sync to verify remote state
-        if (await _networkStateManager.isConnected) {
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'profile_exists_${userId.value}',
-          );
-        }
+        // Profile exists locally
+        // TEMPORARY FIX: Disabled background sync to avoid infinite loop
         return Right(true);
       }
 

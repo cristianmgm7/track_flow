@@ -4,7 +4,6 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app/my_app.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app/app_error_widget.dart';
-import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
 
 void main() async {
   try {
@@ -20,13 +19,9 @@ void main() async {
     await configureDependencies();
     AppLogger.info('Dependencies configured successfully', tag: 'MAIN');
 
-    // Phase 3: Now we can safely use AppBootstrap with injected dependencies
-    final bootstrap = sl<AppBootstrap>();
-    final initialState = await bootstrap.initialize();
-
-    // Log the initialization result for debugging
+    // Phase 3: Let AppFlowBloc handle app state initialization
     AppLogger.info(
-      'App initialized with state: ${initialState.displayName}',
+      'Starting app - AppFlowBloc will handle state initialization',
       tag: 'MAIN',
     );
 

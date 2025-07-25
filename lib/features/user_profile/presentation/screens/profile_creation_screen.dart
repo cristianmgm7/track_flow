@@ -22,6 +22,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});
@@ -68,6 +69,11 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     String? userId = await sessionStorage.getUserId();
     String? userEmail;
 
+    AppLogger.info(
+      'Profile creation: Getting user info - userId from storage: $userId',
+      tag: 'PROFILE_CREATION',
+    );
+
     // If session storage doesn't have userId, try to get it from auth state
     if (userId == null) {
       final authState = context.read<AuthBloc>().state;
@@ -75,8 +81,17 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       if (authState is AuthAuthenticated) {
         userId = authState.user.id.value;
         userEmail = authState.user.email;
+        AppLogger.info(
+          'Profile creation: Got user info from AuthBloc - userId: $userId, email: $userEmail',
+          tag: 'PROFILE_CREATION',
+        );
         // Save it to session storage for future use
         sessionStorage.saveUserId(userId);
+      } else {
+        AppLogger.warning(
+          'Profile creation: AuthBloc state is not AuthAuthenticated: ${authState.runtimeType}',
+          tag: 'PROFILE_CREATION',
+        );
       }
     } else {
       // Get email from auth state even if we have userId
@@ -84,11 +99,54 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
       if (authState is AuthAuthenticated) {
         userEmail = authState.user.email;
+        AppLogger.info(
+          'Profile creation: Got email from AuthBloc - email: $userEmail',
+          tag: 'PROFILE_CREATION',
+        );
+      } else {
+        AppLogger.warning(
+          'Profile creation: AuthBloc state is not AuthAuthenticated: ${authState.runtimeType}',
+          tag: 'PROFILE_CREATION',
+        );
+      }
+    }
+
+    // FALLBACK: If we still don't have email, try to get it from UserProfileBloc
+    if (userEmail == null || userEmail.isEmpty) {
+      AppLogger.info(
+        'Profile creation: Email not available from AuthBloc, trying UserProfileBloc fallback',
+        tag: 'PROFILE_CREATION',
+      );
+
+      // Use the BLoC to get user data (Clean Architecture approach)
+      context.read<UserProfileBloc>().add(GetCurrentUserData());
+
+      // Wait for the BLoC to emit the user data
+      await for (final state in context.read<UserProfileBloc>().stream) {
+        if (state is UserDataLoaded) {
+          userEmail = state.email;
+          userId ??= state.userId;
+          AppLogger.info(
+            'Profile creation: Got user data from UserProfileBloc - userId: $userId, email: $userEmail',
+            tag: 'PROFILE_CREATION',
+          );
+          break;
+        } else if (state is UserDataError) {
+          AppLogger.error(
+            'Profile creation: UserProfileBloc fallback failed: ${state.message}',
+            tag: 'PROFILE_CREATION',
+          );
+          break;
+        }
       }
     }
 
     if (userId == null) {
       setState(() => _isLoading = false);
+      AppLogger.error(
+        'Profile creation: No userId found',
+        tag: 'PROFILE_CREATION',
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('User session not found. Please sign in again.'),
@@ -116,6 +174,11 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       creativeRole: _selectedRole,
     );
 
+    AppLogger.info(
+      'Profile creation: Creating profile with - name: ${profile.name}, email: ${profile.email}, avatar: ${profile.avatarUrl}',
+      tag: 'PROFILE_CREATION',
+    );
+
     context.read<UserProfileBloc>().add(CreateUserProfile(profile));
   }
 
@@ -126,14 +189,24 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         if (state is UserProfileSaved) {
           // Profile was created successfully, notify AppFlowBloc
           // This will trigger a re-evaluation of the app flow
+          AppLogger.info(
+            'Profile created successfully, triggering AppFlowBloc.checkAppFlow()',
+            tag: 'PROFILE_CREATION',
+          );
           context.read<AppFlowBloc>().add(CheckAppFlow());
         } else if (state is UserProfileError) {
           setState(() => _isLoading = false);
+          AppLogger.error('Profile creation failed', tag: 'PROFILE_CREATION');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Failed to create profile. Please try again.'),
               backgroundColor: AppColors.error,
             ),
+          );
+        } else if (state is UserProfileLoading) {
+          AppLogger.info(
+            'Profile creation in progress...',
+            tag: 'PROFILE_CREATION',
           );
         }
       },
