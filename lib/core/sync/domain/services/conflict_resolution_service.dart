@@ -27,7 +27,6 @@ abstract class ConflictResolutionService<T> {
 /// Generic implementation of conflict resolution service
 @lazySingleton
 class ConflictResolutionServiceImpl<T> implements ConflictResolutionService<T> {
-  
   @override
   Future<SyncConflict<T>?> detectConflict({
     required String entityType,
@@ -67,22 +66,24 @@ class ConflictResolutionServiceImpl<T> implements ConflictResolutionService<T> {
     switch (strategy) {
       case ConflictResolutionStrategy.useLocal:
         return conflict.localVersion;
-        
+
       case ConflictResolutionStrategy.useRemote:
         return conflict.remoteVersion;
-        
+
       case ConflictResolutionStrategy.useLatest:
-        final useLocal = conflict.localMetadata.lastModified
-            .isAfter(conflict.remoteMetadata.lastModified);
+        final useLocal = conflict.localMetadata.lastModified.isAfter(
+          conflict.remoteMetadata.lastModified,
+        );
         return useLocal ? conflict.localVersion : conflict.remoteVersion;
-        
+
       case ConflictResolutionStrategy.useHighestVersion:
-        final useLocal = conflict.localMetadata.version > conflict.remoteMetadata.version;
+        final useLocal =
+            conflict.localMetadata.version > conflict.remoteMetadata.version;
         return useLocal ? conflict.localVersion : conflict.remoteVersion;
-        
+
       case ConflictResolutionStrategy.merge:
         return await _performMerge(conflict);
-        
+
       case ConflictResolutionStrategy.manual:
         throw UnsupportedError('Manual resolution requires user input');
     }
@@ -97,20 +98,20 @@ class ConflictResolutionServiceImpl<T> implements ConflictResolutionService<T> {
           conflict: conflict,
           strategy: ConflictResolutionStrategy.useLocal,
         );
-        
+
       case ConflictType.remoteNewer:
         return await resolveConflict(
           conflict: conflict,
           strategy: ConflictResolutionStrategy.useRemote,
         );
-        
+
       case ConflictType.concurrentModification:
         // For concurrent modifications, use latest timestamp
         return await resolveConflict(
           conflict: conflict,
           strategy: ConflictResolutionStrategy.useLatest,
         );
-        
+
       case ConflictType.deletedLocally:
       case ConflictType.deletedRemotely:
         // Deletion conflicts require manual resolution
@@ -131,62 +132,72 @@ class ConflictResolutionServiceImpl<T> implements ConflictResolutionService<T> {
 
 /// Project-specific conflict resolution service
 @lazySingleton
-class ProjectConflictResolutionService extends ConflictResolutionServiceImpl<dynamic> {
-  
+class ProjectConflictResolutionService
+    extends ConflictResolutionServiceImpl<dynamic> {
   @override
   Future<dynamic> _performMerge(SyncConflict<dynamic> conflict) async {
     // Project-specific merge logic
     final local = conflict.localVersion as Map<String, dynamic>;
     final remote = conflict.remoteVersion as Map<String, dynamic>;
-    
+
     // Create merged version by combining non-conflicting fields
     final merged = Map<String, dynamic>.from(remote);
-    
+
     // Merge strategy for projects:
     // - Use latest name and description
     // - Merge collaborator lists
     // - Use latest dates
-    
-    if (conflict.localMetadata.lastModified.isAfter(conflict.remoteMetadata.lastModified)) {
+
+    if (conflict.localMetadata.lastModified.isAfter(
+      conflict.remoteMetadata.lastModified,
+    )) {
       merged['name'] = local['name'];
       merged['description'] = local['description'];
     }
-    
+
     // Merge collaborator IDs (union of both sets)
     final localCollaborators = Set<String>.from(local['collaboratorIds'] ?? []);
-    final remoteCollaborators = Set<String>.from(remote['collaboratorIds'] ?? []);
-    merged['collaboratorIds'] = localCollaborators.union(remoteCollaborators).toList();
-    
+    final remoteCollaborators = Set<String>.from(
+      remote['collaboratorIds'] ?? [],
+    );
+    merged['collaboratorIds'] =
+        localCollaborators.union(remoteCollaborators).toList();
+
     // Use latest modification time
-    final latestModified = conflict.localMetadata.lastModified.isAfter(conflict.remoteMetadata.lastModified)
-        ? conflict.localMetadata.lastModified
-        : conflict.remoteMetadata.lastModified;
-    
+    final latestModified =
+        conflict.localMetadata.lastModified.isAfter(
+              conflict.remoteMetadata.lastModified,
+            )
+            ? conflict.localMetadata.lastModified
+            : conflict.remoteMetadata.lastModified;
+
     merged['updatedAt'] = latestModified.toIso8601String();
-    
+
     return merged;
   }
 }
 
 /// Audio Track conflict resolution service
-@lazySingleton  
-class AudioTrackConflictResolutionService extends ConflictResolutionServiceImpl<dynamic> {
-  
+@lazySingleton
+class AudioTrackConflictResolutionService
+    extends ConflictResolutionServiceImpl<dynamic> {
   @override
   Future<dynamic> _performMerge(SyncConflict<dynamic> conflict) async {
     // Audio track specific merge logic
     final local = conflict.localVersion as Map<String, dynamic>;
     final remote = conflict.remoteVersion as Map<String, dynamic>;
-    
+
     final merged = Map<String, dynamic>.from(remote);
-    
+
     // For audio tracks, prefer local changes for metadata but keep remote file info
-    if (conflict.localMetadata.lastModified.isAfter(conflict.remoteMetadata.lastModified)) {
+    if (conflict.localMetadata.lastModified.isAfter(
+      conflict.remoteMetadata.lastModified,
+    )) {
       merged['name'] = local['name'];
       merged['description'] = local['description'];
       // Keep remote file URL and duration as they're authoritative
     }
-    
+
     return merged;
   }
 }
