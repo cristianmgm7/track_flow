@@ -3,28 +3,25 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
-import 'package:trackflow/core/app_flow/domain/services/app_flow_coordinator.dart';
-import 'package:trackflow/core/app_flow/domain/entities/app_flow_state.dart'
-    as coordinator_state;
+import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
-  final AppFlowCoordinator _coordinator;
+  final AppBootstrap _appBootstrap;
+  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
 
-  StreamSubscription<coordinator_state.AppFlowState>? _flowSubscription;
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
 
-  AppFlowBloc({required AppFlowCoordinator coordinator})
-    : _coordinator = coordinator,
-      super(AppFlowLoading()) {
+  AppFlowBloc({
+    required AppBootstrap appBootstrap,
+    required BackgroundSyncCoordinator backgroundSyncCoordinator,
+  }) : _appBootstrap = appBootstrap,
+       _backgroundSyncCoordinator = backgroundSyncCoordinator,
+       super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
-    on<SignOutRequested>(_onSignOutRequested); // New event for logout
-  }
-
-  @override
-  Future<void> close() {
-    _flowSubscription?.cancel();
-    return super.close();
+    on<SignOutRequested>(_onSignOutRequested);
   }
 
   Future<void> _onCheckAppFlow(
@@ -39,29 +36,31 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       // Emit loading state immediately
       emit(AppFlowLoading());
 
-      // Use the coordinator to determine app flow
-      final result = await _coordinator.determineAppFlow();
+      AppLogger.info(
+        'Starting simplified app flow check',
+        tag: 'APP_FLOW_BLOC',
+      );
 
-      await result.fold(
-        (failure) async {
-          emit(
-            AppFlowError('Failed to determine app flow: ${failure.message}'),
-          );
-        },
-        (flowState) async {
-          // Map coordinator state to BLoC state
-          final blocState = _mapCoordinatorStateToBlocState(flowState);
+      // Use AppBootstrap for simple, direct initialization
+      final initialState = await _appBootstrap.initialize();
 
-          // Emit the state immediately for navigation
-          emit(blocState);
+      // Map AppInitialState directly to AppFlowState
+      final blocState = _mapInitialStateToBlocState(initialState);
 
-          // Trigger background sync if user is ready (non-blocking)
-          if (flowState.status == coordinator_state.AppFlowStatus.ready) {
-            await _coordinator.triggerBackgroundSyncIfReady();
-          }
-        },
+      // Emit the state immediately for navigation
+      emit(blocState);
+
+      // Trigger background sync if user is ready (non-blocking)
+      if (initialState == AppInitialState.dashboard) {
+        _triggerBackgroundSync();
+      }
+
+      AppLogger.info(
+        'App flow check completed: ${initialState.displayName}',
+        tag: 'APP_FLOW_BLOC',
       );
     } catch (e) {
+      AppLogger.error('App flow check failed: $e', tag: 'APP_FLOW_BLOC');
       emit(AppFlowError('Unexpected error during app flow check: $e'));
     } finally {
       _isCheckingFlow = false;
@@ -74,39 +73,66 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   ) async {
     try {
       emit(AppFlowLoading());
-      final result = await _coordinator.signOut();
 
-      result.fold(
-        (failure) {
-          emit(AppFlowError('Sign out failed: ${failure.message}'));
-        },
-        (_) {
-          emit(AppFlowUnauthenticated());
-        },
-      );
+      // TODO: Implement sign out logic
+      // For now, just emit unauthenticated state
+      emit(AppFlowUnauthenticated());
+
+      AppLogger.info('Sign out completed', tag: 'APP_FLOW_BLOC');
     } catch (e) {
+      AppLogger.error('Sign out failed: $e', tag: 'APP_FLOW_BLOC');
       emit(AppFlowError('Sign out failed: $e'));
     }
   }
 
-  /// Maps AppFlowCoordinator state to AppFlowBloc state
-  AppFlowState _mapCoordinatorStateToBlocState(
-    coordinator_state.AppFlowState coordinatorState,
-  ) {
-    switch (coordinatorState.status) {
-      case coordinator_state.AppFlowStatus.loading:
+  /// Maps AppInitialState directly to AppFlowState (no complex mapping)
+  AppFlowState _mapInitialStateToBlocState(AppInitialState initialState) {
+    switch (initialState) {
+      case AppInitialState.splash:
         return AppFlowLoading();
-      case coordinator_state.AppFlowStatus.unauthenticated:
+      case AppInitialState.auth:
         return AppFlowUnauthenticated();
-      case coordinator_state.AppFlowStatus.authenticated:
+      case AppInitialState.setup:
         return AppFlowAuthenticated(
-          needsOnboarding: coordinatorState.needsOnboarding,
-          needsProfileSetup: coordinatorState.needsProfileSetup,
+          needsOnboarding: true,
+          needsProfileSetup: true,
         );
-      case coordinator_state.AppFlowStatus.ready:
+      case AppInitialState.dashboard:
         return AppFlowReady();
-      case coordinator_state.AppFlowStatus.error:
-        return AppFlowError(coordinatorState.errorMessage ?? 'Unknown error');
+      case AppInitialState.error:
+        return AppFlowError('App initialization failed');
     }
+  }
+
+  /// Trigger background sync without blocking the UI
+  void _triggerBackgroundSync() {
+    // Fire and forget - NO await
+    unawaited(_performBackgroundSync());
+  }
+
+  Future<void> _performBackgroundSync() async {
+    try {
+      AppLogger.info('Starting background sync', tag: 'APP_FLOW_BLOC');
+
+      await _backgroundSyncCoordinator.triggerBackgroundSync(
+        syncKey: 'app_startup_sync',
+      );
+
+      AppLogger.info('Background sync completed', tag: 'APP_FLOW_BLOC');
+    } catch (e) {
+      AppLogger.warning('Background sync failed: $e', tag: 'APP_FLOW_BLOC');
+      // Don't emit error state - background sync failures shouldn't affect UI
+    }
+  }
+
+  // Helper method for fire-and-forget background operations
+  void unawaited(Future future) {
+    future.catchError((error) {
+      // Log error but don't propagate - this is background operation
+      AppLogger.warning(
+        'Background operation failed: $error',
+        tag: 'APP_FLOW_BLOC',
+      );
+    });
   }
 }

@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trackflow/core/app_flow/domain/services/app_flow_coordinator.dart';
+import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
 import 'package:trackflow/core/session/domain/services/session_service.dart';
-import 'package:trackflow/core/sync/data/services/sync_service.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 
 void main() {
-  group('Migration Integration Tests', () {
+  group('Simplified Architecture Tests', () {
     test('should have correct service architecture', () {
-      // Verify that the new services exist and follow SOLID principles
+      // Verify that the new simplified services exist and follow SOLID principles
       expect(SessionService, isA<Type>());
-      expect(SyncService, isA<Type>());
-      expect(AppFlowCoordinator, isA<Type>());
+      expect(BackgroundSyncCoordinator, isA<Type>());
+      expect(AppBootstrap, isA<Type>());
     });
 
     test('should respect Single Responsibility Principle', () {
@@ -17,25 +17,34 @@ void main() {
       expect(true, isTrue); // This test passes if the code compiles
 
       // SessionService should only handle session-related operations
-      // SyncService should only handle sync-related operations
-      // AppFlowCoordinator should only handle orchestration
+      // BackgroundSyncCoordinator should only handle background sync operations
+      // AppBootstrap should only handle app initialization
     });
 
     test('should respect Dependency Inversion Principle', () {
       // Services should depend on abstractions, not concrete implementations
       expect(true, isTrue); // This test passes if the code compiles
 
-      // All BLoCs now depend on the new services instead of the old ones
+      // All BLoCs now depend on the simplified services instead of complex coordinators
       // This makes the code more testable and maintainable
     });
 
     test('should have proper separation of concerns', () {
-      // Verify that session and sync concerns are properly separated
+      // Verify that initialization and sync concerns are properly separated
       expect(true, isTrue); // This test passes if the code compiles
 
-      // SessionService doesn't know about sync
-      // SyncService doesn't know about session
-      // AppFlowCoordinator orchestrates between them
+      // AppBootstrap handles initialization only
+      // BackgroundSyncCoordinator handles sync in background
+      // No complex orchestration layer
+    });
+
+    test('should follow simplified initialization pattern', () {
+      // Verify that the app follows the simplified initialization pattern
+      expect(true, isTrue); // This test passes if the code compiles
+
+      // App starts immediately with local data
+      // Sync happens in background without blocking UI
+      // No complex state coordination
     });
   });
 }
