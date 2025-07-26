@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/core/session/domain/entities/session_state.dart';
+import 'package:trackflow/core/app_flow/domain/entities/session_state.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart';
 
 /// Represents the current user session state

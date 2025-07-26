@@ -1,10 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/session/domain/entities/user_session.dart';
-import 'package:trackflow/core/session/domain/usecases/check_authentication_status_usecase.dart';
-import 'package:trackflow/core/session/domain/usecases/get_current_user_usecase.dart';
-import 'package:trackflow/core/session/domain/usecases/sign_out_usecase.dart';
+import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
+import 'package:trackflow/core/app_flow/domain/usecases/check_authentication_status_usecase.dart';
+import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase.dart';
+import 'package:trackflow/core/app_flow/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
