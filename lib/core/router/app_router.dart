@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/core/router/navigation_service.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
@@ -42,51 +41,86 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
 
 class AppRouter {
   static GoRouter router(AppFlowBloc appFlowBloc) {
-    final navigationService = sl<NavigationService>();
-
     return GoRouter(
       navigatorKey: _rootNavigatorKey,
-      initialLocation: navigationService.getInitialRoute(),
+      initialLocation: AppRoutes.splash,
       refreshListenable: GoRouterRefreshStream(appFlowBloc.stream),
       redirect: (context, state) {
         final flowState = appFlowBloc.state;
+        final currentLocation = state.matchedLocation;
 
         AppLogger.info(
-          'AppRouter: Redirect called - flowState: ${flowState.runtimeType}, currentLocation: ${state.matchedLocation}',
+          'AppRouter: Redirect called - flowState: ${flowState.runtimeType}, currentLocation: $currentLocation',
           tag: 'APP_ROUTER',
         );
 
-        // Special handling for loading state to trigger initial check
-        if (flowState is AppFlowLoading &&
-            state.matchedLocation == AppRoutes.splash) {
-          AppLogger.info(
-            'AppRouter: Triggering CheckAppFlow from splash screen',
-            tag: 'APP_ROUTER',
-          );
-          appFlowBloc.add(CheckAppFlow());
+        // Handle loading state
+        if (flowState is AppFlowLoading) {
+          if (currentLocation != AppRoutes.splash) {
+            return AppRoutes.splash;
+          }
+          return null;
         }
 
-        // Use NavigationService for clean routing logic
-        final redirectRoute = navigationService.getRouteForFlowState(
-          flowState,
-          state.matchedLocation,
-        );
-
-        if (redirectRoute != null) {
-          AppLogger.info(
-            'AppRouter: Redirecting from ${state.matchedLocation} to $redirectRoute',
-            tag: 'APP_ROUTER',
-          );
-        } else {
-          AppLogger.info(
-            'AppRouter: No redirect needed, staying on ${state.matchedLocation}',
-            tag: 'APP_ROUTER',
-          );
+        // Handle unauthenticated state
+        if (flowState is AppFlowUnauthenticated) {
+          if (currentLocation != AppRoutes.auth) {
+            return AppRoutes.auth;
+          }
+          return null;
         }
 
-        return redirectRoute;
+        // Handle authenticated state with setup requirements
+        if (flowState is AppFlowAuthenticated) {
+          if (flowState.needsOnboarding &&
+              currentLocation != AppRoutes.onboarding) {
+            return AppRoutes.onboarding;
+          }
+          if (flowState.needsProfileSetup &&
+              currentLocation != AppRoutes.profileCreation) {
+            return AppRoutes.profileCreation;
+          }
+          if (!flowState.needsOnboarding &&
+              !flowState.needsProfileSetup &&
+              currentLocation != AppRoutes.dashboard) {
+            return AppRoutes.dashboard;
+          }
+          return null;
+        }
+
+        // Handle ready state - allow access to main app routes
+        if (flowState is AppFlowReady) {
+          // Allow access to main app routes
+          final mainAppRoutes = [
+            AppRoutes.dashboard,
+            AppRoutes.projects,
+            AppRoutes.settings,
+            AppRoutes.notifications,
+            AppRoutes.userProfile,
+            AppRoutes.manageCollaborators,
+            AppRoutes.audioComments,
+            AppRoutes.cacheDemo,
+            '/storage-management',
+          ];
+
+          if (!mainAppRoutes.contains(currentLocation)) {
+            return AppRoutes.dashboard;
+          }
+          return null;
+        }
+
+        // Handle error state
+        if (flowState is AppFlowError) {
+          if (currentLocation != AppRoutes.auth) {
+            return AppRoutes.auth;
+          }
+          return null;
+        }
+
+        return null;
       },
       routes: [
+        // Setup routes (outside shell)
         GoRoute(
           path: AppRoutes.splash,
           builder: (context, state) => const SplashScreen(),
@@ -107,6 +141,12 @@ class AppRouter {
               ),
         ),
         GoRoute(
+          path: AppRoutes.profileCreation,
+          builder: (context, state) => const ProfileCreationScreen(),
+        ),
+
+        // Standalone routes (outside shell)
+        GoRoute(
           path: AppRoutes.audioComments,
           builder: (context, state) {
             final args = state.extra as AudioCommentsScreenArgs;
@@ -120,12 +160,6 @@ class AppRouter {
           },
         ),
         GoRoute(
-          path: AppRoutes.manageCollaborators,
-          builder:
-              (context, state) =>
-                  ManageCollaboratorsScreen(project: state.extra as Project),
-        ),
-        GoRoute(
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
@@ -134,24 +168,8 @@ class AppRouter {
             );
           },
         ),
-        GoRoute(
-          path: AppRoutes.userProfile,
-          builder: (context, state) {
-            // Get current user ID from auth state or context
-            final authState = context.read<AuthBloc>().state;
-            if (authState is AuthAuthenticated) {
-              return HeroUserProfileScreen(userId: authState.user.id);
-            }
-            // Fallback - this shouldn't happen in normal flow
-            return const Scaffold(
-              body: Center(child: Text('User not authenticated')),
-            );
-          },
-        ),
-        GoRoute(
-          path: AppRoutes.profileCreation,
-          builder: (context, state) => const ProfileCreationScreen(),
-        ),
+
+        // Main app shell route
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder:
@@ -201,6 +219,18 @@ class AppRouter {
                   ),
             ),
             GoRoute(
+              path: AppRoutes.userProfile,
+              builder: (context, state) {
+                final authState = context.read<AuthBloc>().state;
+                if (authState is AuthAuthenticated) {
+                  return HeroUserProfileScreen(userId: authState.user.id);
+                }
+                return const Scaffold(
+                  body: Center(child: Text('User not authenticated')),
+                );
+              },
+            ),
+            GoRoute(
               path: AppRoutes.cacheDemo,
               builder: (context, state) => const CacheDemoScreen(),
             ),
@@ -221,8 +251,6 @@ class AppRouter {
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> appFlowStream) {
     notifyListeners();
-
-    // Listen to app flow stream and notify when it changes
     _appFlowSubscription = appFlowStream.asBroadcastStream().listen(
       (dynamic _) => notifyListeners(),
     );

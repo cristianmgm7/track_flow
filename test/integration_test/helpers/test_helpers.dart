@@ -125,7 +125,9 @@ class TestData {
     TestScenarios.returningUserScenario: {
       'authState': AuthAuthenticated(TestUserFlow.mockUser),
       'onboardingState': OnboardingCompleted(),
-      'profileState': ProfileComplete(TestUserFlow.mockCompleteProfile),
+      'profileState': ProfileComplete(
+        profile: TestUserFlow.mockCompleteProfile,
+      ),
       'expectedRoute': '/dashboard',
       'description': 'Returning user should go directly to dashboard',
     },

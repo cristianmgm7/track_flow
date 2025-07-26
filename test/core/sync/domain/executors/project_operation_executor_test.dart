@@ -49,9 +49,18 @@ void main() {
           operationData: jsonEncode(operationData),
         );
 
-        when(
-          mockRemoteDataSource.createProject(any),
-        ).thenAnswer((_) async => const Right(unit));
+        when(mockRemoteDataSource.createProject(any)).thenAnswer(
+          (_) async => Right(
+            ProjectDTO(
+              id: testEntityId,
+              name: testProjectName,
+              description: testProjectDescription,
+              ownerId: testOwnerId,
+              updatedAt: null,
+              createdAt: DateTime.now(),
+            ),
+          ),
+        );
 
         // Act
         await executor.execute(operation);
@@ -89,9 +98,18 @@ void main() {
           operationData: jsonEncode(operationData),
         );
 
-        when(
-          mockRemoteDataSource.createProject(any),
-        ).thenAnswer((_) async => const Right(unit));
+        when(mockRemoteDataSource.createProject(any)).thenAnswer(
+          (_) async => Right(
+            ProjectDTO(
+              id: testEntityId,
+              name: testProjectName,
+              description: '',
+              ownerId: testOwnerId,
+              updatedAt: null,
+              createdAt: DateTime.now(),
+            ),
+          ),
+        );
 
         // Act
         await executor.execute(operation);
@@ -257,9 +275,18 @@ void main() {
           operationData: null,
         );
 
-        when(
-          mockRemoteDataSource.createProject(any),
-        ).thenAnswer((_) async => const Right(unit));
+        when(mockRemoteDataSource.createProject(any)).thenAnswer(
+          (_) async => Right(
+            ProjectDTO(
+              id: testEntityId,
+              name: '',
+              description: '',
+              ownerId: '',
+              updatedAt: null,
+              createdAt: DateTime.now(),
+            ),
+          ),
+        );
 
         // Act
         await executor.execute(operation);
