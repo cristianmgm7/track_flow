@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -100,7 +99,6 @@ class AppRouter {
             AppRoutes.manageCollaborators,
             AppRoutes.audioComments,
             AppRoutes.cacheDemo,
-            '/storage-management',
           ];
 
           if (!mainAppRoutes.contains(currentLocation)) {
