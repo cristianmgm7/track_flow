@@ -6,7 +6,7 @@ import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/core/session/domain/entities/user_session.dart';
+import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {

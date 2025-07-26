@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/session/domain/services/session_service.dart';
+import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Use case to get current user data (ID and email)

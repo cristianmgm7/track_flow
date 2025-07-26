@@ -3,9 +3,9 @@ import 'package:trackflow/core/services/dynamic_link_service.dart';
 import 'package:trackflow/core/services/database_health_monitor.dart';
 import 'package:trackflow/core/services/performance_metrics_collector.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/core/session/domain/services/session_service.dart';
-import 'package:trackflow/core/session/domain/entities/session_state.dart';
-import 'package:trackflow/core/session/domain/entities/user_session.dart';
+import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
+import 'package:trackflow/core/app_flow/domain/entities/session_state.dart';
+import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
 
 /// Simple app bootstrap that replaces complex initialization coordination
 ///

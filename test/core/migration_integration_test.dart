@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
-import 'package:trackflow/core/session/domain/services/session_service.dart';
+import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 
 void main() {
