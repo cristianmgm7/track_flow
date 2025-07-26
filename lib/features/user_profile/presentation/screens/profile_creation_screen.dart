@@ -39,12 +39,78 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   CreativeRole _selectedRole = CreativeRole.other;
   String _avatarUrl = '';
   bool _isLoading = false;
+  bool _isGoogleUser = false; // ✅ NUEVO: Flag para usuarios de Google
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGoogleData(); // ✅ NUEVO: Cargar datos de Google
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _nameFocusNode.dispose();
     super.dispose();
+  }
+
+  /// ✅ NUEVO: Cargar datos de Google si están disponibles
+  Future<void> _loadGoogleData() async {
+    try {
+      final sessionStorage = sl<SessionStorage>();
+      final isNewGoogleUser =
+          await sessionStorage.getBool('is_new_google_user') ?? false;
+
+      if (isNewGoogleUser) {
+        AppLogger.info(
+          'Loading Google data for profile creation',
+          tag: 'PROFILE_CREATION',
+        );
+
+        final googleDisplayName = await sessionStorage.getString(
+          'google_display_name',
+        );
+        final googlePhotoUrl = await sessionStorage.getString(
+          'google_photo_url',
+        );
+
+        setState(() {
+          _isGoogleUser = true;
+
+          if (googleDisplayName != null && googleDisplayName.isNotEmpty) {
+            _nameController.text = googleDisplayName;
+            AppLogger.info(
+              'Pre-filled name with Google data: $googleDisplayName',
+              tag: 'PROFILE_CREATION',
+            );
+          }
+
+          if (googlePhotoUrl != null && googlePhotoUrl.isNotEmpty) {
+            _avatarUrl = googlePhotoUrl;
+            AppLogger.info(
+              'Pre-filled avatar with Google photo: $googlePhotoUrl',
+              tag: 'PROFILE_CREATION',
+            );
+          }
+        });
+
+        // Limpiar datos temporales de Google
+        await sessionStorage.remove('google_display_name');
+        await sessionStorage.remove('google_photo_url');
+        await sessionStorage.setBool('is_new_google_user', false);
+
+        AppLogger.info(
+          'Google data loaded and cleaned up',
+          tag: 'PROFILE_CREATION',
+        );
+      }
+    } catch (e) {
+      AppLogger.error(
+        'Error loading Google data: $e',
+        tag: 'PROFILE_CREATION',
+        error: e,
+      );
+    }
   }
 
   String? _validateName(String? value) {
@@ -158,10 +224,17 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       return;
     }
 
-    // Set default avatar if none selected
+    // ✅ NUEVO: Set default avatar if none selected (Google or placeholder)
     if (_avatarUrl.isEmpty) {
-      _avatarUrl =
-          'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=${_nameController.text.trim().substring(0, 1).toUpperCase()}';
+      if (_isGoogleUser) {
+        // Para usuarios de Google, usar inicial del nombre
+        _avatarUrl =
+            'https://via.placeholder.com/150/4285F4/FFFFFF?text=${_nameController.text.trim().substring(0, 1).toUpperCase()}';
+      } else {
+        // Para usuarios normales, usar placeholder genérico
+        _avatarUrl =
+            'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=${_nameController.text.trim().substring(0, 1).toUpperCase()}';
+      }
     }
 
     final profile = UserProfile(
@@ -175,7 +248,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     );
 
     AppLogger.info(
-      'Profile creation: Creating profile with - name: ${profile.name}, email: ${profile.email}, avatar: ${profile.avatarUrl}',
+      'Profile creation: Creating profile with - name: ${profile.name}, email: ${profile.email}, avatar: ${profile.avatarUrl}, isGoogleUser: $_isGoogleUser',
       tag: 'PROFILE_CREATION',
     );
 
@@ -211,141 +284,130 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         }
       },
       child: AppScaffold(
-        body: AppSafeArea(
-          child: AppPadding(
-            all: Dimensions.space16,
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: Dimensions.space32),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(Dimensions.space16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Welcome Message
+              _buildWelcomeMessage(),
+              SizedBox(height: Dimensions.space24),
 
-                          // Welcome Header
-                          _buildWelcomeHeader(),
-                          SizedBox(height: Dimensions.space32),
+              // Profile Form
+              _buildProfileForm(),
 
-                          // Profile Form Card
-                          BaseCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Avatar Section
-                                AvatarUploader(
-                                  initialUrl: _avatarUrl,
-                                  onAvatarChanged: (url) {
-                                    setState(() => _avatarUrl = url);
-                                  },
-                                ),
-                                SizedBox(height: Dimensions.space24),
-
-                                // Name Field
-                                AppFormField(
-                                  label: 'Your Name',
-                                  hint: 'Enter your full name',
-                                  controller: _nameController,
-                                  focusNode: _nameFocusNode,
-                                  isRequired: true,
-                                  validator: _validateName,
-                                  keyboardType: TextInputType.name,
-                                  textInputAction: TextInputAction.next,
-                                ),
-                                SizedBox(height: Dimensions.space24),
-
-                                // Creative Role Selector
-                                CreativeRoleSelector(
-                                  selectedRole: _selectedRole,
-                                  onRoleChanged: (role) {
-                                    setState(() => _selectedRole = role);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: Dimensions.space24),
-
-                          // Info Card
-                          _buildInfoCard(),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Continue Button
-                  SizedBox(height: Dimensions.space16),
-                  PrimaryButton(
-                    text: 'Complete Setup',
-                    onPressed: _handleSubmit,
-                    isLoading: _isLoading,
-                    width: double.infinity,
-                  ),
-                ],
+              // Continue Button
+              SizedBox(height: Dimensions.space16),
+              PrimaryButton(
+                text: 'Complete Setup',
+                onPressed: _handleSubmit,
+                isLoading: _isLoading,
+                width: double.infinity,
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildWelcomeHeader() {
+  Widget _buildWelcomeMessage() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Complete Your Profile 🎵',
-          style: AppTextStyle.headlineLarge.copyWith(
+          _isGoogleUser ? 'Welcome to TrackFlow!' : 'Complete Your Profile',
+          style: AppTextStyle.headlineMedium.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
         ),
         SizedBox(height: Dimensions.space8),
         Text(
-          'Great! You\'re almost ready to start collaborating. Let\'s personalize your profile so other musicians can connect with you.',
-          style: AppTextStyle.bodyLarge.copyWith(
+          _isGoogleUser
+              ? 'We\'ve pre-filled your profile with your Google information. Please review and complete any missing details.'
+              : 'Tell us a bit about yourself to get started',
+          style: AppTextStyle.bodyMedium.copyWith(
             color: AppColors.textSecondary,
           ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  Widget _buildInfoCard() {
-    return BaseCard(
-      child: Row(
+  Widget _buildProfileForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
         children: [
-          Icon(
-            Icons.info_outline,
-            color: AppColors.primary,
-            size: Dimensions.iconMedium,
-          ),
-          SizedBox(width: Dimensions.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Why This Matters',
-                  style: AppTextStyle.labelMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
+          // Profile Card
+          BaseCard(
+            child: Padding(
+              padding: const EdgeInsets.all(Dimensions.space24),
+              child: Column(
+                children: [
+                  // Avatar Section
+                  AvatarUploader(
+                    initialUrl: _avatarUrl,
+                    onAvatarChanged: (url) {
+                      setState(() => _avatarUrl = url);
+                    },
+                    isGoogleUser:
+                        _isGoogleUser, // ✅ NUEVO: Pasar flag de Google
                   ),
-                ),
-                SizedBox(height: Dimensions.space4),
-                Text(
-                  'Your profile helps collaborators understand your role and expertise. This information will be visible to other musicians in the platform.',
-                  style: AppTextStyle.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                  SizedBox(height: Dimensions.space24),
+
+                  // Name Field
+                  AppFormField(
+                    label: 'Your Name',
+                    hint: 'Enter your full name',
+                    controller: _nameController,
+                    focusNode: _nameFocusNode,
+                    isRequired: true,
+                    validator: _validateName,
+                    keyboardType: TextInputType.name,
+                    textInputAction: TextInputAction.next,
                   ),
-                ),
-              ],
+                  SizedBox(height: Dimensions.space24),
+
+                  // Creative Role Selector
+                  CreativeRoleSelector(
+                    selectedRole: _selectedRole,
+                    onRoleChanged: (role) {
+                      setState(() => _selectedRole = role);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
+          SizedBox(height: Dimensions.space24),
+
+          // Info Card
+          _buildInfoCard(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return BaseCard(
+      child: Padding(
+        padding: const EdgeInsets.all(Dimensions.space16),
+        child: Column(
+          children: [
+            Icon(Icons.info_outline, color: AppColors.primary, size: 24),
+            SizedBox(height: Dimensions.space8),
+            Text(
+              'This information helps us personalize your experience and connect you with the right collaborators.',
+              style: AppTextStyle.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

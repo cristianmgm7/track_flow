@@ -7,11 +7,13 @@ import 'package:trackflow/core/utils/image_utils.dart';
 class AvatarUploader extends StatefulWidget {
   final String initialUrl;
   final ValueChanged<String> onAvatarChanged;
+  final bool isGoogleUser; // ✅ NUEVO: Flag para usuarios de Google
 
   const AvatarUploader({
     super.key,
     required this.initialUrl,
     required this.onAvatarChanged,
+    this.isGoogleUser = false, // ✅ NUEVO: Default false
   });
 
   @override
@@ -45,20 +47,27 @@ class _AvatarUploaderState extends State<AvatarUploader> {
         Center(child: Stack(children: [_buildAvatar(), _buildEditButton()])),
         SizedBox(height: Dimensions.space12),
         Text(
-          'Profile Picture',
+          widget.isGoogleUser ? 'Google Profile Picture' : 'Profile Picture',
           style: AppTextStyle.labelMedium.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
           ),
         ),
         SizedBox(height: Dimensions.space4),
-        Text(
-          'Add a photo to help others recognize you',
-          style: AppTextStyle.bodySmall.copyWith(
-            color: AppColors.textSecondary,
+        if (widget.isGoogleUser)
+          Text(
+            'Using your Google profile picture',
+            style: AppTextStyle.bodySmall.copyWith(color: AppColors.success),
+            textAlign: TextAlign.center,
+          )
+        else
+          Text(
+            'Add a photo to help others recognize you',
+            style: AppTextStyle.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
       ],
     );
   }
@@ -72,7 +81,12 @@ class _AvatarUploaderState extends State<AvatarUploader> {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.border.withValues(alpha: 0.3),
+          color:
+              widget.isGoogleUser
+                  ? AppColors.primary.withValues(
+                    alpha: 0.3,
+                  ) // ✅ NUEVO: Color especial para Google
+                  : AppColors.border.withValues(alpha: 0.3),
           width: 2,
         ),
         boxShadow: [
@@ -112,7 +126,11 @@ class _AvatarUploaderState extends State<AvatarUploader> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color:
+                  widget.isGoogleUser
+                      ? AppColors
+                          .success // ✅ NUEVO: Color verde para Google
+                      : AppColors.primary,
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.surface, width: 3),
               boxShadow: [
@@ -124,7 +142,9 @@ class _AvatarUploaderState extends State<AvatarUploader> {
               ],
             ),
             child: Icon(
-              Icons.camera_alt,
+              widget.isGoogleUser
+                  ? Icons.check
+                  : Icons.camera_alt, // ✅ NUEVO: Icono diferente para Google
               size: Dimensions.iconSmall,
               color: AppColors.onPrimary,
             ),

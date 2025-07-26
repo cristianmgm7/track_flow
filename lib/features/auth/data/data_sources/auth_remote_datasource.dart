@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/features/auth/data/services/google_auth_service.dart';
 
 abstract class AuthRemoteDataSource {
   Future<User?> getCurrentUser();
@@ -15,8 +16,13 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
+  final GoogleAuthService _googleAuthService;
 
-  AuthRemoteDataSourceImpl(this._auth, this._googleSignIn);
+  AuthRemoteDataSourceImpl(
+    this._auth,
+    this._googleSignIn,
+    this._googleAuthService,
+  );
 
   @override
   Future<User?> getCurrentUser() async {
@@ -27,7 +33,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Stream<User?> authStateChanges() async* {
     // First emit current user immediately (fixes hot reload timeouts)
     yield _auth.currentUser;
-    
+
     // Then listen to future auth state changes
     await for (final user in _auth.authStateChanges()) {
       yield user;
@@ -60,20 +66,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<User?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null;
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+    final result = await _googleAuthService.authenticateWithGoogle();
+
+    return result.fold(
+      (failure) => throw Exception(failure.message),
+      (authResult) => authResult.user,
     );
-    final cred = await _auth.signInWithCredential(credential);
-    return cred.user;
   }
 
   @override
   Future<void> signOut() async {
-    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    await _googleAuthService.signOut();
   }
 }

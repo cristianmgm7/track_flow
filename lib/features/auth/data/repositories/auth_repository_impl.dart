@@ -8,20 +8,25 @@ import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart
 import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource.dart';
+import 'package:trackflow/features/auth/data/services/google_auth_service.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 @LazySingleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
   final SessionStorage _sessionStorage;
   final NetworkStateManager _networkStateManager;
+  final GoogleAuthService _googleAuthService; // ✅ NUEVO
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
     required SessionStorage sessionStorage,
     required NetworkStateManager networkStateManager,
+    required GoogleAuthService googleAuthService, // ✅ NUEVO
   }) : _remote = remote,
        _sessionStorage = sessionStorage,
-       _networkStateManager = networkStateManager;
+       _networkStateManager = networkStateManager,
+       _googleAuthService = googleAuthService;
 
   @override
   Future<Either<Failure, UserId?>> getSignedInUserId() async {
@@ -99,7 +104,7 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         return Left(AuthenticationFailure('No user found after sign up'));
       }
-      return Right(AuthDto.fromFirebase(user).toDomain());
+      return Right(AuthDto.fromFirebase(user, isNewUser: true).toDomain());
     } catch (e) {
       return Left(AuthenticationFailure(e.toString()));
     }
@@ -117,18 +122,48 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      final user = await _remote.signInWithGoogle();
-      if (user != null) {
-        // ✅ SOLO gestión de sesión - responsabilidad única
-        await _sessionStorage.saveUserId(user.uid);
-      }
+      // ✅ NUEVO: Usar GoogleAuthService para obtener datos completos
+      final authResult = await _googleAuthService.authenticateWithGoogle();
 
-      if (user == null) {
-        return Left(
-          AuthenticationFailure('No user found after Google sign in'),
+      return authResult.fold((failure) => Left(failure), (result) async {
+        // Guardar sesión
+        await _sessionStorage.saveUserId(result.user.uid);
+
+        // ✅ NUEVO: Si es usuario nuevo, guardar datos de Google para onboarding
+        if (result.isNewUser) {
+          AppLogger.info(
+            'New Google user detected: ${result.googleData.email}',
+            tag: 'AUTH_REPOSITORY',
+          );
+
+          await _sessionStorage.setString(
+            'google_display_name',
+            result.googleData.displayName ?? '',
+          );
+          await _sessionStorage.setString(
+            'google_photo_url',
+            result.googleData.photoUrl ?? '',
+          );
+          await _sessionStorage.setBool('is_new_google_user', true);
+
+          AppLogger.info(
+            'Google data saved for onboarding: displayName=${result.googleData.displayName}, photoUrl=${result.googleData.photoUrl}',
+            tag: 'AUTH_REPOSITORY',
+          );
+        } else {
+          AppLogger.info(
+            'Existing Google user signed in: ${result.googleData.email}',
+            tag: 'AUTH_REPOSITORY',
+          );
+        }
+
+        return Right(
+          AuthDto.fromFirebase(
+            result.user,
+            isNewUser: result.isNewUser,
+          ).toDomain(),
         );
-      }
-      return Right(AuthDto.fromFirebase(user).toDomain());
+      });
     } catch (e) {
       return Left(AuthenticationFailure(e.toString()));
     }
@@ -146,6 +181,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
       await _remote.signOut();
       await _sessionStorage.clearUserId();
+
+      // ✅ NUEVO: Limpiar datos de Google
+      await _sessionStorage.remove('google_display_name');
+      await _sessionStorage.remove('google_photo_url');
+      await _sessionStorage.setBool('is_new_google_user', false);
+
       return const Right(unit);
     } catch (e) {
       return Left(AuthenticationFailure(e.toString()));

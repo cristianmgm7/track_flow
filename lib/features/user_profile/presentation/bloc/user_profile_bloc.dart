@@ -150,7 +150,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       (userData) {
         if (userData.userId != null && userData.email != null) {
           emit(
-            UserDataLoaded(userId: userData.userId!, email: userData.email!),
+            UserDataLoaded(
+              userId: userData.userId!.value,
+              email: userData.email!,
+            ),
           );
         } else {
           emit(UserDataError('User data not available'));

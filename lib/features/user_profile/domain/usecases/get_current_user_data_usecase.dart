@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/session/domain/services/session_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -15,7 +16,7 @@ class GetCurrentUserDataUseCase {
 
   /// Returns the current user's ID and email
   /// Returns null for both if user is not authenticated
-  Future<Either<Failure, ({String? userId, String? email})>> call() async {
+  Future<Either<Failure, ({UserId? userId, String? email})>> call() async {
     try {
       AppLogger.info(
         'Getting current user data from session service',
@@ -34,7 +35,7 @@ class GetCurrentUserDataUseCase {
         },
         (session) {
           if (session.currentUser != null) {
-            final userId = session.currentUser!.id.value;
+            final userId = session.currentUser!.id;
             final email = session.currentUser!.email;
 
             AppLogger.info(
