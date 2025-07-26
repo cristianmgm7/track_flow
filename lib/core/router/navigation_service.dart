@@ -84,13 +84,31 @@ class NavigationService {
           'NavigationService: Handling ready state at: $currentLocation',
           tag: 'NAVIGATION',
         );
-        if (currentLocation != AppRoutes.dashboard) {
+
+        // Ready users can access dashboard, projects, settings, and other main app routes
+        final allowedRoutes = [
+          AppRoutes.dashboard,
+          AppRoutes.projects,
+          AppRoutes.settings,
+          AppRoutes.notifications,
+          AppRoutes.userProfile,
+          AppRoutes.manageCollaborators,
+          AppRoutes.audioComments,
+          AppRoutes.cacheDemo,
+        ];
+
+        if (!allowedRoutes.contains(currentLocation)) {
           AppLogger.info(
-            'NavigationService: Redirecting to dashboard',
+            'NavigationService: Redirecting ready user to dashboard from invalid route: $currentLocation',
             tag: 'NAVIGATION',
           );
           return AppRoutes.dashboard;
         }
+
+        AppLogger.info(
+          'NavigationService: Ready user staying on valid route: $currentLocation',
+          tag: 'NAVIGATION',
+        );
         return null;
 
       case AppFlowError:
