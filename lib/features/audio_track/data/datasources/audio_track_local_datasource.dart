@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
 abstract class AudioTrackLocalDataSource {
   Future<Either<Failure, Unit>> cacheTrack(AudioTrackDTO track);
   Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id);
+  Future<Either<Failure, List<AudioTrackDTO>>> getAllTracks();
   Future<Either<Failure, Unit>> deleteTrack(String id);
   Future<Either<Failure, Unit>> deleteAllTracks();
   Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
@@ -44,6 +45,16 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
       return Right(trackDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get track by id: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<AudioTrackDTO>>> getAllTracks() async {
+    try {
+      final tracks = await _isar.audioTrackDocuments.where().findAll();
+      return Right(tracks.map((doc) => doc.toDTO()).toList());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get all tracks: $e'));
     }
   }
 
@@ -101,7 +112,10 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName) async {
+  Future<Either<Failure, Unit>> updateTrackName(
+    String trackId,
+    String newName,
+  ) async {
     try {
       await _isar.writeTxn(() async {
         final track = await _isar.audioTrackDocuments.get(fastHash(trackId));

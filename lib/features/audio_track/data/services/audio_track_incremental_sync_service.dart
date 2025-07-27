@@ -135,11 +135,37 @@ class AudioTrackIncrementalSyncService {
   /// 📅 Check if sync is needed (simple timestamp logic)
   Future<bool> _shouldSyncTracks() async {
     try {
-      // Simple approach - sync every 15 minutes
-      // Since AudioTrackLocalDataSource doesn't have getAllTracks method,
-      // we use a conservative approach and always sync for now
-      // TODO: Implement SharedPreferences for last sync timestamp
-      return true; // Always sync for now (can be optimized later)
+      // Get all local tracks and find the most recent sync time
+      final localResult = await _localDataSource.getAllTracks();
+
+      return localResult.fold(
+        (failure) => true, // Error getting local = sync needed
+        (localTracks) {
+          if (localTracks.isEmpty) {
+            return true; // No local tracks = sync needed
+          }
+
+          // Find the most recent sync time
+          DateTime? mostRecentSync;
+          for (final track in localTracks) {
+            final trackSyncTime = track.lastModified ?? track.createdAt;
+            if (trackSyncTime != null &&
+                (mostRecentSync == null ||
+                    trackSyncTime.isAfter(mostRecentSync))) {
+              mostRecentSync = trackSyncTime;
+            }
+          }
+
+          if (mostRecentSync == null) {
+            return true; // No sync metadata = sync needed
+          }
+
+          // Check if 15 minutes have passed
+          final now = DateTime.now();
+          final timeSinceSync = now.difference(mostRecentSync);
+          return timeSinceSync.inMinutes >= 15;
+        },
+      );
     } catch (e) {
       AppLogger.warning(
         'Error checking track sync need: $e - defaulting to sync',
@@ -193,8 +219,10 @@ class AudioTrackIncrementalSyncService {
     return local.name != remote.name ||
         local.duration != remote.duration ||
         local.projectId != remote.projectId ||
-        local.uploadedBy != remote.uploadedBy;
-    // Removed timestamp comparison since it's complex with null safety
+        local.uploadedBy != remote.uploadedBy ||
+        (remote.lastModified != null &&
+            (local.lastModified == null ||
+                remote.lastModified!.isAfter(local.lastModified!)));
   }
 
   /// 📝 Mark tracks as synced (simple timestamp update)
@@ -217,12 +245,17 @@ class AudioTrackIncrementalSyncService {
   /// 📊 Get simple sync statistics for monitoring
   Future<Map<String, dynamic>> getSyncStatistics(String userId) async {
     try {
-      // Simple stats without querying all tracks (method doesn't exist)
+      final localResult = await _localDataSource.getAllTracks();
+      final localCount = localResult.fold(
+        (failure) => 0,
+        (tracks) => tracks.length,
+      );
+
       return {
         'userId': userId,
+        'localTracksCount': localCount,
         'syncStrategy': 'smart_timestamp_based',
         'timestamp': DateTime.now().toIso8601String(),
-        'note': 'Simplified stats - detailed count not available',
       };
     } catch (e) {
       return {

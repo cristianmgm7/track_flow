@@ -16,13 +16,13 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
   final SessionStorage _sessionStorage;
   final NetworkStateManager _networkStateManager;
-  final GoogleAuthService _googleAuthService; // ✅ NUEVO
+  final GoogleAuthService _googleAuthService; // ✅ New
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
     required SessionStorage sessionStorage,
     required NetworkStateManager networkStateManager,
-    required GoogleAuthService googleAuthService, // ✅ NUEVO
+    required GoogleAuthService googleAuthService, // ✅ New
   }) : _remote = remote,
        _sessionStorage = sessionStorage,
        _networkStateManager = networkStateManager,

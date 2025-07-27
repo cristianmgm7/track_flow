@@ -8,17 +8,17 @@ import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
-/// 🧠 CEREBRO DEL UPSTREAM SYNC
+/// 🧠 UPSTREAM SYNC BRAIN
 ///
-/// Manages pending sync operations queue for offline changes.
-/// Garantiza que ninguna operación offline se pierda y que eventualmente
-/// todas lleguen al servidor.
+/// Manages the pending sync operations queue for offline changes.
+/// Ensures that no offline operation is lost and that all eventually
+/// reach the server.
 ///
-/// RESPONSABILIDADES:
-/// 1. 📥 ENCOLAR: Recibe operaciones de repositories y las guarda en Isar
-/// 2. ⚡ PROCESAR: Ejecuta operaciones pendientes cuando hay red
-/// 3. 🔄 RETRY: Reintenta operaciones fallidas hasta máximo de intentos
-/// 4. 🧹 LIMPIAR: Elimina operaciones completadas y que exceden retry limit
+/// RESPONSIBILITIES:
+/// 1. 📥 QUEUE: Receives operations from repositories and stores them in Isar
+/// 2. ⚡ PROCESS: Executes pending operations when network is available
+/// 3. 🔄 RETRY: Retries failed operations up to a maximum number of attempts
+/// 4. 🧹 CLEANUP: Removes completed operations and those exceeding the retry limit
 @lazySingleton
 class PendingOperationsManager {
   final PendingOperationsRepository _repository;
@@ -30,12 +30,11 @@ class PendingOperationsManager {
     this._networkStateManager,
     this._executorFactory,
   );
-
   // ============================================================================
   // 📥 Queue Operations (Called by Repositories)
   // ============================================================================
 
-  /// Core method para agregar cualquier operación a la queue
+  /// Core method to add any operation to the queue
   /// Repositories use the specific helpers below this method
   Future<Either<Failure, Unit>> addOperation({
     required String entityType,
@@ -61,6 +60,7 @@ class PendingOperationsManager {
   }
 
   /// 🔧 HELPER: Repositories call this when user creates entities offline
+  /// Helper: Repositories call this when the user creates entities offline
   Future<Either<Failure, Unit>> addCreateOperation({
     required String entityType,
     required String entityId,
@@ -77,6 +77,7 @@ class PendingOperationsManager {
   }
 
   /// 📝 HELPER: Repositories call this when user updates entities offline
+  /// Helper: Repositories call this when the user updates entities offline
   Future<Either<Failure, Unit>> addUpdateOperation({
     required String entityType,
     required String entityId,
@@ -93,6 +94,7 @@ class PendingOperationsManager {
   }
 
   /// 🗑️ HELPER: Repositories call this when user deletes entities offline
+  /// Helper: Repositories call this when the user deletes entities offline
   Future<Either<Failure, Unit>> addDeleteOperation({
     required String entityType,
     required String entityId,
@@ -105,15 +107,14 @@ class PendingOperationsManager {
       priority: priority,
     );
   }
-
   // ============================================================================
   // ⚡ Processing Operations (Called by BackgroundSyncCoordinator)
   // ============================================================================
 
   /// 🚀 MAIN ENTRY POINT: BackgroundSyncCoordinator calls this
-  /// Procesa todas las operaciones pendientes cuando hay red disponible
+  /// Processes all pending operations when network is available
   Future<void> processPendingOperations() async {
-    // 📶 Solo procesar si hay conexión
+    // 📶 Only process if there is a network connection
     if (!await _networkStateManager.isConnected) {
       return;
     }
@@ -179,8 +180,8 @@ class PendingOperationsManager {
     }
   }
 
-  /// 📊 Procesa operaciones agrupadas por prioridad
-  /// ORDEN: Critical → High → Medium → Low
+  /// 📊 Processes operations grouped by priority
+  /// ORDER: Critical → High → Medium → Low
   Future<void> _processOperationsByPriority(
     List<SyncOperationDocument> operations,
   ) async {
@@ -208,8 +209,8 @@ class PendingOperationsManager {
     }
   }
 
-  /// 🔄 Procesa UNA operación individual
-  /// FLUJO: Check retry limit → Execute → Mark completed/failed
+  /// 🔄 Processes ONE individual operation
+  /// FLOW: Check retry limit → Execute → Mark completed/failed
   Future<void> _processOperation(SyncOperationDocument operation) async {
     // 🚫 Skip if operation exceeded retry limit
     if (!operation.canRetry()) {
@@ -236,6 +237,9 @@ class PendingOperationsManager {
     await executor.execute(operation);
   }
 
+  // ============================================================================
+  // 📊 MONITORING & STATISTICS (Called by BackgroundSyncCoordinator)
+  // ============================================================================
   // ============================================================================
   // 📊 MONITORING & STATISTICS (Called by BackgroundSyncCoordinator)
   // ============================================================================
@@ -330,6 +334,9 @@ class PendingOperationsManager {
   // ============================================================================
   // 🧹 CLEANUP (Called by BackgroundSyncCoordinator)
   // ============================================================================
+  // ============================================================================
+  // 🧹 CLEANUP (Called by BackgroundSyncCoordinator)
+  // ============================================================================
 
   /// 🗑️ Remove completed operations to keep queue manageable
   /// BackgroundSyncCoordinator calls this periodically
@@ -337,6 +344,9 @@ class PendingOperationsManager {
     await _repository.clearCompletedOperations();
   }
 
+  // ============================================================================
+  // 🔧 HELPERS
+  // ============================================================================
   // ============================================================================
   // 🔧 HELPERS
   // ============================================================================

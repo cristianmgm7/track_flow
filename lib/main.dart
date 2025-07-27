@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app/my_app.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/core/app/app_error_widget.dart';
+import 'package:trackflow/core/app/screens/app_error_screen.dart';
 
 void main() async {
   try {
@@ -43,7 +43,7 @@ Widget _buildErrorRecoveryApp(Object error) {
   return MaterialApp(
     title: 'TrackFlow - Recovery Mode',
     theme: ThemeData.dark(),
-    home: AppErrorWidget(
+    home: AppErrorScreen(
       error: error,
       onRetry: () {
         // Restart the app

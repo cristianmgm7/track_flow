@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
-import 'package:trackflow/core/app_flow/services/app_bootstrap.dart';
+import 'package:trackflow/core/app_flow/domain/services/app_bootstrap.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
@@ -94,11 +94,27 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     try {
       emit(AppFlowLoading());
 
-      // TODO: Implement sign out logic
-      // For now, just emit unauthenticated state
-      emit(AppFlowUnauthenticated());
+      AppLogger.info('Starting sign out process', tag: 'APP_FLOW_BLOC');
 
-      AppLogger.info('Sign out completed', tag: 'APP_FLOW_BLOC');
+      // ✅ IMPLEMENTAR SIGN OUT REAL usando AppBootstrap
+      final signOutResult = await _appBootstrap.signOut();
+
+      signOutResult.fold(
+        (failure) {
+          AppLogger.error(
+            'Sign out failed: ${failure.message}',
+            tag: 'APP_FLOW_BLOC',
+          );
+          emit(AppFlowError('Sign out failed: ${failure.message}'));
+        },
+        (_) {
+          AppLogger.info(
+            'Sign out completed successfully',
+            tag: 'APP_FLOW_BLOC',
+          );
+          emit(AppFlowUnauthenticated());
+        },
+      );
     } catch (e) {
       AppLogger.error('Sign out failed: $e', tag: 'APP_FLOW_BLOC');
       emit(AppFlowError('Sign out failed: $e'));

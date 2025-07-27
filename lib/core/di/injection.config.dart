@@ -24,7 +24,8 @@ import 'package:shared_preferences/shared_preferences.dart' as _i45;
 import 'package:trackflow/core/app_flow/data/session_storage.dart' as _i70;
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart'
     as _i169;
-import 'package:trackflow/core/app_flow/services/app_bootstrap.dart' as _i168;
+import 'package:trackflow/core/app_flow/domain/services/app_bootstrap.dart'
+    as _i168;
 import 'package:trackflow/core/di/app_module.dart' as _i176;
 import 'package:trackflow/core/network/network_state_manager.dart'
     as _i27; // ignore: implementation_imports
