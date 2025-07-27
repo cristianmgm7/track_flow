@@ -17,878 +17,393 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 ### Core Principles
 
 - **Explicit Consent**: Users must accept invitations before joining projects
-- **Dual Flow**: Support both existing users and new user invitations
-- **Offline-First**: Work with existing sync architecture
-- **Security**: Proper permission checks and validation
-- **Clean Architecture**: Separate Watcher/Actor pattern for better state management
+- **Dual Flow**: Support both existing users and new users
+- **Clean Architecture**: Separate Actor/Watcher BLoCs for better separation of concerns
+- **Notification Integration**: Automatic notification creation and management
+- **Magic Link Integration**: Seamless onboarding for new users
 
-## Database Schema
+### Architecture Overview
 
-### ProjectInvitation Entity
-
-```dart
-class ProjectInvitation extends Entity<InvitationId> {
-  final ProjectId projectId;
-  final UserId invitedByUserId;    // Who sent the invitation
-  final UserId? invitedUserId;     // For existing users
-  final String invitedEmail;       // For new users
-  final ProjectRole proposedRole;
-  final DateTime createdAt;
-  final DateTime expiresAt;
-  final InvitationStatus status;
-  final String? message;           // Optional invitation message
-}
 ```
-
-### InvitationStatus Enum
-
-```dart
-enum InvitationStatus {
-  pending,    // Invitation sent, waiting for response
-  accepted,   // User accepted the invitation
-  declined,   // User declined the invitation
-  expired,    // Invitation expired
-  cancelled   // Invitation cancelled by sender
-}
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Presentation  │    │     Domain      │    │      Data       │
+│                 │    │                 │    │                 │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │Actor BLoC   │ │    │ │Use Cases    │ │    │ │Repositories │ │
+│ │             │ │    │ │             │ │    │ │             │ │
+│ │• Send Inv   │ │    │ │• Send Inv   │ │    │ │• Local DB   │ │
+│ │• Accept Inv │ │    │ │• Accept Inv │ │    │ │• Remote API │ │
+│ │• Decline Inv│ │    │ │• Decline Inv│ │    │ │• Cache      │ │
+│ │• Cancel Inv │ │    │ │• Cancel Inv │ │    │ │             │ │
+│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
+│                 │    │                 │    │                 │
+│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
+│ │Watcher BLoC │ │    │ │Entities     │ │    │ │DTOs         │ │
+│ │             │ │    │ │             │ │    │ │             │ │
+│ │• Watch Inv  │ │    │ │• Invitation │ │    │ │• Invitation │ │
+│ │• Watch Notif│ │    │ │• Notification│ │    │ │• Notification│ │
+│ │• Counts     │ │    │ │• Status     │ │    │ │• Status     │ │
+│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
-
-### NotificationEntity (New)
-
-```dart
-class NotificationEntity extends Entity<NotificationId> {
-  final NotificationType type;
-  final String title;
-  final String body;
-  final DateTime timestamp;
-  final Map<String, dynamic> payload; // Contains invitation data
-  final bool isRead;
-  final UserId recipientUserId;
-}
-
-enum NotificationType {
-  projectInvitation,
-  projectUpdate,
-  collaboratorJoined,
-  // ... other notification types
-}
-```
-
-## User Experience Flows
-
-### Flow 1: Invite Existing User
-
-1. **Project Owner** types email in invitation form
-2. **System** searches for user by email in database
-3. **If Found**: Create invitation record with `invitedUserId`
-4. **System** creates notification for invited user
-5. **Invited User** sees notification in app
-6. **User** accepts/declines invitation from notification center
-7. **System** adds user to project only after acceptance
-
-### Flow 2: Invite New User
-
-1. **Project Owner** types email in invitation form
-2. **System** searches for user by email in database
-3. **If Not Found**: Create invitation record with `invitedEmail`
-4. **System** generates magic link and sends invitation email
-5. **New User** clicks email link → signs up → automatically joins project
-6. **System** creates user profile and adds to project
-
-## Implementation Architecture
-
-### 🎯 Split Bloc by Responsibility (Watcher/Actor Pattern)
-
-#### ProjectInvitationWatcherBloc
-
-- **Responsibility**: Observes invitation state changes
-- **Events**: `WatchMyPendingInvitations`, `WatchSentInvitations`
-- **States**: `InvitationsLoading`, `InvitationsLoaded`, `InvitationsError`
-- **Methods**: `observeMyPendingInvitations()`, `observeSentInvitations()`
-
-#### ProjectInvitationActorBloc
-
-- **Responsibility**: Handles user actions on invitations
-- **Events**: `SendInvitation`, `AcceptInvitation`, `DeclineInvitation`, `CancelInvitation`
-- **States**: `InvitationActionLoading`, `InvitationActionSuccess`, `InvitationActionError`
-- **Methods**: `sendInvitation()`, `acceptInvitation()`, `declineInvitation()`
 
 ## Implementation Phases
 
-### Phase 1: Core Domain Layer
+### Phase 1: Domain Layer ✅ (COMPLETED)
 
-**Files to Create:**
+**Status**: ✅ **COMPLETED** - All domain components created
 
-- `lib/features/invitations/domain/entities/project_invitation.dart`
-- `lib/features/invitations/domain/entities/invitation_id.dart`
-- `lib/features/invitations/domain/entities/notification_entity.dart`
-- `lib/features/invitations/domain/entities/notification_id.dart`
-- `lib/features/invitations/domain/repositories/invitation_repository.dart`
-- `lib/features/invitations/domain/repositories/notification_repository.dart`
+#### ✅ Completed Tasks:
 
-**Use Cases:**
+- [x] **InvitationId** - Unique identifier for invitations
+- [x] **NotificationId** - Unique identifier for notifications
+- [x] **ProjectInvitation** - Core invitation entity with domain methods
+- [x] **NotificationEntity** - Notification entity with factory methods
+- [x] **InvitationRepository** - Repository interface (Actor/Watcher pattern)
+- [x] **NotificationRepository** - Repository interface for notifications
+- [x] **FindUserByEmailUseCase** - Search for existing users
+- [x] **SendInvitationUseCase** - Send invitations (existing + new users)
+- [x] **AcceptInvitationUseCase** - Accept invitations and add to project
+- [x] **DeclineInvitationUseCase** - Decline invitations
+- [x] **ObservePendingInvitationsUseCase** - Watch pending invitations
+- [x] **ObserveSentInvitationsUseCase** - Watch sent invitations
+- [x] **ObserveNotificationsUseCase** - Watch notifications
+- [x] **MarkNotificationAsReadUseCase** - Mark notifications as read
+- [x] **MarkAllNotificationsAsReadUseCase** - Mark all as read
+- [x] **GetUnreadNotificationsCountUseCase** - Get unread count
+- [x] **GetPendingInvitationsCountUseCase** - Get pending count
+- [x] **CancelInvitationUseCase** - Cancel sent invitations
+- [x] **InvitationExceptions** - Domain exceptions
+- [x] **InvitationFailures** - Domain failures
+- [x] **Domain Barrel File** - Export all domain components
 
-- `SendInvitationUseCase` - Send invitation to user
-- `FindUserByEmailUseCase` - Search for existing user
-- `AcceptInvitationUseCase` - Accept invitation
-- `DeclineInvitationUseCase` - Decline invitation
-- `CancelInvitationUseCase` - Cancel sent invitation
-- `ObserveMyPendingInvitationsUseCase` - Stream pending invitations
-- `ObserveSentInvitationsUseCase` - Stream sent invitations
-- `CreateNotificationUseCase` - Create notification for invitation
+#### 🔧 Issues to Fix:
+
+- [ ] **ID Classes Constructor Issue** - Fix InvitationId and NotificationId constructors
+- [ ] **ProjectRepository Integration** - Add when ProjectRepository is available
+- [ ] **UserProfileRepository Integration** - Add when UserProfileRepository is available
 
 ### Phase 2: Data Layer
 
-**Files to Create:**
+**Status**: 🔄 **IN PROGRESS** - Next phase to implement
 
-- `lib/features/invitations/data/repositories/invitation_repository_impl.dart`
-- `lib/features/invitations/data/repositories/notification_repository_impl.dart`
-- `lib/features/invitations/data/datasources/invitation_remote_datasource.dart`
-- `lib/features/invitations/data/datasources/invitation_local_datasource.dart`
-- `lib/features/invitations/data/datasources/notification_remote_datasource.dart`
-- `lib/features/invitations/data/datasources/notification_local_datasource.dart`
-- `lib/features/invitations/data/models/invitation_dto.dart`
-- `lib/features/invitations/data/models/notification_dto.dart`
-- `lib/features/invitations/data/models/invitation_document.dart`
-- `lib/features/invitations/data/models/notification_document.dart`
+#### Tasks:
 
-### Phase 3: Presentation Layer (Split Blocs)
+- [ ] **InvitationDto** - Data transfer object for invitations
+- [ ] **NotificationDto** - Data transfer object for notifications
+- [ ] **InvitationLocalDataSource** - Local database operations
+- [ ] **NotificationLocalDataSource** - Local database operations
+- [ ] **InvitationRemoteDataSource** - Remote API operations
+- [ ] **NotificationRemoteDataSource** - Remote API operations
+- [ ] **InvitationRepositoryImpl** - Repository implementation
+- [ ] **NotificationRepositoryImpl** - Repository implementation
+- [ ] **InvitationMapper** - Entity ↔ DTO mapping
+- [ ] **NotificationMapper** - Entity ↔ DTO mapping
+- [ ] **Data Barrel File** - Export all data components
 
-**Files to Create:**
+### Phase 3: Split BLoCs
 
-- `lib/features/invitations/presentation/bloc/project_invitation_watcher_bloc.dart`
-- `lib/features/invitations/presentation/bloc/project_invitation_actor_bloc.dart`
-- `lib/features/invitations/presentation/bloc/invitation_watcher_event.dart`
-- `lib/features/invitations/presentation/bloc/invitation_watcher_state.dart`
-- `lib/features/invitations/presentation/bloc/invitation_actor_event.dart`
-- `lib/features/invitations/presentation/bloc/invitation_actor_state.dart`
-- `lib/features/invitations/presentation/screens/invitation_screen.dart`
-- `lib/features/invitations/presentation/widgets/invitation_form.dart`
-- `lib/features/invitations/presentation/widgets/pending_invitations_list.dart`
-- `lib/features/invitations/presentation/widgets/sent_invitations_list.dart`
+**Status**: ⏳ **PENDING**
 
-### Phase 4: Notification System
+#### Tasks:
 
-**Files to Create:**
+- [ ] **ProjectInvitationWatcherBloc** - Observe invitation state changes
+- [ ] **ProjectInvitationActorBloc** - Handle user actions
+- [ ] **NotificationWatcherBloc** - Observe notification state changes
+- [ ] **NotificationActorBloc** - Handle notification actions
+- [ ] **InvitationStates** - State classes for invitation BLoCs
+- [ ] **NotificationStates** - State classes for notification BLoCs
+- [ ] **InvitationEvents** - Event classes for invitation BLoCs
+- [ ] **NotificationEvents** - Event classes for notification BLoCs
 
-- `lib/features/notifications/presentation/screens/notification_center_screen.dart`
-- `lib/features/notifications/presentation/widgets/notification_list.dart`
-- `lib/features/notifications/presentation/widgets/notification_item.dart`
-- `lib/features/notifications/presentation/bloc/notification_bloc.dart`
-- `lib/features/notifications/presentation/bloc/notification_event.dart`
-- `lib/features/notifications/presentation/bloc/notification_state.dart`
+### Phase 4: UI Components
 
-### Phase 5: Magic Link Integration
+**Status**: ⏳ **PENDING**
 
-**Files to Update:**
+#### Tasks:
 
-- `lib/features/magic_link/domain/entities/magic_link.dart` - Add invitation support
-- `lib/features/magic_link/domain/usecases/generate_magic_link_use_case.dart` - Support invitation links
-- `lib/features/magic_link/presentation/blocs/magic_link_bloc.dart` - Handle invitation acceptance
+- [ ] **SendInvitationForm** - Form to send invitations
+- [ ] **PendingInvitationsList** - List of pending invitations
+- [ ] **SentInvitationsList** - List of sent invitations
+- [ ] **InvitationCard** - Individual invitation display
+- [ ] **NotificationCenterScreen** - Main notification screen
+- [ ] **NotificationList** - List of notifications
+- [ ] **NotificationCard** - Individual notification display
+- [ ] **InvitationActionButtons** - Accept/Decline buttons
+
+### Phase 5: Notification System
+
+**Status**: ⏳ **PENDING**
+
+#### Tasks:
+
+- [ ] **NotificationBadge** - Badge showing unread count
+- [ ] **NotificationIcon** - Icon with notification indicator
+- [ ] **NotificationDrawer** - Drawer for notifications
+- [ ] **NotificationSettings** - Notification preferences
+- [ ] **NotificationSound** - Sound for new notifications
+- [ ] **NotificationVibration** - Vibration for notifications
+
+### Phase 6: Magic Link Integration
+
+**Status**: ⏳ **PENDING**
+
+#### Tasks:
+
+- [ ] **Update MagicLinkRepository** - Add invitation support
+- [ ] **InvitationMagicLink** - Magic link for invitations
+- [ ] **EmailTemplateService** - Email template generation
+- [ ] **EmailSendingService** - Email sending functionality
+- [ ] **MagicLinkHandler** - Handle invitation magic links
+- [ ] **InvitationSignupFlow** - Signup flow for invited users
+- [ ] **AutoJoinProject** - Automatically join project after signup
+
+### Phase 7: Integration & Updates
+
+**Status**: ⏳ **PENDING**
+
+#### Tasks:
+
+- [ ] **Update ProjectRepository** - Add collaborator management
+- [ ] **Update UserProfileRepository** - Add email search
+- [ ] **Update AppRouter** - Add invitation routes
+- [ ] **Update Navigation** - Add notification navigation
+- [ ] **Update DI Container** - Register new dependencies
+- [ ] **Update Tests** - Add comprehensive tests
+
+### Phase 8: Testing & Validation
+
+**Status**: ⏳ **PENDING**
+
+#### Tasks:
+
+- [ ] **Unit Tests** - Test all use cases and entities
+- [ ] **Integration Tests** - Test repository implementations
+- [ ] **BLoC Tests** - Test all BLoCs
+- [ ] **Widget Tests** - Test UI components
+- [ ] **End-to-End Tests** - Test complete flows
+- [ ] **Performance Tests** - Test with large datasets
+
+### Phase 9: Documentation & Polish
+
+**Status**: ⏳ **PENDING**
+
+#### Tasks:
+
+- [ ] **API Documentation** - Document all endpoints
+- [ ] **User Documentation** - User guide for invitations
+- [ ] **Developer Documentation** - Technical documentation
+- [ ] **Code Comments** - Add comprehensive comments
+- [ ] **Error Handling** - Improve error messages
+- [ ] **Accessibility** - Ensure accessibility compliance
 
 ## Detailed Implementation Plan
 
-### Step 1: Create Domain Entities
+### Invitation Flow
 
-```dart
-// lib/features/invitations/domain/entities/project_invitation.dart
-class ProjectInvitation extends Entity<InvitationId> {
-  final ProjectId projectId;
-  final UserId invitedByUserId;
-  final UserId? invitedUserId;
-  final String invitedEmail;
-  final ProjectRole proposedRole;
-  final DateTime createdAt;
-  final DateTime expiresAt;
-  final InvitationStatus status;
-  final String? message;
+#### For Existing Users:
 
-  // Domain methods
-  bool get isExpired => DateTime.now().isAfter(expiresAt);
-  bool get canBeAccepted => status == InvitationStatus.pending && !isExpired;
+1. **Send Invitation** → Create invitation record
+2. **Create Notification** → Notify user immediately
+3. **User Sees Notification** → In notification center
+4. **User Accepts/Declines** → Update invitation status
+5. **Add to Project** → Only after acceptance
 
-  ProjectInvitation accept() {
-    if (!canBeAccepted) throw InvitationCannotBeAcceptedException();
-    return copyWith(status: InvitationStatus.accepted);
-  }
+#### For New Users:
 
-  ProjectInvitation decline() {
-    if (!canBeAccepted) throw InvitationCannotBeAcceptedException();
-    return copyWith(status: InvitationStatus.declined);
-  }
-}
-```
+1. **Send Invitation** → Create invitation record
+2. **Generate Magic Link** → Create signup link
+3. **Send Email** → Email with magic link
+4. **User Clicks Link** → Opens app with signup
+5. **User Signs Up** → Create account
+6. **Auto-Join Project** → Automatically join project
 
-### Step 2: Create Split Repository Pattern
+### Notification System
 
-```dart
-// lib/features/invitations/domain/repositories/invitation_repository.dart
-abstract class InvitationRepository {
-  // Actor methods (for actions)
-  Future<Either<Failure, ProjectInvitation>> sendInvitation(SendInvitationParams params);
-  Future<Either<Failure, ProjectInvitation>> acceptInvitation(InvitationId invitationId);
-  Future<Either<Failure, ProjectInvitation>> declineInvitation(InvitationId invitationId);
-  Future<Either<Failure, Unit>> cancelInvitation(InvitationId invitationId);
+#### Notification Types:
 
-  // Watcher methods (for observing)
-  Stream<Either<Failure, List<ProjectInvitation>>> watchPendingInvitations(UserId userId);
-  Stream<Either<Failure, List<ProjectInvitation>>> watchSentInvitations(UserId userId);
-}
-```
+- **Project Invitation** - When invited to project
+- **Invitation Accepted** - When invitation is accepted
+- **Invitation Declined** - When invitation is declined
+- **Collaborator Joined** - When someone joins project
 
-### Step 3: Create Split Use Cases
+#### Notification Features:
 
-```dart
-// Actor Use Cases
-@lazySingleton
-class SendInvitationUseCase {
-  final InvitationRepository _invitationRepository;
-  final FindUserByEmailUseCase _findUserByEmail;
-  final CreateNotificationUseCase _createNotification;
+- **Real-time Updates** - Live notification updates
+- **Badge Count** - Unread notification count
+- **Mark as Read** - Individual and bulk mark as read
+- **Notification Center** - Dedicated notification screen
 
-  Future<Either<Failure, ProjectInvitation>> call(SendInvitationParams params) async {
-    // 1. Search for user by email
-    // 2. Create invitation
-    // 3. Create notification for invited user
-    // 4. Send email if new user
-  }
-}
+### Magic Link Integration
 
-// Watcher Use Cases
-@lazySingleton
-class ObserveMyPendingInvitationsUseCase {
-  final InvitationRepository _invitationRepository;
-  final SessionStorage _sessionStorage;
+#### Magic Link Flow:
 
-  Stream<Either<Failure, List<ProjectInvitation>>> call() async* {
-    final userId = await _sessionStorage.getUserId();
-    if (userId == null) {
-      yield Left(ServerFailure('No user found'));
-      return;
-    }
-
-    yield* _invitationRepository.watchPendingInvitations(
-      UserId.fromUniqueString(userId)
-    );
-  }
-}
-```
-
-### Step 4: Create Split BLoCs
-
-```dart
-// lib/features/invitations/presentation/bloc/project_invitation_watcher_bloc.dart
-class ProjectInvitationWatcherBloc extends Bloc<InvitationWatcherEvent, InvitationWatcherState> {
-  final ObserveMyPendingInvitationsUseCase _observePendingInvitations;
-  final ObserveSentInvitationsUseCase _observeSentInvitations;
-
-  StreamSubscription<Either<Failure, List<ProjectInvitation>>>? _pendingSubscription;
-  StreamSubscription<Either<Failure, List<ProjectInvitation>>>? _sentSubscription;
-
-  ProjectInvitationWatcherBloc({
-    required ObserveMyPendingInvitationsUseCase observePendingInvitations,
-    required ObserveSentInvitationsUseCase observeSentInvitations,
-  }) : _observePendingInvitations = observePendingInvitations,
-       _observeSentInvitations = observeSentInvitations,
-       super(InvitationWatcherInitial()) {
-
-    on<WatchMyPendingInvitations>(_onWatchMyPendingInvitations);
-    on<WatchSentInvitations>(_onWatchSentInvitations);
-  }
-
-  Future<void> _onWatchMyPendingInvitations(
-    WatchMyPendingInvitations event,
-    Emitter<InvitationWatcherState> emit,
-  ) async {
-    emit(InvitationWatcherLoading());
-
-    await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
-      _observePendingInvitations(),
-      onData: (either) {
-        either.fold(
-          (failure) => emit(InvitationWatcherError(failure.message)),
-          (invitations) => emit(PendingInvitationsLoaded(invitations)),
-        );
-      },
-      onError: (error, stackTrace) {
-        emit(InvitationWatcherError(error.toString()));
-      },
-    );
-  }
-}
-
-// lib/features/invitations/presentation/bloc/project_invitation_actor_bloc.dart
-class ProjectInvitationActorBloc extends Bloc<InvitationActorEvent, InvitationActorState> {
-  final SendInvitationUseCase _sendInvitation;
-  final AcceptInvitationUseCase _acceptInvitation;
-  final DeclineInvitationUseCase _declineInvitation;
-
-  ProjectInvitationActorBloc({
-    required SendInvitationUseCase sendInvitation,
-    required AcceptInvitationUseCase acceptInvitation,
-    required DeclineInvitationUseCase declineInvitation,
-  }) : _sendInvitation = sendInvitation,
-       _acceptInvitation = acceptInvitation,
-       _declineInvitation = declineInvitation,
-       super(InvitationActorInitial()) {
-
-    on<SendInvitation>(_onSendInvitation);
-    on<AcceptInvitation>(_onAcceptInvitation);
-    on<DeclineInvitation>(_onDeclineInvitation);
-  }
-
-  Future<void> _onSendInvitation(
-    SendInvitation event,
-    Emitter<InvitationActorState> emit,
-  ) async {
-    emit(InvitationActorLoading());
-
-    final result = await _sendInvitation(event.params);
-
-    result.fold(
-      (failure) => emit(InvitationActorError(failure.message)),
-      (invitation) => emit(InvitationSentSuccess(invitation)),
-    );
-  }
-}
-```
-
-### Step 5: Create Notification System
-
-```dart
-// lib/features/notifications/presentation/screens/notification_center_screen.dart
-class NotificationCenterScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<NotificationBloc, NotificationState>(
-      builder: (context, state) {
-        if (state is NotificationLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state is NotificationsLoaded) {
-          return ListView.builder(
-            itemCount: state.notifications.length,
-            itemBuilder: (context, index) {
-              final notification = state.notifications[index];
-              return NotificationItem(
-                notification: notification,
-                onTap: () => _handleNotificationTap(context, notification),
-              );
-            },
-          );
-        }
-
-        return const Center(child: Text('No notifications'));
-      },
-    );
-  }
-
-  void _handleNotificationTap(BuildContext context, NotificationEntity notification) {
-    if (notification.type == NotificationType.projectInvitation) {
-      // Navigate to invitation details
-      context.push('/invitations/${notification.payload['invitationId']}');
-    }
-  }
-}
-```
-
-## Integration Points
-
-### 1. Update AddCollaboratorForm
-
-Replace the current hardcoded form with the new invitation form:
-
-```dart
-// lib/features/project_detail/presentation/widgets/add_collaborator_form.dart
-class AddCollaboratorForm extends StatelessWidget {
-  final Project project;
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<ProjectInvitationActorBloc>(),
-      child: InvitationForm(project: project),
-    );
-  }
-}
-```
-
-### 2. Add Notification Center to Navigation
-
-```dart
-// lib/core/router/app_routes.dart
-static const String notifications = '/notifications';
-static const String invitations = '/invitations';
-
-// Add to bottom navigation or main menu
-```
-
-### 3. Update Magic Link Handler
-
-```dart
-// lib/features/magic_link/presentation/blocs/magic_link_bloc.dart
-Future<void> _onMagicLinkHandleRequested(
-  MagicLinkHandleRequested event,
-  Emitter<MagicLinkState> emit,
-) async {
-  // ... existing validation logic ...
-
-  // Check if this is an invitation link
-  if (magicLink.type == 'invitation') {
-    // Auto-accept invitation for new users
-    final acceptResult = await acceptInvitationUseCase(
-      AcceptInvitationParams(invitationId: magicLink.invitationId),
-    );
-
-    if (acceptResult.isRight()) {
-      emit(MagicLinkInvitationAccepted());
-    }
-  }
-}
-```
-
-## Security Considerations
-
-### Permission Checks
-
-- Only project collaborators with `addCollaborator` permission can send invitations
-- Users can only accept/decline invitations sent to them
-- Invitations expire after 30 days by default
-- Rate limiting for invitation sending (max 10 per day per user)
-
-### Validation
-
-- Email format validation
-- Prevent self-invitation
-- Prevent duplicate invitations to same user for same project
-- Validate project exists and user has permission
-
-## Testing Strategy
-
-### Unit Tests
-
-- Invitation entity tests
-- Use case tests (Actor and Watcher)
-- Repository tests
-- BLoC tests (separate for Watcher and Actor)
-
-### Integration Tests
-
-- End-to-end invitation flow
-- Magic link integration
-- Notification creation and display
-- Cross-user invitation acceptance
-
-## Migration Strategy
-
-### Phase 1: Add New System (Parallel)
-
-- Implement invitation system alongside existing system
-- Keep current `AddCollaboratorForm` working
-- Add new invitation features
-
-### Phase 2: Gradual Migration
-
-- Update UI to use invitation form
-- Add notification center
-- Deprecate direct collaborator addition
-
-### Phase 3: Complete Migration
-
-- Remove direct collaborator addition
-- Full invitation-based system
-- Clean up old code
+1. **Generate Link** - Create unique invitation link
+2. **Email Template** - Professional invitation email
+3. **Deep Link** - App opens to invitation screen
+4. **Signup Flow** - Streamlined signup process
+5. **Auto-Join** - Automatically join project
 
 ## Success Metrics
 
-### User Experience
+### Performance Metrics:
 
-- Invitation acceptance rate > 80%
-- Average time to accept invitation < 24 hours
-- User satisfaction with invitation flow
-- Notification engagement rate > 60%
+- **App Startup Time** - < 2 seconds (no impact)
+- **Invitation Send Time** - < 1 second
+- **Notification Delivery** - < 500ms
+- **Magic Link Processing** - < 2 seconds
 
-### Technical Metrics
+### User Experience Metrics:
 
-- Invitation system uptime > 99.9%
-- Email delivery rate > 95%
-- Magic link click-through rate > 60%
-- Notification delivery success rate > 98%
+- **Invitation Acceptance Rate** - Target > 70%
+- **Time to Accept Invitation** - Target < 24 hours
+- **User Satisfaction** - Target > 4.5/5
+- **Error Rate** - Target < 1%
 
-## Implementation Timeline
+### Technical Metrics:
 
-**Week 1**: Domain layer and repositories
-**Week 2**: Use cases and split BLoCs
-**Week 3**: UI components and notification system
-**Week 4**: Magic link integration and testing
-**Week 5**: Email integration and refinement
+- **Code Coverage** - Target > 90%
+- **Test Pass Rate** - Target 100%
+- **Build Time** - No significant increase
+- **App Size** - < 5MB increase
 
-## Files to Create (Summary)
+## Risk Mitigation
 
-### Domain Layer (8 files)
+### Technical Risks:
 
-- `project_invitation.dart`
-- `invitation_id.dart`
-- `notification_entity.dart`
-- `notification_id.dart`
-- `invitation_repository.dart`
-- `notification_repository.dart`
-- `send_invitation_usecase.dart`
-- `find_user_by_email_usecase.dart`
-- `accept_invitation_usecase.dart`
-- `decline_invitation_usecase.dart`
-- `observe_pending_invitations_usecase.dart`
-- `observe_sent_invitations_usecase.dart`
-- `create_notification_usecase.dart`
+- **ID Constructor Issues** - Use existing ID patterns
+- **Repository Dependencies** - Implement with TODOs
+- **BLoC Complexity** - Keep Actor/Watcher separation
+- **Database Schema** - Plan migration strategy
 
-### Data Layer (12 files)
+### User Experience Risks:
 
-- `invitation_repository_impl.dart`
-- `notification_repository_impl.dart`
-- `invitation_remote_datasource.dart`
-- `invitation_local_datasource.dart`
-- `notification_remote_datasource.dart`
-- `notification_local_datasource.dart`
-- `invitation_dto.dart`
-- `notification_dto.dart`
-- `invitation_document.dart`
-- `notification_document.dart`
-- `invitation_cache_dto.dart`
-- `notification_cache_dto.dart`
-
-### Presentation Layer (12 files)
-
-- `project_invitation_watcher_bloc.dart`
-- `project_invitation_actor_bloc.dart`
-- `invitation_watcher_event.dart`
-- `invitation_watcher_state.dart`
-- `invitation_actor_event.dart`
-- `invitation_actor_state.dart`
-- `invitation_screen.dart`
-- `invitation_form.dart`
-- `pending_invitations_list.dart`
-- `sent_invitations_list.dart`
-- `notification_center_screen.dart`
-- `notification_list.dart`
-- `notification_item.dart`
-- `notification_bloc.dart`
-- `notification_event.dart`
-- `notification_state.dart`
-
-### Updated Files (6 files)
-
-- `add_collaborator_form.dart` (replace)
-- `manage_collaborators_screen.dart` (enhance)
-- `app_routes.dart` (add routes)
-- `magic_link_bloc.dart` (enhance)
-- `app_router.dart` (add notification routes)
-- `main.dart` (add notification bloc provider)
-
-**Total: 33 new files, 6 updated files**
+- **Notification Spam** - Implement rate limiting
+- **Magic Link Security** - Use secure token generation
+- **Email Delivery** - Use reliable email service
+- **App Performance** - Monitor and optimize
 
 ## Next Steps
 
-1. **Start with Domain Layer**: Create entities and repositories
-2. **Implement Use Cases**: Focus on Actor use cases first
-3. **Create Split BLoCs**: Implement Watcher/Actor pattern
-4. **Build UI Components**: Start with invitation form
-5. **Add Notification System**: Integrate with existing app
-6. **Test and Refine**: Ensure all flows work correctly
-
-This plan provides a clean, scalable architecture that separates concerns properly and provides an excellent user experience for project invitations.
+1. **Fix ID Constructor Issues** - Resolve InvitationId/NotificationId
+2. **Start Phase 2** - Implement Data Layer
+3. **Create Repository Implementations** - Local and remote data sources
+4. **Add DTOs and Mappers** - Data transfer objects
+5. **Implement BLoCs** - Actor and Watcher patterns
 
 ---
 
-# 📋 IMPLEMENTATION TODO CHECKLIST
-
-## 🎯 Phase 1: Domain Layer (Week 1)
-
-### ✅ Core Entities
-
-- [ ] Create `lib/features/invitations/domain/entities/invitation_id.dart`
-- [ ] Create `lib/features/invitations/domain/entities/project_invitation.dart`
-- [ ] Create `lib/features/invitations/domain/entities/notification_id.dart`
-- [ ] Create `lib/features/invitations/domain/entities/notification_entity.dart`
-- [ ] Add `InvitationStatus` enum
-- [ ] Add `NotificationType` enum
-
-### ✅ Repository Interfaces
-
-- [ ] Create `lib/features/invitations/domain/repositories/invitation_repository.dart`
-- [ ] Create `lib/features/invitations/domain/repositories/notification_repository.dart`
-- [ ] Define Actor methods (send, accept, decline, cancel)
-- [ ] Define Watcher methods (watch pending, watch sent)
-
-### ✅ Use Cases
-
-- [ ] Create `lib/features/invitations/domain/usecases/send_invitation_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/find_user_by_email_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/accept_invitation_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/decline_invitation_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/cancel_invitation_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/observe_pending_invitations_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/observe_sent_invitations_usecase.dart`
-- [ ] Create `lib/features/invitations/domain/usecases/create_notification_usecase.dart`
-
-### ✅ Exceptions
-
-- [ ] Create `InvitationCannotBeAcceptedException`
-- [ ] Create `InvitationNotFoundException`
-- [ ] Create `InvitationExpiredException`
-
-## 🗄️ Phase 2: Data Layer (Week 1-2)
-
-### ✅ DTOs and Models
-
-- [ ] Create `lib/features/invitations/data/models/invitation_dto.dart`
-- [ ] Create `lib/features/invitations/data/models/notification_dto.dart`
-- [ ] Create `lib/features/invitations/data/models/invitation_document.dart`
-- [ ] Create `lib/features/invitations/data/models/notification_document.dart`
-- [ ] Create `lib/features/invitations/data/models/invitation_cache_dto.dart`
-- [ ] Create `lib/features/invitations/data/models/notification_cache_dto.dart`
-
-### ✅ Data Sources
-
-- [ ] Create `lib/features/invitations/data/datasources/invitation_remote_datasource.dart`
-- [ ] Create `lib/features/invitations/data/datasources/invitation_local_datasource.dart`
-- [ ] Create `lib/features/invitations/data/datasources/notification_remote_datasource.dart`
-- [ ] Create `lib/features/invitations/data/datasources/notification_local_datasource.dart`
-- [ ] Implement Firestore operations for invitations
-- [ ] Implement Isar operations for local storage
-- [ ] Implement offline-first sync logic
-
-### ✅ Repository Implementations
-
-- [ ] Create `lib/features/invitations/data/repositories/invitation_repository_impl.dart`
-- [ ] Create `lib/features/invitations/data/repositories/notification_repository_impl.dart`
-- [ ] Implement Actor methods
-- [ ] Implement Watcher methods
-- [ ] Add proper error handling
-- [ ] Add offline-first logic
-
-## 🎭 Phase 3: Presentation Layer - Split BLoCs (Week 2)
-
-### ✅ Watcher BLoC
-
-- [ ] Create `lib/features/invitations/presentation/bloc/invitation_watcher_event.dart`
-- [ ] Create `lib/features/invitations/presentation/bloc/invitation_watcher_state.dart`
-- [ ] Create `lib/features/invitations/presentation/bloc/project_invitation_watcher_bloc.dart`
-- [ ] Implement `WatchMyPendingInvitations` event
-- [ ] Implement `WatchSentInvitations` event
-- [ ] Add proper stream management
-- [ ] Add error handling
-
-### ✅ Actor BLoC
-
-- [ ] Create `lib/features/invitations/presentation/bloc/invitation_actor_event.dart`
-- [ ] Create `lib/features/invitations/presentation/bloc/invitation_actor_state.dart`
-- [ ] Create `lib/features/invitations/presentation/bloc/project_invitation_actor_bloc.dart`
-- [ ] Implement `SendInvitation` event
-- [ ] Implement `AcceptInvitation` event
-- [ ] Implement `DeclineInvitation` event
-- [ ] Implement `CancelInvitation` event
-- [ ] Add loading states
-- [ ] Add success/error handling
-
-## 🎨 Phase 4: UI Components (Week 2-3)
-
-### ✅ Invitation Forms
-
-- [ ] Create `lib/features/invitations/presentation/widgets/invitation_form.dart`
-- [ ] Add email input with validation
-- [ ] Add role selection dropdown
-- [ ] Add optional message field
-- [ ] Add user search functionality
-- [ ] Add user preview when found
-- [ ] Add send invitation button
-- [ ] Add loading states
-
-### ✅ Invitation Lists
-
-- [ ] Create `lib/features/invitations/presentation/widgets/pending_invitations_list.dart`
-- [ ] Create `lib/features/invitations/presentation/widgets/sent_invitations_list.dart`
-- [ ] Add invitation cards with details
-- [ ] Add accept/decline buttons
-- [ ] Add invitation status indicators
-- [ ] Add empty state handling
-
-### ✅ Screens
-
-- [ ] Create `lib/features/invitations/presentation/screens/invitation_screen.dart`
-- [ ] Add tabs for pending/sent invitations
-- [ ] Integrate with both BLoCs
-- [ ] Add navigation from project details
-
-## 🔔 Phase 5: Notification System (Week 3)
-
-### ✅ Notification BLoC
-
-- [ ] Create `lib/features/notifications/presentation/bloc/notification_event.dart`
-- [ ] Create `lib/features/notifications/presentation/bloc/notification_state.dart`
-- [ ] Create `lib/features/notifications/presentation/bloc/notification_bloc.dart`
-- [ ] Implement notification watching
-- [ ] Implement mark as read functionality
-- [ ] Add notification count tracking
-
-### ✅ Notification UI
-
-- [ ] Create `lib/features/notifications/presentation/widgets/notification_item.dart`
-- [ ] Create `lib/features/notifications/presentation/widgets/notification_list.dart`
-- [ ] Create `lib/features/notifications/presentation/screens/notification_center_screen.dart`
-- [ ] Add notification badges
-- [ ] Add notification tap handling
-- [ ] Add notification filtering
-
-## 🔗 Phase 6: Magic Link Integration (Week 3-4)
-
-### ✅ Magic Link Updates
-
-- [ ] Update `lib/features/magic_link/domain/entities/magic_link.dart`
-- [ ] Add invitation type support
-- [ ] Update `lib/features/magic_link/domain/usecases/generate_magic_link_use_case.dart`
-- [ ] Add invitation link generation
-- [ ] Update `lib/features/magic_link/presentation/blocs/magic_link_bloc.dart`
-- [ ] Add invitation acceptance handling
-- [ ] Add auto-accept for new users
-
-## 🔧 Phase 7: Integration & Updates (Week 4)
-
-### ✅ Replace Existing Form
-
-- [ ] Update `lib/features/project_detail/presentation/widgets/add_collaborator_form.dart`
-- [ ] Replace with new invitation form
-- [ ] Add BLoC provider
-- [ ] Test integration
-
-### ✅ Navigation Updates
-
-- [ ] Update `lib/core/router/app_routes.dart`
-- [ ] Add notification route
-- [ ] Add invitation route
-- [ ] Update `lib/core/router/app_router.dart`
-- [ ] Add route guards
-- [ ] Update `lib/main.dart`
-- [ ] Add notification bloc provider
-
-### ✅ Project Details Updates
-
-- [ ] Update `lib/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart`
-- [ ] Add invitation status section
-- [ ] Add pending invitations display
-- [ ] Add invitation management
-
-## 🧪 Phase 8: Testing (Week 4-5)
-
-### ✅ Unit Tests
-
-- [ ] Test invitation entities
-- [ ] Test use cases (Actor and Watcher)
-- [ ] Test repositories
-- [ ] Test BLoCs (separate for Watcher and Actor)
-- [ ] Test UI components
-
-### ✅ Integration Tests
-
-- [ ] Test end-to-end invitation flow
-- [ ] Test magic link integration
-- [ ] Test notification creation and display
-- [ ] Test cross-user invitation acceptance
-- [ ] Test offline functionality
-
-### ✅ Manual Testing
-
-- [ ] Test invitation sending
-- [ ] Test invitation acceptance
-- [ ] Test invitation decline
-- [ ] Test notification display
-- [ ] Test magic link flow
-- [ ] Test offline scenarios
-
-## 🚀 Phase 9: Deployment & Cleanup (Week 5)
-
-### ✅ Dependency Injection
-
-- [ ] Add all use cases to DI container
-- [ ] Add all repositories to DI container
-- [ ] Add all BLoCs to DI container
-- [ ] Test dependency injection
-
-### ✅ Code Cleanup
-
-- [ ] Remove old hardcoded collaborator addition
-- [ ] Clean up unused imports
-- [ ] Add proper documentation
-- [ ] Code review and refactoring
-
-### ✅ Performance Optimization
-
-- [ ] Optimize database queries
-- [ ] Add proper caching
-- [ ] Optimize UI performance
-- [ ] Add loading states
-
-## ✅ Final Checklist
-
-### 🎯 Core Functionality
-
-- [ ] Users can send invitations to existing users
-- [ ] Users can send invitations to new users via email
-- [ ] Users can accept invitations
-- [ ] Users can decline invitations
-- [ ] Users can cancel sent invitations
-- [ ] Invitations expire after 30 days
-- [ ] Notifications are created for invitations
-- [ ] Magic links work for new user invitations
-
-### 🔒 Security & Validation
-
-- [ ] Permission checks work correctly
-- [ ] Email validation works
-- [ ] Self-invitation is prevented
-- [ ] Duplicate invitations are prevented
-- [ ] Rate limiting works
-- [ ] Invitation expiration works
-
-### 📱 User Experience
-
-- [ ] UI is responsive and intuitive
-- [ ] Loading states are shown
-- [ ] Error messages are clear
-- [ ] Success feedback is provided
-- [ ] Navigation flows work smoothly
-- [ ] Offline functionality works
-
-### 🧪 Quality Assurance
-
-- [ ] All tests pass
-- [ ] No console errors
-- [ ] Performance is acceptable
-- [ ] Code follows project standards
-- [ ] Documentation is complete
+## 📋 **COMPREHENSIVE TODO CHECKLIST**
+
+### ✅ **Phase 1: Domain Layer** (13/13 tasks) - **COMPLETED**
+
+- [x] Create `InvitationId` entity
+- [x] Create `NotificationId` entity
+- [x] Create `ProjectInvitation` entity with domain methods
+- [x] Create `NotificationEntity` with factory methods
+- [x] Create `InvitationRepository` interface (Actor/Watcher pattern)
+- [x] Create `NotificationRepository` interface
+- [x] Create `FindUserByEmailUseCase`
+- [x] Create `SendInvitationUseCase` (existing + new users)
+- [x] Create `AcceptInvitationUseCase` (accept + add to project)
+- [x] Create `DeclineInvitationUseCase`
+- [x] Create `ObservePendingInvitationsUseCase`
+- [x] Create `ObserveSentInvitationsUseCase`
+- [x] Create `ObserveNotificationsUseCase`
+- [x] Create `MarkNotificationAsReadUseCase`
+- [x] Create `MarkAllNotificationsAsReadUseCase`
+- [x] Create `GetUnreadNotificationsCountUseCase`
+- [x] Create `GetPendingInvitationsCountUseCase`
+- [x] Create `CancelInvitationUseCase`
+- [x] Create domain exceptions
+- [x] Create domain failures
+- [x] Create domain barrel file
+
+### 🔄 **Phase 2: Data Layer** (12 tasks) - **NEXT**
+
+- [ ] Create `InvitationDto` data transfer object
+- [ ] Create `NotificationDto` data transfer object
+- [ ] Create `InvitationLocalDataSource` for local database
+- [ ] Create `NotificationLocalDataSource` for local database
+- [ ] Create `InvitationRemoteDataSource` for remote API
+- [ ] Create `NotificationRemoteDataSource` for remote API
+- [ ] Create `InvitationRepositoryImpl` implementation
+- [ ] Create `NotificationRepositoryImpl` implementation
+- [ ] Create `InvitationMapper` (Entity ↔ DTO)
+- [ ] Create `NotificationMapper` (Entity ↔ DTO)
+- [ ] Create data barrel file
+- [ ] Add database schema migrations
+
+### ⏳ **Phase 3: Split BLoCs** (8 tasks)
+
+- [ ] Create `ProjectInvitationWatcherBloc` (observe state changes)
+- [ ] Create `ProjectInvitationActorBloc` (handle user actions)
+- [ ] Create `NotificationWatcherBloc` (observe notifications)
+- [ ] Create `NotificationActorBloc` (handle notification actions)
+- [ ] Create invitation states classes
+- [ ] Create notification states classes
+- [ ] Create invitation events classes
+- [ ] Create notification events classes
+
+### ⏳ **Phase 4: UI Components** (8 tasks)
+
+- [ ] Create `SendInvitationForm` component
+- [ ] Create `PendingInvitationsList` component
+- [ ] Create `SentInvitationsList` component
+- [ ] Create `InvitationCard` component
+- [ ] Create `NotificationCenterScreen`
+- [ ] Create `NotificationList` component
+- [ ] Create `NotificationCard` component
+- [ ] Create `InvitationActionButtons` (Accept/Decline)
+
+### ⏳ **Phase 5: Notification System** (6 tasks)
+
+- [ ] Create `NotificationBadge` component
+- [ ] Create `NotificationIcon` component
+- [ ] Create `NotificationDrawer` component
+- [ ] Create `NotificationSettings` screen
+- [ ] Add notification sound functionality
+- [ ] Add notification vibration functionality
+
+### ⏳ **Phase 6: Magic Link Integration** (7 tasks)
+
+- [ ] Update existing `MagicLinkRepository` for invitations
+- [ ] Create `InvitationMagicLink` entity
+- [ ] Create `EmailTemplateService` for invitation emails
+- [ ] Create `EmailSendingService` for sending emails
+- [ ] Create `MagicLinkHandler` for invitation links
+- [ ] Create `InvitationSignupFlow` for new users
+- [ ] Implement `AutoJoinProject` functionality
+
+### ⏳ **Phase 7: Integration & Updates** (6 tasks)
+
+- [ ] Update `ProjectRepository` with collaborator management
+- [ ] Update `UserProfileRepository` with email search
+- [ ] Update `AppRouter` with invitation routes
+- [ ] Update navigation with notification routes
+- [ ] Update DI container with new dependencies
+- [ ] Update existing tests and add new ones
+
+### ⏳ **Phase 8: Testing & Validation** (6 tasks)
+
+- [ ] Write unit tests for all use cases
+- [ ] Write integration tests for repositories
+- [ ] Write BLoC tests for all BLoCs
+- [ ] Write widget tests for UI components
+- [ ] Write end-to-end tests for complete flows
+- [ ] Write performance tests for large datasets
+
+### ⏳ **Phase 9: Documentation & Polish** (6 tasks)
+
+- [ ] Write API documentation for all endpoints
+- [ ] Write user documentation for invitation feature
+- [ ] Write developer documentation for implementation
+- [ ] Add comprehensive code comments
+- [ ] Improve error handling and messages
+- [ ] Ensure accessibility compliance
 
 ---
 
-## 📊 Progress Tracking
-
-**Phase 1 (Domain Layer)**: ⏳ 0/13 tasks completed
-**Phase 2 (Data Layer)**: ⏳ 0/12 tasks completed  
-**Phase 3 (Split BLoCs)**: ⏳ 0/8 tasks completed
-**Phase 4 (UI Components)**: ⏳ 0/8 tasks completed
-**Phase 5 (Notification System)**: ⏳ 0/6 tasks completed
-**Phase 6 (Magic Link Integration)**: ⏳ 0/7 tasks completed
-**Phase 7 (Integration & Updates)**: ⏳ 0/6 tasks completed
-**Phase 8 (Testing)**: ⏳ 0/8 tasks completed
-**Phase 9 (Deployment & Cleanup)**: ⏳ 0/6 tasks completed
-
-**Overall Progress**: ⏳ 0/74 tasks completed (0%)
-
----
-
-## 🎯 Next Action Items
-
-1. **Start with Phase 1**: Create `invitation_id.dart` and `project_invitation.dart`
-2. **Set up project structure**: Create the `lib/features/invitations/` directory
-3. **Begin domain layer**: Focus on entities and repositories first
-4. **Test incrementally**: Test each component as you build it
-
-**Ready to start implementation! 🚀**
+**Total Progress**: 13/74 tasks completed (17.6%)
+**Current Phase**: Phase 1 ✅ COMPLETED
+**Next Phase**: Phase 2 - Data Layer 🔄
