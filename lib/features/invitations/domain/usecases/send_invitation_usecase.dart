@@ -4,31 +4,29 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
-import 'package:trackflow/features/invitations/domain/entities/notification_entity.dart';
-import 'package:trackflow/features/invitations/domain/entities/notification_id.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:trackflow/features/invitations/domain/repositories/notification_repository.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 import 'package:trackflow/features/magic_link/domain/entities/magic_link.dart';
+import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
 
 /// Use case to send an invitation to a user
 /// Handles both existing users and new users
 @lazySingleton
 class SendInvitationUseCase {
   final InvitationRepository _invitationRepository;
-  final NotificationRepository _notificationRepository;
+  final NotificationService _notificationService;
   final FindUserByEmailUseCase _findUserByEmail;
   final MagicLinkRepository _magicLinkRepository;
 
   SendInvitationUseCase({
     required InvitationRepository invitationRepository,
-    required NotificationRepository notificationRepository,
+    required NotificationService notificationService,
     required FindUserByEmailUseCase findUserByEmail,
     required MagicLinkRepository magicLinkRepository,
   }) : _invitationRepository = invitationRepository,
-       _notificationRepository = notificationRepository,
+       _notificationService = notificationService,
        _findUserByEmail = findUserByEmail,
        _magicLinkRepository = magicLinkRepository;
 
@@ -87,7 +85,7 @@ class SendInvitationUseCase {
     }
   }
 
-  /// Create notification for existing user
+  /// Create notification for existing user using core notification service
   Future<void> _createNotificationForExistingUser(
     ProjectInvitation invitation,
     UserProfile existingUser,
@@ -105,10 +103,9 @@ class SendInvitationUseCase {
     // Get project name for notification
     final projectName = await _getProjectName(invitation.projectId);
 
-    // Create notification
-    final notification = NotificationEntityFactory.createProjectInvitation(
-      id: NotificationId(),
-      recipientUserId: existingUser.id,
+    // Create notification using core notification service
+    await _notificationService.createProjectInvitationNotification(
+      recipientId: existingUser.id,
       invitationId: invitation.id.value,
       projectId: invitation.projectId.value,
       projectName: projectName,
@@ -117,8 +114,6 @@ class SendInvitationUseCase {
           invitation
               .invitedEmail, // This should be inviter's email, but we'll use invited email for now
     );
-
-    await _notificationRepository.createNotification(notification);
   }
 
   /// Create magic link for new user

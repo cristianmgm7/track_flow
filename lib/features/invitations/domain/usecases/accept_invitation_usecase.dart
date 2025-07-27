@@ -3,28 +3,26 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
-import 'package:trackflow/features/invitations/domain/entities/notification_entity.dart';
-import 'package:trackflow/features/invitations/domain/entities/notification_id.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:trackflow/features/invitations/domain/repositories/notification_repository.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
 
 /// Use case to accept a project invitation
 /// Handles the acceptance flow and adds user to project
 @lazySingleton
 class AcceptInvitationUseCase {
   final InvitationRepository _invitationRepository;
-  final NotificationRepository _notificationRepository;
+  final NotificationService _notificationService;
   // TODO: Add ProjectRepository when it's created
   // final ProjectRepository _projectRepository;
 
   AcceptInvitationUseCase({
     required InvitationRepository invitationRepository,
-    required NotificationRepository notificationRepository,
+    required NotificationService notificationService,
     // required ProjectRepository projectRepository,
   }) : _invitationRepository = invitationRepository,
-       _notificationRepository = notificationRepository;
+       _notificationService = notificationService;
   // _projectRepository = projectRepository;
 
   /// Accept an invitation
@@ -107,7 +105,7 @@ class AcceptInvitationUseCase {
     // TODO: Implement notification marking as read
   }
 
-  /// Notify project owner about acceptance
+  /// Notify project owner about acceptance using core notification service
   Future<void> _notifyProjectOwner(ProjectInvitation invitation) async {
     // TODO: Get project details when ProjectRepository is available
     // final projectResult = await _projectRepository.getProject(invitation.projectId);
@@ -124,16 +122,13 @@ class AcceptInvitationUseCase {
     //         (profile) => profile?.name ?? 'A user',
     //       );
 
-    //       // Create notification for project owner
-    //       final notification = NotificationEntityFactory.createCollaboratorJoined(
-    //         id: NotificationId(),
-    //         recipientUserId: invitation.invitedByUserId,
+    //       // Create notification for project owner using core notification service
+    //       await _notificationService.createCollaboratorJoinedNotification(
+    //         recipientId: invitation.invitedByUserId,
     //         projectId: invitation.projectId.value,
     //         projectName: project.name,
     //         collaboratorName: acceptedUserName,
     //       );
-
-    //       await _notificationRepository.createNotification(notification);
     //     }
     //   },
     // );

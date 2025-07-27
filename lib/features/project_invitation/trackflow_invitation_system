@@ -22,6 +22,29 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 - **Notification Integration**: Automatic notification creation and management
 - **Magic Link Integration**: Seamless onboarding for new users
 
+**folder structure**
+
+lib/
+├── core/
+│ └── notifications/ # 🎯 CORE NOTIFICATION SYSTEM
+│ └── domain/
+│ ├── entities/
+│ │ ├── notification.dart
+│ │ └── notification_id.dart
+│ ├── repositories/
+│ │ └── notification_repository.dart
+│ ├── services/
+│ │ └── notification_service.dart
+│ └── usecases/
+│ └── observe_notifications_usecase.dart
+│
+└── features/
+└── invitations/ # 🎯 USES CORE NOTIFICATIONS
+└── domain/
+└── usecases/
+├── send_invitation.dart # Uses NotificationService
+└── accept_invitation.dart # Uses NotificationService
+
 ### Architecture Overview
 
 ```
@@ -49,37 +72,39 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 
 ## Implementation Phases
 
-### Phase 1: Domain Layer ✅ (COMPLETED)
+### Phase 1: Domain Layer ✅ (COMPLETED + REFACTORED)
 
-**Status**: ✅ **COMPLETED** - All domain components created
+**Status**: ✅ **COMPLETED** - All domain components created with proper clean architecture
 
 #### ✅ Completed Tasks:
 
 - [x] **InvitationId** - Unique identifier for invitations
-- [x] **NotificationId** - Unique identifier for notifications
 - [x] **ProjectInvitation** - Core invitation entity with domain methods
-- [x] **NotificationEntity** - Notification entity with factory methods
 - [x] **InvitationRepository** - Repository interface (Actor/Watcher pattern)
-- [x] **NotificationRepository** - Repository interface for notifications
 - [x] **FindUserByEmailUseCase** - Search for existing users
 - [x] **SendInvitationUseCase** - Send invitations (existing + new users)
 - [x] **AcceptInvitationUseCase** - Accept invitations and add to project
 - [x] **DeclineInvitationUseCase** - Decline invitations
 - [x] **ObservePendingInvitationsUseCase** - Watch pending invitations
 - [x] **ObserveSentInvitationsUseCase** - Watch sent invitations
-- [x] **ObserveNotificationsUseCase** - Watch notifications
-- [x] **MarkNotificationAsReadUseCase** - Mark notifications as read
-- [x] **MarkAllNotificationsAsReadUseCase** - Mark all as read
-- [x] **GetUnreadNotificationsCountUseCase** - Get unread count
 - [x] **GetPendingInvitationsCountUseCase** - Get pending count
 - [x] **CancelInvitationUseCase** - Cancel sent invitations
 - [x] **InvitationExceptions** - Domain exceptions
 - [x] **InvitationFailures** - Domain failures
 - [x] **Domain Barrel File** - Export all domain components
 
+#### ✅ **REFACTORED: Core Notifications System**
+
+- [x] **Core Notification Entity** - Moved to `lib/core/notifications/domain/entities/notification.dart`
+- [x] **Core Notification Repository** - Moved to `lib/core/notifications/domain/repositories/notification_repository.dart`
+- [x] **Core Notification Service** - Created `lib/core/notifications/domain/services/notification_service.dart`
+- [x] **Core Notification Use Cases** - Moved to core notifications domain
+- [x] **Updated Invitation Use Cases** - Now use core NotificationService
+- [x] **Clean Separation** - Notifications are now a cross-cutting concern
+
 #### 🔧 Issues to Fix:
 
-- [ ] **ID Classes Constructor Issue** - Fix InvitationId and NotificationId constructors
+- [ ] **ID Constructor Issue** - Fix InvitationId and NotificationId constructors
 - [ ] **ProjectRepository Integration** - Add when ProjectRepository is available
 - [ ] **UserProfileRepository Integration** - Add when UserProfileRepository is available
 
@@ -90,15 +115,15 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 #### Tasks:
 
 - [ ] **InvitationDto** - Data transfer object for invitations
-- [ ] **NotificationDto** - Data transfer object for notifications
+- [ ] **NotificationDto** - Data transfer object for notifications (in core)
 - [ ] **InvitationLocalDataSource** - Local database operations
-- [ ] **NotificationLocalDataSource** - Local database operations
+- [ ] **NotificationLocalDataSource** - Local database operations (in core)
 - [ ] **InvitationRemoteDataSource** - Remote API operations
-- [ ] **NotificationRemoteDataSource** - Remote API operations
+- [ ] **NotificationRemoteDataSource** - Remote API operations (in core)
 - [ ] **InvitationRepositoryImpl** - Repository implementation
-- [ ] **NotificationRepositoryImpl** - Repository implementation
+- [ ] **NotificationRepositoryImpl** - Repository implementation (in core)
 - [ ] **InvitationMapper** - Entity ↔ DTO mapping
-- [ ] **NotificationMapper** - Entity ↔ DTO mapping
+- [ ] **NotificationMapper** - Entity ↔ DTO mapping (in core)
 - [ ] **Data Barrel File** - Export all data components
 
 ### Phase 3: Split BLoCs
@@ -109,12 +134,12 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 
 - [ ] **ProjectInvitationWatcherBloc** - Observe invitation state changes
 - [ ] **ProjectInvitationActorBloc** - Handle user actions
-- [ ] **NotificationWatcherBloc** - Observe notification state changes
-- [ ] **NotificationActorBloc** - Handle notification actions
+- [ ] **NotificationWatcherBloc** - Observe notification state changes (in core)
+- [ ] **NotificationActorBloc** - Handle notification actions (in core)
 - [ ] **InvitationStates** - State classes for invitation BLoCs
-- [ ] **NotificationStates** - State classes for notification BLoCs
+- [ ] **NotificationStates** - State classes for notification BLoCs (in core)
 - [ ] **InvitationEvents** - Event classes for invitation BLoCs
-- [ ] **NotificationEvents** - Event classes for notification BLoCs
+- [ ] **NotificationEvents** - Event classes for notification BLoCs (in core)
 
 ### Phase 4: UI Components
 
@@ -126,9 +151,9 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 - [ ] **PendingInvitationsList** - List of pending invitations
 - [ ] **SentInvitationsList** - List of sent invitations
 - [ ] **InvitationCard** - Individual invitation display
-- [ ] **NotificationCenterScreen** - Main notification screen
-- [ ] **NotificationList** - List of notifications
-- [ ] **NotificationCard** - Individual notification display
+- [ ] **NotificationCenterScreen** - Main notification screen (in core)
+- [ ] **NotificationList** - List of notifications (in core)
+- [ ] **NotificationCard** - Individual notification display (in core)
 - [ ] **InvitationActionButtons** - Accept/Decline buttons
 
 ### Phase 5: Notification System
@@ -137,12 +162,12 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 
 #### Tasks:
 
-- [ ] **NotificationBadge** - Badge showing unread count
-- [ ] **NotificationIcon** - Icon with notification indicator
-- [ ] **NotificationDrawer** - Drawer for notifications
-- [ ] **NotificationSettings** - Notification preferences
-- [ ] **NotificationSound** - Sound for new notifications
-- [ ] **NotificationVibration** - Vibration for notifications
+- [ ] **NotificationBadge** - Badge showing unread count (in core)
+- [ ] **NotificationIcon** - Icon with notification indicator (in core)
+- [ ] **NotificationDrawer** - Drawer for notifications (in core)
+- [ ] **NotificationSettings** - Notification preferences (in core)
+- [ ] **NotificationSound** - Sound for new notifications (in core)
+- [ ] **NotificationVibration** - Vibration for notifications (in core)
 
 ### Phase 6: Magic Link Integration
 
@@ -204,7 +229,7 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 #### For Existing Users:
 
 1. **Send Invitation** → Create invitation record
-2. **Create Notification** → Notify user immediately
+2. **Create Notification** → Notify user immediately (via core NotificationService)
 3. **User Sees Notification** → In notification center
 4. **User Accepts/Declines** → Update invitation status
 5. **Add to Project** → Only after acceptance
@@ -218,7 +243,7 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 5. **User Signs Up** → Create account
 6. **Auto-Join Project** → Automatically join project
 
-### Notification System
+### Notification System (Core)
 
 #### Notification Types:
 
@@ -226,6 +251,9 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 - **Invitation Accepted** - When invitation is accepted
 - **Invitation Declined** - When invitation is declined
 - **Collaborator Joined** - When someone joins project
+- **Audio Comment Added** - When someone comments on track
+- **Audio Track Uploaded** - When someone uploads a track
+- **System Message** - General system notifications
 
 #### Notification Features:
 
@@ -233,6 +261,7 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 - **Badge Count** - Unread notification count
 - **Mark as Read** - Individual and bulk mark as read
 - **Notification Center** - Dedicated notification screen
+- **Cross-Feature Support** - All features can create notifications
 
 ### Magic Link Integration
 
@@ -295,42 +324,43 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 
 ## 📋 **COMPREHENSIVE TODO CHECKLIST**
 
-### ✅ **Phase 1: Domain Layer** (13/13 tasks) - **COMPLETED**
+### ✅ **Phase 1: Domain Layer** (13/13 tasks) - **COMPLETED + REFACTORED**
 
 - [x] Create `InvitationId` entity
-- [x] Create `NotificationId` entity
 - [x] Create `ProjectInvitation` entity with domain methods
-- [x] Create `NotificationEntity` with factory methods
 - [x] Create `InvitationRepository` interface (Actor/Watcher pattern)
-- [x] Create `NotificationRepository` interface
 - [x] Create `FindUserByEmailUseCase`
 - [x] Create `SendInvitationUseCase` (existing + new users)
 - [x] Create `AcceptInvitationUseCase` (accept + add to project)
 - [x] Create `DeclineInvitationUseCase`
 - [x] Create `ObservePendingInvitationsUseCase`
 - [x] Create `ObserveSentInvitationsUseCase`
-- [x] Create `ObserveNotificationsUseCase`
-- [x] Create `MarkNotificationAsReadUseCase`
-- [x] Create `MarkAllNotificationsAsReadUseCase`
-- [x] Create `GetUnreadNotificationsCountUseCase`
 - [x] Create `GetPendingInvitationsCountUseCase`
 - [x] Create `CancelInvitationUseCase`
 - [x] Create domain exceptions
 - [x] Create domain failures
 - [x] Create domain barrel file
 
+### ✅ **REFACTORED: Core Notifications System** (5/5 tasks) - **COMPLETED**
+
+- [x] **Move Notification Entity** to `lib/core/notifications/domain/entities/notification.dart`
+- [x] **Move Notification Repository** to `lib/core/notifications/domain/repositories/notification_repository.dart`
+- [x] **Create Notification Service** in `lib/core/notifications/domain/services/notification_service.dart`
+- [x] **Move Notification Use Cases** to core notifications domain
+- [x] **Update Invitation Use Cases** to use core NotificationService
+
 ### 🔄 **Phase 2: Data Layer** (12 tasks) - **NEXT**
 
 - [ ] Create `InvitationDto` data transfer object
-- [ ] Create `NotificationDto` data transfer object
+- [ ] Create `NotificationDto` data transfer object (in core)
 - [ ] Create `InvitationLocalDataSource` for local database
-- [ ] Create `NotificationLocalDataSource` for local database
+- [ ] Create `NotificationLocalDataSource` for local database (in core)
 - [ ] Create `InvitationRemoteDataSource` for remote API
-- [ ] Create `NotificationRemoteDataSource` for remote API
+- [ ] Create `NotificationRemoteDataSource` for remote API (in core)
 - [ ] Create `InvitationRepositoryImpl` implementation
-- [ ] Create `NotificationRepositoryImpl` implementation
+- [ ] Create `NotificationRepositoryImpl` implementation (in core)
 - [ ] Create `InvitationMapper` (Entity ↔ DTO)
-- [ ] Create `NotificationMapper` (Entity ↔ DTO)
+- [ ] Create `NotificationMapper` (Entity ↔ DTO) (in core)
 - [ ] Create data barrel file
 - [ ] Add database schema migrations
 
@@ -338,12 +368,12 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 
 - [ ] Create `ProjectInvitationWatcherBloc` (observe state changes)
 - [ ] Create `ProjectInvitationActorBloc` (handle user actions)
-- [ ] Create `NotificationWatcherBloc` (observe notifications)
-- [ ] Create `NotificationActorBloc` (handle notification actions)
+- [ ] Create `NotificationWatcherBloc` (observe notifications) (in core)
+- [ ] Create `NotificationActorBloc` (handle notification actions) (in core)
 - [ ] Create invitation states classes
-- [ ] Create notification states classes
+- [ ] Create notification states classes (in core)
 - [ ] Create invitation events classes
-- [ ] Create notification events classes
+- [ ] Create notification events classes (in core)
 
 ### ⏳ **Phase 4: UI Components** (8 tasks)
 
@@ -351,19 +381,19 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 - [ ] Create `PendingInvitationsList` component
 - [ ] Create `SentInvitationsList` component
 - [ ] Create `InvitationCard` component
-- [ ] Create `NotificationCenterScreen`
-- [ ] Create `NotificationList` component
-- [ ] Create `NotificationCard` component
+- [ ] Create `NotificationCenterScreen` (in core)
+- [ ] Create `NotificationList` component (in core)
+- [ ] Create `NotificationCard` component (in core)
 - [ ] Create `InvitationActionButtons` (Accept/Decline)
 
 ### ⏳ **Phase 5: Notification System** (6 tasks)
 
-- [ ] Create `NotificationBadge` component
-- [ ] Create `NotificationIcon` component
-- [ ] Create `NotificationDrawer` component
-- [ ] Create `NotificationSettings` screen
-- [ ] Add notification sound functionality
-- [ ] Add notification vibration functionality
+- [ ] Create `NotificationBadge` component (in core)
+- [ ] Create `NotificationIcon` component (in core)
+- [ ] Create `NotificationDrawer` component (in core)
+- [ ] Create `NotificationSettings` screen (in core)
+- [ ] Add notification sound functionality (in core)
+- [ ] Add notification vibration functionality (in core)
 
 ### ⏳ **Phase 6: Magic Link Integration** (7 tasks)
 
@@ -404,6 +434,6 @@ Replace the current hardcoded collaborator addition with a proper invitation sys
 
 ---
 
-**Total Progress**: 13/74 tasks completed (17.6%)
-**Current Phase**: Phase 1 ✅ COMPLETED
+**Total Progress**: 18/79 tasks completed (22.8%)
+**Current Phase**: Phase 1 ✅ COMPLETED + REFACTORED
 **Next Phase**: Phase 2 - Data Layer 🔄

@@ -1,25 +1,25 @@
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/invitations/domain/entities/notification_entity.dart';
-import 'package:trackflow/features/invitations/domain/entities/notification_id.dart';
+import 'package:trackflow/core/notifications/domain/entities/notification.dart';
+import 'package:trackflow/core/notifications/domain/entities/notification_id.dart';
 
 /// Repository responsible for notification operations
 abstract class NotificationRepository {
   // Actor methods (for actions)
 
   /// Create a new notification
-  Future<Either<Failure, NotificationEntity>> createNotification(
-    NotificationEntity notification,
+  Future<Either<Failure, Notification>> createNotification(
+    Notification notification,
   );
 
   /// Mark a notification as read
-  Future<Either<Failure, NotificationEntity>> markAsRead(
+  Future<Either<Failure, Notification>> markAsRead(
     NotificationId notificationId,
   );
 
   /// Mark a notification as unread
-  Future<Either<Failure, NotificationEntity>> markAsUnread(
+  Future<Either<Failure, Notification>> markAsUnread(
     NotificationId notificationId,
   );
 
@@ -37,17 +37,15 @@ abstract class NotificationRepository {
   // Watcher methods (for observing)
 
   /// Watch all notifications for a user
-  Stream<Either<Failure, List<NotificationEntity>>> watchNotifications(
-    UserId userId,
-  );
+  Stream<Either<Failure, List<Notification>>> watchNotifications(UserId userId);
 
   /// Watch unread notifications for a user
-  Stream<Either<Failure, List<NotificationEntity>>> watchUnreadNotifications(
+  Stream<Either<Failure, List<Notification>>> watchUnreadNotifications(
     UserId userId,
   );
 
   /// Get a specific notification by ID
-  Future<Either<Failure, NotificationEntity?>> getNotificationById(
+  Future<Either<Failure, Notification?>> getNotificationById(
     NotificationId notificationId,
   );
 
