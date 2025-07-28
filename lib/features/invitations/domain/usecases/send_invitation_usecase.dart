@@ -9,6 +9,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/find_user_by_ema
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
+import 'package:trackflow/core/session/current_user_service.dart';
 
 /// Use case to send an invitation to a user
 /// Handles both existing users and new users
@@ -18,16 +19,19 @@ class SendInvitationUseCase {
   final NotificationService _notificationService;
   final FindUserByEmailUseCase _findUserByEmail;
   final MagicLinkRepository _magicLinkRepository;
+  final CurrentUserService _currentUserService;
 
   SendInvitationUseCase({
     required InvitationRepository invitationRepository,
     required NotificationService notificationService,
     required FindUserByEmailUseCase findUserByEmail,
     required MagicLinkRepository magicLinkRepository,
+    required CurrentUserService currentUserService,
   }) : _invitationRepository = invitationRepository,
        _notificationService = notificationService,
        _findUserByEmail = findUserByEmail,
-       _magicLinkRepository = magicLinkRepository;
+       _magicLinkRepository = magicLinkRepository,
+       _currentUserService = currentUserService;
 
   /// Send an invitation to a user
   /// Returns the created invitation
@@ -35,7 +39,10 @@ class SendInvitationUseCase {
     SendInvitationParams params,
   ) async {
     try {
-      // 1. Search for existing user by email
+      // 1. Get current user ID
+      final currentUserId = await _currentUserService.getCurrentUserIdOrThrow();
+
+      // 2. Search for existing user by email
       final userSearchResult = await _findUserByEmail(params.invitedEmail);
 
       UserProfile? existingUser;
@@ -49,10 +56,10 @@ class SendInvitationUseCase {
         },
       );
 
-      // 2. Create invitation with appropriate parameters
+      // 3. Create invitation with appropriate parameters
       final invitationParams = SendInvitationParams(
         projectId: params.projectId,
-        invitedByUserId: params.invitedByUserId,
+        invitedByUserId: currentUserId, // Always get from CurrentUserService
         invitedUserId: existingUser?.id, // null for new users
         invitedEmail: params.invitedEmail,
         proposedRole: params.proposedRole,

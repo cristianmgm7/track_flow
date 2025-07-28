@@ -966,6 +966,7 @@ extension GetItInjectableX on _i1.GetIt {
               notificationService: gh<_i32.NotificationService>(),
               findUserByEmail: gh<_i164.FindUserByEmailUseCase>(),
               magicLinkRepository: gh<_i24.MagicLinkRepository>(),
+              currentUserService: gh<_i112.CurrentUserService>(),
             ));
     gh.lazySingleton<_i179.SignInUseCase>(() => _i179.SignInUseCase(
           gh<_i103.AuthRepository>(),

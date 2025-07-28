@@ -96,7 +96,10 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                             project: project,
                             onTap:
                                 () => context.push(
-                                  AppRoutes.projectDetails,
+                                  AppRoutes.projectDetails.replaceAll(
+                                    ':id',
+                                    project.id.value,
+                                  ),
                                   extra: project,
                                 ),
                           ),

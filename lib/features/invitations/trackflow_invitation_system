@@ -108,11 +108,11 @@ lib/
 - [x] **ProjectRepository Integration** - Add when ProjectRepository is available
 - [x] **UserProfileRepository Integration** - Add when UserProfileRepository is available
 
-### Phase 2: Data Layer
+### Phase 2: Data Layer ✅ (COMPLETED)
 
-**Status**: 🔄 **IN PROGRESS** - Next phase to implement
+**Status**: ✅ **COMPLETED** - All data layer components implemented
 
-#### Tasks:
+#### ✅ Completed Tasks:
 
 - [x] **InvitationDto** - Data transfer object for invitations
 - [x] **NotificationDto** - Data transfer object for notifications (in core)
@@ -125,36 +125,52 @@ lib/
 - [x] **InvitationMapper** - Entity ↔ DTO mapping
 - [x] **NotificationMapper** - Entity ↔ DTO mapping (in core)
 - [x] **Data Barrel File** - Export all data components
+- [x] **Database Schema** - Isar documents and build.yaml configuration
 
-### Phase 3: Split BLoCs
+### Phase 3: Split BLoCs ✅ (COMPLETED)
 
-**Status**: ⏳ **PENDING**
+**Status**: ✅ **COMPLETED** - All BLoCs implemented with Actor/Watcher pattern
 
-#### Tasks:
+#### ✅ Completed Tasks:
 
-- [ x] **ProjectInvitationWatcherBloc** - Observe invitation state changes
-- [ x] **ProjectInvitationActorBloc** - Handle user actions
-- [ x] **NotificationWatcherBloc** - Observe notification state changes (in core)
-- [ x] **NotificationActorBloc** - Handle notification actions (in core)
-- [ x] **InvitationStates** - State classes for invitation BLoCs
-- [ x] **NotificationStates** - State classes for notification BLoCs (in core)
-- [ x] **InvitationEvents** - Event classes for invitation BLoCs
-- [ x] **NotificationEvents** - Event classes for notification BLoCs (in core)
+- [x] **ProjectInvitationWatcherBloc** - Observe invitation state changes
+- [x] **ProjectInvitationActorBloc** - Handle user actions
+- [x] **NotificationWatcherBloc** - Observe notification state changes (in core)
+- [x] **NotificationActorBloc** - Handle notification actions (in core)
+- [x] **InvitationStates** - State classes for invitation BLoCs
+- [x] **NotificationStates** - State classes for notification BLoCs (in core)
+- [x] **InvitationEvents** - Event classes for invitation BLoCs
+- [x] **NotificationEvents** - Event classes for notification BLoCs (in core)
 
-### Phase 4: UI Components
+#### ✅ **CurrentUserService Integration**:
 
-**Status**: ⏳ **PENDING**
+- [x] **CurrentUserService** - Service to get current user ID from session storage
+- [x] **Watcher BLoCs** - Use CurrentUserService to get userId internally
+- [x] **Actor BLoCs** - Use cases get userId internally from CurrentUserService
+- [x] **Events** - Simplified to not require userId parameters
+- [x] **DI Registration** - All BLoCs registered in dependency injection
 
-#### Tasks:
+### Phase 4: UI Components 🔄 (IN PROGRESS)
 
-- [ ] **SendInvitationForm** - Form to send invitations
-- [ ] **PendingInvitationsList** - List of pending invitations
-- [ ] **SentInvitationsList** - List of sent invitations
-- [ ] **InvitationCard** - Individual invitation display
-- [ ] **NotificationCenterScreen** - Main notification screen (in core)
-- [ ] **NotificationList** - List of notifications (in core)
-- [ ] **NotificationCard** - Individual notification display (in core)
-- [ ] **InvitationActionButtons** - Accept/Decline buttons
+**Status**: 🔄 **IN PROGRESS** - Basic screens implemented, need full integration
+
+#### ✅ Completed Tasks:
+
+- [x] **NotificationCenterScreen** - Main notification screen (in core) - Basic implementation
+- [x] **InvitationsScreen** - Main invitations screen - Basic implementation
+- [x] **Router Integration** - Screens connected to app router
+- [x] **Navigation** - Notifications tab in bottom navigation
+- [x] **BLoC Integration** - BLoCs added to ShellRoute providers
+
+#### 🔄 Tasks in Progress:
+
+- [x] **SendInvitationForm** - Form to send invitations (completed with UI components)
+- [ ] **PendingInvitationsList** - List of pending invitations (needs real BLoC integration)
+- [ ] **SentInvitationsList** - List of sent invitations (needs real BLoC integration)
+- [ ] **InvitationCard** - Individual invitation display (needs real BLoC integration)
+- [ ] **NotificationList** - List of notifications (in core) (needs real BLoC integration)
+- [ ] **NotificationCard** - Individual notification display (in core) (needs real BLoC integration)
+- [ ] **InvitationActionButtons** - Accept/Decline buttons (needs real BLoC integration)
 
 ### Phase 5: Notification System
 
@@ -349,42 +365,54 @@ lib/
 - [x] **Move Notification Use Cases** to core notifications domain
 - [x] **Update Invitation Use Cases** to use core NotificationService
 
-### 🔄 **Phase 2: Data Layer** (12 tasks) - **NEXT**
+### ✅ **Phase 2: Data Layer** (12/12 tasks) - **COMPLETED**
 
-- [ ] Create `InvitationDto` data transfer object
-- [ ] Create `NotificationDto` data transfer object (in core)
-- [ ] Create `InvitationLocalDataSource` for local database
-- [ ] Create `NotificationLocalDataSource` for local database (in core)
-- [ ] Create `InvitationRemoteDataSource` for remote API
-- [ ] Create `NotificationRemoteDataSource` for remote API (in core)
-- [ ] Create `InvitationRepositoryImpl` implementation
-- [ ] Create `NotificationRepositoryImpl` implementation (in core)
-- [ ] Create `InvitationMapper` (Entity ↔ DTO)
-- [ ] Create `NotificationMapper` (Entity ↔ DTO) (in core)
-- [ ] Create data barrel file
-- [ ] Add database schema migrations
+- [x] Create `InvitationDto` data transfer object
+- [x] Create `NotificationDto` data transfer object (in core)
+- [x] Create `InvitationLocalDataSource` for local database
+- [x] Create `NotificationLocalDataSource` for local database (in core)
+- [x] Create `InvitationRemoteDataSource` for remote API
+- [x] Create `NotificationRemoteDataSource` for remote API (in core)
+- [x] Create `InvitationRepositoryImpl` implementation
+- [x] Create `NotificationRepositoryImpl` implementation (in core)
+- [x] Create `InvitationMapper` (Entity ↔ DTO)
+- [x] Create `NotificationMapper` (Entity ↔ DTO) (in core)
+- [x] Create data barrel file
+- [x] Add database schema migrations
 
-### ⏳ **Phase 3: Split BLoCs** (8 tasks)
+### ✅ **Phase 3: Split BLoCs** (8/8 tasks) - **COMPLETED**
 
-- [ ] Create `ProjectInvitationWatcherBloc` (observe state changes)
-- [ ] Create `ProjectInvitationActorBloc` (handle user actions)
-- [ ] Create `NotificationWatcherBloc` (observe notifications) (in core)
-- [ ] Create `NotificationActorBloc` (handle notification actions) (in core)
-- [ ] Create invitation states classes
-- [ ] Create notification states classes (in core)
-- [ ] Create invitation events classes
-- [ ] Create notification events classes (in core)
+- [x] Create `ProjectInvitationWatcherBloc` (observe state changes)
+- [x] Create `ProjectInvitationActorBloc` (handle user actions)
+- [x] Create `NotificationWatcherBloc` (observe notifications) (in core)
+- [x] Create `NotificationActorBloc` (handle notification actions) (in core)
+- [x] Create invitation states classes
+- [x] Create notification states classes (in core)
+- [x] Create invitation events classes
+- [x] Create notification events classes (in core)
 
-### ⏳ **Phase 4: UI Components** (8 tasks)
+### ✅ **CurrentUserService Integration** (5/5 tasks) - **COMPLETED**
 
-- [ ] Create `SendInvitationForm` component
-- [ ] Create `PendingInvitationsList` component
-- [ ] Create `SentInvitationsList` component
-- [ ] Create `InvitationCard` component
-- [ ] Create `NotificationCenterScreen` (in core)
-- [ ] Create `NotificationList` component (in core)
-- [ ] Create `NotificationCard` component (in core)
-- [ ] Create `InvitationActionButtons` (Accept/Decline)
+- [x] Create `CurrentUserService` for getting current user ID
+- [x] Update Watcher BLoCs to use CurrentUserService internally
+- [x] Update Actor BLoCs to use use cases that get userId internally
+- [x] Simplify events to not require userId parameters
+- [x] Register all BLoCs in dependency injection
+
+### 🔄 **Phase 4: UI Components** (8 tasks) - **IN PROGRESS**
+
+- [x] Create `NotificationCenterScreen` (in core) - Basic implementation
+- [x] Create `InvitationsScreen` - Basic implementation
+- [x] Connect screens to app router
+- [x] Update navigation with notifications tab
+- [x] Add BLoCs to ShellRoute providers
+- [x] **SendInvitationForm** - Form to send invitations (completed with UI components)
+- [ ] **PendingInvitationsList** - List of pending invitations (needs real BLoC integration)
+- [ ] **SentInvitationsList** - List of sent invitations (needs real BLoC integration)
+- [ ] **InvitationCard** - Individual invitation display (needs real BLoC integration)
+- [ ] **NotificationList** - List of notifications (in core) (needs real BLoC integration)
+- [ ] **NotificationCard** - Individual notification display (in core) (needs real BLoC integration)
+- [ ] **InvitationActionButtons** - Accept/Decline buttons (needs real BLoC integration)
 
 ### ⏳ **Phase 5: Notification System** (6 tasks)
 
@@ -434,6 +462,6 @@ lib/
 
 ---
 
-**Total Progress**: 18/79 tasks completed (22.8%)
-**Current Phase**: Phase 1 ✅ COMPLETED + REFACTORED
-**Next Phase**: Phase 2 - Data Layer 🔄
+**Total Progress**: 43/79 tasks completed (54.4%)
+**Current Phase**: Phase 4 - UI Components 🔄 (5/8 tasks completed)
+**Next Priority**: Complete Phase 4 - Real BLoC integration in UI components

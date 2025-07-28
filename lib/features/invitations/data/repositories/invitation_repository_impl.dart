@@ -36,7 +36,9 @@ class InvitationRepositoryImpl implements InvitationRepository {
       final invitation = ProjectInvitation(
         id: InvitationId(),
         projectId: params.projectId,
-        invitedByUserId: params.invitedByUserId,
+        invitedByUserId:
+            params
+                .invitedByUserId!, // Now guaranteed to be non-null from use case
         invitedUserId: params.invitedUserId,
         invitedEmail: params.invitedEmail,
         proposedRole: params.proposedRole,
