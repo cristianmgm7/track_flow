@@ -104,7 +104,7 @@ class NotificationActorBloc
   ) async {
     emit(const NotificationActorLoading());
 
-    final result = await _markAllAsReadUseCase(event.userId);
+    final result = await _markAllAsReadUseCase();
 
     result.fold(
       (failure) => emit(NotificationActorError(failure.message)),

@@ -7,7 +7,6 @@ import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/inputs/app_text_field.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/invitations_blocs.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 

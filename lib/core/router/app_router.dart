@@ -29,6 +29,13 @@ import 'package:trackflow/features/audio_cache/screens/storage_management_screen
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
+import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
+import 'package:trackflow/core/notifications/presentation/screens/notification_center_screen.dart';
+import 'package:trackflow/features/auth/domain/entities/user.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/invitations/presentation/blocs/watcher/project_invitation_watcher_bloc.dart';
+import 'package:trackflow/features/invitations/presentation/screens/invitations_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -180,6 +187,12 @@ class AppRouter {
                   BlocProvider<AudioContextBloc>(
                     create: (_) => sl<AudioContextBloc>(),
                   ),
+                  BlocProvider<NotificationWatcherBloc>(
+                    create: (_) => sl<NotificationWatcherBloc>(),
+                  ),
+                  BlocProvider<ProjectInvitationWatcherBloc>(
+                    create: (_) => sl<ProjectInvitationWatcherBloc>(),
+                  ),
                 ],
                 child: MainScaffold(child: child),
               ),
@@ -194,10 +207,7 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.notifications,
-              builder:
-                  (context, state) => const Scaffold(
-                    body: Center(child: Text("Notifications")),
-                  ),
+              builder: (context, state) => const NotificationCenterScreen(),
             ),
             GoRoute(
               path: AppRoutes.projectDetails,

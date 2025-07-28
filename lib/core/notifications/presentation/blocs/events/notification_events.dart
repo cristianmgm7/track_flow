@@ -17,32 +17,17 @@ abstract class NotificationWatcherEvent extends Equatable {
 
 /// Event to start watching all notifications
 class WatchAllNotifications extends NotificationWatcherEvent {
-  final UserId userId;
-
-  const WatchAllNotifications(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const WatchAllNotifications();
 }
 
 /// Event to start watching unread notifications
 class WatchUnreadNotifications extends NotificationWatcherEvent {
-  final UserId userId;
-
-  const WatchUnreadNotifications(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const WatchUnreadNotifications();
 }
 
 /// Event to start watching notification count
 class WatchNotificationCount extends NotificationWatcherEvent {
-  final UserId userId;
-
-  const WatchNotificationCount(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const WatchNotificationCount();
 }
 
 /// Event to stop watching notifications
@@ -94,12 +79,7 @@ class MarkAsUnread extends NotificationActorEvent {
 
 /// Event to mark all notifications as read
 class MarkAllAsRead extends NotificationActorEvent {
-  final UserId userId;
-
-  const MarkAllAsRead(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const MarkAllAsRead();
 }
 
 /// Event to delete a notification
