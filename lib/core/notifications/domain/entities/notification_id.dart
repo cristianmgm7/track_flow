@@ -1,7 +1,7 @@
 import 'package:uuid/uuid.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/entities/value_object.dart';
 
-class NotificationId extends UniqueId {
+class NotificationId extends ValueObject<String> {
   factory NotificationId() => NotificationId._(const Uuid().v4());
 
   factory NotificationId.fromUniqueString(String input) {
@@ -9,5 +9,5 @@ class NotificationId extends UniqueId {
     return NotificationId._(input);
   }
 
-  const NotificationId._(super.value) : super._();
+  const NotificationId._(super.value);
 }

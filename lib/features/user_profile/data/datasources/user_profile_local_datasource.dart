@@ -10,6 +10,9 @@ abstract class UserProfileLocalDataSource {
   Future<void> cacheUserProfile(UserProfileDTO profile);
   Stream<UserProfileDTO?> watchUserProfile(String userId);
 
+  /// Find a user profile by email address (local cache)
+  Future<UserProfileDTO?> findUserByEmail(String email);
+
   /// Obtiene múltiples perfiles de usuario por sus IDs (one-shot)
   Future<List<UserProfileDTO>> getUserProfilesByIds(List<String> userIds);
 
@@ -40,6 +43,16 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
     return _isar.userProfileDocuments
         .watchObject(fastHash(userId), fireImmediately: true)
         .map((doc) => doc?.toDTO());
+  }
+
+  @override
+  Future<UserProfileDTO?> findUserByEmail(String email) async {
+    final profileDoc =
+        await _isar.userProfileDocuments
+            .where()
+            .emailEqualTo(email)
+            .findFirst();
+    return profileDoc?.toDTO();
   }
 
   @override

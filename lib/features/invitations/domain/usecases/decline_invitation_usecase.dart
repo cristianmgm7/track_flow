@@ -4,18 +4,26 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
 
 /// Use case to decline a project invitation
 @lazySingleton
 class DeclineInvitationUseCase {
   final InvitationRepository _invitationRepository;
+  final ProjectsRepository _projectRepository;
+  final UserProfileRepository _userProfileRepository;
   final NotificationService _notificationService;
 
   DeclineInvitationUseCase({
     required InvitationRepository invitationRepository,
+    required ProjectsRepository projectRepository,
+    required UserProfileRepository userProfileRepository,
     required NotificationService notificationService,
   }) : _invitationRepository = invitationRepository,
+       _projectRepository = projectRepository,
+       _userProfileRepository = userProfileRepository,
        _notificationService = notificationService;
 
   /// Decline an invitation
@@ -67,24 +75,51 @@ class DeclineInvitationUseCase {
   Future<void> _markInvitationNotificationsAsRead(
     InvitationId invitationId,
   ) async {
-    // This would typically query notifications by invitation ID
-    // For now, we'll implement this in the notification repository
-    // TODO: Implement notification marking as read
+    // This would typically query notifications by invitation ID and mark them as read
+    // For now, we'll implement this as a TODO until the notification repository has the method
+    // TODO: Implement when NotificationRepository has markNotificationsByInvitationId method
+    print(
+      'Marking notifications as read for invitation: ${invitationId.value}',
+    );
   }
 
   /// Notify project owner about decline using core notification service
   Future<void> _notifyProjectOwnerAboutDecline(
     ProjectInvitation invitation,
   ) async {
-    // TODO: Get project details when ProjectRepository is available
-    // TODO: Get declined user profile when UserProfileRepository is available
+    // Get project details
+    final projectResult = await _projectRepository.getProjectById(
+      invitation.projectId,
+    );
 
-    // For now, we'll create a simple notification using core notification service
-    // await _notificationService.createProjectUpdateNotification(
-    //   recipientId: invitation.invitedByUserId,
-    //   projectId: invitation.projectId.value,
-    //   projectName: 'Project', // TODO: Get actual project name
-    //   updateMessage: 'Invitation to ${invitation.invitedEmail} was declined',
-    // );
+    projectResult.fold(
+      (failure) => print('Failed to get project for notification: $failure'),
+      (project) async {
+        // Get declined user profile (if it exists)
+        String declinedUserName = invitation.invitedEmail;
+        if (invitation.invitedUserId != null) {
+          final userProfileResult = await _userProfileRepository.getUserProfile(
+            invitation.invitedUserId!,
+          );
+
+          userProfileResult.fold(
+            (failure) => print('Failed to get user profile: $failure'),
+            (profile) {
+              if (profile != null) {
+                declinedUserName = profile.name;
+              }
+            },
+          );
+        }
+
+        // Create notification for project owner using core notification service
+        await _notificationService.createProjectUpdateNotification(
+          recipientId: invitation.invitedByUserId,
+          projectId: invitation.projectId.value,
+          projectName: project.name.value.getOrElse(() => 'Project'),
+          updateMessage: 'Invitation to $declinedUserName was declined',
+        );
+      },
+    );
   }
 }

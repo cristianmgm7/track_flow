@@ -2,6 +2,9 @@
 export 'entities/invitation_id.dart';
 export 'entities/project_invitation.dart';
 
+// Domain value objects
+export 'value_objects/send_invitation_params.dart';
+
 // Domain repositories
 export 'repositories/invitation_repository.dart';
 

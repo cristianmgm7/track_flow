@@ -16,7 +16,7 @@ class UniqueId extends ValueObject<String> {
   }
 }
 
-class UserId extends UniqueId {
+class UserId extends ValueObject<String> {
   factory UserId() => UserId._(const Uuid().v4());
 
   factory UserId.fromUniqueString(String input) {
@@ -29,10 +29,10 @@ class UserId extends UniqueId {
     return UserId.fromUniqueString(input);
   }
 
-  const UserId._(super.value) : super._();
+  const UserId._(super.value); // ✅ Fixed: removed : super._();
 }
 
-class ProjectId extends UniqueId {
+class ProjectId extends ValueObject<String> {
   factory ProjectId() => ProjectId._(const Uuid().v4());
 
   factory ProjectId.fromUniqueString(String input) {
@@ -40,10 +40,10 @@ class ProjectId extends UniqueId {
     return ProjectId._(input);
   }
 
-  const ProjectId._(super.value) : super._();
+  const ProjectId._(super.value); // ✅ Fixed: removed : super._();
 }
 
-class AudioTrackId extends UniqueId {
+class AudioTrackId extends ValueObject<String> {
   factory AudioTrackId() => AudioTrackId._(const Uuid().v4());
 
   factory AudioTrackId.fromUniqueString(String input) {
@@ -51,10 +51,10 @@ class AudioTrackId extends UniqueId {
     return AudioTrackId._(input);
   }
 
-  const AudioTrackId._(super.value) : super._();
+  const AudioTrackId._(super.value); // ✅ Fixed: removed : super._();
 }
 
-class AudioCommentId extends UniqueId {
+class AudioCommentId extends ValueObject<String> {
   factory AudioCommentId() => AudioCommentId._(const Uuid().v4());
 
   factory AudioCommentId.fromUniqueString(String input) {
@@ -62,10 +62,10 @@ class AudioCommentId extends UniqueId {
     return AudioCommentId._(input);
   }
 
-  const AudioCommentId._(super.value) : super._();
+  const AudioCommentId._(super.value); // ✅ Fixed: removed : super._();
 }
 
-class MagicLinkId extends UniqueId {
+class MagicLinkId extends ValueObject<String> {
   factory MagicLinkId() => MagicLinkId._(const Uuid().v4());
 
   factory MagicLinkId.fromUniqueString(String input) {
@@ -73,10 +73,10 @@ class MagicLinkId extends UniqueId {
     return MagicLinkId._(input);
   }
 
-  const MagicLinkId._(super.value) : super._();
+  const MagicLinkId._(super.value); // ✅ Fixed: removed : super._();
 }
 
-class PlaylistId extends UniqueId {
+class PlaylistId extends ValueObject<String> {
   factory PlaylistId() => PlaylistId._(const Uuid().v4());
 
   factory PlaylistId.fromUniqueString(String input) {
@@ -84,5 +84,5 @@ class PlaylistId extends UniqueId {
     return PlaylistId._(input);
   }
 
-  const PlaylistId._(super.value) : super._();
+  const PlaylistId._(super.value); // ✅ Fixed: removed : super._();
 }

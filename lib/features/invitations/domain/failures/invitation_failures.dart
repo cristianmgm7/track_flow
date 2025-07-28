@@ -1,4 +1,3 @@
-import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/error/failures.dart';
 
 /// Domain failures for invitation-related operations

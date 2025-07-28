@@ -4,7 +4,10 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
 
@@ -13,17 +16,19 @@ import 'package:trackflow/core/notifications/domain/services/notification_servic
 @lazySingleton
 class AcceptInvitationUseCase {
   final InvitationRepository _invitationRepository;
+  final ProjectsRepository _projectRepository;
+  final UserProfileRepository _userProfileRepository;
   final NotificationService _notificationService;
-  // TODO: Add ProjectRepository when it's created
-  // final ProjectRepository _projectRepository;
 
   AcceptInvitationUseCase({
     required InvitationRepository invitationRepository,
+    required ProjectsRepository projectRepository,
+    required UserProfileRepository userProfileRepository,
     required NotificationService notificationService,
-    // required ProjectRepository projectRepository,
   }) : _invitationRepository = invitationRepository,
+       _projectRepository = projectRepository,
+       _userProfileRepository = userProfileRepository,
        _notificationService = notificationService;
-  // _projectRepository = projectRepository;
 
   /// Accept an invitation
   /// Returns the updated invitation
@@ -57,7 +62,7 @@ class AcceptInvitationUseCase {
           acceptedInvitation,
         ) async {
           // 4. Add user to project (TODO: Implement when ProjectRepository is available)
-          // await _addUserToProject(acceptedInvitation);
+          await _addUserToProject(acceptedInvitation);
 
           // 5. Mark related notifications as read
           await _markInvitationNotificationsAsRead(invitationId);
@@ -75,69 +80,85 @@ class AcceptInvitationUseCase {
 
   /// Add user to project
   Future<void> _addUserToProject(ProjectInvitation invitation) async {
-    // TODO: Implement when ProjectRepository is available
     // Get the project
-    // final projectResult = await _projectRepository.getProject(invitation.projectId);
+    final projectResult = await _projectRepository.getProjectById(
+      invitation.projectId,
+    );
 
-    // projectResult.fold(
-    //   (failure) => print('Failed to get project: $failure'),
-    //   (project) async {
-    //     if (project != null) {
-    //       // Add collaborator to project
-    //       final updatedProject = project.addCollaborator(
-    //         userId: invitation.invitedUserId!,
-    //         role: invitation.proposedRole,
-    //       );
+    projectResult.fold((failure) => print('Failed to get project: $failure'), (
+      project,
+    ) async {
+      if (invitation.invitedUserId != null) {
+        // Create new collaborator with the proposed role
+        final newCollaborator = ProjectCollaborator.create(
+          userId: invitation.invitedUserId!,
+          role: invitation.proposedRole,
+        );
 
-    //       // Save updated project
-    //       await _projectRepository.updateProject(updatedProject);
-    //     }
-    //   },
-    // );
+        // Add collaborator to project using domain logic
+        final updatedProject = project.addCollaborator(newCollaborator);
+
+        // Save updated project
+        final saveResult = await _projectRepository.updateProject(
+          updatedProject,
+        );
+
+        saveResult.fold(
+          (failure) => print('Failed to save updated project: $failure'),
+          (_) => print('Successfully added user to project'),
+        );
+      }
+    });
   }
 
   /// Mark invitation notifications as read
   Future<void> _markInvitationNotificationsAsRead(
     InvitationId invitationId,
   ) async {
-    // This would typically query notifications by invitation ID
-    // For now, we'll implement this in the notification repository
-    // TODO: Implement notification marking as read
+    // This would typically query notifications by invitation ID and mark them as read
+    // For now, we'll implement this as a TODO until the notification repository has the method
+    // TODO: Implement when NotificationRepository has markNotificationsByInvitationId method
+    print(
+      'Marking notifications as read for invitation: ${invitationId.value}',
+    );
   }
 
   /// Notify project owner about acceptance using core notification service
   Future<void> _notifyProjectOwner(ProjectInvitation invitation) async {
-    // TODO: Get project details when ProjectRepository is available
-    // final projectResult = await _projectRepository.getProject(invitation.projectId);
+    // Get project details
+    final projectResult = await _projectRepository.getProjectById(
+      invitation.projectId,
+    );
 
-    // projectResult.fold(
-    //   (failure) => print('Failed to get project for notification: $failure'),
-    //   (project) async {
-    //     if (project != null) {
-    //       // Get accepted user profile
-    //       final acceptedUserProfile = await _getUserProfile(invitation.invitedUserId!);
+    projectResult.fold(
+      (failure) => print('Failed to get project for notification: $failure'),
+      (project) async {
+        if (invitation.invitedUserId != null) {
+          // Get accepted user profile
+          final acceptedUserProfile = await _getUserProfile(
+            invitation.invitedUserId!,
+          );
 
-    //       final acceptedUserName = acceptedUserProfile.fold(
-    //         (failure) => 'A user',
-    //         (profile) => profile?.name ?? 'A user',
-    //       );
+          final acceptedUserName = acceptedUserProfile.fold(
+            (failure) => 'A user',
+            (profile) => profile?.name ?? 'A user',
+          );
 
-    //       // Create notification for project owner using core notification service
-    //       await _notificationService.createCollaboratorJoinedNotification(
-    //         recipientId: invitation.invitedByUserId,
-    //         projectId: invitation.projectId.value,
-    //         projectName: project.name,
-    //         collaboratorName: acceptedUserName,
-    //       );
-    //     }
-    //   },
-    // );
+          // Create notification for project owner using core notification service
+          await _notificationService.createCollaboratorJoinedNotification(
+            recipientId: invitation.invitedByUserId,
+            projectId: invitation.projectId.value,
+            projectName: project.name.value.getOrElse(() => 'Project'),
+            collaboratorName: acceptedUserName,
+          );
+        }
+      },
+    );
   }
 
   /// Get user profile
   Future<Either<Failure, UserProfile?>> _getUserProfile(UserId userId) async {
-    // This would typically use a UserProfileRepository method
-    // For now, we'll return a simple result
-    return Right(null);
+    // Use UserProfileRepository to get user profile
+    return await _userProfileRepository.getUserProfile(userId);
   }
 }

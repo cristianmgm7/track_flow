@@ -6,7 +6,6 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
-import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -19,8 +18,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   final UserProfileLocalDataSource _localDataSource;
   final UserProfileRemoteDataSource _remoteDataSource;
   final NetworkStateManager _networkStateManager;
-  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
-  final PendingOperationsManager _pendingOperationsManager;
   final FirebaseFirestore _firestore;
 
   UserProfileRepositoryImpl({
@@ -33,8 +30,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   }) : _localDataSource = localDataSource,
        _remoteDataSource = remoteDataSource,
        _networkStateManager = networkStateManager,
-       _backgroundSyncCoordinator = backgroundSyncCoordinator,
-       _pendingOperationsManager = pendingOperationsManager,
        _firestore = firestore;
 
   @override
@@ -176,6 +171,38 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
       return Right(docSnapshot.exists);
     } catch (e) {
       return Left(DatabaseFailure('Failed to check if profile exists: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfile?>> findUserByEmail(String email) async {
+    try {
+      // OFFLINE-FIRST: Check local cache first
+      final localProfile = await _localDataSource.findUserByEmail(email);
+      if (localProfile != null) {
+        return Right(localProfile.toDomain());
+      }
+
+      // If not in local cache, try remote if connected
+      final isConnected = await _networkStateManager.isConnected;
+      if (!isConnected) {
+        return Right(null); // User not found (offline)
+      }
+
+      // Search remote database
+      final remoteResult = await _remoteDataSource.findUserByEmail(email);
+      return remoteResult.fold((failure) => Left(failure), (
+        remoteProfile,
+      ) async {
+        if (remoteProfile != null) {
+          // Cache the found profile locally
+          await _localDataSource.cacheUserProfile(remoteProfile);
+          return Right(remoteProfile.toDomain());
+        }
+        return Right(null); // User not found
+      });
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to find user by email: $e'));
     }
   }
 }

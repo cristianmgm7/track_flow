@@ -12,6 +12,9 @@ abstract class UserProfileRemoteDataSource {
   /// Update a user profile
   Future<Either<Failure, UserProfileDTO>> updateProfile(UserProfileDTO profile);
 
+  /// Find a user profile by email address
+  Future<Either<Failure, UserProfileDTO?>> findUserByEmail(String email);
+
   /// Obtiene múltiples perfiles de usuario por sus IDs (Firestore, limitado a 10 por petición)
   Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
     List<String> userIds,
@@ -65,6 +68,28 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
           .doc(profile.id)
           .set(profile.toJson(), SetOptions(merge: true));
       return right(profile);
+    } on FirebaseException catch (e) {
+      return left(ServerFailure(e.message ?? 'An error occurred'));
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserProfileDTO?>> findUserByEmail(String email) async {
+    try {
+      final query =
+          await _firestore
+              .collection(UserProfileDTO.collection)
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
+
+      if (query.docs.isEmpty) {
+        return right(null); // User not found
+      }
+
+      return right(UserProfileDTO.fromJson(query.docs.first.data()));
     } on FirebaseException catch (e) {
       return left(ServerFailure(e.message ?? 'An error occurred'));
     } catch (e) {
