@@ -51,11 +51,6 @@ class AppRouter {
         final flowState = appFlowBloc.state;
         final currentLocation = state.matchedLocation;
 
-        AppLogger.info(
-          'AppRouter: Redirect called - flowState: ${flowState.runtimeType}, currentLocation: $currentLocation',
-          tag: 'APP_ROUTER',
-        );
-
         // Handle loading state
         if (flowState is AppFlowLoading) {
           if (currentLocation != AppRoutes.splash) {
@@ -92,22 +87,22 @@ class AppRouter {
 
         // Handle ready state - allow access to main app routes
         if (flowState is AppFlowReady) {
-          // Allow access to main app routes
-          final mainAppRoutes = [
-            AppRoutes.dashboard,
-            AppRoutes.projects,
-            AppRoutes.settings,
-            AppRoutes.notifications,
-            AppRoutes.userProfile,
-            AppRoutes.manageCollaborators,
-            AppRoutes.audioComments,
-            AppRoutes.cacheDemo,
-          ];
-
-          if (!mainAppRoutes.contains(currentLocation)) {
-            return AppRoutes.dashboard;
+          // When app is ready, redirect to dashboard if not on a valid route
+          // Valid routes are: dashboard, projects, settings, notifications, and any project details
+          if (currentLocation == AppRoutes.dashboard ||
+              currentLocation == AppRoutes.projects ||
+              currentLocation == AppRoutes.settings ||
+              currentLocation == AppRoutes.notifications ||
+              currentLocation == AppRoutes.userProfile ||
+              currentLocation == AppRoutes.manageCollaborators ||
+              currentLocation == AppRoutes.audioComments ||
+              currentLocation == AppRoutes.cacheDemo ||
+              currentLocation.startsWith('/projects/')) {
+            return null; // Allow navigation
           }
-          return null;
+
+          // Redirect to dashboard for any other route
+          return AppRoutes.dashboard;
         }
 
         // Handle error state
