@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
+import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
@@ -48,14 +49,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.project.name.toString()),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
+    return AppScaffold(
+      appBar: null, // Remove the default app bar
       body: BlocListener<AudioTrackBloc, AudioTrackState>(
         listener: (context, state) {
           if (state is AudioTrackEditSuccess ||

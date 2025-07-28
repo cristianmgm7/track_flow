@@ -53,7 +53,11 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     showTrackFlowFormSheet(
       title: 'Invite Collaborator',
       context: context,
-      child: SendInvitationForm(projectId: currentProject.id),
+      useRootNavigator: false, // Mantener en false para no perder contexto
+      child: BlocProvider(
+        create: (context) => sl<ProjectInvitationActorBloc>(),
+        child: SendInvitationForm(projectId: currentProject.id),
+      ),
     );
   }
 
