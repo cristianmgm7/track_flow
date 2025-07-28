@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/session/current_user_service.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
@@ -11,11 +12,14 @@ import 'package:trackflow/features/invitations/presentation/blocs/states/invitat
 class ProjectInvitationWatcherBloc
     extends Bloc<InvitationWatcherEvent, InvitationWatcherState> {
   final InvitationRepository _invitationRepository;
+  final CurrentUserService _currentUserService;
 
   ProjectInvitationWatcherBloc({
     required InvitationRepository invitationRepository,
+    required CurrentUserService currentUserService,
   }) : _invitationRepository = invitationRepository,
-       super(const InvitationWatcherInitial()) {
+       _currentUserService = currentUserService,
+       super(InvitationWatcherInitial()) {
     on<WatchPendingInvitations>(_onWatchPendingInvitations);
     on<WatchSentInvitations>(_onWatchSentInvitations);
     on<WatchInvitationCount>(_onWatchInvitationCount);
@@ -27,20 +31,26 @@ class ProjectInvitationWatcherBloc
     WatchPendingInvitations event,
     Emitter<InvitationWatcherState> emit,
   ) async {
-    emit(const InvitationWatcherLoading());
+    emit(InvitationWatcherLoading());
 
-    await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
-      _invitationRepository.watchPendingInvitations(event.userId),
-      onData: (result) {
-        result.fold(
-          (failure) => emit(InvitationWatcherError(failure.message)),
-          (invitations) => emit(PendingInvitationsWatcherState(invitations)),
-        );
-      },
-      onError: (error, stackTrace) {
-        emit(InvitationWatcherError(error.toString()));
-      },
-    );
+    try {
+      final currentUserId = await _currentUserService.getCurrentUserIdOrThrow();
+
+      await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
+        _invitationRepository.watchPendingInvitations(currentUserId),
+        onData: (result) {
+          result.fold(
+            (failure) => emit(InvitationWatcherError(failure.message)),
+            (invitations) => emit(PendingInvitationsWatcherState(invitations)),
+          );
+        },
+        onError: (error, stackTrace) {
+          emit(InvitationWatcherError(error.toString()));
+        },
+      );
+    } catch (e) {
+      emit(InvitationWatcherError(e.toString()));
+    }
   }
 
   /// Watch sent invitations by a user
@@ -48,20 +58,26 @@ class ProjectInvitationWatcherBloc
     WatchSentInvitations event,
     Emitter<InvitationWatcherState> emit,
   ) async {
-    emit(const InvitationWatcherLoading());
+    emit(InvitationWatcherLoading());
 
-    await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
-      _invitationRepository.watchSentInvitations(event.userId),
-      onData: (result) {
-        result.fold(
-          (failure) => emit(InvitationWatcherError(failure.message)),
-          (invitations) => emit(SentInvitationsWatcherState(invitations)),
-        );
-      },
-      onError: (error, stackTrace) {
-        emit(InvitationWatcherError(error.toString()));
-      },
-    );
+    try {
+      final currentUserId = await _currentUserService.getCurrentUserIdOrThrow();
+
+      await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
+        _invitationRepository.watchSentInvitations(currentUserId),
+        onData: (result) {
+          result.fold(
+            (failure) => emit(InvitationWatcherError(failure.message)),
+            (invitations) => emit(SentInvitationsWatcherState(invitations)),
+          );
+        },
+        onError: (error, stackTrace) {
+          emit(InvitationWatcherError(error.toString()));
+        },
+      );
+    } catch (e) {
+      emit(InvitationWatcherError(e.toString()));
+    }
   }
 
   /// Watch invitation count for a user
@@ -69,21 +85,27 @@ class ProjectInvitationWatcherBloc
     WatchInvitationCount event,
     Emitter<InvitationWatcherState> emit,
   ) async {
-    emit(const InvitationWatcherLoading());
+    emit(InvitationWatcherLoading());
 
-    await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
-      _invitationRepository.watchPendingInvitations(event.userId),
-      onData: (result) {
-        result.fold(
-          (failure) => emit(InvitationWatcherError(failure.message)),
-          (invitations) =>
-              emit(InvitationCountWatcherState(invitations.length)),
-        );
-      },
-      onError: (error, stackTrace) {
-        emit(InvitationWatcherError(error.toString()));
-      },
-    );
+    try {
+      final currentUserId = await _currentUserService.getCurrentUserIdOrThrow();
+
+      await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
+        _invitationRepository.watchPendingInvitations(currentUserId),
+        onData: (result) {
+          result.fold(
+            (failure) => emit(InvitationWatcherError(failure.message)),
+            (invitations) =>
+                emit(InvitationCountWatcherState(invitations.length)),
+          );
+        },
+        onError: (error, stackTrace) {
+          emit(InvitationWatcherError(error.toString()));
+        },
+      );
+    } catch (e) {
+      emit(InvitationWatcherError(e.toString()));
+    }
   }
 
   /// Stop watching invitations
@@ -91,7 +113,7 @@ class ProjectInvitationWatcherBloc
     StopWatchingInvitations event,
     Emitter<InvitationWatcherState> emit,
   ) async {
-    emit(const InvitationWatcherInitial());
+    emit(InvitationWatcherInitial());
   }
 
   @override

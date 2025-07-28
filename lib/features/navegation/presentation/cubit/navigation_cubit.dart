@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-enum AppTab { projects, myMusic, settings }
+enum AppTab { projects, notifications, settings }
 
 @injectable
 class NavigationCubit extends Cubit<AppTab> {

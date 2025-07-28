@@ -76,10 +76,8 @@ class _MainScaffoldState extends State<MainScaffold> {
                 case AppTab.projects:
                   context.go(AppRoutes.projects);
                   break;
-                case AppTab.myMusic:
-                  // TODO: Create a dedicated route for playlists
-                  // For now, we can navigate to a placeholder or the first project
-                  context.go(AppRoutes.projects);
+                case AppTab.notifications:
+                  context.go(AppRoutes.notifications);
                   break;
                 case AppTab.settings:
                   context.go(AppRoutes.settings);
@@ -93,9 +91,9 @@ class _MainScaffoldState extends State<MainScaffold> {
                 label: 'Projects',
               ),
               AppBottomNavigationItem(
-                icon: Icons.music_note_outlined,
-                activeIcon: Icons.music_note,
-                label: 'My Music',
+                icon: Icons.notifications_outlined,
+                activeIcon: Icons.notifications,
+                label: 'Notifications',
               ),
               AppBottomNavigationItem(
                 icon: Icons.settings_outlined,

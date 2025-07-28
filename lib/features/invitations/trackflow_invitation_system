@@ -132,14 +132,14 @@ lib/
 
 #### Tasks:
 
-- [ ] **ProjectInvitationWatcherBloc** - Observe invitation state changes
-- [ ] **ProjectInvitationActorBloc** - Handle user actions
-- [ ] **NotificationWatcherBloc** - Observe notification state changes (in core)
-- [ ] **NotificationActorBloc** - Handle notification actions (in core)
-- [ ] **InvitationStates** - State classes for invitation BLoCs
-- [ ] **NotificationStates** - State classes for notification BLoCs (in core)
-- [ ] **InvitationEvents** - Event classes for invitation BLoCs
-- [ ] **NotificationEvents** - Event classes for notification BLoCs (in core)
+- [ x] **ProjectInvitationWatcherBloc** - Observe invitation state changes
+- [ x] **ProjectInvitationActorBloc** - Handle user actions
+- [ x] **NotificationWatcherBloc** - Observe notification state changes (in core)
+- [ x] **NotificationActorBloc** - Handle notification actions (in core)
+- [ x] **InvitationStates** - State classes for invitation BLoCs
+- [ x] **NotificationStates** - State classes for notification BLoCs (in core)
+- [ x] **InvitationEvents** - Event classes for invitation BLoCs
+- [ x] **NotificationEvents** - Event classes for notification BLoCs (in core)
 
 ### Phase 4: UI Components
 

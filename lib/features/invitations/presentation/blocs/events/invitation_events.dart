@@ -17,32 +17,17 @@ abstract class InvitationWatcherEvent extends Equatable {
 
 /// Event to start watching pending invitations
 class WatchPendingInvitations extends InvitationWatcherEvent {
-  final UserId userId;
-
-  const WatchPendingInvitations(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const WatchPendingInvitations();
 }
 
 /// Event to start watching sent invitations
 class WatchSentInvitations extends InvitationWatcherEvent {
-  final UserId userId;
-
-  const WatchSentInvitations(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const WatchSentInvitations();
 }
 
 /// Event to start watching invitation count
 class WatchInvitationCount extends InvitationWatcherEvent {
-  final UserId userId;
-
-  const WatchInvitationCount(this.userId);
-
-  @override
-  List<Object?> get props => [userId];
+  const WatchInvitationCount();
 }
 
 /// Event to stop watching invitations
