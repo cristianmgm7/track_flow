@@ -15,6 +15,7 @@ targets:
           - "lib/features/audio_cache/shared/data/models/cache_metadata_document.dart"
           - "lib/core/sync/data/models/sync_metadata_document.dart"
           - "lib/core/sync/data/models/sync_operation_document.dart"
+          - "lib/features/invitations/data/models/invitation_document.dart"
       injectable_generator|injectable_builder:
         generate_for:
           - "lib/**.dart"
