@@ -104,9 +104,9 @@ lib/
 
 #### 🔧 Issues to Fix:
 
-- [ ] **ID Constructor Issue** - Fix InvitationId and NotificationId constructors
-- [ ] **ProjectRepository Integration** - Add when ProjectRepository is available
-- [ ] **UserProfileRepository Integration** - Add when UserProfileRepository is available
+- [x] **ID Constructor Issue** - Fix InvitationId and NotificationId constructors
+- [x] **ProjectRepository Integration** - Add when ProjectRepository is available
+- [x] **UserProfileRepository Integration** - Add when UserProfileRepository is available
 
 ### Phase 2: Data Layer
 
@@ -114,17 +114,17 @@ lib/
 
 #### Tasks:
 
-- [ ] **InvitationDto** - Data transfer object for invitations
-- [ ] **NotificationDto** - Data transfer object for notifications (in core)
-- [ ] **InvitationLocalDataSource** - Local database operations
-- [ ] **NotificationLocalDataSource** - Local database operations (in core)
-- [ ] **InvitationRemoteDataSource** - Remote API operations
-- [ ] **NotificationRemoteDataSource** - Remote API operations (in core)
-- [ ] **InvitationRepositoryImpl** - Repository implementation
-- [ ] **NotificationRepositoryImpl** - Repository implementation (in core)
-- [ ] **InvitationMapper** - Entity ↔ DTO mapping
-- [ ] **NotificationMapper** - Entity ↔ DTO mapping (in core)
-- [ ] **Data Barrel File** - Export all data components
+- [x] **InvitationDto** - Data transfer object for invitations
+- [x] **NotificationDto** - Data transfer object for notifications (in core)
+- [x] **InvitationLocalDataSource** - Local database operations
+- [x] **NotificationLocalDataSource** - Local database operations (in core)
+- [x] **InvitationRemoteDataSource** - Remote API operations
+- [x] **NotificationRemoteDataSource** - Remote API operations (in core)
+- [x] **InvitationRepositoryImpl** - Repository implementation
+- [x] **NotificationRepositoryImpl** - Repository implementation (in core)
+- [x] **InvitationMapper** - Entity ↔ DTO mapping
+- [x] **NotificationMapper** - Entity ↔ DTO mapping (in core)
+- [x] **Data Barrel File** - Export all data components
 
 ### Phase 3: Split BLoCs
 
