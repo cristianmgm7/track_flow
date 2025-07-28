@@ -72,17 +72,19 @@ class NotificationWatcherBloc
   ) async {
     emit(const NotificationWatcherLoading());
 
-    try {
-      final countResult = await _notificationRepository
-          .getUnreadNotificationsCount(event.userId);
-
-      countResult.fold(
-        (failure) => emit(NotificationWatcherError(failure.message)),
-        (count) => emit(NotificationCountWatcherState(count)),
-      );
-    } catch (e) {
-      emit(NotificationWatcherError(e.toString()));
-    }
+    await emit.onEach<Either<Failure, List<Notification>>>(
+      _notificationRepository.watchUnreadNotifications(event.userId),
+      onData: (result) {
+        result.fold(
+          (failure) => emit(NotificationWatcherError(failure.message)),
+          (notifications) =>
+              emit(NotificationCountWatcherState(notifications.length)),
+        );
+      },
+      onError: (error, stackTrace) {
+        emit(NotificationWatcherError(error.toString()));
+      },
+    );
   }
 
   /// Stop watching notifications

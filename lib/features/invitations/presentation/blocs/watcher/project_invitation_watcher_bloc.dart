@@ -71,17 +71,19 @@ class ProjectInvitationWatcherBloc
   ) async {
     emit(const InvitationWatcherLoading());
 
-    try {
-      final countResult = await _invitationRepository
-          .getPendingInvitationsCount(event.userId);
-
-      countResult.fold(
-        (failure) => emit(InvitationWatcherError(failure.message)),
-        (count) => emit(InvitationCountWatcherState(count)),
-      );
-    } catch (e) {
-      emit(InvitationWatcherError(e.toString()));
-    }
+    await emit.onEach<Either<Failure, List<ProjectInvitation>>>(
+      _invitationRepository.watchPendingInvitations(event.userId),
+      onData: (result) {
+        result.fold(
+          (failure) => emit(InvitationWatcherError(failure.message)),
+          (invitations) =>
+              emit(InvitationCountWatcherState(invitations.length)),
+        );
+      },
+      onError: (error, stackTrace) {
+        emit(InvitationWatcherError(error.toString()));
+      },
+    );
   }
 
   /// Stop watching invitations

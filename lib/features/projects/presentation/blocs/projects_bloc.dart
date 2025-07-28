@@ -22,8 +22,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final WatchAllProjectsUseCase watchAllProjects;
   final SyncStatusProvider _syncStatusProvider;
 
-  StreamSubscription<Either<Failure, List<Project>>>? _projectsSubscription;
-
   //constructor
   ProjectsBloc({
     required this.createProject,
@@ -33,7 +31,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     required SyncStatusProvider syncStatusProvider,
   }) : _syncStatusProvider = syncStatusProvider,
        super(ProjectsInitial()) {
-    _initializeSyncAwareness();
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
@@ -85,35 +82,42 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   ) async {
     emit(ProjectsLoading());
 
-    // Listen to sync state changes for UI updates
-    _syncStatusProvider.watchSyncState().listen((syncState) {
-      if (state is ProjectsLoaded) {
-        switch (syncState.status) {
-          case SyncStatus.syncing:
-            emit(
-              (state as ProjectsLoaded).copyWith(
-                isSyncing: true,
-                syncProgress: syncState.progress,
-              ),
-            );
-            break;
-          case SyncStatus.complete:
-            emit(
-              (state as ProjectsLoaded).copyWith(
-                isSyncing: false,
-                syncProgress: 1.0,
-              ),
-            );
-            break;
-          case SyncStatus.error:
-            emit((state as ProjectsLoaded).copyWith(isSyncing: false));
-            break;
-          case SyncStatus.initial:
-            break;
+    // Watch sync state changes using emit.onEach()
+    await emit.onEach<SyncState>(
+      _syncStatusProvider.watchSyncState(),
+      onData: (syncState) {
+        if (state is ProjectsLoaded) {
+          switch (syncState.status) {
+            case SyncStatus.syncing:
+              emit(
+                (state as ProjectsLoaded).copyWith(
+                  isSyncing: true,
+                  syncProgress: syncState.progress,
+                ),
+              );
+              break;
+            case SyncStatus.complete:
+              emit(
+                (state as ProjectsLoaded).copyWith(
+                  isSyncing: false,
+                  syncProgress: 1.0,
+                ),
+              );
+              break;
+            case SyncStatus.error:
+              emit((state as ProjectsLoaded).copyWith(isSyncing: false));
+              break;
+            case SyncStatus.initial:
+              break;
+          }
         }
-      }
-    });
+      },
+      onError: (error, stackTrace) {
+        // Handle sync state errors if needed
+      },
+    );
 
+    // Watch projects using emit.onEach()
     await emit.onEach<Either<Failure, List<Project>>>(
       watchAllProjects(),
       onData: (eitherProjects) {
@@ -143,12 +147,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     );
   }
 
-  @override
-  Future<void> close() {
-    _projectsSubscription?.cancel();
-    return super.close();
-  }
-
   String _mapFailureToMessage(Failure failure) {
     if (failure is ValidationFailure) {
       return failure.message;
@@ -166,34 +164,5 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       return "An unexpected error occurred. Please try again later.";
     }
     return "An unknown error occurred.";
-  }
-
-  /// Initialize sync awareness with the new SyncService
-  void _initializeSyncAwareness() {
-    // Listen to sync state changes for UI updates
-    _syncStatusProvider.watchSyncState().listen((syncState) {
-      // Handle sync state changes
-      if (syncState.status == SyncStatus.syncing) {
-        // Sync is in progress
-        if (state is ProjectsLoaded) {
-          emit(
-            (state as ProjectsLoaded).copyWith(
-              isSyncing: true,
-              syncProgress: syncState.progress,
-            ),
-          );
-        }
-      } else if (syncState.status == SyncStatus.complete) {
-        // Sync completed
-        if (state is ProjectsLoaded) {
-          emit(
-            (state as ProjectsLoaded).copyWith(
-              isSyncing: false,
-              syncProgress: 1.0,
-            ),
-          );
-        }
-      }
-    });
   }
 }
