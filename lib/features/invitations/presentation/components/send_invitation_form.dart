@@ -11,7 +11,6 @@ import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/feedback/app_feedback_system.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
 
@@ -44,7 +43,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
 
   void _sendInvitation(InvitationActorState state) {
     if (!_formKey.currentState!.validate()) return;
-    
+
     // Only proceed if we have a successful search result or new user
     if (state is! UserSearchSuccess && _emailController.text.isEmpty) {
       AppFeedbackSystem.showSnackBar(
@@ -75,9 +74,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
         height: Dimensions.iconMedium,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(
-            AppColors.primary,
-          ),
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
         ),
       );
     } else if (state is UserSearchSuccess && state.user != null) {
@@ -98,7 +95,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Container(
             padding: EdgeInsets.all(Dimensions.space8),
             decoration: BoxDecoration(
-              color: AppColors.error.withOpacity(0.1),
+              color: AppColors.error,
               borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
             ),
             child: Row(
@@ -135,19 +132,17 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Container(
             padding: EdgeInsets.all(Dimensions.space12),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.1),
+              color: AppColors.success,
               borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-              border: Border.all(color: AppColors.success.withOpacity(0.3)),
+              border: Border.all(color: AppColors.success),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  backgroundColor: AppColors.primary,
                   child: Text(
-                    user.name.isNotEmpty
-                        ? user.name[0].toUpperCase()
-                        : 'U',
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
                     style: AppTextStyle.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -200,9 +195,9 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Container(
             padding: EdgeInsets.all(Dimensions.space12),
             decoration: BoxDecoration(
-              color: AppColors.info.withOpacity(0.1),
+              color: AppColors.info,
               borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-              border: Border.all(color: AppColors.info.withOpacity(0.3)),
+              border: Border.all(color: AppColors.info),
             ),
             child: Row(
               children: [
@@ -243,7 +238,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
 
   bool _canSendInvitation(InvitationActorState state) {
     return (state is UserSearchSuccess) ||
-           (_emailController.text.isNotEmpty &&
+        (_emailController.text.isNotEmpty &&
             state is! UserSearchLoading &&
             state is! UserSearchError);
   }
@@ -256,13 +251,13 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Navigator.of(context).pop();
           AppFeedbackSystem.showSnackBar(
             context,
-            message: '¡Invitación enviada exitosamente!',
+            message: '¡invitation sent successfully!',
             type: FeedbackType.success,
           );
         } else if (state is InvitationActorError && state is! UserSearchError) {
           AppFeedbackSystem.showSnackBar(
             context,
-            message: 'Error al enviar invitación: ${state.message}',
+            message: 'Error sending invitation: ${state.message}',
             type: FeedbackType.error,
           );
         }
@@ -270,77 +265,78 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
       child: BlocBuilder<ProjectInvitationActorBloc, InvitationActorState>(
         builder: (context, state) {
           return Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Email Field with Real Search
-            AppFormField(
-              label: 'Email del colaborador',
-              hint: 'Buscar por email...',
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              isRequired: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'El email es requerido';
-                }
-                if (!RegExp(
-                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                ).hasMatch(value)) {
-                  return 'Por favor ingresa un email válido';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                _searchUser(value);
-              },
-              suffixIcon: _buildSuffixIcon(state),
-            ),
-
-            // Search Error
-            _buildSearchError(state),
-
-            // User Found Indicator
-            _buildUserFoundIndicator(state),
-
-            // New User Indicator
-            _buildNewUserIndicator(state),
-
-            SizedBox(height: Dimensions.space24),
-
-            // Action Buttons
-            Row(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: SecondaryButton(
-                    text: 'Cancelar',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+                // Email Field with Real Search
+                AppFormField(
+                  label: 'Email of collaborator',
+                  hint: 'Search by email...',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  isRequired: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    _searchUser(value);
+                  },
+                  suffixIcon: _buildSuffixIcon(state),
                 ),
-                SizedBox(width: Dimensions.space12),
-                Expanded(
-                  child: BlocBuilder<
-                    ProjectInvitationActorBloc,
-                    InvitationActorState
-                  >(
-                    builder: (context, state) {
-                      return PrimaryButton(
-                        text: 'Enviar Invitación',
-                        onPressed: _canSendInvitation(state)
-                                ? () => _sendInvitation(state)
-                                : null,
-                        isLoading: state is InvitationActorLoading,
-                        isDisabled: state is InvitationActorLoading,
-                      );
-                    },
-                  ),
+
+                // Search Error
+                _buildSearchError(state),
+
+                // User Found Indicator
+                _buildUserFoundIndicator(state),
+
+                // New User Indicator
+                _buildNewUserIndicator(state),
+
+                SizedBox(height: Dimensions.space24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: SecondaryButton(
+                        text: 'Cancelar',
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    SizedBox(width: Dimensions.space12),
+                    Expanded(
+                      child: BlocBuilder<
+                        ProjectInvitationActorBloc,
+                        InvitationActorState
+                      >(
+                        builder: (context, state) {
+                          return PrimaryButton(
+                            text: 'Send Invitation',
+                            onPressed:
+                                _canSendInvitation(state)
+                                    ? () => _sendInvitation(state)
+                                    : null,
+                            isLoading: state is InvitationActorLoading,
+                            isDisabled: state is InvitationActorLoading,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      );
+          );
         },
       ),
     );

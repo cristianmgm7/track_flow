@@ -54,42 +54,52 @@ class InvitationRepositoryImpl implements InvitationRepository {
       // Convert to DTO
       final invitationDto = InvitationDto.fromDomain(invitation);
 
-      // OFFLINE-FIRST: Save locally immediately
-      await _localDataSource.cacheInvitation(invitationDto);
+      // ONLINE-FIRST: Try to send to remote first
+      final isConnected = await _networkStateManager.isConnected;
+      if (isConnected) {
+        final remoteResult = await _remoteDataSource.createInvitation(
+          invitationDto,
+        );
 
-      // Try to sync to remote if connected
-      try {
-        final isConnected = await _networkStateManager.isConnected;
-        if (isConnected) {
-          final remoteResult = await _remoteDataSource.createInvitation(
-            invitationDto,
-          );
-          remoteResult.fold(
-            (failure) {
-              AppLogger.warning(
-                'Failed to sync invitation to remote: ${failure.message}',
-                tag: 'InvitationRepository',
-              );
-              // Don't fail the operation - local save was successful
-            },
-            (_) {
-              AppLogger.info(
-                'Invitation synced to remote successfully',
-                tag: 'InvitationRepository',
-              );
-            },
-          );
-        }
-      } catch (e) {
+        return remoteResult.fold(
+          (failure) {
+            // ❌ REMOTE FAILED: Return error immediately
+            // User needs to know the invitation wasn't sent
+            AppLogger.error(
+              'Failed to send invitation to remote: ${failure.message}',
+              tag: 'InvitationRepository',
+            );
+            return Left(failure);
+          },
+          (remoteInvitation) async {
+            // ✅ REMOTE SUCCESS: Save locally and return
+            await _localDataSource.cacheInvitation(invitationDto);
+            AppLogger.info(
+              'Invitation sent successfully and cached locally',
+              tag: 'InvitationRepository',
+            );
+            return Right(invitation);
+          },
+        );
+      } else {
+        // ❌ NO NETWORK: Fail immediately
+        // User needs to know they can't send invitations offline
         AppLogger.warning(
-          'Background sync failed, but local save was successful: $e',
+          'Cannot send invitation: No internet connection',
           tag: 'InvitationRepository',
         );
-        // Don't fail the operation - local save was successful
+        return Left(
+          NetworkFailure(
+            'No internet connection. Invitations require network.',
+          ),
+        );
       }
-
-      return Right(invitation);
     } catch (e) {
+      AppLogger.error(
+        'Unexpected error sending invitation: $e',
+        tag: 'InvitationRepository',
+        error: e,
+      );
       return Left(ServerFailure('Failed to send invitation: $e'));
     }
   }
@@ -113,41 +123,51 @@ class InvitationRepositoryImpl implements InvitationRepository {
         final acceptedInvitation = invitation.accept();
         final invitationDto = InvitationDto.fromDomain(acceptedInvitation);
 
-        // Update locally immediately
-        await _localDataSource.updateInvitation(invitationDto);
+        // ONLINE-FIRST: Try to update remote first
+        final isConnected = await _networkStateManager.isConnected;
+        if (isConnected) {
+          final remoteResult = await _remoteDataSource.updateInvitation(
+            invitationDto,
+          );
 
-        // Try to sync to remote if connected
-        try {
-          final isConnected = await _networkStateManager.isConnected;
-          if (isConnected) {
-            final remoteResult = await _remoteDataSource.updateInvitation(
-              invitationDto,
-            );
-            remoteResult.fold(
-              (failure) {
-                AppLogger.warning(
-                  'Failed to sync accepted invitation to remote: ${failure.message}',
-                  tag: 'InvitationRepository',
-                );
-              },
-              (_) {
-                AppLogger.info(
-                  'Accepted invitation synced to remote successfully',
-                  tag: 'InvitationRepository',
-                );
-              },
-            );
-          }
-        } catch (e) {
+          return remoteResult.fold(
+            (failure) {
+              // ❌ REMOTE FAILED: Return error immediately
+              AppLogger.error(
+                'Failed to accept invitation on remote: ${failure.message}',
+                tag: 'InvitationRepository',
+              );
+              return Left(failure);
+            },
+            (_) async {
+              // ✅ REMOTE SUCCESS: Update locally and return
+              await _localDataSource.updateInvitation(invitationDto);
+              AppLogger.info(
+                'Invitation accepted successfully and cached locally',
+                tag: 'InvitationRepository',
+              );
+              return Right(acceptedInvitation);
+            },
+          );
+        } else {
+          // ❌ NO NETWORK: Fail immediately
           AppLogger.warning(
-            'Background sync failed, but local update was successful: $e',
+            'Cannot accept invitation: No internet connection',
             tag: 'InvitationRepository',
           );
+          return Left(
+            NetworkFailure(
+              'No internet connection. Accepting invitations require network.',
+            ),
+          );
         }
-
-        return Right(acceptedInvitation);
       });
     } catch (e) {
+      AppLogger.error(
+        'Unexpected error accepting invitation: $e',
+        tag: 'InvitationRepository',
+        error: e,
+      );
       return Left(ServerFailure('Failed to accept invitation: $e'));
     }
   }
@@ -171,41 +191,51 @@ class InvitationRepositoryImpl implements InvitationRepository {
         final declinedInvitation = invitation.decline();
         final invitationDto = InvitationDto.fromDomain(declinedInvitation);
 
-        // Update locally immediately
-        await _localDataSource.updateInvitation(invitationDto);
+        // ONLINE-FIRST: Try to update remote first
+        final isConnected = await _networkStateManager.isConnected;
+        if (isConnected) {
+          final remoteResult = await _remoteDataSource.updateInvitation(
+            invitationDto,
+          );
 
-        // Try to sync to remote if connected
-        try {
-          final isConnected = await _networkStateManager.isConnected;
-          if (isConnected) {
-            final remoteResult = await _remoteDataSource.updateInvitation(
-              invitationDto,
-            );
-            remoteResult.fold(
-              (failure) {
-                AppLogger.warning(
-                  'Failed to sync declined invitation to remote: ${failure.message}',
-                  tag: 'InvitationRepository',
-                );
-              },
-              (_) {
-                AppLogger.info(
-                  'Declined invitation synced to remote successfully',
-                  tag: 'InvitationRepository',
-                );
-              },
-            );
-          }
-        } catch (e) {
+          return remoteResult.fold(
+            (failure) {
+              // ❌ REMOTE FAILED: Return error immediately
+              AppLogger.error(
+                'Failed to decline invitation on remote: ${failure.message}',
+                tag: 'InvitationRepository',
+              );
+              return Left(failure);
+            },
+            (_) async {
+              // ✅ REMOTE SUCCESS: Update locally and return
+              await _localDataSource.updateInvitation(invitationDto);
+              AppLogger.info(
+                'Invitation declined successfully and cached locally',
+                tag: 'InvitationRepository',
+              );
+              return Right(declinedInvitation);
+            },
+          );
+        } else {
+          // ❌ NO NETWORK: Fail immediately
           AppLogger.warning(
-            'Background sync failed, but local update was successful: $e',
+            'Cannot decline invitation: No internet connection',
             tag: 'InvitationRepository',
           );
+          return Left(
+            NetworkFailure(
+              'No internet connection. Declining invitations require network.',
+            ),
+          );
         }
-
-        return Right(declinedInvitation);
       });
     } catch (e) {
+      AppLogger.error(
+        'Unexpected error declining invitation: $e',
+        tag: 'InvitationRepository',
+        error: e,
+      );
       return Left(ServerFailure('Failed to decline invitation: $e'));
     }
   }
@@ -229,41 +259,51 @@ class InvitationRepositoryImpl implements InvitationRepository {
         final cancelledInvitation = invitation.cancel();
         final invitationDto = InvitationDto.fromDomain(cancelledInvitation);
 
-        // Update locally immediately
-        await _localDataSource.updateInvitation(invitationDto);
+        // ONLINE-FIRST: Try to update remote first
+        final isConnected = await _networkStateManager.isConnected;
+        if (isConnected) {
+          final remoteResult = await _remoteDataSource.updateInvitation(
+            invitationDto,
+          );
 
-        // Try to sync to remote if connected
-        try {
-          final isConnected = await _networkStateManager.isConnected;
-          if (isConnected) {
-            final remoteResult = await _remoteDataSource.updateInvitation(
-              invitationDto,
-            );
-            remoteResult.fold(
-              (failure) {
-                AppLogger.warning(
-                  'Failed to sync cancelled invitation to remote: ${failure.message}',
-                  tag: 'InvitationRepository',
-                );
-              },
-              (_) {
-                AppLogger.info(
-                  'Cancelled invitation synced to remote successfully',
-                  tag: 'InvitationRepository',
-                );
-              },
-            );
-          }
-        } catch (e) {
+          return remoteResult.fold(
+            (failure) {
+              // ❌ REMOTE FAILED: Return error immediately
+              AppLogger.error(
+                'Failed to cancel invitation on remote: ${failure.message}',
+                tag: 'InvitationRepository',
+              );
+              return Left(failure);
+            },
+            (_) async {
+              // ✅ REMOTE SUCCESS: Update locally and return
+              await _localDataSource.updateInvitation(invitationDto);
+              AppLogger.info(
+                'Invitation cancelled successfully and cached locally',
+                tag: 'InvitationRepository',
+              );
+              return const Right(unit);
+            },
+          );
+        } else {
+          // ❌ NO NETWORK: Fail immediately
           AppLogger.warning(
-            'Background sync failed, but local update was successful: $e',
+            'Cannot cancel invitation: No internet connection',
             tag: 'InvitationRepository',
           );
+          return Left(
+            NetworkFailure(
+              'No internet connection. Cancelling invitations require network.',
+            ),
+          );
         }
-
-        return Right(unit);
       });
     } catch (e) {
+      AppLogger.error(
+        'Unexpected error cancelling invitation: $e',
+        tag: 'InvitationRepository',
+        error: e,
+      );
       return Left(ServerFailure('Failed to cancel invitation: $e'));
     }
   }

@@ -5,7 +5,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/find_user_by_email_usecase.dart';
+import 'package:trackflow/features/invitations/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 import 'package:trackflow/core/notifications/domain/services/notification_service.dart';

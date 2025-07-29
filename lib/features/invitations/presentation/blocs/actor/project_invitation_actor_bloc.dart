@@ -4,7 +4,7 @@ import 'package:trackflow/features/invitations/domain/usecases/accept_invitation
 import 'package:trackflow/features/invitations/domain/usecases/cancel_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/decline_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/send_invitation_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/find_user_by_email_usecase.dart';
+import 'package:trackflow/features/invitations/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/states/invitation_states.dart';
 
@@ -117,9 +117,7 @@ class ProjectInvitationActorBloc
       result.fold(
         (failure) => emit(InvitationActorError(failure.message)),
         (_) => emit(
-          CancelInvitationSuccess(
-            message: 'Invitation cancelled successfully',
-          ),
+          CancelInvitationSuccess(message: 'Invitation cancelled successfully'),
         ),
       );
     } catch (e) {
@@ -139,7 +137,7 @@ class ProjectInvitationActorBloc
     Emitter<InvitationActorState> emit,
   ) async {
     final email = event.email.trim();
-    
+
     // Clear search if email is empty
     if (email.isEmpty) {
       emit(InvitationActorInitial());
