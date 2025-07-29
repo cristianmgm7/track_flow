@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
+import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
+import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
+import 'package:trackflow/features/invitations/presentation/blocs/states/invitation_states.dart';
 
 /// Action buttons for invitation actions (Accept/Decline)
+/// Uses BLoC pattern for state management and event handling
 class InvitationActionButtons extends StatelessWidget {
   final ProjectInvitation invitation;
-  final VoidCallback? onAccept;
-  final VoidCallback? onDecline;
-  final bool isLoading;
-  final bool isAcceptLoading;
-  final bool isDeclineLoading;
+  final VoidCallback? onSuccess;
+  final VoidCallback? onError;
 
   const InvitationActionButtons({
     super.key,
     required this.invitation,
-    this.onAccept,
-    this.onDecline,
-    this.isLoading = false,
-    this.isAcceptLoading = false,
-    this.isDeclineLoading = false,
+    this.onSuccess,
+    this.onError,
   });
 
   @override
@@ -30,43 +29,69 @@ class InvitationActionButtons extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Row(
-      children: [
-        Expanded(
-          child: SecondaryButton(
-            text: 'Decline',
-            onPressed: isLoading || isDeclineLoading ? null : onDecline,
-            isLoading: isDeclineLoading,
-            icon: Icons.close,
-            size: ButtonSize.small,
-          ),
-        ),
-        SizedBox(width: Dimensions.space12),
-        Expanded(
-          child: PrimaryButton(
-            text: 'Accept',
-            onPressed: isLoading || isAcceptLoading ? null : onAccept,
-            isLoading: isAcceptLoading,
-            icon: Icons.check,
-            size: ButtonSize.small,
-          ),
-        ),
-      ],
+    return BlocConsumer<ProjectInvitationActorBloc, InvitationActorState>(
+      listener: (context, state) {
+        if (state is AcceptInvitationSuccess || state is DeclineInvitationSuccess) {
+          onSuccess?.call();
+        } else if (state is InvitationActorError) {
+          onError?.call();
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is InvitationActorLoading;
+        
+        return Row(
+          children: [
+            Expanded(
+              child: SecondaryButton(
+                text: 'Decline',
+                onPressed: isLoading ? null : () => _handleDecline(context),
+                isLoading: isLoading,
+                icon: Icons.close,
+                size: ButtonSize.small,
+              ),
+            ),
+            SizedBox(width: Dimensions.space12),
+            Expanded(
+              child: PrimaryButton(
+                text: 'Accept',
+                onPressed: isLoading ? null : () => _handleAccept(context),
+                isLoading: isLoading,
+                icon: Icons.check,
+                size: ButtonSize.small,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleAccept(BuildContext context) {
+    context.read<ProjectInvitationActorBloc>().add(
+      AcceptInvitation(invitation.id),
+    );
+  }
+
+  void _handleDecline(BuildContext context) {
+    context.read<ProjectInvitationActorBloc>().add(
+      DeclineInvitation(invitation.id),
     );
   }
 }
 
 /// Action buttons for sent invitations (Cancel)
+/// Uses BLoC pattern for state management and event handling
 class SentInvitationActionButtons extends StatelessWidget {
   final ProjectInvitation invitation;
-  final VoidCallback? onCancel;
-  final bool isLoading;
+  final VoidCallback? onSuccess;
+  final VoidCallback? onError;
 
   const SentInvitationActionButtons({
     super.key,
     required this.invitation,
-    this.onCancel,
-    this.isLoading = false,
+    this.onSuccess,
+    this.onError,
   });
 
   @override
@@ -76,13 +101,32 @@ class SentInvitationActionButtons extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return PrimaryButton(
-      text: 'Cancel Invitation',
-      onPressed: isLoading ? null : onCancel,
-      isLoading: isLoading,
-      icon: Icons.cancel,
-      size: ButtonSize.small,
-      isDestructive: true,
+    return BlocConsumer<ProjectInvitationActorBloc, InvitationActorState>(
+      listener: (context, state) {
+        if (state is CancelInvitationSuccess) {
+          onSuccess?.call();
+        } else if (state is InvitationActorError) {
+          onError?.call();
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is InvitationActorLoading;
+        
+        return PrimaryButton(
+          text: 'Cancel Invitation',
+          onPressed: isLoading ? null : () => _handleCancel(context),
+          isLoading: isLoading,
+          icon: Icons.cancel,
+          size: ButtonSize.small,
+          isDestructive: true,
+        );
+      },
+    );
+  }
+
+  void _handleCancel(BuildContext context) {
+    context.read<ProjectInvitationActorBloc>().add(
+      CancelInvitation(invitation.id),
     );
   }
 }

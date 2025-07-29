@@ -1049,6 +1049,7 @@ extension GetItInjectableX on _i1.GetIt {
               sendInvitationUseCase: gh<_i178.SendInvitationUseCase>(),
               acceptInvitationUseCase: gh<_i153.AcceptInvitationUseCase>(),
               declineInvitationUseCase: gh<_i162.DeclineInvitationUseCase>(),
+              cancelInvitationUseCase: gh<_i110.CancelInvitationUseCase>(),
             ));
     gh.factory<_i195.SessionService>(() => _i195.SessionService(
           checkAuthUseCase: gh<_i111.CheckAuthenticationStatusUseCase>(),

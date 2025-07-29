@@ -8,28 +8,23 @@ import 'package:trackflow/features/invitations/presentation/widgets/invitation_s
 import 'package:trackflow/features/invitations/presentation/components/invitation_action_buttons.dart';
 
 /// Card widget to display individual invitation
+/// Uses BLoC pattern for action handling
 class InvitationCard extends StatelessWidget {
   final ProjectInvitation invitation;
-  final VoidCallback? onAccept;
-  final VoidCallback? onDecline;
-  final VoidCallback? onCancel;
   final VoidCallback? onTap;
-  final bool isLoading;
-  final bool isAcceptLoading;
-  final bool isDeclineLoading;
-  final bool isCancelLoading;
+  final VoidCallback? onActionSuccess;
+  final VoidCallback? onActionError;
+  final bool showReceivedActions;
+  final bool showSentActions;
 
   const InvitationCard({
     super.key,
     required this.invitation,
-    this.onAccept,
-    this.onDecline,
-    this.onCancel,
     this.onTap,
-    this.isLoading = false,
-    this.isAcceptLoading = false,
-    this.isDeclineLoading = false,
-    this.isCancelLoading = false,
+    this.onActionSuccess,
+    this.onActionError,
+    this.showReceivedActions = false,
+    this.showSentActions = false,
   });
 
   @override
@@ -147,23 +142,20 @@ class InvitationCard extends StatelessWidget {
 
   Widget _buildActions() {
     // For pending invitations received by the user
-    if (invitation.status == InvitationStatus.pending && onAccept != null) {
+    if (invitation.status == InvitationStatus.pending && showReceivedActions) {
       return InvitationActionButtons(
         invitation: invitation,
-        onAccept: onAccept,
-        onDecline: onDecline,
-        isLoading: isLoading,
-        isAcceptLoading: isAcceptLoading,
-        isDeclineLoading: isDeclineLoading,
+        onSuccess: onActionSuccess,
+        onError: onActionError,
       );
     }
 
     // For pending invitations sent by the user
-    if (invitation.status == InvitationStatus.pending && onCancel != null) {
+    if (invitation.status == InvitationStatus.pending && showSentActions) {
       return SentInvitationActionButtons(
         invitation: invitation,
-        onCancel: onCancel,
-        isLoading: isCancelLoading,
+        onSuccess: onActionSuccess,
+        onError: onActionError,
       );
     }
 
@@ -172,7 +164,7 @@ class InvitationCard extends StatelessWidget {
 
   bool _shouldShowActions() {
     return invitation.status == InvitationStatus.pending &&
-        (onAccept != null || onCancel != null);
+        (showReceivedActions || showSentActions);
   }
 
   String _formatDate(DateTime date) {

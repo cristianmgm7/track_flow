@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/invitations/domain/usecases/accept_invitation_usecase.dart';
+import 'package:trackflow/features/invitations/domain/usecases/cancel_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/decline_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/send_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
@@ -12,18 +13,22 @@ class ProjectInvitationActorBloc
   final SendInvitationUseCase _sendInvitationUseCase;
   final AcceptInvitationUseCase _acceptInvitationUseCase;
   final DeclineInvitationUseCase _declineInvitationUseCase;
+  final CancelInvitationUseCase _cancelInvitationUseCase;
 
   ProjectInvitationActorBloc({
     required SendInvitationUseCase sendInvitationUseCase,
     required AcceptInvitationUseCase acceptInvitationUseCase,
     required DeclineInvitationUseCase declineInvitationUseCase,
+    required CancelInvitationUseCase cancelInvitationUseCase,
   }) : _sendInvitationUseCase = sendInvitationUseCase,
        _acceptInvitationUseCase = acceptInvitationUseCase,
        _declineInvitationUseCase = declineInvitationUseCase,
+       _cancelInvitationUseCase = cancelInvitationUseCase,
        super(InvitationActorInitial()) {
     on<SendInvitation>(_onSendInvitation);
     on<AcceptInvitation>(_onAcceptInvitation);
     on<DeclineInvitation>(_onDeclineInvitation);
+    on<CancelInvitation>(_onCancelInvitation);
     on<ResetInvitationActorState>(_onResetState);
   }
 
@@ -55,9 +60,17 @@ class ProjectInvitationActorBloc
     emit(InvitationActorLoading());
 
     try {
-      // TODO: Implement proper invitation acceptance
-      await Future.delayed(const Duration(seconds: 1));
-      emit(InvitationActorSuccess(message: 'Invitation accepted successfully'));
+      final result = await _acceptInvitationUseCase(event.invitationId);
+
+      result.fold(
+        (failure) => emit(InvitationActorError(failure.message)),
+        (invitation) => emit(
+          AcceptInvitationSuccess(
+            message: 'Invitation accepted successfully',
+            invitation: invitation,
+          ),
+        ),
+      );
     } catch (e) {
       emit(InvitationActorError(e.toString()));
     }
@@ -70,9 +83,39 @@ class ProjectInvitationActorBloc
     emit(InvitationActorLoading());
 
     try {
-      // TODO: Implement proper invitation decline
-      await Future.delayed(const Duration(seconds: 1));
-      emit(InvitationActorSuccess(message: 'Invitation declined successfully'));
+      final result = await _declineInvitationUseCase(event.invitationId);
+
+      result.fold(
+        (failure) => emit(InvitationActorError(failure.message)),
+        (invitation) => emit(
+          DeclineInvitationSuccess(
+            message: 'Invitation declined successfully',
+            invitation: invitation,
+          ),
+        ),
+      );
+    } catch (e) {
+      emit(InvitationActorError(e.toString()));
+    }
+  }
+
+  Future<void> _onCancelInvitation(
+    CancelInvitation event,
+    Emitter<InvitationActorState> emit,
+  ) async {
+    emit(InvitationActorLoading());
+
+    try {
+      final result = await _cancelInvitationUseCase(event.invitationId);
+
+      result.fold(
+        (failure) => emit(InvitationActorError(failure.message)),
+        (_) => emit(
+          CancelInvitationSuccess(
+            message: 'Invitation cancelled successfully',
+          ),
+        ),
+      );
     } catch (e) {
       emit(InvitationActorError(e.toString()));
     }

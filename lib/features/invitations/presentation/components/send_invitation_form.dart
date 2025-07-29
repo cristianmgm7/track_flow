@@ -101,7 +101,8 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
       projectId: widget.projectId,
       invitedEmail: _emailController.text.trim(),
       proposedRole: ProjectRole.editor, // Default role
-      message: 'Te invito a colaborar en este proyecto', // Default message
+      message:
+          'I want to collaborate with you in this project', // Default message
       expirationDuration: const Duration(days: 30),
     );
 

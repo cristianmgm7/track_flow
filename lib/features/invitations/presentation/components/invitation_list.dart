@@ -7,16 +7,17 @@ import 'package:trackflow/features/invitations/domain/entities/project_invitatio
 import 'package:trackflow/features/invitations/presentation/components/invitation_card.dart';
 
 /// List component to display invitations
+/// Uses BLoC pattern for action handling
 class InvitationList extends StatelessWidget {
   final List<ProjectInvitation> invitations;
   final bool isLoading;
   final bool isEmpty;
   final String? emptyMessage;
   final VoidCallback? onInvitationTap;
-  final Function(ProjectInvitation)? onAccept;
-  final Function(ProjectInvitation)? onDecline;
-  final Function(ProjectInvitation)? onCancel;
-  final Map<String, bool> loadingStates; // invitationId -> isLoading
+  final VoidCallback? onActionSuccess;
+  final VoidCallback? onActionError;
+  final bool showReceivedActions;
+  final bool showSentActions;
 
   const InvitationList({
     super.key,
@@ -25,10 +26,10 @@ class InvitationList extends StatelessWidget {
     this.isEmpty = false,
     this.emptyMessage,
     this.onInvitationTap,
-    this.onAccept,
-    this.onDecline,
-    this.onCancel,
-    this.loadingStates = const {},
+    this.onActionSuccess,
+    this.onActionError,
+    this.showReceivedActions = false,
+    this.showSentActions = false,
   });
 
   @override
@@ -48,18 +49,14 @@ class InvitationList extends StatelessWidget {
           (context, index) => SizedBox(height: Dimensions.space12),
       itemBuilder: (context, index) {
         final invitation = invitations[index];
-        final isLoading = loadingStates[invitation.id.value] ?? false;
 
         return InvitationCard(
           invitation: invitation,
-          onTap: onInvitationTap != null ? () => onInvitationTap!() : null,
-          onAccept: onAccept != null ? () => onAccept!(invitation) : null,
-          onDecline: onDecline != null ? () => onDecline!(invitation) : null,
-          onCancel: onCancel != null ? () => onCancel!(invitation) : null,
-          isLoading: isLoading,
-          isAcceptLoading: isLoading && onAccept != null,
-          isDeclineLoading: isLoading && onDecline != null,
-          isCancelLoading: isLoading && onCancel != null,
+          onTap: onInvitationTap,
+          onActionSuccess: onActionSuccess,
+          onActionError: onActionError,
+          showReceivedActions: showReceivedActions,
+          showSentActions: showSentActions,
         );
       },
     );
@@ -73,7 +70,7 @@ class InvitationList extends StatelessWidget {
           Icon(
             Icons.inbox_outlined,
             size: 64,
-            color: AppColors.textSecondary.withOpacity(0.5),
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
           ),
           SizedBox(height: Dimensions.space16),
           Text(
@@ -87,7 +84,7 @@ class InvitationList extends StatelessWidget {
           Text(
             'When you receive invitations, they will appear here',
             style: AppTextStyle.bodyMedium.copyWith(
-              color: AppColors.textSecondary.withOpacity(0.7),
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),
@@ -98,22 +95,21 @@ class InvitationList extends StatelessWidget {
 }
 
 /// List component specifically for pending invitations
+/// Uses BLoC pattern for action handling
 class PendingInvitationsList extends StatelessWidget {
   final List<ProjectInvitation> invitations;
   final bool isLoading;
   final VoidCallback? onInvitationTap;
-  final Function(ProjectInvitation)? onAccept;
-  final Function(ProjectInvitation)? onDecline;
-  final Map<String, bool> loadingStates;
+  final VoidCallback? onActionSuccess;
+  final VoidCallback? onActionError;
 
   const PendingInvitationsList({
     super.key,
     required this.invitations,
     this.isLoading = false,
     this.onInvitationTap,
-    this.onAccept,
-    this.onDecline,
-    this.loadingStates = const {},
+    this.onActionSuccess,
+    this.onActionError,
   });
 
   @override
@@ -131,28 +127,29 @@ class PendingInvitationsList extends StatelessWidget {
       isEmpty: pendingInvitations.isEmpty,
       emptyMessage: 'No pending invitations',
       onInvitationTap: onInvitationTap,
-      onAccept: onAccept,
-      onDecline: onDecline,
-      loadingStates: loadingStates,
+      onActionSuccess: onActionSuccess,
+      onActionError: onActionError,
+      showReceivedActions: true,
     );
   }
 }
 
 /// List component specifically for sent invitations
+/// Uses BLoC pattern for action handling
 class SentInvitationsList extends StatelessWidget {
   final List<ProjectInvitation> invitations;
   final bool isLoading;
   final VoidCallback? onInvitationTap;
-  final Function(ProjectInvitation)? onCancel;
-  final Map<String, bool> loadingStates;
+  final VoidCallback? onActionSuccess;
+  final VoidCallback? onActionError;
 
   const SentInvitationsList({
     super.key,
     required this.invitations,
     this.isLoading = false,
     this.onInvitationTap,
-    this.onCancel,
-    this.loadingStates = const {},
+    this.onActionSuccess,
+    this.onActionError,
   });
 
   @override
@@ -163,8 +160,9 @@ class SentInvitationsList extends StatelessWidget {
       isEmpty: invitations.isEmpty,
       emptyMessage: 'No sent invitations',
       onInvitationTap: onInvitationTap,
-      onCancel: onCancel,
-      loadingStates: loadingStates,
+      onActionSuccess: onActionSuccess,
+      onActionError: onActionError,
+      showSentActions: true,
     );
   }
 }
