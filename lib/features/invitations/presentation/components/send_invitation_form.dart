@@ -12,9 +12,7 @@ import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/feedback/app_feedback_system.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
 
 class SendInvitationForm extends StatefulWidget {
@@ -30,67 +28,28 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
-  bool _isSearching = false;
-  UserProfile? _foundUser;
-  String? _searchError;
-
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
   }
 
-  Future<void> _searchUser(String email) async {
+  void _searchUser(String email) {
     if (email.isEmpty) {
-      setState(() {
-        _isSearching = false;
-        _foundUser = null;
-        _searchError = null;
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearching = true;
-      _foundUser = null;
-      _searchError = null;
-    });
-
-    try {
-      final findUserUseCase = sl<FindUserByEmailUseCase>();
-      final result = await findUserUseCase(email);
-
-      result.fold(
-        (failure) {
-          setState(() {
-            _isSearching = false;
-            _foundUser = null;
-            _searchError = 'Error searching for user: ${failure.message}';
-          });
-        },
-        (user) {
-          setState(() {
-            _isSearching = false;
-            _foundUser = user;
-            _searchError = null;
-          });
-        },
-      );
-    } catch (e) {
-      setState(() {
-        _isSearching = false;
-        _foundUser = null;
-        _searchError = 'Unexpected error: $e';
-      });
+      context.read<ProjectInvitationActorBloc>().add(const ClearUserSearch());
+    } else {
+      context.read<ProjectInvitationActorBloc>().add(SearchUserByEmail(email));
     }
   }
 
-  void _sendInvitation() {
+  void _sendInvitation(InvitationActorState state) {
     if (!_formKey.currentState!.validate()) return;
-    if (_foundUser == null) {
+    
+    // Only proceed if we have a successful search result or new user
+    if (state is! UserSearchSuccess && _emailController.text.isEmpty) {
       AppFeedbackSystem.showSnackBar(
         context,
-        message: 'Please search for a valid user first',
+        message: 'Please enter a valid email first',
         type: FeedbackType.error,
       );
       return;
@@ -109,18 +68,198 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
     context.read<ProjectInvitationActorBloc>().add(SendInvitation(params));
   }
 
+  Widget? _buildSuffixIcon(InvitationActorState state) {
+    if (state is UserSearchLoading) {
+      return SizedBox(
+        width: Dimensions.iconMedium,
+        height: Dimensions.iconMedium,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(
+            AppColors.primary,
+          ),
+        ),
+      );
+    } else if (state is UserSearchSuccess && state.user != null) {
+      return Icon(
+        Icons.check_circle,
+        color: AppColors.success,
+        size: Dimensions.iconMedium,
+      );
+    }
+    return null;
+  }
+
+  Widget _buildSearchError(InvitationActorState state) {
+    if (state is UserSearchError) {
+      return Column(
+        children: [
+          SizedBox(height: Dimensions.space8),
+          Container(
+            padding: EdgeInsets.all(Dimensions.space8),
+            decoration: BoxDecoration(
+              color: AppColors.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  color: AppColors.error,
+                  size: Dimensions.iconSmall,
+                ),
+                SizedBox(width: Dimensions.space8),
+                Expanded(
+                  child: Text(
+                    state.message,
+                    style: AppTextStyle.bodySmall.copyWith(
+                      color: AppColors.error,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildUserFoundIndicator(InvitationActorState state) {
+    if (state is UserSearchSuccess && state.user != null) {
+      final user = state.user!;
+      return Column(
+        children: [
+          SizedBox(height: Dimensions.space12),
+          Container(
+            padding: EdgeInsets.all(Dimensions.space12),
+            decoration: BoxDecoration(
+              color: AppColors.success.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+              border: Border.all(color: AppColors.success.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.primary.withOpacity(0.2),
+                  child: Text(
+                    user.name.isNotEmpty
+                        ? user.name[0].toUpperCase()
+                        : 'U',
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                SizedBox(width: Dimensions.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.name,
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        user.email,
+                        style: AppTextStyle.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      Text(
+                        'Usuario existente encontrado',
+                        style: AppTextStyle.bodySmall.copyWith(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildNewUserIndicator(InvitationActorState state) {
+    if (_emailController.text.isNotEmpty &&
+        state is UserSearchSuccess &&
+        state.user == null) {
+      return Column(
+        children: [
+          SizedBox(height: Dimensions.space12),
+          Container(
+            padding: EdgeInsets.all(Dimensions.space12),
+            decoration: BoxDecoration(
+              color: AppColors.info.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+              border: Border.all(color: AppColors.info.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_add,
+                  color: AppColors.info,
+                  size: Dimensions.iconMedium,
+                ),
+                SizedBox(width: Dimensions.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Nuevo usuario',
+                        style: AppTextStyle.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.info,
+                        ),
+                      ),
+                      Text(
+                        'Se enviará un enlace mágico para que se registre',
+                        style: AppTextStyle.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  bool _canSendInvitation(InvitationActorState state) {
+    return (state is UserSearchSuccess) ||
+           (_emailController.text.isNotEmpty &&
+            state is! UserSearchLoading &&
+            state is! UserSearchError);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<ProjectInvitationActorBloc, InvitationActorState>(
       listener: (context, state) {
-        if (state is InvitationActorSuccess) {
+        if (state is SendInvitationSuccess) {
           Navigator.of(context).pop();
           AppFeedbackSystem.showSnackBar(
             context,
             message: '¡Invitación enviada exitosamente!',
             type: FeedbackType.success,
           );
-        } else if (state is InvitationActorError) {
+        } else if (state is InvitationActorError && state is! UserSearchError) {
           AppFeedbackSystem.showSnackBar(
             context,
             message: 'Error al enviar invitación: ${state.message}',
@@ -128,7 +267,9 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           );
         }
       },
-      child: Form(
+      child: BlocBuilder<ProjectInvitationActorBloc, InvitationActorState>(
+        builder: (context, state) {
+          return Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -152,168 +293,19 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                 return null;
               },
               onChanged: (value) {
-                if (value.isNotEmpty) {
-                  _searchUser(value);
-                } else {
-                  setState(() {
-                    _foundUser = null;
-                    _searchError = null;
-                  });
-                }
+                _searchUser(value);
               },
-              suffixIcon:
-                  _isSearching
-                      ? SizedBox(
-                        width: Dimensions.iconMedium,
-                        height: Dimensions.iconMedium,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.primary,
-                          ),
-                        ),
-                      )
-                      : _foundUser != null
-                      ? Icon(
-                        Icons.check_circle,
-                        color: AppColors.success,
-                        size: Dimensions.iconMedium,
-                      )
-                      : null,
+              suffixIcon: _buildSuffixIcon(state),
             ),
 
             // Search Error
-            if (_searchError != null) ...[
-              SizedBox(height: Dimensions.space8),
-              Container(
-                padding: EdgeInsets.all(Dimensions.space8),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: AppColors.error,
-                      size: Dimensions.iconSmall,
-                    ),
-                    SizedBox(width: Dimensions.space8),
-                    Expanded(
-                      child: Text(
-                        _searchError!,
-                        style: AppTextStyle.bodySmall.copyWith(
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            _buildSearchError(state),
 
             // User Found Indicator
-            if (_foundUser != null) ...[
-              SizedBox(height: Dimensions.space12),
-              Container(
-                padding: EdgeInsets.all(Dimensions.space12),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                  border: Border.all(color: AppColors.success.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: AppColors.primary.withOpacity(0.2),
-                      child: Text(
-                        _foundUser!.name.isNotEmpty
-                            ? _foundUser!.name[0].toUpperCase()
-                            : 'U',
-                        style: AppTextStyle.bodyMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: Dimensions.space12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _foundUser!.name,
-                            style: AppTextStyle.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            _foundUser!.email,
-                            style: AppTextStyle.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            'Usuario existente encontrado',
-                            style: AppTextStyle.bodySmall.copyWith(
-                              color: AppColors.success,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            _buildUserFoundIndicator(state),
 
             // New User Indicator
-            if (_emailController.text.isNotEmpty &&
-                _foundUser == null &&
-                !_isSearching &&
-                _searchError == null) ...[
-              SizedBox(height: Dimensions.space12),
-              Container(
-                padding: EdgeInsets.all(Dimensions.space12),
-                decoration: BoxDecoration(
-                  color: AppColors.info.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                  border: Border.all(color: AppColors.info.withOpacity(0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.person_add,
-                      color: AppColors.info,
-                      size: Dimensions.iconMedium,
-                    ),
-                    SizedBox(width: Dimensions.space12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Nuevo usuario',
-                            style: AppTextStyle.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.info,
-                            ),
-                          ),
-                          Text(
-                            'Se enviará un enlace mágico para que se registre',
-                            style: AppTextStyle.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            _buildNewUserIndicator(state),
 
             SizedBox(height: Dimensions.space24),
 
@@ -335,12 +327,8 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                     builder: (context, state) {
                       return PrimaryButton(
                         text: 'Enviar Invitación',
-                        onPressed:
-                            _foundUser != null ||
-                                    (_emailController.text.isNotEmpty &&
-                                        !_isSearching &&
-                                        _searchError == null)
-                                ? _sendInvitation
+                        onPressed: _canSendInvitation(state)
+                                ? () => _sendInvitation(state)
                                 : null,
                         isLoading: state is InvitationActorLoading,
                         isDisabled: state is InvitationActorLoading,
@@ -352,6 +340,8 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
             ),
           ],
         ),
+      );
+        },
       ),
     );
   }

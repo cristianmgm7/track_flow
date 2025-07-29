@@ -4,6 +4,7 @@ import 'package:trackflow/features/invitations/domain/usecases/accept_invitation
 import 'package:trackflow/features/invitations/domain/usecases/cancel_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/decline_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/send_invitation_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/states/invitation_states.dart';
 
@@ -14,21 +15,26 @@ class ProjectInvitationActorBloc
   final AcceptInvitationUseCase _acceptInvitationUseCase;
   final DeclineInvitationUseCase _declineInvitationUseCase;
   final CancelInvitationUseCase _cancelInvitationUseCase;
+  final FindUserByEmailUseCase _findUserByEmailUseCase;
 
   ProjectInvitationActorBloc({
     required SendInvitationUseCase sendInvitationUseCase,
     required AcceptInvitationUseCase acceptInvitationUseCase,
     required DeclineInvitationUseCase declineInvitationUseCase,
     required CancelInvitationUseCase cancelInvitationUseCase,
+    required FindUserByEmailUseCase findUserByEmailUseCase,
   }) : _sendInvitationUseCase = sendInvitationUseCase,
        _acceptInvitationUseCase = acceptInvitationUseCase,
        _declineInvitationUseCase = declineInvitationUseCase,
        _cancelInvitationUseCase = cancelInvitationUseCase,
+       _findUserByEmailUseCase = findUserByEmailUseCase,
        super(InvitationActorInitial()) {
     on<SendInvitation>(_onSendInvitation);
     on<AcceptInvitation>(_onAcceptInvitation);
     on<DeclineInvitation>(_onDeclineInvitation);
     on<CancelInvitation>(_onCancelInvitation);
+    on<SearchUserByEmail>(_onSearchUserByEmail);
+    on<ClearUserSearch>(_onClearUserSearch);
     on<ResetInvitationActorState>(_onResetState);
   }
 
@@ -123,6 +129,39 @@ class ProjectInvitationActorBloc
 
   void _onResetState(
     ResetInvitationActorState event,
+    Emitter<InvitationActorState> emit,
+  ) {
+    emit(InvitationActorInitial());
+  }
+
+  Future<void> _onSearchUserByEmail(
+    SearchUserByEmail event,
+    Emitter<InvitationActorState> emit,
+  ) async {
+    final email = event.email.trim();
+    
+    // Clear search if email is empty
+    if (email.isEmpty) {
+      emit(InvitationActorInitial());
+      return;
+    }
+
+    emit(UserSearchLoading());
+
+    try {
+      final result = await _findUserByEmailUseCase(email);
+
+      result.fold(
+        (failure) => emit(UserSearchError(failure.message)),
+        (user) => emit(UserSearchSuccess(user)),
+      );
+    } catch (e) {
+      emit(UserSearchError('Unexpected error: $e'));
+    }
+  }
+
+  void _onClearUserSearch(
+    ClearUserSearch event,
     Emitter<InvitationActorState> emit,
   ) {
     emit(InvitationActorInitial());

@@ -91,3 +91,18 @@ class CancelInvitation extends InvitationActorEvent {
 class ResetInvitationActorState extends InvitationActorEvent {
   const ResetInvitationActorState();
 }
+
+/// Event to search for a user by email
+class SearchUserByEmail extends InvitationActorEvent {
+  final String email;
+
+  const SearchUserByEmail(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+/// Event to clear user search results
+class ClearUserSearch extends InvitationActorEvent {
+  const ClearUserSearch();
+}

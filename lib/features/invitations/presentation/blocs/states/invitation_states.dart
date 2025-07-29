@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 // =============================================================================
 // WATCHER STATES
@@ -151,4 +152,29 @@ class DeclineInvitationSuccess extends InvitationActorSuccess {
 /// State for cancel invitation action
 class CancelInvitationSuccess extends InvitationActorSuccess {
   const CancelInvitationSuccess({required super.message});
+}
+
+/// State for user search loading
+class UserSearchLoading extends InvitationActorState {
+  const UserSearchLoading();
+}
+
+/// State for user search success
+class UserSearchSuccess extends InvitationActorState {
+  final UserProfile? user; // null = new user (not found)
+  
+  const UserSearchSuccess(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
+/// State for user search error
+class UserSearchError extends InvitationActorState {
+  final String message;
+  
+  const UserSearchError(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

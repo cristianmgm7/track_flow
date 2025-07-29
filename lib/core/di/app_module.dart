@@ -18,6 +18,7 @@ import 'package:trackflow/features/user_profile/data/models/user_profile_documen
 import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_document_unified.dart';
 import 'package:trackflow/features/audio_cache/shared/data/models/cache_reference_document.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
+import 'package:trackflow/features/invitations/data/models/invitation_document.dart';
 
 // NEW SERVICES - SOLID Architecture
 // These imports are used by the generated injection.config.dart
@@ -62,6 +63,7 @@ abstract class AppModule {
       CachedAudioDocumentUnifiedSchema,
       CacheReferenceDocumentSchema,
       SyncOperationDocumentSchema,
+      InvitationDocumentSchema,
     ], directory: dir.path);
   }
 
