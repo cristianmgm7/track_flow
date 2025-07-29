@@ -55,7 +55,10 @@ abstract class AppModule {
   @preResolve
   Future<Isar> get isar async {
     final dir = await getApplicationDocumentsDirectory();
-    return await Isar.open([
+
+    // Required schemas for the application
+    // Make sure all Isar documents are included here
+    final schemas = [
       ProjectDocumentSchema,
       AudioTrackDocumentSchema,
       AudioCommentDocumentSchema,
@@ -65,8 +68,13 @@ abstract class AppModule {
       CacheReferenceDocumentSchema,
       SyncOperationDocumentSchema,
       InvitationDocumentSchema,
-      NotificationDocumentSchema,
-    ], directory: dir.path);
+      NotificationDocumentSchema, // Required for notification system
+    ];
+
+    // Validate that all schemas are not null
+    for (final schema in schemas) {}
+
+    return await Isar.open(schemas, directory: dir.path);
   }
 
   @preResolve

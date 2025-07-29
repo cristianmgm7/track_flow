@@ -161,10 +161,13 @@ class NotificationService {
 
     final result = await _repository.createNotification(notification);
 
-    result.fold(
-      (failure) => throw Exception('Failed to create notification: $failure'),
-      (notification) => print('Notification created: ${notification.id}'),
-    );
+    result.fold((failure) {
+      // Log the error for debugging
+      print('Failed to create notification: $failure');
+
+      // Throw a more user-friendly exception
+      throw Exception('Unable to create notification. Please try again later.');
+    }, (notification) => print('Notification created: ${notification.id}'));
   }
 
   /// Mark a notification as read
