@@ -80,3 +80,37 @@ class ManageCollaboratorsLeaveSuccess extends ManageCollaboratorsState {
   @override
   List<Object?> get props => [];
 }
+
+// User search states for adding collaborators
+class UserSearchLoading extends ManageCollaboratorsState {
+  @override
+  List<Object?> get props => [];
+}
+
+class UserSearchSuccess extends ManageCollaboratorsState {
+  final UserProfile? user; // null = new user (not found)
+  
+  UserSearchSuccess(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}
+
+class UserSearchError extends ManageCollaboratorsState {
+  final String message;
+  
+  UserSearchError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
+class AddCollaboratorByEmailSuccess extends ManageCollaboratorsState {
+  final Project project;
+  final String message;
+
+  AddCollaboratorByEmailSuccess(this.project, this.message);
+
+  @override
+  List<Object?> get props => [project, message];
+}

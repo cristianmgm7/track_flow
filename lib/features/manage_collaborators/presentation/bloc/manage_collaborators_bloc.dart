@@ -10,6 +10,8 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_pr
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/invitations/domain/usecases/find_user_by_email_usecase.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_by_email_usecase.dart';
 import 'manage_collaborators_event.dart';
 import 'manage_collaborators_state.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
@@ -22,6 +24,8 @@ class ManageCollaboratorsBloc
   final UpdateCollaboratorRoleUseCase updateCollaboratorRoleUseCase;
   final LeaveProjectUseCase leaveProjectUseCase;
   final WatchUserProfilesUseCase watchUserProfilesUseCase;
+  final FindUserByEmailUseCase findUserByEmailUseCase;
+  final AddCollaboratorByEmailUseCase addCollaboratorByEmailUseCase;
 
   StreamSubscription<Either<Failure, List<UserProfile>>>? _profilesSubscription;
   ManageCollaboratorsLoaded? _lastLoadedState;
@@ -32,12 +36,17 @@ class ManageCollaboratorsBloc
     required this.updateCollaboratorRoleUseCase,
     required this.leaveProjectUseCase,
     required this.watchUserProfilesUseCase,
+    required this.findUserByEmailUseCase,
+    required this.addCollaboratorByEmailUseCase,
   }) : super(ManageCollaboratorsInitial()) {
     on<WatchCollaborators>(_onWatchCollaborators);
     on<AddCollaborator>(_onAddCollaborator);
+    on<AddCollaboratorByEmail>(_onAddCollaboratorByEmail);
     on<RemoveCollaborator>(_onRemoveCollaborator);
     on<UpdateCollaboratorRole>(_onUpdateCollaboratorRole);
     on<LeaveProject>(_onLeaveProject);
+    on<SearchUserByEmail>(_onSearchUserByEmail);
+    on<ClearUserSearch>(_onClearUserSearch);
   }
 
   Future<void> _onWatchCollaborators(
@@ -184,6 +193,89 @@ class ManageCollaboratorsBloc
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
       (project) => emit(ManageCollaboratorsLeaveSuccess()),
     );
+  }
+
+  Future<void> _onSearchUserByEmail(
+    SearchUserByEmail event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) async {
+    final email = event.email.trim();
+    
+    // Clear search if email is empty
+    if (email.isEmpty) {
+      emit(ManageCollaboratorsInitial());
+      return;
+    }
+
+    emit(UserSearchLoading());
+
+    try {
+      final result = await findUserByEmailUseCase(email);
+
+      result.fold(
+        (failure) => emit(UserSearchError(failure.message)),
+        (user) => emit(UserSearchSuccess(user)),
+      );
+    } catch (e) {
+      emit(UserSearchError('Unexpected error: $e'));
+    }
+  }
+
+  void _onClearUserSearch(
+    ClearUserSearch event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) {
+    emit(ManageCollaboratorsInitial());
+  }
+
+  Future<void> _onAddCollaboratorByEmail(
+    AddCollaboratorByEmail event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) async {
+    emit(ManageCollaboratorsLoading());
+
+    try {
+      // Use the new use case that handles the complete flow:
+      // 1. Find user by email
+      // 2. Add collaborator  
+      // 3. Create notification
+      final result = await addCollaboratorByEmailUseCase(
+        AddCollaboratorByEmailParams(
+          projectId: event.projectId,
+          email: event.email,
+          role: event.role,
+        ),
+      );
+
+      result.fold(
+        (failure) {
+          String errorMessage;
+          if (failure is ProjectPermissionException) {
+            errorMessage = 'You do not have permission to add collaborators.';
+          } else {
+            errorMessage = failure.toString();
+          }
+          emit(ManageCollaboratorsError(errorMessage));
+          if (_lastLoadedState != null) {
+            emit(_lastLoadedState!);
+          }
+        },
+        (project) {
+          // Extract user name from email for success message
+          final emailUsername = event.email.split('@').first;
+          emit(AddCollaboratorByEmailSuccess(
+            project, 
+            'Collaborator $emailUsername added successfully!'
+          ));
+          add(WatchCollaborators(project: project));
+        },
+      );
+    } catch (e) {
+      emit(ManageCollaboratorsError('Unexpected error: $e'));
+      if (_lastLoadedState != null) {
+        emit(_lastLoadedState!);
+      }
+    }
   }
 
   @override

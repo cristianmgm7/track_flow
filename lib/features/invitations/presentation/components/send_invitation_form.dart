@@ -4,15 +4,14 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
-import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
-import 'package:trackflow/features/invitations/presentation/blocs/states/invitation_states.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/feedback/app_feedback_system.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
 
 class SendInvitationForm extends StatefulWidget {
   final ProjectId projectId;
@@ -35,16 +34,16 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
 
   void _searchUser(String email) {
     if (email.isEmpty) {
-      context.read<ProjectInvitationActorBloc>().add(const ClearUserSearch());
+      context.read<ManageCollaboratorsBloc>().add(ClearUserSearch());
     } else {
-      context.read<ProjectInvitationActorBloc>().add(SearchUserByEmail(email));
+      context.read<ManageCollaboratorsBloc>().add(SearchUserByEmail(email));
     }
   }
 
-  void _sendInvitation(InvitationActorState state) {
+  void _addCollaborator(ManageCollaboratorsState state) {
     if (!_formKey.currentState!.validate()) return;
 
-    // Only proceed if we have a successful search result or new user
+    // Only proceed if we have a successful search result or valid email
     if (state is! UserSearchSuccess && _emailController.text.isEmpty) {
       AppFeedbackSystem.showSnackBar(
         context,
@@ -54,20 +53,17 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
       return;
     }
 
-    // Send invitation with default values
-    final params = SendInvitationParams(
-      projectId: widget.projectId,
-      invitedEmail: _emailController.text.trim(),
-      proposedRole: ProjectRole.editor, // Default role
-      message:
-          'I want to collaborate with you in this project', // Default message
-      expirationDuration: const Duration(days: 30),
+    // Add collaborator directly with default editor role
+    context.read<ManageCollaboratorsBloc>().add(
+      AddCollaboratorByEmail(
+        projectId: widget.projectId,
+        email: _emailController.text.trim(),
+        role: ProjectRole.editor, // Default role
+      ),
     );
-
-    context.read<ProjectInvitationActorBloc>().add(SendInvitation(params));
   }
 
-  Widget? _buildSuffixIcon(InvitationActorState state) {
+  Widget? _buildSuffixIcon(ManageCollaboratorsState state) {
     if (state is UserSearchLoading) {
       return SizedBox(
         width: Dimensions.iconMedium,
@@ -87,7 +83,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
     return null;
   }
 
-  Widget _buildSearchError(InvitationActorState state) {
+  Widget _buildSearchError(ManageCollaboratorsState state) {
     if (state is UserSearchError) {
       return Column(
         children: [
@@ -123,7 +119,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildUserFoundIndicator(InvitationActorState state) {
+  Widget _buildUserFoundIndicator(ManageCollaboratorsState state) {
     if (state is UserSearchSuccess && state.user != null) {
       final user = state.user!;
       return Column(
@@ -185,7 +181,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildNewUserIndicator(InvitationActorState state) {
+  Widget _buildNewUserIndicator(ManageCollaboratorsState state) {
     if (_emailController.text.isNotEmpty &&
         state is UserSearchSuccess &&
         state.user == null) {
@@ -236,33 +232,34 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
     return const SizedBox.shrink();
   }
 
-  bool _canSendInvitation(InvitationActorState state) {
+  bool _canAddCollaborator(ManageCollaboratorsState state) {
     return (state is UserSearchSuccess) ||
         (_emailController.text.isNotEmpty &&
             state is! UserSearchLoading &&
-            state is! UserSearchError);
+            state is! UserSearchError &&
+            state is! ManageCollaboratorsLoading);
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProjectInvitationActorBloc, InvitationActorState>(
+    return BlocListener<ManageCollaboratorsBloc, ManageCollaboratorsState>(
       listener: (context, state) {
-        if (state is SendInvitationSuccess) {
+        if (state is AddCollaboratorByEmailSuccess) {
           Navigator.of(context).pop();
           AppFeedbackSystem.showSnackBar(
             context,
-            message: '¡invitation sent successfully!',
+            message: state.message,
             type: FeedbackType.success,
           );
-        } else if (state is InvitationActorError && state is! UserSearchError) {
+        } else if (state is ManageCollaboratorsError) {
           AppFeedbackSystem.showSnackBar(
             context,
-            message: 'Error sending invitation: ${state.message}',
+            message: 'Error adding collaborator: ${state.message}',
             type: FeedbackType.error,
           );
         }
       },
-      child: BlocBuilder<ProjectInvitationActorBloc, InvitationActorState>(
+      child: BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
         builder: (context, state) {
           return Form(
             key: _formKey,
@@ -316,18 +313,18 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                     SizedBox(width: Dimensions.space12),
                     Expanded(
                       child: BlocBuilder<
-                        ProjectInvitationActorBloc,
-                        InvitationActorState
+                        ManageCollaboratorsBloc,
+                        ManageCollaboratorsState
                       >(
                         builder: (context, state) {
                           return PrimaryButton(
-                            text: 'Send Invitation',
+                            text: 'Add Collaborator',
                             onPressed:
-                                _canSendInvitation(state)
-                                    ? () => _sendInvitation(state)
+                                _canAddCollaborator(state)
+                                    ? () => _addCollaborator(state)
                                     : null,
-                            isLoading: state is InvitationActorLoading,
-                            isDisabled: state is InvitationActorLoading,
+                            isLoading: state is ManageCollaboratorsLoading,
+                            isDisabled: state is ManageCollaboratorsLoading,
                           );
                         },
                       ),

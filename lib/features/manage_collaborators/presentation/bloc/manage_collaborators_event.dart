@@ -22,6 +22,21 @@ class AddCollaborator extends ManageCollaboratorsEvent {
   List<Object?> get props => [projectId, collaboratorId];
 }
 
+class AddCollaboratorByEmail extends ManageCollaboratorsEvent {
+  final ProjectId projectId;
+  final String email;
+  final ProjectRole role;
+  
+  AddCollaboratorByEmail({
+    required this.projectId,
+    required this.email,
+    required this.role,
+  });
+
+  @override
+  List<Object?> get props => [projectId, email, role];
+}
+
 class UpdateCollaboratorRole extends ManageCollaboratorsEvent {
   final ProjectId projectId;
   final UserId userId;
@@ -67,4 +82,21 @@ class LeaveProject extends ManageCollaboratorsEvent {
 
   @override
   List<Object?> get props => [projectId];
+}
+
+// User search events for adding collaborators
+class SearchUserByEmail extends ManageCollaboratorsEvent {
+  final String email;
+  
+  SearchUserByEmail(this.email);
+
+  @override
+  List<Object?> get props => [email];
+}
+
+class ClearUserSearch extends ManageCollaboratorsEvent {
+  ClearUserSearch();
+
+  @override
+  List<Object?> get props => [];
 }
