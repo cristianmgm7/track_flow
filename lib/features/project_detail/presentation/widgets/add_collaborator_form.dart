@@ -5,6 +5,7 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
@@ -38,10 +39,14 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
     if (_formKey.currentState!.validate()) {
       final email = _emailController?.text;
       setState(() => _isSubmitting = true);
+
+      // ✅ FIXED: Use AddCollaboratorByEmail instead of AddCollaborator
+      // This is the correct event for adding collaborators by email
       context.read<ManageCollaboratorsBloc>().add(
-        AddCollaborator(
+        AddCollaboratorByEmail(
           projectId: widget.project.id,
-          collaboratorId: UserId.fromUniqueString(email!),
+          email: email!,
+          role: ProjectRole.viewer, // Default role for new collaborators
         ),
       );
       setState(() => _isSubmitting = false);
@@ -53,11 +58,11 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
   Widget build(BuildContext context) {
     return BlocListener<ManageCollaboratorsBloc, ManageCollaboratorsState>(
       listener: (context, state) {
-        if (state is AddCollaboratorSuccess) {
+        if (state is AddCollaboratorByEmailSuccess) {
           Navigator.of(context).pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Collaborator invited!'),
+            SnackBar(
+              content: Text(state.message),
               backgroundColor: Colors.green,
             ),
           );
@@ -78,13 +83,16 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             AppFormField(
-              label: 'Collaborator id',
+              label: 'Email del colaborador',
               controller: _emailController,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter an email';
+                  return 'Por favor ingresa un email';
                 }
-                // Add more email validation if needed
+                // Basic email validation
+                if (!value.contains('@') || !value.contains('.')) {
+                  return 'Por favor ingresa un email válido';
+                }
                 return null;
               },
             ),
@@ -93,7 +101,7 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
               children: [
                 Expanded(
                   child: SecondaryButton(
-                    text: 'Cancel',
+                    text: 'Cancelar',
                     onPressed:
                         _isSubmitting
                             ? null
@@ -104,7 +112,7 @@ class _AddCollaboratorFormState extends State<AddCollaboratorForm> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Add',
+                    text: 'Añadir',
                     onPressed: _isSubmitting ? null : _submit,
                     isLoading: _isSubmitting,
                   ),

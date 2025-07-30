@@ -7,6 +7,7 @@ import 'package:trackflow/core/sync/domain/usecases/sync_audio_comments_usecase.
 import 'package:trackflow/core/sync/domain/usecases/sync_audio_tracks_using_simple_service_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_collaborators_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_notifications_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 /// 📡 DOWNSTREAM SYNC MANAGER (Remote → Local)
@@ -27,6 +28,7 @@ class SyncDataManager {
   final SyncAudioCommentsUseCase _syncAudioComments;
   final SyncUserProfileUseCase _syncUserProfile;
   final SyncUserProfileCollaboratorsUseCase _syncUserProfileCollaborators;
+  final SyncNotificationsUseCase _syncNotifications;
 
   SyncDataManager({
     required SyncProjectsUsingSimpleServiceUseCase syncProjects,
@@ -34,11 +36,13 @@ class SyncDataManager {
     required SyncAudioCommentsUseCase syncAudioComments,
     required SyncUserProfileUseCase syncUserProfile,
     required SyncUserProfileCollaboratorsUseCase syncUserProfileCollaborators,
+    required SyncNotificationsUseCase syncNotifications,
   }) : _syncProjects = syncProjects,
        _syncAudioTracks = syncAudioTracks,
        _syncAudioComments = syncAudioComments,
        _syncUserProfile = syncUserProfile,
-       _syncUserProfileCollaborators = syncUserProfileCollaborators;
+       _syncUserProfileCollaborators = syncUserProfileCollaborators,
+       _syncNotifications = syncNotifications;
 
   // ============================================================================
   // 📡 MAIN SYNC OPERATIONS
@@ -72,6 +76,9 @@ class SyncDataManager {
 
         // Collaborators: Depends on projects, simple sync
         _syncUserProfileCollaborators(),
+
+        // Notifications: Smart sync with preservation logic
+        _syncNotifications(),
       ]);
 
       final duration = DateTime.now().difference(startTime);
@@ -110,6 +117,7 @@ class SyncDataManager {
       await Future.wait<void>([
         _syncProjects(),
         _syncUserProfileCollaborators(),
+        _syncNotifications(),
       ]);
       onProgress?.call(0.7);
 
@@ -192,6 +200,7 @@ class SyncDataManager {
           'audio_tracks': 'simple preservation logic',
           'audio_comments': 'simple preservation logic',
           'collaborators': 'simple preservation logic',
+          'notifications': '15 minutes (smart sync)',
         },
         'timestamp': DateTime.now().toIso8601String(),
       };

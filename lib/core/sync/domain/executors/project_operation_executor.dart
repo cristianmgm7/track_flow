@@ -6,7 +6,7 @@ import 'package:trackflow/features/projects/data/datasources/project_remote_data
 import 'package:trackflow/features/projects/data/models/project_dto.dart';
 
 /// Handles sync operations for Project entities
-/// 
+///
 /// This executor is responsible for translating sync operations
 /// into appropriate calls to the ProjectRemoteDataSource.
 @injectable
@@ -20,31 +20,34 @@ class ProjectOperationExecutor implements OperationExecutor {
 
   @override
   Future<void> execute(SyncOperationDocument operation) async {
-    final operationData = operation.operationData != null 
-        ? jsonDecode(operation.operationData!) as Map<String, dynamic>
-        : <String, dynamic>{};
+    final operationData =
+        operation.operationData != null
+            ? jsonDecode(operation.operationData!) as Map<String, dynamic>
+            : <String, dynamic>{};
 
     switch (operation.operationType) {
       case 'create':
         await _executeCreate(operation, operationData);
         break;
-        
+
       case 'update':
         await _executeUpdate(operation, operationData);
         break;
-        
+
       case 'delete':
         await _executeDelete(operation);
         break;
-        
+
       default:
-        throw UnsupportedError('Unknown project operation: ${operation.operationType}');
+        throw UnsupportedError(
+          'Unknown project operation: ${operation.operationType}',
+        );
     }
   }
 
   /// Execute project creation
   Future<void> _executeCreate(
-    SyncOperationDocument operation, 
+    SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
     final projectDto = ProjectDTO(
@@ -56,27 +59,66 @@ class ProjectOperationExecutor implements OperationExecutor {
         operationData['createdAt'] ?? DateTime.now().toIso8601String(),
       ),
       updatedAt: null,
+      // ✅ Include collaborators data for creation
+      collaborators:
+          (operationData['collaborators'] as List<dynamic>?)
+              ?.map((e) => (e as Map).cast<String, dynamic>())
+              .toList() ??
+          [],
+      collaboratorIds:
+          (operationData['collaboratorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      isDeleted: operationData['isDeleted'] as bool? ?? false,
+      version: operationData['version'] as int? ?? 1,
+      lastModified:
+          operationData['lastModified'] != null
+              ? DateTime.parse(operationData['lastModified'])
+              : null,
     );
-    
+
     await _remoteDataSource.createProject(projectDto);
   }
 
   /// Execute project update
   Future<void> _executeUpdate(
-    SyncOperationDocument operation, 
+    SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
+    // ✅ FIXED: Use complete data from operationData instead of creating incomplete DTO
     final projectDto = ProjectDTO(
       id: operation.entityId,
       name: operationData['name'] ?? '',
       description: operationData['description'] ?? '',
       ownerId: operationData['ownerId'] ?? '',
-      createdAt: DateTime.now(), // This should come from local data
-      updatedAt: DateTime.parse(
-        operationData['updatedAt'] ?? DateTime.now().toIso8601String(),
+      createdAt: DateTime.parse(
+        operationData['createdAt'] ?? DateTime.now().toIso8601String(),
       ),
+      updatedAt:
+          operationData['updatedAt'] != null
+              ? DateTime.parse(operationData['updatedAt'])
+              : null,
+      // ✅ CRITICAL FIX: Include collaborators data to prevent data loss
+      collaborators:
+          (operationData['collaborators'] as List<dynamic>?)
+              ?.map((e) => (e as Map).cast<String, dynamic>())
+              .toList() ??
+          [],
+      collaboratorIds:
+          (operationData['collaboratorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      isDeleted: operationData['isDeleted'] as bool? ?? false,
+      // ✅ Include sync metadata
+      version: operationData['version'] as int? ?? 1,
+      lastModified:
+          operationData['lastModified'] != null
+              ? DateTime.parse(operationData['lastModified'])
+              : null,
     );
-    
+
     await _remoteDataSource.updateProject(projectDto);
   }
 
