@@ -11,6 +11,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/check_profile_co
 import 'package:trackflow/features/user_profile/domain/usecases/get_current_user_data_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 @injectable
 class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
@@ -39,39 +40,82 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     WatchUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
+    AppLogger.info(
+      'UserProfileBloc: Starting to watch user profile - userId: ${event.userId}',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
     emit(UserProfileLoading());
 
-    final stream =
-        event.userId == null
-            ? watchUserProfileUseCase.call()
-            : watchUserProfileUseCase.call(event.userId!);
+    try {
+      final stream =
+          event.userId == null
+              ? watchUserProfileUseCase.call()
+              : watchUserProfileUseCase.call(event.userId!);
 
-    await emit.onEach<Either<Failure, UserProfile?>>(
-      stream,
-      onData: (eitherProfile) {
-        eitherProfile.fold(
-          (failure) {
-            emit(UserProfileError());
-          },
-          (profile) {
-            if (profile != null) {
-              emit(
-                UserProfileLoaded(
-                  profile: profile,
-                  isSyncing: false,
-                  syncProgress: null,
-                ),
+      await emit.onEach<Either<Failure, UserProfile?>>(
+        stream,
+        onData: (eitherProfile) {
+          eitherProfile.fold(
+            (failure) {
+              AppLogger.error(
+                'UserProfileBloc: Profile watch failed: ${failure.message}',
+                tag: 'USER_PROFILE_BLOC',
+                error: failure,
               );
-            } else {
-              emit(UserProfileError());
-            }
-          },
-        );
-      },
-      onError: (error, stackTrace) {
-        emit(UserProfileError());
-      },
-    );
+
+              // Check if it's an authentication error
+              if (failure.message.contains('No user found') ||
+                  failure.message.contains('not authenticated')) {
+                AppLogger.warning(
+                  'UserProfileBloc: Authentication error detected - user not authenticated',
+                  tag: 'USER_PROFILE_BLOC',
+                );
+                emit(UserProfileError());
+              } else {
+                emit(UserProfileError());
+              }
+            },
+            (profile) {
+              if (profile != null) {
+                AppLogger.info(
+                  'UserProfileBloc: Profile loaded successfully for user: ${profile.email}',
+                  tag: 'USER_PROFILE_BLOC',
+                );
+                emit(
+                  UserProfileLoaded(
+                    profile: profile,
+                    isSyncing: false,
+                    syncProgress: null,
+                  ),
+                );
+              } else {
+                AppLogger.warning(
+                  'UserProfileBloc: No profile found for user',
+                  tag: 'USER_PROFILE_BLOC',
+                );
+                emit(UserProfileError());
+              }
+            },
+          );
+        },
+        onError: (error, stackTrace) {
+          AppLogger.error(
+            'UserProfileBloc: Exception watching profile: $error',
+            tag: 'USER_PROFILE_BLOC',
+            error: error,
+          );
+          emit(UserProfileError());
+        },
+      );
+    } catch (e) {
+      AppLogger.error(
+        'UserProfileBloc: Exception in _onWatchUserProfile: $e',
+        tag: 'USER_PROFILE_BLOC',
+        error: e,
+      );
+      emit(UserProfileError());
+    }
   }
 
   Future<void> _onSaveUserProfile(

@@ -7,7 +7,7 @@ import 'package:trackflow/features/invitations/presentation/blocs/events/invitat
 import 'package:trackflow/features/invitations/presentation/blocs/states/invitation_states.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/watcher/project_invitation_watcher_bloc.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
-import 'package:trackflow/features/invitations/presentation/components/send_invitation_form.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/send_invitation_form.dart';
 import 'package:trackflow/features/invitations/presentation/components/invitation_card.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
@@ -52,49 +52,51 @@ class _InvitationsScreenState extends State<InvitationsScreen>
   void _openSendInvitationSheet() {
     // TODO: Get actual project ID from context or navigation parameter
     final testProjectId = ProjectId.fromUniqueString('test-project-id');
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(Dimensions.radiusLarge),
-            topRight: Radius.circular(Dimensions.radiusLarge),
+      builder:
+          (context) => Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(Dimensions.radiusLarge),
+                topRight: Radius.circular(Dimensions.radiusLarge),
+              ),
+            ),
+            padding: EdgeInsets.only(
+              left: Dimensions.space16,
+              right: Dimensions.space16,
+              top: Dimensions.space16,
+              bottom:
+                  MediaQuery.of(context).viewInsets.bottom + Dimensions.space16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                SizedBox(height: Dimensions.space16),
+                Text(
+                  'Invite Collaborator',
+                  style: AppTextStyle.titleLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: Dimensions.space20),
+                SendInvitationForm(projectId: testProjectId),
+              ],
+            ),
           ),
-        ),
-        padding: EdgeInsets.only(
-          left: Dimensions.space16,
-          right: Dimensions.space16,
-          top: Dimensions.space16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + Dimensions.space16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(height: Dimensions.space16),
-            Text(
-              'Invite Collaborator',
-              style: AppTextStyle.titleLarge.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: Dimensions.space20),
-            SendInvitationForm(projectId: testProjectId),
-          ],
-        ),
-      ),
     );
   }
 
@@ -181,10 +183,13 @@ class _InvitationsScreenState extends State<InvitationsScreen>
 
                 // Handle general success state
                 if (state is InvitationWatcherSuccess) {
-                  final pendingInvitations = state.invitations
-                      .where((inv) => inv.status == InvitationStatus.pending)
-                      .toList();
-                  
+                  final pendingInvitations =
+                      state.invitations
+                          .where(
+                            (inv) => inv.status == InvitationStatus.pending,
+                          )
+                          .toList();
+
                   if (pendingInvitations.isEmpty) {
                     return _buildEmptyState(
                       Icons.inbox_outlined,
@@ -270,10 +275,7 @@ class _InvitationsScreenState extends State<InvitationsScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            title,
-            style: AppTextStyle.titleMedium,
-          ),
+          Text(title, style: AppTextStyle.titleMedium),
           SizedBox(height: Dimensions.space8),
           Text(
             message,
@@ -282,20 +284,13 @@ class _InvitationsScreenState extends State<InvitationsScreen>
             ),
           ),
           SizedBox(height: Dimensions.space16),
-          PrimaryButton(
-            text: 'Retry',
-            onPressed: onRetry,
-          ),
+          PrimaryButton(text: 'Retry', onPressed: onRetry),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyState(
-    IconData icon,
-    String title,
-    String subtitle,
-  ) {
+  Widget _buildEmptyState(IconData icon, String title, String subtitle) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

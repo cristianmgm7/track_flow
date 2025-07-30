@@ -203,16 +203,47 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(hasCredentials);
       }
 
-      // Check session storage first (faster)
-      final userId = await _sessionStorage.getUserId();
-      if (userId != null) {
-        return Right(true);
-      }
+      // Check Firebase Auth first (source of truth)
+      final firebaseUser = await _remote.getCurrentUser();
+      final sessionUserId = await _sessionStorage.getUserId();
 
-      // Fallback to remote check if no session data
-      final user = await _remote.getCurrentUser();
-      return Right(user != null);
+      // Synchronize state between Firebase Auth and SessionStorage
+      if (firebaseUser != null && sessionUserId == null) {
+        // Firebase has user but SessionStorage doesn't - sync it
+        AppLogger.info(
+          'Syncing Firebase user to SessionStorage: ${firebaseUser.uid}',
+          tag: 'AUTH_REPOSITORY',
+        );
+        await _sessionStorage.saveUserId(firebaseUser.uid);
+        return Right(true);
+      } else if (firebaseUser == null && sessionUserId != null) {
+        // SessionStorage has user but Firebase doesn't - clear it
+        AppLogger.warning(
+          'Clearing stale SessionStorage userId: $sessionUserId',
+          tag: 'AUTH_REPOSITORY',
+        );
+        await _sessionStorage.clearUserId();
+        return Right(false);
+      } else if (firebaseUser != null && sessionUserId != null) {
+        // Both have user - verify they match
+        if (firebaseUser.uid != sessionUserId) {
+          AppLogger.warning(
+            'User ID mismatch: Firebase=${firebaseUser.uid}, Session=$sessionUserId - updating SessionStorage',
+            tag: 'AUTH_REPOSITORY',
+          );
+          await _sessionStorage.saveUserId(firebaseUser.uid);
+        }
+        return Right(true);
+      } else {
+        // Neither has user
+        return Right(false);
+      }
     } catch (e) {
+      AppLogger.error(
+        'Error checking login status: $e',
+        tag: 'AUTH_REPOSITORY',
+        error: e,
+      );
       return Left(AuthenticationFailure(e.toString()));
     }
   }
@@ -236,14 +267,38 @@ class AuthRepositoryImpl implements AuthRepository {
         return Right(null);
       }
 
-      // Get user from remote
-      final user = await _remote.getCurrentUser();
-      if (user == null) {
+      // Get user from Firebase Auth (source of truth)
+      final firebaseUser = await _remote.getCurrentUser();
+      final sessionUserId = await _sessionStorage.getUserId();
+
+      // Synchronize state
+      if (firebaseUser != null) {
+        // Ensure SessionStorage is in sync
+        if (sessionUserId != firebaseUser.uid) {
+          AppLogger.info(
+            'Syncing Firebase user to SessionStorage: ${firebaseUser.uid}',
+            tag: 'AUTH_REPOSITORY',
+          );
+          await _sessionStorage.saveUserId(firebaseUser.uid);
+        }
+        return Right(AuthDto.fromFirebase(firebaseUser).toDomain());
+      } else {
+        // Firebase has no user - clear SessionStorage if it has stale data
+        if (sessionUserId != null) {
+          AppLogger.warning(
+            'Clearing stale SessionStorage userId: $sessionUserId',
+            tag: 'AUTH_REPOSITORY',
+          );
+          await _sessionStorage.clearUserId();
+        }
         return Right(null);
       }
-
-      return Right(AuthDto.fromFirebase(user).toDomain());
     } catch (e) {
+      AppLogger.error(
+        'Error getting current user: $e',
+        tag: 'AUTH_REPOSITORY',
+        error: e,
+      );
       return Left(AuthenticationFailure('Failed to get current user: $e'));
     }
   }

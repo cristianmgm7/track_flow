@@ -11,6 +11,9 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 
 class HeroUserProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -25,6 +28,15 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserProfile();
+  }
+
+  void _loadUserProfile() {
+    AppLogger.info(
+      'HeroUserProfileScreen: Loading user profile for userId: ${widget.userId.value}',
+      tag: 'HERO_USER_PROFILE_SCREEN',
+    );
+
     context.read<UserProfileBloc>().add(
       WatchUserProfile(userId: widget.userId.value),
     );
@@ -34,99 +46,113 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: BlocBuilder<UserProfileBloc, UserProfileState>(
-        builder: (context, state) {
-          if (state is UserProfileLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+      body: BlocListener<AuthBloc, AuthState>(
+        listener: (context, authState) {
+          // If user becomes unauthenticated, show error
+          if (authState is AuthUnauthenticated) {
+            AppLogger.warning(
+              'HeroUserProfileScreen: User became unauthenticated',
+              tag: 'HERO_USER_PROFILE_SCREEN',
             );
+            // The UI will handle this through the UserProfileError state
           }
-          if (state is UserProfileLoaded) {
-            final profile = state.profile;
-            final avatarProvider = ImageUtils.createSafeImageProvider(
-              profile.avatarUrl,
-            );
-
-            return CustomScrollView(
-              slivers: [
-                // Header Sliver: background image + centered name
-                SliverAppBar(
-                  expandedHeight: MediaQuery.of(context).size.height * 0.35,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: AppColors.background,
-                  iconTheme: const IconThemeData(color: AppColors.textPrimary),
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Background image
-                        Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image:
-                                  avatarProvider ??
-                                  const AssetImage(
-                                    'assets/images/default_profile_bg.jpg',
-                                  ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        // Name at bottom left
-                        Positioned(
-                          left: 24,
-                          bottom: 24,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.background.withOpacity(0.7),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              profile.name,
-                              style: AppTextStyle.displayMedium.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 28,
-                                shadows: [
-                                  Shadow(
-                                    color: AppColors.background.withOpacity(
-                                      0.7,
-                                    ),
-                                    blurRadius: 8,
-                                  ),
-                                ],
-                              ),
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Info Section below header
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0,
-                    ),
-                    child: _buildInfoSection(context, profile),
-                  ),
-                ),
-              ],
-            );
-          }
-          if (state is UserProfileError) {
-            return _buildErrorState();
-          }
-          return const SizedBox.shrink();
         },
+        child: BlocBuilder<UserProfileBloc, UserProfileState>(
+          builder: (context, state) {
+            if (state is UserProfileLoading) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
+            if (state is UserProfileLoaded) {
+              final profile = state.profile;
+              final avatarProvider = ImageUtils.createSafeImageProvider(
+                profile.avatarUrl,
+              );
+
+              return CustomScrollView(
+                slivers: [
+                  // Header Sliver: background image + centered name
+                  SliverAppBar(
+                    expandedHeight: MediaQuery.of(context).size.height * 0.35,
+                    floating: false,
+                    pinned: true,
+                    backgroundColor: AppColors.background,
+                    iconTheme: const IconThemeData(
+                      color: AppColors.textPrimary,
+                    ),
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Background image
+                          Container(
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image:
+                                    avatarProvider ??
+                                    const AssetImage(
+                                      'assets/images/default_profile_bg.jpg',
+                                    ),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          // Name at bottom left
+                          Positioned(
+                            left: 24,
+                            bottom: 24,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.background.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                profile.name,
+                                style: AppTextStyle.displayMedium.copyWith(
+                                  color: AppColors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 28,
+                                  shadows: [
+                                    Shadow(
+                                      color: AppColors.background.withOpacity(
+                                        0.7,
+                                      ),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Info Section below header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
+                      child: _buildInfoSection(context, profile),
+                    ),
+                  ),
+                ],
+              );
+            }
+            if (state is UserProfileError) {
+              return _buildErrorState();
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }
@@ -317,11 +343,26 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
           ),
           SizedBox(height: Dimensions.space8),
           Text(
-            'Please try again later',
+            'Please check your connection and try again',
             style: AppTextStyle.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
+          ),
+          SizedBox(height: Dimensions.space16),
+          ElevatedButton(
+            onPressed: () {
+              AppLogger.info(
+                'HeroUserProfileScreen: Retrying profile load',
+                tag: 'HERO_USER_PROFILE_SCREEN',
+              );
+              _loadUserProfile();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
+            ),
+            child: const Text('Retry'),
           ),
         ],
       ),

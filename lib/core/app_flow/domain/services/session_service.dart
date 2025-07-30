@@ -41,9 +41,9 @@ class SessionService {
     try {
       AppLogger.info('Starting getCurrentSession()', tag: 'SESSION_SERVICE');
 
-      // Step 1: Check authentication status
+      // Step 1: Check authentication status with synchronization
       AppLogger.info(
-        'Step 1: Checking authentication status...',
+        'Step 1: Checking authentication status with sync...',
         tag: 'SESSION_SERVICE',
       );
       final authResult = await _checkAuthUseCase();
@@ -73,8 +73,11 @@ class SessionService {
         return const Right(UserSession.unauthenticated());
       }
 
-      // Step 2: Get current user
-      AppLogger.info('Step 2: Getting current user...', tag: 'SESSION_SERVICE');
+      // Step 2: Get current user with synchronization
+      AppLogger.info(
+        'Step 2: Getting current user with sync...',
+        tag: 'SESSION_SERVICE',
+      );
       final userResult = await _getCurrentUserUseCase();
 
       final user = await userResult.fold(

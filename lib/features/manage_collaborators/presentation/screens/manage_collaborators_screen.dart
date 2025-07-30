@@ -8,7 +8,7 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/components/collaborator_component.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/manage_collaborators_actions.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/invitations/presentation/components/send_invitation_form.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/send_invitation_form.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/core/di/injection.dart';
