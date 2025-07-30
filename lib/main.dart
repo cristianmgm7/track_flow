@@ -4,15 +4,17 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app/my_app.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app/screens/app_error_screen.dart';
+import 'package:trackflow/config/flavor_config.dart';
+import 'package:trackflow/config/firebase_config.dart';
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
     // Phase 1: Initialize Firebase FIRST
-    AppLogger.info('Initializing Firebase...', tag: 'MAIN');
-    await Firebase.initializeApp();
-    AppLogger.info('Firebase initialized successfully', tag: 'MAIN');
+    AppLogger.info('Initializing Firebase for ${FlavorConfig.name}...', tag: 'MAIN');
+    await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
+    AppLogger.info('Firebase initialized successfully for ${FlavorConfig.name}', tag: 'MAIN');
 
     // Phase 2: Configure dependencies AFTER Firebase
     AppLogger.info('Configuring dependencies...', tag: 'MAIN');
@@ -41,7 +43,7 @@ void main() async {
 
 Widget _buildErrorRecoveryApp(Object error) {
   return MaterialApp(
-    title: 'TrackFlow - Recovery Mode',
+    title: '${FlavorConfig.title} - Recovery Mode',
     theme: ThemeData.dark(),
     home: AppErrorScreen(
       error: error,

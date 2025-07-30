@@ -23,21 +23,57 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.trackflow"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // Default config - will be overridden by flavors
+        applicationId = "com.trackflow"
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    flavorDimensions += "environment"
+    
+    productFlavors {
+        create("development") {
+            dimension = "environment"
+            applicationId = "com.trackflow.dev"
+            manifestPlaceholders["appName"] = "TrackFlow Dev"
+            buildConfigField("String", "FLAVOR", "\"development\"")
+            resValue("string", "app_name", "TrackFlow Dev")
+        }
+        
+        create("staging") {
+            dimension = "environment"
+            applicationId = "com.trackflow.staging"
+            manifestPlaceholders["appName"] = "TrackFlow Staging"
+            buildConfigField("String", "FLAVOR", "\"staging\"")
+            resValue("string", "app_name", "TrackFlow Staging")
+        }
+        
+        create("production") {
+            dimension = "environment"
+            applicationId = "com.trackflow"
+            manifestPlaceholders["appName"] = "TrackFlow"
+            buildConfigField("String", "FLAVOR", "\"production\"")
+            resValue("string", "app_name", "TrackFlow")
+        }
+    }
+
     buildTypes {
+        debug {
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+        }
+        
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
