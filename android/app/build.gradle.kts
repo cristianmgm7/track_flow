@@ -21,6 +21,10 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
+    
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         // Default config - will be overridden by flavors
@@ -62,7 +66,7 @@ android {
     buildTypes {
         debug {
             isDebuggable = true
-            applicationIdSuffix = ".debug"
+            // Removed applicationIdSuffix to match Firebase registration
         }
         
         release {

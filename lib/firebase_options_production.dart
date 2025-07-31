@@ -50,9 +50,9 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR-PRODUCTION-ANDROID-API-KEY',
-    appId: 'YOUR-PRODUCTION-ANDROID-APP-ID',
-    messagingSenderId: 'YOUR-PRODUCTION-SENDER-ID',
+    apiKey: 'AIzaSyBF150aejFGMNbWEZ7uQVlenYX-DSHCuEQ',
+    appId: '1:192570465818:android:e5ac6819bdc93bb1297ba3',
+    messagingSenderId: '192570465818',
     projectId: 'trackflow-prod',
     storageBucket: 'trackflow-prod.firebasestorage.app',
   );

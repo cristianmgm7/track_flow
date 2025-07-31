@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "192570465818",
+    "project_id": "trackflow-prod",
+    "storage_bucket": "trackflow-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192570465818:android:e5ac6819bdc93bb1297ba3",
+        "android_client_info": {
+          "package_name": "com.trackflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "192570465818-u1t7odkng97cql706enr4c07sp6ik688.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBF150aejFGMNbWEZ7uQVlenYX-DSHCuEQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "192570465818-u1t7odkng97cql706enr4c07sp6ik688.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

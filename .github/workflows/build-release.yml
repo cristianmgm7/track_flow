@@ -1,0 +1,289 @@
+name: 🚀 Build Release - Production
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+      upload_to_stores:
+        description: 'Upload to app stores'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  prepare:
+    name: 🏷️ Preparar Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build_number: ${{ steps.version.outputs.build_number }}
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🏷️ Determinar versión
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "push" ]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION="${{ github.event.inputs.version }}"
+        fi
+        
+        BUILD_NUMBER=$(date +%s)
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+        echo "🏷️ Versión: $VERSION+$BUILD_NUMBER"
+        
+  build-android-release:
+    name: 🤖 Build Android Release
+    runs-on: ubuntu-latest
+    needs: prepare
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: ☕ Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        
+    - name: 🎯 Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.3'
+        channel: 'stable'
+        cache: true
+        
+    - name: 🔧 Configurar keystore
+      run: |
+        echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/keystore/trackflow-release-key.keystore
+        echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
+        echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+        echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+        echo "storeFile=../keystore/trackflow-release-key.keystore" >> android/key.properties
+        
+    - name: 📦 Instalar dependencias
+      run: flutter pub get
+      
+    - name: 🔧 Generar código
+      run: flutter packages pub run build_runner build --delete-conflicting-outputs
+      
+    - name: 🏗️ Actualizar versión
+      run: |
+        sed -i "s/version: .*/version: ${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.build_number }}/" pubspec.yaml
+        
+    - name: 🔨 Build App Bundle Release
+      run: |
+        echo "🚀 Building production app bundle..."
+        flutter build appbundle --flavor production --release --verbose
+        
+    - name: ✅ Verificar App Bundle
+      run: |
+        aab_file="build/app/outputs/bundle/productionRelease/app-production-release.aab"
+        if [ -f "$aab_file" ]; then
+          echo "✅ App Bundle generado exitosamente"
+          echo "📁 Archivo: $aab_file"
+          echo "📏 Tamaño: $(du -h $aab_file | cut -f1)"
+        else
+          echo "❌ App Bundle no encontrado"
+          ls -la build/app/outputs/bundle/productionRelease/
+          exit 1
+        fi
+        
+    - name: 📦 Subir App Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: trackflow-production-release-aab-v${{ needs.prepare.outputs.version }}
+        path: build/app/outputs/bundle/productionRelease/app-production-release.aab
+        retention-days: 30
+        
+    - name: 🏪 Subir a Google Play Store
+      if: github.event.inputs.upload_to_stores == 'true'
+      uses: r0adkll/upload-google-play@v1.1.3
+      with:
+        serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+        packageName: com.trackflow
+        releaseFiles: build/app/outputs/bundle/productionRelease/app-production-release.aab
+        track: internal # Cambiar a 'production' cuando esté listo
+        status: completed
+        releaseNotes: |
+          🚀 TrackFlow v${{ needs.prepare.outputs.version }}
+          
+          Nuevas características y mejoras en esta versión.
+          
+          Para más detalles, visita: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.prepare.outputs.version }}
+          
+  build-ios-release:
+    name: 🍎 Build iOS Release
+    runs-on: macos-latest
+    needs: prepare
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 🎯 Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.3'
+        channel: 'stable'
+        cache: true
+        
+    - name: 🔧 Configurar certificados iOS
+      uses: apple-actions/import-codesign-certs@v3
+      with:
+        p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+        p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        
+    - name: 🔧 Configurar provisioning profile
+      uses: apple-actions/download-provisioning-profiles@v3
+      with:
+        bundle-id: com.trackflow
+        issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
+        api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+        api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        
+    - name: 📦 Instalar dependencias
+      run: flutter pub get
+      
+    - name: 🔧 Generar código
+      run: flutter packages pub run build_runner build --delete-conflicting-outputs
+      
+    - name: 🏗️ Actualizar versión
+      run: |
+        sed -i '' "s/version: .*/version: ${{ needs.prepare.outputs.version }}+${{ needs.prepare.outputs.build_number }}/" pubspec.yaml
+        
+    - name: 🔨 Build iOS Release
+      run: |
+        echo "🚀 Building iOS production release..."
+        flutter build ipa --flavor production --release --verbose
+        
+    - name: ✅ Verificar IPA
+      run: |
+        ipa_file="build/ios/ipa/trackflow.ipa"
+        if [ -f "$ipa_file" ]; then
+          echo "✅ IPA generado exitosamente"
+          echo "📁 Archivo: $ipa_file"
+          echo "📏 Tamaño: $(du -h $ipa_file | cut -f1)"
+        else
+          echo "❌ IPA no encontrado"
+          ls -la build/ios/ipa/
+          exit 1
+        fi
+        
+    - name: 📦 Subir IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: trackflow-production-release-ipa-v${{ needs.prepare.outputs.version }}
+        path: build/ios/ipa/trackflow.ipa
+        retention-days: 30
+        
+    - name: 🍎 Subir a App Store Connect
+      if: github.event.inputs.upload_to_stores == 'true'
+      uses: apple-actions/upload-testflight-build@v1
+      with:
+        app-path: build/ios/ipa/trackflow.ipa
+        issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
+        api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+        api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+        
+  create-release:
+    name: 🏷️ Crear GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare, build-android-release, build-ios-release]
+    if: always() && (needs.build-android-release.result == 'success' || needs.build-ios-release.result == 'success')
+    
+    steps:
+    - name: 📥 Checkout código
+      uses: actions/checkout@v4
+      
+    - name: 📥 Descargar artefactos Android
+      if: needs.build-android-release.result == 'success'
+      uses: actions/download-artifact@v4
+      with:
+        name: trackflow-production-release-aab-v${{ needs.prepare.outputs.version }}
+        path: ./artifacts/
+        
+    - name: 📥 Descargar artefactos iOS
+      if: needs.build-ios-release.result == 'success'
+      uses: actions/download-artifact@v4
+      with:
+        name: trackflow-production-release-ipa-v${{ needs.prepare.outputs.version }}
+        path: ./artifacts/
+        
+    - name: 🏷️ Crear Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ needs.prepare.outputs.version }}
+        name: TrackFlow v${{ needs.prepare.outputs.version }}
+        body: |
+          🚀 **TrackFlow v${{ needs.prepare.outputs.version }}**
+          
+          ## 📱 Archivos de Release
+          
+          ${{ needs.build-android-release.result == 'success' && '- ✅ Android App Bundle (.aab) para Google Play Store' || '- ❌ Android build falló' }}
+          ${{ needs.build-ios-release.result == 'success' && '- ✅ iOS Archive (.ipa) para App Store' || '- ❌ iOS build falló' }}
+          
+          ## 🔄 Cambios en esta versión
+          
+          Ver commits desde la versión anterior para detalles completos.
+          
+          ## 📋 Instalación
+          
+          - **Android**: Subir el archivo .aab a Google Play Console
+          - **iOS**: Subir el archivo .ipa a App Store Connect
+          
+          ---
+          
+          🤖 Release generado automáticamente por GitHub Actions
+        files: ./artifacts/*
+        draft: false
+        prerelease: false
+        
+  notify-release:
+    name: 🔔 Notificar Release
+    runs-on: ubuntu-latest
+    needs: [prepare, build-android-release, build-ios-release, create-release]
+    if: always()
+    
+    steps:
+    - name: 📢 Notificar éxito
+      if: needs.create-release.result == 'success'
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: |
+          🎉 ¡Release v${{ needs.prepare.outputs.version }} completado!
+          
+          ✅ Android: ${{ needs.build-android-release.result == 'success' && 'Exitoso' || 'Falló' }}
+          ✅ iOS: ${{ needs.build-ios-release.result == 'success' && 'Exitoso' || 'Falló' }}
+          
+          🔗 Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.prepare.outputs.version }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        
+    - name: 📢 Notificar fallo
+      if: needs.build-android-release.result == 'failure' || needs.build-ios-release.result == 'failure'
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: |
+          ❌ Release v${{ needs.prepare.outputs.version }} falló
+          
+          Android: ${{ needs.build-android-release.result }}
+          iOS: ${{ needs.build-ios-release.result }}
+          
+          🔗 Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

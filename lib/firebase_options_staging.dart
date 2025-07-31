@@ -50,9 +50,9 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR-STAGING-ANDROID-API-KEY',
-    appId: 'YOUR-STAGING-ANDROID-APP-ID',
-    messagingSenderId: 'YOUR-STAGING-SENDER-ID',
+    apiKey: 'AIzaSyB0SG-ZaTQNBG4wu0-F1fRsVbqNtuq4JjU',
+    appId: '1:221115151816:android:1362a8ff85c13d07943cfd',
+    messagingSenderId: '221115151816',
     projectId: 'trackflow-staging',
     storageBucket: 'trackflow-staging.firebasestorage.app',
   );

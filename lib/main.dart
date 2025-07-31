@@ -11,10 +11,14 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Phase 1: Initialize Firebase FIRST
-    AppLogger.info('Initializing Firebase for ${FlavorConfig.name}...', tag: 'MAIN');
-    await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
-    AppLogger.info('Firebase initialized successfully for ${FlavorConfig.name}', tag: 'MAIN');
+    // Phase 1: Initialize Firebase FIRST (only if not already initialized)
+    AppLogger.info('🎯 FLAVOR: ${FlavorConfig.name} - Initializing Firebase...', tag: 'MAIN');
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
+      AppLogger.info('✅ Firebase initialized successfully for ${FlavorConfig.name}', tag: 'MAIN');
+    } else {
+      AppLogger.info('✅ Firebase already initialized for ${FlavorConfig.name}', tag: 'MAIN');
+    }
 
     // Phase 2: Configure dependencies AFTER Firebase
     AppLogger.info('Configuring dependencies...', tag: 'MAIN');

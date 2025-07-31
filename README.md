@@ -3,16 +3,20 @@
 <div align="center">
   <img src="assets/images/logo.png" alt="TrackFlow Logo" width="200"/>
   
-  [![Flutter](https://img.shields.io/badge/Flutter-3.7.2-blue.svg)](https://flutter.dev)
-  [![Firebase](https://img.shields.io/badge/Firebase-3.13.0-orange.svg)](https://firebase.google.com)
+  [![Flutter](https://img.shields.io/badge/Flutter-3.24.3-blue.svg)](https://flutter.dev)
+  [![Firebase](https://img.shields.io/badge/Firebase-4.0.0-orange.svg)](https://firebase.google.com)
   [![Clean Architecture](https://img.shields.io/badge/Architecture-DDD%20%2B%20Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
   [![BLoC](https://img.shields.io/badge/State%20Management-BLoC-blue.svg)](https://bloclibrary.dev)
+  [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)](https://github.com/features/actions)
+  [![Flavors](https://img.shields.io/badge/Flavors-Dev%2FStaging%2FProd-green.svg)](#-flavors)
   [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 </div>
 
 ## Overview
 
 TrackFlow is a modern, collaborative audio platform built for music creators, producers, and audio professionals. Leveraging Domain-Driven Design (DDD) principles and Clean Architecture, it provides a robust, scalable solution for real-time audio collaboration across iOS, Android, and desktop platforms.
+
+**🎉 Ready for Production:** Complete CI/CD pipeline with GitHub Actions, 3-environment setup (dev/staging/prod), Firebase integration, and automated distribution to testers.
 
 ### 🎯 **Core Mission**
 Empowering music creators to collaborate seamlessly through advanced audio features, real-time feedback systems, and permission-based project management, while maintaining professional-grade audio quality and workflow efficiency.
@@ -283,47 +287,85 @@ sequenceDiagram
     Bloc-->>UI: Update State
 ```
 
+## 🎭 **Flavors (Environments)**
+
+TrackFlow is configured with **3 professional environments**:
+
+| Environment | Package ID | Firebase Project | Usage |
+|-------------|------------|------------------|-------|
+| 🏠 **Development** | `com.trackflow.dev` | `trackflow-dev` | Local development & debugging |
+| 🧪 **Staging** | `com.trackflow.staging` | `trackflow-staging` | Beta testing with testers |
+| 🚀 **Production** | `com.trackflow` | `trackflow-prod` | Live users in app stores |
+
+### **Running Different Flavors:**
+```bash
+# Development (with full logging)
+./scripts/run_flavors.sh development debug
+
+# Staging (for beta testers)  
+./scripts/run_flavors.sh staging debug
+
+# Production (no logs, store-ready)
+./scripts/run_flavors.sh production release
+```
+
+---
+
+## 🤖 **CI/CD Pipeline**
+
+**Automated GitHub Actions workflows:**
+
+- 🧪 **CI:** Tests & code analysis on every push/PR
+- 🔨 **Debug Builds:** Automatic APK distribution to testers on develop
+- 🚀 **Release Builds:** Production-ready builds on version tags
+- 📱 **Firebase Distribution:** Manual distribution to specific tester groups
+
+**Workflow:** `Push to develop` → `Automatic build` → `Testers notified` → `Download & test`
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Flutter SDK (^3.7.2)
-- Dart SDK
+- Flutter SDK (^3.24.3)
+- Dart SDK  
 - Firebase CLI
 - iOS Simulator (for iOS development)
 - Android Studio (for Android development)
 
-### Installation
+### **📚 Complete Setup Guide**
 
-1. Clone the repository:
+> **👉 For complete setup instructions, see [`docs/`](docs/) folder with comprehensive guides:**
 
+- 📋 **[Complete Overview](docs/RESUMEN_COMPLETO.md)** - Full project context
+- ⚡ **[Quick Commands](docs/COMANDOS_RAPIDOS.md)** - Daily development commands  
+- 🤖 **[Automated Workflow](docs/WORKFLOW_AUTOMATIZADO.md)** - How automation works
+- 🔥 **[Firebase Setup](docs/development/FIREBASE_PASO_A_PASO.md)** - Step-by-step Firebase config
+- ⚙️ **[GitHub Actions](docs/workflows/GUIA_GITHUB_ACTIONS.md)** - CI/CD configuration
+- 🏪 **[Store Publishing](docs/distribution/GUIA_TIENDAS_APLICACIONES.md)** - App store deployment
+
+### **Quick Start:**
+
+1. **Clone and setup:**
    ```bash
    git clone https://github.com/cristianmgm7/track_flow.git
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
-   cd track_flow
-   ```
-
-3. Install dependencies:
-
-   ```bash
+   cd trackflow
    flutter pub get
    ```
 
-4. Configure Firebase:
-
-   - Create a new Firebase project
-   - Add your iOS and Android apps
-   - Download and add the configuration files
-   - Enable Authentication and Storage services
-
-5. Run the app:
+2. **Generate code:**
    ```bash
-   flutter run
+   flutter packages pub run build_runner build --delete-conflicting-outputs
    ```
+
+3. **Run development flavor:**
+   ```bash
+   ./scripts/run_flavors.sh development debug
+   ```
+
+4. **For complete Firebase setup and production deployment:**
+   📖 **See [docs/README.md](docs/README.md)** for detailed guides
 
 ## 📱 Screenshots
 

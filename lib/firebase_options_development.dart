@@ -50,26 +50,26 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'YOUR-DEV-ANDROID-API-KEY',
-    appId: 'YOUR-DEV-ANDROID-APP-ID',
-    messagingSenderId: 'YOUR-DEV-SENDER-ID',
+    apiKey: 'AIzaSyBm3x-cGCnFlPhDnorG4wRIdt4M-MmQvY8',
+    appId: '1:664691871365:android:7ba3bcfca58beafeeca3ec',
+    messagingSenderId: '664691871365',
     projectId: 'trackflow-dev',
     storageBucket: 'trackflow-dev.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR-DEV-IOS-API-KEY',
-    appId: 'YOUR-DEV-IOS-APP-ID',
-    messagingSenderId: 'YOUR-DEV-SENDER-ID',
+    apiKey: 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
+    appId: '1:664691871365:ios:98553e3fbde162feeca3ec',
+    messagingSenderId: '664691871365',
     projectId: 'trackflow-dev',
     storageBucket: 'trackflow-dev.firebasestorage.app',
     iosBundleId: 'com.trackflow.dev',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR-DEV-IOS-API-KEY',
-    appId: 'YOUR-DEV-IOS-APP-ID',
-    messagingSenderId: 'YOUR-DEV-SENDER-ID',
+    apiKey: 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
+    appId: '1:664691871365:ios:98553e3fbde162feeca3ec',
+    messagingSenderId: '664691871365',
     projectId: 'trackflow-dev',
     storageBucket: 'trackflow-dev.firebasestorage.app',
     iosBundleId: 'com.trackflow.dev',

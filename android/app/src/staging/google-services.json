@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "221115151816",
+    "project_id": "trackflow-staging",
+    "storage_bucket": "trackflow-staging.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:221115151816:android:1362a8ff85c13d07943cfd",
+        "android_client_info": {
+          "package_name": "com.trackflow.staging"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "221115151816-u85vbbpteone7f3kofl16p7gskfsohn5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0SG-ZaTQNBG4wu0-F1fRsVbqNtuq4JjU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "221115151816-u85vbbpteone7f3kofl16p7gskfsohn5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
