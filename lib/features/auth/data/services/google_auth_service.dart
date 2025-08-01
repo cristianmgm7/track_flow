@@ -15,16 +15,8 @@ class GoogleAuthService {
   /// Authenticates user with Google and extracts all available data
   Future<Either<Failure, GoogleAuthResult>> authenticateWithGoogle() async {
     try {
-      // ✅ NUEVO: Configuración específica para emuladores
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-        // ✅ NUEVO: Configuración para emuladores - usar serverClientId en lugar de clientId
-        serverClientId:
-            '411076004525-6sfjv4mkbab89b81jn3so4o6s8om46sa.apps.googleusercontent.com', // Web client ID
-      );
-
       // 1. Get Google account
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return Left(AuthenticationFailure('Google sign in cancelled'));
       }

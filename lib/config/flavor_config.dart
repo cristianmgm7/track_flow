@@ -31,6 +31,8 @@ class FlavorConfig {
   static bool get isStaging => currentFlavor == Flavor.staging;
   static bool get isProduction => currentFlavor == Flavor.production;
   
+  static bool get isInitialized => _currentFlavor != null;
+  
   static void setFlavor(Flavor flavor) {
     _currentFlavor = flavor;
     if (kDebugMode) {

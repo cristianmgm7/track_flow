@@ -18,6 +18,8 @@ import 'google_auth_service_test.mocks.dart';
   AdditionalUserInfo,
 ])
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  
   group('GoogleAuthService', () {
     late GoogleAuthService googleAuthService;
     late MockGoogleSignIn mockGoogleSignIn;
