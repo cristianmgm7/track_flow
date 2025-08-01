@@ -108,7 +108,7 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.background.withOpacity(0.7),
+                                color: AppColors.background.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -119,8 +119,8 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                                   fontSize: 28,
                                   shadows: [
                                     Shadow(
-                                      color: AppColors.background.withOpacity(
-                                        0.7,
+                                      color: AppColors.background.withValues(
+                                        alpha: 0.7,
                                       ),
                                       blurRadius: 8,
                                     ),

@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/auth/data/services/google_auth_service.dart';
 
@@ -15,12 +14,10 @@ abstract class AuthRemoteDataSource {
 @LazySingleton(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _auth;
-  final GoogleSignIn _googleSignIn;
   final GoogleAuthService _googleAuthService;
 
   AuthRemoteDataSourceImpl(
     this._auth,
-    this._googleSignIn,
     this._googleAuthService,
   );
 

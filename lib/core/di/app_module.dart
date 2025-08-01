@@ -71,8 +71,6 @@ abstract class AppModule {
       NotificationDocumentSchema, // Required for notification system
     ];
 
-    // Validate that all schemas are not null
-    for (final schema in schemas) {}
 
     return await Isar.open(schemas, directory: dir.path);
   }

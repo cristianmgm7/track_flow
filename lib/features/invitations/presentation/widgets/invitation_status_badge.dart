@@ -36,15 +36,15 @@ class InvitationStatusBadge extends StatelessWidget {
   Color _getBackgroundColor() {
     switch (status) {
       case InvitationStatus.pending:
-        return AppColors.warning.withOpacity(0.1);
+        return AppColors.warning.withValues(alpha: 0.1);
       case InvitationStatus.accepted:
-        return AppColors.success.withOpacity(0.1);
+        return AppColors.success.withValues(alpha: 0.1);
       case InvitationStatus.declined:
-        return AppColors.error.withOpacity(0.1);
+        return AppColors.error.withValues(alpha: 0.1);
       case InvitationStatus.expired:
-        return AppColors.disabled.withOpacity(0.1);
+        return AppColors.disabled.withValues(alpha: 0.1);
       case InvitationStatus.cancelled:
-        return AppColors.grey700.withOpacity(0.1);
+        return AppColors.grey700.withValues(alpha: 0.1);
     }
   }
 

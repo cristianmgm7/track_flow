@@ -212,7 +212,7 @@ class _RadioToUpdateCollaboratorRoleState
             decoration: BoxDecoration(
               color:
                   isSelected
-                      ? AppColors.primary.withOpacity(0.1)
+                      ? AppColors.primary.withValues(alpha: 0.1)
                       : AppColors.surface,
               borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
               border: Border.all(
@@ -229,7 +229,7 @@ class _RadioToUpdateCollaboratorRoleState
                     color:
                         isSelected
                             ? AppColors.primary
-                            : AppColors.textSecondary.withOpacity(0.2),
+                            : AppColors.textSecondary.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

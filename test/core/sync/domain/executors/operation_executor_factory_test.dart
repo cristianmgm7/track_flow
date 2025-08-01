@@ -1,15 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor_factory.dart';
 import 'package:trackflow/core/sync/domain/executors/project_operation_executor.dart';
 import 'package:trackflow/core/sync/domain/executors/audio_track_operation_executor.dart';
 import 'package:trackflow/core/sync/domain/executors/audio_comment_operation_executor.dart';
 import 'package:trackflow/core/sync/domain/executors/user_profile_operation_executor.dart';
-
-import 'operation_executor_factory_test.mocks.dart';
-
-@GenerateMocks([OperationExecutorFactory])
 void main() {
   late OperationExecutorFactory factory;
 

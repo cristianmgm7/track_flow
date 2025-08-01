@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
 import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
 
