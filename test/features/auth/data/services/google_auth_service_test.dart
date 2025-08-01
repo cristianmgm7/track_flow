@@ -223,9 +223,7 @@ void main() {
     group('signOut', () {
       test('should sign out from both Google and Firebase', () async {
         // Arrange
-        when(mockFirebaseAuth.signOut()).thenAnswer((_) async {
-          return null;
-        });
+        when(mockFirebaseAuth.signOut()).thenAnswer((_) async {});
         when(mockGoogleSignIn.signOut()).thenAnswer((_) async {
           return null;
         });

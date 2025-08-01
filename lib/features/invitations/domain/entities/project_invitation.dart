@@ -92,7 +92,6 @@ class ProjectInvitation extends Entity<InvitationId> {
     );
   }
 
-  @override
   List<Object?> get props => [
     id,
     projectId,

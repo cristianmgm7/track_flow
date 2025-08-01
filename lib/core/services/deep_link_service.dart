@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Service to handle incoming deep links (replacement for Firebase Dynamic Links)
 /// Uses custom URL schemes and universal links for cross-platform support
@@ -45,7 +46,9 @@ class DeepLinkService {
         _handleCustomSchemeLink(uri);
         return;
       }
-    } catch (e) {}
+    } catch (e) {
+      AppLogger.error('Error handling deep link', error: e);
+    }
   }
 
   void _handleWebLink(Uri uri) {

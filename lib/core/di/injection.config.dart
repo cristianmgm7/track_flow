@@ -677,7 +677,6 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i104.AuthRemoteDataSource>(
         () => _i104.AuthRemoteDataSourceImpl(
               gh<_i13.FirebaseAuth>(),
-              gh<_i17.GoogleSignIn>(),
               gh<_i74.GoogleAuthService>(),
             ));
     gh.lazySingleton<_i105.AuthRepository>(() => _i106.AuthRepositoryImpl(

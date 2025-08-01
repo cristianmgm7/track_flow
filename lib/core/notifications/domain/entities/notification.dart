@@ -90,7 +90,6 @@ class Notification extends Entity<NotificationId> {
     );
   }
 
-  @override
   List<Object?> get props => [
     id,
     type,
