@@ -142,6 +142,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
     // If session storage doesn't have userId, try to get it from auth state
     if (userId == null) {
+      if (!mounted) return;
       final authState = context.read<AuthBloc>().state;
 
       if (authState is AuthAuthenticated) {
@@ -161,6 +162,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       }
     } else {
       // Get email from auth state even if we have userId
+      if (!mounted) return;
       final authState = context.read<AuthBloc>().state;
 
       if (authState is AuthAuthenticated) {
@@ -185,9 +187,11 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       );
 
       // Use the BLoC to get user data (Clean Architecture approach)
+      if (!mounted) return;
       context.read<UserProfileBloc>().add(GetCurrentUserData());
 
       // Wait for the BLoC to emit the user data
+      if (!mounted) return;
       await for (final state in context.read<UserProfileBloc>().stream) {
         if (state is UserDataLoaded) {
           userEmail = state.email;
@@ -213,6 +217,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         'Profile creation: No userId found',
         tag: 'PROFILE_CREATION',
       );
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('User session not found. Please sign in again.'),
@@ -220,6 +225,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         ),
       );
       // Navigate back to auth screen
+      if (!mounted) return;
       context.go(AppRoutes.auth);
       return;
     }
@@ -252,6 +258,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       tag: 'PROFILE_CREATION',
     );
 
+    if (!mounted) return;
     context.read<UserProfileBloc>().add(CreateUserProfile(profile));
   }
 

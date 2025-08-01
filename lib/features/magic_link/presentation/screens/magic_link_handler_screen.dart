@@ -26,7 +26,9 @@ class MagicLinkHandlerScreen extends StatelessWidget {
               const SnackBar(content: Text('¡Te has unido al proyecto!')),
             );
             Future.delayed(const Duration(seconds: 2), () {
-              context.go(AppRoutes.dashboard);
+              if (context.mounted) {
+                context.go(AppRoutes.dashboard);
+              }
             });
           } else if (state is MagicLinkHandleErrorState) {
             ScaffoldMessenger.of(

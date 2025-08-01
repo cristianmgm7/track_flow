@@ -172,7 +172,7 @@ class _CachedTracksManagerComponentState
           ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && mounted) {
       // Note: deleteAudioFile is still in CacheStorageRepository
       // You'll need to inject it separately or use a different approach
       ScaffoldMessenger.of(context).showSnackBar(

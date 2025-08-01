@@ -165,16 +165,20 @@ class _AudioCommentWaveformDisplayState
     PlayerController controller,
   ) async {
     try {
-      final totalDuration = await controller.getDuration(DurationType.max);
-      if (totalDuration == 0) return;
+      // Store BLoC reference and render box before async operation
+      final audioPlayerBloc = context.read<AudioPlayerBloc>();
       final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
       if (renderBox == null) return;
+      
+      final totalDuration = await controller.getDuration(DurationType.max);
+      if (totalDuration == 0) return;
+      if (!mounted) return;
       final waveformWidth = renderBox.size.width;
       final tapRatio = (tapPosition.dx / waveformWidth).clamp(0.0, 1.0);
       final seekPosition = Duration(
         milliseconds: (totalDuration * tapRatio).round(),
       );
-      final audioPlayerBloc = context.read<AudioPlayerBloc>();
+      
       audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
     } catch (e) {
       // Error handled silently - waveform tap continues to work
@@ -207,20 +211,25 @@ class _AudioCommentWaveformDisplayState
     setState(() {
       _isDragging = false;
     });
+    
+    // Store BLoC reference before async operations
+    final audioPlayerBloc = context.read<AudioPlayerBloc>();
+    
     try {
       final currentPosition = await controller.getDuration(
         DurationType.current,
       );
       final seekPosition = Duration(milliseconds: currentPosition);
-      final audioPlayerBloc = context.read<AudioPlayerBloc>();
+      if (!mounted) return;
+      
       audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
       if (_wasPlayingBeforeDrag) {
         await Future.delayed(const Duration(milliseconds: 100));
+        if (!mounted) return;
         audioPlayerBloc.add(const ResumeAudioRequested());
       }
     } catch (e) {
-      if (_wasPlayingBeforeDrag) {
-        final audioPlayerBloc = context.read<AudioPlayerBloc>();
+      if (_wasPlayingBeforeDrag && mounted) {
         audioPlayerBloc.add(const ResumeAudioRequested());
       }
     }

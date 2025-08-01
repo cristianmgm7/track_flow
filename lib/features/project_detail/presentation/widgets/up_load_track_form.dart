@@ -67,7 +67,8 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
         setState(() => _isSubmitting = true);
         final file = File(filePath);
         final duration = await _getAudioDuration(file);
-
+        
+        if (!mounted) return;
         context.read<AudioTrackBloc>().add(
           UploadAudioTrackEvent(
             name: _trackTitle!,
@@ -77,6 +78,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
           ),
         );
         setState(() => _isSubmitting = false);
+        if (!mounted) return;
         Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
