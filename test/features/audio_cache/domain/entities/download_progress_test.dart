@@ -1,4 +1,4 @@
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:trackflow/features/audio_cache/shared/domain/entities/download_progress.dart';
 
 void main() {

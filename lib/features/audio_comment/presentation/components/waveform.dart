@@ -176,7 +176,9 @@ class _AudioCommentWaveformDisplayState
       );
       final audioPlayerBloc = context.read<AudioPlayerBloc>();
       audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
-    } catch (e) {}
+    } catch (e) {
+      // Error handled silently - waveform tap continues to work
+    }
   }
 
   /// Handles the start of a drag gesture on the waveform, pausing playback if necessary.

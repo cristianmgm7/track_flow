@@ -1,4 +1,4 @@
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:trackflow/features/audio_cache/shared/domain/entities/cached_audio.dart';
 
 void main() {

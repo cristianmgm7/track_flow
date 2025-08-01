@@ -1,5 +1,4 @@
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/playlist/domain/entities/playlist_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -16,8 +15,6 @@ export 'package:trackflow/features/projects/domain/value_objects/project_name.da
 export 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 
 class Project extends AggregateRoot<ProjectId> {
-  @override
-  final ProjectId id;
   final UserId ownerId;
   final ProjectName name;
   final ProjectDescription description;
@@ -35,8 +32,7 @@ class Project extends AggregateRoot<ProjectId> {
     this.updatedAt,
     List<ProjectCollaborator>? collaborators,
     this.isDeleted = false,
-  }) : id = id,
-       collaborators = collaborators ?? [],
+  }) : collaborators = collaborators ?? [],
        super(id);
 
   Project copyWith({
