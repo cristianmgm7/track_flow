@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../config/environment_config.dart';
 
 /// Smart logging abstraction for the app with flavor-aware configuration
@@ -17,7 +18,7 @@ class AppLogger {
   static void debug(String message, {String? tag}) {
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
-      print('🐛 DEBUG: $tagPrefix$message');
+      debugPrint('🐛 DEBUG: $tagPrefix$message');
     }
   }
 
@@ -25,7 +26,7 @@ class AppLogger {
   static void info(String message, {String? tag}) {
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
-      print('ℹ️ INFO: $tagPrefix$message');
+      debugPrint('ℹ️ INFO: $tagPrefix$message');
     }
   }
 
@@ -33,7 +34,7 @@ class AppLogger {
   static void warning(String message, {String? tag}) {
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
-      print('⚠️ WARNING: $tagPrefix$message');
+      debugPrint('⚠️ WARNING: $tagPrefix$message');
     }
   }
 
@@ -47,12 +48,12 @@ class AppLogger {
     // Show error logs only in development/staging
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
-      print('🚨 ERROR: $tagPrefix$message');
+      debugPrint('🚨 ERROR: $tagPrefix$message');
       if (error != null) {
-        print('   Exception: $error');
+        debugPrint('   Exception: $error');
       }
       if (stackTrace != null) {
-        print('   StackTrace: $stackTrace');
+        debugPrint('   StackTrace: $stackTrace');
       }
     }
 
@@ -73,12 +74,12 @@ class AppLogger {
     // Show critical logs only in development/staging (not production console)
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
-      print('💀 CRITICAL: $tagPrefix$message');
+      debugPrint('💀 CRITICAL: $tagPrefix$message');
       if (error != null) {
-        print('   Exception: $error');
+        debugPrint('   Exception: $error');
       }
       if (stackTrace != null) {
-        print('   StackTrace: $stackTrace');
+        debugPrint('   StackTrace: $stackTrace');
       }
     }
 
@@ -100,7 +101,7 @@ class AppLogger {
     if (_shouldLog) {
       final keyInfo = syncKey != null ? ' [$syncKey]' : '';
       final durationInfo = duration != null ? ' (${duration}ms)' : '';
-      print('🔄 SYNC$keyInfo: $phase - $message$durationInfo');
+      debugPrint('🔄 SYNC$keyInfo: $phase - $message$durationInfo');
     }
   }
 
@@ -109,7 +110,7 @@ class AppLogger {
     if (_shouldLog) {
       final urlInfo = url != null ? ' [$url]' : '';
       final statusInfo = statusCode != null ? ' (HTTP $statusCode)' : '';
-      print('🌐 NETWORK$urlInfo: $message$statusInfo');
+      debugPrint('🌐 NETWORK$urlInfo: $message$statusInfo');
     }
   }
 
@@ -118,7 +119,7 @@ class AppLogger {
     if (_shouldLog) {
       final tableInfo = table != null ? ' [$table]' : '';
       final countInfo = count != null ? ' ($count items)' : '';
-      print('💾 DATABASE$tableInfo: $message$countInfo');
+      debugPrint('💾 DATABASE$tableInfo: $message$countInfo');
     }
   }
 
@@ -130,10 +131,10 @@ class AppLogger {
   }) {
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
-      print('📊 STRUCTURED: $tagPrefix$message');
+      debugPrint('📊 STRUCTURED: $tagPrefix$message');
       if (data != null) {
         data.forEach((key, value) {
-          print('   $key: $value');
+          debugPrint('   $key: $value');
         });
       }
     }
@@ -149,10 +150,10 @@ class AppLogger {
     if (_shouldLog) {
       final tagPrefix = tag != null ? '[$tag] ' : '';
       final durationInfo = durationMs != null ? ' (${durationMs}ms)' : '';
-      print('⚡ PERFORMANCE$durationInfo: $tagPrefix$operation');
+      debugPrint('⚡ PERFORMANCE$durationInfo: $tagPrefix$operation');
       if (metadata != null) {
         metadata.forEach((key, value) {
-          print('   $key: $value');
+          debugPrint('   $key: $value');
         });
       }
     }

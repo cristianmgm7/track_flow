@@ -3,6 +3,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/notifications/domain/entities/notification.dart';
 import 'package:trackflow/core/notifications/domain/entities/notification_id.dart';
 import 'package:trackflow/core/notifications/domain/repositories/notification_repository.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Core notification service that other features can inject and use
 /// Provides high-level methods for creating common notification types
@@ -163,11 +164,11 @@ class NotificationService {
 
     result.fold((failure) {
       // Log the error for debugging
-      print('Failed to create notification: $failure');
+      AppLogger.error('Failed to create notification', error: failure);
 
       // Throw a more user-friendly exception
       throw Exception('Unable to create notification. Please try again later.');
-    }, (notification) => print('Notification created: ${notification.id}'));
+    }, (notification) => AppLogger.info('Notification created: ${notification.id}'));
   }
 
   /// Mark a notification as read
@@ -178,7 +179,7 @@ class NotificationService {
       (failure) =>
           throw Exception('Failed to mark notification as read: $failure'),
       (notification) =>
-          print('Notification marked as read: ${notification.id}'),
+          AppLogger.info('Notification marked as read: ${notification.id}'),
     );
   }
 
@@ -189,7 +190,7 @@ class NotificationService {
     result.fold(
       (failure) =>
           throw Exception('Failed to mark all notifications as read: $failure'),
-      (_) => print('All notifications marked as read for user: $userId'),
+      (_) => AppLogger.info('All notifications marked as read for user: $userId'),
     );
   }
 

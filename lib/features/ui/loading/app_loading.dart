@@ -211,7 +211,7 @@ class AppLoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: overlayColor ?? AppColors.background.withOpacity(0.8),
+            color: overlayColor ?? AppColors.background.withValues(alpha: 0.8),
             child: Center(
               child: AppLoading(
                 message: loadingMessage,

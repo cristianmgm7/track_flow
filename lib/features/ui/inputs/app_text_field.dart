@@ -164,7 +164,7 @@ class _AppTextFieldState extends State<AppTextField>
                       minHeight: _inputHeight,
                     ),
               decoration: BoxDecoration(
-                color: widget.enabled ? AppColors.surface : AppColors.disabled.withOpacity(0.1),
+                color: widget.enabled ? AppColors.surface : AppColors.disabled.withValues(alpha: 0.1),
                 borderRadius: AppBorders.medium,
                 border: Border.all(
                   color: _borderColor,

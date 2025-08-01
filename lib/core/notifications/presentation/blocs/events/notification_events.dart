@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/notifications/domain/entities/notification.dart';
 import 'package:trackflow/core/notifications/domain/entities/notification_id.dart';
 

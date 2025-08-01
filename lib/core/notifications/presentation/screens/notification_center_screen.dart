@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/notifications/presentation/blocs/events/notification_events.dart';
 import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
 

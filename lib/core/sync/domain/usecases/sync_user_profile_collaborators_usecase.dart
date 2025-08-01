@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
 
@@ -37,7 +38,7 @@ class SyncUserProfileCollaboratorsUseCase {
     result.fold(
       (failure) async {
         // Don't clear cache if remote fetch fails - preserve existing data
-        print('Error syncing collaborators: $failure');
+        AppLogger.error('Error syncing collaborators', error: failure);
       },
       (profiles) async {
         // Only clear cache when we have new data to replace it

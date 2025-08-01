@@ -71,7 +71,7 @@ class NotificationList extends StatelessWidget {
           Icon(
             Icons.notifications_none_outlined,
             size: 64,
-            color: AppColors.textSecondary.withOpacity(0.5),
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
           ),
           SizedBox(height: Dimensions.space16),
           Text(
@@ -85,7 +85,7 @@ class NotificationList extends StatelessWidget {
           Text(
             'When you receive notifications, they will appear here',
             style: AppTextStyle.bodyMedium.copyWith(
-              color: AppColors.textSecondary.withOpacity(0.7),
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
           ),

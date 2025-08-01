@@ -73,7 +73,7 @@ class NotificationCard extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.1),
+        color: iconColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
       ),
       child: Icon(iconData, color: iconColor, size: Dimensions.iconMedium),
@@ -122,7 +122,7 @@ class NotificationCard extends StatelessWidget {
         Text(
           _formatTimestamp(notification.timestamp),
           style: AppTextStyle.caption.copyWith(
-            color: AppColors.textSecondary.withOpacity(0.7),
+            color: AppColors.textSecondary.withValues(alpha: 0.7),
           ),
         ),
       ],

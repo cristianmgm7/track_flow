@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,11 +51,11 @@ class SessionStorageImpl implements SessionStorage {
 
   @override
   void debugPrintAllValues() {
-    print('SessionStorage: All stored values:');
+    debugPrint('SessionStorage: All stored values:');
     final keys = _prefs.getKeys();
     for (final key in keys) {
       final value = _prefs.get(key);
-      print('  $key: $value');
+      debugPrint('  $key: $value');
     }
   }
 
