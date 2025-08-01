@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/auth/domain/entities/email.dart';
 import 'package:trackflow/features/auth/domain/entities/password.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart';
@@ -31,7 +32,7 @@ class SignInUseCase {
       } catch (e) {
         // Don't fail authentication if profile sync fails
         // Profile will be handled by the profile creation flow
-        print('Warning: Failed to sync profile after sign in: $e');
+        AppLogger.warning('Failed to sync profile after sign in: $e', tag: 'SignInUseCase');
       }
 
       return Right(user);

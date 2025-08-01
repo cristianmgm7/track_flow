@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -11,11 +12,12 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AppFlowBloc, AppFlowState>(
       builder: (context, state) {
-        print('🔄 [SplashScreen] Building with state: ${state.runtimeType}');
+        AppLogger.debug('Building with state: ${state.runtimeType}', tag: 'SplashScreen');
 
         if (state is AppFlowLoading && state.progress > 0) {
-          print(
-            '🔄 [SplashScreen] Showing sync progress: ${(state.progress * 100).toInt()}%',
+          AppLogger.debug(
+            'Showing sync progress: ${(state.progress * 100).toInt()}%',
+            tag: 'SplashScreen',
           );
           // Show sync progress with progress bar
           return AppSplashScreen(
@@ -25,14 +27,14 @@ class SplashScreen extends StatelessWidget {
             showProgress: true,
           );
         } else if (state is AppFlowLoading) {
-          print('🔄 [SplashScreen] Showing general loading');
+          AppLogger.debug('Showing general loading', tag: 'SplashScreen');
           // Show general loading
           return AppSplashScreen(
             message: 'Initializing TrackFlow...',
             logo: Image.asset('assets/images/logo.png', height: 100),
           );
         } else {
-          print('🔄 [SplashScreen] Showing default splash');
+          AppLogger.debug('Showing default splash', tag: 'SplashScreen');
           // Default splash
           return AppSplashScreen(
             message: 'Welcome to TrackFlow',

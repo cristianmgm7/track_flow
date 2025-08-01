@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 enum Flavor {
   development,
@@ -33,7 +34,7 @@ class FlavorConfig {
   static void setFlavor(Flavor flavor) {
     _currentFlavor = flavor;
     if (kDebugMode) {
-      print('🎯 Current Flavor: ${flavor.name}');
+      AppLogger.info('Current Flavor: ${flavor.name}', tag: 'FlavorConfig');
     }
   }
 }

@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_track/domain/repositories/audio_track_r
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'dart:io';
 
 @LazySingleton(as: AudioTrackRepository)
@@ -234,7 +235,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   void unawaited(Future future) {
     future.catchError((error) {
       // Log error but don't propagate - this is background operation
-      print('Background sync trigger failed: $error');
+      AppLogger.warning('Background sync trigger failed: $error', tag: 'AudioTrackRepositoryImpl');
     });
   }
 }

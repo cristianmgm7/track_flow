@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import '../models/project_dto.dart';
 
 /// Abstract class defining the contract for remote project operations.
@@ -152,7 +153,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
     String userId,
   ) async {
     try {
-      print('ProjectRemoteDataSource: Getting projects for user: $userId');
+      AppLogger.network('Getting projects for user: $userId', url: 'firestore://projects');
 
       // Query for projects owned by the user
       final ownedProjectsFuture =
@@ -168,7 +169,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
               .where('collaboratorIds', arrayContains: userId)
               .get();
 
-      print('ProjectRemoteDataSource: Executing queries...');
+      AppLogger.network('Executing Firestore queries for user projects');
 
       // Wait for both queries to complete
       final results = await Future.wait([
@@ -179,11 +180,11 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       final ownedProjects = results[0];
       final collaboratorProjects = results[1];
 
-      print(
-        'ProjectRemoteDataSource: Found ${ownedProjects.docs.length} owned projects',
+      AppLogger.network(
+        'Found ${ownedProjects.docs.length} owned projects',
       );
-      print(
-        'ProjectRemoteDataSource: Found ${collaboratorProjects.docs.length} collaborator projects',
+      AppLogger.network(
+        'Found ${collaboratorProjects.docs.length} collaborator projects',
       );
 
       // Combine and deduplicate projects
@@ -206,8 +207,8 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         }
       }
 
-      print(
-        'ProjectRemoteDataSource: Total unique projects found: ${allProjects.length}',
+      AppLogger.network(
+        'Total unique projects found: ${allProjects.length}',
       );
       return Right(allProjects);
     } catch (e) {

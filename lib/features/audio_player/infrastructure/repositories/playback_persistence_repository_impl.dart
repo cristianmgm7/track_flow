@@ -1,12 +1,11 @@
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:trackflow/core/utils/app_logger.dart';
 import '../../domain/entities/playback_session.dart';
 import '../../domain/entities/audio_queue.dart';
 import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/repeat_mode.dart';
-import '../../domain/entities/audio_track_metadata.dart';
-import '../../domain/entities/audio_source.dart';
 import '../../domain/repositories/playback_persistence_repository.dart';
 
 /// Implementation of PlaybackPersistenceRepository using SharedPreferences
@@ -34,7 +33,7 @@ class PlaybackPersistenceRepositoryImpl
       await prefs.setString(_playbackStateKey, jsonEncode(sessionData));
     } catch (e) {
       // Log error but don't throw - persistence failures shouldn't break playback
-      print('Failed to save playback state: $e');
+      AppLogger.error('Failed to save playback state: $e', tag: 'PlaybackPersistenceRepositoryImpl');
     }
   }
 
@@ -73,7 +72,7 @@ class PlaybackPersistenceRepositoryImpl
         volume: (data['volume'] as num?)?.toDouble() ?? 1.0,
       );
     } catch (e) {
-      print('Failed to load playback state: $e');
+      AppLogger.error('Failed to load playback state: $e', tag: 'PlaybackPersistenceRepositoryImpl');
       return null;
     }
   }
@@ -84,7 +83,7 @@ class PlaybackPersistenceRepositoryImpl
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_playbackStateKey);
     } catch (e) {
-      print('Failed to clear playback state: $e');
+      AppLogger.error('Failed to clear playback state: $e', tag: 'PlaybackPersistenceRepositoryImpl');
     }
   }
 
@@ -109,7 +108,7 @@ class PlaybackPersistenceRepositoryImpl
       };
       await prefs.setString(_queueKey, jsonEncode(queueData));
     } catch (e) {
-      print('Failed to save queue: $e');
+      AppLogger.error('Failed to save queue: $e', tag: 'PlaybackPersistenceRepositoryImpl');
     }
   }
 
@@ -136,7 +135,7 @@ class PlaybackPersistenceRepositoryImpl
         currentIndex: data['currentIndex'] as int,
       );
     } catch (e) {
-      print('Failed to load queue: $e');
+      AppLogger.error('Failed to load queue: $e', tag: 'PlaybackPersistenceRepositoryImpl');
       return null;
     }
   }
@@ -149,7 +148,7 @@ class PlaybackPersistenceRepositoryImpl
       positions[trackId] = position.inMilliseconds;
       await prefs.setString(_trackPositionsKey, jsonEncode(positions));
     } catch (e) {
-      print('Failed to save track position: $e');
+      AppLogger.error('Failed to save track position: $e', tag: 'PlaybackPersistenceRepositoryImpl');
     }
   }
 
@@ -160,7 +159,7 @@ class PlaybackPersistenceRepositoryImpl
       final positionMs = positions[trackId];
       return positionMs != null ? Duration(milliseconds: positionMs) : null;
     } catch (e) {
-      print('Failed to load track position: $e');
+      AppLogger.error('Failed to load track position: $e', tag: 'PlaybackPersistenceRepositoryImpl');
       return null;
     }
   }
@@ -171,7 +170,7 @@ class PlaybackPersistenceRepositoryImpl
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_trackPositionsKey);
     } catch (e) {
-      print('Failed to clear track positions: $e');
+      AppLogger.error('Failed to clear track positions: $e', tag: 'PlaybackPersistenceRepositoryImpl');
     }
   }
 

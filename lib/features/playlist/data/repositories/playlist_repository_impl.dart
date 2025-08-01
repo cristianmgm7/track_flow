@@ -5,6 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 import '../../domain/entities/playlist.dart';
 import '../../domain/repositories/playlist_repository.dart';
@@ -216,7 +217,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   void unawaited(Future future) {
     future.catchError((error) {
       // Log error but don't propagate - this is background operation
-      print('Background sync trigger failed: $error');
+      AppLogger.warning('Background sync trigger failed: $error', tag: 'PlaylistRepositoryImpl');
     });
   }
 }

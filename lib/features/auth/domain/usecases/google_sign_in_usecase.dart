@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/auth/domain/entities/user.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
@@ -23,7 +24,7 @@ class GoogleSignInUseCase {
       } catch (e) {
         // Don't fail authentication if profile sync fails
         // Profile will be handled by the profile creation flow
-        print('Warning: Failed to sync profile after Google sign in: $e');
+        AppLogger.warning('Failed to sync profile after Google sign in: $e', tag: 'GoogleSignInUseCase');
       }
 
       return Right(user);

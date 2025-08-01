@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
@@ -78,8 +79,9 @@ class DeclineInvitationUseCase {
     // This would typically query notifications by invitation ID and mark them as read
     // For now, we'll implement this as a TODO until the notification repository has the method
     // TODO: Implement when NotificationRepository has markNotificationsByInvitationId method
-    print(
+    AppLogger.info(
       'Marking notifications as read for invitation: ${invitationId.value}',
+      tag: 'DeclineInvitationUseCase',
     );
   }
 
@@ -93,7 +95,7 @@ class DeclineInvitationUseCase {
     );
 
     projectResult.fold(
-      (failure) => print('Failed to get project for notification: $failure'),
+      (failure) => AppLogger.error('Failed to get project for notification: $failure', tag: 'DeclineInvitationUseCase'),
       (project) async {
         // Get declined user profile (if it exists)
         String declinedUserName = invitation.invitedEmail;
@@ -103,7 +105,7 @@ class DeclineInvitationUseCase {
           );
 
           userProfileResult.fold(
-            (failure) => print('Failed to get user profile: $failure'),
+            (failure) => AppLogger.error('Failed to get user profile: $failure', tag: 'DeclineInvitationUseCase'),
             (profile) {
               if (profile != null) {
                 declinedUserName = profile.name;

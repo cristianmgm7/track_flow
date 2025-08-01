@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
@@ -133,8 +134,8 @@ class SendInvitationUseCase {
     // TODO: Send email with magic link
     // This will be implemented in the email integration phase
     magicLinkResult.fold(
-      (failure) => print('Failed to generate magic link: $failure'),
-      (magicLink) => print('Magic link generated: ${magicLink.url}'),
+      (failure) => AppLogger.error('Failed to generate magic link: $failure', tag: 'SendInvitationUseCase'),
+      (magicLink) => AppLogger.info('Magic link generated: ${magicLink.url}', tag: 'SendInvitationUseCase'),
     );
   }
 

@@ -1,6 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/entities/invitation_id.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
@@ -8,7 +10,6 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
 
 /// Use case to accept a project invitation
@@ -85,7 +86,7 @@ class AcceptInvitationUseCase {
       invitation.projectId,
     );
 
-    projectResult.fold((failure) => print('Failed to get project: $failure'), (
+    projectResult.fold((failure) => AppLogger.error('Failed to get project: $failure', tag: 'AcceptInvitationUseCase'), (
       project,
     ) async {
       if (invitation.invitedUserId != null) {
@@ -104,8 +105,8 @@ class AcceptInvitationUseCase {
         );
 
         saveResult.fold(
-          (failure) => print('Failed to save updated project: $failure'),
-          (_) => print('Successfully added user to project'),
+          (failure) => AppLogger.error('Failed to save updated project: $failure', tag: 'AcceptInvitationUseCase'),
+          (_) => AppLogger.info('Successfully added user to project', tag: 'AcceptInvitationUseCase'),
         );
       }
     });
@@ -118,8 +119,9 @@ class AcceptInvitationUseCase {
     // This would typically query notifications by invitation ID and mark them as read
     // For now, we'll implement this as a TODO until the notification repository has the method
     // TODO: Implement when NotificationRepository has markNotificationsByInvitationId method
-    print(
+    AppLogger.info(
       'Marking notifications as read for invitation: ${invitationId.value}',
+      tag: 'AcceptInvitationUseCase',
     );
   }
 
@@ -131,7 +133,7 @@ class AcceptInvitationUseCase {
     );
 
     projectResult.fold(
-      (failure) => print('Failed to get project for notification: $failure'),
+      (failure) => AppLogger.error('Failed to get project for notification: $failure', tag: 'AcceptInvitationUseCase'),
       (project) async {
         if (invitation.invitedUserId != null) {
           // Get accepted user profile

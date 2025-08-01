@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import '../models/project_dto.dart';
 
 abstract class ProjectsLocalDataSource {
@@ -28,19 +29,21 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<Either<Failure, Unit>> cacheProject(ProjectDTO project) async {
     try {
-      print(
-        'ProjectsLocalDataSource: Caching project: ${project.name} (${project.id})',
+      AppLogger.database(
+        'Caching project: ${project.name} (${project.id})',
+        table: 'projects',
       );
       final projectDoc = ProjectDocument.fromDTO(project);
       await _isar.writeTxn(() async {
         await _isar.projectDocuments.put(projectDoc);
       });
-      print(
-        'ProjectsLocalDataSource: Successfully cached project: ${project.name}',
+      AppLogger.database(
+        'Successfully cached project: ${project.name}',
+        table: 'projects',
       );
       return const Right(unit);
     } catch (e) {
-      print('ProjectsLocalDataSource: Failed to cache project: $e');
+      AppLogger.error('Failed to cache project: $e', tag: 'ProjectsLocalDataSource');
       return Left(CacheFailure('Failed to cache project: $e'));
     }
   }
@@ -110,14 +113,14 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   @override
   Future<Either<Failure, Unit>> clearCache() async {
     try {
-      print('ProjectsLocalDataSource: Clearing cache...');
+      AppLogger.database('Clearing cache...', table: 'projects');
       await _isar.writeTxn(() async {
         await _isar.projectDocuments.clear();
       });
-      print('ProjectsLocalDataSource: Cache cleared.');
+      AppLogger.database('Cache cleared.', table: 'projects');
       return const Right(unit);
     } catch (e) {
-      print('ProjectsLocalDataSource: Failed to clear cache: $e');
+      AppLogger.error('Failed to clear cache: $e', tag: 'ProjectsLocalDataSource');
       return Left(CacheFailure('Failed to clear cache: $e'));
     }
   }
