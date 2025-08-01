@@ -5,20 +5,58 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "track_flow (iPhone Cristian)",
+            "name": "track_flow Dev (iPhone Cristian)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main.dart",
-            "deviceId": "00008030-00010C31110A802E"
+            "deviceId": "00008030-00010C31110A802E",
+            "args": ["--flavor", "development", "--dart-define=FLAVOR=development"]
         },
         {
-            "name": "track_flow (android)",
+            "name": "track_flow Staging (iPhone Cristian)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main.dart",
-            "deviceId": "emulator-5554"
+            "deviceId": "00008030-00010C31110A802E",
+            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
+        },
+        {
+            "name": "track_flow Prod (iPhone Cristian)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "deviceId": "00008030-00010C31110A802E",
+            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
+        },
+        {
+            "name": "track_flow Dev (android)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "args": ["--flavor", "development", "--dart-define=FLAVOR=development"]
+        },
+        {
+            "name": "track_flow Staging (android)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
+        },
+        {
+            "name": "track_flow Prod (android)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main.dart",
+            "deviceId": "emulator-5554",
+            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         {
             "name": "track_flow (iPhoneX cris)",
