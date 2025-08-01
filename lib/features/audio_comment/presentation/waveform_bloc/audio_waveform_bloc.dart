@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart';
 import 'package:trackflow/features/audio_player/domain/entities/playback_session.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart';
@@ -156,7 +157,9 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
     try {
       // Update the controller position to show the seek line
       await controller.seekTo(sessionPosition);
-    } catch (e) {}
+    } catch (e) {
+      AppLogger.error('Error syncing waveform', error: e);
+    }
   }
 
   Future<void> _onWaveformSeeked(

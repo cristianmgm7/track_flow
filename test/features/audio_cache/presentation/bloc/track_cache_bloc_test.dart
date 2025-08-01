@@ -159,7 +159,6 @@ void main() {
     });
 
     // Note: GetTrackCacheStatusRequested tests would require more complex setup
-    // due to the new repository architecture. Leaving as TODO for now.
     test(
       'GetTrackCacheStatusRequested - TODO: implement with new architecture',
       () {
