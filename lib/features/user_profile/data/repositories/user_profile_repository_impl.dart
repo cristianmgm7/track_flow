@@ -100,13 +100,66 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Stream<Either<Failure, UserProfile?>> watchUserProfile(UserId userId) async* {
     try {
+      AppLogger.info(
+        'UserProfileRepository: Starting to watch profile for userId: ${userId.value}',
+        tag: 'USER_PROFILE_REPOSITORY',
+      );
+
       // CACHE-ASIDE PATTERN: Return local data immediately
-      // TEMPORARY FIX: Disabled background sync to avoid infinite loop
       await for (final dto in _localDataSource.watchUserProfile(userId.value)) {
-        // Return local data immediately without triggering background sync
-        yield Right(dto?.toDomain());
+        if (dto != null) {
+          // Profile exists locally, return it
+          AppLogger.info(
+            'UserProfileRepository: Profile found in local cache',
+            tag: 'USER_PROFILE_REPOSITORY',
+          );
+          yield Right(dto.toDomain());
+        } else {
+          // Profile not in local cache, try to sync from remote ONCE
+          AppLogger.info(
+            'UserProfileRepository: Profile not in local cache, attempting remote sync',
+            tag: 'USER_PROFILE_REPOSITORY',
+          );
+
+          final isConnected = await _networkStateManager.isConnected;
+          if (isConnected) {
+            final remoteResult = await _remoteDataSource.getProfileById(
+              userId.value,
+            );
+            await remoteResult.fold(
+              (failure) async {
+                AppLogger.warning(
+                  'UserProfileRepository: Remote sync failed: ${failure.message}',
+                  tag: 'USER_PROFILE_REPOSITORY',
+                );
+              },
+              (remoteProfile) async {
+                AppLogger.info(
+                  'UserProfileRepository: Profile found in remote, caching locally',
+                  tag: 'USER_PROFILE_REPOSITORY',
+                );
+                // Cache the profile locally
+                await _localDataSource.cacheUserProfile(remoteProfile);
+                // The local stream will emit the cached profile on next iteration
+              },
+            );
+          } else {
+            AppLogger.info(
+              'UserProfileRepository: No internet connection, cannot sync from remote',
+              tag: 'USER_PROFILE_REPOSITORY',
+            );
+          }
+
+          // Yield null for now, the local stream will emit the cached profile if sync was successful
+          yield Right(null);
+        }
       }
     } catch (e) {
+      AppLogger.error(
+        'UserProfileRepository: Error watching profile: $e',
+        tag: 'USER_PROFILE_REPOSITORY',
+        error: e,
+      );
       yield Left(DatabaseFailure('Failed to watch user profile: $e'));
     }
   }
@@ -121,17 +174,31 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         return Left(DatabaseFailure('No internet connection'));
       }
 
+      AppLogger.info(
+        'UserProfileRepository: Forcing sync from remote for userId: ${userId.value}',
+        tag: 'USER_PROFILE_REPOSITORY',
+      );
+
       // Get profile from remote data source
       final remoteResult = await _remoteDataSource.getProfileById(userId.value);
 
       return remoteResult.fold((failure) => Left(failure), (
         remoteProfile,
       ) async {
+        AppLogger.info(
+          'UserProfileRepository: Remote profile found, caching locally',
+          tag: 'USER_PROFILE_REPOSITORY',
+        );
         // Cache the profile locally
         await _localDataSource.cacheUserProfile(remoteProfile);
         return Right(remoteProfile.toDomain());
       });
     } catch (e) {
+      AppLogger.error(
+        'UserProfileRepository: Error syncing profile from remote: $e',
+        tag: 'USER_PROFILE_REPOSITORY',
+        error: e,
+      );
       return Left(DatabaseFailure('Failed to sync profile from remote: $e'));
     }
   }
@@ -149,27 +216,68 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Future<Either<Failure, bool>> profileExists(UserId userId) async {
     try {
+      AppLogger.info(
+        'UserProfileRepository: Checking if profile exists for userId: ${userId.value}',
+        tag: 'USER_PROFILE_REPOSITORY',
+      );
+
       // OFFLINE-FIRST: Check local cache first
       final localStream = _localDataSource.watchUserProfile(userId.value);
       final localProfile = await localStream.first;
 
       if (localProfile != null) {
         // Profile exists locally
-        // TEMPORARY FIX: Disabled background sync to avoid infinite loop
+        AppLogger.info(
+          'UserProfileRepository: Profile exists locally',
+          tag: 'USER_PROFILE_REPOSITORY',
+        );
         return Right(true);
       }
+
+      AppLogger.info(
+        'UserProfileRepository: Profile not found locally, checking remote',
+        tag: 'USER_PROFILE_REPOSITORY',
+      );
 
       // If not local, check remote if connected
       final isConnected = await _networkStateManager.isConnected;
       if (!isConnected) {
+        AppLogger.warning(
+          'UserProfileRepository: No internet connection, cannot check remote',
+          tag: 'USER_PROFILE_REPOSITORY',
+        );
         return Right(false); // Assume doesn't exist if offline and not cached
       }
 
       // Check remote database
       final userRef = _firestore.collection('user_profile').doc(userId.value);
       final docSnapshot = await userRef.get();
-      return Right(docSnapshot.exists);
+
+      final exists = docSnapshot.exists;
+      AppLogger.info(
+        'UserProfileRepository: Remote check completed - exists: $exists',
+        tag: 'USER_PROFILE_REPOSITORY',
+      );
+
+      if (exists) {
+        AppLogger.info(
+          'UserProfileRepository: Profile exists in Firestore but not in local cache',
+          tag: 'USER_PROFILE_REPOSITORY',
+        );
+      } else {
+        AppLogger.warning(
+          'UserProfileRepository: Profile does not exist in Firestore',
+          tag: 'USER_PROFILE_REPOSITORY',
+        );
+      }
+
+      return Right(exists);
     } catch (e) {
+      AppLogger.error(
+        'UserProfileRepository: Error checking if profile exists: $e',
+        tag: 'USER_PROFILE_REPOSITORY',
+        error: e,
+      );
       return Left(DatabaseFailure('Failed to check if profile exists: $e'));
     }
   }

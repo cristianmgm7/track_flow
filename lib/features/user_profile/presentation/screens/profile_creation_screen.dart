@@ -36,8 +36,8 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   String _avatarUrl = '';
   bool _isLoading = false;
   bool _isGoogleUser = false; // ✅ NUEVO: Flag para usuarios de Google
-  
-  // User data for profile creation
+
+  // User data for profile creation (loaded via BLoC)
   String? _userId;
   String? _userEmail;
 
@@ -136,14 +136,14 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         'Profile creation: User data not loaded - userId: $_userId, email: $_userEmail',
         tag: 'PROFILE_CREATION',
       );
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('User session not found. Please try again.'),
           backgroundColor: AppColors.error,
         ),
       );
-      
+
       // Request user data again through BLoC
       context.read<UserProfileBloc>().add(GetCurrentUserData());
       return;
@@ -186,9 +186,40 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   Widget build(BuildContext context) {
     return BlocListener<UserProfileBloc, UserProfileState>(
       listener: (context, state) {
-        if (state is UserProfileSaved) {
-          // Profile was created successfully, notify AppFlowBloc
-          // This will trigger a re-evaluation of the app flow
+        if (state is UserDataLoaded) {
+          // Handle current user data loaded for profile creation
+          setState(() {
+            _userId = state.userId;
+            _userEmail = state.email;
+          });
+          AppLogger.info(
+            'Profile creation: User data loaded - userId: $_userId, email: $_userEmail',
+            tag: 'PROFILE_CREATION',
+          );
+        } else if (state is UserDataError) {
+          AppLogger.error(
+            'Profile creation: Failed to load user data: ${state.message}',
+            tag: 'PROFILE_CREATION',
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to load user session: ${state.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        } else if (state is UserProfileSaved) {
+          // Profile was created successfully, reset loading state
+          setState(() => _isLoading = false);
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile created successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+
+          // Notify AppFlowBloc to trigger a re-evaluation of the app flow
           AppLogger.info(
             'Profile created successfully, triggering AppFlowBloc.checkAppFlow()',
             tag: 'PROFILE_CREATION',
@@ -208,27 +239,26 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
             'Profile creation in progress...',
             tag: 'PROFILE_CREATION',
           );
-        } else if (state is UserDataLoaded) {
-          // ✅ Handle user data loaded from BLoC
-          setState(() {
-            _userId = state.userId;
-            _userEmail = state.email;
-          });
+        } else if (state is UserProfileLoaded) {
+          // Profile was loaded after creation, this means the profile exists
+          // We can navigate away or show a success state
           AppLogger.info(
-            'User data loaded from BLoC - userId: ${state.userId}, email: ${state.email}',
+            'Profile loaded after creation: ${state.profile.name}',
             tag: 'PROFILE_CREATION',
           );
-        } else if (state is UserDataError) {
-          AppLogger.error(
-            'Failed to load user data: ${state.message}',
-            tag: 'PROFILE_CREATION',
-          );
+
+          // Show success message and trigger app flow check
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to load user session: ${state.message}'),
-              backgroundColor: AppColors.error,
+              content: Text(
+                'Welcome ${state.profile.name}! Your profile is ready.',
+              ),
+              backgroundColor: AppColors.success,
             ),
           );
+
+          // Trigger AppFlowBloc to navigate to main app
+          context.read<AppFlowBloc>().add(CheckAppFlow());
         }
       },
       child: AppScaffold(

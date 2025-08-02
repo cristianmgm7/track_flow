@@ -12,6 +12,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/get_current_user
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 @injectable
 class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
@@ -34,6 +35,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     on<ClearUserProfile>(_onClearUserProfile);
     on<CheckProfileCompleteness>(_onCheckProfileCompleteness);
     on<GetCurrentUserData>(_onGetCurrentUserData);
+    on<DiagnoseProfileState>(_onDiagnoseProfileState);
   }
 
   Future<void> _onWatchUserProfile(
@@ -179,6 +181,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         // FIXED: Emit UserProfileSaved and then trigger a profile reload
         emit(UserProfileSaved());
         // Trigger profile reload to get the updated profile data
+        AppLogger.info(
+          'UserProfileBloc: Dispatching WatchUserProfile event',
+          tag: 'USER_PROFILE_BLOC',
+        );
         add(WatchUserProfile());
       },
     );
@@ -236,6 +242,75 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
           );
         } else {
           emit(UserDataError('User data not available'));
+        }
+      },
+    );
+  }
+
+  Future<void> _onDiagnoseProfileState(
+    DiagnoseProfileState event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    AppLogger.info(
+      'UserProfileBloc: Starting profile state diagnosis',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
+    String? userId = event.userId;
+    if (userId == null) {
+      // Get userId from session storage
+      final userDataResult = await getCurrentUserDataUseCase.call();
+      userDataResult.fold(
+        (failure) {
+          AppLogger.error(
+            'UserProfileBloc: Failed to get user data for diagnosis: ${failure.message}',
+            tag: 'USER_PROFILE_BLOC',
+          );
+          return;
+        },
+        (userData) {
+          userId = userData.userId?.value;
+        },
+      );
+    }
+
+    if (userId == null) {
+      AppLogger.error(
+        'UserProfileBloc: No userId available for diagnosis',
+        tag: 'USER_PROFILE_BLOC',
+      );
+      return;
+    }
+
+    AppLogger.info(
+      'UserProfileBloc: Diagnosing profile state for userId: $userId',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
+    // Check if profile exists
+    final existsResult = await updateUserProfileUseCase.repository
+        .profileExists(UserId.fromUniqueString(userId!));
+
+    existsResult.fold(
+      (failure) {
+        AppLogger.error(
+          'UserProfileBloc: Failed to check profile existence: ${failure.message}',
+          tag: 'USER_PROFILE_BLOC',
+        );
+      },
+      (exists) {
+        if (exists) {
+          AppLogger.info(
+            'UserProfileBloc: Profile exists but may not be loaded properly',
+            tag: 'USER_PROFILE_BLOC',
+          );
+          // Try to force a sync
+          add(WatchUserProfile(userId: userId));
+        } else {
+          AppLogger.warning(
+            'UserProfileBloc: Profile does not exist - user needs to create profile',
+            tag: 'USER_PROFILE_BLOC',
+          );
         }
       },
     );

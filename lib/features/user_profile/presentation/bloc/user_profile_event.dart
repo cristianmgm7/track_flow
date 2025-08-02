@@ -29,3 +29,8 @@ class CheckProfileCompleteness extends UserProfileEvent {
 }
 
 class GetCurrentUserData extends UserProfileEvent {}
+
+class DiagnoseProfileState extends UserProfileEvent {
+  final String? userId;
+  DiagnoseProfileState({this.userId});
+}

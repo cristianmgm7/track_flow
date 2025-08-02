@@ -28,14 +28,14 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
        _authRepository = authRepository,
        super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
-    
+
     // Listen to auth state changes from repository
     _authStateSubscription = _authRepository.authState.listen((user) {
       AppLogger.info(
         'AppFlowBloc: Auth state changed - user: ${user?.email ?? 'null'}',
         tag: 'APP_FLOW_BLOC',
       );
-      
+
       // Trigger app flow check when auth state changes
       add(CheckAppFlow());
     });
@@ -102,7 +102,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       _isCheckingFlow = false;
     }
   }
-
 
   /// Maps AppInitialState directly to AppFlowState (no complex mapping)
   AppFlowState _mapInitialStateToBlocState(
