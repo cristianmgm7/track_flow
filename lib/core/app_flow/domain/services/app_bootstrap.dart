@@ -7,8 +7,6 @@ import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 import 'package:trackflow/core/app_flow/domain/entities/session_state.dart';
 import 'package:trackflow/core/app_flow/domain/value_objects/app_initial_state.dart';
 import 'package:trackflow/core/app_flow/domain/value_objects/app_bootstrap_result.dart';
-import 'package:dartz/dartz.dart';
-import 'package:trackflow/core/error/failures.dart';
 
 /// Simple app bootstrap that replaces complex initialization coordination
 ///
@@ -172,43 +170,4 @@ class AppBootstrap {
     );
   }
 
-  /// Sign out the current user
-  ///
-  /// This method delegates to SessionService for user sign out.
-  /// It handles the coordination of sign out operations.
-  Future<Either<Failure, Unit>> signOut() async {
-    try {
-      AppLogger.info(
-        'Starting sign out via AppBootstrap',
-        tag: 'APP_BOOTSTRAP',
-      );
-
-      final result = await _sessionService.signOut();
-
-      result.fold(
-        (failure) {
-          AppLogger.error(
-            'Sign out failed: ${failure.message}',
-            tag: 'APP_BOOTSTRAP',
-            error: failure,
-          );
-        },
-        (_) {
-          AppLogger.info(
-            'Sign out completed successfully via AppBootstrap',
-            tag: 'APP_BOOTSTRAP',
-          );
-        },
-      );
-
-      return result;
-    } catch (e) {
-      AppLogger.error(
-        'Sign out failed with exception: $e',
-        tag: 'APP_BOOTSTRAP',
-        error: e,
-      );
-      return Left(ServerFailure('Sign out failed: $e'));
-    }
-  }
 }

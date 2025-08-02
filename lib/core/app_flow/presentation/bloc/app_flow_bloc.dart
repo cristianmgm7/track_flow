@@ -23,7 +23,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
        super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
-    on<SignOutRequested>(_onSignOutRequested);
   }
 
   Future<void> _onCheckAppFlow(
@@ -88,39 +87,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
   }
 
-  Future<void> _onSignOutRequested(
-    SignOutRequested event,
-    Emitter<AppFlowState> emit,
-  ) async {
-    try {
-      emit(AppFlowLoading());
-
-      AppLogger.info('Starting sign out process', tag: 'APP_FLOW_BLOC');
-
-      // ✅ IMPLEMENTAR SIGN OUT REAL usando AppBootstrap
-      final signOutResult = await _appBootstrap.signOut();
-
-      signOutResult.fold(
-        (failure) {
-          AppLogger.error(
-            'Sign out failed: ${failure.message}',
-            tag: 'APP_FLOW_BLOC',
-          );
-          emit(AppFlowError('Sign out failed: ${failure.message}'));
-        },
-        (_) {
-          AppLogger.info(
-            'Sign out completed successfully',
-            tag: 'APP_FLOW_BLOC',
-          );
-          emit(AppFlowUnauthenticated());
-        },
-      );
-    } catch (e) {
-      AppLogger.error('Sign out failed: $e', tag: 'APP_FLOW_BLOC');
-      emit(AppFlowError('Sign out failed: $e'));
-    }
-  }
 
   /// Maps AppInitialState directly to AppFlowState (no complex mapping)
   AppFlowState _mapInitialStateToBlocState(

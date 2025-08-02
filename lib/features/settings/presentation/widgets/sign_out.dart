@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
@@ -47,10 +47,10 @@ class SignOut extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
-                // Stop audio playback before signing out
+                // Stop audio playbook before signing out
                 context.read<AudioPlayerBloc>().add(StopAudioRequested());
-                // Use AppFlowBloc for coordinated sign out
-                context.read<AppFlowBloc>().add(SignOutRequested());
+                // Use AuthBloc for sign out
+                context.read<AuthBloc>().add(AuthSignOutRequested());
                 context.read<NavigationCubit>().reset();
               },
               child: Text("Sign Out"),

@@ -4,7 +4,6 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
 import 'package:trackflow/core/app_flow/domain/usecases/check_authentication_status_usecase.dart';
 import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase.dart';
-import 'package:trackflow/core/app_flow/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -19,19 +18,15 @@ class SessionService {
   final GetCurrentUserUseCase _getCurrentUserUseCase;
   final OnboardingUseCase _onboardingUseCase;
   final CheckProfileCompletenessUseCase _profileUseCase;
-  final SignOutUseCase _signOutUseCase;
-
   SessionService({
     required CheckAuthenticationStatusUseCase checkAuthUseCase,
     required GetCurrentUserUseCase getCurrentUserUseCase,
     required OnboardingUseCase onboardingUseCase,
     required CheckProfileCompletenessUseCase profileUseCase,
-    required SignOutUseCase signOutUseCase,
   }) : _checkAuthUseCase = checkAuthUseCase,
        _getCurrentUserUseCase = getCurrentUserUseCase,
        _onboardingUseCase = onboardingUseCase,
-       _profileUseCase = profileUseCase,
-       _signOutUseCase = signOutUseCase;
+       _profileUseCase = profileUseCase;
 
   /// Get the current user session
   ///
@@ -190,40 +185,6 @@ class SessionService {
     }
   }
 
-  /// Sign out the current user
-  ///
-  /// This method only handles user sign out.
-  /// It does NOT handle sync state management.
-  Future<Either<Failure, Unit>> signOut() async {
-    try {
-      AppLogger.info('Starting sign out process', tag: 'SESSION_SERVICE');
-      final result = await _signOutUseCase();
-      return result.fold(
-        (failure) {
-          AppLogger.error(
-            'Sign out failed: ${failure.message}',
-            tag: 'SESSION_SERVICE',
-            error: failure,
-          );
-          return Left(failure);
-        },
-        (_) {
-          AppLogger.info(
-            'Sign out completed successfully',
-            tag: 'SESSION_SERVICE',
-          );
-          return const Right(unit);
-        },
-      );
-    } catch (e) {
-      AppLogger.error(
-        'Sign out failed with exception: $e',
-        tag: 'SESSION_SERVICE',
-        error: e,
-      );
-      return Left(ServerFailure('Sign out failed: $e'));
-    }
-  }
 
   /// Check if user is authenticated
   Future<Either<Failure, bool>> isAuthenticated() async {

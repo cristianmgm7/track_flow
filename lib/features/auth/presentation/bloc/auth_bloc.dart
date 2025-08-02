@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -14,15 +15,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInUseCase signIn;
   final SignUpUseCase signUp;
   final GoogleSignInUseCase googleSignIn;
+  final SignOutUseCase signOut;
 
   AuthBloc({
     required this.signIn,
     required this.signUp,
     required this.googleSignIn,
+    required this.signOut,
   }) : super(AuthInitial()) {
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthGoogleSignInRequested>(_onAuthGoogleSignInRequested);
+    on<AuthSignOutRequested>(_onAuthSignOutRequested);
   }
 
   Future<void> _onAuthSignInRequested(
@@ -122,6 +126,32 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           tag: 'AUTH_BLOC',
         );
         emit(AuthAuthenticated(user));
+      },
+    );
+  }
+
+  Future<void> _onAuthSignOutRequested(
+    AuthSignOutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    AppLogger.info('Starting sign out process', tag: 'AUTH_BLOC');
+
+    emit(AuthLoading());
+
+    final result = await signOut();
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'Sign out failed: ${failure.message}',
+          tag: 'AUTH_BLOC',
+          error: failure,
+        );
+        emit(AuthError(failure.message));
+      },
+      (_) {
+        AppLogger.info('Sign out completed successfully', tag: 'AUTH_BLOC');
+        emit(AuthInitial());
       },
     );
   }
