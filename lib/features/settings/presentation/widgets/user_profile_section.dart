@@ -29,7 +29,7 @@ class UserProfileSection extends StatelessWidget {
                 // Profile Header
                 _buildProfileHeader(context, state),
                 SizedBox(height: Dimensions.space16),
-                
+
                 // Profile Options
                 _buildProfileOption(
                   context,
@@ -60,16 +60,17 @@ class UserProfileSection extends StatelessWidget {
             radius: 30,
             backgroundColor: AppColors.grey600,
             backgroundImage: avatarProvider,
-            child: avatarProvider == null
-                ? Icon(
-                    Icons.person,
-                    size: 30,
-                    color: AppColors.textSecondary,
-                  )
-                : null,
+            child:
+                avatarProvider == null
+                    ? Icon(
+                      Icons.person,
+                      size: 30,
+                      color: AppColors.textSecondary,
+                    )
+                    : null,
           ),
           SizedBox(width: Dimensions.space16),
-          
+
           // User Info
           Expanded(
             child: Column(
@@ -85,10 +86,12 @@ class UserProfileSection extends StatelessWidget {
                 ),
                 SizedBox(height: Dimensions.space4),
                 Text(
-                  'Account Settings',
+                  profile.email,
                   style: AppTextStyle.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -99,15 +102,18 @@ class UserProfileSection extends StatelessWidget {
 
     // Handle different states
     String displayText;
+    String subtitleText;
     Color textColor;
     IconData? actionIcon;
     VoidCallback? onActionTap;
 
     if (state is UserProfileLoading) {
-      displayText = 'Loading...';
+      displayText = 'Loading profile...';
+      subtitleText = 'Please wait';
       textColor = AppColors.textPrimary;
     } else if (state is UserProfileError) {
       displayText = 'Unable to load profile';
+      subtitleText = 'Tap retry to try again';
       textColor = AppColors.error;
       actionIcon = Icons.refresh;
       onActionTap = () {
@@ -116,9 +122,15 @@ class UserProfileSection extends StatelessWidget {
       };
     } else if (state is UserProfileInitial) {
       displayText = 'Loading profile...';
+      subtitleText = 'Initializing';
       textColor = AppColors.textSecondary;
+    } else if (state is UserProfileSaved) {
+      displayText = 'Profile updated';
+      subtitleText = 'Changes saved successfully';
+      textColor = AppColors.success;
     } else {
       displayText = 'Profile unavailable';
+      subtitleText = 'Unable to load user data';
       textColor = AppColors.textSecondary;
     }
 
@@ -127,11 +139,7 @@ class UserProfileSection extends StatelessWidget {
         CircleAvatar(
           radius: 30,
           backgroundColor: AppColors.grey600,
-          child: Icon(
-            Icons.person,
-            size: 30,
-            color: AppColors.textSecondary,
-          ),
+          child: Icon(Icons.person, size: 30, color: AppColors.textSecondary),
         ),
         SizedBox(width: Dimensions.space16),
         Expanded(
@@ -140,18 +148,18 @@ class UserProfileSection extends StatelessWidget {
             children: [
               Text(
                 displayText,
-                style: AppTextStyle.headlineMedium.copyWith(
-                  color: textColor,
-                ),
+                style: AppTextStyle.headlineMedium.copyWith(color: textColor),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: Dimensions.space4),
               Text(
-                'Account Settings',
+                subtitleText,
                 style: AppTextStyle.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -182,15 +190,11 @@ class UserProfileSection extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: AppTextStyle.bodyLarge.copyWith(
-          color: AppColors.textPrimary,
-        ),
+        style: AppTextStyle.bodyLarge.copyWith(color: AppColors.textPrimary),
       ),
       subtitle: Text(
         subtitle,
-        style: AppTextStyle.bodySmall.copyWith(
-          color: AppColors.textSecondary,
-        ),
+        style: AppTextStyle.bodySmall.copyWith(color: AppColors.textSecondary),
       ),
       trailing: Icon(
         Icons.arrow_forward_ios,

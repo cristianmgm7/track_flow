@@ -1022,6 +1022,7 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i190.AppFlowBloc>(() => _i190.AppFlowBloc(
           appBootstrap: gh<_i189.AppBootstrap>(),
           backgroundSyncCoordinator: gh<_i143.BackgroundSyncCoordinator>(),
+          authRepository: gh<_i105.AuthRepository>(),
         ));
     gh.lazySingleton<_i191.AudioContextService>(
         () => _i192.AudioContextServiceImpl(

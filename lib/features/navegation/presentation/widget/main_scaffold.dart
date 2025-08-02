@@ -11,8 +11,8 @@ import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 
 class MainScaffold extends StatefulWidget {
   final Widget child;
@@ -34,10 +34,10 @@ class _MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     final currentTab = context.select((NavigationCubit cubit) => cubit.state);
 
-    return BlocListener<AuthBloc, AuthState>(
-      listener: (context, authState) {
+    return BlocListener<AppFlowBloc, AppFlowState>(
+      listener: (context, appFlowState) {
         // Profile management is handled by my_app.dart
-        if (authState is AuthUnauthenticated) {
+        if (appFlowState is AppFlowUnauthenticated) {
           // User signed out, clear profile state
           context.read<UserProfileBloc>().add(ClearUserProfile());
         }

@@ -8,7 +8,6 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
@@ -20,10 +19,10 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/screens/current_user_profile_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
@@ -219,13 +218,10 @@ class AppRouter {
             GoRoute(
               path: AppRoutes.userProfile,
               builder: (context, state) {
-                final authState = context.read<AuthBloc>().state;
-                if (authState is AuthAuthenticated) {
-                  return HeroUserProfileScreen(userId: authState.user.id);
-                }
-                return const Scaffold(
-                  body: Center(child: Text('User not authenticated')),
-                );
+                // Router should not handle authentication checks
+                // AppFlowBloc already handled this at the route level
+                // Create a CurrentUserProfileScreen that gets current user automatically
+                return const CurrentUserProfileScreen();
               },
             ),
             GoRoute(

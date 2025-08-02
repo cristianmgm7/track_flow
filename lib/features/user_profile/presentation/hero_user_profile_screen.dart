@@ -12,8 +12,8 @@ import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 
 class HeroUserProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -46,10 +46,10 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, authState) {
+      body: BlocListener<AppFlowBloc, AppFlowState>(
+        listener: (context, appFlowState) {
           // If user becomes unauthenticated, show error
-          if (authState is AuthUnauthenticated) {
+          if (appFlowState is AppFlowUnauthenticated) {
             AppLogger.warning(
               'HeroUserProfileScreen: User became unauthenticated',
               tag: 'HERO_USER_PROFILE_SCREEN',

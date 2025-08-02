@@ -116,7 +116,7 @@ class TestScenarios {
 class TestData {
   static Map<String, Map<String, dynamic>> get scenarios => {
     TestScenarios.newUserScenario: {
-      'authState': AuthUnauthenticated(),
+      'authState': AuthInitial(),
       'onboardingState': OnboardingIncomplete(),
       'profileState': UserProfileInitial(),
       'expectedRoute': '/auth',

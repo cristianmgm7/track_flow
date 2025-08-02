@@ -122,29 +122,64 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     SaveUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
+    AppLogger.info(
+      'UserProfileBloc: Saving user profile for user: ${event.profile.email}',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
     emit(UserProfileLoading());
     final result = await updateUserProfileUseCase.call(event.profile);
-    result.fold((failure) => emit(UserProfileError()), (profile) {
-      // FIXED: Emit UserProfileSaved instead of calling WatchUserProfile
-      // This prevents the infinite loop and properly notifies the UI
-      emit(UserProfileSaved());
-    });
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'UserProfileBloc: Profile save failed: ${failure.message}',
+          tag: 'USER_PROFILE_BLOC',
+          error: failure,
+        );
+        emit(UserProfileError());
+      },
+      (profile) {
+        AppLogger.info(
+          'UserProfileBloc: Profile saved successfully, triggering profile reload',
+          tag: 'USER_PROFILE_BLOC',
+        );
+        // FIXED: Emit UserProfileSaved and then trigger a profile reload
+        emit(UserProfileSaved());
+        // Trigger profile reload to get the updated profile data
+        add(WatchUserProfile());
+      },
+    );
   }
 
   Future<void> _onCreateUserProfile(
     CreateUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
+    AppLogger.info(
+      'UserProfileBloc: Creating user profile for user: ${event.profile.email}',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
     emit(UserProfileLoading());
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
       (failure) {
+        AppLogger.error(
+          'UserProfileBloc: Profile creation failed: ${failure.message}',
+          tag: 'USER_PROFILE_BLOC',
+          error: failure,
+        );
         emit(UserProfileError());
       },
       (profile) {
-        // FIXED: Emit UserProfileSaved instead of calling WatchUserProfile
-        // This prevents the infinite loop and properly notifies the UI
+        AppLogger.info(
+          'UserProfileBloc: Profile created successfully, triggering profile reload',
+          tag: 'USER_PROFILE_BLOC',
+        );
+        // FIXED: Emit UserProfileSaved and then trigger a profile reload
         emit(UserProfileSaved());
+        // Trigger profile reload to get the updated profile data
+        add(WatchUserProfile());
       },
     );
   }

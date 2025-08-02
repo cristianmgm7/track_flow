@@ -8,21 +8,37 @@ import 'package:trackflow/core/app_flow/domain/services/app_bootstrap.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
+import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final AppBootstrap _appBootstrap;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
+  final AuthRepository _authRepository;
 
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
+  StreamSubscription? _authStateSubscription;
 
   AppFlowBloc({
     required AppBootstrap appBootstrap,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
+    required AuthRepository authRepository,
   }) : _appBootstrap = appBootstrap,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
+       _authRepository = authRepository,
        super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
+    
+    // Listen to auth state changes from repository
+    _authStateSubscription = _authRepository.authState.listen((user) {
+      AppLogger.info(
+        'AppFlowBloc: Auth state changed - user: ${user?.email ?? 'null'}',
+        tag: 'APP_FLOW_BLOC',
+      );
+      
+      // Trigger app flow check when auth state changes
+      add(CheckAppFlow());
+    });
   }
 
   Future<void> _onCheckAppFlow(
@@ -162,5 +178,11 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         tag: 'APP_FLOW_BLOC',
       );
     });
+  }
+
+  @override
+  Future<void> close() {
+    _authStateSubscription?.cancel();
+    return super.close();
   }
 }

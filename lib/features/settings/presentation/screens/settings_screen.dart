@@ -5,8 +5,8 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/features/settings/presentation/widgets/user_profile_section.dart';
 import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
@@ -15,6 +15,7 @@ import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -27,20 +28,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize user profile if not already loaded
     final userProfileBloc = context.read<UserProfileBloc>();
-    if (userProfileBloc.state is UserProfileInitial) {
+    final currentState = userProfileBloc.state;
+
+    // Only trigger profile loading if we're in initial state or error state
+    if (currentState is UserProfileInitial ||
+        currentState is UserProfileError) {
+      AppLogger.info(
+        'SettingsScreen: Initializing user profile loading',
+        tag: 'SETTINGS_SCREEN',
+      );
       userProfileBloc.add(WatchUserProfile());
+    } else {
+      AppLogger.info(
+        'SettingsScreen: User profile already loaded or loading',
+        tag: 'SETTINGS_SCREEN',
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
+    return BlocListener<AppFlowBloc, AppFlowState>(
       listener: (context, state) {
-        if (state is AuthUnauthenticated) {
-          context.go(AppRoutes.auth); // or Navigator.pushReplacement...
+        if (state is AppFlowUnauthenticated) {
+          context.go(AppRoutes.auth);
         }
       },
       child: AppScaffold(
