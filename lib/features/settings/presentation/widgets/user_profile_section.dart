@@ -8,6 +8,9 @@ import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
 
 class UserProfileSection extends StatelessWidget {
   const UserProfileSection({super.key});
@@ -94,7 +97,31 @@ class UserProfileSection extends StatelessWidget {
       );
     }
 
-    // Loading or error state
+    // Handle different states
+    String displayText;
+    Color textColor;
+    IconData? actionIcon;
+    VoidCallback? onActionTap;
+
+    if (state is UserProfileLoading) {
+      displayText = 'Loading...';
+      textColor = AppColors.textPrimary;
+    } else if (state is UserProfileError) {
+      displayText = 'Unable to load profile';
+      textColor = AppColors.error;
+      actionIcon = Icons.refresh;
+      onActionTap = () {
+        // Retry loading the profile
+        context.read<UserProfileBloc>().add(WatchUserProfile());
+      };
+    } else if (state is UserProfileInitial) {
+      displayText = 'Loading profile...';
+      textColor = AppColors.textSecondary;
+    } else {
+      displayText = 'Profile unavailable';
+      textColor = AppColors.textSecondary;
+    }
+
     return Row(
       children: [
         CircleAvatar(
@@ -112,10 +139,12 @@ class UserProfileSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Loading...',
+                displayText,
                 style: AppTextStyle.headlineMedium.copyWith(
-                  color: AppColors.textPrimary,
+                  color: textColor,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: Dimensions.space4),
               Text(
@@ -127,6 +156,13 @@ class UserProfileSection extends StatelessWidget {
             ],
           ),
         ),
+        if (actionIcon != null && onActionTap != null)
+          SecondaryButton(
+            text: 'Retry',
+            icon: actionIcon,
+            onPressed: onActionTap,
+            size: ButtonSize.small,
+          ),
       ],
     );
   }

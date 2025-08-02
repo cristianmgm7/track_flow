@@ -12,6 +12,9 @@ import 'package:trackflow/features/settings/presentation/widgets/preferences.dar
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,6 +27,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // Initialize user profile if not already loaded
+    final userProfileBloc = context.read<UserProfileBloc>();
+    if (userProfileBloc.state is UserProfileInitial) {
+      userProfileBloc.add(WatchUserProfile());
+    }
   }
 
   @override
