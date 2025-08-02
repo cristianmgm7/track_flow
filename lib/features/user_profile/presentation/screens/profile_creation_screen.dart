@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
@@ -18,8 +16,6 @@ import 'package:trackflow/features/user_profile/presentation/components/avatar_u
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -40,11 +36,17 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   String _avatarUrl = '';
   bool _isLoading = false;
   bool _isGoogleUser = false; // ✅ NUEVO: Flag para usuarios de Google
+  
+  // User data for profile creation
+  String? _userId;
+  String? _userEmail;
 
   @override
   void initState() {
     super.initState();
     _loadGoogleData(); // ✅ NUEVO: Cargar datos de Google
+    // Request current user data through BLoC
+    context.read<UserProfileBloc>().add(GetCurrentUserData());
   }
 
   @override
@@ -123,112 +125,31 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     return null;
   }
 
-  void _handleSubmit() async {
+  void _handleSubmit() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    // Try to get userId from session storage first
-    final sessionStorage = sl<SessionStorage>();
-    String? userId = await sessionStorage.getUserId();
-    String? userEmail;
-
-    AppLogger.info(
-      'Profile creation: Getting user info - userId from storage: $userId',
-      tag: 'PROFILE_CREATION',
-    );
-
-    // If session storage doesn't have userId, try to get it from auth state
-    if (userId == null) {
-      if (!mounted) return;
-      final authState = context.read<AuthBloc>().state;
-
-      if (authState is AuthAuthenticated) {
-        userId = authState.user.id.value;
-        userEmail = authState.user.email;
-        AppLogger.info(
-          'Profile creation: Got user info from AuthBloc - userId: $userId, email: $userEmail',
-          tag: 'PROFILE_CREATION',
-        );
-        // Save it to session storage for future use
-        sessionStorage.saveUserId(userId);
-      } else {
-        AppLogger.warning(
-          'Profile creation: AuthBloc state is not AuthAuthenticated: ${authState.runtimeType}',
-          tag: 'PROFILE_CREATION',
-        );
-      }
-    } else {
-      // Get email from auth state even if we have userId
-      if (!mounted) return;
-      final authState = context.read<AuthBloc>().state;
-
-      if (authState is AuthAuthenticated) {
-        userEmail = authState.user.email;
-        AppLogger.info(
-          'Profile creation: Got email from AuthBloc - email: $userEmail',
-          tag: 'PROFILE_CREATION',
-        );
-      } else {
-        AppLogger.warning(
-          'Profile creation: AuthBloc state is not AuthAuthenticated: ${authState.runtimeType}',
-          tag: 'PROFILE_CREATION',
-        );
-      }
-    }
-
-    // FALLBACK: If we still don't have email, try to get it from UserProfileBloc
-    if (userEmail == null || userEmail.isEmpty) {
-      AppLogger.info(
-        'Profile creation: Email not available from AuthBloc, trying UserProfileBloc fallback',
-        tag: 'PROFILE_CREATION',
-      );
-
-      // Use the BLoC to get user data (Clean Architecture approach)
-      if (!mounted) return;
-      context.read<UserProfileBloc>().add(GetCurrentUserData());
-
-      // Wait for the BLoC to emit the user data
-      if (!mounted) return;
-      await for (final state in context.read<UserProfileBloc>().stream) {
-        if (state is UserDataLoaded) {
-          userEmail = state.email;
-          userId ??= state.userId;
-          AppLogger.info(
-            'Profile creation: Got user data from UserProfileBloc - userId: $userId, email: $userEmail',
-            tag: 'PROFILE_CREATION',
-          );
-          break;
-        } else if (state is UserDataError) {
-          AppLogger.error(
-            'Profile creation: UserProfileBloc fallback failed: ${state.message}',
-            tag: 'PROFILE_CREATION',
-          );
-          break;
-        }
-      }
-    }
-
-    if (userId == null) {
-      setState(() => _isLoading = false);
+    // Check if we have user data from BLoC
+    if (_userId == null || _userEmail == null) {
       AppLogger.error(
-        'Profile creation: No userId found',
+        'Profile creation: User data not loaded - userId: $_userId, email: $_userEmail',
         tag: 'PROFILE_CREATION',
       );
-      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('User session not found. Please sign in again.'),
+          content: Text('User session not found. Please try again.'),
           backgroundColor: AppColors.error,
         ),
       );
-      // Navigate back to auth screen
-      if (!mounted) return;
-      context.go(AppRoutes.auth);
+      
+      // Request user data again through BLoC
+      context.read<UserProfileBloc>().add(GetCurrentUserData());
       return;
     }
+
+    setState(() => _isLoading = true);
 
     // ✅ NUEVO: Set default avatar if none selected (Google or placeholder)
     if (_avatarUrl.isEmpty) {
@@ -244,9 +165,9 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     }
 
     final profile = UserProfile(
-      id: UserId.fromUniqueString(userId),
+      id: UserId.fromUniqueString(_userId!),
       name: _nameController.text.trim(),
-      email: userEmail ?? '',
+      email: _userEmail!,
       avatarUrl: _avatarUrl,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -258,7 +179,6 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       tag: 'PROFILE_CREATION',
     );
 
-    if (!mounted) return;
     context.read<UserProfileBloc>().add(CreateUserProfile(profile));
   }
 
@@ -287,6 +207,27 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
           AppLogger.info(
             'Profile creation in progress...',
             tag: 'PROFILE_CREATION',
+          );
+        } else if (state is UserDataLoaded) {
+          // ✅ Handle user data loaded from BLoC
+          setState(() {
+            _userId = state.userId;
+            _userEmail = state.email;
+          });
+          AppLogger.info(
+            'User data loaded from BLoC - userId: ${state.userId}, email: ${state.email}',
+            tag: 'PROFILE_CREATION',
+          );
+        } else if (state is UserDataError) {
+          AppLogger.error(
+            'Failed to load user data: ${state.message}',
+            tag: 'PROFILE_CREATION',
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to load user session: ${state.message}'),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
