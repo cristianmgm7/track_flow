@@ -13,6 +13,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_e
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 class MainScaffold extends StatefulWidget {
   final Widget child;
@@ -36,10 +37,20 @@ class _MainScaffoldState extends State<MainScaffold> {
 
     return BlocListener<AppFlowBloc, AppFlowState>(
       listener: (context, appFlowState) {
-        // Profile management is handled by my_app.dart
+        // ✅ CRÍTICO: Limpiar estado cuando el usuario no está autenticado
         if (appFlowState is AppFlowUnauthenticated) {
-          // User signed out, clear profile state
+          AppLogger.info(
+            'MainScaffold: User became unauthenticated, clearing all user data',
+            tag: 'MAIN_SCAFFOLD',
+          );
+
+          // Limpiar UserProfileBloc
           context.read<UserProfileBloc>().add(ClearUserProfile());
+
+          // Limpiar otros BLoCs que puedan tener datos de usuario
+          // TODO: Añadir otros BLoCs que necesiten limpieza
+          // context.read<ProjectsBloc>().add(ClearProjects());
+          // context.read<NotificationsBloc>().add(ClearNotifications());
         }
       },
       child: BlocListener<UserProfileBloc, UserProfileState>(

@@ -8,7 +8,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/get_current_user_data_usecase.dart';
+import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -19,7 +19,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
   final CheckProfileCompletenessUseCase checkProfileCompletenessUseCase;
-  final GetCurrentUserDataUseCase getCurrentUserDataUseCase;
+  final GetCurrentUserUseCase getCurrentUserUseCase;
 
   StreamSubscription<Either<Failure, UserProfile?>>? _profileSubscription;
 
@@ -27,7 +27,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     required this.updateUserProfileUseCase,
     required this.watchUserProfileUseCase,
     required this.checkProfileCompletenessUseCase,
-    required this.getCurrentUserDataUseCase,
+    required this.getCurrentUserUseCase,
   }) : super(UserProfileInitial()) {
     on<WatchUserProfile>(_onWatchUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
@@ -103,7 +103,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         },
         onError: (error, stackTrace) {
           AppLogger.error(
-            'UserProfileBloc: Exception watching profile: $error',
+            'UserProfileBloc: Error watching profile: $error',
             tag: 'USER_PROFILE_BLOC',
             error: error,
           );
@@ -112,7 +112,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       );
     } catch (e) {
       AppLogger.error(
-        'UserProfileBloc: Exception in _onWatchUserProfile: $e',
+        'UserProfileBloc: Exception watching profile: $e',
         tag: 'USER_PROFILE_BLOC',
         error: e,
       );
@@ -128,7 +128,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       'UserProfileBloc: Saving user profile for user: ${event.profile.email}',
       tag: 'USER_PROFILE_BLOC',
     );
-
     emit(UserProfileLoading());
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
@@ -145,9 +144,11 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
           'UserProfileBloc: Profile saved successfully, triggering profile reload',
           tag: 'USER_PROFILE_BLOC',
         );
-        // FIXED: Emit UserProfileSaved and then trigger a profile reload
         emit(UserProfileSaved());
-        // Trigger profile reload to get the updated profile data
+        AppLogger.info(
+          'UserProfileBloc: Dispatching WatchUserProfile event',
+          tag: 'USER_PROFILE_BLOC',
+        );
         add(WatchUserProfile());
       },
     );
@@ -161,7 +162,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       'UserProfileBloc: Creating user profile for user: ${event.profile.email}',
       tag: 'USER_PROFILE_BLOC',
     );
-
     emit(UserProfileLoading());
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
@@ -178,9 +178,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
           'UserProfileBloc: Profile created successfully, triggering profile reload',
           tag: 'USER_PROFILE_BLOC',
         );
-        // FIXED: Emit UserProfileSaved and then trigger a profile reload
         emit(UserProfileSaved());
-        // Trigger profile reload to get the updated profile data
         AppLogger.info(
           'UserProfileBloc: Dispatching WatchUserProfile event',
           tag: 'USER_PROFILE_BLOC',
@@ -194,8 +192,33 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     ClearUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
+    AppLogger.info(
+      'UserProfileBloc: Clearing user profile state',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
     _profileSubscription?.cancel();
     emit(UserProfileInitial());
+  }
+
+  /// Clear all user profile data and state
+  void clearAllUserData() {
+    AppLogger.info(
+      'UserProfileBloc: Clearing all user profile data and canceling streams',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
+    // Cancelar todas las subscripciones activas
+    _profileSubscription?.cancel();
+    _profileSubscription = null;
+
+    // Limpiar cualquier estado residual
+    emit(UserProfileInitial());
+
+    AppLogger.info(
+      'UserProfileBloc: All user profile data cleared successfully',
+      tag: 'USER_PROFILE_BLOC',
+    );
   }
 
   Future<void> _onCheckProfileCompleteness(
@@ -226,7 +249,8 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
   ) async {
     emit(UserProfileLoading());
 
-    final result = await getCurrentUserDataUseCase.call();
+    // ✅ USAR EL USE CASE CONSOLIDADO
+    final result = await getCurrentUserUseCase.getBasicData();
 
     result.fold(
       (failure) {
@@ -255,11 +279,9 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       'UserProfileBloc: Starting profile state diagnosis',
       tag: 'USER_PROFILE_BLOC',
     );
-
     String? userId = event.userId;
     if (userId == null) {
-      // Get userId from session storage
-      final userDataResult = await getCurrentUserDataUseCase.call();
+      final userDataResult = await getCurrentUserUseCase.getBasicData();
       userDataResult.fold(
         (failure) {
           AppLogger.error(
@@ -273,7 +295,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
         },
       );
     }
-
     if (userId == null) {
       AppLogger.error(
         'UserProfileBloc: No userId available for diagnosis',
@@ -281,16 +302,12 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       );
       return;
     }
-
     AppLogger.info(
       'UserProfileBloc: Diagnosing profile state for userId: $userId',
       tag: 'USER_PROFILE_BLOC',
     );
-
-    // Check if profile exists
     final existsResult = await updateUserProfileUseCase.repository
         .profileExists(UserId.fromUniqueString(userId!));
-
     existsResult.fold(
       (failure) {
         AppLogger.error(
@@ -304,7 +321,6 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
             'UserProfileBloc: Profile exists but may not be loaded properly',
             tag: 'USER_PROFILE_BLOC',
           );
-          // Try to force a sync
           add(WatchUserProfile(userId: userId));
         } else {
           AppLogger.warning(

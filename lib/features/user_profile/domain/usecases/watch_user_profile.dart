@@ -30,6 +30,14 @@ class WatchUserProfileUseCase {
           'WatchUserProfileUseCase: No userId found in session storage',
           tag: 'WATCH_USER_PROFILE',
         );
+
+        // ✅ CRÍTICO: Si no hay userId, significa que el usuario no está autenticado
+        // Limpiar cualquier estado residual
+        AppLogger.info(
+          'WatchUserProfileUseCase: User not authenticated, clearing profile state',
+          tag: 'WATCH_USER_PROFILE',
+        );
+
         yield Left(ServerFailure('No user found - user not authenticated'));
         return;
       }

@@ -9,12 +9,14 @@ import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
+import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final AppBootstrap _appBootstrap;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final AuthRepository _authRepository;
+  final UserProfileRepository _userProfileRepository;
 
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
   StreamSubscription? _authStateSubscription;
@@ -23,9 +25,11 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     required AppBootstrap appBootstrap,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required AuthRepository authRepository,
+    required UserProfileRepository userProfileRepository,
   }) : _appBootstrap = appBootstrap,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
        _authRepository = authRepository,
+       _userProfileRepository = userProfileRepository,
        super(AppFlowLoading()) {
     on<CheckAppFlow>(_onCheckAppFlow);
 
@@ -35,6 +39,15 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         'AppFlowBloc: Auth state changed - user: ${user?.email ?? 'null'}',
         tag: 'APP_FLOW_BLOC',
       );
+
+      // ✅ CRÍTICO: Si el usuario es null (logout), limpiar estado completo
+      if (user == null) {
+        AppLogger.info(
+          'AppFlowBloc: User is null (logout detected), clearing all state',
+          tag: 'APP_FLOW_BLOC',
+        );
+        _clearAllUserState();
+      }
 
       // Trigger app flow check when auth state changes
       add(CheckAppFlow());
@@ -177,6 +190,30 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         tag: 'APP_FLOW_BLOC',
       );
     });
+  }
+
+  /// Clear all user-related state when logging out
+  void _clearAllUserState() {
+    AppLogger.info(
+      'AppFlowBloc: Clearing all user state and cache',
+      tag: 'APP_FLOW_BLOC',
+    );
+
+    // Clear profile cache
+    try {
+      // ✅ CRÍTICO: Limpiar cache del repositorio
+      unawaited(_userProfileRepository.clearProfileCache());
+
+      AppLogger.info(
+        'AppFlowBloc: Profile cache cleared successfully',
+        tag: 'APP_FLOW_BLOC',
+      );
+    } catch (e) {
+      AppLogger.warning(
+        'AppFlowBloc: Error clearing user state: $e',
+        tag: 'APP_FLOW_BLOC',
+      );
+    }
   }
 
   @override
