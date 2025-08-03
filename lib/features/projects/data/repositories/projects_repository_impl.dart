@@ -211,4 +211,14 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
           );
         });
   }
+
+  @override
+  Future<Either<Failure, Unit>> clearLocalCache() async {
+    try {
+      await _localDataSource.clearCache();
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to clear projects cache: $e'));
+    }
+  }
 }

@@ -25,4 +25,7 @@ abstract class AudioTrackRepository {
     required ProjectId projectId,
     required String newName,
   });
+  
+  /// Delete all tracks from local cache
+  Future<Either<Failure, Unit>> deleteAllTracks();
 }

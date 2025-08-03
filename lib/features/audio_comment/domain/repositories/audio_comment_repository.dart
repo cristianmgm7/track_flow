@@ -15,4 +15,7 @@ abstract class AudioCommentRepository {
   );
 
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
+  
+  /// Delete all comments from local cache
+  Future<Either<Failure, Unit>> deleteAllComments();
 }

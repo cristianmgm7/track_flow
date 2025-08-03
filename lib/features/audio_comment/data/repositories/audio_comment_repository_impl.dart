@@ -184,6 +184,16 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Unit>> deleteAllComments() async {
+    try {
+      await _localDataSource.deleteAllComments();
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to delete all comments: $e'));
+    }
+  }
+
   // Helper method for fire-and-forget background operations
   void unawaited(Future future) {
     future.catchError((error) {

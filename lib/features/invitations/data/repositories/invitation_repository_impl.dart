@@ -409,4 +409,14 @@ class InvitationRepositoryImpl implements InvitationRepository {
       return Left(DatabaseFailure('Failed to sync invitation from remote: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, Unit>> clearCache() async {
+    try {
+      await _localDataSource.clearCache();
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to clear invitations cache: $e'));
+    }
+  }
 }

@@ -231,6 +231,16 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Unit>> deleteAllTracks() async {
+    try {
+      await localDataSource.deleteAllTracks();
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to delete all tracks: $e'));
+    }
+  }
+
   // Helper method for fire-and-forget background operations
   void unawaited(Future future) {
     future.catchError((error) {

@@ -47,4 +47,7 @@ abstract class InvitationRepository {
 
   /// Get pending invitations count for a user
   Future<Either<Failure, int>> getPendingInvitationsCount(UserId userId);
+  
+  /// Clear all invitation cache
+  Future<Either<Failure, Unit>> clearCache();
 }
