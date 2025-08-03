@@ -850,6 +850,7 @@ extension GetItInjectableX on _i1.GetIt {
               backgroundSyncCoordinator: gh<_i144.BackgroundSyncCoordinator>(),
               pendingOperationsManager: gh<_i85.PendingOperationsManager>(),
               firestore: gh<_i16.FirebaseFirestore>(),
+              sessionStorage: gh<_i89.SessionStorage>(),
             ));
     gh.lazySingleton<_i154.WatchAllProjectsUseCase>(
         () => _i154.WatchAllProjectsUseCase(

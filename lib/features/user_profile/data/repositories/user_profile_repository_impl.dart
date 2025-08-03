@@ -12,6 +12,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
@@ -19,6 +20,7 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   final UserProfileRemoteDataSource _remoteDataSource;
   final NetworkStateManager _networkStateManager;
   final FirebaseFirestore _firestore;
+  final SessionStorage _sessionStorage;
 
   UserProfileRepositoryImpl({
     required UserProfileLocalDataSource localDataSource,
@@ -27,10 +29,12 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
     required FirebaseFirestore firestore,
+    required SessionStorage sessionStorage,
   }) : _localDataSource = localDataSource,
        _remoteDataSource = remoteDataSource,
        _networkStateManager = networkStateManager,
-       _firestore = firestore;
+       _firestore = firestore,
+       _sessionStorage = sessionStorage;
 
   @override
   Future<Either<Failure, UserProfile?>> getUserProfile(UserId userId) async {
@@ -107,6 +111,25 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
 
       // CACHE-ASIDE PATTERN: Return local data immediately
       await for (final dto in _localDataSource.watchUserProfile(userId.value)) {
+        // ✅ CRITICAL: Check if we should continue emitting data
+        // If there's no session, stop the stream to prevent infinite loops
+        final currentSessionUserId = await _sessionStorage.getUserId();
+        if (currentSessionUserId == null) {
+          AppLogger.info(
+            'UserProfileRepository: No active session, stopping profile stream for userId: ${userId.value}',
+            tag: 'USER_PROFILE_REPOSITORY',
+          );
+          return; // Stop the stream completely
+        }
+
+        if (currentSessionUserId != userId.value) {
+          AppLogger.warning(
+            'UserProfileRepository: Session userId ($currentSessionUserId) != requested userId (${userId.value}), stopping stream',
+            tag: 'USER_PROFILE_REPOSITORY',
+          );
+          return; // Stop the stream completely
+        }
+
         if (dto != null) {
           // Profile exists locally, return it
           AppLogger.info(

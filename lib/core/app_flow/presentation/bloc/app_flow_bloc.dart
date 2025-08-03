@@ -19,7 +19,8 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final SessionCleanupService _sessionCleanupService;
 
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
-  bool _isSessionCleanupInProgress = false; // Prevent multiple session cleanup calls
+  bool _isSessionCleanupInProgress =
+      false; // Prevent multiple session cleanup calls
   StreamSubscription? _authStateSubscription;
 
   AppFlowBloc({
@@ -47,7 +48,8 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
           'AppFlowBloc: User is null (logout detected), clearing all state',
           tag: 'APP_FLOW_BLOC',
         );
-        _clearAllUserState();
+        // ✅ FIXED: Delay cleanup to ensure all BLoCs are registered
+        _scheduleDelayedCleanup();
       } else if (user == null && _isSessionCleanupInProgress) {
         AppLogger.info(
           'AppFlowBloc: Session cleanup already in progress, skipping duplicate cleanup call',
@@ -201,8 +203,8 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     });
   }
 
-  /// Clear all user-related state when logging out
-  void _clearAllUserState() {
+  /// Schedule delayed cleanup to ensure all BLoCs are registered
+  void _scheduleDelayedCleanup() {
     if (_isSessionCleanupInProgress) {
       AppLogger.info(
         'AppFlowBloc: Session cleanup already in progress, skipping duplicate call',
@@ -212,7 +214,20 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
 
     _isSessionCleanupInProgress = true;
-    
+
+    AppLogger.info(
+      'AppFlowBloc: Scheduling delayed cleanup to ensure BLoC registration',
+      tag: 'APP_FLOW_BLOC',
+    );
+
+    // Delay cleanup to ensure all BLoCs are registered
+    Future.delayed(Duration(milliseconds: 500), () {
+      _clearAllUserState();
+    });
+  }
+
+  /// Clear all user-related state when logging out
+  void _clearAllUserState() {
     AppLogger.info(
       'AppFlowBloc: Starting comprehensive user state cleanup',
       tag: 'APP_FLOW_BLOC',
@@ -221,24 +236,29 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     // Use comprehensive session cleanup service
     try {
       // ✅ ENHANCED: Use comprehensive cleanup service
-      unawaited(_sessionCleanupService.clearAllUserData().then((result) {
-        result.fold(
-          (failure) {
-            AppLogger.warning(
-              'AppFlowBloc: Session cleanup failed: ${failure.message}',
-              tag: 'APP_FLOW_BLOC',
-            );
-          },
-          (_) {
-            AppLogger.info(
-              'AppFlowBloc: Comprehensive session cleanup completed successfully',
-              tag: 'APP_FLOW_BLOC',
-            );
-          },
-        );
-      }).whenComplete(() {
-        _isSessionCleanupInProgress = false;
-      }));
+      unawaited(
+        _sessionCleanupService
+            .clearAllUserData()
+            .then((result) {
+              result.fold(
+                (failure) {
+                  AppLogger.warning(
+                    'AppFlowBloc: Session cleanup failed: ${failure.message}',
+                    tag: 'APP_FLOW_BLOC',
+                  );
+                },
+                (_) {
+                  AppLogger.info(
+                    'AppFlowBloc: Comprehensive session cleanup completed successfully',
+                    tag: 'APP_FLOW_BLOC',
+                  );
+                },
+              );
+            })
+            .whenComplete(() {
+              _isSessionCleanupInProgress = false;
+            }),
+      );
     } catch (e) {
       _isSessionCleanupInProgress = false;
       AppLogger.warning(
