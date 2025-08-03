@@ -28,9 +28,4 @@ class CheckProfileCompleteness extends UserProfileEvent {
   CheckProfileCompleteness({this.userId});
 }
 
-class GetCurrentUserData extends UserProfileEvent {}
-
-class DiagnoseProfileState extends UserProfileEvent {
-  final String? userId;
-  DiagnoseProfileState({this.userId});
-}
+class GetProfileCreationData extends UserProfileEvent {}

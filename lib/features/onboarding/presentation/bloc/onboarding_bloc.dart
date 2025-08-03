@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_id_usecase.dart';
+import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase.dart';
 import 'package:trackflow/features/onboarding/domain/onboarding_usacase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'onboarding_event.dart';
@@ -9,13 +9,13 @@ import 'onboarding_state.dart';
 @injectable
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   final OnboardingUseCase _onboardingUseCase;
-  final GetCurrentUserIdUseCase _getCurrentUserIdUseCase;
+  final GetCurrentUserUseCase _getCurrentUserUseCase;
 
   OnboardingBloc({
     required OnboardingUseCase onboardingUseCase,
-    required GetCurrentUserIdUseCase getCurrentUserIdUseCase,
+    required GetCurrentUserUseCase getCurrentUserUseCase,
   }) : _onboardingUseCase = onboardingUseCase,
-       _getCurrentUserIdUseCase = getCurrentUserIdUseCase,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
        super(OnboardingInitial()) {
     on<CheckOnboardingStatus>(_onCheckOnboardingStatus);
     on<MarkOnboardingCompleted>(_onMarkOnboardingCompleted);
@@ -36,28 +36,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(OnboardingLoading());
 
     try {
-      // Get current user ID
-      final userIdResult = await _getCurrentUserIdUseCase();
-      final userId = await userIdResult.fold(
+      // Get current user
+      final userResult = await _getCurrentUserUseCase();
+      final user = await userResult.fold(
         (failure) async {
           AppLogger.error(
-            'OnboardingBloc: Failed to get user ID: ${failure.message}',
+            'OnboardingBloc: Failed to get user: ${failure.message}',
             tag: 'ONBOARDING_BLOC',
             error: failure,
           );
-          emit(OnboardingError('Failed to get user ID: ${failure.message}'));
+          emit(OnboardingError('Failed to get user: ${failure.message}'));
           return null;
         },
-        (userId) async {
+        (user) async {
           AppLogger.info(
-            'OnboardingBloc: Got user ID: ${userId?.value}',
+            'OnboardingBloc: Got user: ${user?.id.value}',
             tag: 'ONBOARDING_BLOC',
           );
-          return userId;
+          return user;
         },
       );
 
-      if (userId == null) {
+      if (user?.id == null) {
         AppLogger.error(
           'OnboardingBloc: No authenticated user found',
           tag: 'ONBOARDING_BLOC',
@@ -67,12 +67,12 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       }
 
       AppLogger.info(
-        'OnboardingBloc: Checking onboarding completed for user: ${userId.value}',
+        'OnboardingBloc: Checking onboarding completed for user: ${user!.id.value}',
         tag: 'ONBOARDING_BLOC',
       );
 
       final onboardingResult = await _onboardingUseCase
-          .checkOnboardingCompleted(userId.value);
+          .checkOnboardingCompleted(user.id.value);
 
       final onboardingCompleted = onboardingResult.fold(
         (failure) {
@@ -126,28 +126,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(OnboardingLoading());
 
     try {
-      // Get current user ID
-      final userIdResult = await _getCurrentUserIdUseCase();
-      final userId = await userIdResult.fold(
+      // Get current user
+      final userResult = await _getCurrentUserUseCase();
+      final user = await userResult.fold(
         (failure) async {
           AppLogger.error(
-            'OnboardingBloc: Failed to get user ID for completion: ${failure.message}',
+            'OnboardingBloc: Failed to get user for completion: ${failure.message}',
             tag: 'ONBOARDING_BLOC',
             error: failure,
           );
-          emit(OnboardingError('Failed to get user ID: ${failure.message}'));
+          emit(OnboardingError('Failed to get user: ${failure.message}'));
           return null;
         },
-        (userId) async {
+        (user) async {
           AppLogger.info(
-            'OnboardingBloc: Got user ID for completion: ${userId?.value}',
+            'OnboardingBloc: Got user for completion: ${user?.id.value}',
             tag: 'ONBOARDING_BLOC',
           );
-          return userId;
+          return user;
         },
       );
 
-      if (userId == null) {
+      if (user?.id == null) {
         AppLogger.error(
           'OnboardingBloc: No authenticated user found for completion',
           tag: 'ONBOARDING_BLOC',
@@ -157,11 +157,13 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       }
 
       AppLogger.info(
-        'OnboardingBloc: Calling onboardingCompleted for user: ${userId.value}',
+        'OnboardingBloc: Calling onboardingCompleted for user: ${user!.id.value}',
         tag: 'ONBOARDING_BLOC',
       );
 
-      final result = await _onboardingUseCase.onboardingCompleted(userId.value);
+      final result = await _onboardingUseCase.onboardingCompleted(
+        user.id.value,
+      );
       result.fold(
         (failure) {
           AppLogger.error(
@@ -220,19 +222,19 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(OnboardingLoading());
 
     try {
-      // Get current user ID
-      final userIdResult = await _getCurrentUserIdUseCase();
-      final userId = await userIdResult.fold((failure) async {
+      // Get current user
+      final userResult = await _getCurrentUserUseCase();
+      final user = await userResult.fold((failure) async {
         AppLogger.error(
-          'OnboardingBloc: Failed to get user ID for reset: ${failure.message}',
+          'OnboardingBloc: Failed to get user for reset: ${failure.message}',
           tag: 'ONBOARDING_BLOC',
           error: failure,
         );
-        emit(OnboardingError('Failed to get user ID: ${failure.message}'));
+        emit(OnboardingError('Failed to get user: ${failure.message}'));
         return null;
-      }, (userId) async => userId);
+      }, (user) async => user);
 
-      if (userId == null) {
+      if (user?.id == null) {
         AppLogger.error(
           'OnboardingBloc: No authenticated user found for reset',
           tag: 'ONBOARDING_BLOC',
@@ -241,7 +243,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         return;
       }
 
-      final result = await _onboardingUseCase.resetOnboarding(userId.value);
+      final result = await _onboardingUseCase.resetOnboarding(user!.id.value);
       result.fold(
         (failure) {
           AppLogger.error(

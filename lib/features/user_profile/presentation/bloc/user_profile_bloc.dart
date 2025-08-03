@@ -12,7 +12,6 @@ import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 
 @injectable
 class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
@@ -34,8 +33,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     on<CreateUserProfile>(_onCreateUserProfile);
     on<ClearUserProfile>(_onClearUserProfile);
     on<CheckProfileCompleteness>(_onCheckProfileCompleteness);
-    on<GetCurrentUserData>(_onGetCurrentUserData);
-    on<DiagnoseProfileState>(_onDiagnoseProfileState);
+    on<GetProfileCreationData>(_onGetProfileCreationData);
   }
 
   Future<void> _onWatchUserProfile(
@@ -213,7 +211,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     _profileSubscription = null;
 
     // Limpiar cualquier estado residual
-    emit(UserProfileInitial());
+    add(ClearUserProfile());
 
     AppLogger.info(
       'UserProfileBloc: All user profile data cleared successfully',
@@ -243,14 +241,13 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     }
   }
 
-  Future<void> _onGetCurrentUserData(
-    GetCurrentUserData event,
+  Future<void> _onGetProfileCreationData(
+    GetProfileCreationData event,
     Emitter<UserProfileState> emit,
   ) async {
     emit(UserProfileLoading());
 
-    // ✅ USAR EL USE CASE CONSOLIDADO
-    final result = await getCurrentUserUseCase.getBasicData();
+    final result = await getCurrentUserUseCase.getProfileCreationData();
 
     result.fold(
       (failure) {
@@ -258,75 +255,20 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
       },
       (userData) {
         if (userData.userId != null && userData.email != null) {
+          final isGoogleUser =
+              userData.displayName != null || userData.photoUrl != null;
+
           emit(
-            UserDataLoaded(
+            ProfileCreationDataLoaded(
               userId: userData.userId!.value,
               email: userData.email!,
+              displayName: userData.displayName,
+              photoUrl: userData.photoUrl,
+              isGoogleUser: isGoogleUser,
             ),
           );
         } else {
           emit(UserDataError('User data not available'));
-        }
-      },
-    );
-  }
-
-  Future<void> _onDiagnoseProfileState(
-    DiagnoseProfileState event,
-    Emitter<UserProfileState> emit,
-  ) async {
-    AppLogger.info(
-      'UserProfileBloc: Starting profile state diagnosis',
-      tag: 'USER_PROFILE_BLOC',
-    );
-    String? userId = event.userId;
-    if (userId == null) {
-      final userDataResult = await getCurrentUserUseCase.getBasicData();
-      userDataResult.fold(
-        (failure) {
-          AppLogger.error(
-            'UserProfileBloc: Failed to get user data for diagnosis: ${failure.message}',
-            tag: 'USER_PROFILE_BLOC',
-          );
-          return;
-        },
-        (userData) {
-          userId = userData.userId?.value;
-        },
-      );
-    }
-    if (userId == null) {
-      AppLogger.error(
-        'UserProfileBloc: No userId available for diagnosis',
-        tag: 'USER_PROFILE_BLOC',
-      );
-      return;
-    }
-    AppLogger.info(
-      'UserProfileBloc: Diagnosing profile state for userId: $userId',
-      tag: 'USER_PROFILE_BLOC',
-    );
-    final existsResult = await updateUserProfileUseCase.repository
-        .profileExists(UserId.fromUniqueString(userId!));
-    existsResult.fold(
-      (failure) {
-        AppLogger.error(
-          'UserProfileBloc: Failed to check profile existence: ${failure.message}',
-          tag: 'USER_PROFILE_BLOC',
-        );
-      },
-      (exists) {
-        if (exists) {
-          AppLogger.info(
-            'UserProfileBloc: Profile exists but may not be loaded properly',
-            tag: 'USER_PROFILE_BLOC',
-          );
-          add(WatchUserProfile(userId: userId));
-        } else {
-          AppLogger.warning(
-            'UserProfileBloc: Profile does not exist - user needs to create profile',
-            tag: 'USER_PROFILE_BLOC',
-          );
         }
       },
     );

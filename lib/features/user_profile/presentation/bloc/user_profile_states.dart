@@ -89,6 +89,31 @@ class UserDataLoaded extends UserProfileState {
   List<Object?> get props => [userId, email];
 }
 
+class ProfileCreationDataLoaded extends UserProfileState {
+  final String userId;
+  final String email;
+  final String? displayName;
+  final String? photoUrl;
+  final bool isGoogleUser;
+
+  ProfileCreationDataLoaded({
+    required this.userId,
+    required this.email,
+    this.displayName,
+    this.photoUrl,
+    this.isGoogleUser = false,
+  });
+
+  @override
+  List<Object?> get props => [
+    userId,
+    email,
+    displayName,
+    photoUrl,
+    isGoogleUser,
+  ];
+}
+
 class UserDataError extends UserProfileState {
   final String message;
 
