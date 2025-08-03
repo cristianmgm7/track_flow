@@ -138,7 +138,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     emit(AuthLoading());
 
-    final result = await signOut();
+    final result = await signOut.call();
 
     result.fold(
       (failure) {
@@ -152,22 +152,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (_) {
         AppLogger.info('Sign out completed successfully', tag: 'AUTH_BLOC');
 
-        // ✅ CRÍTICO: Limpiar estado completo antes de emitir AuthInitial
-        _clearAllUserData();
-
         emit(AuthInitial());
       },
     );
-  }
-
-  /// Clear all user-related data when signing out
-  void _clearAllUserData() {
-    AppLogger.info(
-      'AuthBloc: Clearing all user data during sign out',
-      tag: 'AUTH_BLOC',
-    );
-
-    // This will be handled by the AppFlowBloc listener
-    // The AppFlowBloc will detect the auth state change and trigger a complete reset
   }
 }

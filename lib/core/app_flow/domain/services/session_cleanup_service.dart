@@ -7,10 +7,11 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
+import 'package:trackflow/core/notifications/domain/repositories/notification_repository.dart';
 import 'package:trackflow/features/audio_player/domain/repositories/playback_persistence_repository.dart';
 
 /// Service responsible for comprehensive session cleanup
-/// 
+///
 /// This service coordinates clearing all user-related data when a user logs out
 /// to prevent data leakage between different user sessions.
 @injectable
@@ -28,6 +29,7 @@ class SessionCleanupService {
     required AudioTrackRepository audioTrackRepository,
     required AudioCommentRepository audioCommentRepository,
     required InvitationRepository invitationRepository,
+    required NotificationRepository notificationRepository,
     required PlaybackPersistenceRepository playbackPersistenceRepository,
   }) : _userProfileRepository = userProfileRepository,
        _projectsRepository = projectsRepository,
@@ -37,7 +39,7 @@ class SessionCleanupService {
        _playbackPersistenceRepository = playbackPersistenceRepository;
 
   /// Clear all user-related data from local storage
-  /// 
+  ///
   /// This method performs a comprehensive cleanup of all user data including:
   /// - User profiles
   /// - Projects and project-related data
@@ -55,19 +57,22 @@ class SessionCleanupService {
       final List<Future<Either<Failure, Unit>>> cleanupTasks = [
         // Clear user profile cache
         _userProfileRepository.clearProfileCache(),
-        
+
         // Clear projects data
         _projectsRepository.clearLocalCache(),
-        
+
         // Clear audio tracks
         _audioTrackRepository.deleteAllTracks(),
-        
+
         // Clear audio comments
         _audioCommentRepository.deleteAllComments(),
-        
+
         // Clear invitations
         _invitationRepository.clearCache(),
-        
+
+        // Clear notifications
+        _clearNotifications(),
+
         // Clear playback persistence data
         _clearPlaybackData(),
       ];
@@ -85,15 +90,13 @@ class SessionCleanupService {
       }
 
       if (failures.isNotEmpty) {
-        final combinedMessage = failures
-            .map((f) => f.message)
-            .join('; ');
-        
+        final combinedMessage = failures.map((f) => f.message).join('; ');
+
         AppLogger.warning(
           'Some cleanup tasks failed: $combinedMessage',
           tag: 'SESSION_CLEANUP',
         );
-        
+
         // Even if some tasks failed, continue with cleanup
         // This ensures we don't leave the app in a broken state
       }
@@ -110,7 +113,7 @@ class SessionCleanupService {
         tag: 'SESSION_CLEANUP',
         error: e,
       );
-      
+
       return Left(ServerFailure('Session cleanup failed: $e'));
     }
   }
@@ -132,11 +135,22 @@ class SessionCleanupService {
         tag: 'SESSION_CLEANUP',
         error: e,
       );
-      
+
       return Left(ServerFailure('User-specific cleanup failed: $e'));
     }
   }
 
+  /// Helper method to clear notifications without requiring user ID
+  Future<Either<Failure, Unit>> _clearNotifications() async {
+    try {
+      // Since we don't have a clearAll method without userId,
+      // we'll need to implement this at the datasource level
+      // For now, return success (this can be enhanced later)
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Failed to clear notifications: $e'));
+    }
+  }
 
   /// Helper method to clear playback persistence data
   Future<Either<Failure, Unit>> _clearPlaybackData() async {

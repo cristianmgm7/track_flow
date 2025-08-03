@@ -974,6 +974,7 @@ extension GetItInjectableX on _i1.GetIt {
           audioTrackRepository: gh<_i158.AudioTrackRepository>(),
           audioCommentRepository: gh<_i156.AudioCommentRepository>(),
           invitationRepository: gh<_i76.InvitationRepository>(),
+          notificationRepository: gh<_i31.NotificationRepository>(),
           playbackPersistenceRepository:
               gh<_i40.PlaybackPersistenceRepository>(),
         ));
@@ -989,7 +990,7 @@ extension GetItInjectableX on _i1.GetIt {
         ));
     gh.lazySingleton<_i182.SignOutUseCase>(() => _i182.SignOutUseCase(
           gh<_i105.AuthRepository>(),
-          gh<_i150.UserProfileRepository>(),
+          gh<_i179.SessionCleanupService>(),
         ));
     gh.factory<_i183.UpdateUserProfileUseCase>(
         () => _i183.UpdateUserProfileUseCase(
@@ -1034,7 +1035,7 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i191.AppFlowBloc>(() => _i191.AppFlowBloc(
           appBootstrap: gh<_i190.AppBootstrap>(),
           backgroundSyncCoordinator: gh<_i142.BackgroundSyncCoordinator>(),
-          authRepository: gh<_i105.AuthRepository>(),
+          getAuthStateUseCase: gh<_i116.GetAuthStateUseCase>(),
           sessionCleanupService: gh<_i179.SessionCleanupService>(),
         ));
     gh.lazySingleton<_i192.AudioContextService>(
