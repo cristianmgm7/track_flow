@@ -180,12 +180,26 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       await _remote.signOut();
-      await _sessionStorage.clearUserId();
-
-      // ✅ NUEVO: Limpiar datos de Google
-      await _sessionStorage.remove('google_display_name');
-      await _sessionStorage.remove('google_photo_url');
-      await _sessionStorage.setBool('is_new_google_user', false);
+      
+      // NOTE: SessionStorage clearing is now handled by SessionCleanupService
+      // to prevent race conditions. Only ensure specific auth-related cleanup here
+      // if SessionStorage hasn't been cleared already.
+      final currentUserId = await _sessionStorage.getUserId();
+      if (currentUserId != null) {
+        AppLogger.info(
+          'SessionStorage not yet cleared, performing auth-specific cleanup',
+          tag: 'AUTH_REPOSITORY',
+        );
+        await _sessionStorage.clearUserId();
+        await _sessionStorage.remove('google_display_name');
+        await _sessionStorage.remove('google_photo_url');
+        await _sessionStorage.setBool('is_new_google_user', false);
+      } else {
+        AppLogger.info(
+          'SessionStorage already cleared by SessionCleanupService',
+          tag: 'AUTH_REPOSITORY',
+        );
+      }
 
       return const Right(unit);
     } catch (e) {

@@ -36,20 +36,67 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
     on<ClearUserProfile>(_onClearUserProfile);
     on<CheckProfileCompleteness>(_onCheckProfileCompleteness);
     on<GetProfileCreationData>(_onGetProfileCreationData);
-    
+
+    AppLogger.info(
+      'UserProfileBloc: Constructor called, registering for cleanup',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
     // Register for automatic state cleanup
     registerForCleanup();
+
+    AppLogger.info(
+      'UserProfileBloc: Registration for cleanup completed',
+      tag: 'USER_PROFILE_BLOC',
+    );
   }
 
   @override
   UserProfileState get initialState => UserProfileInitial();
+
+  @override
+  void reset() {
+    AppLogger.info(
+      'UserProfileBloc: Starting BLoC reset - canceling ${_profileSubscription != null ? "active" : "no"} subscriptions',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
+    // Cancel all active subscriptions before resetting state
+    if (_profileSubscription != null) {
+      AppLogger.info(
+        'UserProfileBloc: Canceling active profile subscription',
+        tag: 'USER_PROFILE_BLOC',
+      );
+      _profileSubscription?.cancel();
+      _profileSubscription = null;
+    } else {
+      AppLogger.warning(
+        'UserProfileBloc: No active subscription to cancel during reset',
+        tag: 'USER_PROFILE_BLOC',
+      );
+    }
+
+    // Use the parent's reset method which properly emits the initial state
+    super.reset();
+
+    AppLogger.info(
+      'UserProfileBloc: BLoC reset completed successfully - state is now ${state.runtimeType}',
+      tag: 'USER_PROFILE_BLOC',
+    );
+  }
 
   Future<void> _onWatchUserProfile(
     WatchUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
     AppLogger.info(
-      'UserProfileBloc: Starting to watch user profile - userId: ${event.userId}',
+      'UserProfileBloc: WatchUserProfile event received - userId: ${event.userId} - current state: ${state.runtimeType}',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
+    // Debug: Print stack trace to see what's calling this
+    AppLogger.info(
+      'UserProfileBloc: WatchUserProfile called from: ${StackTrace.current.toString().split('\n').take(5).join('\n')}',
       tag: 'USER_PROFILE_BLOC',
     );
 

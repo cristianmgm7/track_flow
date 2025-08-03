@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_comment/domain/repositories/audio_comme
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:trackflow/features/audio_player/domain/repositories/playback_persistence_repository.dart';
 import 'package:trackflow/core/app_flow/domain/services/bloc_state_cleanup_service.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 
 /// Service responsible for comprehensive session cleanup
 ///
@@ -23,6 +24,10 @@ class SessionCleanupService {
   final InvitationRepository _invitationRepository;
   final PlaybackPersistenceRepository _playbackPersistenceRepository;
   final BlocStateCleanupService _blocStateCleanupService;
+  final SessionStorage _sessionStorage;
+  
+  // Prevent multiple concurrent cleanup operations
+  bool _isCleanupInProgress = false;
 
   SessionCleanupService({
     required UserProfileRepository userProfileRepository,
@@ -32,13 +37,15 @@ class SessionCleanupService {
     required InvitationRepository invitationRepository,
     required PlaybackPersistenceRepository playbackPersistenceRepository,
     required BlocStateCleanupService blocStateCleanupService,
+    required SessionStorage sessionStorage,
   }) : _userProfileRepository = userProfileRepository,
        _projectsRepository = projectsRepository,
        _audioTrackRepository = audioTrackRepository,
        _audioCommentRepository = audioCommentRepository,
        _invitationRepository = invitationRepository,
        _playbackPersistenceRepository = playbackPersistenceRepository,
-       _blocStateCleanupService = blocStateCleanupService;
+       _blocStateCleanupService = blocStateCleanupService,
+       _sessionStorage = sessionStorage;
 
   /// Clear all user-related data from local storage
   ///
@@ -50,20 +57,53 @@ class SessionCleanupService {
   /// - Playback state and preferences
   /// - BLoC states (reset to initial state)
   Future<Either<Failure, Unit>> clearAllUserData() async {
+    // Prevent concurrent cleanup operations
+    if (_isCleanupInProgress) {
+      AppLogger.info(
+        'Session cleanup already in progress, skipping duplicate request',
+        tag: 'SESSION_CLEANUP',
+      );
+      return const Right(unit);
+    }
+
     try {
+      _isCleanupInProgress = true;
+      
       AppLogger.info(
         'Starting comprehensive session cleanup',
         tag: 'SESSION_CLEANUP',
       );
 
-      // Step 1: Reset BLoC states first (faster operation)
+      // Step 1: Clear SessionStorage FIRST to prevent race conditions
+      AppLogger.info(
+        'Clearing SessionStorage (userId and all session data)',
+        tag: 'SESSION_CLEANUP',
+      );
+      await _sessionStorage.clearAll();
+
+      // Step 2: Clear UserProfile cache SYNCHRONOUSLY before BLoC reset
+      // This prevents widgets from finding cached profiles during rebuild
+      AppLogger.info(
+        'Clearing UserProfile cache synchronously to prevent race conditions',
+        tag: 'SESSION_CLEANUP',
+      );
+      final profileClearResult = await _userProfileRepository.clearProfileCache();
+      profileClearResult.fold(
+        (failure) => AppLogger.warning(
+          'UserProfile cache clear failed: ${failure.message}, but continuing cleanup',
+          tag: 'SESSION_CLEANUP',
+        ),
+        (_) => AppLogger.info(
+          'UserProfile cache cleared successfully',
+          tag: 'SESSION_CLEANUP',
+        ),
+      );
+
+      // Step 3: Reset BLoC states AFTER critical caches are cleared
       _blocStateCleanupService.resetAllBlocStates();
 
-      // Step 2: Clear repository data in parallel
+      // Step 4: Clear remaining repository data in parallel
       final List<Future<Either<Failure, Unit>>> cleanupTasks = [
-        // Clear user profile cache
-        _userProfileRepository.clearProfileCache(),
-
         // Clear projects data
         _projectsRepository.clearLocalCache(),
 
@@ -121,6 +161,8 @@ class SessionCleanupService {
       );
 
       return Left(ServerFailure('Session cleanup failed: $e'));
+    } finally {
+      _isCleanupInProgress = false;
     }
   }
 

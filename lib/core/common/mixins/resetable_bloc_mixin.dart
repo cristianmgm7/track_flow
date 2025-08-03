@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/common/interfaces/resetable.dart';
 import 'package:trackflow/core/app_flow/domain/services/bloc_state_cleanup_service.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Mixin that provides automatic registration and cleanup for resetable BLoCs
 /// 
@@ -30,9 +31,30 @@ mixin ResetableBlocMixin<Event, State> on BlocBase<State> implements Resetable {
   /// This should be called in the BLoC constructor after super() call.
   void registerForCleanup() {
     if (!_isRegistered) {
-      final cleanupService = sl<BlocStateCleanupService>();
-      cleanupService.registerResetable(this);
-      _isRegistered = true;
+      try {
+        final cleanupService = sl<BlocStateCleanupService>();
+        AppLogger.info(
+          'ResetableBlocMixin: Registering $runtimeType for cleanup',
+          tag: 'RESETABLE_BLOC_MIXIN',
+        );
+        cleanupService.registerResetable(this);
+        _isRegistered = true;
+        AppLogger.info(
+          'ResetableBlocMixin: Successfully registered $runtimeType for cleanup',
+          tag: 'RESETABLE_BLOC_MIXIN',
+        );
+      } catch (e) {
+        AppLogger.error(
+          'ResetableBlocMixin: Failed to register $runtimeType for cleanup: $e',
+          tag: 'RESETABLE_BLOC_MIXIN',
+          error: e,
+        );
+      }
+    } else {
+      AppLogger.warning(
+        'ResetableBlocMixin: $runtimeType already registered for cleanup',
+        tag: 'RESETABLE_BLOC_MIXIN',
+      );
     }
   }
 

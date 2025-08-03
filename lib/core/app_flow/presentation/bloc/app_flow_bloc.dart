@@ -19,6 +19,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final SessionCleanupService _sessionCleanupService;
 
   bool _isCheckingFlow = false; // Prevent multiple simultaneous checks
+  bool _isSessionCleanupInProgress = false; // Prevent multiple session cleanup calls
   StreamSubscription? _authStateSubscription;
 
   AppFlowBloc({
@@ -41,12 +42,20 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       );
 
       // ✅ CRÍTICO: Si el usuario es null (logout), limpiar estado completo
-      if (user == null) {
+      if (user == null && !_isSessionCleanupInProgress) {
         AppLogger.info(
           'AppFlowBloc: User is null (logout detected), clearing all state',
           tag: 'APP_FLOW_BLOC',
         );
         _clearAllUserState();
+      } else if (user == null && _isSessionCleanupInProgress) {
+        AppLogger.info(
+          'AppFlowBloc: Session cleanup already in progress, skipping duplicate cleanup call',
+          tag: 'APP_FLOW_BLOC',
+        );
+      } else if (user != null) {
+        // Reset session cleanup flag when user signs in
+        _isSessionCleanupInProgress = false;
       }
 
       // Trigger app flow check when auth state changes
@@ -194,6 +203,16 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
   /// Clear all user-related state when logging out
   void _clearAllUserState() {
+    if (_isSessionCleanupInProgress) {
+      AppLogger.info(
+        'AppFlowBloc: Session cleanup already in progress, skipping duplicate call',
+        tag: 'APP_FLOW_BLOC',
+      );
+      return;
+    }
+
+    _isSessionCleanupInProgress = true;
+    
     AppLogger.info(
       'AppFlowBloc: Starting comprehensive user state cleanup',
       tag: 'APP_FLOW_BLOC',
@@ -217,8 +236,11 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
             );
           },
         );
+      }).whenComplete(() {
+        _isSessionCleanupInProgress = false;
       }));
     } catch (e) {
+      _isSessionCleanupInProgress = false;
       AppLogger.warning(
         'AppFlowBloc: Error during session cleanup: $e',
         tag: 'APP_FLOW_BLOC',

@@ -14,13 +14,23 @@ class SignOutUseCase {
 
   Future<Either<Failure, Unit>> call() async {
     try {
-      // ✅ ENHANCED: Use comprehensive session cleanup before auth logout
+      AppLogger.info(
+        'Starting sign out process',
+        tag: 'SIGN_OUT_USE_CASE',
+      );
+
+      // Step 1: Comprehensive session cleanup FIRST
+      // This clears SessionStorage immediately preventing race conditions
+      AppLogger.info(
+        'Starting comprehensive session cleanup (including SessionStorage)',
+        tag: 'SIGN_OUT_USE_CASE',
+      );
+      
       final cleanupResult = await _sessionCleanupService.clearAllUserData();
       
       // Log cleanup result but don't fail logout if cleanup has issues
       cleanupResult.fold(
         (failure) {
-          // Log warning but continue with logout
           AppLogger.warning(
             'Session cleanup partially failed during manual logout: ${failure.message}',
             tag: 'SIGN_OUT_USE_CASE',
@@ -34,9 +44,26 @@ class SignOutUseCase {
         },
       );
 
-      // Perform authentication logout
-      return await _authRepository.signOut();
+      // Step 2: Perform authentication logout (Firebase only, SessionStorage already cleared)
+      AppLogger.info(
+        'Performing Firebase authentication logout',
+        tag: 'SIGN_OUT_USE_CASE',
+      );
+      
+      final authResult = await _authRepository.signOut();
+      
+      AppLogger.info(
+        'Sign out process completed successfully',
+        tag: 'SIGN_OUT_USE_CASE',
+      );
+
+      return authResult;
     } catch (e) {
+      AppLogger.error(
+        'Sign out process failed: $e',
+        tag: 'SIGN_OUT_USE_CASE',
+        error: e,
+      );
       return Left(AuthenticationFailure('Failed to sign out: $e'));
     }
   }

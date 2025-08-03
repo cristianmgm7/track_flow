@@ -26,24 +26,44 @@ class WatchUserProfileUseCase {
       id = await _sessionStorage.getUserId();
 
       if (id == null) {
-        AppLogger.warning(
-          'WatchUserProfileUseCase: No userId found in session storage',
-          tag: 'WATCH_USER_PROFILE',
-        );
-
-        // ✅ CRÍTICO: Si no hay userId, significa que el usuario no está autenticado
-        // Limpiar cualquier estado residual
         AppLogger.info(
-          'WatchUserProfileUseCase: User not authenticated, clearing profile state',
+          'WatchUserProfileUseCase: No userId found in session storage - user not authenticated',
           tag: 'WATCH_USER_PROFILE',
         );
 
-        yield Left(ServerFailure('No user found - user not authenticated'));
+        // Return null profile instead of error to prevent infinite loops
+        yield Right(null);
         return;
       }
 
       AppLogger.info(
         'WatchUserProfileUseCase: Got userId from session: $id',
+        tag: 'WATCH_USER_PROFILE',
+      );
+    } else {
+      // CRITICAL: Even when userId is explicitly provided, verify it matches current session
+      // This prevents widgets with stale userIds from loading cached profiles after logout
+      final currentSessionUserId = await _sessionStorage.getUserId();
+      if (currentSessionUserId == null) {
+        AppLogger.warning(
+          'WatchUserProfileUseCase: No current session, rejecting explicit userId: $id',
+          tag: 'WATCH_USER_PROFILE',
+        );
+        yield Right(null);
+        return;
+      }
+      
+      if (currentSessionUserId != id) {
+        AppLogger.warning(
+          'WatchUserProfileUseCase: Explicit userId ($id) does not match current session ($currentSessionUserId), rejecting request',
+          tag: 'WATCH_USER_PROFILE',
+        );
+        yield Right(null);
+        return;
+      }
+      
+      AppLogger.info(
+        'WatchUserProfileUseCase: Explicit userId validated against current session: $id',
         tag: 'WATCH_USER_PROFILE',
       );
     }
@@ -59,22 +79,32 @@ class WatchUserProfileUseCase {
       );
 
       await for (final either in stream) {
-        yield either.fold(
-          (failure) {
+        yield await either.fold(
+          (failure) async {
             AppLogger.error(
               'WatchUserProfileUseCase: Error watching profile: ${failure.message}',
               tag: 'WATCH_USER_PROFILE',
               error: failure,
             );
-            return left(failure);
+            return Left(failure);
           },
-          (profile) {
+          (profile) async {
             if (profile != null) {
               AppLogger.info(
                 'WatchUserProfileUseCase: Profile loaded successfully for userId: $id',
                 tag: 'WATCH_USER_PROFILE',
               );
             } else {
+              // Double-check if user is still authenticated before trying to sync
+              final currentUserId = await _sessionStorage.getUserId();
+              if (currentUserId == null || currentUserId != id) {
+                AppLogger.info(
+                  'WatchUserProfileUseCase: User no longer authenticated, stopping profile watch',
+                  tag: 'WATCH_USER_PROFILE',
+                );
+                return Right(null);
+              }
+
               AppLogger.warning(
                 'WatchUserProfileUseCase: No profile found for userId: $id',
                 tag: 'WATCH_USER_PROFILE',
@@ -85,7 +115,7 @@ class WatchUserProfileUseCase {
                 _trySyncFromRemote(id);
               }
             }
-            return right(profile);
+            return Right(profile);
           },
         );
       }
