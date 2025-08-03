@@ -9,9 +9,11 @@ import 'auth_event.dart';
 import 'auth_state.dart';
 import 'package:trackflow/features/auth/domain/entities/email.dart';
 import 'package:trackflow/features/auth/domain/entities/password.dart';
+import 'package:trackflow/core/common/mixins/resetable_bloc_mixin.dart';
 
 @injectable
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
+class AuthBloc extends Bloc<AuthEvent, AuthState>
+    with ResetableBlocMixin<AuthEvent, AuthState> {
   final SignInUseCase signIn;
   final SignUpUseCase signUp;
   final GoogleSignInUseCase googleSignIn;
@@ -27,7 +29,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthGoogleSignInRequested>(_onAuthGoogleSignInRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
+    
+    // Register for automatic state cleanup
+    registerForCleanup();
   }
+
+  @override
+  AuthState get initialState => AuthInitial();
 
   Future<void> _onAuthSignInRequested(
     AuthSignInRequested event,

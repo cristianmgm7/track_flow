@@ -25,7 +25,7 @@ class SessionCleanupService {
   final PlaybackPersistenceRepository _playbackPersistenceRepository;
   final BlocStateCleanupService _blocStateCleanupService;
   final SessionStorage _sessionStorage;
-  
+
   // Prevent multiple concurrent cleanup operations
   bool _isCleanupInProgress = false;
 
@@ -68,7 +68,7 @@ class SessionCleanupService {
 
     try {
       _isCleanupInProgress = true;
-      
+
       AppLogger.info(
         'Starting comprehensive session cleanup',
         tag: 'SESSION_CLEANUP',
@@ -87,7 +87,8 @@ class SessionCleanupService {
         'Clearing UserProfile cache synchronously to prevent race conditions',
         tag: 'SESSION_CLEANUP',
       );
-      final profileClearResult = await _userProfileRepository.clearProfileCache();
+      final profileClearResult =
+          await _userProfileRepository.clearProfileCache();
       profileClearResult.fold(
         (failure) => AppLogger.warning(
           'UserProfile cache clear failed: ${failure.message}, but continuing cleanup',

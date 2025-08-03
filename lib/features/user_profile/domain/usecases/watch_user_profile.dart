@@ -52,7 +52,7 @@ class WatchUserProfileUseCase {
         yield Right(null);
         return;
       }
-      
+
       if (currentSessionUserId != id) {
         AppLogger.warning(
           'WatchUserProfileUseCase: Explicit userId ($id) does not match current session ($currentSessionUserId), rejecting request',
@@ -61,7 +61,7 @@ class WatchUserProfileUseCase {
         yield Right(null);
         return;
       }
-      
+
       AppLogger.info(
         'WatchUserProfileUseCase: Explicit userId validated against current session: $id',
         tag: 'WATCH_USER_PROFILE',
@@ -89,22 +89,30 @@ class WatchUserProfileUseCase {
             return Left(failure);
           },
           (profile) async {
+            // ✅ CRITICAL: Always check session before processing profile
+            final currentUserId = await _sessionStorage.getUserId();
+            if (currentUserId == null) {
+              AppLogger.info(
+                'WatchUserProfileUseCase: No active session, returning null profile',
+                tag: 'WATCH_USER_PROFILE',
+              );
+              return Right(null);
+            }
+
+            if (currentUserId != id) {
+              AppLogger.warning(
+                'WatchUserProfileUseCase: Session userId ($currentUserId) != requested userId ($id), returning null',
+                tag: 'WATCH_USER_PROFILE',
+              );
+              return Right(null);
+            }
+
             if (profile != null) {
               AppLogger.info(
                 'WatchUserProfileUseCase: Profile loaded successfully for userId: $id',
                 tag: 'WATCH_USER_PROFILE',
               );
             } else {
-              // Double-check if user is still authenticated before trying to sync
-              final currentUserId = await _sessionStorage.getUserId();
-              if (currentUserId == null || currentUserId != id) {
-                AppLogger.info(
-                  'WatchUserProfileUseCase: User no longer authenticated, stopping profile watch',
-                  tag: 'WATCH_USER_PROFILE',
-                );
-                return Right(null);
-              }
-
               AppLogger.warning(
                 'WatchUserProfileUseCase: No profile found for userId: $id',
                 tag: 'WATCH_USER_PROFILE',

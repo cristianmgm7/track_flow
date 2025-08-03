@@ -5,20 +5,20 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 /// Mixin that provides automatic registration and cleanup for resetable BLoCs
-/// 
+///
 /// This mixin simplifies the implementation of the Resetable interface by
 /// automatically registering the BLoC with the BlocStateCleanupService on
 /// creation and unregistering it on disposal.
-/// 
+///
 /// Example usage:
 /// ```dart
 /// class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
 ///     with ResetableBlocMixin<UserProfileEvent, UserProfileState> {
-///   
+///
 ///   UserProfileBloc() : super(UserProfileInitial()) {
 ///     registerForCleanup(); // Call this in constructor
 ///   }
-/// 
+///
 ///   @override
 ///   UserProfileState get initialState => UserProfileInitial();
 /// }
@@ -27,39 +27,45 @@ mixin ResetableBlocMixin<Event, State> on BlocBase<State> implements Resetable {
   bool _isRegistered = false;
 
   /// Register this BLoC for automatic state cleanup
-  /// 
+  ///
   /// This should be called in the BLoC constructor after super() call.
   void registerForCleanup() {
     if (!_isRegistered) {
       try {
-        final cleanupService = sl<BlocStateCleanupService>();
         AppLogger.info(
-          'ResetableBlocMixin: Registering $runtimeType for cleanup',
+          '🔄 ResetableBlocMixin: Attempting to register $runtimeType for cleanup',
           tag: 'RESETABLE_BLOC_MIXIN',
         );
+
+        final cleanupService = sl<BlocStateCleanupService>();
+        AppLogger.info(
+          '✅ ResetableBlocMixin: Got BlocStateCleanupService instance for $runtimeType',
+          tag: 'RESETABLE_BLOC_MIXIN',
+        );
+
         cleanupService.registerResetable(this);
         _isRegistered = true;
         AppLogger.info(
-          'ResetableBlocMixin: Successfully registered $runtimeType for cleanup',
+          '🎯 ResetableBlocMixin: Successfully registered $runtimeType for cleanup',
           tag: 'RESETABLE_BLOC_MIXIN',
         );
       } catch (e) {
         AppLogger.error(
-          'ResetableBlocMixin: Failed to register $runtimeType for cleanup: $e',
+          '❌ ResetableBlocMixin: Failed to register $runtimeType for cleanup: $e',
           tag: 'RESETABLE_BLOC_MIXIN',
           error: e,
         );
       }
     } else {
       AppLogger.warning(
-        'ResetableBlocMixin: $runtimeType already registered for cleanup',
+        '⚠️ ResetableBlocMixin: $runtimeType already registered for cleanup',
         tag: 'RESETABLE_BLOC_MIXIN',
       );
     }
   }
 
   /// The initial state that the BLoC should return to when reset
-  /// 
+  ///
   /// Subclasses must implement this to provide their initial state.
   State get initialState;
 

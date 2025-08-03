@@ -424,7 +424,7 @@ extension GetItInjectableX on _i1.GetIt {
         () => _i4.AudioPlaybackServiceImpl());
     gh.lazySingleton<_i5.AudioTrackConflictResolutionService>(
         () => _i5.AudioTrackConflictResolutionService());
-    gh.factory<_i6.BlocStateCleanupService>(
+    gh.singleton<_i6.BlocStateCleanupService>(
         () => _i6.BlocStateCleanupService());
     gh.lazySingleton<_i7.CacheMaintenanceService>(
         () => _i8.CacheMaintenanceServiceImpl());
