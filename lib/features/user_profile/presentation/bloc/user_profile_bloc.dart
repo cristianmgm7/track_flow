@@ -12,9 +12,11 @@ import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/common/mixins/resetable_bloc_mixin.dart';
 
 @injectable
-class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
+class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
+    with ResetableBlocMixin<UserProfileEvent, UserProfileState> {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
   final CheckProfileCompletenessUseCase checkProfileCompletenessUseCase;
@@ -34,7 +36,13 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState> {
     on<ClearUserProfile>(_onClearUserProfile);
     on<CheckProfileCompleteness>(_onCheckProfileCompleteness);
     on<GetProfileCreationData>(_onGetProfileCreationData);
+    
+    // Register for automatic state cleanup
+    registerForCleanup();
   }
+
+  @override
+  UserProfileState get initialState => UserProfileInitial();
 
   Future<void> _onWatchUserProfile(
     WatchUserProfile event,

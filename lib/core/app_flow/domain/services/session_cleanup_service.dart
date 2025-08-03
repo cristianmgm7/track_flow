@@ -7,8 +7,8 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
-import 'package:trackflow/core/notifications/domain/repositories/notification_repository.dart';
 import 'package:trackflow/features/audio_player/domain/repositories/playback_persistence_repository.dart';
+import 'package:trackflow/core/app_flow/domain/services/bloc_state_cleanup_service.dart';
 
 /// Service responsible for comprehensive session cleanup
 ///
@@ -22,6 +22,7 @@ class SessionCleanupService {
   final AudioCommentRepository _audioCommentRepository;
   final InvitationRepository _invitationRepository;
   final PlaybackPersistenceRepository _playbackPersistenceRepository;
+  final BlocStateCleanupService _blocStateCleanupService;
 
   SessionCleanupService({
     required UserProfileRepository userProfileRepository,
@@ -29,14 +30,15 @@ class SessionCleanupService {
     required AudioTrackRepository audioTrackRepository,
     required AudioCommentRepository audioCommentRepository,
     required InvitationRepository invitationRepository,
-    required NotificationRepository notificationRepository,
     required PlaybackPersistenceRepository playbackPersistenceRepository,
+    required BlocStateCleanupService blocStateCleanupService,
   }) : _userProfileRepository = userProfileRepository,
        _projectsRepository = projectsRepository,
        _audioTrackRepository = audioTrackRepository,
        _audioCommentRepository = audioCommentRepository,
        _invitationRepository = invitationRepository,
-       _playbackPersistenceRepository = playbackPersistenceRepository;
+       _playbackPersistenceRepository = playbackPersistenceRepository,
+       _blocStateCleanupService = blocStateCleanupService;
 
   /// Clear all user-related data from local storage
   ///
@@ -45,8 +47,8 @@ class SessionCleanupService {
   /// - Projects and project-related data
   /// - Audio tracks and comments
   /// - Invitations
-  /// - Notifications
   /// - Playback state and preferences
+  /// - BLoC states (reset to initial state)
   Future<Either<Failure, Unit>> clearAllUserData() async {
     try {
       AppLogger.info(
@@ -54,6 +56,10 @@ class SessionCleanupService {
         tag: 'SESSION_CLEANUP',
       );
 
+      // Step 1: Reset BLoC states first (faster operation)
+      _blocStateCleanupService.resetAllBlocStates();
+
+      // Step 2: Clear repository data in parallel
       final List<Future<Either<Failure, Unit>>> cleanupTasks = [
         // Clear user profile cache
         _userProfileRepository.clearProfileCache(),

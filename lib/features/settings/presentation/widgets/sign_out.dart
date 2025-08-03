@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
-import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 
@@ -49,9 +48,8 @@ class SignOut extends StatelessWidget {
               onPressed: () {
                 // Stop audio playbook before signing out
                 context.read<AudioPlayerBloc>().add(StopAudioRequested());
-                // Use AuthBloc for sign out
+                // Use AuthBloc for sign out (BLoC states will be reset automatically)
                 context.read<AuthBloc>().add(AuthSignOutRequested());
-                context.read<NavigationCubit>().reset();
               },
               child: Text("Sign Out"),
             ),
