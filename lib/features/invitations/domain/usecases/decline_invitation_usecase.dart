@@ -95,7 +95,10 @@ class DeclineInvitationUseCase {
     );
 
     projectResult.fold(
-      (failure) => AppLogger.error('Failed to get project for notification: $failure', tag: 'DeclineInvitationUseCase'),
+      (failure) => AppLogger.error(
+        'Failed to get project for notification: $failure',
+        tag: 'DeclineInvitationUseCase',
+      ),
       (project) async {
         // Get declined user profile (if it exists)
         String declinedUserName = invitation.invitedEmail;
@@ -105,7 +108,10 @@ class DeclineInvitationUseCase {
           );
 
           userProfileResult.fold(
-            (failure) => AppLogger.error('Failed to get user profile: $failure', tag: 'DeclineInvitationUseCase'),
+            (failure) => AppLogger.error(
+              'Failed to get user profile: $failure',
+              tag: 'DeclineInvitationUseCase',
+            ),
             (profile) {
               if (profile != null) {
                 declinedUserName = profile.name;
@@ -117,7 +123,7 @@ class DeclineInvitationUseCase {
         // Create notification for project owner using core notification service
         await _notificationService.createProjectUpdateNotification(
           recipientId: invitation.invitedByUserId,
-          projectId: invitation.projectId.value,
+          projectId: invitation.projectId,
           projectName: project.name.value.getOrElse(() => 'Project'),
           updateMessage: 'Invitation to $declinedUserName was declined',
         );

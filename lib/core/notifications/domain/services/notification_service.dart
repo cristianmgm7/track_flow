@@ -17,7 +17,7 @@ class NotificationService {
   Future<void> createProjectInvitationNotification({
     required UserId recipientId,
     required String invitationId,
-    required String projectId,
+    required ProjectId projectId,
     required String projectName,
     required String inviterName,
     String? inviterEmail,
@@ -29,7 +29,7 @@ class NotificationService {
       recipientId: recipientId,
       payload: {
         'invitationId': invitationId,
-        'projectId': projectId,
+        'projectId': projectId.value,
         'projectName': projectName,
         'inviterName': inviterName,
         'inviterEmail': inviterEmail,
@@ -40,7 +40,7 @@ class NotificationService {
   /// Create a collaborator joined notification
   Future<void> createCollaboratorJoinedNotification({
     required UserId recipientId,
-    required String projectId,
+    required ProjectId projectId,
     required String projectName,
     required String collaboratorName,
   }) async {
@@ -50,7 +50,7 @@ class NotificationService {
       body: '$collaboratorName joined "$projectName"',
       recipientId: recipientId,
       payload: {
-        'projectId': projectId,
+        'projectId': projectId.value,
         'projectName': projectName,
         'collaboratorName': collaboratorName,
       },
@@ -60,7 +60,7 @@ class NotificationService {
   /// Create a project update notification
   Future<void> createProjectUpdateNotification({
     required UserId recipientId,
-    required String projectId,
+    required ProjectId projectId,
     required String projectName,
     required String updateMessage,
   }) async {
@@ -70,7 +70,7 @@ class NotificationService {
       body: updateMessage,
       recipientId: recipientId,
       payload: {
-        'projectId': projectId,
+        'projectId': projectId.value,
         'projectName': projectName,
         'updateMessage': updateMessage,
       },
@@ -105,7 +105,7 @@ class NotificationService {
   /// Create an audio track upload notification
   Future<void> createAudioTrackUploadNotification({
     required UserId recipientId,
-    required String projectId,
+    required ProjectId projectId,
     required String projectName,
     required String uploaderName,
     required String trackName,
@@ -116,7 +116,7 @@ class NotificationService {
       body: '$uploaderName uploaded "$trackName" to "$projectName"',
       recipientId: recipientId,
       payload: {
-        'projectId': projectId,
+        'projectId': projectId.value,
         'projectName': projectName,
         'uploaderName': uploaderName,
         'trackName': trackName,
@@ -162,13 +162,19 @@ class NotificationService {
 
     final result = await _repository.createNotification(notification);
 
-    result.fold((failure) {
-      // Log the error for debugging
-      AppLogger.error('Failed to create notification', error: failure);
+    result.fold(
+      (failure) {
+        // Log the error for debugging
+        AppLogger.error('Failed to create notification', error: failure);
 
-      // Throw a more user-friendly exception
-      throw Exception('Unable to create notification. Please try again later.');
-    }, (notification) => AppLogger.info('Notification created: ${notification.id}'));
+        // Throw a more user-friendly exception
+        throw Exception(
+          'Unable to create notification. Please try again later.',
+        );
+      },
+      (notification) =>
+          AppLogger.info('Notification created: ${notification.id}'),
+    );
   }
 
   /// Mark a notification as read
@@ -190,7 +196,8 @@ class NotificationService {
     result.fold(
       (failure) =>
           throw Exception('Failed to mark all notifications as read: $failure'),
-      (_) => AppLogger.info('All notifications marked as read for user: $userId'),
+      (_) =>
+          AppLogger.info('All notifications marked as read for user: $userId'),
     );
   }
 

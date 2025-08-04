@@ -10,7 +10,7 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_pr
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/invitations/domain/usecases/find_user_by_email_usecase.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_by_email_usecase.dart';
 import 'manage_collaborators_event.dart';
 import 'manage_collaborators_state.dart';
@@ -200,7 +200,7 @@ class ManageCollaboratorsBloc
     Emitter<ManageCollaboratorsState> emit,
   ) async {
     final email = event.email.trim();
-    
+
     // Clear search if email is empty
     if (email.isEmpty) {
       emit(ManageCollaboratorsInitial());
@@ -210,7 +210,7 @@ class ManageCollaboratorsBloc
     emit(UserSearchLoading());
 
     try {
-      final result = await findUserByEmailUseCase(email);
+      final result = await findUserByEmailUseCase.call(email);
 
       result.fold(
         (failure) => emit(UserSearchError(failure.message)),
@@ -237,7 +237,7 @@ class ManageCollaboratorsBloc
     try {
       // Use the new use case that handles the complete flow:
       // 1. Find user by email
-      // 2. Add collaborator  
+      // 2. Add collaborator
       // 3. Create notification
       final result = await addCollaboratorByEmailUseCase(
         AddCollaboratorByEmailParams(
@@ -263,10 +263,12 @@ class ManageCollaboratorsBloc
         (project) {
           // Extract user name from email for success message
           final emailUsername = event.email.split('@').first;
-          emit(AddCollaboratorByEmailSuccess(
-            project, 
-            'Collaborator $emailUsername added successfully!'
-          ));
+          emit(
+            AddCollaboratorByEmailSuccess(
+              project,
+              'Collaborator $emailUsername added successfully!',
+            ),
+          );
           add(WatchCollaborators(project: project));
         },
       );

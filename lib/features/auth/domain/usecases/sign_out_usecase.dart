@@ -2,15 +2,13 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart';
-import 'package:trackflow/core/app_flow/domain/services/session_cleanup_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 @lazySingleton
 class SignOutUseCase {
   final AuthRepository _authRepository;
-  final SessionCleanupService _sessionCleanupService;
 
-  SignOutUseCase(this._authRepository, this._sessionCleanupService);
+  SignOutUseCase(this._authRepository);
 
   Future<Either<Failure, Unit>> call() async {
     try {

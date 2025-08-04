@@ -86,30 +86,40 @@ class AcceptInvitationUseCase {
       invitation.projectId,
     );
 
-    projectResult.fold((failure) => AppLogger.error('Failed to get project: $failure', tag: 'AcceptInvitationUseCase'), (
-      project,
-    ) async {
-      if (invitation.invitedUserId != null) {
-        // Create new collaborator with the proposed role
-        final newCollaborator = ProjectCollaborator.create(
-          userId: invitation.invitedUserId!,
-          role: invitation.proposedRole,
-        );
+    projectResult.fold(
+      (failure) => AppLogger.error(
+        'Failed to get project: $failure',
+        tag: 'AcceptInvitationUseCase',
+      ),
+      (project) async {
+        if (invitation.invitedUserId != null) {
+          // Create new collaborator with the proposed role
+          final newCollaborator = ProjectCollaborator.create(
+            userId: invitation.invitedUserId!,
+            role: invitation.proposedRole,
+          );
 
-        // Add collaborator to project using domain logic
-        final updatedProject = project.addCollaborator(newCollaborator);
+          // Add collaborator to project using domain logic
+          final updatedProject = project.addCollaborator(newCollaborator);
 
-        // Save updated project
-        final saveResult = await _projectRepository.updateProject(
-          updatedProject,
-        );
+          // Save updated project
+          final saveResult = await _projectRepository.updateProject(
+            updatedProject,
+          );
 
-        saveResult.fold(
-          (failure) => AppLogger.error('Failed to save updated project: $failure', tag: 'AcceptInvitationUseCase'),
-          (_) => AppLogger.info('Successfully added user to project', tag: 'AcceptInvitationUseCase'),
-        );
-      }
-    });
+          saveResult.fold(
+            (failure) => AppLogger.error(
+              'Failed to save updated project: $failure',
+              tag: 'AcceptInvitationUseCase',
+            ),
+            (_) => AppLogger.info(
+              'Successfully added user to project',
+              tag: 'AcceptInvitationUseCase',
+            ),
+          );
+        }
+      },
+    );
   }
 
   /// Mark invitation notifications as read
@@ -133,7 +143,10 @@ class AcceptInvitationUseCase {
     );
 
     projectResult.fold(
-      (failure) => AppLogger.error('Failed to get project for notification: $failure', tag: 'AcceptInvitationUseCase'),
+      (failure) => AppLogger.error(
+        'Failed to get project for notification: $failure',
+        tag: 'AcceptInvitationUseCase',
+      ),
       (project) async {
         if (invitation.invitedUserId != null) {
           // Get accepted user profile
@@ -149,7 +162,7 @@ class AcceptInvitationUseCase {
           // Create notification for project owner using core notification service
           await _notificationService.createCollaboratorJoinedNotification(
             recipientId: invitation.invitedByUserId,
-            projectId: invitation.projectId.value,
+            projectId: invitation.projectId,
             projectName: project.name.value.getOrElse(() => 'Project'),
             collaboratorName: acceptedUserName,
           );

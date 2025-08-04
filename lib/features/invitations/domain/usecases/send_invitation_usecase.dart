@@ -6,7 +6,7 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/invitations/domain/entities/project_invitation.dart';
 import 'package:trackflow/features/invitations/domain/repositories/invitation_repository.dart';
 import 'package:trackflow/features/invitations/domain/value_objects/send_invitation_params.dart';
-import 'package:trackflow/features/invitations/domain/usecases/find_user_by_email_usecase.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/magic_link/domain/repositories/magic_link_repository.dart';
 import 'package:trackflow/core/notifications/domain/services/notification_service.dart';
@@ -114,7 +114,7 @@ class SendInvitationUseCase {
     await _notificationService.createProjectInvitationNotification(
       recipientId: existingUser.id,
       invitationId: invitation.id.value,
-      projectId: invitation.projectId.value,
+      projectId: invitation.projectId,
       projectName: projectName,
       inviterName: inviterName,
       inviterEmail:
@@ -134,8 +134,14 @@ class SendInvitationUseCase {
     // TODO: Send email with magic link
     // This will be implemented in the email integration phase
     magicLinkResult.fold(
-      (failure) => AppLogger.error('Failed to generate magic link: $failure', tag: 'SendInvitationUseCase'),
-      (magicLink) => AppLogger.info('Magic link generated: ${magicLink.url}', tag: 'SendInvitationUseCase'),
+      (failure) => AppLogger.error(
+        'Failed to generate magic link: $failure',
+        tag: 'SendInvitationUseCase',
+      ),
+      (magicLink) => AppLogger.info(
+        'Magic link generated: ${magicLink.url}',
+        tag: 'SendInvitationUseCase',
+      ),
     );
   }
 
