@@ -64,6 +64,37 @@ class BackgroundSyncCoordinator {
     }
   }
 
+  /// Triggers only UPSTREAM sync (pending operations) without downstream
+  ///
+  /// Use this when you only need to push local changes to the server
+  /// without pulling fresh data. Much more efficient for simple operations
+  /// like creating/updating projects.
+  Future<void> triggerUpstreamSync({
+    String syncKey = 'upstream_only',
+    bool force = false,
+  }) async {
+    // Skip if sync is already in progress for this key
+    if (_ongoingSyncs.contains(syncKey) && !force) {
+      return;
+    }
+
+    // Skip if no network connection
+    if (!await _networkStateManager.isConnected) {
+      return;
+    }
+
+    // Mark this sync operation as ongoing
+    _ongoingSyncs.add(syncKey);
+
+    try {
+      // Perform only upstream sync (fire and forget)
+      unawaited(_performUpstreamSync(syncKey));
+    } catch (e) {
+      // Remove from ongoing syncs if immediate error
+      _ongoingSyncs.remove(syncKey);
+    }
+  }
+
   /// Triggers sync when network connectivity is restored
   ///
   /// This method is automatically called when the device
@@ -182,6 +213,61 @@ class BackgroundSyncCoordinator {
       );
       // TODO: Send to error monitoring service
       // ErrorMonitoringService.reportError(e, context: 'background_sync_failure', syncKey: syncKey);
+    } finally {
+      // Always remove from ongoing syncs
+      _ongoingSyncs.remove(syncKey);
+    }
+  }
+
+  /// Perform only UPSTREAM sync (pending operations)
+  ///
+  /// This method is used to push local changes to the server
+  /// without pulling fresh data.
+  Future<void> _performUpstreamSync(String syncKey) async {
+    try {
+      // Only proceed if we have good network connection
+      if (!await _networkStateManager.hasGoodConnection()) {
+        AppLogger.warning(
+          'Skipping upstream sync ($syncKey) - poor network connection',
+          tag: 'BackgroundSyncCoordinator',
+        );
+        return;
+      }
+
+      AppLogger.sync('INIT', 'Starting upstream sync only', syncKey: syncKey);
+
+      // PHASE 1: UPSTREAM SYNC - Push pending local changes first
+      // This ensures local changes are preserved before pulling fresh data
+      AppLogger.sync(
+        'UPSTREAM',
+        'Starting upstream sync (pending operations)',
+        syncKey: syncKey,
+      );
+      final upstreamStartTime = DateTime.now();
+
+      await _pendingOperationsManager.processPendingOperations();
+
+      final upstreamDuration = DateTime.now().difference(upstreamStartTime);
+      AppLogger.sync(
+        'UPSTREAM',
+        'Upstream sync completed',
+        syncKey: syncKey,
+        duration: upstreamDuration.inMilliseconds,
+      );
+      AppLogger.sync(
+        'COMPLETE',
+        'Upstream sync only completed successfully',
+        syncKey: syncKey,
+      );
+    } catch (e) {
+      // Log error but don't throw - this is background operation
+      AppLogger.error(
+        'Upstream sync failed: $e',
+        tag: 'BackgroundSyncCoordinator',
+        error: e,
+      );
+      // TODO: Send to error monitoring service
+      // ErrorMonitoringService.reportError(e, context: 'upstream_sync_failure', syncKey: syncKey);
     } finally {
       // Always remove from ongoing syncs
       _ongoingSyncs.remove(syncKey);
