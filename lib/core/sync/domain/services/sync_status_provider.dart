@@ -4,15 +4,15 @@ import 'package:trackflow/core/sync/domain/services/sync_data_manager.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 
 /// Provides read-only access to sync status for UI components
-/// 
+///
 /// This service is designed specifically for BLoCs and UI components
 /// that need to display sync status but should NOT trigger sync operations.
-/// 
+///
 /// Key responsibilities:
 /// - Expose current sync state for UI display
 /// - Stream sync state changes for reactive UI
 /// - Provide pending operations count for indicators
-/// 
+///
 /// What it does NOT do:
 /// - Trigger sync operations (that's BackgroundSyncCoordinator's job)
 /// - Handle sync logic (that's SyncDataManager/PendingOperationsManager's job)
@@ -28,7 +28,7 @@ class SyncStatusProvider {
        _pendingOperationsManager = pendingOperationsManager;
 
   /// Get the current sync state for UI display
-  /// 
+  ///
   /// This provides information about:
   /// - Whether sync is in progress
   /// - Sync progress percentage
@@ -42,7 +42,7 @@ class SyncStatusProvider {
   }
 
   /// Watch sync state changes for reactive UI updates
-  /// 
+  ///
   /// BLoCs can listen to this stream to update UI indicators:
   /// - Show/hide loading spinners
   /// - Update progress bars
@@ -52,7 +52,7 @@ class SyncStatusProvider {
   }
 
   /// Get count of pending operations for UI badges/indicators
-  /// 
+  ///
   /// Useful for showing:
   /// - "X items pending sync" messages
   /// - Offline indicator badges
@@ -62,7 +62,7 @@ class SyncStatusProvider {
   }
 
   /// Check if sync is currently active
-  /// 
+  ///
   /// Convenience method for BLoCs to quickly check sync status
   /// without having to parse the full SyncState object
   Future<bool> get isSyncing async {
@@ -71,7 +71,7 @@ class SyncStatusProvider {
   }
 
   /// Check if there are pending operations
-  /// 
+  ///
   /// Useful for showing offline indicators or "unsaved changes" warnings
   Future<bool> get hasPendingOperations async {
     final count = await getPendingOperationsCount();
@@ -79,7 +79,7 @@ class SyncStatusProvider {
   }
 
   /// Get a combined status that considers both downstream sync and pending operations
-  /// 
+  ///
   /// This provides a holistic view of sync status:
   /// - If downloading: "Syncing..."
   /// - If has pending: "X items to sync"

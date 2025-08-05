@@ -4,9 +4,9 @@ import 'package:trackflow/features/invitations/domain/usecases/accept_invitation
 import 'package:trackflow/features/invitations/domain/usecases/cancel_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/decline_invitation_usecase.dart';
 import 'package:trackflow/features/invitations/domain/usecases/send_invitation_usecase.dart';
-import 'package:trackflow/features/invitations/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/events/invitation_events.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/states/invitation_states.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/find_user_by_email_usecase.dart';
 
 @injectable
 class ProjectInvitationActorBloc

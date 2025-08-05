@@ -53,14 +53,6 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
       listener: (context, state) {
         if (state is ProjectCreatedSuccess) {
           Navigator.of(context).pop();
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Project created!'),
-                backgroundColor: AppColors.success,
-              ),
-            );
-          }
         } else if (state is ProjectsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

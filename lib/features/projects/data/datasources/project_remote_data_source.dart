@@ -153,7 +153,10 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
     String userId,
   ) async {
     try {
-      AppLogger.network('Getting projects for user: $userId', url: 'firestore://projects');
+      AppLogger.network(
+        'Getting projects for user: $userId',
+        url: 'firestore://projects',
+      );
 
       // Query for projects owned by the user
       final ownedProjectsFuture =
@@ -180,9 +183,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       final ownedProjects = results[0];
       final collaboratorProjects = results[1];
 
-      AppLogger.network(
-        'Found ${ownedProjects.docs.length} owned projects',
-      );
+      AppLogger.network('Found ${ownedProjects.docs.length} owned projects');
       AppLogger.network(
         'Found ${collaboratorProjects.docs.length} collaborator projects',
       );
@@ -207,9 +208,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         }
       }
 
-      AppLogger.network(
-        'Total unique projects found: ${allProjects.length}',
-      );
+      AppLogger.network('Total unique projects found: ${allProjects.length}');
       return Right(allProjects);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

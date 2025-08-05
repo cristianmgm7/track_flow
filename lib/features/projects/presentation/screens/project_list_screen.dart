@@ -51,67 +51,83 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       ),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [],
-        body: BlocBuilder<ProjectsBloc, ProjectsState>(
-          buildWhen:
-              (previous, current) =>
-                  current is! ProjectOperationSuccess &&
-                  current is! ProjectsError &&
-                  current is! ProjectsLoading,
-          builder: (context, state) {
-            if (state is ProjectsLoading) {
-              return const AppProjectLoadingState();
-            }
-            if (state is ProjectOperationSuccess) {
-              return AppProjectSuccessState(message: state.message);
-            }
-            if (state is ProjectsError) {
-              return AppProjectErrorState(
-                message: state.message,
-                onRetry:
-                    () => context.read<ProjectsBloc>().add(
-                      StartWatchingProjects(),
-                    ),
+        body: BlocListener<ProjectsBloc, ProjectsState>(
+          listener: (context, state) {
+            if (state is ProjectCreatedSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Project created successfully!'),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                ),
               );
             }
-            if (state is ProjectsLoaded) {
-              final projects = state.projects;
-              if (projects.isEmpty) {
-                return AppProjectEmptyState(
-                  message: 'No projects yet',
-                  subtitle: 'Create your first project to get started!',
-                  icon: Icon(
-                    Icons.folder_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  actionText: 'Create Project',
-                  onAction: _openProjectActionsSheet,
+          },
+          child: BlocBuilder<ProjectsBloc, ProjectsState>(
+            buildWhen:
+                (previous, current) =>
+                    current is! ProjectOperationSuccess &&
+                    current is! ProjectCreatedSuccess &&
+                    current is! ProjectsError,
+            builder: (context, state) {
+              if (state is ProjectsLoading) {
+                return const AppProjectLoadingState();
+              }
+              if (state is ProjectOperationSuccess) {
+                return AppProjectSuccessState(message: state.message);
+              }
+              if (state is ProjectCreatedSuccess) {
+                // Mostrar loading mientras se actualiza la lista
+                return const AppProjectLoadingState();
+              }
+              if (state is ProjectsError) {
+                return AppProjectErrorState(
+                  message: state.message,
+                  onRetry:
+                      () => context.read<ProjectsBloc>().add(
+                        StartWatchingProjects(),
+                      ),
                 );
               }
-              return AppProjectList(
-                projects:
-                    projects
-                        .map(
-                          (project) => ProjectCard(
-                            project: project,
-                            onTap:
-                                () => context.push(
-                                  AppRoutes.projectDetails.replaceAll(
-                                    ':id',
-                                    project.id.value,
+              if (state is ProjectsLoaded) {
+                final projects = state.projects;
+                if (projects.isEmpty) {
+                  return AppProjectEmptyState(
+                    message: 'No projects yet',
+                    subtitle: 'Create your first project to get started!',
+                    icon: Icon(
+                      Icons.folder_outlined,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    actionText: 'Create Project',
+                    onAction: _openProjectActionsSheet,
+                  );
+                }
+                return AppProjectList(
+                  projects:
+                      projects
+                          .map(
+                            (project) => ProjectCard(
+                              project: project,
+                              onTap:
+                                  () => context.push(
+                                    AppRoutes.projectDetails.replaceAll(
+                                      ':id',
+                                      project.id.value,
+                                    ),
+                                    extra: project,
                                   ),
-                                  extra: project,
-                                ),
-                          ),
-                        )
-                        .toList(),
+                            ),
+                          )
+                          .toList(),
+                );
+              }
+              return const AppProjectEmptyState(
+                message: 'No projects available',
+                subtitle: 'Something went wrong. Please try again.',
               );
-            }
-            return const AppProjectEmptyState(
-              message: 'No projects available',
-              subtitle: 'Something went wrong. Please try again.',
-            );
-          },
+            },
+          ),
         ),
       ),
     );
