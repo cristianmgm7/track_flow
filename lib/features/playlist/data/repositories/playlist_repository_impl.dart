@@ -60,9 +60,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'playlists_create',
         ),
       );
@@ -158,9 +158,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'playlists_update',
         ),
       );
@@ -199,9 +199,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'playlists_delete',
         ),
       );
@@ -217,7 +217,10 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   void unawaited(Future future) {
     future.catchError((error) {
       // Log error but don't propagate - this is background operation
-      AppLogger.warning('Background sync trigger failed: $error', tag: 'PlaylistRepositoryImpl');
+      AppLogger.warning(
+        'Background sync trigger failed: $error',
+        tag: 'PlaylistRepositoryImpl',
+      );
     });
   }
 }

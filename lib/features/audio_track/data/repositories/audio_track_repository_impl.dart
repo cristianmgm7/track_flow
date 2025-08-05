@@ -131,9 +131,9 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
-      // 4. Trigger background sync (no condition check - coordinator handles it)
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'audio_tracks_upload',
         ),
       );
@@ -171,9 +171,9 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'audio_tracks_delete',
         ),
       );
@@ -217,9 +217,9 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'audio_tracks_update',
         ),
       );
@@ -245,7 +245,10 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   void unawaited(Future future) {
     future.catchError((error) {
       // Log error but don't propagate - this is background operation
-      AppLogger.warning('Background sync trigger failed: $error', tag: 'AudioTrackRepositoryImpl');
+      AppLogger.warning(
+        'Background sync trigger failed: $error',
+        tag: 'AudioTrackRepositoryImpl',
+      );
     });
   }
 }

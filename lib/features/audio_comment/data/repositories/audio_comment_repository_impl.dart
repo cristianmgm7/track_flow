@@ -133,9 +133,9 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         );
       }
 
-      // 4. Trigger background sync (no condition check - coordinator handles it)
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'audio_comments_create',
         ),
       );
@@ -170,9 +170,9 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'audio_comments_delete',
         ),
       );
@@ -198,7 +198,10 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   void unawaited(Future future) {
     future.catchError((error) {
       // Log error but don't propagate - this is background operation
-      AppLogger.warning('Background sync trigger failed: $error', tag: 'AudioCommentRepositoryImpl');
+      AppLogger.warning(
+        'Background sync trigger failed: $error',
+        tag: 'AudioCommentRepositoryImpl',
+      );
     });
   }
 }
