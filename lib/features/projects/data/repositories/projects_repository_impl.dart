@@ -54,7 +54,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
       // 4. Trigger background sync (no condition check - coordinator handles it)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'projects_create',
         ),
       );
@@ -93,9 +93,9 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'projects_update',
         ),
       );
@@ -130,9 +130,9 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         );
       }
 
-      // 4. Trigger background sync
+      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
           syncKey: 'projects_delete',
         ),
       );
