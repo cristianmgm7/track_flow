@@ -5,7 +5,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_usecase.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/watch_userprofiles.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';

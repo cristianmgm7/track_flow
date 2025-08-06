@@ -337,8 +337,6 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_c
     as _i150;
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart'
     as _i151;
-import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart'
-    as _i98;
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart'
     as _i202;
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart'
@@ -405,6 +403,8 @@ import 'package:trackflow/features/user_profile/domain/usecases/update_user_prof
     as _i185;
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart'
     as _i156;
+import 'package:trackflow/features/user_profile/domain/usecases/watch_userprofiles.dart'
+    as _i98;
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart'
     as _i187;
 

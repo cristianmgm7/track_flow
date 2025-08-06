@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart';
-import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_userprofiles.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/watch_userprofiles.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
 
