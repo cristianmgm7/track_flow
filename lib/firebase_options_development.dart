@@ -59,20 +59,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
-    appId: '1:664691871365:ios:98553e3fbde162feeca3ec',
+    appId: '1:664691871365:ios:6e653980f04b2b53eca3ec',
     messagingSenderId: '664691871365',
     projectId: 'trackflow-dev',
     storageBucket: 'trackflow-dev.firebasestorage.app',
-    iosBundleId: 'com.trackflow.dev',
+    iosBundleId: 'com.crd.producer-gmail.com.trackflow.dev',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
-    appId: '1:664691871365:ios:98553e3fbde162feeca3ec',
+    appId: '1:664691871365:ios:6e653980f04b2b53eca3ec',
     messagingSenderId: '664691871365',
     projectId: 'trackflow-dev',
     storageBucket: 'trackflow-dev.firebasestorage.app',
-    iosBundleId: 'com.trackflow.dev',
+    iosBundleId: 'com.crd.producer-gmail.com.trackflow.dev',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

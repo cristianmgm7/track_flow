@@ -58,21 +58,21 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR-STAGING-IOS-API-KEY',
-    appId: 'YOUR-STAGING-IOS-APP-ID',
-    messagingSenderId: 'YOUR-STAGING-SENDER-ID',
+    apiKey: 'AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218',
+    appId: '1:221115151816:ios:314e8084da41d35e943cfd',
+    messagingSenderId: '221115151816',
     projectId: 'trackflow-staging',
     storageBucket: 'trackflow-staging.firebasestorage.app',
-    iosBundleId: 'com.trackflow.staging',
+    iosBundleId: 'com.crd.producer-gmail.com.trackflow.staging',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'YOUR-STAGING-IOS-API-KEY',
-    appId: 'YOUR-STAGING-IOS-APP-ID',
-    messagingSenderId: 'YOUR-STAGING-SENDER-ID',
+    apiKey: 'AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218',
+    appId: '1:221115151816:ios:314e8084da41d35e943cfd',
+    messagingSenderId: '221115151816',
     projectId: 'trackflow-staging',
     storageBucket: 'trackflow-staging.firebasestorage.app',
-    iosBundleId: 'com.trackflow.staging',
+    iosBundleId: 'com.crd.producer-gmail.com.trackflow.staging',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

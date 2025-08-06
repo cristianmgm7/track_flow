@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyDZOHTnrld_8Egbk1l0hXc5jA6PgjIU_ek</string>
+	<string>AIzaSyB7tKnuDS228N60cQfTR8ZJ33LorXajj7Q</string>
 	<key>GCM_SENDER_ID</key>
-	<string>411076004525</string>
+	<string>192570465818</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.trackflow</string>
+	<string>com.crd.producer-gmail.com.trackflow</string>
 	<key>PROJECT_ID</key>
-	<string>track-flow-8e1c0</string>
+	<string>trackflow-prod</string>
 	<key>STORAGE_BUCKET</key>
-	<string>track-flow-8e1c0.firebasestorage.app</string>
+	<string>trackflow-prod.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:411076004525:ios:3ecff2d0ed586e9ad55424</string>
+	<string>1:192570465818:ios:3ab55abc78673b75297ba3</string>
 </dict>
 </plist>
