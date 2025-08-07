@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class AppColors {
   static const Color background = Color(0xFF1E1E1E); // Fondo general
   static const Color surface = Color.fromARGB(255, 26, 26, 26); // Cards, modals
-  static const Color primary = Color.fromARGB(
-    255,
+  static const Color primary = Color.fromRGBO(
     93,
     93,
     219,
+    1,
   ); // Verde ChatGPT (acento opcional)
   static const Color onPrimary = Colors.white;
   static const Color textPrimary = Color(0xFFEFEFEF); // Texto principal

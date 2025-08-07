@@ -1,7 +1,7 @@
 # TrackFlow 🎵
 
 <div align="center">
-  <img src="assets/images/logo.png" alt="TrackFlow Logo" width="200"/>
+  <img src="assets/logo/trackflow_prod.jpg" alt="TrackFlow Logo" width="200"/>
   
   [![Flutter](https://img.shields.io/badge/Flutter-3.24.3-blue.svg)](https://flutter.dev)
   [![Firebase](https://img.shields.io/badge/Firebase-4.0.0-orange.svg)](https://firebase.google.com)
@@ -19,17 +19,20 @@ TrackFlow is a modern, collaborative audio platform built for music creators, pr
 **🎉 Ready for Production:** Complete CI/CD pipeline with GitHub Actions, 3-environment setup (dev/staging/prod), Firebase integration, and automated distribution to testers.
 
 ### 🎯 **Core Mission**
+
 Empowering music creators to collaborate seamlessly through advanced audio features, real-time feedback systems, and permission-based project management, while maintaining professional-grade audio quality and workflow efficiency.
 
 ## ✨ Features
 
 ### 🔐 **Advanced Authentication & Security**
+
 - Multi-provider authentication (Email/Password, Google Sign-In)
 - Role-based access control (RBAC) with granular permissions
 - Active domain security patterns for project isolation
 - Firebase Authentication with secure session management
 
 ### 🎵 **Professional Audio Collaboration**
+
 - **Real-time Audio Processing**: High-quality recording and playback
 - **Audio Waveform Visualization**: Interactive audio timeline with visual feedback
 - **Time-stamped Comments**: Precise feedback system on specific audio segments
@@ -37,13 +40,15 @@ Empowering music creators to collaborate seamlessly through advanced audio featu
 - **Multi-format Support**: Comprehensive audio file handling
 
 ### 👥 **Smart Project Management**
+
 - **Permission-based Collaboration**: Owner, Admin, Editor, Viewer roles
-- **Real-time Sync**: Live project updates across all devices  
+- **Real-time Sync**: Live project updates across all devices
 - **Magic Link Sharing**: Secure project invitations via Firebase Dynamic Links
 - **Offline-first Architecture**: Local caching with automatic sync
 - **Creative Role Tracking**: Producer, songwriter, mixing engineer profiles
 
 ### 🏗️ **Enterprise-Grade Architecture**
+
 - **Domain-Driven Design**: Rich domain models with business logic encapsulation
 - **Clean Architecture**: Clear separation of concerns across layers
 - **Functional Error Handling**: Type-safe error propagation with Either monads
@@ -53,10 +58,12 @@ Empowering music creators to collaborate seamlessly through advanced audio featu
 ## 🛠 Technical Stack
 
 ### **Core Framework & Language**
+
 - **Flutter SDK** ^3.7.2 - Cross-platform development framework
 - **Dart** ^3.7.2 - Primary programming language
 
 ### **Architecture & Design Patterns**
+
 - **Domain-Driven Design (DDD)** - Rich domain modeling with ubiquitous language
 - **Clean Architecture** - Layered architecture with dependency inversion
 - **BLoC Pattern** - Reactive state management with business logic separation
@@ -64,11 +71,13 @@ Empowering music creators to collaborate seamlessly through advanced audio featu
 - **Active Domain Model** - Domain entities with embedded business logic
 
 ### **State Management & Reactive Programming**
+
 - **flutter_bloc** ^8.1.4 - BLoC state management implementation
 - **rxdart** ^0.28.0 - Reactive extensions for Dart streams
 - **equatable** ^2.0.5 - Value equality for immutable objects
 
 ### **Backend Services (Firebase)**
+
 - **Firebase Core** ^3.13.0 - Firebase SDK foundation
 - **Firebase Auth** ^5.5.3 - Authentication & user management
 - **Cloud Firestore** ^5.6.7 - NoSQL document database with real-time sync
@@ -76,6 +85,7 @@ Empowering music creators to collaborate seamlessly through advanced audio featu
 - **Firebase Dynamic Links** ^6.1.5 - Deep linking for project sharing
 
 ### **Audio Processing & Media**
+
 - **just_audio** ^0.10.4 - Professional audio playback engine
 - **audio_session** ^0.1.16 - Audio session management
 - **audio_service** ^0.18.10 - Background audio processing
@@ -83,26 +93,31 @@ Empowering music creators to collaborate seamlessly through advanced audio featu
 - **audio_waveforms** ^1.3.0 - Real-time waveform visualization
 
 ### **Local Storage & Caching**
+
 - **Isar Database** ^3.1.0+1 - High-performance NoSQL local database
 - **SharedPreferences** ^2.2.2 - Key-value storage for user preferences
 - **Path Provider** ^2.1.2 - File system path management
 
 ### **Dependency Injection & Code Generation**
+
 - **get_it** ^8.0.3 - Service locator pattern implementation
 - **injectable** ^2.1.2 - Dependency injection with code generation
 - **build_runner** ^2.4.8 - Dart code generation tool
 
 ### **Functional Programming & Error Handling**
+
 - **dartz** ^0.10.1 - Functional programming utilities (Either, Option monads)
 - **Failure Types** - Custom error hierarchy with domain-specific failures
 
 ### **Testing & Quality Assurance**
+
 - **flutter_test** - Unit testing framework
 - **bloc_test** ^9.1.6 - BLoC testing utilities
 - **mockito** ^5.4.4 - Mock object generation for testing
 - **fake_cloud_firestore** ^3.1.0 - Firebase testing utilities
 
 ### **UI/UX & Navigation**
+
 - **go_router** ^13.2.0 - Declarative routing with type safety
 - **google_fonts** ^6.1.0 - Typography system
 - **flutter_slidable** ^3.0.0 - Interactive list components
@@ -120,7 +135,7 @@ graph TB
     APP --> DOMAIN[🏛️ Domain Layer]
     APP --> DATA[💾 Data Layer]
     DATA --> EXT[🌐 External Layer]
-    
+
     UI -.-> |"BLoC Events"| APP
     APP -.-> |"BLoC States"| UI
     DOMAIN -.-> |"Repository Contracts"| DATA
@@ -130,13 +145,14 @@ graph TB
 ### **🏛️ Domain-Driven Design Implementation**
 
 #### **Rich Domain Models with Business Logic**
+
 ```dart
 // Domain Entity with Embedded Business Logic
 class Project extends AggregateRoot<ProjectId> {
   final ProjectName name;
   final UserId ownerId;
   final List<ProjectCollaborator> collaborators;
-  
+
   // Domain methods enforce business rules
   Project addCollaborator({
     required UserId requester,
@@ -144,28 +160,29 @@ class Project extends AggregateRoot<ProjectId> {
     required ProjectRole role,
   }) {
     final requesterCollaborator = _findCollaborator(requester);
-    
+
     if (!requesterCollaborator.hasPermission(ProjectPermission.addCollaborator)) {
       throw ProjectPermissionException();
     }
-    
+
     // Business logic implementation...
   }
 }
 ```
 
 #### **Active Domain Patterns for Permission Management**
+
 ```dart
 // Permission-based Active Domain Model
 class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
   final UserId userId;
   final ProjectRole role;
   final List<ProjectPermission> specificPermissions;
-  
+
   // Domain logic for permission checking
   bool hasPermission(ProjectPermission permission) {
     if (specificPermissions.contains(permission)) return true;
-    
+
     switch (role.value) {
       case ProjectRoleType.owner:
         return true; // Full access
@@ -238,6 +255,7 @@ lib/
 ### **🔄 Data Flow Architecture**
 
 #### **Command Flow (Write Operations)**
+
 ```mermaid
 sequenceDiagram
     participant UI as 🎨 UI Widget
@@ -260,6 +278,7 @@ sequenceDiagram
 ```
 
 #### **Query Flow (Read Operations)**
+
 ```mermaid
 sequenceDiagram
     participant UI as 🎨 UI Widget
@@ -272,16 +291,16 @@ sequenceDiagram
     UI->>Bloc: Request Data
     Bloc->>UseCase: Get Data
     UseCase->>Repo: Query Repository
-    
+
     Repo->>Local: Check Local Cache (Isar)
     Local-->>Repo: Cached Data
-    
+
     alt Cache Miss or Stale
         Repo->>Remote: Fetch Remote Data
         Remote-->>Repo: Fresh Data
         Repo->>Local: Update Cache
     end
-    
+
     Repo-->>UseCase: Domain Entity
     UseCase-->>Bloc: Result
     Bloc-->>UI: Update State
@@ -291,18 +310,19 @@ sequenceDiagram
 
 TrackFlow is configured with **3 professional environments**:
 
-| Environment | Package ID | Firebase Project | Usage |
-|-------------|------------|------------------|-------|
-| 🏠 **Development** | `com.trackflow.dev` | `trackflow-dev` | Local development & debugging |
-| 🧪 **Staging** | `com.trackflow.staging` | `trackflow-staging` | Beta testing with testers |
-| 🚀 **Production** | `com.trackflow` | `trackflow-prod` | Live users in app stores |
+| Environment        | Package ID              | Firebase Project    | Usage                         |
+| ------------------ | ----------------------- | ------------------- | ----------------------------- |
+| 🏠 **Development** | `com.trackflow.dev`     | `trackflow-dev`     | Local development & debugging |
+| 🧪 **Staging**     | `com.trackflow.staging` | `trackflow-staging` | Beta testing with testers     |
+| 🚀 **Production**  | `com.trackflow`         | `trackflow-prod`    | Live users in app stores      |
 
 ### **Running Different Flavors:**
+
 ```bash
 # Development (with full logging)
 ./scripts/run_flavors.sh development debug
 
-# Staging (for beta testers)  
+# Staging (for beta testers)
 ./scripts/run_flavors.sh staging debug
 
 # Production (no logs, store-ready)
@@ -329,7 +349,7 @@ TrackFlow is configured with **3 professional environments**:
 ### Prerequisites
 
 - Flutter SDK (^3.24.3)
-- Dart SDK  
+- Dart SDK
 - Firebase CLI
 - iOS Simulator (for iOS development)
 - Android Studio (for Android development)
@@ -339,7 +359,7 @@ TrackFlow is configured with **3 professional environments**:
 > **👉 For complete setup instructions, see [`docs/`](docs/) folder with comprehensive guides:**
 
 - 📋 **[Complete Overview](docs/RESUMEN_COMPLETO.md)** - Full project context
-- ⚡ **[Quick Commands](docs/COMANDOS_RAPIDOS.md)** - Daily development commands  
+- ⚡ **[Quick Commands](docs/COMANDOS_RAPIDOS.md)** - Daily development commands
 - 🤖 **[Automated Workflow](docs/WORKFLOW_AUTOMATIZADO.md)** - How automation works
 - 🔥 **[Firebase Setup](docs/development/FIREBASE_PASO_A_PASO.md)** - Step-by-step Firebase config
 - ⚙️ **[GitHub Actions](docs/workflows/GUIA_GITHUB_ACTIONS.md)** - CI/CD configuration
@@ -348,6 +368,7 @@ TrackFlow is configured with **3 professional environments**:
 ### **Quick Start:**
 
 1. **Clone and setup:**
+
    ```bash
    git clone https://github.com/cristianmgm7/track_flow.git
    cd trackflow
@@ -355,11 +376,13 @@ TrackFlow is configured with **3 professional environments**:
    ```
 
 2. **Generate code:**
+
    ```bash
    flutter packages pub run build_runner build --delete-conflicting-outputs
    ```
 
 3. **Run development flavor:**
+
    ```bash
    ./scripts/run_flavors.sh development debug
    ```
@@ -426,6 +449,7 @@ samples, guidance on mobile development, and a full API reference.
 TrackFlow implements sophisticated **Active Domain Patterns** for permission management, where domain entities encapsulate not just data but also the business rules that govern access control.
 
 #### **Role-Based Access Control (RBAC)**
+
 ```dart
 enum ProjectPermission {
   editProject, deleteProject, addCollaborator, removeCollaborator,
@@ -442,6 +466,7 @@ enum ProjectRoleType {
 ```
 
 #### **Domain-Driven Permission Enforcement**
+
 The permission system is embedded directly in the domain entities, ensuring business rules are enforced at the domain level rather than in the UI or application layer:
 
 ```dart
@@ -455,7 +480,7 @@ Project updateProject({required UserId requester, ProjectName? newName}) {
   if (!collaborator.hasPermission(ProjectPermission.editProject)) {
     throw ProjectPermissionException('User lacks edit permissions');
   }
-  
+
   return copyWith(name: newName, updatedAt: DateTime.now());
 }
 ```
@@ -463,12 +488,14 @@ Project updateProject({required UserId requester, ProjectName? newName}) {
 ### **🛡️ Security Architecture**
 
 #### **Domain-Level Security**
+
 - **Entity-Based Access Control**: Permissions are checked within domain entities
 - **Aggregate Boundaries**: Security rules are enforced at aggregate roots
 - **Domain Exceptions**: Security violations throw domain-specific exceptions
 - **Type-Safe IDs**: Strongly-typed identifiers prevent ID confusion
 
 #### **Infrastructure Security**
+
 - **Firebase Security Rules**: Server-side validation of permissions
 - **Authentication States**: Reactive authentication state management
 - **Session Management**: Secure user session handling with automatic renewal
@@ -476,6 +503,7 @@ Project updateProject({required UserId requester, ProjectName? newName}) {
 ### **📊 Error Handling Strategy**
 
 #### **Functional Error Handling with Either Monads**
+
 ```dart
 // Repository returns Either<Failure, Success> for type-safe error handling
 Future<Either<Failure, Project>> createProject(Project project) async {
@@ -495,6 +523,7 @@ Future<Either<Failure, Project>> createProject(Project project) async {
 ```
 
 #### **Domain-Specific Failure Types**
+
 ```dart
 abstract class Failure extends Equatable {
   final String message;
@@ -511,12 +540,14 @@ class AuthenticationFailure extends Failure { /* ... */ }
 ### **🔄 Real-time Collaboration Architecture**
 
 #### **Event-Driven Real-time Updates**
+
 - **Firestore Streams**: Real-time document synchronization
 - **Local Cache First**: Offline-first with automatic sync
 - **Conflict Resolution**: Last-write-wins with user notification
 - **Optimistic Updates**: Immediate UI feedback with rollback capability
 
 #### **Collaborative Features Implementation**
+
 - **Real-time Project Updates**: Live collaboration on project changes
 - **Time-stamped Comments**: Precise feedback on audio segments
 - **Permission-aware UI**: Dynamic UI based on user permissions
@@ -527,6 +558,7 @@ class AuthenticationFailure extends Failure { /* ... */ }
 ## 📋 Development Best Practices
 
 ### **Domain-Driven Design Principles**
+
 1. **Ubiquitous Language**: Consistent terminology across codebase and domain
 2. **Bounded Contexts**: Clear feature boundaries with minimal coupling
 3. **Rich Domain Models**: Business logic embedded in domain entities
@@ -534,12 +566,14 @@ class AuthenticationFailure extends Failure { /* ... */ }
 5. **Domain Services**: Complex operations that don't belong to single entities
 
 ### **Clean Architecture Guidelines**
+
 1. **Dependency Inversion**: Domain layer independent of external concerns
 2. **Single Responsibility**: Each layer has distinct responsibilities
 3. **Interface Segregation**: Small, focused repository interfaces
 4. **Dependency Injection**: Loose coupling through service locator pattern
 
 ### **Code Quality Standards**
+
 - **Type Safety**: Extensive use of value objects and strong typing
 - **Immutability**: Immutable domain entities with copy methods
 - **Error Handling**: Comprehensive error handling with Either types
@@ -553,6 +587,7 @@ class AuthenticationFailure extends Failure { /* ... */ }
 ### **Quick Start Guide**
 
 1. **Clone and Setup**
+
 ```bash
 git clone https://github.com/cristianmgm7/track_flow.git
 cd trackflow
@@ -560,17 +595,20 @@ flutter pub get
 ```
 
 2. **Generate Code**
+
 ```bash
 flutter packages pub run build_runner build --delete-conflicting-outputs
 ```
 
 3. **Firebase Configuration**
+
 - Create Firebase project at [Firebase Console](https://console.firebase.google.com)
 - Enable Authentication, Firestore, and Storage
 - Download configuration files (`google-services.json`, `GoogleService-Info.plist`)
 - Add files to respective platform directories
 
 4. **Run Application**
+
 ```bash
 flutter run
 ```
@@ -578,6 +616,7 @@ flutter run
 ### **Development Workflow**
 
 #### **Adding New Features**
+
 Follow the established patterns documented in `.claude/commands/datasource_best_practices.md`:
 
 ```bash
@@ -586,6 +625,7 @@ Follow the established patterns documented in `.claude/commands/datasource_best_
 ```
 
 #### **Code Generation Commands**
+
 ```bash
 # Dependency injection
 flutter packages pub run build_runner build
@@ -598,11 +638,12 @@ flutter packages pub run build_runner clean
 ```
 
 #### **Testing Strategy**
+
 ```bash
 # Unit tests
 flutter test
 
-# Integration tests  
+# Integration tests
 flutter test integration_test/
 
 # Widget tests

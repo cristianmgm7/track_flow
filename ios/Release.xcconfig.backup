@@ -7,6 +7,3 @@ DISPLAY_NAME = TrackFlow Dev
 
 // Firebase configuration file
 FIREBASE_CONFIG_FILE = GoogleService-Info-Dev.plist
-
-// App Icon Configuration
-ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Dev
