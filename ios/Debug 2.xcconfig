@@ -1,0 +1,9 @@
+#include "Generated.xcconfig"
+#include "../../Flutter/Debug.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.crd.producer-gmail.com.trackflow.staging
+PRODUCT_NAME = TrackFlow Staging
+DISPLAY_NAME = TrackFlow Staging
+
+// Firebase configuration file
+FIREBASE_CONFIG_FILE = GoogleService-Info-Staging.plist
