@@ -28,33 +28,25 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
 
     emit(
       ProjectDetailState.initial().copyWith(
-        project: event.project,
+        isLoadingProject: true,
         isLoadingTracks: true,
         isLoadingCollaborators: true,
       ),
     );
 
-    final currentProjectId = event.project.id.value;
+    final currentProjectId = event.projectId.value;
 
     await emit.onEach<Either<Failure, ProjectDetailBundle>>(
-      watchProjectDetail
-          .call(
-            projectId: currentProjectId,
-            collaboratorIds:
-                event.project.collaborators.map((e) => e.userId.value).toList(),
-          )
-          .takeWhile(
-            (_) =>
-                // Continue stream only if this is still the current project
-                state.project?.id.value == currentProjectId,
-          ),
+      watchProjectDetail.call(projectId: currentProjectId),
       onData: (either) {
         either.fold(
           (failure) {
             emit(
               state.copyWith(
+                isLoadingProject: false,
                 isLoadingTracks: false,
                 isLoadingCollaborators: false,
+                projectError: failure.message,
                 tracksError: failure.message,
                 collaboratorsError: failure.message,
               ),
@@ -63,11 +55,15 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
           (bundle) {
             emit(
               state.copyWith(
-                project: event.project,
+                project: bundle.project,
                 tracks: bundle.tracks,
                 collaborators: bundle.collaborators,
+                isLoadingProject: false,
                 isLoadingTracks: false,
                 isLoadingCollaborators: false,
+                projectError: null,
+                tracksError: null,
+                collaboratorsError: null,
               ),
             );
           },

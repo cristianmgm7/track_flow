@@ -31,7 +31,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   void initState() {
     super.initState();
     context.read<ProjectDetailBloc>().add(
-      WatchProjectDetail(project: widget.project),
+      WatchProjectDetail(projectId: widget.project.id),
     );
   }
 
@@ -56,9 +56,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           if (state is AudioTrackEditSuccess ||
               state is AudioTrackDeleteSuccess ||
               state is AudioTrackUploadSuccess) {
-            // Refresh project detail data when track operations complete
+            // No manual refresh needed if stream is alive, but keep it idempotent
             context.read<ProjectDetailBloc>().add(
-              WatchProjectDetail(project: widget.project),
+              WatchProjectDetail(projectId: widget.project.id),
             );
           } else if (state is AudioTrackError) {
             // Show error message for track operation failures
@@ -84,7 +84,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 message: 'Error loading project:  ${state.projectError}',
                 onRetry:
                     () => context.read<ProjectDetailBloc>().add(
-                      WatchProjectDetail(project: widget.project),
+                      WatchProjectDetail(projectId: widget.project.id),
                     ),
               );
             }
