@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
@@ -7,6 +8,7 @@ import 'package:trackflow/features/manage_collaborators/presentation/widgets/rem
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/radio_to_update_collaborator_role.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 
 class CollaboratorActions {
   static List<AppBottomSheetAction> forCollaborator({
@@ -34,6 +36,9 @@ class CollaboratorActions {
         showAppContentModal(
           context: context,
           title: 'Edit Role',
+          reprovideBlocs: [
+            context.read<ManageCollaboratorsBloc>(),
+          ],
           child: RadioToUpdateCollaboratorRole(
             projectId: project.id,
             userId: collaborator.id,
