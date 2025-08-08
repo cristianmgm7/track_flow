@@ -30,7 +30,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   void initState() {
     super.initState();
     context.read<ManageCollaboratorsBloc>().add(
-      WatchCollaborators(project: widget.project),
+      WatchCollaborators(projectId: widget.project.id),
     );
   }
 

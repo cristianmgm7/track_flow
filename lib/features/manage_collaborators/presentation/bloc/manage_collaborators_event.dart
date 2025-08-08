@@ -6,11 +6,11 @@ import 'package:trackflow/features/projects/domain/value_objects/project_role.da
 abstract class ManageCollaboratorsEvent extends Equatable {}
 
 class WatchCollaborators extends ManageCollaboratorsEvent {
-  final Project project;
-  WatchCollaborators({required this.project});
+  final ProjectId projectId;
+  WatchCollaborators({required this.projectId});
 
   @override
-  List<Object?> get props => [project];
+  List<Object?> get props => [projectId];
 }
 
 class AddCollaboratorByEmail extends ManageCollaboratorsEvent {

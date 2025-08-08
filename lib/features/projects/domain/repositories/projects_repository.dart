@@ -11,7 +11,10 @@ abstract class ProjectsRepository {
 
   /// Streams local projects.
   Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId);
-  
+
   /// Clear all local project cache
   Future<Either<Failure, Unit>> clearLocalCache();
+
+  /// Stream a single project by id from local cache.
+  Stream<Either<Failure, Project?>> watchProjectById(ProjectId projectId);
 }

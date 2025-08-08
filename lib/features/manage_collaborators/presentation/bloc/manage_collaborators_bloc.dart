@@ -4,13 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/user_profile/domain/usecases/watch_userprofiles.dart';
+// import 'package:trackflow/features/user_profile/domain/usecases/watch_userprofiles.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/leave_project_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/remove_collaborator_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/update_colaborator_role_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/find_user_by_email_usecase.dart';
 import 'package:trackflow/features/manage_collaborators/domain/usecases/add_collaborator_by_email_usecase.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_collaborators_bundle_usecase.dart';
 import 'manage_collaborators_event.dart';
 import 'manage_collaborators_state.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
@@ -21,9 +22,9 @@ class ManageCollaboratorsBloc
   final RemoveCollaboratorUseCase removeCollaboratorUseCase;
   final UpdateCollaboratorRoleUseCase updateCollaboratorRoleUseCase;
   final LeaveProjectUseCase leaveProjectUseCase;
-  final WatchUserProfilesUseCase watchUserProfilesUseCase;
   final FindUserByEmailUseCase findUserByEmailUseCase;
   final AddCollaboratorByEmailUseCase addCollaboratorByEmailUseCase;
+  final WatchCollaboratorsBundleUseCase watchCollaboratorsBundleUseCase;
 
   StreamSubscription<Either<Failure, List<UserProfile>>>? _profilesSubscription;
   ManageCollaboratorsLoaded? _lastLoadedState;
@@ -32,9 +33,9 @@ class ManageCollaboratorsBloc
     required this.removeCollaboratorUseCase,
     required this.updateCollaboratorRoleUseCase,
     required this.leaveProjectUseCase,
-    required this.watchUserProfilesUseCase,
     required this.findUserByEmailUseCase,
     required this.addCollaboratorByEmailUseCase,
+    required this.watchCollaboratorsBundleUseCase,
   }) : super(ManageCollaboratorsInitial()) {
     on<WatchCollaborators>(_onWatchCollaborators);
     on<AddCollaboratorByEmail>(_onAddCollaboratorByEmail);
@@ -49,17 +50,15 @@ class ManageCollaboratorsBloc
     WatchCollaborators event,
     Emitter<ManageCollaboratorsState> emit,
   ) async {
-    final userIds =
-        event.project.collaborators.map((c) => c.userId.value).toList();
-    await emit.onEach<Either<Failure, List<UserProfile>>>(
-      watchUserProfilesUseCase.call(userIds),
+    await emit.onEach<Either<Failure, CollaboratorsBundle>>(
+      watchCollaboratorsBundleUseCase(event.projectId),
       onData: (either) {
         either.fold(
           (failure) => emit(ManageCollaboratorsError(failure.toString())),
-          (profiles) {
+          (bundle) {
             final loadedState = ManageCollaboratorsLoaded(
-              event.project,
-              profiles,
+              bundle.project,
+              bundle.userProfiles,
             );
             _lastLoadedState = loadedState;
             emit(loadedState);
@@ -101,7 +100,7 @@ class ManageCollaboratorsBloc
         }
       },
       (project) {
-        add(WatchCollaborators(project: project));
+        add(WatchCollaborators(projectId: project.id));
       },
     );
   }
@@ -138,7 +137,7 @@ class ManageCollaboratorsBloc
           UpdateCollaboratorRoleSuccess(project, event.newRole.toShortString()),
         );
         // Then watch for updates
-        add(WatchCollaborators(project: project));
+        add(WatchCollaborators(projectId: project.id));
       },
     );
   }
@@ -234,7 +233,7 @@ class ManageCollaboratorsBloc
               'Collaborator $emailUsername added successfully!',
             ),
           );
-          add(WatchCollaborators(project: project));
+          add(WatchCollaborators(projectId: project.id));
         },
       );
     } catch (e) {

@@ -17,6 +17,8 @@ abstract class ProjectsLocalDataSource {
 
   Stream<Either<Failure, List<ProjectDTO>>> watchAllProjects(String ownerId);
 
+  Stream<Either<Failure, ProjectDTO?>> watchProjectById(String projectId);
+
   Future<Either<Failure, Unit>> clearCache();
 }
 
@@ -43,7 +45,10 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
       );
       return const Right(unit);
     } catch (e) {
-      AppLogger.error('Failed to cache project: $e', tag: 'ProjectsLocalDataSource');
+      AppLogger.error(
+        'Failed to cache project: $e',
+        tag: 'ProjectsLocalDataSource',
+      );
       return Left(CacheFailure('Failed to cache project: $e'));
     }
   }
@@ -111,6 +116,23 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
   }
 
   @override
+  Stream<Either<Failure, ProjectDTO?>> watchProjectById(String projectId) {
+    try {
+      // Watch a single project document by its id
+      return _isar.projectDocuments
+          .watchObject(fastHash(projectId), fireImmediately: true)
+          .map((doc) => right<Failure, ProjectDTO?>(doc?.toDTO()))
+          .handleError(
+            (e) => left<Failure, ProjectDTO?>(
+              CacheFailure('Failed to watch project: $e'),
+            ),
+          );
+    } catch (e) {
+      return Stream.value(left(CacheFailure('Failed to watch project: $e')));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> clearCache() async {
     try {
       AppLogger.database('Clearing cache...', table: 'projects');
@@ -120,7 +142,10 @@ class ProjectsLocalDataSourceImpl implements ProjectsLocalDataSource {
       AppLogger.database('Cache cleared.', table: 'projects');
       return const Right(unit);
     } catch (e) {
-      AppLogger.error('Failed to clear cache: $e', tag: 'ProjectsLocalDataSource');
+      AppLogger.error(
+        'Failed to clear cache: $e',
+        tag: 'ProjectsLocalDataSource',
+      );
       return Left(CacheFailure('Failed to clear cache: $e'));
     }
   }

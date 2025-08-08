@@ -213,6 +213,25 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   }
 
   @override
+  Stream<Either<Failure, Project?>> watchProjectById(ProjectId projectId) {
+    // Trigger background sync for this project id (non-blocking)
+    unawaited(
+      _backgroundSyncCoordinator.triggerBackgroundSync(
+        syncKey: 'project_${projectId.value}',
+      ),
+    );
+
+    return _localDataSource
+        .watchProjectById(projectId.value)
+        .map((either) => either.map((dto) => dto?.toDomain()))
+        .handleError((error) {
+          return left<Failure, Project?>(
+            DatabaseFailure('Local project stream error: $error'),
+          );
+        });
+  }
+
+  @override
   Future<Either<Failure, Unit>> clearLocalCache() async {
     try {
       await _localDataSource.clearCache();
