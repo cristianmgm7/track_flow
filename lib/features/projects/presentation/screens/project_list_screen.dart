@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart'
+    show showAppActionSheet;
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
@@ -27,7 +28,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   void _openProjectActionsSheet() {
-    showTrackFlowActionSheet(
+    showAppActionSheet(
       context: context,
       title: 'Create something new',
       actions: ProjectActions.onProjectList(context),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
-import 'package:trackflow/features/ui/modals/trackflow_form_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -13,12 +13,12 @@ import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cac
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TrackActions {
-  static List<TrackFlowActionItem> forTrack(
+  static List<AppBottomSheetAction> forTrack(
     BuildContext context,
     ProjectId projectId,
     AudioTrack track,
   ) => [
-    TrackFlowActionItem(
+    AppBottomSheetAction(
       icon: Icons.comment,
       title: 'Comment',
       subtitle: 'Add feedback or notes to this track',
@@ -32,19 +32,19 @@ class TrackActions {
         );
       },
     ),
-    TrackFlowActionItem(
+    AppBottomSheetAction(
       icon: Icons.edit,
       title: 'Rename',
       subtitle: 'Change the track’s title',
       onTap: () {
-        showTrackFlowFormSheet(
+        showAppFormSheet(
           context: context,
           title: 'Rename Track',
           child: RenameTrackForm(track: track),
         );
       },
     ),
-    TrackFlowActionItem(
+    AppBottomSheetAction(
       icon: Icons.delete,
       title: 'Delete Track',
       subtitle: 'Remove from the project',
@@ -60,7 +60,7 @@ class TrackActions {
         );
       },
     ),
-    TrackFlowActionItem(
+    AppBottomSheetAction(
       icon: Icons.download,
       title: 'Download',
       subtitle: 'Save this track to your device',

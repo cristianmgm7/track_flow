@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
-import 'package:trackflow/features/ui/modals/trackflow_form_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_state.dart';
@@ -38,7 +38,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     UserProfile collaborator,
     Project currentProject,
   ) {
-    showTrackFlowActionSheet(
+    showAppActionSheet(
       title: collaborator.name,
       context: context,
       actions: CollaboratorActions.forCollaborator(
@@ -50,7 +50,7 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
   }
 
   void _openAddCollaboratorSheet(Project currentProject) {
-    showTrackFlowFormSheet(
+    showAppFormSheet(
       title: 'Invite Collaborator',
       context: context,
       useRootNavigator: false, // Mantener en false para no perder contexto

@@ -6,7 +6,7 @@ import 'package:trackflow/features/audio_context/presentation/bloc/audio_context
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/audio_track_actions.dart';
-import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 
 class TrackMenuButton extends StatelessWidget {
   final AudioTrack track;
@@ -27,7 +27,7 @@ class TrackMenuButton extends StatelessWidget {
     BuildContext context,
     AudioContextState contextState,
   ) {
-    showTrackFlowActionSheet(
+    showAppActionSheet(
       context: context,
       title: track.name,
       actions: TrackActions.forTrack(context, projectId, track),

@@ -3,7 +3,7 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/ui/project/project_cover_art.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/project_detail_actions_sheet.dart';
 
 /// A sliver header for the project detail screen, showing the cover art as background
@@ -18,7 +18,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
   });
 
   void _openProjectDetailActionsSheet(BuildContext context) {
-    showTrackFlowActionSheet(
+    showAppActionSheet(
       title: 'Project Actions',
       context: context,
       actions: ProjectDetailActions.forProject(context, project),

@@ -395,6 +395,9 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
 Future<T?> showAppBottomSheet<T>({
   required BuildContext context,
   required Widget child,
+  // If provided, this builder will receive the DraggableScrollableSheet's
+  // ScrollController so the inner content can be wired for proper dragging.
+  Widget Function(ScrollController scrollController)? scrollableChildBuilder,
   String? title,
   Widget? header,
   List<Widget>? actions,
@@ -417,7 +420,7 @@ Future<T?> showAppBottomSheet<T>({
     backgroundColor: Colors.transparent,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    useRootNavigator: true,
+    useRootNavigator: false,
     builder: (context) {
       if (isScrollControlled) {
         return DraggableScrollableSheet(
@@ -426,6 +429,13 @@ Future<T?> showAppBottomSheet<T>({
           maxChildSize: maxChildSize,
           expand: false,
           builder: (context, scrollController) {
+            final Widget effectiveChild =
+                scrollableChildBuilder != null
+                    ? scrollableChildBuilder(scrollController)
+                    : SingleChildScrollView(
+                      controller: scrollController,
+                      child: child,
+                    );
             return AppBottomSheet(
               title: title,
               header: header,
@@ -436,7 +446,7 @@ Future<T?> showAppBottomSheet<T>({
               padding: padding,
               backgroundColor: backgroundColor,
               borderRadius: borderRadius,
-              child: child,
+              child: effectiveChild,
             );
           },
         );
@@ -481,7 +491,7 @@ Future<T?> showAppContentModal<T>({
     backgroundColor: Colors.transparent,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    useRootNavigator: true,
+    useRootNavigator: false,
     builder: (context) {
       return Padding(
         padding: EdgeInsets.only(
@@ -565,6 +575,11 @@ Future<T?> showAppActionSheet<T>({
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     onClose: onClose,
-    child: AppBottomSheetList(actions: actions),
+    scrollableChildBuilder:
+        (scrollController) => AppBottomSheetList(
+          actions: actions,
+          scrollController: scrollController,
+        ),
+    child: const SizedBox.shrink(),
   );
 }

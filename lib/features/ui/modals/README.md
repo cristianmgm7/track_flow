@@ -1,13 +1,12 @@
-# TrackFlow Modal Components
+# App Modal Components
 
-Componentes de modales del sistema de diseño de TrackFlow.
+Componentes de modales del sistema de diseño unificado.
 
 ## Ubicación y organización
 
 ```
-lib/core/theme/components/modals/
-├── app_action_sheet.dart     - Action sheets (recomendado ✅)
-├── app_bottom_sheet.dart     - Bottom sheets base
+lib/features/ui/modals/
+├── app_bottom_sheet.dart     - Base + action/content sheets
 ├── app_dialog.dart           - Diálogos
 └── app_form_sheet.dart       - Form sheets (recomendado ✅)
 ```
@@ -17,20 +16,20 @@ lib/core/theme/components/modals/
 ### Para Action Sheets:
 
 ```dart
-import 'package:trackflow/core/theme/ui/modals/app_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 
 // ✅ Recomendado para nuevos desarrollos
-showTrackFlowActionSheet(
+showAppActionSheet(
   context: context,
   title: 'Opciones del Proyecto',
   actions: [
-    TrackFlowActionItem(
+    AppBottomSheetAction(
       icon: Icons.edit,
       title: 'Editar',
       subtitle: 'Editar nombre del proyecto',
       onTap: () => // acción
     ),
-    TrackFlowActionItem(
+    AppBottomSheetAction(
       icon: Icons.delete,
       title: 'Eliminar',
       subtitle: 'Eliminar proyecto',
@@ -43,10 +42,10 @@ showTrackFlowActionSheet(
 ### Para Form Sheets:
 
 ```dart
-import 'package:trackflow/core/theme/components/modals/app_form_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 
 // ✅ Recomendado para nuevos desarrollos
-showTrackFlowFormSheet(
+showAppFormSheet(
   context: context,
   title: 'Crear Proyecto',
   child: CreateProjectForm(),
@@ -56,10 +55,10 @@ showTrackFlowFormSheet(
 ### Para Content Modals (Nuevo - Soluciona overflow):
 
 ```dart
-import 'package:trackflow/features/ui/modals/trackflow_action_sheet.dart';
+import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 
 // ✅ Recomendado para modales con contenido personalizado que se ajustan al tamaño
-showTrackFlowContentModal(
+showAppContentModal(
   context: context,
   title: 'Editar Rol',
   child: RadioToUpdateCollaboratorRole(
@@ -97,21 +96,10 @@ showTrackFlowContentModal(
 
 ## Migración de código legacy
 
-### Imports antiguos (mantienen compatibilidad):
+### Migración completada
 
-```dart
-// ⚠️ Legacy - mantiene compatibilidad pero deprecated
-import 'package:trackflow/core/presentation/widgets/trackflow_action_bottom_sheet.dart';
-import 'package:trackflow/core/presentation/widgets/trackflow_form_bottom_sheet.dart';
-```
-
-### Imports nuevos (recomendados):
-
-```dart
-// ✅ Nuevos imports recomendados
-import 'package:trackflow/core/theme/ui/modals/app_action_sheet.dart';
-import 'package:trackflow/core/theme/components/modals/app_form_sheet.dart';
-```
+- Eliminados wrappers legacy `TrackFlow*`
+- Usar solo `AppBottomSheetAction`, `showAppActionSheet`, `showAppContentModal`, `showAppFormSheet`
 
 ## Patrones de uso comunes
 
@@ -202,14 +190,14 @@ class CollaboratorActions {
 
 ```dart
 // ❌ Antes (causaba overflow)
-showTrackFlowActionSheet(
+showAppActionSheet(
   context: context,
   actions: [],
   body: MyContentWidget(), // Overflow de 40px
 );
 
 // ✅ Ahora (se ajusta al contenido)
-showTrackFlowContentModal(
+showAppContentModal(
   context: context,
   child: MyContentWidget(), // Se ajusta automáticamente
 );
