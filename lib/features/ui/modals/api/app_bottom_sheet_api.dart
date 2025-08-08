@@ -38,12 +38,13 @@ Future<T?> showAppBottomSheet<T>({
           maxChildSize: maxChildSize,
           expand: false,
           builder: (context, scrollController) {
-            final Widget effectiveChild = scrollableChildBuilder != null
-                ? scrollableChildBuilder(scrollController)
-                : SingleChildScrollView(
-                    controller: scrollController,
-                    child: child,
-                  );
+            final Widget effectiveChild =
+                scrollableChildBuilder != null
+                    ? scrollableChildBuilder(scrollController)
+                    : SingleChildScrollView(
+                      controller: scrollController,
+                      child: child,
+                    );
             return AppBottomSheet(
               title: title,
               header: header,
@@ -147,8 +148,13 @@ Future<T?> showAppActionSheet<T>({
   VoidCallback? onClose,
 }) {
   final itemCount = actions.length;
-  final calculatedInitialSize = initialChildSize ??
-      (itemCount <= 3 ? 0.3 : itemCount <= 6 ? 0.5 : 0.65);
+  final calculatedInitialSize =
+      initialChildSize ??
+      (itemCount <= 3
+          ? 0.3
+          : itemCount <= 6
+          ? 0.5
+          : 0.65);
 
   if (body != null) {
     return showAppContentModal<T>(
@@ -177,12 +183,11 @@ Future<T?> showAppActionSheet<T>({
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     onClose: onClose,
-    scrollableChildBuilder: (scrollController) => AppBottomSheetList(
-      actions: actions,
-      scrollController: scrollController,
-    ),
+    scrollableChildBuilder:
+        (scrollController) => AppBottomSheetList(
+          actions: actions,
+          scrollController: scrollController,
+        ),
     child: const SizedBox.shrink(),
   );
 }
-
-

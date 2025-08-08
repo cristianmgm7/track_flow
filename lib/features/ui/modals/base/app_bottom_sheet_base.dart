@@ -60,7 +60,8 @@ class AppBottomSheet extends StatelessWidget {
           if (title != null || header != null) _buildDivider(),
           Flexible(
             child: Container(
-              padding: padding ??
+              padding:
+                  padding ??
                   EdgeInsets.fromLTRB(
                     Dimensions.space16,
                     Dimensions.space0,
@@ -149,12 +150,15 @@ class AppBottomSheet extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        children: actions!
-            .map((action) => Padding(
-                  padding: EdgeInsets.only(left: Dimensions.space8),
-                  child: action,
-                ))
-            .toList(),
+        children:
+            actions!
+                .map(
+                  (action) => Padding(
+                    padding: EdgeInsets.only(left: Dimensions.space8),
+                    child: action,
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -164,15 +168,16 @@ class _AppSheetIconButton extends StatelessWidget {
   final IconData icon;
   final String? tooltip;
 
-  const _AppSheetIconButton({
-    required this.icon,
-    this.tooltip,
-  });
+  const _AppSheetIconButton({required this.icon, this.tooltip});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(icon, color: AppColors.textPrimary, size: Dimensions.iconMedium),
+      icon: Icon(
+        icon,
+        color: AppColors.textPrimary,
+        size: Dimensions.iconMedium,
+      ),
       onPressed: () => Navigator.of(context).pop(),
       tooltip: tooltip,
       constraints: BoxConstraints(
@@ -182,5 +187,3 @@ class _AppSheetIconButton extends StatelessWidget {
     );
   }
 }
-
-

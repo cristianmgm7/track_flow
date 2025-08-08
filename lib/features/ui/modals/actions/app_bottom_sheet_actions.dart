@@ -75,7 +75,8 @@ class _AppBottomSheetListItem extends StatefulWidget {
   const _AppBottomSheetListItem({required this.action, required this.onTap});
 
   @override
-  State<_AppBottomSheetListItem> createState() => _AppBottomSheetListItemState();
+  State<_AppBottomSheetListItem> createState() =>
+      _AppBottomSheetListItemState();
 }
 
 class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
@@ -150,7 +151,8 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
                       children: [
                         Icon(
                           widget.action.icon,
-                          color: widget.action.iconColor ?? AppColors.textPrimary,
+                          color:
+                              widget.action.iconColor ?? AppColors.textPrimary,
                           size: Dimensions.iconMedium,
                         ),
                         SizedBox(width: Dimensions.space16),
@@ -161,7 +163,9 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
                               Text(
                                 widget.action.title,
                                 style: AppTextStyle.bodyLarge.copyWith(
-                                  color: widget.action.textColor ?? AppColors.textPrimary,
+                                  color:
+                                      widget.action.textColor ??
+                                      AppColors.textPrimary,
                                 ),
                               ),
                               if (widget.action.subtitle != null) ...[
@@ -192,5 +196,3 @@ class _AppBottomSheetListItemState extends State<_AppBottomSheetListItem>
     );
   }
 }
-
-
