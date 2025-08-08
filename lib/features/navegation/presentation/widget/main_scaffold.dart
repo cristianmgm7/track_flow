@@ -46,11 +46,6 @@ class _MainScaffoldState extends State<MainScaffold> {
 
           // Limpiar UserProfileBloc
           context.read<UserProfileBloc>().add(ClearUserProfile());
-
-          // Limpiar otros BLoCs que puedan tener datos de usuario
-          // TODO: Añadir otros BLoCs que necesiten limpieza
-          // context.read<ProjectsBloc>().add(ClearProjects());
-          // context.read<NotificationsBloc>().add(ClearNotifications());
         }
       },
       child: BlocListener<UserProfileBloc, UserProfileState>(

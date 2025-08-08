@@ -11,7 +11,7 @@ Future<T?> showAppFormSheet<T>({
   double minChildSize = 0.5,
   double maxChildSize = 0.9,
   bool isDismissible = true,
-  bool useRootNavigator = false,
+  bool useRootNavigator = true,
 }) {
   return showModalBottomSheet<T>(
     context: context,

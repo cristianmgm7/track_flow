@@ -45,7 +45,7 @@ class AppBottomNavigation extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
           child: Container(
-            height: 90, // Slightly taller for iOS feel
+            height: Dimensions.bottomNavHeight,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -63,10 +63,10 @@ class AppBottomNavigation extends StatelessWidget {
               ),
             ),
             child: SafeArea(
+              top: false,
               child: Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: Dimensions.space8,
-                  vertical: Dimensions.space4,
                 ),
                 child: Row(
                   children:
@@ -249,8 +249,8 @@ class _AppBottomNavigationItemWidgetState
             onTap: widget.onTap,
             child: Container(
               padding: EdgeInsets.symmetric(
-                horizontal: Dimensions.space12,
-                vertical: Dimensions.space8,
+                horizontal: Dimensions.space4,
+                vertical: Dimensions.space2,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -258,7 +258,7 @@ class _AppBottomNavigationItemWidgetState
                 children: [
                   // Icon with selection background
                   Container(
-                    padding: EdgeInsets.all(Dimensions.space6),
+                    padding: EdgeInsets.all(Dimensions.space2),
                     decoration: BoxDecoration(
                       color:
                           widget.isSelected
@@ -288,7 +288,7 @@ class _AppBottomNavigationItemWidgetState
                                 ? widget.item.activeIcon!
                                 : widget.item.icon,
                             key: ValueKey(widget.isSelected),
-                            size: 26, // Slightly larger for iOS feel
+                            size: 24,
                             color: iconColor,
                           ),
                         ),
@@ -304,7 +304,7 @@ class _AppBottomNavigationItemWidgetState
 
                   // Label
                   if (widget.showLabel) ...[
-                    SizedBox(height: Dimensions.space4),
+                    SizedBox(height: Dimensions.space2),
                     AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 200),
                       style: AppTextStyle.caption.copyWith(
@@ -313,7 +313,7 @@ class _AppBottomNavigationItemWidgetState
                             widget.isSelected
                                 ? FontWeight.w600
                                 : FontWeight.w400,
-                        fontSize: 11, // Slightly smaller for iOS feel
+                        fontSize: 10,
                       ),
                       child: Text(
                         widget.item.label,

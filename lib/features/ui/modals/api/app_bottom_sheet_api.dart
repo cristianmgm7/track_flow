@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/ui/modals/base/app_bottom_sheet_base.dart';
 import 'package:trackflow/features/ui/modals/actions/app_bottom_sheet_actions.dart';
 
@@ -22,6 +23,8 @@ Future<T?> showAppBottomSheet<T>({
   EdgeInsetsGeometry? padding,
   Color? backgroundColor,
   BorderRadius? borderRadius,
+  bool useRootNavigator = true,
+  List<BlocBase>? reprovideBlocs,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -29,7 +32,7 @@ Future<T?> showAppBottomSheet<T>({
     backgroundColor: Colors.transparent,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    useRootNavigator: false,
+    useRootNavigator: useRootNavigator,
     builder: (context) {
       if (isScrollControlled) {
         return DraggableScrollableSheet(
@@ -45,7 +48,7 @@ Future<T?> showAppBottomSheet<T>({
                       controller: scrollController,
                       child: child,
                     );
-            return AppBottomSheet(
+            Widget sheet = AppBottomSheet(
               title: title,
               header: header,
               actions: actions,
@@ -57,11 +60,21 @@ Future<T?> showAppBottomSheet<T>({
               borderRadius: borderRadius,
               child: effectiveChild,
             );
+            if (reprovideBlocs != null && reprovideBlocs.isNotEmpty) {
+              sheet = MultiBlocProvider(
+                providers:
+                    reprovideBlocs
+                        .map((b) => BlocProvider.value(value: b))
+                        .toList(),
+                child: sheet,
+              );
+            }
+            return sheet;
           },
         );
       }
 
-      return AppBottomSheet(
+      Widget sheet = AppBottomSheet(
         title: title,
         header: header,
         actions: actions,
@@ -73,6 +86,14 @@ Future<T?> showAppBottomSheet<T>({
         borderRadius: borderRadius,
         child: child,
       );
+      if (reprovideBlocs != null && reprovideBlocs.isNotEmpty) {
+        sheet = MultiBlocProvider(
+          providers:
+              reprovideBlocs.map((b) => BlocProvider.value(value: b)).toList(),
+          child: sheet,
+        );
+      }
+      return sheet;
     },
   );
 }
@@ -93,6 +114,8 @@ Future<T?> showAppContentModal<T>({
   Color? backgroundColor,
   BorderRadius? borderRadius,
   double? maxHeight,
+  bool useRootNavigator = true,
+  List<BlocBase>? reprovideBlocs,
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -100,9 +123,9 @@ Future<T?> showAppContentModal<T>({
     backgroundColor: Colors.transparent,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
-    useRootNavigator: false,
+    useRootNavigator: useRootNavigator,
     builder: (context) {
-      return Padding(
+      Widget sheet = Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
@@ -126,6 +149,14 @@ Future<T?> showAppContentModal<T>({
           ),
         ),
       );
+      if (reprovideBlocs != null && reprovideBlocs.isNotEmpty) {
+        sheet = MultiBlocProvider(
+          providers:
+              reprovideBlocs.map((b) => BlocProvider.value(value: b)).toList(),
+          child: sheet,
+        );
+      }
+      return sheet;
     },
   );
 }
@@ -146,6 +177,8 @@ Future<T?> showAppActionSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   VoidCallback? onClose,
+  bool useRootNavigator = true,
+  List<BlocBase>? reprovideBlocs,
 }) {
   final itemCount = actions.length;
   final calculatedInitialSize =
@@ -166,6 +199,8 @@ Future<T?> showAppActionSheet<T>({
       isDismissible: isDismissible,
       enableDrag: enableDrag,
       onClose: onClose,
+      useRootNavigator: useRootNavigator,
+      reprovideBlocs: reprovideBlocs,
       child: body,
     );
   }
@@ -183,6 +218,8 @@ Future<T?> showAppActionSheet<T>({
     isDismissible: isDismissible,
     enableDrag: enableDrag,
     onClose: onClose,
+    useRootNavigator: useRootNavigator,
+    reprovideBlocs: reprovideBlocs,
     scrollableChildBuilder:
         (scrollController) => AppBottomSheetList(
           actions: actions,
