@@ -26,6 +26,12 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
 
+  // Creates a subtle tinted background of [base] over the app surface without using withOpacity.
+  Color _blendOnSurface(Color base, {double opacity = 0.12}) {
+    final overlay = base.withAlpha((opacity * 255).round());
+    return Color.alphaBlend(overlay, AppColors.surface);
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -91,8 +97,9 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Container(
             padding: EdgeInsets.all(Dimensions.space8),
             decoration: BoxDecoration(
-              color: AppColors.error,
+              color: _blendOnSurface(AppColors.error),
               borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+              border: Border.all(color: AppColors.error),
             ),
             child: Row(
               children: [
@@ -128,7 +135,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Container(
             padding: EdgeInsets.all(Dimensions.space12),
             decoration: BoxDecoration(
-              color: AppColors.success,
+              color: _blendOnSurface(AppColors.success),
               borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
               border: Border.all(color: AppColors.success),
             ),
@@ -141,7 +148,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                     user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
                     style: AppTextStyle.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.onPrimary,
                     ),
                   ),
                 ),
@@ -191,7 +198,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
           Container(
             padding: EdgeInsets.all(Dimensions.space12),
             decoration: BoxDecoration(
-              color: AppColors.info,
+              color: _blendOnSurface(AppColors.info),
               borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
               border: Border.all(color: AppColors.info),
             ),

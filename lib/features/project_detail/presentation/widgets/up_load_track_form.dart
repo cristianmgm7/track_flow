@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
@@ -67,7 +68,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
         setState(() => _isSubmitting = true);
         final file = File(filePath);
         final duration = await _getAudioDuration(file);
-        
+
         if (!mounted) return;
         context.read<AudioTrackBloc>().add(
           UploadAudioTrackEvent(
@@ -84,7 +85,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select an audio file.'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }

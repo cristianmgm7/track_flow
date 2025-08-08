@@ -116,9 +116,6 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
               // For success state, we need to get collaborators from the last loaded state
               // or use a fallback
               currentCollaborators = _lastLoadedState?.userProfiles ?? [];
-            } else if (state is AddCollaboratorSuccess) {
-              currentProject = state.project;
-              currentCollaborators = _lastLoadedState?.userProfiles ?? [];
             } else if (state is RemoveCollaboratorSuccess) {
               currentProject = state.project;
               currentCollaborators = _lastLoadedState?.userProfiles ?? [];

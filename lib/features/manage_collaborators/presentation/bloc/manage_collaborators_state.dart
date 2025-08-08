@@ -31,15 +31,6 @@ class ManageCollaboratorsError extends ManageCollaboratorsState {
   List<Object?> get props => [message];
 }
 
-class AddCollaboratorSuccess extends ManageCollaboratorsState {
-  final Project project;
-
-  AddCollaboratorSuccess(this.project);
-
-  @override
-  List<Object?> get props => [project];
-}
-
 class UpdateCollaboratorRoleSuccess extends ManageCollaboratorsState {
   final Project project;
   final String newRole;
@@ -89,7 +80,7 @@ class UserSearchLoading extends ManageCollaboratorsState {
 
 class UserSearchSuccess extends ManageCollaboratorsState {
   final UserProfile? user; // null = new user (not found)
-  
+
   UserSearchSuccess(this.user);
 
   @override
@@ -98,7 +89,7 @@ class UserSearchSuccess extends ManageCollaboratorsState {
 
 class UserSearchError extends ManageCollaboratorsState {
   final String message;
-  
+
   UserSearchError(this.message);
 
   @override

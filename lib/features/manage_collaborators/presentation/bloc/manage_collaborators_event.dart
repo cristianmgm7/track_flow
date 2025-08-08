@@ -13,20 +13,11 @@ class WatchCollaborators extends ManageCollaboratorsEvent {
   List<Object?> get props => [project];
 }
 
-class AddCollaborator extends ManageCollaboratorsEvent {
-  final ProjectId projectId;
-  final UserId collaboratorId;
-  AddCollaborator({required this.projectId, required this.collaboratorId});
-
-  @override
-  List<Object?> get props => [projectId, collaboratorId];
-}
-
 class AddCollaboratorByEmail extends ManageCollaboratorsEvent {
   final ProjectId projectId;
   final String email;
   final ProjectRole role;
-  
+
   AddCollaboratorByEmail({
     required this.projectId,
     required this.email,
@@ -87,7 +78,7 @@ class LeaveProject extends ManageCollaboratorsEvent {
 // User search events for adding collaborators
 class SearchUserByEmail extends ManageCollaboratorsEvent {
   final String email;
-  
+
   SearchUserByEmail(this.email);
 
   @override

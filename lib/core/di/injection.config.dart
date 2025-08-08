@@ -1099,18 +1099,17 @@ extension GetItInjectableX on _i1.GetIt {
             ));
     gh.factory<_i201.LoadTrackContextUseCase>(
         () => _i201.LoadTrackContextUseCase(gh<_i194.AudioContextService>()));
-    gh.factory<_i202.ManageCollaboratorsBloc>(() =>
-        _i202.ManageCollaboratorsBloc(
-          addCollaboratorUseCase: gh<_i158.AddCollaboratorToProjectUseCase>(),
-          removeCollaboratorUseCase: gh<_i150.RemoveCollaboratorUseCase>(),
-          updateCollaboratorRoleUseCase:
-              gh<_i151.UpdateCollaboratorRoleUseCase>(),
-          leaveProjectUseCase: gh<_i172.LeaveProjectUseCase>(),
-          watchUserProfilesUseCase: gh<_i98.WatchUserProfilesUseCase>(),
-          findUserByEmailUseCase: gh<_i168.FindUserByEmailUseCase>(),
-          addCollaboratorByEmailUseCase:
-              gh<_i191.AddCollaboratorByEmailUseCase>(),
-        ));
+    gh.factory<_i202.ManageCollaboratorsBloc>(
+        () => _i202.ManageCollaboratorsBloc(
+              removeCollaboratorUseCase: gh<_i150.RemoveCollaboratorUseCase>(),
+              updateCollaboratorRoleUseCase:
+                  gh<_i151.UpdateCollaboratorRoleUseCase>(),
+              leaveProjectUseCase: gh<_i172.LeaveProjectUseCase>(),
+              watchUserProfilesUseCase: gh<_i98.WatchUserProfilesUseCase>(),
+              findUserByEmailUseCase: gh<_i168.FindUserByEmailUseCase>(),
+              addCollaboratorByEmailUseCase:
+                  gh<_i191.AddCollaboratorByEmailUseCase>(),
+            ));
     gh.factory<_i203.ProjectInvitationActorBloc>(
         () => _i203.ProjectInvitationActorBloc(
               sendInvitationUseCase: gh<_i181.SendInvitationUseCase>(),
