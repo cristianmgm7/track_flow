@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:trackflow/config/flavor_config.dart';
 
 /// Helper class to manage flavor-specific logos throughout the app
 class FlavorLogoHelper {
@@ -8,19 +9,19 @@ class FlavorLogoHelper {
 
   /// Get the appropriate logo path based on the current flavor
   ///
-  /// In debug mode, returns development logo
-  /// In release mode, returns production logo
-  /// You can customize this logic based on your flavor detection
+  /// Uses FlavorConfig to determine the current flavor
+  /// Falls back to debug/release mode if FlavorConfig is not initialized
   static String getLogoPath() {
-    // For now, we'll use a simple approach based on debug/release mode
-    // You can enhance this to detect specific flavors if needed
-
-    if (kDebugMode) {
-      // In debug mode, use development logo
-      return _devLogoPath;
-    } else {
-      // In release mode, use production logo
-      return _prodLogoPath;
+    // Try to use FlavorConfig first
+    try {
+      return getLogoPathForFlavor(FlavorConfig.name);
+    } catch (e) {
+      // Fallback to debug/release mode
+      if (kDebugMode) {
+        return _devLogoPath;
+      } else {
+        return _prodLogoPath;
+      }
     }
   }
 
@@ -53,17 +54,33 @@ class FlavorLogoHelper {
   }
 
   /// Check if the current environment is development
-  static bool get isDevelopment => kDebugMode;
+  static bool get isDevelopment {
+    try {
+      return FlavorConfig.isDevelopment;
+    } catch (e) {
+      return kDebugMode;
+    }
+  }
 
   /// Check if the current environment is production
-  static bool get isProduction => !kDebugMode;
+  static bool get isProduction {
+    try {
+      return FlavorConfig.isProduction;
+    } catch (e) {
+      return !kDebugMode;
+    }
+  }
 
   /// Get current flavor name
   static String get currentFlavor {
-    if (kDebugMode) {
-      return 'development';
-    } else {
-      return 'production';
+    try {
+      return FlavorConfig.name;
+    } catch (e) {
+      if (kDebugMode) {
+        return 'development';
+      } else {
+        return 'production';
+      }
     }
   }
 }

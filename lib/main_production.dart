@@ -1,4 +1,4 @@
-import 'config/flavor_config.dart';
+import 'package:trackflow/config/flavor_config.dart';
 import 'main.dart' as runner;
 
 void main() {
