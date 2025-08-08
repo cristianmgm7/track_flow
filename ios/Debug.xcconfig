@@ -1,6 +1,6 @@
 #include "Flutter/Generated.xcconfig"
 #include "Flutter/Debug.xcconfig"
-#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug dev.xcconfig"
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug-develop.xcconfig"
 
 PRODUCT_BUNDLE_IDENTIFIER = com.crd.producer-gmail.com.trackflow.dev
 PRODUCT_NAME = TrackFlow Dev

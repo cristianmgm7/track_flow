@@ -7,14 +7,14 @@ ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
   'Debug' => :debug,
-  'Debug dev' => :debug,
-  'Debug staging' => :debug,
-  'Debug prod' => :debug,
+  'Debug-develop' => :debug,
+  'Debug-staging' => :debug,
+  'Debug-production' => :debug,
   'Profile' => :release,
   'Release' => :release,
-  'Release dev' => :release,
-  'Release staging' => :release,
-  'Release prod' => :release,
+  'Release-develop' => :release,
+  'Release-staging' => :release,
+  'Release-production' => :release,
 }
 
 def flutter_root
@@ -47,9 +47,6 @@ target 'Runner' do
   #   :path => '~/Library/Caches/CocoaPods/GitHub/boringssl-standalone'
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-  target 'RunnerTests' do
-    inherit! :search_paths
-  end
 end
 
 post_install do |installer|
@@ -59,6 +56,17 @@ post_install do |installer|
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+      # Ensure a single Swift version across all configs to satisfy CocoaPods
+      config.build_settings['SWIFT_VERSION'] = '5.0'
+    end
+  end
+
+  # Also enforce SWIFT_VERSION = 5.0 for user targets (Runner, RunnerTests)
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_targets.each do |user_target|
+      user_target.build_configurations.each do |config|
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+      end
     end
   end
 end
