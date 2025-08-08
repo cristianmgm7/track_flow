@@ -5,6 +5,7 @@ import 'package:trackflow/features/ui/dialogs/app_dialog.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
@@ -138,36 +139,66 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary, width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: 40,
-                    backgroundColor: AppColors.grey600,
-                    backgroundImage:
-                        _avatarFile != null
-                            ? FileImage(_avatarFile!)
-                            : (_avatarUrl.isNotEmpty &&
-                                Uri.tryParse(_avatarUrl)?.isAbsolute == true)
-                            ? NetworkImage(_avatarUrl) as ImageProvider
-                            : null,
-                    child:
-                        (_avatarFile == null &&
-                                (_avatarUrl.isEmpty ||
-                                    Uri.tryParse(_avatarUrl)?.isAbsolute !=
-                                        true))
-                            ? Icon(
-                              Icons.person,
-                              size: 40,
-                              color: AppColors.textSecondary,
-                            )
-                            : null,
-                  ),
-                ),
+              BlocBuilder<UserProfileBloc, UserProfileState>(
+                builder: (context, state) {
+                  ImageProvider? backgroundImage;
+
+                  if (_avatarFile != null) {
+                    backgroundImage = FileImage(_avatarFile!);
+                  } else {
+                    String? stateUrl;
+                    if (state is UserProfileLoaded) {
+                      stateUrl = state.profile.avatarUrl;
+                    } else if (state is ProfileComplete) {
+                      stateUrl = state.profile.avatarUrl;
+                    } else if (state is ProfileIncomplete &&
+                        state.profile != null) {
+                      stateUrl = state.profile!.avatarUrl;
+                    } else if (state is ProfileCreationDataLoaded) {
+                      stateUrl = state.photoUrl;
+                    }
+
+                    final effectiveUrl =
+                        (stateUrl != null && stateUrl.isNotEmpty)
+                            ? stateUrl
+                            : _avatarUrl;
+
+                    if (effectiveUrl.isNotEmpty &&
+                        Uri.tryParse(effectiveUrl)?.isAbsolute == true) {
+                      backgroundImage = NetworkImage(effectiveUrl);
+                    } else if (effectiveUrl.isNotEmpty &&
+                        File(effectiveUrl).existsSync()) {
+                      backgroundImage = FileImage(File(effectiveUrl));
+                    } else {
+                      backgroundImage = null;
+                    }
+                  }
+
+                  final showPlaceholder = backgroundImage == null;
+
+                  return GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundColor: AppColors.grey600,
+                        backgroundImage: backgroundImage,
+                        child:
+                            showPlaceholder
+                                ? Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: AppColors.textSecondary,
+                                )
+                                : null,
+                      ),
+                    ),
+                  );
+                },
               ),
               SizedBox(height: Dimensions.space12),
               AppFormField(

@@ -22,6 +22,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
       title: 'Project Actions',
       context: context,
       actions: ProjectDetailActions.forProject(context, project),
+      initialChildSize: 0.5, // open larger by default to avoid manual drag
     );
   }
 

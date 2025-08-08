@@ -180,15 +180,6 @@ Future<T?> showAppActionSheet<T>({
   bool useRootNavigator = true,
   List<BlocBase>? reprovideBlocs,
 }) {
-  final itemCount = actions.length;
-  final calculatedInitialSize =
-      initialChildSize ??
-      (itemCount <= 3
-          ? 0.3
-          : itemCount <= 6
-          ? 0.5
-          : 0.65);
-
   if (body != null) {
     return showAppContentModal<T>(
       context: context,
@@ -204,6 +195,16 @@ Future<T?> showAppActionSheet<T>({
       child: body,
     );
   }
+
+  // Default: use draggable sheet with computed initial size (stable for lists)
+  final itemCount = actions.length;
+  final calculatedInitialSize =
+      initialChildSize ??
+      (itemCount <= 3
+          ? 0.3
+          : itemCount <= 6
+          ? 0.5
+          : 0.65);
 
   return showAppBottomSheet<T>(
     context: context,

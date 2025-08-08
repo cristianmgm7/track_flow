@@ -32,6 +32,7 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       context: context,
       title: 'Create something new',
       actions: ProjectActions.onProjectList(context),
+      initialChildSize: 0.4, // open larger by default to avoid manual drag
     );
   }
 
