@@ -32,7 +32,6 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
       context: context,
       title: 'Create something new',
       actions: ProjectActions.onProjectList(context),
-      sizeToContent: true,
     );
   }
 

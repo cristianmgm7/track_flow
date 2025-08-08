@@ -22,7 +22,6 @@ class ProjectDetailSliverHeader extends StatelessWidget {
       title: 'Project Actions',
       context: context,
       actions: ProjectDetailActions.forProject(context, project),
-      sizeToContent: true,
     );
   }
 

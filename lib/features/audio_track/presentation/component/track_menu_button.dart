@@ -31,7 +31,6 @@ class TrackMenuButton extends StatelessWidget {
       context: context,
       title: track.name,
       actions: TrackActions.forTrack(context, projectId, track),
-      sizeToContent: true,
     );
   }
 

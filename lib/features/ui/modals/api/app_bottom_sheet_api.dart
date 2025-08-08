@@ -168,7 +168,6 @@ Future<T?> showAppActionSheet<T>({
   String? title,
   Widget? header,
   Widget? body,
-  bool sizeToContent = false,
   bool showHandle = true,
   bool showCloseButton = false,
   bool isScrollControlled = true,
@@ -190,7 +189,7 @@ Future<T?> showAppActionSheet<T>({
           ? 0.5
           : 0.65);
 
-  if (body != null || sizeToContent) {
+  if (body != null) {
     return showAppContentModal<T>(
       context: context,
       title: title,
@@ -202,7 +201,7 @@ Future<T?> showAppActionSheet<T>({
       onClose: onClose,
       useRootNavigator: useRootNavigator,
       reprovideBlocs: reprovideBlocs,
-      child: body ?? AppBottomSheetList(actions: actions),
+      child: body,
     );
   }
 
