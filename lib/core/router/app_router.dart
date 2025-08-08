@@ -170,9 +170,6 @@ class AppRouter {
               (context, state, child) => MultiBlocProvider(
                 providers: [
                   BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
-                  BlocProvider<ProjectDetailBloc>(
-                    create: (_) => sl<ProjectDetailBloc>(),
-                  ),
                   BlocProvider<AudioContextBloc>(
                     create: (_) => sl<AudioContextBloc>(),
                   ),
@@ -200,9 +197,13 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.projectDetails,
-              builder:
-                  (context, state) =>
-                      ProjectDetailsScreen(project: state.extra as Project),
+              builder: (context, state) {
+                final project = state.extra as Project;
+                return BlocProvider<ProjectDetailBloc>(
+                  create: (_) => sl<ProjectDetailBloc>(),
+                  child: ProjectDetailsScreen(project: project),
+                );
+              },
             ),
             GoRoute(
               path: AppRoutes.settings,
