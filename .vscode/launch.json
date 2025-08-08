@@ -12,7 +12,7 @@
             "flutterMode": "debug",
             "program": "lib/main_development.dart",
             "deviceId": "AE92D3D7-702A-41B2-9AC4-E20A6536333D",
-            "args": ["--dart-define=FLAVOR=development"]
+            "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
         },
         {
             "name": "🧪 Staging (iOS Simulator)",
@@ -21,7 +21,7 @@
             "flutterMode": "debug",
             "program": "lib/main_staging.dart",
             "deviceId": "AE92D3D7-702A-41B2-9AC4-E20A6536333D",
-            "args": ["--dart-define=FLAVOR=staging"]
+            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
         },
         {
             "name": "🎯 Prod (iOS Simulator)",
@@ -30,7 +30,7 @@
             "flutterMode": "debug",
             "program": "lib/main_production.dart",
             "deviceId": "AE92D3D7-702A-41B2-9AC4-E20A6536333D",
-            "args": ["--dart-define=FLAVOR=production"]
+            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         
         // === Tu iPhone Físico ===
@@ -41,7 +41,7 @@
             "flutterMode": "debug",
             "program": "lib/main_development.dart",
             "deviceId": "00008030-00010C31110A802E",
-            "args": ["--dart-define=FLAVOR=development"]
+            "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
         },
         {
             "name": "🧪 Staging (Tu iPhone)",
@@ -50,7 +50,7 @@
             "flutterMode": "debug",
             "program": "lib/main_staging.dart",
             "deviceId": "00008030-00010C31110A802E",
-            "args": ["--dart-define=FLAVOR=staging"]
+            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
         },
         {
             "name": "🎯 Prod (Tu iPhone)",
@@ -59,7 +59,7 @@
             "flutterMode": "debug",
             "program": "lib/main_production.dart",
             "deviceId": "00008030-00010C31110A802E",
-            "args": ["--dart-define=FLAVOR=production"]
+            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         
         // === Android Emulator ===
@@ -79,7 +79,7 @@
             "flutterMode": "debug",
             "program": "lib/main_staging.dart",
             "deviceId": "emulator-5554",
-            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
+            "args": ["--dart-define=FLAVOR=staging"]
         },
         {
             "name": "🎯 Prod (Android)",
@@ -88,7 +88,7 @@
             "flutterMode": "debug",
             "program": "lib/main_production.dart",
             "deviceId": "emulator-5554",
-            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
+            "args": ["--dart-define=FLAVOR=production"]
         }
     ]
 }

@@ -1,9 +1,13 @@
 #include "Generated.xcconfig"
 #include "../../Flutter/Release.xcconfig"
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.release staging.xcconfig"
 
 PRODUCT_BUNDLE_IDENTIFIER = com.crd.producer-gmail.com.trackflow.staging
 PRODUCT_NAME = TrackFlow Staging
-DISPLAY_NAME = TrackFlow Staging
+APP_DISPLAY_NAME = TrackFlow Staging
+
+// Flutter build mode
+FLUTTER_BUILD_MODE = release
 
 // Firebase configuration file
 FIREBASE_CONFIG_FILE = GoogleService-Info-Staging.plist

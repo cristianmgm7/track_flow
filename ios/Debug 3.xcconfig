@@ -1,9 +1,13 @@
 #include "Generated.xcconfig"
 #include "../../Flutter/Debug.xcconfig"
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug prod.xcconfig"
 
 PRODUCT_BUNDLE_IDENTIFIER = com.crd.producer-gmail.com.trackflow
 PRODUCT_NAME = TrackFlow
-DISPLAY_NAME = TrackFlow
+APP_DISPLAY_NAME = TrackFlow
+
+// Flutter build mode
+FLUTTER_BUILD_MODE = debug
 
 // Firebase configuration file
 FIREBASE_CONFIG_FILE = GoogleService-Info-Prod.plist
