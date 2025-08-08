@@ -36,9 +36,7 @@ class CollaboratorActions {
         showAppContentModal(
           context: context,
           title: 'Edit Role',
-          reprovideBlocs: [
-            context.read<ManageCollaboratorsBloc>(),
-          ],
+          reprovideBlocs: [context.read<ManageCollaboratorsBloc>()],
           child: RadioToUpdateCollaboratorRole(
             projectId: project.id,
             userId: collaborator.id,

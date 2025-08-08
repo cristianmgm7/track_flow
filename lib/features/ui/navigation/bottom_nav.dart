@@ -47,7 +47,7 @@ class AppBottomNavigation extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 25.0, sigmaY: 25.0),
           child: Container(
-            height: 90 + bottomPadding, // Add bottom padding to height
+            height: Dimensions.bottomNavHeight + bottomPadding,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -68,8 +68,8 @@ class AppBottomNavigation extends StatelessWidget {
               padding: EdgeInsets.only(
                 left: Dimensions.space8,
                 right: Dimensions.space8,
-                top: Dimensions.space4,
-                bottom: Dimensions.space4 + bottomPadding,
+                top: Dimensions.space2,
+                bottom: Dimensions.space2 + bottomPadding,
               ),
                 child: Row(
                   children:
@@ -252,7 +252,7 @@ class _AppBottomNavigationItemWidgetState
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: Dimensions.space12,
-                vertical: Dimensions.space8,
+                vertical: Dimensions.space4,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
