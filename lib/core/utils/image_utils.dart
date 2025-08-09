@@ -338,6 +338,18 @@ class ImageUtils {
     }
 
     if (imagePath.startsWith('http')) {
+      // Avoid hitting external placeholder services (which can hang offline)
+      try {
+        final uri = Uri.tryParse(imagePath);
+        final host = uri?.host.toLowerCase() ?? '';
+        if (host.contains('placeholder.com')) {
+          return _buildFallbackWidget(width, height, fallbackWidget);
+        }
+      } catch (_) {
+        // If parsing fails, fall back gracefully
+        return _buildFallbackWidget(width, height, fallbackWidget);
+      }
+
       return Image.network(
         imagePath,
         width: width,
