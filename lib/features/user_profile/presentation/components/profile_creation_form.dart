@@ -139,12 +139,8 @@ class ProfileCreationFormState extends State<ProfileCreationForm> {
   UserProfile? getFormData() {
     if (!isValid) return null;
 
-    final avatarUrl =
-        _avatarUrl.isEmpty
-            ? (widget.isGoogleUser
-                ? 'https://via.placeholder.com/150/4285F4/FFFFFF?text=${_nameController.text.trim().substring(0, 1).toUpperCase()}'
-                : 'https://via.placeholder.com/150/CCCCCC/FFFFFF?text=${_nameController.text.trim().substring(0, 1).toUpperCase()}')
-            : _avatarUrl;
+    // Avoid external placeholder URLs that can hang offline; let UI show local fallback
+    final avatarUrl = _avatarUrl;
 
     return UserProfile(
       id: UserId.fromUniqueString('temp'),
