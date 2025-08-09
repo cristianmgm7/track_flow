@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_bundle_usecase.dart';
 
 abstract class AudioCommentEvent extends Equatable {
   @override
@@ -15,7 +15,12 @@ class AddAudioCommentEvent extends AudioCommentEvent {
   final String content;
   final Duration timestamp;
 
-  AddAudioCommentEvent(this.projectId, this.trackId, this.content, this.timestamp);
+  AddAudioCommentEvent(
+    this.projectId,
+    this.trackId,
+    this.content,
+    this.timestamp,
+  );
 
   @override
   List<Object?> get props => [projectId, trackId, content, timestamp];
@@ -32,19 +37,22 @@ class DeleteAudioCommentEvent extends AudioCommentEvent {
   List<Object?> get props => [commentId, projectId, trackId];
 }
 
-class WatchCommentsByTrackEvent extends AudioCommentEvent {
+// Removed legacy track-only watcher and comments-updated event in favor of bundle
+
+class WatchAudioCommentsBundleEvent extends AudioCommentEvent {
+  final ProjectId projectId;
   final AudioTrackId trackId;
 
-  WatchCommentsByTrackEvent(this.trackId);
+  WatchAudioCommentsBundleEvent(this.projectId, this.trackId);
 
   @override
-  List<Object?> get props => [trackId];
+  List<Object?> get props => [projectId, trackId];
 }
 
-class AudioCommentsUpdated extends AudioCommentEvent {
-  final Either<Failure, List<AudioComment>> comments;
-  AudioCommentsUpdated(this.comments);
+class AudioCommentsBundleUpdated extends AudioCommentEvent {
+  final Either<Failure, AudioCommentsBundle> result;
+  AudioCommentsBundleUpdated(this.result);
 
   @override
-  List<Object?> get props => [comments];
+  List<Object?> get props => [result];
 }

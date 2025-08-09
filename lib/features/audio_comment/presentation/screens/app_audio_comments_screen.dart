@@ -59,7 +59,10 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
                     padding: EdgeInsets.symmetric(
                       horizontal: Dimensions.screenMarginSmall,
                     ),
-                    child: CommentsSection(trackId: widget.track.id),
+                    child: CommentsSection(
+                      projectId: widget.projectId,
+                      trackId: widget.track.id,
+                    ),
                   ),
                 ),
                 SizedBox(height: Dimensions.space32),

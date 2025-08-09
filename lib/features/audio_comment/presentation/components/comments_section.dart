@@ -12,9 +12,14 @@ import 'audio_comment_card.dart';
 /// Comments section component that handles displaying the list of comments
 /// with proper state management and error handling
 class CommentsSection extends StatefulWidget {
+  final ProjectId projectId;
   final AudioTrackId trackId;
 
-  const CommentsSection({super.key, required this.trackId});
+  const CommentsSection({
+    super.key,
+    required this.projectId,
+    required this.trackId,
+  });
 
   @override
   State<CommentsSection> createState() => _CommentsSectionState();
@@ -28,7 +33,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<AudioCommentBloc>().add(
-          WatchCommentsByTrackEvent(widget.trackId),
+          WatchAudioCommentsBundleEvent(widget.projectId, widget.trackId),
         );
       }
     });
