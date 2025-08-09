@@ -82,19 +82,25 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          // Background image (adaptive: http or local)
-                          ImageUtils.createAdaptiveImageWidget(
-                            imagePath: profile.avatarUrl,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            fallbackWidget: Image(
-                              image: const AssetImage(
-                                'assets/images/default_profile_bg.jpg',
+                          // Background image: prefer network; otherwise use static asset to avoid async jank
+                          if (profile.avatarUrl.startsWith('http'))
+                            ImageUtils.createAdaptiveImageWidget(
+                              imagePath: profile.avatarUrl,
+                              width: double.infinity,
+                              height: double.infinity,
+                              fit: BoxFit.cover,
+                              fallbackWidget: Image(
+                                image: const AssetImage(
+                                  'assets/images/default_profile_bg.jpg',
+                                ),
+                                fit: BoxFit.cover,
                               ),
+                            )
+                          else
+                            const Image(
+                              image: AssetImage('assets/images/default_profile_bg.jpg'),
                               fit: BoxFit.cover,
                             ),
-                          ),
                           // Name at bottom left
                           Positioned(
                             left: 24,

@@ -111,25 +111,6 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
 
       // CACHE-ASIDE PATTERN: Return local data immediately
       await for (final dto in _localDataSource.watchUserProfile(userId.value)) {
-        // ✅ CRITICAL: Check if we should continue emitting data
-        // If there's no session, stop the stream to prevent infinite loops
-        final currentSessionUserId = await _sessionStorage.getUserId();
-        if (currentSessionUserId == null) {
-          AppLogger.info(
-            'UserProfileRepository: No active session, stopping profile stream for userId: ${userId.value}',
-            tag: 'USER_PROFILE_REPOSITORY',
-          );
-          return; // Stop the stream completely
-        }
-
-        if (currentSessionUserId != userId.value) {
-          AppLogger.warning(
-            'UserProfileRepository: Session userId ($currentSessionUserId) != requested userId (${userId.value}), stopping stream',
-            tag: 'USER_PROFILE_REPOSITORY',
-          );
-          return; // Stop the stream completely
-        }
-
         if (dto != null) {
           // Profile exists locally, return it
           AppLogger.info(

@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 abstract class UserProfileRemoteDataSource {
   /// Get a SINGLE user profile by ID
@@ -123,10 +126,50 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
     }
   }
 
-  Future<String?> _uploadAvatar(String userId, String filePath) async {
+  Future<String?> _uploadAvatar(String userId, String avatarUrl) async {
     try {
-      final ref = _storage.ref().child('avatars/$userId');
-      return await ref.getDownloadURL();
+      // Resolve local file path from a variety of inputs (absolute, file://, filename)
+      String? localPath;
+      if (avatarUrl.startsWith('file://')) {
+        localPath = Uri.parse(avatarUrl).toFilePath();
+      } else if (File(avatarUrl).isAbsolute && File(avatarUrl).existsSync()) {
+        localPath = avatarUrl;
+      } else {
+        // Treat as a filename key stored locally in permanent_images
+        final appDir = await getApplicationDocumentsDirectory();
+        final candidate = p.join(
+          appDir.path,
+          'permanent_images',
+          p.basename(avatarUrl),
+        );
+        if (File(candidate).existsSync()) {
+          localPath = candidate;
+        }
+      }
+
+      if (localPath == null || !File(localPath).existsSync()) {
+        return null; // Nothing to upload
+      }
+
+      final fileName = p.basename(localPath);
+      final storageRef = _storage.ref().child('avatars/$userId/$fileName');
+
+      // Infer simple content type from extension
+      String? contentType;
+      final ext = p.extension(localPath).toLowerCase();
+      if (ext == '.jpg' || ext == '.jpeg') contentType = 'image/jpeg';
+      if (ext == '.png') contentType = 'image/png';
+      if (ext == '.webp') contentType = 'image/webp';
+
+      final uploadTask = await storageRef.putFile(
+        File(localPath),
+        contentType != null ? SettableMetadata(contentType: contentType) : null,
+      );
+
+      if (uploadTask.state == TaskState.success) {
+        return await storageRef.getDownloadURL();
+      }
+      return null;
     } catch (e) {
       return null;
     }
