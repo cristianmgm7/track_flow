@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/notifications/presentation/blocs/events/notification_events.dart';
 import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
+import 'package:trackflow/core/notifications/presentation/blocs/states/notification_states.dart';
+import 'package:trackflow/core/notifications/presentation/components/notification_list.dart';
 
 /// Main notification center screen
 class NotificationCenterScreen extends StatefulWidget {
@@ -24,7 +26,17 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen>
 
     // Start watching notifications
     context.read<NotificationWatcherBloc>().add(const WatchAllNotifications());
-    context.read<NotificationWatcherBloc>().add(const WatchNotificationCount());
+
+    // Switch watcher based on active tab
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) return;
+      final watcherBloc = context.read<NotificationWatcherBloc>();
+      if (_tabController.index == 0) {
+        watcherBloc.add(const WatchAllNotifications());
+      } else {
+        watcherBloc.add(const WatchUnreadNotifications());
+      }
+    });
   }
 
   @override
@@ -85,9 +97,43 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen>
         controller: _tabController,
         children: [
           // All Notifications Tab
-          const Center(child: Text('All notifications will appear here')),
+          BlocBuilder<NotificationWatcherBloc, NotificationWatcherState>(
+            builder: (context, state) {
+              if (state is NotificationWatcherLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is NotificationWatcherError) {
+                return Center(child: Text(state.message));
+              }
+              if (state is AllNotificationsWatcherState) {
+                return NotificationList(
+                  notifications: state.notifications,
+                  isEmpty: state.notifications.isEmpty,
+                );
+              }
+              // Fallback UI
+              return const Center(child: Text('No notifications'));
+            },
+          ),
           // Unread Notifications Tab
-          const Center(child: Text('Unread notifications will appear here')),
+          BlocBuilder<NotificationWatcherBloc, NotificationWatcherState>(
+            builder: (context, state) {
+              if (state is NotificationWatcherLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is NotificationWatcherError) {
+                return Center(child: Text(state.message));
+              }
+              if (state is UnreadNotificationsWatcherState) {
+                return NotificationList(
+                  notifications: state.unreadNotifications,
+                  isEmpty: state.unreadNotifications.isEmpty,
+                );
+              }
+              // Fallback UI
+              return const Center(child: Text('No unread notifications'));
+            },
+          ),
         ],
       ),
     );
