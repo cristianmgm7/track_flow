@@ -13,6 +13,8 @@ import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dar
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -211,10 +213,16 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,
-              builder:
-                  (context, state) => ManageCollaboratorsScreen(
-                    project: state.extra as Project,
-                  ),
+              builder: (context, state) {
+                final project = state.extra as Project;
+                return BlocProvider<ManageCollaboratorsBloc>(
+                  create:
+                      (_) =>
+                          sl<ManageCollaboratorsBloc>()
+                            ..add(WatchCollaborators(projectId: project.id)),
+                  child: ManageCollaboratorsScreen(project: project),
+                );
+              },
             ),
             GoRoute(
               path: AppRoutes.userProfile,

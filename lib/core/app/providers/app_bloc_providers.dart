@@ -6,7 +6,6 @@ import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
@@ -47,11 +46,7 @@ class AppBlocProviders {
 
   /// Get main app providers (dashboard and project management features)
   static List<BlocProvider> getMainAppProviders() {
-    return [
-      BlocProvider<ManageCollaboratorsBloc>(
-        create: (context) => sl<ManageCollaboratorsBloc>(),
-      ),
-    ];
+    return [];
   }
 
   /// Get audio-related providers

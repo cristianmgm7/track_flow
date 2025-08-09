@@ -1,4 +1,7 @@
 import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_collaborators_bundle_usecase.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -90,4 +93,14 @@ class ClearUserSearch extends ManageCollaboratorsEvent {
 
   @override
   List<Object?> get props => [];
+}
+
+// Internal event to update state from the collaborators bundle stream
+class CollaboratorsBundleUpdated extends ManageCollaboratorsEvent {
+  final Either<Failure, CollaboratorsBundle> result;
+
+  CollaboratorsBundleUpdated(this.result);
+
+  @override
+  List<Object?> get props => [result];
 }

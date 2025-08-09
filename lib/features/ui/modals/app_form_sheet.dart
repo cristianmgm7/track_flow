@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 
@@ -12,6 +13,7 @@ Future<T?> showAppFormSheet<T>({
   double maxChildSize = 0.9,
   bool isDismissible = true,
   bool useRootNavigator = false,
+  List<BlocBase<dynamic>> reprovideBlocs = const [],
 }) {
   return showModalBottomSheet<T>(
     context: context,
@@ -20,6 +22,18 @@ Future<T?> showAppFormSheet<T>({
     useRootNavigator: useRootNavigator,
     isDismissible: isDismissible,
     builder: (context) {
+      // Re-provide any blocs into the modal subtree if requested
+      Widget wrapWithProviders(Widget child) {
+        if (reprovideBlocs.isEmpty) return child;
+        return MultiBlocProvider(
+          providers:
+              reprovideBlocs
+                  .map((bloc) => BlocProvider.value(value: bloc))
+                  .toList(),
+          child: child,
+        );
+      }
+
       return DraggableScrollableSheet(
         initialChildSize: initialChildSize,
         minChildSize: minChildSize,
@@ -29,7 +43,7 @@ Future<T?> showAppFormSheet<T>({
           return _AppFormSheetContent(
             title: title,
             scrollController: scrollController,
-            child: child,
+            child: wrapWithProviders(child),
           );
         },
       );

@@ -44,6 +44,7 @@ class ManageCollaboratorsBloc
     on<LeaveProject>(_onLeaveProject);
     on<SearchUserByEmail>(_onSearchUserByEmail);
     on<ClearUserSearch>(_onClearUserSearch);
+    on<CollaboratorsBundleUpdated>(_onCollaboratorsBundleUpdated);
   }
 
   Future<void> _onWatchCollaborators(
@@ -52,24 +53,29 @@ class ManageCollaboratorsBloc
   ) async {
     await emit.onEach<Either<Failure, CollaboratorsBundle>>(
       watchCollaboratorsBundleUseCase(event.projectId),
-      onData: (either) {
-        either.fold(
-          (failure) => emit(ManageCollaboratorsError(failure.toString())),
-          (bundle) {
-            final loadedState = ManageCollaboratorsLoaded(
-              bundle.project,
-              bundle.userProfiles,
-            );
-            _lastLoadedState = loadedState;
-            emit(loadedState);
-          },
-        );
-      },
+      onData: (either) => add(CollaboratorsBundleUpdated(either)),
       onError: (error, stackTrace) {
         emit(ManageCollaboratorsError(error.toString()));
         if (_lastLoadedState != null) {
           emit(_lastLoadedState!);
         }
+      },
+    );
+  }
+
+  void _onCollaboratorsBundleUpdated(
+    CollaboratorsBundleUpdated event,
+    Emitter<ManageCollaboratorsState> emit,
+  ) {
+    event.result.fold(
+      (failure) => emit(ManageCollaboratorsError(failure.toString())),
+      (bundle) {
+        final loadedState = ManageCollaboratorsLoaded(
+          bundle.project,
+          bundle.userProfiles,
+        );
+        _lastLoadedState = loadedState;
+        emit(loadedState);
       },
     );
   }
@@ -100,7 +106,7 @@ class ManageCollaboratorsBloc
         }
       },
       (project) {
-        add(WatchCollaborators(projectId: project.id));
+        // No need to re-subscribe; existing watcher will pick up DB changes
       },
     );
   }
@@ -136,8 +142,7 @@ class ManageCollaboratorsBloc
         emit(
           UpdateCollaboratorRoleSuccess(project, event.newRole.toShortString()),
         );
-        // Then watch for updates
-        add(WatchCollaborators(projectId: project.id));
+        // No need to re-subscribe; existing watcher will pick up DB changes
       },
     );
   }
@@ -233,7 +238,7 @@ class ManageCollaboratorsBloc
               'Collaborator $emailUsername added successfully!',
             ),
           );
-          add(WatchCollaborators(projectId: project.id));
+          // No need to re-subscribe; existing watcher will pick up DB changes
         },
       );
     } catch (e) {
