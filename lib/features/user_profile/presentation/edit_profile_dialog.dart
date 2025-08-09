@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
+import 'package:path/path.dart' as p;
 
 class EditProfileDialog extends StatefulWidget {
   final UserProfile profile;
@@ -76,13 +77,14 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         if (permanentPath != null) {
           setState(() {
             _avatarFile = File(permanentPath);
-            _avatarUrl = permanentPath;
+            // Persist only the filename key, not an absolute sandbox path
+            _avatarUrl = p.basename(permanentPath);
           });
         } else {
           // Fallback to original path if copying fails
           setState(() {
             _avatarFile = File(pickedFile.path);
-            _avatarUrl = pickedFile.path;
+            _avatarUrl = p.basename(pickedFile.path);
           });
         }
       }
@@ -141,40 +143,20 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
             children: [
               BlocBuilder<UserProfileBloc, UserProfileState>(
                 builder: (context, state) {
-                  ImageProvider? backgroundImage;
-
-                  if (_avatarFile != null) {
-                    backgroundImage = FileImage(_avatarFile!);
-                  } else {
-                    String? stateUrl;
-                    if (state is UserProfileLoaded) {
-                      stateUrl = state.profile.avatarUrl;
-                    } else if (state is ProfileComplete) {
-                      stateUrl = state.profile.avatarUrl;
-                    } else if (state is ProfileIncomplete &&
-                        state.profile != null) {
-                      stateUrl = state.profile!.avatarUrl;
-                    } else if (state is ProfileCreationDataLoaded) {
-                      stateUrl = state.photoUrl;
-                    }
-
-                    final effectiveUrl =
-                        (stateUrl != null && stateUrl.isNotEmpty)
-                            ? stateUrl
-                            : _avatarUrl;
-
-                    if (effectiveUrl.isNotEmpty &&
-                        Uri.tryParse(effectiveUrl)?.isAbsolute == true) {
-                      backgroundImage = NetworkImage(effectiveUrl);
-                    } else if (effectiveUrl.isNotEmpty &&
-                        File(effectiveUrl).existsSync()) {
-                      backgroundImage = FileImage(File(effectiveUrl));
-                    } else {
-                      backgroundImage = null;
-                    }
+                  String? stateUrl;
+                  if (state is UserProfileLoaded) {
+                    stateUrl = state.profile.avatarUrl;
+                  } else if (state is ProfileComplete) {
+                    stateUrl = state.profile.avatarUrl;
+                  } else if (state is ProfileIncomplete &&
+                      state.profile != null) {
+                    stateUrl = state.profile!.avatarUrl;
+                  } else if (state is ProfileCreationDataLoaded) {
+                    stateUrl = state.photoUrl;
                   }
 
-                  final showPlaceholder = backgroundImage == null;
+                  final displayPath =
+                      _avatarFile?.path ?? (stateUrl ?? _avatarUrl);
 
                   return GestureDetector(
                     onTap: _pickImage,
@@ -183,18 +165,18 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.primary, width: 2),
                       ),
-                      child: CircleAvatar(
-                        radius: 40,
-                        backgroundColor: AppColors.grey600,
-                        backgroundImage: backgroundImage,
-                        child:
-                            showPlaceholder
-                                ? Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: AppColors.textSecondary,
-                                )
-                                : null,
+                      child: ClipOval(
+                        child: ImageUtils.createRobustImageWidget(
+                          imagePath: displayPath,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          fallbackWidget: Icon(
+                            Icons.person,
+                            size: 40,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                       ),
                     ),
                   );

@@ -30,8 +30,13 @@ class ImageUtils {
         }
       }
 
-      // If we reach here, the file doesn't exist, try asset image as fallback
-      return AssetImage(imagePath);
+      // Fallback to asset image only if it looks like a bundled asset path
+      if (imagePath.startsWith('assets/')) {
+        return AssetImage(imagePath);
+      }
+
+      // Otherwise, return null so callers can show a placeholder without errors
+      return null;
     } catch (e) {
       // If any error occurs during image provider creation, return null
       // This will show the default icon
@@ -95,26 +100,30 @@ class ImageUtils {
     if (imagePath.isEmpty) return null;
 
     try {
+      // Normalize potential file:// URIs
+      final normalizedPath =
+          imagePath.startsWith('file://')
+              ? Uri.parse(imagePath).toFilePath()
+              : imagePath;
+
       // Check if the file exists
-      final file = File(imagePath);
+      final file = File(normalizedPath);
       if (await file.exists()) {
-        return imagePath; // File exists, return original path
+        return normalizedPath; // File exists, return normalized path
       }
 
-      // File doesn't exist, try to find it in permanent storage
-      if (imagePath.contains('profile_images')) {
-        final repairedPath = await _findImageInPermanentStorage(imagePath);
-        if (repairedPath != null) {
-          AppLogger.info(
-            'Repaired image path: $imagePath -> $repairedPath',
-            tag: 'IMAGE_UTILS',
-          );
-          return repairedPath;
-        }
+      // File doesn't exist, try to find it in permanent storage by filename
+      final repairedPath = await _findImageInPermanentStorage(normalizedPath);
+      if (repairedPath != null) {
+        AppLogger.info(
+          'Repaired image path: $normalizedPath -> $repairedPath',
+          tag: 'IMAGE_UTILS',
+        );
+        return repairedPath;
       }
 
       AppLogger.warning(
-        'Image file not found and cannot be repaired: $imagePath',
+        'Image file not found and cannot be repaired: $normalizedPath',
         tag: 'IMAGE_UTILS',
       );
       return null;
@@ -311,6 +320,58 @@ class ImageUtils {
           },
         );
       },
+    );
+  }
+
+  /// Creates an image widget that supports both remote (http) and local files.
+  /// - For http/https: uses Image.network with error + loading fallbacks
+  /// - For local paths/keys: validates/repairs and uses Image.file
+  static Widget createAdaptiveImageWidget({
+    required String imagePath,
+    required double width,
+    required double height,
+    BoxFit fit = BoxFit.cover,
+    Widget? fallbackWidget,
+  }) {
+    if (imagePath.isEmpty) {
+      return _buildFallbackWidget(width, height, fallbackWidget);
+    }
+
+    if (imagePath.startsWith('http')) {
+      return Image.network(
+        imagePath,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          AppLogger.warning(
+            'Error loading network image: $error',
+            tag: 'IMAGE_UTILS',
+          );
+          return _buildFallbackWidget(width, height, fallbackWidget);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    }
+
+    // Local path or key: delegate to robust local widget
+    return createRobustImageWidget(
+      imagePath: imagePath,
+      width: width,
+      height: height,
+      fit: fit,
+      fallbackWidget: fallbackWidget,
     );
   }
 

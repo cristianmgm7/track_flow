@@ -6,7 +6,7 @@ import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'dart:ui';
-import 'dart:io';
+import 'package:trackflow/core/utils/image_utils.dart';
 
 class CollaboratorCard extends StatelessWidget {
   final String name;
@@ -86,23 +86,11 @@ class CollaboratorCard extends StatelessWidget {
 
   Widget _buildBackgroundImage() {
     if (avatarUrl.isNotEmpty) {
-      ImageProvider imageProvider;
-      if (avatarUrl.startsWith('http')) {
-        imageProvider = NetworkImage(avatarUrl);
-      } else {
-        imageProvider = FileImage(File(avatarUrl));
-      }
-
-      return Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: imageProvider,
-            fit: BoxFit.cover,
-            onError: (exception, stackTrace) {
-              // Fallback to default avatar if image fails to load
-            },
-          ),
-        ),
+      return ImageUtils.createRobustImageWidget(
+        imagePath: avatarUrl,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
       );
     } else {
       // Default avatar background

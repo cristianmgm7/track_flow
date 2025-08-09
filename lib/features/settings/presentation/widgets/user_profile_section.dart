@@ -49,25 +49,22 @@ class UserProfileSection extends StatelessWidget {
   Widget _buildProfileHeader(BuildContext context, UserProfileState state) {
     if (state is UserProfileLoaded) {
       final profile = state.profile;
-      final avatarProvider = ImageUtils.createSafeImageProvider(
-        profile.avatarUrl,
-      );
 
       return Row(
         children: [
           // User Avatar
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: AppColors.grey600,
-            backgroundImage: avatarProvider,
-            child:
-                avatarProvider == null
-                    ? Icon(
-                      Icons.person,
-                      size: 30,
-                      color: AppColors.textSecondary,
-                    )
-                    : null,
+          ClipOval(
+            child: ImageUtils.createAdaptiveImageWidget(
+              imagePath: profile.avatarUrl,
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+              fallbackWidget: Icon(
+                Icons.person,
+                size: 30,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           SizedBox(width: Dimensions.space16),
 

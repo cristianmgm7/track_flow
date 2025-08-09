@@ -62,33 +62,28 @@ class AudioCommentComponent extends StatelessWidget {
   }
 
   Widget _buildAvatar(BuildContext context) {
-    ImageProvider? imageProvider;
-    try {
-      imageProvider =
-          collaborator.avatarUrl.isNotEmpty
-              ? ImageUtils.createSafeImageProvider(collaborator.avatarUrl)
-              : null;
-    } catch (e) {
-      // If image loading fails, use null to show text avatar
-      imageProvider = null;
-    }
-
-    return CircleAvatar(
-      radius: Dimensions.avatarMedium / 2,
-      backgroundImage: imageProvider,
-      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-      child:
-          (collaborator.avatarUrl.isEmpty || imageProvider == null)
-              ? Text(
-                collaborator.name.isNotEmpty
-                    ? collaborator.name.substring(0, 1).toUpperCase()
-                    : comment.createdBy.value.substring(0, 1).toUpperCase(),
-                style: AppTextStyle.headlineSmall.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-              : null,
+    return ClipOval(
+      child: ImageUtils.createAdaptiveImageWidget(
+        imagePath: collaborator.avatarUrl,
+        width: Dimensions.avatarMedium,
+        height: Dimensions.avatarMedium,
+        fit: BoxFit.cover,
+        fallbackWidget: Container(
+          width: Dimensions.avatarMedium,
+          height: Dimensions.avatarMedium,
+          color: AppColors.primary.withValues(alpha: 0.1),
+          alignment: Alignment.center,
+          child: Text(
+            collaborator.name.isNotEmpty
+                ? collaborator.name.substring(0, 1).toUpperCase()
+                : comment.createdBy.value.substring(0, 1).toUpperCase(),
+            style: AppTextStyle.headlineSmall.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
     );
   }
 

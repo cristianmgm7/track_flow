@@ -75,19 +75,18 @@ class _UserImagePickerState extends State<UserImagePicker> {
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.primary, width: 2),
           ),
-          child: CircleAvatar(
-            radius: 40,
-            backgroundColor: AppColors.grey600,
-            backgroundImage:
-                _pickedImage != null ? FileImage(_pickedImage!) : null,
-            child:
-                _pickedImage == null
-                    ? Icon(
-                      Icons.person,
-                      size: 40,
-                      color: AppColors.textSecondary,
-                    )
-                    : null,
+          child: ClipOval(
+            child: ImageUtils.createAdaptiveImageWidget(
+              imagePath: _pickedImage?.path ?? '',
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+              fallbackWidget: Icon(
+                Icons.person,
+                size: 40,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 12),

@@ -66,9 +66,6 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
             }
             if (state is UserProfileLoaded) {
               final profile = state.profile;
-              final avatarProvider = ImageUtils.createSafeImageProvider(
-                profile.avatarUrl,
-              );
 
               return CustomScrollView(
                 slivers: [
@@ -85,17 +82,17 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                       background: Stack(
                         fit: StackFit.expand,
                         children: [
-                          // Background image
-                          Container(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image:
-                                    avatarProvider ??
-                                    const AssetImage(
-                                      'assets/images/default_profile_bg.jpg',
-                                    ),
-                                fit: BoxFit.cover,
+                          // Background image (adaptive: http or local)
+                          ImageUtils.createAdaptiveImageWidget(
+                            imagePath: profile.avatarUrl,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                            fallbackWidget: Image(
+                              image: const AssetImage(
+                                'assets/images/default_profile_bg.jpg',
                               ),
+                              fit: BoxFit.cover,
                             ),
                           ),
                           // Name at bottom left
@@ -108,7 +105,9 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.background.withValues(alpha: 0.7),
+                                color: AppColors.background.withValues(
+                                  alpha: 0.7,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
