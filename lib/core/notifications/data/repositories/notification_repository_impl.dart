@@ -459,4 +459,111 @@ class NotificationRepositoryImpl implements NotificationRepository {
       );
     }
   }
+
+  @override
+  Future<Either<Failure, Unit>> syncNotificationsFromRemote(
+    UserId userId,
+  ) async {
+    try {
+      // Check if we have network connectivity
+      final isConnected = await _networkStateManager.isConnected;
+      if (!isConnected) {
+        AppLogger.warning(
+          'No network connection - skipping notification sync',
+          tag: 'NotificationRepository',
+        );
+        return Left(NetworkFailure('No network connection available'));
+      }
+
+      AppLogger.info(
+        'Starting notification sync from remote for user: ${userId.value}',
+        tag: 'NotificationRepository',
+      );
+
+      // Fetch all notifications for the user from remote
+      final remoteResult = await _remoteDataSource.getNotificationsForUser(
+        userId.value,
+      );
+
+      return remoteResult.fold(
+        (failure) {
+          AppLogger.warning(
+            'Failed to fetch notifications from remote: ${failure.message}',
+            tag: 'NotificationRepository',
+          );
+          return Left(failure);
+        },
+        (remoteNotifications) async {
+          // Get existing local notifications for comparison
+          final localNotifications = await _localDataSource
+              .getNotificationsForUser(userId.value);
+
+          // Create a map of local notifications by ID for quick lookup
+          final localNotificationMap = <String, NotificationDto>{
+            for (final notification in localNotifications)
+              notification.id: notification
+          };
+
+          int newCount = 0;
+          int updatedCount = 0;
+
+          // Process each remote notification
+          for (final remoteNotification in remoteNotifications) {
+            final localNotification = localNotificationMap[remoteNotification.id];
+
+            if (localNotification == null) {
+              // New notification - cache it locally
+              await _localDataSource.cacheNotification(remoteNotification);
+              newCount++;
+            } else {
+              // Check if remote notification is newer or different
+              final remoteTimestamp = remoteNotification.timestamp;
+              final localTimestamp = localNotification.timestamp;
+
+              // Update if remote is newer, but preserve local read status
+              // unless it was explicitly changed remotely
+              if (remoteTimestamp.isAfter(localTimestamp) ||
+                  _shouldUpdateNotification(localNotification, remoteNotification)) {
+                
+                // Preserve local read status if it was marked as read locally
+                // but remote shows unread (user read it locally but sync hadn't happened)
+                final updatedNotification = remoteNotification.copyWith(
+                  isRead: localNotification.isRead || remoteNotification.isRead,
+                );
+
+                await _localDataSource.updateNotification(updatedNotification);
+                updatedCount++;
+              }
+            }
+          }
+
+          AppLogger.info(
+            'Notification sync completed - New: $newCount, Updated: $updatedCount',
+            tag: 'NotificationRepository',
+          );
+
+          return Right(unit);
+        },
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Notification sync failed: $e',
+        tag: 'NotificationRepository',
+        error: e,
+      );
+      return Left(ServerFailure('Failed to sync notifications: $e'));
+    }
+  }
+
+  /// Helper method to determine if a notification should be updated
+  /// based on content changes, not just timestamp
+  bool _shouldUpdateNotification(
+    NotificationDto local,
+    NotificationDto remote,
+  ) {
+    // Update if title, body, or payload changed
+    return local.title != remote.title ||
+        local.body != remote.body ||
+        local.payload.toString() != remote.payload.toString();
+  }
 }

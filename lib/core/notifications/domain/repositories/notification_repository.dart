@@ -34,6 +34,12 @@ abstract class NotificationRepository {
   /// Delete all notifications for a user
   Future<Either<Failure, Unit>> deleteAllNotifications(UserId userId);
 
+  /// Sync notifications from remote to local cache for a user
+  /// This method fetches all notifications from the remote source (Firestore)
+  /// and caches them locally, ensuring the user receives notifications
+  /// created for them by other users or systems.
+  Future<Either<Failure, Unit>> syncNotificationsFromRemote(UserId userId);
+
   // Watcher methods (for observing)
 
   /// Watch all notifications for a user

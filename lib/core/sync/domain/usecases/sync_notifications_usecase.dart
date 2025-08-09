@@ -51,13 +51,29 @@ class SyncNotificationsUseCase {
         return;
       }
 
-      // Use repository to watch notifications - this triggers the sync internally
-      // The repository handles the offline-first logic and remote sync
+      // Sync notifications from remote to local cache
       final userEntity = UserId.fromUniqueString(userId);
-
-      // Trigger a watch operation to ensure data is fresh
-      // The repository implementation will handle the actual sync
-      await _notificationRepository.watchNotifications(userEntity).first;
+      
+      // Call the new sync method to fetch notifications from remote
+      final syncResult = await _notificationRepository.syncNotificationsFromRemote(userEntity);
+      
+      syncResult.fold(
+        (failure) {
+          AppLogger.warning(
+            'Remote notification sync failed: ${failure.message}',
+            tag: 'SyncNotificationsUseCase',
+          );
+          // Don't throw - sync failures shouldn't break the operation
+          // Local data is still available
+        },
+        (_) {
+          AppLogger.sync(
+            'NOTIFICATIONS',
+            'Remote notifications synced successfully to local cache',
+            syncKey: userId,
+          );
+        },
+      );
 
       // Mark as synced
       await _markNotificationsAsSynced();
