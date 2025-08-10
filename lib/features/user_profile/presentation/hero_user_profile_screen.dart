@@ -6,7 +6,6 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
@@ -83,24 +82,10 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                         fit: StackFit.expand,
                         children: [
                           // Background image: prefer network; otherwise use static asset to avoid async jank
-                          if (profile.avatarUrl.startsWith('http'))
-                            ImageUtils.createAdaptiveImageWidget(
-                              imagePath: profile.avatarUrl,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                              fallbackWidget: Image(
-                                image: const AssetImage(
-                                  'assets/images/default_profile_bg.jpg',
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          else
-                            const Image(
-                              image: AssetImage('assets/images/default_profile_bg.jpg'),
-                              fit: BoxFit.cover,
-                            ),
+                          const Image(
+                            image: AssetImage('assets/images/default_profile_bg.jpg'),
+                            fit: BoxFit.cover,
+                          ),
                           // Name at bottom left
                           Positioned(
                             left: 24,
