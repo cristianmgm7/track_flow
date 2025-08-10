@@ -9,7 +9,6 @@ import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dar
 abstract class UserProfileLocalDataSource {
   Future<void> cacheUserProfile(UserProfileDTO profile);
   Stream<UserProfileDTO?> watchUserProfile(String userId);
-  Future<UserProfileDTO?> getUserProfileById(String userId);
 
   /// Find a user profile by email address (local cache)
   Future<UserProfileDTO?> findUserByEmail(String email);
@@ -44,12 +43,6 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
     return _isar.userProfileDocuments
         .watchObject(fastHash(userId), fireImmediately: true)
         .map((doc) => doc?.toDTO());
-  }
-
-  @override
-  Future<UserProfileDTO?> getUserProfileById(String userId) async {
-    final doc = await _isar.userProfileDocuments.get(fastHash(userId));
-    return doc?.toDTO();
   }
 
   @override

@@ -20,6 +20,8 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   final UserProfileRemoteDataSource _remoteDataSource;
   final NetworkStateManager _networkStateManager;
   final FirebaseFirestore _firestore;
+  // SessionStorage kept for API parity; not used in watcher
+  // ignore: unused_field
   final SessionStorage _sessionStorage;
 
   UserProfileRepositoryImpl({
@@ -109,9 +111,18 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         tag: 'USER_PROFILE_REPOSITORY',
       );
 
-      // PURE LOCAL STREAM: strictly map Isar DTO to domain and emit
+      // CACHE-ASIDE (local-only watcher): emit local data; seeding is handled by app sync
       await for (final dto in _localDataSource.watchUserProfile(userId.value)) {
-        yield Right(dto?.toDomain());
+        if (dto != null) {
+          AppLogger.info(
+            'UserProfileRepository: Profile found in local cache',
+            tag: 'USER_PROFILE_REPOSITORY',
+          );
+          yield Right(dto.toDomain());
+        } else {
+          // Emit null to indicate "not yet available locally"; do not fetch remote here
+          yield Right(null);
+        }
       }
     } catch (e) {
       AppLogger.error(

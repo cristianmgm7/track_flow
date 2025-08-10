@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
@@ -146,25 +145,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
                   ),
                 );
               } else {
-                // Graceful fallback: show minimal placeholder profile instead of error
-                // so the screen can open and allow user to create/update profile.
-                AppLogger.warning(
-                  'UserProfileBloc: No profile found for user - emitting placeholder state',
-                  tag: 'USER_PROFILE_BLOC',
-                );
-                emit(UserProfileLoaded(
-                  profile: UserProfile(
-                    id: UserId.fromUniqueString(event.userId ?? ''),
-                    name: '',
-                    email: '',
-                    avatarUrl: '',
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                    creativeRole: CreativeRole.other,
-                  ),
-                  isSyncing: false,
-                  syncProgress: null,
-                ));
+                // Keep lightweight loading state while local profile is not yet seeded
+                if (state is! UserProfileLoading) {
+                  emit(UserProfileLoading());
+                }
               }
             },
           );
@@ -196,7 +180,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
       'UserProfileBloc: Saving user profile for user: ${event.profile.email}',
       tag: 'USER_PROFILE_BLOC',
     );
-    emit(UserProfileLoading());
+    emit(UserProfileSaving());
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
       (failure) {
@@ -209,15 +193,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
       },
       (profile) {
         AppLogger.info(
-          'UserProfileBloc: Profile saved successfully, triggering profile reload',
+          'UserProfileBloc: Profile saved successfully',
           tag: 'USER_PROFILE_BLOC',
         );
         emit(UserProfileSaved());
-        AppLogger.info(
-          'UserProfileBloc: Dispatching WatchUserProfile event',
-          tag: 'USER_PROFILE_BLOC',
-        );
-        add(WatchUserProfile());
       },
     );
   }
@@ -230,7 +209,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
       'UserProfileBloc: Creating user profile for user: ${event.profile.email}',
       tag: 'USER_PROFILE_BLOC',
     );
-    emit(UserProfileLoading());
+    emit(UserProfileSaving());
     final result = await updateUserProfileUseCase.call(event.profile);
     result.fold(
       (failure) {
@@ -243,15 +222,10 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
       },
       (profile) {
         AppLogger.info(
-          'UserProfileBloc: Profile created successfully, triggering profile reload',
+          'UserProfileBloc: Profile created successfully',
           tag: 'USER_PROFILE_BLOC',
         );
         emit(UserProfileSaved());
-        AppLogger.info(
-          'UserProfileBloc: Dispatching WatchUserProfile event',
-          tag: 'USER_PROFILE_BLOC',
-        );
-        add(WatchUserProfile());
       },
     );
   }

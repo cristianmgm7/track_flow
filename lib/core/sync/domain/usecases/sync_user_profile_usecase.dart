@@ -28,8 +28,7 @@ class SyncUserProfileUseCase {
         AppLogger.error('Error syncing user profile', error: failure);
       },
       (profileDTO) async {
-        // Only clear cache when we have new data to replace it
-        await local.clearCache();
+        // Upsert only this user profile to avoid transient nulls from a global clear
         await local.cacheUserProfile(profileDTO);
       },
     );

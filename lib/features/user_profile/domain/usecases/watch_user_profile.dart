@@ -114,14 +114,10 @@ class WatchUserProfileUseCase {
               );
             } else {
               AppLogger.warning(
-                'WatchUserProfileUseCase: No profile found for userId: $id',
+                'WatchUserProfileUseCase: No local profile found for userId: $id',
                 tag: 'WATCH_USER_PROFILE',
               );
-
-              // Try to sync from remote if profile is not found locally
-              if (id != null) {
-                _trySyncFromRemote(id);
-              }
+              // Do not trigger remote sync here; app bootstrap handles seeding
             }
             return Right(profile);
           },
@@ -137,56 +133,5 @@ class WatchUserProfileUseCase {
     }
   }
 
-  /// Try to sync profile from remote when not found locally
-  Future<void> _trySyncFromRemote(String userId) async {
-    try {
-      AppLogger.info(
-        'WatchUserProfileUseCase: Attempting to sync profile from remote for userId: $userId',
-        tag: 'WATCH_USER_PROFILE',
-      );
-
-      final syncResult = await _userProfileRepository.syncProfileFromRemote(
-        UserId.fromUniqueString(userId),
-      );
-
-      syncResult.fold(
-        (failure) {
-          AppLogger.warning(
-            'WatchUserProfileUseCase: Remote sync failed: ${failure.message}',
-            tag: 'WATCH_USER_PROFILE',
-          );
-
-          // Log more details about the failure
-          if (failure.message.contains('not found')) {
-            AppLogger.error(
-              'WatchUserProfileUseCase: Profile does not exist in Firestore for userId: $userId',
-              tag: 'WATCH_USER_PROFILE',
-            );
-          } else if (failure.message.contains('No internet connection')) {
-            AppLogger.warning(
-              'WatchUserProfileUseCase: No internet connection for sync',
-              tag: 'WATCH_USER_PROFILE',
-            );
-          } else {
-            AppLogger.error(
-              'WatchUserProfileUseCase: Unexpected sync error: ${failure.message}',
-              tag: 'WATCH_USER_PROFILE',
-            );
-          }
-        },
-        (profile) {
-          AppLogger.info(
-            'WatchUserProfileUseCase: Profile synced from remote successfully - name: ${profile.name}, email: ${profile.email}',
-            tag: 'WATCH_USER_PROFILE',
-          );
-        },
-      );
-    } catch (e) {
-      AppLogger.error(
-        'WatchUserProfileUseCase: Error during remote sync: $e',
-        tag: 'WATCH_USER_PROFILE',
-        error: e,
-      );
-    }
-  }
+  // Remote sync is intentionally not triggered here to keep watch local-only
 }

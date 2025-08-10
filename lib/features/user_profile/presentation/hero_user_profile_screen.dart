@@ -83,7 +83,9 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                         children: [
                           // Background image: prefer network; otherwise use static asset to avoid async jank
                           const Image(
-                            image: AssetImage('assets/images/default_profile_bg.jpg'),
+                            image: AssetImage(
+                              'assets/images/default_profile_bg.jpg',
+                            ),
                             fit: BoxFit.cover,
                           ),
                           // Name at bottom left
