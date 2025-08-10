@@ -109,63 +109,9 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
         tag: 'USER_PROFILE_REPOSITORY',
       );
 
-      // CACHE-ASIDE PATTERN: Return local data immediately
+      // PURE LOCAL STREAM: strictly map Isar DTO to domain and emit
       await for (final dto in _localDataSource.watchUserProfile(userId.value)) {
-        if (dto != null) {
-          // Profile exists locally, return it
-          AppLogger.info(
-            'UserProfileRepository: Profile found in local cache',
-            tag: 'USER_PROFILE_REPOSITORY',
-          );
-          yield Right(dto.toDomain());
-        } else {
-          // Profile not in local cache.
-          // IMPORTANT: emit immediately to unblock UI, then attempt remote sync in the background.
-          yield Right(null);
-
-          // Fire-and-forget remote sync without blocking the stream
-          () async {
-            try {
-              AppLogger.info(
-                'UserProfileRepository: Profile not in local cache, attempting remote sync (background)',
-                tag: 'USER_PROFILE_REPOSITORY',
-              );
-
-              final isConnected = await _networkStateManager.isConnected;
-              if (!isConnected) {
-                AppLogger.info(
-                  'UserProfileRepository: Offline, skip remote sync',
-                  tag: 'USER_PROFILE_REPOSITORY',
-                );
-                return;
-              }
-
-              final remoteResult = await _remoteDataSource.getProfileById(
-                userId.value,
-              );
-              await remoteResult.fold(
-                (failure) async {
-                  AppLogger.warning(
-                    'UserProfileRepository: Remote sync failed: ${failure.message}',
-                    tag: 'USER_PROFILE_REPOSITORY',
-                  );
-                },
-                (remoteProfile) async {
-                  AppLogger.info(
-                    'UserProfileRepository: Remote profile found, caching locally',
-                    tag: 'USER_PROFILE_REPOSITORY',
-                  );
-                  await _localDataSource.cacheUserProfile(remoteProfile);
-                },
-              );
-            } catch (e) {
-              AppLogger.warning(
-                'UserProfileRepository: Background sync error: $e',
-                tag: 'USER_PROFILE_REPOSITORY',
-              );
-            }
-          }();
-        }
+        yield Right(dto?.toDomain());
       }
     } catch (e) {
       AppLogger.error(
