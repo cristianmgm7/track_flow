@@ -52,19 +52,33 @@ class UserProfileSection extends StatelessWidget {
 
       return Row(
         children: [
-          // User Avatar
+          // User Avatar: prefer local cache path, else remote URL
           ClipOval(
-            child: ImageUtils.createAdaptiveImageWidget(
-              imagePath: profile.avatarUrl,
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              fallbackWidget: Icon(
-                Icons.person,
-                size: 30,
-                color: AppColors.textSecondary,
-              ),
-            ),
+            child:
+                (profile.avatarLocalPath != null &&
+                        profile.avatarLocalPath!.isNotEmpty)
+                    ? ImageUtils.createAdaptiveImageWidget(
+                      imagePath: profile.avatarLocalPath!,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      fallbackWidget: Icon(
+                        Icons.person,
+                        size: 30,
+                        color: AppColors.textSecondary,
+                      ),
+                    )
+                    : ImageUtils.createAdaptiveImageWidget(
+                      imagePath: profile.avatarUrl,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                      fallbackWidget: Icon(
+                        Icons.person,
+                        size: 30,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
           ),
           SizedBox(width: Dimensions.space16),
 

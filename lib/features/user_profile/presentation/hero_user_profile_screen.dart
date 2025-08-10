@@ -6,7 +6,6 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
@@ -67,38 +66,29 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
             if (state is UserProfileLoaded) {
               final profile = state.profile;
 
-              return CustomScrollView(
-                slivers: [
-                  // Header Sliver: background image + centered name
-                  SliverAppBar(
-                    expandedHeight: MediaQuery.of(context).size.height * 0.35,
-                    floating: false,
-                    pinned: true,
-                    backgroundColor: AppColors.background,
-                    iconTheme: const IconThemeData(
-                      color: AppColors.textPrimary,
-                    ),
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Stack(
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: 240,
+                      child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          // Background image (adaptive: http or local)
-                          ImageUtils.createAdaptiveImageWidget(
-                            imagePath: profile.avatarUrl,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
-                            fallbackWidget: Image(
-                              image: const AssetImage(
-                                'assets/images/default_profile_bg.jpg',
+                          Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xFF1F1F1F), Color(0xFF121212)],
                               ),
-                              fit: BoxFit.cover,
                             ),
                           ),
                           // Name at bottom left
                           Positioned(
                             left: 24,
                             bottom: 24,
+                            right: 24,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -125,25 +115,23 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                                     ),
                                   ],
                                 ),
-                                textAlign: TextAlign.left,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  // Info Section below header
-                  SliverToBoxAdapter(
-                    child: Padding(
+                    Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
                         vertical: 12.0,
                       ),
                       child: _buildInfoSection(context, profile),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             }
             if (state is UserProfileError) {
@@ -241,30 +229,27 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
       padding: EdgeInsets.only(right: Dimensions.space8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                width: 1,
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              width: 1,
             ),
-            child: IconButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  useRootNavigator: false,
-                  builder: (context) => EditProfileDialog(profile: profile),
-                );
-              },
-              icon: Icon(
-                Icons.edit,
-                color: AppColors.textPrimary,
-                size: Dimensions.iconMedium,
-              ),
+          ),
+          child: IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                useRootNavigator: false,
+                builder: (context) => EditProfileDialog(profile: profile),
+              );
+            },
+            icon: Icon(
+              Icons.edit,
+              color: AppColors.textPrimary,
+              size: Dimensions.iconMedium,
             ),
           ),
         ),
