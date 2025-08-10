@@ -125,7 +125,20 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
 
   Future<String?> _uploadAvatar(String userId, String filePath) async {
     try {
-      final ref = _storage.ref().child('avatars/$userId');
+      // Derive a file name to avoid overwriting and allow caching
+      final extension = filePath.split('.').last;
+      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final ref = _storage.ref().child('avatars/$userId/$fileName');
+
+      final file = File(filePath.startsWith('file://')
+          ? Uri.parse(filePath).toFilePath()
+          : filePath);
+
+      if (!file.existsSync()) {
+        return null;
+      }
+
+      await ref.putFile(file);
       return await ref.getDownloadURL();
     } catch (e) {
       return null;
