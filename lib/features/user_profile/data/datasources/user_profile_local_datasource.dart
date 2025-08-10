@@ -32,8 +32,14 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
 
   @override
   Future<void> cacheUserProfile(UserProfileDTO profile) async {
-    final profileDoc = UserProfileDocument.fromDTO(profile);
     await _isar.writeTxn(() async {
+      final existing = await _isar.userProfileDocuments.get(
+        fastHash(profile.id),
+      );
+      final profileDoc = UserProfileDocument.fromDTO(profile);
+      // Preserve local avatar path unless an explicit new one is provided
+      profileDoc.avatarLocalPath =
+          profile.avatarLocalPath ?? existing?.avatarLocalPath;
       await _isar.userProfileDocuments.put(profileDoc);
     });
   }

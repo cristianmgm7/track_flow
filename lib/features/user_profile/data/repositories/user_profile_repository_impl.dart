@@ -76,7 +76,11 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
             profile.id.value,
             dto.avatarUrl,
           );
-          dto = dto.copyWith(avatarLocalPath: cachedPath);
+          // Ensure remote uses the cached path for upload
+          dto = dto.copyWith(
+            avatarLocalPath: cachedPath,
+            avatarUrl: cachedPath,
+          );
         } catch (e) {
           AppLogger.warning(
             'Avatar cache copy failed: $e',
