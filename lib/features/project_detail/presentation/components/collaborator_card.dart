@@ -86,7 +86,7 @@ class CollaboratorCard extends StatelessWidget {
 
   Widget _buildBackgroundImage() {
     if (avatarUrl.isNotEmpty) {
-      return ImageUtils.createRobustImageWidget(
+      return ImageUtils.createAdaptiveImageWidget(
         imagePath: avatarUrl,
         width: double.infinity,
         height: double.infinity,

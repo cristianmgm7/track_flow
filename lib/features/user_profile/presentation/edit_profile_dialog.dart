@@ -143,20 +143,23 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
             children: [
               BlocBuilder<UserProfileBloc, UserProfileState>(
                 builder: (context, state) {
-                  String? stateUrl;
+                  String? localPath;
+                  String? remoteUrl;
                   if (state is UserProfileLoaded) {
-                    stateUrl = state.profile.avatarUrl;
+                    localPath = state.profile.avatarLocalPath;
+                    remoteUrl = state.profile.avatarUrl;
                   } else if (state is ProfileComplete) {
-                    stateUrl = state.profile.avatarUrl;
+                    localPath = state.profile.avatarLocalPath;
+                    remoteUrl = state.profile.avatarUrl;
                   } else if (state is ProfileIncomplete &&
                       state.profile != null) {
-                    stateUrl = state.profile!.avatarUrl;
+                    localPath = state.profile!.avatarLocalPath;
+                    remoteUrl = state.profile!.avatarUrl;
                   } else if (state is ProfileCreationDataLoaded) {
-                    stateUrl = state.photoUrl;
+                    remoteUrl = state.photoUrl;
                   }
 
-                  final displayPath =
-                      _avatarFile?.path ?? (stateUrl ?? _avatarUrl);
+                  final chosenLocal = _avatarFile?.path ?? localPath;
 
                   return GestureDetector(
                     onTap: _pickImage,
@@ -166,17 +169,30 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                         border: Border.all(color: AppColors.primary, width: 2),
                       ),
                       child: ClipOval(
-                        child: ImageUtils.createRobustImageWidget(
-                          imagePath: displayPath,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          fallbackWidget: Icon(
-                            Icons.person,
-                            size: 40,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                        child:
+                            (chosenLocal != null && chosenLocal.isNotEmpty)
+                                ? ImageUtils.createAdaptiveImageWidget(
+                                  imagePath: chosenLocal,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  fallbackWidget: Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                )
+                                : ImageUtils.createAdaptiveImageWidget(
+                                  imagePath: remoteUrl ?? _avatarUrl,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  fallbackWidget: Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
                       ),
                     ),
                   );

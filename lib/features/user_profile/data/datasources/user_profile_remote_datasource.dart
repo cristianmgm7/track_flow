@@ -6,7 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+// import 'package:path_provider/path_provider.dart';
 
 abstract class UserProfileRemoteDataSource {
   /// Get a SINGLE user profile by ID
@@ -139,12 +139,13 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
         localPath = avatarUrl;
       }
 
-      if (localPath == null || !File(localPath).existsSync()) {
+      if (!File(localPath).existsSync()) {
         return null; // Nothing to upload
       }
 
       final extension = p.extension(localPath).replaceFirst('.', '');
-      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final fileName =
+          'avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
       final ref = _storage.ref().child('avatars/$userId/$fileName');
 
       await ref.putFile(File(localPath));

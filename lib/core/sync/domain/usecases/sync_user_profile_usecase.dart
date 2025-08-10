@@ -3,6 +3,7 @@ import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
+import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
 @lazySingleton
 class SyncUserProfileUseCase {
@@ -21,14 +22,45 @@ class SyncUserProfileUseCase {
       return;
     }
 
+    // Step 1: read local to see if we have pending avatarLocalPath without remote URL
+    UserProfileDTO? localDto;
+    try {
+      localDto = await local
+          .getUserProfilesByIds([userId])
+          .then((list) => list.isNotEmpty ? list.first : null);
+    } catch (_) {}
+
+    if (localDto != null &&
+        localDto.avatarUrl.isEmpty &&
+        (localDto.avatarLocalPath ?? '').isNotEmpty) {
+      // Attempt to push local avatar to remote (normaliza URL)
+      AppLogger.info(
+        'SyncUserProfile: pushing local avatar to remote',
+        tag: 'SYNC_USER',
+      );
+      final toPush = localDto.copyWith(avatarUrl: localDto.avatarLocalPath);
+      final pushed = await remote.updateProfile(toPush);
+      await pushed.fold(
+        (failure) async {
+          AppLogger.warning(
+            'SyncUserProfile: failed to push local avatar: ${failure.message}',
+            tag: 'SYNC_USER',
+          );
+        },
+        (remoteFixed) async {
+          await local.cacheUserProfile(remoteFixed);
+        },
+      );
+      return;
+    }
+
+    // Step 2: pull remote and upsert local
     final failureOrProfile = await remote.getProfileById(userId);
     await failureOrProfile.fold(
       (failure) async {
-        // Don't clear cache if remote fetch fails - preserve existing data
         AppLogger.error('Error syncing user profile', error: failure);
       },
       (profileDTO) async {
-        // Upsert only this user profile to avoid transient nulls from a global clear
         await local.cacheUserProfile(profileDTO);
       },
     );
