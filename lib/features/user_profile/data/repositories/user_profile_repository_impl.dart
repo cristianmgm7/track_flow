@@ -119,43 +119,52 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
           );
           yield Right(dto.toDomain());
         } else {
-          // Profile not in local cache, try to sync from remote ONCE
-          AppLogger.info(
-            'UserProfileRepository: Profile not in local cache, attempting remote sync',
-            tag: 'USER_PROFILE_REPOSITORY',
-          );
-
-          final isConnected = await _networkStateManager.isConnected;
-          if (isConnected) {
-            final remoteResult = await _remoteDataSource.getProfileById(
-              userId.value,
-            );
-            await remoteResult.fold(
-              (failure) async {
-                AppLogger.warning(
-                  'UserProfileRepository: Remote sync failed: ${failure.message}',
-                  tag: 'USER_PROFILE_REPOSITORY',
-                );
-              },
-              (remoteProfile) async {
-                AppLogger.info(
-                  'UserProfileRepository: Profile found in remote, caching locally',
-                  tag: 'USER_PROFILE_REPOSITORY',
-                );
-                // Cache the profile locally
-                await _localDataSource.cacheUserProfile(remoteProfile);
-                // The local stream will emit the cached profile on next iteration
-              },
-            );
-          } else {
-            AppLogger.info(
-              'UserProfileRepository: No internet connection, cannot sync from remote',
-              tag: 'USER_PROFILE_REPOSITORY',
-            );
-          }
-
-          // Yield null for now, the local stream will emit the cached profile if sync was successful
+          // Profile not in local cache.
+          // IMPORTANT: emit immediately to unblock UI, then attempt remote sync in the background.
           yield Right(null);
+
+          // Fire-and-forget remote sync without blocking the stream
+          () async {
+            try {
+              AppLogger.info(
+                'UserProfileRepository: Profile not in local cache, attempting remote sync (background)',
+                tag: 'USER_PROFILE_REPOSITORY',
+              );
+
+              final isConnected = await _networkStateManager.isConnected;
+              if (!isConnected) {
+                AppLogger.info(
+                  'UserProfileRepository: Offline, skip remote sync',
+                  tag: 'USER_PROFILE_REPOSITORY',
+                );
+                return;
+              }
+
+              final remoteResult = await _remoteDataSource.getProfileById(
+                userId.value,
+              );
+              await remoteResult.fold(
+                (failure) async {
+                  AppLogger.warning(
+                    'UserProfileRepository: Remote sync failed: ${failure.message}',
+                    tag: 'USER_PROFILE_REPOSITORY',
+                  );
+                },
+                (remoteProfile) async {
+                  AppLogger.info(
+                    'UserProfileRepository: Remote profile found, caching locally',
+                    tag: 'USER_PROFILE_REPOSITORY',
+                  );
+                  await _localDataSource.cacheUserProfile(remoteProfile);
+                },
+              );
+            } catch (e) {
+              AppLogger.warning(
+                'UserProfileRepository: Background sync error: $e',
+                tag: 'USER_PROFILE_REPOSITORY',
+              );
+            }
+          }();
         }
       }
     } catch (e) {
