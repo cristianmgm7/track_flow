@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
@@ -26,6 +27,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
   String? _trackTitle;
   PlatformFile? _file;
   bool _isSubmitting = false;
+  final bool _isPicking = false;
   TextEditingController? _titleController;
 
   @override
@@ -122,7 +124,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
             Padding(
               padding: const EdgeInsets.only(top: Dimensions.space8),
               child: Text(
-                'Selected:  [36m${_file!.name} [0m',
+                'Selected: ${_file!.name}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

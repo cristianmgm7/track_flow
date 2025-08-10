@@ -51,10 +51,12 @@ class _SecondaryButtonState extends State<SecondaryButton>
     _scaleAnimation = Tween<double>(
       begin: AppAnimations.scaleNormal,
       end: AppAnimations.scaleDown,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: AppAnimations.easeOut,
-    ));
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: AppAnimations.easeOut,
+      ),
+    );
   }
 
   @override
@@ -127,7 +129,8 @@ class _SecondaryButtonState extends State<SecondaryButton>
             onTapDown: _onTapDown,
             onTapUp: _onTapUp,
             onTapCancel: _onTapCancel,
-            onTap: _isDisabled ? null : widget.onPressed,
+            // Avoid double-calling onTap: use InkWell's onTap only
+            onTap: null,
             child: AnimatedContainer(
               duration: AppAnimations.fast,
               width: widget.width,
@@ -140,14 +143,15 @@ class _SecondaryButtonState extends State<SecondaryButton>
                 color: Colors.transparent,
                 borderRadius: AppBorders.medium,
                 border: Border.all(
-                  color: _isDisabled 
-                      ? AppColors.disabled 
-                      : AppColors.primary,
+                  color: _isDisabled ? AppColors.disabled : AppColors.primary,
                   width: AppBorders.widthThin,
                 ),
-                boxShadow: _isDisabled 
-                    ? AppShadows.none 
-                    : (_isPressed ? AppShadows.buttonPressed : AppShadows.none),
+                boxShadow:
+                    _isDisabled
+                        ? AppShadows.none
+                        : (_isPressed
+                            ? AppShadows.buttonPressed
+                            : AppShadows.none),
               ),
               child: Material(
                 color: Colors.transparent,
@@ -159,51 +163,65 @@ class _SecondaryButtonState extends State<SecondaryButton>
                       horizontal: Dimensions.space16,
                       vertical: Dimensions.space12,
                     ),
-                    child: widget.isLoading
-                        ? Center(
-                            child: SizedBox(
-                              width: _iconSize,
-                              height: _iconSize,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  _isDisabled ? AppColors.disabled : AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              if (widget.icon != null && !widget.iconRight) ...[
-                                Icon(
-                                  widget.icon,
-                                  size: _iconSize,
-                                  color: _isDisabled ? AppColors.disabled : AppColors.primary,
-                                ),
-                                SizedBox(width: Dimensions.space8),
-                              ],
-                              Flexible(
-                                child: Text(
-                                  widget.text,
-                                  style: _textStyle.copyWith(
-                                    color: _isDisabled ? AppColors.disabled : AppColors.primary,
+                    child:
+                        widget.isLoading
+                            ? Center(
+                              child: SizedBox(
+                                width: _iconSize,
+                                height: _iconSize,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    _isDisabled
+                                        ? AppColors.disabled
+                                        : AppColors.primary,
                                   ),
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (widget.icon != null && widget.iconRight) ...[
-                                SizedBox(width: Dimensions.space8),
-                                Icon(
-                                  widget.icon,
-                                  size: _iconSize,
-                                  color: _isDisabled ? AppColors.disabled : AppColors.primary,
+                            )
+                            : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (widget.icon != null &&
+                                    !widget.iconRight) ...[
+                                  Icon(
+                                    widget.icon,
+                                    size: _iconSize,
+                                    color:
+                                        _isDisabled
+                                            ? AppColors.disabled
+                                            : AppColors.primary,
+                                  ),
+                                  SizedBox(width: Dimensions.space8),
+                                ],
+                                Flexible(
+                                  child: Text(
+                                    widget.text,
+                                    style: _textStyle.copyWith(
+                                      color:
+                                          _isDisabled
+                                              ? AppColors.disabled
+                                              : AppColors.primary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
+                                if (widget.icon != null &&
+                                    widget.iconRight) ...[
+                                  SizedBox(width: Dimensions.space8),
+                                  Icon(
+                                    widget.icon,
+                                    size: _iconSize,
+                                    color:
+                                        _isDisabled
+                                            ? AppColors.disabled
+                                            : AppColors.primary,
+                                  ),
+                                ],
                               ],
-                            ],
-                          ),
+                            ),
                   ),
                 ),
               ),

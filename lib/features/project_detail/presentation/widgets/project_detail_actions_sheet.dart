@@ -19,6 +19,7 @@ class ProjectDetailActions {
         showAppFormSheet(
           context: context,
           title: 'Upload Track',
+          useRootNavigator: true,
           child: UploadTrackForm(project: project),
         );
       },
