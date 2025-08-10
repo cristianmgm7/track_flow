@@ -286,39 +286,18 @@ class ImageUtils {
       return _buildFallbackWidget(width, height, fallbackWidget);
     }
 
-    return FutureBuilder<String?>(
-      future: validateAndRepairImagePath(imagePath),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final validPath = snapshot.data;
-        if (validPath == null) {
-          return _buildFallbackWidget(width, height, fallbackWidget);
-        }
-
-        return Image.file(
-          File(validPath),
-          width: width,
-          height: height,
-          fit: fit,
-          errorBuilder: (context, error, stackTrace) {
-            AppLogger.warning(
-              'Error loading image: $error',
-              tag: 'IMAGE_UTILS',
-            );
-            return _buildFallbackWidget(width, height, fallbackWidget);
-          },
-        );
+    // Simplificado: no reparar rutas aquí. Render directo si existe.
+    if (!File(imagePath).existsSync()) {
+      return _buildFallbackWidget(width, height, fallbackWidget);
+    }
+    return Image.file(
+      File(imagePath),
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (context, error, stackTrace) {
+        AppLogger.warning('Error loading image: $error', tag: 'IMAGE_UTILS');
+        return _buildFallbackWidget(width, height, fallbackWidget);
       },
     );
   }
@@ -365,14 +344,18 @@ class ImageUtils {
       );
     }
 
-    // Local path or key: delegate to robust local widget
-    return createRobustImageWidget(
-      imagePath: imagePath,
-      width: width,
-      height: height,
-      fit: fit,
-      fallbackWidget: fallbackWidget,
-    );
+    // Local path: render directo si existe, de lo contrario fallback
+    if (File(imagePath).existsSync()) {
+      return Image.file(
+        File(imagePath),
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) =>
+            _buildFallbackWidget(width, height, fallbackWidget),
+      );
+    }
+    return _buildFallbackWidget(width, height, fallbackWidget);
   }
 
   static Widget _buildFallbackWidget(

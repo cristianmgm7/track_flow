@@ -127,12 +127,15 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
     try {
       // Derive a file name to avoid overwriting and allow caching
       final extension = filePath.split('.').last;
-      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final fileName =
+          'avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
       final ref = _storage.ref().child('avatars/$userId/$fileName');
 
-      final file = File(filePath.startsWith('file://')
-          ? Uri.parse(filePath).toFilePath()
-          : filePath);
+      final file = File(
+        filePath.startsWith('file://')
+            ? Uri.parse(filePath).toFilePath()
+            : filePath,
+      );
 
       if (!file.existsSync()) {
         return null;
