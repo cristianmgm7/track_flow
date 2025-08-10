@@ -15,7 +15,8 @@ enum CreativeRole {
 class UserProfile extends AggregateRoot<UserId> {
   final String name;
   final String email;
-  final String avatarUrl;
+  final String avatarUrl; // remote URL (http/https) when disponible
+  final String? avatarLocalPath; // local cache path (solo local)
   final DateTime createdAt;
   final DateTime? updatedAt;
   final CreativeRole? creativeRole;
@@ -26,18 +27,19 @@ class UserProfile extends AggregateRoot<UserId> {
     required this.name,
     required this.email,
     required this.avatarUrl,
+    this.avatarLocalPath,
     required this.createdAt,
     this.updatedAt,
     this.creativeRole,
     this.role,
   }) : super(id);
 
-
   UserProfile copyWith({
     UserId? id,
     String? name,
     String? email,
     String? avatarUrl,
+    String? avatarLocalPath,
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
@@ -48,6 +50,7 @@ class UserProfile extends AggregateRoot<UserId> {
       name: name ?? this.name,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarLocalPath: avatarLocalPath ?? this.avatarLocalPath,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       creativeRole: creativeRole ?? this.creativeRole,

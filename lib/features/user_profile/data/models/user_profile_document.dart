@@ -19,6 +19,7 @@ class UserProfileDocument {
   late String email;
 
   late String avatarUrl;
+  String? avatarLocalPath;
   late DateTime createdAt;
   DateTime? updatedAt;
 
@@ -39,6 +40,7 @@ class UserProfileDocument {
       ..name = dto.name
       ..email = dto.email
       ..avatarUrl = dto.avatarUrl
+      ..avatarLocalPath = dto.avatarLocalPath
       ..createdAt = dto.createdAt
       ..updatedAt = dto.updatedAt
       ..creativeRole = dto.creativeRole
@@ -62,6 +64,7 @@ class UserProfileDocument {
       ..name = dto.name
       ..email = dto.email
       ..avatarUrl = dto.avatarUrl
+      ..avatarLocalPath = dto.avatarLocalPath
       ..createdAt = dto.createdAt
       ..updatedAt = dto.updatedAt
       ..creativeRole = dto.creativeRole
@@ -86,6 +89,7 @@ class UserProfileDocument {
       ..name = name
       ..email = email
       ..avatarUrl = avatarUrl
+      ..avatarLocalPath = null
       ..createdAt = createdAt
       ..updatedAt = updatedAt ?? DateTime.now()
       ..creativeRole = creativeRole
@@ -98,6 +102,7 @@ class UserProfileDocument {
       name: name,
       email: email,
       avatarUrl: avatarUrl,
+      avatarLocalPath: avatarLocalPath,
       createdAt: createdAt,
       updatedAt: updatedAt,
       creativeRole: creativeRole,

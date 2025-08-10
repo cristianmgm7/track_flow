@@ -13,6 +13,8 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
+import 'package:trackflow/core/media/avatar_cache_manager.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
@@ -63,8 +65,27 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Future<Either<Failure, Unit>> updateUserProfile(UserProfile profile) async {
     try {
-      // 1. OFFLINE-FIRST: Update locally IMMEDIATELY
-      final dto = UserProfileDTO.fromDomain(profile);
+      // Normalize and cache local avatar path if needed
+      AvatarCacheManager cache = sl<AvatarCacheManager>();
+      var dto = UserProfileDTO.fromDomain(profile);
+      final isLocalAvatar =
+          dto.avatarUrl.isNotEmpty && !dto.avatarUrl.startsWith('http');
+      if (isLocalAvatar) {
+        try {
+          final cachedPath = await cache.copyAvatarToCache(
+            profile.id.value,
+            dto.avatarUrl,
+          );
+          dto = dto.copyWith(avatarLocalPath: cachedPath);
+        } catch (e) {
+          AppLogger.warning(
+            'Avatar cache copy failed: $e',
+            tag: 'UserProfileRepository',
+          );
+        }
+      }
+
+      // 1. OFFLINE-FIRST: Update locally IMMEDIATELY with localPath if any
       await _localDataSource.cacheUserProfile(dto);
 
       // 2. TEMPORARY FIX: Direct sync instead of background queue
@@ -81,11 +102,23 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
               );
               // Don't fail the operation - local save was successful
             },
-            (_) {
+            (remoteUpdatedDto) async {
               AppLogger.info(
                 'Profile synced to remote successfully',
                 tag: 'UserProfileRepository',
               );
+              // Merge remote DTO (with http avatarUrl) with local avatarLocalPath
+              final merged = remoteUpdatedDto.copyWith(
+                avatarLocalPath: dto.avatarLocalPath,
+              );
+              try {
+                await _localDataSource.cacheUserProfile(merged);
+              } catch (e) {
+                AppLogger.warning(
+                  'Failed to update local cache with remote DTO: $e',
+                  tag: 'UserProfileRepository',
+                );
+              }
             },
           );
         }

@@ -18,45 +18,50 @@ const UserProfileDocumentSchema = CollectionSchema(
   name: r'UserProfileDocument',
   id: -4921975089983509931,
   properties: {
-    r'avatarUrl': PropertySchema(
+    r'avatarLocalPath': PropertySchema(
       id: 0,
+      name: r'avatarLocalPath',
+      type: IsarType.string,
+    ),
+    r'avatarUrl': PropertySchema(
+      id: 1,
       name: r'avatarUrl',
       type: IsarType.string,
     ),
     r'createdAt': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'creativeRole': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'creativeRole',
       type: IsarType.string,
       enumMap: _UserProfileDocumentcreativeRoleEnumValueMap,
     ),
     r'email': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'email',
       type: IsarType.string,
     ),
     r'id': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'id',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'name',
       type: IsarType.string,
     ),
     r'syncMetadata': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'syncMetadata',
       type: IsarType.object,
       target: r'SyncMetadataDocument',
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -108,6 +113,12 @@ int _userProfileDocumentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.avatarLocalPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.avatarUrl.length * 3;
   bytesCount += 3 + object.creativeRole.name.length * 3;
   bytesCount += 3 + object.email.length * 3;
@@ -130,19 +141,20 @@ void _userProfileDocumentSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.avatarUrl);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.creativeRole.name);
-  writer.writeString(offsets[3], object.email);
-  writer.writeString(offsets[4], object.id);
-  writer.writeString(offsets[5], object.name);
+  writer.writeString(offsets[0], object.avatarLocalPath);
+  writer.writeString(offsets[1], object.avatarUrl);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeString(offsets[3], object.creativeRole.name);
+  writer.writeString(offsets[4], object.email);
+  writer.writeString(offsets[5], object.id);
+  writer.writeString(offsets[6], object.name);
   writer.writeObject<SyncMetadataDocument>(
-    offsets[6],
+    offsets[7],
     allOffsets,
     SyncMetadataDocumentSchema.serialize,
     object.syncMetadata,
   );
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 UserProfileDocument _userProfileDocumentDeserialize(
@@ -152,20 +164,21 @@ UserProfileDocument _userProfileDocumentDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = UserProfileDocument();
-  object.avatarUrl = reader.readString(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
+  object.avatarLocalPath = reader.readStringOrNull(offsets[0]);
+  object.avatarUrl = reader.readString(offsets[1]);
+  object.createdAt = reader.readDateTime(offsets[2]);
   object.creativeRole = _UserProfileDocumentcreativeRoleValueEnumMap[
-          reader.readStringOrNull(offsets[2])] ??
+          reader.readStringOrNull(offsets[3])] ??
       CreativeRole.producer;
-  object.email = reader.readString(offsets[3]);
-  object.id = reader.readString(offsets[4]);
-  object.name = reader.readString(offsets[5]);
+  object.email = reader.readString(offsets[4]);
+  object.id = reader.readString(offsets[5]);
+  object.name = reader.readString(offsets[6]);
   object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
-    offsets[6],
+    offsets[7],
     SyncMetadataDocumentSchema.deserialize,
     allOffsets,
   );
-  object.updatedAt = reader.readDateTimeOrNull(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -177,26 +190,28 @@ P _userProfileDocumentDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 2:
+      return (reader.readDateTime(offset)) as P;
+    case 3:
       return (_UserProfileDocumentcreativeRoleValueEnumMap[
               reader.readStringOrNull(offset)] ??
           CreativeRole.producer) as P;
-    case 3:
-      return (reader.readString(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readObjectOrNull<SyncMetadataDocument>(
         offset,
         SyncMetadataDocumentSchema.deserialize,
         allOffsets,
       )) as P;
-    case 7:
+    case 8:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -515,6 +530,160 @@ extension UserProfileDocumentQueryWhere
 
 extension UserProfileDocumentQueryFilter on QueryBuilder<UserProfileDocument,
     UserProfileDocument, QFilterCondition> {
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'avatarLocalPath',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'avatarLocalPath',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'avatarLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'avatarLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'avatarLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'avatarLocalPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'avatarLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'avatarLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'avatarLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'avatarLocalPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'avatarLocalPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
+      avatarLocalPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'avatarLocalPath',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterFilterCondition>
       avatarUrlEqualTo(
     String value, {
@@ -1416,6 +1585,20 @@ extension UserProfileDocumentQueryLinks on QueryBuilder<UserProfileDocument,
 extension UserProfileDocumentQuerySortBy
     on QueryBuilder<UserProfileDocument, UserProfileDocument, QSortBy> {
   QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterSortBy>
+      sortByAvatarLocalPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarLocalPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterSortBy>
+      sortByAvatarLocalPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarLocalPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterSortBy>
       sortByAvatarUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'avatarUrl', Sort.asc);
@@ -1516,6 +1699,20 @@ extension UserProfileDocumentQuerySortBy
 
 extension UserProfileDocumentQuerySortThenBy
     on QueryBuilder<UserProfileDocument, UserProfileDocument, QSortThenBy> {
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterSortBy>
+      thenByAvatarLocalPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarLocalPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterSortBy>
+      thenByAvatarLocalPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'avatarLocalPath', Sort.desc);
+    });
+  }
+
   QueryBuilder<UserProfileDocument, UserProfileDocument, QAfterSortBy>
       thenByAvatarUrl() {
     return QueryBuilder.apply(this, (query) {
@@ -1632,6 +1829,14 @@ extension UserProfileDocumentQuerySortThenBy
 extension UserProfileDocumentQueryWhereDistinct
     on QueryBuilder<UserProfileDocument, UserProfileDocument, QDistinct> {
   QueryBuilder<UserProfileDocument, UserProfileDocument, QDistinct>
+      distinctByAvatarLocalPath({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'avatarLocalPath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, UserProfileDocument, QDistinct>
       distinctByAvatarUrl({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'avatarUrl', caseSensitive: caseSensitive);
@@ -1686,6 +1891,13 @@ extension UserProfileDocumentQueryProperty
   QueryBuilder<UserProfileDocument, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<UserProfileDocument, String?, QQueryOperations>
+      avatarLocalPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'avatarLocalPath');
     });
   }
 

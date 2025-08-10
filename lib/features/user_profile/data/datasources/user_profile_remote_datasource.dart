@@ -135,41 +135,20 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
       } else if (File(avatarUrl).isAbsolute && File(avatarUrl).existsSync()) {
         localPath = avatarUrl;
       } else {
-        // Treat as a filename key stored locally in permanent_images
-        final appDir = await getApplicationDocumentsDirectory();
-        final candidate = p.join(
-          appDir.path,
-          'permanent_images',
-          p.basename(avatarUrl),
-        );
-        if (File(candidate).existsSync()) {
-          localPath = candidate;
-        }
+        // Fallback to unique filename upload using provided string
+        localPath = avatarUrl;
       }
 
       if (localPath == null || !File(localPath).existsSync()) {
         return null; // Nothing to upload
       }
 
-      final fileName = p.basename(localPath);
-      final storageRef = _storage.ref().child('avatars/$userId/$fileName');
+      final extension = p.extension(localPath).replaceFirst('.', '');
+      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.$extension';
+      final ref = _storage.ref().child('avatars/$userId/$fileName');
 
-      // Infer simple content type from extension
-      String? contentType;
-      final ext = p.extension(localPath).toLowerCase();
-      if (ext == '.jpg' || ext == '.jpeg') contentType = 'image/jpeg';
-      if (ext == '.png') contentType = 'image/png';
-      if (ext == '.webp') contentType = 'image/webp';
-
-      final uploadTask = await storageRef.putFile(
-        File(localPath),
-        contentType != null ? SettableMetadata(contentType: contentType) : null,
-      );
-
-      if (uploadTask.state == TaskState.success) {
-        return await storageRef.getDownloadURL();
-      }
-      return null;
+      await ref.putFile(File(localPath));
+      return await ref.getDownloadURL();
     } catch (e) {
       return null;
     }

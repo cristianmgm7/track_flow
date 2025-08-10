@@ -120,7 +120,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         id: widget.profile.id,
         name: name ?? '',
         email: email ?? '',
-        avatarUrl: _avatarUrl,
+        avatarUrl: _avatarFile?.path ?? _avatarUrl,
         creativeRole: _creativeRole,
         createdAt: DateTime.now(),
       );

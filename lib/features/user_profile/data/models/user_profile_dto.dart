@@ -7,6 +7,7 @@ class UserProfileDTO {
   final String name;
   final String email;
   final String avatarUrl;
+  final String? avatarLocalPath; // local-only (no se serializa a Firestore)
   final DateTime createdAt;
   final DateTime? updatedAt;
   final CreativeRole creativeRole;
@@ -20,6 +21,7 @@ class UserProfileDTO {
     required this.name,
     required this.email,
     required this.avatarUrl,
+    this.avatarLocalPath,
     required this.createdAt,
     this.updatedAt,
     required this.creativeRole,
@@ -36,6 +38,7 @@ class UserProfileDTO {
       name: userProfile.name,
       email: userProfile.email,
       avatarUrl: userProfile.avatarUrl,
+      avatarLocalPath: userProfile.avatarLocalPath,
       createdAt: userProfile.createdAt,
       updatedAt: userProfile.updatedAt,
       creativeRole: userProfile.creativeRole ?? CreativeRole.other,
@@ -53,6 +56,7 @@ class UserProfileDTO {
       name: name,
       email: email,
       avatarUrl: avatarUrl,
+      avatarLocalPath: avatarLocalPath,
       createdAt: createdAt,
       updatedAt: updatedAt,
       creativeRole: creativeRole,
@@ -79,6 +83,7 @@ class UserProfileDTO {
       name: json['name'] as String? ?? 'No Name',
       email: json['email'] as String? ?? '',
       avatarUrl: json['avatarUrl'] as String? ?? '',
+      avatarLocalPath: null, // nunca viene del remoto
       createdAt: parsedCreatedAt ?? DateTime.now(),
       updatedAt: parsedUpdatedAt,
       creativeRole: _parseCreativeRole(json['creativeRole'] as String?),
@@ -111,6 +116,7 @@ class UserProfileDTO {
     String? name,
     String? email,
     String? avatarUrl,
+    String? avatarLocalPath,
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
@@ -122,6 +128,7 @@ class UserProfileDTO {
       name: name ?? this.name,
       email: email ?? this.email,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      avatarLocalPath: avatarLocalPath ?? this.avatarLocalPath,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       creativeRole: creativeRole ?? this.creativeRole,

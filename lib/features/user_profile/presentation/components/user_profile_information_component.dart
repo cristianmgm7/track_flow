@@ -73,7 +73,7 @@ class _ProfileInformationState extends State<ProfileInformation> {
                 children: [
                   Row(
                     children: [
-                      // Profile Avatar with robust image handling
+                      // Profile Avatar: prefer local cache, else remote URL
                       Container(
                         width: 60,
                         height: 60,
@@ -85,19 +85,35 @@ class _ProfileInformationState extends State<ProfileInformation> {
                           ),
                         ),
                         child: ClipOval(
-                          child: ImageUtils.createRobustImageWidget(
-                            imagePath: profile.avatarUrl,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            fallbackWidget: Icon(
-                              Icons.person,
-                              size: 30,
-                              color: AppColors.textSecondary.withValues(
-                                alpha: 0.5,
-                              ),
-                            ),
-                          ),
+                          child:
+                              (profile.avatarLocalPath != null &&
+                                      profile.avatarLocalPath!.isNotEmpty)
+                                  ? ImageUtils.createAdaptiveImageWidget(
+                                    imagePath: profile.avatarLocalPath!,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    fallbackWidget: Icon(
+                                      Icons.person,
+                                      size: 30,
+                                      color: AppColors.textSecondary.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  )
+                                  : ImageUtils.createAdaptiveImageWidget(
+                                    imagePath: profile.avatarUrl,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    fallbackWidget: Icon(
+                                      Icons.person,
+                                      size: 30,
+                                      color: AppColors.textSecondary.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                    ),
+                                  ),
                         ),
                       ),
                       SizedBox(width: Dimensions.space12),
