@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
@@ -145,11 +146,25 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
                   ),
                 );
               } else {
+                // Graceful fallback: show minimal placeholder profile instead of error
+                // so the screen can open and allow user to create/update profile.
                 AppLogger.warning(
-                  'UserProfileBloc: No profile found for user',
+                  'UserProfileBloc: No profile found for user - emitting placeholder state',
                   tag: 'USER_PROFILE_BLOC',
                 );
-                emit(UserProfileError());
+                emit(UserProfileLoaded(
+                  profile: UserProfile(
+                    id: UserId.fromUniqueString(event.userId ?? ''),
+                    name: '',
+                    email: '',
+                    avatarUrl: '',
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                    creativeRole: CreativeRole.other,
+                  ),
+                  isSyncing: false,
+                  syncProgress: null,
+                ));
               }
             },
           );
