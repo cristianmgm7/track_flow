@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart' hide AudioSource;
 
@@ -42,8 +43,24 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
         ),
       );
 
-      // Load the audio source
-      await _audioPlayer.setUrl(source.url);
+      // Load the audio source (handle local files vs remote URLs)
+      final url = source.url;
+      final isLocalFilePath = url.startsWith('/') || url.startsWith('file://');
+      if (isLocalFilePath) {
+        final filePath =
+            url.startsWith('file://') ? url.replaceFirst('file://', '') : url;
+        // Validate file exists to prevent platform exceptions
+        if (!File(filePath).existsSync()) {
+          throw Exception('Local audio file not found at path: $filePath');
+        }
+        await _audioPlayer.setFilePath(filePath);
+      } else {
+        if (source.headers != null && source.headers!.isNotEmpty) {
+          await _audioPlayer.setUrl(url, headers: source.headers);
+        } else {
+          await _audioPlayer.setUrl(url);
+        }
+      }
 
       // Start playback
       await _audioPlayer.play();
@@ -185,7 +202,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       if (nextSource != null) {
         // Move to next track and update queue index
         final updatedQueue = queue.moveToNext();
-        
+
         await play(nextSource);
         // Update the queue in session to reflect the new current index
         _updateSession(
@@ -220,7 +237,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       if (previousSource != null) {
         // Move to previous track and update queue index
         final updatedQueue = queue.moveToPrevious();
-        
+
         await play(previousSource);
         // Update the queue in session to reflect the new current index
         _updateSession(

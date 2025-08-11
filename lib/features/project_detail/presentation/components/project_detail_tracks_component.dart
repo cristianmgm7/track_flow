@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/component/track_component.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 
 class ProjectDetailTracksComponent extends StatelessWidget {
   final ProjectDetailState state;
@@ -51,10 +54,21 @@ class ProjectDetailTracksComponent extends StatelessWidget {
               const Text('No tracks found'),
             ],
             if (state.tracks.isNotEmpty) ...[
-              ...state.tracks.map(
-                (track) =>
-                    TrackComponent(track: track, projectId: state.project!.id),
-              ),
+              ...state.tracks.map((track) {
+                final index = state.tracks.indexOf(track);
+                return TrackComponent(
+                  track: track,
+                  projectId: state.project!.id,
+                  onPlay: () {
+                    context.read<AudioPlayerBloc>().add(
+                      PlayPlaylistRequested(
+                        tracks: state.tracks,
+                        startIndex: index,
+                      ),
+                    );
+                  },
+                );
+              }),
             ],
           ],
         ),

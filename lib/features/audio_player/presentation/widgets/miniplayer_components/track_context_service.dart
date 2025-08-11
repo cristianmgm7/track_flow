@@ -11,10 +11,9 @@ abstract class ITrackContextService {
 class TrackContextService implements ITrackContextService {
   @override
   void loadTrackContext(BuildContext context, String trackId) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AudioContextBloc>().add(
-        LoadTrackContextRequested(AudioTrackId.fromUniqueString(trackId)),
-      );
-    });
+    if (!context.mounted) return;
+    context.read<AudioContextBloc>().add(
+      LoadTrackContextRequested(AudioTrackId.fromUniqueString(trackId)),
+    );
   }
 }

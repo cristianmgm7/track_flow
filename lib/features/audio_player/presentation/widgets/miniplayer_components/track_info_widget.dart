@@ -84,6 +84,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
   void _handleTrackChange(String trackId) {
     if (trackId != _currentTrackId && trackId.isNotEmpty) {
       _currentTrackId = trackId;
+      if (!mounted) return;
       _contextService.loadTrackContext(context, trackId);
     }
   }
@@ -93,10 +94,13 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
     final theme = Theme.of(context);
     final trackInfo = _infoBuilder.buildFromState(widget.state);
 
-    // Solo cargar contexto si el track cambió - usando postFrameCallback para evitar builds durante builds
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _handleTrackChange(trackInfo.trackId);
-    });
+    // Trigger only when props change; avoid scheduling after unmount
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _handleTrackChange(trackInfo.trackId);
+      });
+    }
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -136,43 +140,43 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                         width: double.infinity,
                         child: Row(
                           children: [
-                          if (displayArtist.isNotEmpty) ...[
-                            Flexible(
-                              child: Text(
-                                displayArtist,
+                            if (displayArtist.isNotEmpty) ...[
+                              Flexible(
+                                child: Text(
+                                  displayArtist,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.7),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                            if (displayArtist.isNotEmpty &&
+                                trackInfo.duration.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
+                                child: Text(
+                                  '•',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.textTheme.bodySmall?.color
+                                        ?.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (trackInfo.duration.isNotEmpty)
+                              Text(
+                                trackInfo.duration,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.textTheme.bodySmall?.color
                                       ?.withValues(alpha: 0.7),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
                           ],
-                          if (displayArtist.isNotEmpty &&
-                              trackInfo.duration.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4.0,
-                              ),
-                              child: Text(
-                                '•',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.textTheme.bodySmall?.color
-                                      ?.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (trackInfo.duration.isNotEmpty)
-                            Text(
-                              trackInfo.duration,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.textTheme.bodySmall?.color
-                                    ?.withValues(alpha: 0.7),
-                              ),
-                            ),
-                        ],
                         ),
                       ),
                     )
