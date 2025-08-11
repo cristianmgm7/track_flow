@@ -9,6 +9,8 @@ import 'package:trackflow/core/app/providers/app_bloc_providers.dart';
 import 'package:trackflow/core/app/services/dynamic_link_handler.dart';
 import 'package:trackflow/core/app/services/app_initializer.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -29,7 +31,7 @@ class _App extends StatefulWidget {
   State<_App> createState() => _AppState();
 }
 
-class _AppState extends State<_App> {
+class _AppState extends State<_App> with WidgetsBindingObserver {
   late final GoRouter _router;
   late final DynamicLinkHandler _dynamicLinkHandler;
   late final AppInitializer _appInitializer;
@@ -37,6 +39,7 @@ class _AppState extends State<_App> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeApp();
   }
 
@@ -63,8 +66,23 @@ class _AppState extends State<_App> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _dynamicLinkHandler.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Persist playback state on backgrounding or app going inactive/detached
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      // Best-effort save; avoid throwing inside lifecycle callback
+      try {
+        context.read<AudioPlayerBloc>().add(const SavePlaybackStateRequested());
+      } catch (_) {}
+    }
+    super.didChangeAppLifecycleState(state);
   }
 
   @override
