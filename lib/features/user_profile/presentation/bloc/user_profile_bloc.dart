@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/update_user_profile_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/usecases/create_user_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/watch_user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/usecases/check_profile_completeness_usecase.dart';
 import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase.dart';
@@ -18,6 +19,7 @@ import 'package:trackflow/core/common/mixins/resetable_bloc_mixin.dart';
 class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
     with ResetableBlocMixin<UserProfileEvent, UserProfileState> {
   final UpdateUserProfileUseCase updateUserProfileUseCase;
+  final CreateUserProfileUseCase createUserProfileUseCase;
   final WatchUserProfileUseCase watchUserProfileUseCase;
   final CheckProfileCompletenessUseCase checkProfileCompletenessUseCase;
   final GetCurrentUserUseCase getCurrentUserUseCase;
@@ -26,6 +28,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
 
   UserProfileBloc({
     required this.updateUserProfileUseCase,
+    required this.createUserProfileUseCase,
     required this.watchUserProfileUseCase,
     required this.checkProfileCompletenessUseCase,
     required this.getCurrentUserUseCase,
@@ -210,7 +213,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
       tag: 'USER_PROFILE_BLOC',
     );
     emit(UserProfileSaving());
-    final result = await updateUserProfileUseCase.call(event.profile);
+    final result = await createUserProfileUseCase.call(event.profile);
     result.fold(
       (failure) {
         AppLogger.error(

@@ -131,19 +131,17 @@ class CheckProfileCompletenessUseCase {
   bool _isProfileComplete(UserProfile profile) {
     final hasName = profile.name.isNotEmpty;
     final hasEmail = profile.email.isNotEmpty;
-    final hasAvatar = profile.avatarUrl.isNotEmpty;
-
-    // Re-enabled email requirement now that auth state is fixed
-    final isComplete = hasName && hasEmail && hasAvatar;
+    // Avatar optional (Plan A): only require name and email
+    final isComplete = hasName && hasEmail;
 
     AppLogger.debug(
-      'Profile completeness check: name=$hasName, email=$hasEmail, avatar=$hasAvatar, complete=$isComplete',
+      'Profile completeness check: name=$hasName, email=$hasEmail, complete=$isComplete',
       tag: 'PROFILE_COMPLETENESS',
     );
 
     // Add detailed logging to see actual values
     AppLogger.info(
-      'Profile completeness details - name: "${profile.name}", email: "${profile.email}", avatar: "${profile.avatarUrl}"',
+      'Profile completeness details - name: "${profile.name}", email: "${profile.email}"',
       tag: 'PROFILE_COMPLETENESS',
     );
 
