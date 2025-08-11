@@ -13,6 +13,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class UploadTrackForm extends StatefulWidget {
   final Project project;
@@ -27,7 +29,7 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
   String? _trackTitle;
   PlatformFile? _file;
   bool _isSubmitting = false;
-  final bool _isPicking = false;
+  // Removed unused _isPicking
   TextEditingController? _titleController;
 
   @override
@@ -43,13 +45,55 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['m4a', 'mp3', 'wav', 'aac', 'aiff', 'caf'],
+      allowMultiple: false,
+      withData: true, // critical for iOS where path can be null
+    );
 
     if (result != null && result.files.isNotEmpty) {
       setState(() {
         _file = result.files.first;
       });
     }
+  }
+
+  Future<File?> _materializePlatformFile(PlatformFile pf) async {
+    // If we already have a real path (Android, some iOS cases), use it
+    if (pf.path != null && pf.path!.isNotEmpty) {
+      final f = File(pf.path!);
+      if (await f.exists()) return f;
+    }
+
+    // Otherwise, write bytes or stream to a temporary file (iOS Files/iCloud)
+    final tempDir = await getTemporaryDirectory();
+    final safeName =
+        pf.name.isNotEmpty
+            ? pf.name
+            : 'audio_${DateTime.now().millisecondsSinceEpoch}';
+    final ext = p.extension(safeName);
+    final base = ext.isEmpty ? safeName : p.basenameWithoutExtension(safeName);
+    final outPath = p.join(
+      tempDir.path,
+      '${base}_${DateTime.now().millisecondsSinceEpoch}$ext',
+    );
+    final outFile = File(outPath);
+
+    if (pf.bytes != null) {
+      await outFile.writeAsBytes(pf.bytes!);
+      return outFile;
+    }
+
+    if (pf.readStream != null) {
+      final sink = outFile.openWrite();
+      await sink.addStream(pf.readStream!);
+      await sink.flush();
+      await sink.close();
+      return outFile;
+    }
+
+    return null;
   }
 
   Future<Duration> _getAudioDuration(File file) async {
@@ -65,10 +109,21 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       _trackTitle = _titleController?.text;
-      final filePath = _file?.path;
-      if (filePath != null) {
+      final selected = _file;
+      if (selected != null) {
         setState(() => _isSubmitting = true);
-        final file = File(filePath);
+        final file = await _materializePlatformFile(selected);
+        if (file == null) {
+          setState(() => _isSubmitting = false);
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not access selected audio file.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
         final duration = await _getAudioDuration(file);
 
         if (!mounted) return;

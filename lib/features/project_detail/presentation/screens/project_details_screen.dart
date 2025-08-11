@@ -14,6 +14,8 @@ import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playli
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
+import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -108,6 +110,12 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 8),
+                      BlocProvider(
+                        create: (_) => sl<SyncStatusCubit>(),
+                        child: const GlobalSyncIndicator(),
+                      ),
+                      const SizedBox(height: 8),
                       // PlaylistWidget para los tracks del proyecto
                       BlocProvider<PlaylistCacheBloc>(
                         create: (_) => sl<PlaylistCacheBloc>(),

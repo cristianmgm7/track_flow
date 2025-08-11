@@ -10,6 +10,7 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
+import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 
 /// Factory for creating BLoC providers following SOLID principles
 ///
@@ -32,6 +33,7 @@ class AppBlocProviders {
       BlocProvider<AppFlowBloc>(create: (context) => sl<AppFlowBloc>()),
       BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
       BlocProvider<NavigationCubit>(create: (context) => sl<NavigationCubit>()),
+      BlocProvider<SyncStatusCubit>(create: (context) => sl<SyncStatusCubit>()),
     ];
   }
 

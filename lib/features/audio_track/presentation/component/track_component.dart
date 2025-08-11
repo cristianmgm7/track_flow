@@ -10,6 +10,9 @@ import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
+import 'package:trackflow/features/audio_track/presentation/widgets/track_upload_status_badge.dart';
+import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 
 import 'track_duration_formatter.dart';
 import 'track_info_section.dart';
@@ -45,6 +48,10 @@ class _TrackComponentState extends State<TrackComponent> {
                   sl<AudioContextBloc>()
                     ..add(LoadTrackContextRequested(widget.track.id)),
         ),
+        BlocProvider(
+          create:
+              (context) => sl<TrackUploadStatusCubit>()..watch(widget.track.id),
+        ),
       ],
       child: BaseCard(
         onTap: () {
@@ -68,7 +75,13 @@ class _TrackComponentState extends State<TrackComponent> {
               // Future: imageUrl: track.coverArtUrl,
             ),
             SizedBox(width: Dimensions.space12),
-            TrackInfoSection(track: widget.track, statusBadge: Container()),
+            TrackInfoSection(
+              track: widget.track,
+              statusBadge: TrackUploadStatusBadge(
+                trackId: widget.track.id,
+                onRetry: () => context.read<SyncStatusCubit>().retryUpstream(),
+              ),
+            ),
             SizedBox(width: Dimensions.space8),
             // Duration
             TrackDurationText(duration: widget.track.duration),
