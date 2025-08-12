@@ -4,6 +4,9 @@
     <!-- Required permissions for Google Sign-In -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     
     <application
         android:label="${appName}"
@@ -44,6 +47,17 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <!-- just_audio_background notification channel -->
+        <meta-data
+            android:name="com.ryanheise.just_audio.notification_channel_id"
+            android:value="com.trackflow.playback" />
+        <meta-data
+            android:name="com.ryanheise.just_audio.notification_channel_name"
+            android:value="Playback" />
+        <meta-data
+            android:name="com.ryanheise.just_audio.notification_icon"
+            android:resource="@mipmap/ic_launcher" />
             
     </application>
     

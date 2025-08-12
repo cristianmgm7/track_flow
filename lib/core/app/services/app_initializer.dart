@@ -3,6 +3,7 @@ import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/services/image_maintenance_service.dart';
+import 'package:trackflow/core/app/services/audio_background_initializer.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 /// Handles app initialization logic following Single Responsibility Principle
@@ -37,6 +38,9 @@ class AppInitializer {
     AppLogger.info('Starting app initialization', tag: 'APP_INITIALIZER');
 
     try {
+      // Initialize audio background/session
+      _initializeAudioBackground();
+
       // Perform maintenance tasks in background
       _performMaintenanceTasks();
 
@@ -78,6 +82,18 @@ class AppInitializer {
           tag: 'APP_INITIALIZER',
         );
         // Don't rethrow - maintenance failures shouldn't break app startup
+      }
+    });
+  }
+
+  /// Initialize audio background capabilities (non-blocking)
+  void _initializeAudioBackground() {
+    Future.microtask(() async {
+      try {
+        final initializer = sl<AudioBackgroundInitializer>();
+        await initializer.initialize();
+      } catch (e) {
+        AppLogger.warning('Audio background init failed: $e', tag: 'APP_INITIALIZER');
       }
     });
   }
