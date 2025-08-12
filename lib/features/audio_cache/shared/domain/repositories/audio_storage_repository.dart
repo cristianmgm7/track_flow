@@ -19,8 +19,10 @@ abstract class AudioStorageRepository {
   /// Returns cached audio info or failure
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
     AudioTrackId trackId,
-    File audioFile,
-  );
+    File audioFile, {
+    String? referenceId,
+    bool canDelete = true,
+  });
 
   /// Get cached audio file path if exists
   ///

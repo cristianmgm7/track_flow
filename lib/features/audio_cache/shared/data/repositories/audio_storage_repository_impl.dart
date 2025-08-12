@@ -21,10 +21,15 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   @override
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
     AudioTrackId trackId,
-    File audioFile,
-  ) async {
+    File audioFile, {
+    String? referenceId,
+    bool canDelete = true,
+  }) async {
     try {
       // Generate storage path for the audio file
+      // Preserve original extension from the downloaded file if possible
+      final originalPath = audioFile.path;
+      final detectedExt = _extractExtension(originalPath) ?? '.mp3';
       final cacheKey = _localDataSource.generateCacheKey(trackId.value, '');
       final filePathResult = await _localDataSource.getFilePathFromCacheKey(
         cacheKey,
@@ -33,8 +38,14 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       return await filePathResult.fold((failure) => Left(failure), (
         destinationPath,
       ) async {
+        // If destination path has a different extension, adjust it
+        String finalDestinationPath = destinationPath.replaceAll(
+          RegExp(r'\.[^/.]+$'),
+          detectedExt,
+        );
+
         // Copy the file to the cache location
-        final destinationFile = await audioFile.copy(destinationPath);
+        final destinationFile = await audioFile.copy(finalDestinationPath);
 
         // Verify file and calculate checksum
         final fileSize = await destinationFile.length();
@@ -45,7 +56,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
         final unifiedDocument =
             CachedAudioDocumentUnified()
               ..trackId = trackId.value
-              ..filePath = destinationPath
+              ..filePath = finalDestinationPath
               ..fileSizeBytes = fileSize
               ..cachedAt = DateTime.now()
               ..checksum = checksum
@@ -53,7 +64,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
               ..status = CacheStatus.cached
               ..referenceCount = 1
               ..lastAccessed = DateTime.now()
-              ..references = ['individual']
+              ..references = [if (referenceId != null) referenceId else 'individual']
               ..downloadAttempts = 0
               ..lastDownloadAttempt = null
               ..failureReason = null
@@ -219,5 +230,14 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   @override
   Stream<bool> watchTrackCacheStatus(AudioTrackId trackId) {
     return _localDataSource.watchTrackCacheStatus(trackId.value);
+  }
+
+  String? _extractExtension(String path) {
+    final idx = path.lastIndexOf('.');
+    if (idx == -1) return null;
+    final ext = path.substring(idx).toLowerCase();
+    // basic sanity to avoid query strings or very long suffixes
+    if (ext.length > 5) return null;
+    return ext;
   }
 }

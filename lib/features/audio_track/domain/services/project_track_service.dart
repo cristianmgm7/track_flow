@@ -52,7 +52,18 @@ class ProjectTrackService {
       file: File(url),
       track: track,
     );
-    return result.fold((failure) => Left(failure), (_) => Right(unit));
+    return result.fold((failure) => Left(failure), (_) async {
+      // Persist a stable local copy in the app library for reliable playback
+      try {
+        await audioStorageRepository.storeAudio(
+          track.id,
+          File(url),
+          referenceId: 'library',
+          canDelete: false,
+        );
+      } catch (_) {}
+      return Right(unit);
+    });
   }
 
   Future<Either<Failure, Unit>> deleteTrack({
