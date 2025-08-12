@@ -7,6 +7,8 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
@@ -26,7 +28,7 @@ import 'package:trackflow/features/user_profile/presentation/hero_user_profile_s
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/current_user_profile_screen.dart';
 import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
-import 'package:trackflow/features/audio_cache/screens/storage_management_screen.dart';
+import 'package:trackflow/features/audio_cache/management/presentation/screens/cache_management_screen.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
@@ -97,6 +99,7 @@ class AppRouter {
               currentLocation == AppRoutes.manageCollaborators ||
               currentLocation == AppRoutes.audioComments ||
               currentLocation == AppRoutes.cacheDemo ||
+              currentLocation == AppRoutes.cacheManagement ||
               currentLocation.startsWith('/projects/')) {
             return null; // Allow navigation
           }
@@ -146,8 +149,20 @@ class AppRouter {
           path: AppRoutes.audioComments,
           builder: (context, state) {
             final args = state.extra as AudioCommentsScreenArgs;
-            return BlocProvider<TrackCacheBloc>(
-              create: (context) => sl<TrackCacheBloc>(),
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<TrackCacheBloc>(
+                  create: (context) => sl<TrackCacheBloc>(),
+                ),
+                // Scope AudioCommentBloc to this screen to avoid cross-track leakage
+                BlocProvider<AudioCommentBloc>(
+                  create: (context) => sl<AudioCommentBloc>(),
+                ),
+                // Provide waveform bloc scoped to this screen
+                BlocProvider<AudioWaveformBloc>(
+                  create: (context) => sl<AudioWaveformBloc>(),
+                ),
+              ],
               child: AppAudioCommentsScreen(
                 projectId: args.projectId,
                 track: args.track,
@@ -238,8 +253,8 @@ class AppRouter {
               builder: (context, state) => const CacheDemoScreen(),
             ),
             GoRoute(
-              path: '/storage-management',
-              builder: (context, state) => const StorageManagementScreen(),
+              path: AppRoutes.cacheManagement,
+              builder: (context, state) => const CacheManagementScreen(),
             ),
           ],
         ),

@@ -38,26 +38,9 @@ class WatchAudioCommentsBundleUseCase {
     required ProjectId projectId,
     required AudioTrackId trackId,
   }) {
-    // Stream of the specific track by filtering project tracks
+    // Stream of the specific track by ID
     final track$ = _audioTrackRepository
-        .watchTracksByProject(projectId)
-        .map<Either<Failure, AudioTrack>>((eitherTracks) {
-          return eitherTracks.fold((failure) => left(failure), (tracks) {
-            AudioTrack? found;
-            for (final t in tracks) {
-              if (t.id == trackId) {
-                found = t;
-                break;
-              }
-            }
-            if (found != null) {
-              return right(found);
-            }
-            return left<Failure, AudioTrack>(
-              DatabaseFailure('Track not found in local cache'),
-            );
-          });
-        })
+        .watchTrackById(trackId)
         .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())))
         .shareReplay(maxSize: 1);
 

@@ -8,12 +8,14 @@ import 'audio_comment_state.dart';
 
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'dart:async';
 
 @injectable
 class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   final AddAudioCommentUseCase addAudioCommentUseCase;
   final WatchAudioCommentsBundleUseCase watchAudioCommentsBundleUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
+  StreamSubscription<Either<Failure, AudioCommentsBundle>>? _bundleSubscription;
 
   AudioCommentBloc({
     required this.addAudioCommentUseCase,
@@ -72,15 +74,18 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     Emitter<AudioCommentState> emit,
   ) async {
     emit(const AudioCommentLoading());
-    await emit.onEach<Either<Failure, AudioCommentsBundle>>(
-      watchAudioCommentsBundleUseCase(
-        projectId: event.projectId,
-        trackId: event.trackId,
-      ),
-      onData: (either) => add(AudioCommentsBundleUpdated(either)),
-      onError: (error, stackTrace) {
-        emit(AudioCommentError(error.toString()));
-      },
+    // Cancel any previous subscription to avoid cross-track leakage
+    await _bundleSubscription?.cancel();
+    _bundleSubscription = watchAudioCommentsBundleUseCase(
+      projectId: event.projectId,
+      trackId: event.trackId,
+    ).listen(
+      (either) => add(AudioCommentsBundleUpdated(either)),
+      onError:
+          (error, _) => add(
+            AudioCommentsBundleUpdated(left(ServerFailure(error.toString()))),
+          ),
+      cancelOnError: false,
     );
   }
 
@@ -99,5 +104,11 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
         ),
       ),
     );
+  }
+
+  @override
+  Future<void> close() async {
+    await _bundleSubscription?.cancel();
+    return super.close();
   }
 }

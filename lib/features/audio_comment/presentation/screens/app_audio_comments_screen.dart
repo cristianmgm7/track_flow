@@ -34,6 +34,15 @@ class AppAudioCommentsScreen extends StatefulWidget {
 
 class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
   @override
+  void didUpdateWidget(covariant AppAudioCommentsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.track.id != widget.track.id) {
+      // Force header and comments section to rebuild with the new track
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;

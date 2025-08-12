@@ -63,6 +63,34 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }
 
   @override
+  Stream<Either<Failure, AudioTrack>> watchTrackById(AudioTrackId id) {
+    try {
+      // Trigger background sync when method is called
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_track_${id.value}',
+        ),
+      );
+
+      return localDataSource.watchTrackById(id.value).map((eitherDto) {
+        return eitherDto.fold(
+          (failure) => Left(failure),
+          (dto) =>
+              dto != null
+                  ? Right(dto.toDomain())
+                  : Left(
+                    DatabaseFailure('Audio track not found in local cache'),
+                  ),
+        );
+      });
+    } catch (e) {
+      return Stream.value(
+        Left(DatabaseFailure('Failed to watch audio track: ${e.toString()}')),
+      );
+    }
+  }
+
+  @override
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
   ) {

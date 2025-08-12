@@ -27,6 +27,23 @@ class _AudioCommentWaveformDisplayState
   double? _lastWidth;
 
   @override
+  void didUpdateWidget(covariant AudioCommentWaveformDisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trackId != widget.trackId) {
+      // Track changed: reload waveform even if width didn't change
+      final spacing = 3.0;
+      final width = _lastWidth ?? 400.0;
+      final noOfSamples = (width / spacing).floor();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<AudioWaveformBloc>().add(
+          LoadWaveform(widget.trackId, noOfSamples: noOfSamples),
+        );
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -169,7 +186,7 @@ class _AudioCommentWaveformDisplayState
       final audioPlayerBloc = context.read<AudioPlayerBloc>();
       final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
       if (renderBox == null) return;
-      
+
       final totalDuration = await controller.getDuration(DurationType.max);
       if (totalDuration == 0) return;
       if (!mounted) return;
@@ -178,7 +195,7 @@ class _AudioCommentWaveformDisplayState
       final seekPosition = Duration(
         milliseconds: (totalDuration * tapRatio).round(),
       );
-      
+
       audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
     } catch (e) {
       // Error handled silently - waveform tap continues to work
@@ -211,17 +228,17 @@ class _AudioCommentWaveformDisplayState
     setState(() {
       _isDragging = false;
     });
-    
+
     // Store BLoC reference before async operations
     final audioPlayerBloc = context.read<AudioPlayerBloc>();
-    
+
     try {
       final currentPosition = await controller.getDuration(
         DurationType.current,
       );
       final seekPosition = Duration(milliseconds: currentPosition);
       if (!mounted) return;
-      
+
       audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
       if (_wasPlayingBeforeDrag) {
         await Future.delayed(const Duration(milliseconds: 100));

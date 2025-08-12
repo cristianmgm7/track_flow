@@ -7,9 +7,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
-import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 
@@ -56,17 +54,11 @@ class AppBlocProviders {
   static List<BlocProvider> getAudioProviders() {
     return [
       BlocProvider<AudioTrackBloc>(create: (context) => sl<AudioTrackBloc>()),
-      BlocProvider<AudioCommentBloc>(
-        create: (context) => sl<AudioCommentBloc>(),
-      ),
       BlocProvider<AudioPlayerBloc>(
         create:
             (context) =>
                 sl<AudioPlayerBloc>()
                   ..add(const AudioPlayerInitializeRequested()),
-      ),
-      BlocProvider<AudioWaveformBloc>(
-        create: (context) => sl<AudioWaveformBloc>(),
       ),
     ];
   }

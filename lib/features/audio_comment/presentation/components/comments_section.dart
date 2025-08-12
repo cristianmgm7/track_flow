@@ -40,6 +40,21 @@ class _CommentsSectionState extends State<CommentsSection> {
   }
 
   @override
+  void didUpdateWidget(covariant CommentsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trackId != widget.trackId ||
+        oldWidget.projectId != widget.projectId) {
+      // Re-subscribe for the new track
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<AudioCommentBloc>().add(
+          WatchAudioCommentsBundleEvent(widget.projectId, widget.trackId),
+        );
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocBuilder<AudioCommentBloc, AudioCommentState>(
       builder: (context, state) {

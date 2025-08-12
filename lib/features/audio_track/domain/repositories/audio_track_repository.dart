@@ -7,6 +7,9 @@ import 'dart:io';
 abstract class AudioTrackRepository {
   Future<Either<Failure, AudioTrack>> getTrackById(AudioTrackId id);
 
+  /// Watch a single track by id. Emits updates when the track changes in local cache.
+  Stream<Either<Failure, AudioTrack>> watchTrackById(AudioTrackId id);
+
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
   );
@@ -25,7 +28,7 @@ abstract class AudioTrackRepository {
     required ProjectId projectId,
     required String newName,
   });
-  
+
   /// Delete all tracks from local cache
   Future<Either<Failure, Unit>> deleteAllTracks();
 }

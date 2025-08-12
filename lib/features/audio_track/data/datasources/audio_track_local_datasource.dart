@@ -9,6 +9,9 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
 abstract class AudioTrackLocalDataSource {
   Future<Either<Failure, Unit>> cacheTrack(AudioTrackDTO track);
   Future<Either<Failure, AudioTrackDTO?>> getTrackById(String id);
+
+  /// Watch a single track by id from local cache
+  Stream<Either<Failure, AudioTrackDTO?>> watchTrackById(String id);
   Future<Either<Failure, List<AudioTrackDTO>>> getAllTracks();
   Future<Either<Failure, Unit>> deleteTrack(String id);
   Future<Either<Failure, Unit>> deleteAllTracks();
@@ -45,6 +48,26 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
       return Right(trackDoc?.toDTO());
     } catch (e) {
       return Left(CacheFailure('Failed to get track by id: $e'));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, AudioTrackDTO?>> watchTrackById(String id) {
+    try {
+      final stream = _isar.audioTrackDocuments
+          .where()
+          .filter()
+          .idEqualTo(id)
+          .watch(fireImmediately: true)
+          .map<Either<Failure, AudioTrackDTO?>>((docs) {
+            final doc = docs.isNotEmpty ? docs.first : null;
+            return right<Failure, AudioTrackDTO?>(doc?.toDTO());
+          });
+      return stream.handleError(
+        (e) => left(ServerFailure('Failed to watch track: $e')),
+      );
+    } catch (e) {
+      return Stream.value(left(CacheFailure('Failed to watch track: $e')));
     }
   }
 
