@@ -30,4 +30,5 @@ class AppRoutes {
 
   // Audio cache demo routes
   static const String cacheDemo = '/settings/cache-demo';
+  static const String cacheManagement = '/settings/cache-management';
 }

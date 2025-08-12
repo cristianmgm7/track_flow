@@ -130,7 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Icons.arrow_forward_ios,
                         color: AppColors.textSecondary,
                       ),
-                      onTap: () => context.push('/storage-management'),
+                      onTap: () => context.push(AppRoutes.cacheManagement),
                     ),
                   ],
                 ),
