@@ -10,7 +10,10 @@ import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
+import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:async';
 
 class TrackActions {
   static List<AppBottomSheetAction> forTrack(
@@ -67,18 +70,40 @@ class TrackActions {
       onTap: () async {
         Navigator.of(context).pop(); // Close the action sheet
 
-        // Use BLoC pattern for downloads
-        context.read<TrackCacheBloc>().add(
-          CacheTrackRequested(trackId: track.id.value, audioUrl: track.url),
-        );
+        final bloc = context.read<TrackCacheBloc>();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${track.name} added to download queue'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        // 1) Try to get a cached path immediately
+        final completer = Completer<String?>();
+        late final StreamSubscription sub;
+        sub = bloc.stream.listen((state) {
+          if (state is TrackCachePathLoaded && state.trackId == track.id.value) {
+            completer.complete(state.filePath);
+            sub.cancel();
+          } else if (state is TrackCacheOperationFailure && state.trackId == track.id.value) {
+            completer.complete(null);
+            sub.cancel();
+          }
+        });
+        bloc.add(GetCachedTrackPathRequested(track.id.value));
+
+        final filePath = await completer.future.timeout(const Duration(seconds: 2), onTimeout: () => null);
+
+        if (filePath != null && filePath.isNotEmpty) {
+          // 2) Share the cached file so user can choose destination
+          await Share.shareXFiles([XFile(filePath)], text: 'Export ${track.name}');
+        } else {
+          // 3) Not cached yet → start caching and inform user to retry export when ready
+          bloc.add(
+            CacheTrackRequested(trackId: track.id.value, audioUrl: track.url),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Downloading ${track.name}... Tap Download again to save when ready'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       },
     ),
   ];
