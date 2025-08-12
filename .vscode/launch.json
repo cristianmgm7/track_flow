@@ -62,6 +62,35 @@
             "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         
+        // === iPhone X Físico ===
+        {
+            "name": "🚀 Dev (iPhone X)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_development.dart",
+            "deviceId": "011a383549b06a289a4fd1d32ac5145d13066afe",
+            "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
+        },
+        {
+            "name": "🧪 Staging (iPhone X)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_staging.dart",
+            "deviceId": "011a383549b06a289a4fd1d32ac5145d13066afe",
+            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
+        },
+        {
+            "name": "🎯 Prod (iPhone X)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_production.dart",
+            "deviceId": "011a383549b06a289a4fd1d32ac5145d13066afe",
+            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
+        },
+        
         // === Android Emulator ===
         {
             "name": "🚀 Dev (Android)",

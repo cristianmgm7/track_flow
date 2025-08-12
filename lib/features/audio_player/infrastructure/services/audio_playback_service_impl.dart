@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart' hide AudioSource;
+import 'package:just_audio/just_audio.dart' as ja show AudioSource;
+import 'package:audio_service/audio_service.dart' as bg;
+import 'package:trackflow/core/utils/app_logger.dart';
 
 import '../../domain/entities/audio_source.dart';
 import '../../domain/entities/audio_queue.dart';
@@ -46,25 +49,52 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       // Load the audio source (handle local files vs remote URLs)
       final url = source.url;
       final isLocalFilePath = url.startsWith('/') || url.startsWith('file://');
+      AppLogger.info(
+        'Audio play requested | isLocal=$isLocalFilePath | url=$url',
+        tag: 'AUDIO_PLAYBACK',
+      );
+      // Build MediaItem required by just_audio_background
+      final mediaItem = bg.MediaItem(
+        id: source.metadata.id.value,
+        title: source.metadata.title,
+        artist: source.metadata.artist,
+        duration: source.metadata.duration,
+        artUri:
+            source.metadata.coverUrl != null &&
+                    source.metadata.coverUrl!.isNotEmpty
+                ? Uri.parse(source.metadata.coverUrl!)
+                : null,
+      );
+
+      // Resolve URI
+      late final Uri resolvedUri;
       if (isLocalFilePath) {
         final filePath =
             url.startsWith('file://') ? url.replaceFirst('file://', '') : url;
         // Validate file exists to prevent platform exceptions
         if (!File(filePath).existsSync()) {
+          AppLogger.error(
+            'Local audio file not found at path: $filePath',
+            tag: 'AUDIO_PLAYBACK',
+          );
           throw Exception('Local audio file not found at path: $filePath');
         }
-        await _audioPlayer.setFilePath(filePath);
+        resolvedUri = Uri.file(filePath);
       } else {
-        if (source.headers != null && source.headers!.isNotEmpty) {
-          await _audioPlayer.setUrl(url, headers: source.headers);
-        } else {
-          await _audioPlayer.setUrl(url);
-        }
+        resolvedUri = Uri.parse(url);
       }
+
+      // Load audio source with MediaItem tag (required by background)
+      await _audioPlayer.setAudioSource(
+        ja.AudioSource.uri(resolvedUri, tag: mediaItem),
+      );
+      AppLogger.info('Loaded source successfully', tag: 'AUDIO_PLAYBACK');
 
       // Start playback
       await _audioPlayer.play();
+      AppLogger.info('Playback started', tag: 'AUDIO_PLAYBACK');
     } catch (e) {
+      AppLogger.error('Failed to play audio: $e', tag: 'AUDIO_PLAYBACK');
       _updateSession(
         _currentSession.copyWith(
           state: PlaybackState.error,

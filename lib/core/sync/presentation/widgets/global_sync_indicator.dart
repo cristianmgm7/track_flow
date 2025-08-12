@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
-import 'package:trackflow/features/sync/presentation/cubit/sync_status_cubit.dart';
+import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';

@@ -76,21 +76,28 @@ class TrackActions {
         final completer = Completer<String?>();
         late final StreamSubscription sub;
         sub = bloc.stream.listen((state) {
-          if (state is TrackCachePathLoaded && state.trackId == track.id.value) {
+          if (state is TrackCachePathLoaded &&
+              state.trackId == track.id.value) {
             completer.complete(state.filePath);
             sub.cancel();
-          } else if (state is TrackCacheOperationFailure && state.trackId == track.id.value) {
+          } else if (state is TrackCacheOperationFailure &&
+              state.trackId == track.id.value) {
             completer.complete(null);
             sub.cancel();
           }
         });
         bloc.add(GetCachedTrackPathRequested(track.id.value));
 
-        final filePath = await completer.future.timeout(const Duration(seconds: 2), onTimeout: () => null);
+        final filePath = await completer.future.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => null,
+        );
 
         if (filePath != null && filePath.isNotEmpty) {
           // 2) Share the cached file so user can choose destination
-          await Share.shareXFiles([XFile(filePath)], text: 'Export ${track.name}');
+          await Share.shareXFiles([
+            XFile(filePath),
+          ], text: 'Export ${track.name}');
         } else {
           // 3) Not cached yet → start caching and inform user to retry export when ready
           bloc.add(
@@ -98,7 +105,9 @@ class TrackActions {
           );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Downloading ${track.name}... Tap Download again to save when ready'),
+              content: Text(
+                'Downloading ${track.name}... Tap Download again to save when ready',
+              ),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
             ),

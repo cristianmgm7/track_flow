@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:audio_waveforms/audio_waveforms.dart';
+import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -21,6 +22,7 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
   StreamSubscription? _cacheSubscription;
   AudioTrackId? _currentTrackId;
   bool _isSeekingFromWaveform = false;
+  int? _lastRequestedSamples;
 
   AudioWaveformBloc({
     required AudioPlaybackService audioPlaybackService,
@@ -59,6 +61,7 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
       state.copyWith(status: WaveformStatus.loading, forceNullController: true),
     );
     _currentTrackId = event.trackId;
+    _lastRequestedSamples = event.noOfSamples;
 
     // Get cached track path directly
     try {
@@ -71,10 +74,12 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
           add(_TrackPathLoaded(filePath, noOfSamples: event.noOfSamples));
         } else {
           add(_TrackCacheFailed('Track not cached'));
+          _startCachePolling();
         }
       });
     } catch (e) {
       add(_TrackCacheFailed('Failed to get cached track: $e'));
+      _startCachePolling();
     }
   }
 
@@ -83,6 +88,18 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
     Emitter<AudioWaveformState> emit,
   ) async {
     try {
+      // Ensure file exists before preparing controller
+      final file = File(event.path);
+      if (!await file.exists()) {
+        emit(
+          state.copyWith(
+            status: WaveformStatus.error,
+            errorMessage: 'Cached file not found on disk. Please re-cache.',
+            forceNullController: true,
+          ),
+        );
+        return;
+      }
       state.playerController?.dispose();
 
       final newController = PlayerController();
@@ -135,6 +152,10 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
     emit(
       state.copyWith(status: WaveformStatus.error, errorMessage: event.error),
     );
+    // If it's not cached yet, start polling for when it becomes available
+    if (event.error.toLowerCase().contains('not cached')) {
+      _startCachePolling();
+    }
   }
 
   Future<void> _onPlayerSessionUpdated(
@@ -186,5 +207,26 @@ class AudioWaveformBloc extends Bloc<AudioWaveformEvent, AudioWaveformState> {
     _cacheSubscription?.cancel();
     state.playerController?.dispose();
     return super.close();
+  }
+
+  void _startCachePolling() {
+    // Avoid multiple subscriptions
+    _cacheSubscription?.cancel();
+    final trackId = _currentTrackId;
+    if (trackId == null) return;
+    _cacheSubscription = Stream.periodic(const Duration(seconds: 1)).listen((
+      _,
+    ) async {
+      try {
+        final result = await _getCachedTrackPathUseCase(trackId.value);
+        result.fold((_) {}, (path) {
+          if (path != null) {
+            // Stop polling and prepare waveform
+            _cacheSubscription?.cancel();
+            add(_TrackPathLoaded(path, noOfSamples: _lastRequestedSamples));
+          }
+        });
+      } catch (_) {}
+    });
   }
 }

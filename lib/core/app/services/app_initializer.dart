@@ -93,7 +93,10 @@ class AppInitializer {
         final initializer = sl<AudioBackgroundInitializer>();
         await initializer.initialize();
       } catch (e) {
-        AppLogger.warning('Audio background init failed: $e', tag: 'APP_INITIALIZER');
+        AppLogger.warning(
+          'Audio background init failed: $e',
+          tag: 'APP_INITIALIZER',
+        );
       }
     });
   }

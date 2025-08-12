@@ -23,5 +23,3 @@ class AudioBackgroundInitializer {
     await session.configure(const AudioSessionConfiguration.music());
   }
 }
-
-

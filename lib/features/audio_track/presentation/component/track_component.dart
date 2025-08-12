@@ -62,8 +62,8 @@ class _TrackComponentState extends State<TrackComponent> {
           } else {
             // Sensible default: play this single track if no handler provided
             context.read<AudioPlayerBloc>().add(
-                  PlayPlaylistRequested(tracks: [widget.track], startIndex: 0),
-                );
+              PlayPlaylistRequested(tracks: [widget.track], startIndex: 0),
+            );
           }
         },
         margin: EdgeInsets.zero,

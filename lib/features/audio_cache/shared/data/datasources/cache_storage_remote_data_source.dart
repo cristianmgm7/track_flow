@@ -94,8 +94,18 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         // Store cancellation info
         _activeDownloads[downloadId] = true;
 
-        // Open file for writing
-        final sink = file.openWrite();
+        // Determine extension from Content-Type header or URL path
+        final contentType = response.headers['content-type'] ?? '';
+        final detectedExt =
+            _extensionFromContentType(contentType) ??
+            _extensionFromUrl(uri.path) ??
+            '.mp3';
+
+        // Adjust local file path to use detected extension
+        final targetFile = File(
+          file.path.replaceAll(RegExp(r'\.[^/.]+$'), detectedExt),
+        );
+        final sink = targetFile.openWrite();
 
         // Listen to response stream with progress tracking
         response.stream.listen(
@@ -134,8 +144,8 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         final isCancelled = _cancelledDownloads[downloadId] == true;
         if (isCancelled) {
           // Delete partial file if cancelled
-          if (await file.exists()) {
-            await file.delete();
+          if (await targetFile.exists()) {
+            await targetFile.delete();
           }
           return Left(
             DownloadCacheFailure(
@@ -146,13 +156,13 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         }
 
         // Verify file was downloaded successfully
-        if (await file.exists() && await file.length() > 0) {
+        if (await targetFile.exists() && await targetFile.length() > 0) {
           final completedProgress = DownloadProgress.completed(
             downloadId,
-            await file.length(),
+            await targetFile.length(),
           );
           onProgress(completedProgress);
-          return Right(file);
+          return Right(targetFile);
         } else {
           return Left(
             DownloadCacheFailure(
@@ -174,6 +184,39 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         ),
       );
     }
+  }
+
+  String? _extensionFromContentType(String contentType) {
+    final type = contentType.split(';').first.trim().toLowerCase();
+    switch (type) {
+      case 'audio/mpeg':
+      case 'audio/mp3':
+        return '.mp3';
+      case 'audio/mp4':
+      case 'audio/aac':
+      case 'audio/x-m4a':
+      case 'audio/m4a':
+        return '.m4a';
+      case 'audio/wav':
+      case 'audio/x-wav':
+        return '.wav';
+      case 'audio/ogg':
+      case 'application/ogg':
+        return '.ogg';
+      case 'audio/flac':
+        return '.flac';
+      default:
+        return null;
+    }
+  }
+
+  String? _extensionFromUrl(String path) {
+    final idx = path.lastIndexOf('.');
+    if (idx == -1) return null;
+    final ext = path.substring(idx).toLowerCase();
+    // Basic sanity check
+    if (ext.length > 5) return null; // avoid query strings, etc.
+    return ext;
   }
 
   @override

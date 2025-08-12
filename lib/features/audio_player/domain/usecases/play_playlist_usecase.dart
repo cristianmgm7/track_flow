@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'dart:io';
 import 'package:injectable/injectable.dart';
 import '../entities/audio_failure.dart';
 import '../../../playlist/domain/repositories/playlist_repository.dart';
@@ -41,8 +42,10 @@ class PlayPlaylistUseCase {
     try {
       List<AudioTrack> trackList = [];
       if (playlistId != null) {
-        final playlistResult = await _playlistRepository.getPlaylistById(playlistId);
-        
+        final playlistResult = await _playlistRepository.getPlaylistById(
+          playlistId,
+        );
+
         // Handle the Either result properly
         final playlistError = playlistResult.fold(
           (failure) => failure.message,
@@ -53,22 +56,22 @@ class PlayPlaylistUseCase {
             if (playlist.trackIds.isEmpty) {
               return 'Playlist is empty: ${playlistId.value}';
             }
-            
+
             // Success case - store playlist for processing
             return null; // null means no error
           },
         );
-        
+
         if (playlistError != null) {
           return Left(PlaylistFailure(playlistError));
         }
-        
+
         // Extract playlist from Either
         final playlist = playlistResult.fold(
           (failure) => null,
           (playlist) => playlist,
         );
-        
+
         if (playlist != null) {
           // Load tracks from playlist
           for (final trackId in playlist.trackIds) {
@@ -108,6 +111,27 @@ class PlayPlaylistUseCase {
             }
           },
         );
+        // Validate fallback: if it's a local path, ensure it still exists;
+        // if it's remote, require http(s) scheme.
+        if (urlToUse != null && urlToUse!.isNotEmpty) {
+          final looksLocal =
+              urlToUse!.startsWith('/') || urlToUse!.startsWith('file://');
+          if (looksLocal) {
+            final filePath =
+                urlToUse!.startsWith('file://')
+                    ? urlToUse!.replaceFirst('file://', '')
+                    : urlToUse!;
+            if (!File(filePath).existsSync()) {
+              urlToUse = null; // discard stale temp path
+            }
+          } else {
+            final uri = Uri.tryParse(urlToUse!);
+            if (uri == null ||
+                (uri.scheme != 'http' && uri.scheme != 'https')) {
+              urlToUse = null;
+            }
+          }
+        }
         if (urlToUse != null && urlToUse!.isNotEmpty) {
           final metadata = AudioTrackMetadata(
             id: track.id,
