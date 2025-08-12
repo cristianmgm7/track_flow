@@ -13,6 +13,8 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/track_upload_status_badge.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 
 import 'track_duration_formatter.dart';
 import 'track_info_section.dart';
@@ -57,6 +59,11 @@ class _TrackComponentState extends State<TrackComponent> {
         onTap: () {
           if (widget.onPlay != null) {
             widget.onPlay!();
+          } else {
+            // Sensible default: play this single track if no handler provided
+            context.read<AudioPlayerBloc>().add(
+                  PlayPlaylistRequested(tracks: [widget.track], startIndex: 0),
+                );
           }
         },
         margin: EdgeInsets.zero,
