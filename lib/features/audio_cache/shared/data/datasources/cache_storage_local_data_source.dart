@@ -474,7 +474,8 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
 
   Future<Directory> _getCacheDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
-    final cacheDir = Directory('${appDir.path}/audio_cache');
+    // Store persistent audio files under Documents/trackflow/audio
+    final cacheDir = Directory('${appDir.path}/trackflow/audio');
 
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
