@@ -42,6 +42,8 @@ class AudioCommentHeader extends StatelessWidget {
                   builder: (context, state) {
                     final isPlaying = state is AudioPlayerPlaying;
                     final isBuffering = state is AudioPlayerBuffering;
+                    final session = state is AudioPlayerSessionState ? state.session : null;
+                    final isDifferentTrack = session?.currentTrack?.id != track.id;
                     return AudioPlayPauseButton(
                       isPlaying: isPlaying,
                       isBuffering: isBuffering,
@@ -49,22 +51,20 @@ class AudioCommentHeader extends StatelessWidget {
                       iconSize: 36,
                       backgroundColor: Colors.white,
                       iconColor: Colors.black,
-                      onPressed:
-                          isBuffering
-                              ? null
-                              : () {
-                                final audioPlayerBloc =
-                                    context.read<AudioPlayerBloc>();
-                                if (isPlaying) {
-                                  audioPlayerBloc.add(
-                                    const PauseAudioRequested(),
-                                  );
-                                } else {
-                                  audioPlayerBloc.add(
-                                    const ResumeAudioRequested(),
-                                  );
-                                }
-                              },
+                       onPressed: isBuffering
+                           ? null
+                           : () {
+                               final audioPlayerBloc = context.read<AudioPlayerBloc>();
+                               if (isDifferentTrack) {
+                                 audioPlayerBloc.add(PlayAudioRequested(track.id));
+                                 return;
+                               }
+                               if (isPlaying) {
+                                 audioPlayerBloc.add(const PauseAudioRequested());
+                               } else {
+                                 audioPlayerBloc.add(const ResumeAudioRequested());
+                               }
+                             },
                     );
                   },
                 ),

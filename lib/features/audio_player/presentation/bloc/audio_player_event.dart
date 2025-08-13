@@ -97,6 +97,20 @@ class SeekToPositionRequested extends AudioPlayerEvent {
   String toString() => 'SeekToPositionRequested(position: $position)';
 }
 
+/// Play a specific track if needed, then seek to a position atomically
+class PlayAndSeekRequested extends AudioPlayerEvent {
+  const PlayAndSeekRequested(this.trackId, this.position);
+
+  final AudioTrackId trackId;
+  final Duration position;
+
+  @override
+  List<Object?> get props => [trackId, position];
+
+  @override
+  String toString() => 'PlayAndSeekRequested(trackId: $trackId, position: $position)';
+}
+
 /// Toggle shuffle mode on/off
 class ToggleShuffleRequested extends AudioPlayerEvent {
   const ToggleShuffleRequested();

@@ -33,6 +33,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     on<SkipToNextRequested>(_onSkipToNextRequested);
     on<SkipToPreviousRequested>(_onSkipToPreviousRequested);
     on<SeekToPositionRequested>(_onSeekToPositionRequested);
+    on<PlayAndSeekRequested>(_onPlayAndSeekRequested);
     on<ToggleShuffleRequested>(_onToggleShuffleRequested);
     on<ToggleRepeatModeRequested>(_onToggleRepeatModeRequested);
     on<SetRepeatModeRequested>(_onSetRepeatModeRequested);
@@ -237,6 +238,36 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     try {
       await _audioPlayerService.seek(event.position);
       // State will be updated via SessionStateChanged event
+    } catch (e) {
+      emit(
+        AudioPlayerError(
+          AudioPlayerFailure('Failed to seek: ${e.toString()}'),
+          currentSession,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onPlayAndSeekRequested(
+    PlayAndSeekRequested event,
+    Emitter<AudioPlayerState> emit,
+  ) async {
+    // If current track differs, play the requested one first
+    final currentId = currentSession.currentTrack?.id;
+    if (currentId == null || currentId != event.trackId) {
+      emit(AudioPlayerBuffering(currentSession));
+      final playResult = await _audioPlayerService.playAudio(event.trackId);
+      playResult.fold(
+        (failure) {
+          emit(AudioPlayerError(failure, currentSession));
+          return;
+        },
+        (_) {},
+      );
+    }
+    // Then seek
+    try {
+      await _audioPlayerService.seek(event.position);
     } catch (e) {
       emit(
         AudioPlayerError(

@@ -195,8 +195,17 @@ class _AudioCommentWaveformDisplayState
       final seekPosition = Duration(
         milliseconds: (totalDuration * tapRatio).round(),
       );
-
-      audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
+      // If a different track is playing, switch and seek atomically
+      final playerState = context.read<AudioPlayerBloc>().state;
+      AudioTrackId? currentId;
+      if (playerState is AudioPlayerSessionState) {
+        currentId = playerState.session.currentTrack?.id;
+      }
+      if (currentId == null || currentId != widget.trackId) {
+        audioPlayerBloc.add(PlayAndSeekRequested(widget.trackId, seekPosition));
+      } else {
+        audioPlayerBloc.add(SeekToPositionRequested(seekPosition));
+      }
     } catch (e) {
       // Error handled silently - waveform tap continues to work
     }
