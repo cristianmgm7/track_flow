@@ -93,6 +93,8 @@ class _CommentInputModalState extends State<CommentInputModal>
           _capturedTimestamp ?? Duration.zero,
         ),
       );
+      final audioPlayerBloc = context.read<AudioPlayerBloc>();
+      audioPlayerBloc.add(const ResumeAudioRequested());
       _controller.clear();
       _focusNode.unfocus();
     }

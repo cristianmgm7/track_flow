@@ -30,6 +30,8 @@ class TrackMenuButton extends StatelessWidget {
     showAppActionSheet(
       context: context,
       title: track.name,
+      initialChildSize: 0.6,
+      maxChildSize: 0.8,
       actions: TrackActions.forTrack(context, projectId, track),
     );
   }
