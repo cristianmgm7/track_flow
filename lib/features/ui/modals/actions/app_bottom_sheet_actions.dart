@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_animations.dart';
 import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
@@ -15,6 +16,8 @@ class AppBottomSheetAction {
   final bool showTrailingIcon;
   final Color? iconColor;
   final Color? textColor;
+  // New: bloc-aware callback that receives the bloc context
+  final void Function(BuildContext, BlocBase)? onTapWithBloc;
 
   AppBottomSheetAction({
     required this.icon,
@@ -25,17 +28,43 @@ class AppBottomSheetAction {
     this.showTrailingIcon = true,
     this.iconColor,
     this.textColor,
+    this.onTapWithBloc,
   });
+
+  // Factory constructor for bloc-aware actions
+  factory AppBottomSheetAction.withBloc({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required void Function(BuildContext, BlocBase) onTapWithBloc,
+    Widget Function(BuildContext)? childSheetBuilder,
+    bool showTrailingIcon = true,
+    Color? iconColor,
+    Color? textColor,
+  }) {
+    return AppBottomSheetAction(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      onTapWithBloc: onTapWithBloc,
+      childSheetBuilder: childSheetBuilder,
+      showTrailingIcon: showTrailingIcon,
+      iconColor: iconColor,
+      textColor: textColor,
+    );
+  }
 }
 
 class AppBottomSheetList extends StatelessWidget {
   final List<AppBottomSheetAction> actions;
   final ScrollController? scrollController;
+  final BlocBase? blocContext; // New: bloc context for bloc-aware actions
 
   const AppBottomSheetList({
     super.key,
     required this.actions,
     this.scrollController,
+    this.blocContext,
   });
 
   @override
@@ -49,6 +78,7 @@ class AppBottomSheetList extends StatelessWidget {
         return _AppBottomSheetListItem(
           action: action,
           onTap: () => _handleTap(context, action),
+          blocContext: blocContext,
         );
       },
     );
@@ -56,6 +86,13 @@ class AppBottomSheetList extends StatelessWidget {
 
   void _handleTap(BuildContext context, AppBottomSheetAction action) {
     Navigator.of(context).pop();
+
+    // Handle bloc-aware actions first
+    if (action.onTapWithBloc != null && blocContext != null) {
+      action.onTapWithBloc!(context, blocContext!);
+      return;
+    }
+
     if (action.childSheetBuilder != null) {
       showAppBottomSheet(
         context: context,
@@ -71,8 +108,13 @@ class AppBottomSheetList extends StatelessWidget {
 class _AppBottomSheetListItem extends StatefulWidget {
   final AppBottomSheetAction action;
   final VoidCallback onTap;
+  final BlocBase? blocContext; // New: bloc context for bloc-aware actions
 
-  const _AppBottomSheetListItem({required this.action, required this.onTap});
+  const _AppBottomSheetListItem({
+    required this.action,
+    required this.onTap,
+    this.blocContext,
+  });
 
   @override
   State<_AppBottomSheetListItem> createState() =>

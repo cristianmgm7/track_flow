@@ -37,10 +37,14 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
     showAppActionSheet(
       title: collaborator.name,
       context: context,
+      initialChildSize: 0.6,
+      maxChildSize: 0.8,
+      reprovideBlocs: [context.read<ManageCollaboratorsBloc>()],
       actions: CollaboratorActions.forCollaborator(
         context: context,
         project: currentProject,
         collaborator: collaborator,
+        manageCollaboratorsBloc: context.read<ManageCollaboratorsBloc>(),
       ),
     );
   }

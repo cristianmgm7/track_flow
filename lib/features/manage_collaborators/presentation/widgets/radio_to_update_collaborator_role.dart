@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
@@ -15,6 +14,7 @@ class RadioToUpdateCollaboratorRole extends StatefulWidget {
   final UserId userId;
   final ProjectRoleType initialRole;
   final void Function(ProjectRole) onSave;
+  final ManageCollaboratorsBloc manageCollaboratorsBloc;
 
   const RadioToUpdateCollaboratorRole({
     super.key,
@@ -22,6 +22,7 @@ class RadioToUpdateCollaboratorRole extends StatefulWidget {
     required this.userId,
     required this.initialRole,
     required this.onSave,
+    required this.manageCollaboratorsBloc,
   });
 
   @override
@@ -56,7 +57,7 @@ class _RadioToUpdateCollaboratorRoleState
         break;
     }
     widget.onSave(newRole);
-    context.read<ManageCollaboratorsBloc>().add(
+    widget.manageCollaboratorsBloc.add(
       UpdateCollaboratorRole(
         projectId: widget.projectId,
         userId: widget.userId,

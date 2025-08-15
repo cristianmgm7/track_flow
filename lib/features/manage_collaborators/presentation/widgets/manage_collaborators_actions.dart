@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
@@ -15,6 +14,7 @@ class CollaboratorActions {
     required Project project,
     required BuildContext context,
     required UserProfile collaborator,
+    required ManageCollaboratorsBloc manageCollaboratorsBloc,
   }) => [
     AppBottomSheetAction(
       icon: Icons.person,
@@ -25,23 +25,24 @@ class CollaboratorActions {
             AppRoutes.artistProfile.replaceFirst(':id', collaborator.id.value),
           ),
     ),
-    AppBottomSheetAction(
+    AppBottomSheetAction.withBloc(
       icon: Icons.edit,
       title: 'Edit Role',
       subtitle: "Change collaborator's role",
-      onTap: () {
+      onTapWithBloc: (context, bloc) {
         final projectCollaborator = project.collaborators.firstWhere(
           (c) => c.userId == collaborator.id,
         );
         showAppContentModal(
           context: context,
           title: 'Edit Role',
-          reprovideBlocs: [context.read<ManageCollaboratorsBloc>()],
+          reprovideBlocs: [bloc],
           child: RadioToUpdateCollaboratorRole(
             projectId: project.id,
             userId: collaborator.id,
             initialRole: projectCollaborator.role.value,
             onSave: (_) {},
+            manageCollaboratorsBloc: bloc as ManageCollaboratorsBloc,
           ),
         );
       },

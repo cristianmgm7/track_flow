@@ -225,6 +225,8 @@ Future<T?> showAppActionSheet<T>({
         (scrollController) => AppBottomSheetList(
           actions: actions,
           scrollController: scrollController,
+          blocContext:
+              reprovideBlocs?.isNotEmpty == true ? reprovideBlocs!.first : null,
         ),
     child: const SizedBox.shrink(),
   );
