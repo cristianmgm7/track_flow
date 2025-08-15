@@ -49,7 +49,7 @@ class PureAudioPlayer extends StatelessWidget {
               children: [
                 // Track info section - expanded to be more prominent
                 if (showTrackInfo) ...[
-                  Expanded(
+                  Flexible(
                     flex: 3,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -212,7 +212,7 @@ class PureAudioPlayer extends StatelessWidget {
                   const SizedBox(height: 40),
 
                   // Additional controls section
-                  Expanded(
+                  Flexible(
                     flex: 1,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),

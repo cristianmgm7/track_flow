@@ -196,7 +196,7 @@ class _AudioCommentWaveformDisplayState
         milliseconds: (totalDuration * tapRatio).round(),
       );
       // If a different track is playing, switch and seek atomically
-      final playerState = context.read<AudioPlayerBloc>().state;
+      final playerState = audioPlayerBloc.state;
       AudioTrackId? currentId;
       if (playerState is AudioPlayerSessionState) {
         currentId = playerState.session.currentTrack?.id;

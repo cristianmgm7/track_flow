@@ -71,6 +71,7 @@ class TrackActions {
         Navigator.of(context).pop(); // Close the action sheet
 
         final bloc = context.read<TrackCacheBloc>();
+        final messenger = ScaffoldMessenger.of(context);
 
         // 1) Try to get a cached path immediately
         final completer = Completer<String?>();
@@ -103,7 +104,7 @@ class TrackActions {
           bloc.add(
             CacheTrackRequested(trackId: track.id.value, audioUrl: track.url),
           );
-          ScaffoldMessenger.of(context).showSnackBar(
+          messenger.showSnackBar(
             SnackBar(
               content: Text(
                 'Downloading ${track.name}... Tap Download again to save when ready',

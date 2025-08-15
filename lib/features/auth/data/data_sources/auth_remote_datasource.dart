@@ -8,6 +8,7 @@ abstract class AuthRemoteDataSource {
   Future<User?> signInWithEmailAndPassword(String email, String password);
   Future<User?> signUpWithEmailAndPassword(String email, String password);
   Future<User?> signInWithGoogle();
+  Future<User?> signInWithApple();
   Future<void> signOut();
 }
 
@@ -16,10 +17,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _auth;
   final GoogleAuthService _googleAuthService;
 
-  AuthRemoteDataSourceImpl(
-    this._auth,
-    this._googleAuthService,
-  );
+  AuthRemoteDataSourceImpl(this._auth, this._googleAuthService);
 
   @override
   Future<User?> getCurrentUser() async {
@@ -69,6 +67,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       (failure) => throw Exception(failure.message),
       (authResult) => authResult.user,
     );
+  }
+
+  @override
+  Future<User?> signInWithApple() async {
+    // Implemented at repository via AppleAuthService directly. Keep remote simple.
+    // We still expose this for symmetry but delegate to FirebaseAuth once credential is obtained.
+    throw UnimplementedError('signInWithApple is handled via AppleAuthService');
   }
 
   @override

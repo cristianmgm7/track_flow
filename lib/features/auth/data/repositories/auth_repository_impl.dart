@@ -9,6 +9,7 @@ import 'package:trackflow/features/auth/data/models/auth_dto.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/auth/data/data_sources/auth_remote_datasource.dart';
 import 'package:trackflow/features/auth/data/services/google_auth_service.dart';
+import 'package:trackflow/features/auth/data/services/apple_auth_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 @LazySingleton(as: AuthRepository)
@@ -17,16 +18,19 @@ class AuthRepositoryImpl implements AuthRepository {
   final SessionStorage _sessionStorage;
   final NetworkStateManager _networkStateManager;
   final GoogleAuthService _googleAuthService; // ✅ New
+  final AppleAuthService _appleAuthService;
 
   AuthRepositoryImpl({
     required AuthRemoteDataSource remote,
     required SessionStorage sessionStorage,
     required NetworkStateManager networkStateManager,
     required GoogleAuthService googleAuthService, // ✅ New
+    required AppleAuthService appleAuthService,
   }) : _remote = remote,
        _sessionStorage = sessionStorage,
        _networkStateManager = networkStateManager,
-       _googleAuthService = googleAuthService;
+       _googleAuthService = googleAuthService,
+       _appleAuthService = appleAuthService;
 
   @override
   Future<Either<Failure, UserId?>> getSignedInUserId() async {
@@ -170,6 +174,28 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, domain.User>> signInWithApple() async {
+    try {
+      final isConnected = await _networkStateManager.isConnected;
+      if (!isConnected) {
+        return Left(
+          AuthenticationFailure(
+            'Apple sign in is not available in offline mode',
+          ),
+        );
+      }
+
+      final result = await _appleAuthService.authenticateWithApple();
+      return result.fold((failure) => Left(failure), (user) async {
+        await _sessionStorage.saveUserId(user.uid);
+        return Right(AuthDto.fromFirebase(user).toDomain());
+      });
+    } catch (e) {
+      return Left(AuthenticationFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> signOut() async {
     try {
       final isConnected = await _networkStateManager.isConnected;
@@ -180,7 +206,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       await _remote.signOut();
-      
+
       // NOTE: SessionStorage clearing is now handled by SessionCleanupService
       // to prevent race conditions. Only ensure specific auth-related cleanup here
       // if SessionStorage hasn't been cleared already.

@@ -1,10 +1,11 @@
-// ignore_for_file: unused_import, unused_element, invalid_use_of_protected_member
+// ignore_for_file: unused_import, unused_element, invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
 /// BLoC State Cleanup Pattern - Practical Examples
 library;
-/// 
+
+///
 /// This file contains copy-paste ready examples for implementing
 /// the BLoC state cleanup pattern in different scenarios.
-/// 
+///
 /// Copy the relevant example and adapt it to your specific BLoC.
 
 import 'dart:async';
@@ -21,17 +22,23 @@ import 'package:trackflow/core/di/injection.dart';
 
 /// Example events
 abstract class ExampleEvent {}
+
 class LoadData extends ExampleEvent {}
+
 class ClearData extends ExampleEvent {}
 
 /// Example states
 abstract class ExampleState {}
+
 class ExampleInitial extends ExampleState {}
+
 class ExampleLoading extends ExampleState {}
+
 class ExampleLoaded extends ExampleState {
   final String data;
   ExampleLoaded(this.data);
 }
+
 class ExampleError extends ExampleState {
   final String message;
   ExampleError(this.message);
@@ -41,11 +48,10 @@ class ExampleError extends ExampleState {
 @injectable
 class ExampleSimpleBloc extends Bloc<ExampleEvent, ExampleState>
     with ResetableBlocMixin<ExampleEvent, ExampleState> {
-  
   ExampleSimpleBloc() : super(ExampleInitial()) {
     on<LoadData>(_onLoadData);
     on<ClearData>(_onClearData);
-    
+
     // ✅ REQUIRED: Register for automatic cleanup
     registerForCleanup();
   }
@@ -78,13 +84,12 @@ class ExampleSimpleBloc extends Bloc<ExampleEvent, ExampleState>
 @injectable
 class ExampleComplexBloc extends Bloc<ExampleEvent, ExampleState>
     with ResetableBlocMixin<ExampleEvent, ExampleState> {
-  
   StreamSubscription<String>? _dataSubscription;
   Timer? _periodicTimer;
-  
+
   ExampleComplexBloc() : super(ExampleInitial()) {
     on<LoadData>(_onLoadData);
-    
+
     // ✅ REQUIRED: Register for automatic cleanup
     registerForCleanup();
   }
@@ -99,24 +104,24 @@ class ExampleComplexBloc extends Bloc<ExampleEvent, ExampleState>
     // Cancel any ongoing subscriptions
     _dataSubscription?.cancel();
     _dataSubscription = null;
-    
+
     // Cancel timers
     _periodicTimer?.cancel();
     _periodicTimer = null;
-    
+
     // Call parent reset to emit initial state
     super.reset();
   }
 
   Future<void> _onLoadData(LoadData event, Emitter<ExampleState> emit) async {
     emit(ExampleLoading());
-    
+
     // Example: Listen to data stream
     _dataSubscription = _getDataStream().listen(
       (data) => emit(ExampleLoaded(data)),
       onError: (error) => emit(ExampleError(error.toString())),
     );
-    
+
     // Example: Start periodic updates
     _periodicTimer = Timer.periodic(Duration(seconds: 30), (timer) {
       // Refresh data periodically
@@ -145,7 +150,6 @@ enum AppTab { home, profile, settings }
 /// ✅ COPY THIS: Simple Cubit with manual Resetable implementation
 @injectable
 class ExampleNavigationCubit extends Cubit<AppTab> implements Resetable {
-  
   ExampleNavigationCubit() : super(AppTab.home) {
     // ✅ REQUIRED: Manual registration
     final cleanupService = sl<BlocStateCleanupService>();
@@ -183,14 +187,14 @@ class UserProfileState {
 
   const UserProfileState({
     this.name,
-    this.email, 
+    this.email,
     this.isLoading = false,
     this.error,
   });
 
   // Create clean initial state
   static const initial = UserProfileState();
-  
+
   UserProfileState copyWith({
     String? name,
     String? email,
@@ -207,7 +211,9 @@ class UserProfileState {
 }
 
 abstract class UserProfileEvent {}
+
 class LoadUserProfile extends UserProfileEvent {}
+
 class UpdateUserProfile extends UserProfileEvent {
   final String name;
   final String email;
@@ -215,14 +221,13 @@ class UpdateUserProfile extends UserProfileEvent {
 }
 
 /// ✅ COPY THIS: BLoC with custom state object
-@injectable  
+@injectable
 class ExampleUserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
     with ResetableBlocMixin<UserProfileEvent, UserProfileState> {
-  
   ExampleUserProfileBloc() : super(UserProfileState.initial) {
     on<LoadUserProfile>(_onLoadUserProfile);
     on<UpdateUserProfile>(_onUpdateUserProfile);
-    
+
     // ✅ REQUIRED: Register for automatic cleanup
     registerForCleanup();
   }
@@ -232,24 +237,23 @@ class ExampleUserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
   UserProfileState get initialState => UserProfileState.initial;
 
   Future<void> _onLoadUserProfile(
-    LoadUserProfile event, 
+    LoadUserProfile event,
     Emitter<UserProfileState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
-    
+
     try {
       // Simulate API call
       await Future.delayed(Duration(seconds: 1));
-      emit(state.copyWith(
-        isLoading: false,
-        name: 'John Doe',
-        email: 'john@example.com',
-      ));
+      emit(
+        state.copyWith(
+          isLoading: false,
+          name: 'John Doe',
+          email: 'john@example.com',
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        error: 'Failed to load profile',
-      ));
+      emit(state.copyWith(isLoading: false, error: 'Failed to load profile'));
     }
   }
 
@@ -258,20 +262,15 @@ class ExampleUserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
     Emitter<UserProfileState> emit,
   ) async {
     emit(state.copyWith(isLoading: true, error: null));
-    
+
     try {
       // Simulate API call
       await Future.delayed(Duration(milliseconds: 500));
-      emit(state.copyWith(
-        isLoading: false,
-        name: event.name,
-        email: event.email,
-      ));
+      emit(
+        state.copyWith(isLoading: false, name: event.name, email: event.email),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        error: 'Failed to update profile',
-      ));
+      emit(state.copyWith(isLoading: false, error: 'Failed to update profile'));
     }
   }
 }
@@ -284,10 +283,9 @@ class ExampleUserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
 @injectable
 class ExampleConditionalBloc extends Bloc<ExampleEvent, ExampleState>
     with ResetableBlocMixin<ExampleEvent, ExampleState> {
-  
   ExampleConditionalBloc() : super(ExampleInitial()) {
     on<LoadData>(_onLoadData);
-    
+
     // ✅ REQUIRED: Register for automatic cleanup
     registerForCleanup();
   }
@@ -318,7 +316,6 @@ class ExampleConditionalBloc extends Bloc<ExampleEvent, ExampleState>
 
 /// ✅ COPY THIS: Test helper for BLoC state cleanup
 class BlocCleanupTestHelper {
-  
   /// Test if a BLoC properly resets to initial state
   static void testBlocReset<T extends BlocBase<S>, S>(
     T bloc,
@@ -329,29 +326,29 @@ class BlocCleanupTestHelper {
     if (bloc is Cubit<S>) {
       bloc.emit(nonInitialState);
     }
-    
+
     // Act: Reset the bloc
     if (bloc is Resetable) {
       (bloc as Resetable).reset();
     }
-    
+
     // Assert: Verify it's back to initial state
     assert(bloc.state.runtimeType == initialState.runtimeType);
   }
-  
+
   /// Test if cleanup service properly manages registration
   static void testCleanupServiceRegistration() {
     final service = BlocStateCleanupService();
     final mockResetable = _MockResetable();
-    
+
     // Test registration
     service.registerResetable(mockResetable);
     assert(service.registeredCount == 1);
-    
+
     // Test reset
     service.resetAllBlocStates();
     assert(mockResetable.wasReset);
-    
+
     // Test unregistration
     service.unregisterResetable(mockResetable);
     assert(service.registeredCount == 0);
@@ -360,7 +357,7 @@ class BlocCleanupTestHelper {
 
 class _MockResetable implements Resetable {
   bool wasReset = false;
-  
+
   @override
   void reset() {
     wasReset = true;

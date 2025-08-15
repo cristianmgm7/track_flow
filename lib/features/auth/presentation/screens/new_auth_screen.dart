@@ -72,6 +72,10 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
     context.read<AuthBloc>().add(AuthGoogleSignInRequested());
   }
 
+  void _signInWithApple() {
+    context.read<AuthBloc>().add(AuthAppleSignInRequested());
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -271,6 +275,14 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
                   color: AppColors.textPrimary,
                 ),
               ),
+              SizedBox(height: Dimensions.space16),
+              if (Theme.of(context).platform == TargetPlatform.iOS)
+                GlassmorphismButton(
+                  text: 'Continue with Apple',
+                  onPressed: isLoading ? null : _signInWithApple,
+                  isLoading: isLoading,
+                  icon: const Icon(Icons.apple, color: AppColors.textPrimary),
+                ),
             ],
           ),
         ),

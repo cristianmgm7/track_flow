@@ -24,7 +24,10 @@ class GoogleSignInUseCase {
       } catch (e) {
         // Don't fail authentication if profile sync fails
         // Profile will be handled by the profile creation flow
-        AppLogger.warning('Failed to sync profile after Google sign in: $e', tag: 'GoogleSignInUseCase');
+        AppLogger.warning(
+          'Failed to sync profile after Google sign in: $e',
+          tag: 'GoogleSignInUseCase',
+        );
       }
 
       return Right(user);

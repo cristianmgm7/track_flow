@@ -40,6 +40,8 @@ abstract class AppModule {
   @lazySingleton
   GoogleSignIn get googleSignIn => GoogleSignIn();
 
+  // Apple Sign In has no global object; service will use FirebaseAuth directly
+
   // Network
   @lazySingleton
   InternetConnectionChecker get internetConnectionChecker =>
@@ -70,7 +72,6 @@ abstract class AppModule {
       InvitationDocumentSchema,
       NotificationDocumentSchema, // Required for notification system
     ];
-
 
     return await Isar.open(schemas, directory: dir.path);
   }

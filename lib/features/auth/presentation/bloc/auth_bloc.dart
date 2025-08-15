@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/google_sign_in_usecase.dart';
+import 'package:trackflow/features/auth/domain/usecases/apple_sign_in_usecase.dart';
 import 'package:trackflow/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'auth_event.dart';
@@ -17,19 +18,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>
   final SignInUseCase signIn;
   final SignUpUseCase signUp;
   final GoogleSignInUseCase googleSignIn;
+  final AppleSignInUseCase appleSignIn;
   final SignOutUseCase signOut;
 
   AuthBloc({
     required this.signIn,
     required this.signUp,
     required this.googleSignIn,
+    required this.appleSignIn,
     required this.signOut,
   }) : super(AuthInitial()) {
     on<AuthSignInRequested>(_onAuthSignInRequested);
     on<AuthSignUpRequested>(_onAuthSignUpRequested);
     on<AuthGoogleSignInRequested>(_onAuthGoogleSignInRequested);
+    on<AuthAppleSignInRequested>(_onAuthAppleSignInRequested);
     on<AuthSignOutRequested>(_onAuthSignOutRequested);
-    
+
     // Register for automatic state cleanup
     registerForCleanup();
   }
@@ -117,7 +121,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>
 
     emit(AuthLoading());
 
-    final result = await googleSignIn();
+    final result = await googleSignIn.call();
 
     result.fold(
       (failure) {
@@ -131,6 +135,35 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>
       (user) {
         AppLogger.info(
           'Google sign in successful for user: ${user.email} (ID: ${user.id})',
+          tag: 'AUTH_BLOC',
+        );
+        emit(AuthAuthenticated(user));
+      },
+    );
+  }
+
+  Future<void> _onAuthAppleSignInRequested(
+    AuthAppleSignInRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    AppLogger.info('Starting Apple sign in process', tag: 'AUTH_BLOC');
+
+    emit(AuthLoading());
+
+    final result = await appleSignIn();
+
+    result.fold(
+      (failure) {
+        AppLogger.error(
+          'Apple sign in failed: ${failure.message}',
+          tag: 'AUTH_BLOC',
+          error: failure,
+        );
+        emit(AuthError(failure.message));
+      },
+      (user) {
+        AppLogger.info(
+          'Apple sign in successful for user: ${user.email} (ID: ${user.id})',
           tag: 'AUTH_BLOC',
         );
         emit(AuthAuthenticated(user));

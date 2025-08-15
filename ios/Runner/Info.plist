@@ -29,19 +29,19 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.192570465818-2i4enrmo96urakgunl6lqun8gersmmvm</string>
+				<string>com.googleusercontent.apps.664691871365-c4q16q41nd3nrf8v284v3b73fls78jn6</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>GIDClientID</key>
-	<string>192570465818-2i4enrmo96urakgunl6lqun8gersmmvm.apps.googleusercontent.com</string>
+	<string>664691871365-c4q16q41nd3nrf8v284v3b73fls78jn6.apps.googleusercontent.com</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>https</string>
 		<string>http</string>
-		<string>com.googleusercontent.apps.192570465818-2i4enrmo96urakgunl6lqun8gersmmvm</string>
+		<string>com.googleusercontent.apps.664691871365-c4q16q41nd3nrf8v284v3b73fls78jn6</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
