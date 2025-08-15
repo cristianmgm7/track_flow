@@ -31,6 +31,7 @@ class AudioCommentMiniPlayer extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    const SizedBox(width: 40),
                     Expanded(
                       child: Text(
                         track.name,
