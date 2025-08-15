@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
-import '../../../ui/navigation/app_bar.dart';
 import '../../../../core/entities/unique_id.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
 import '../components/audio_comment_header.dart';
 import '../components/comments_section.dart';
 import '../components/comment_input_modal.dart';
+import '../components/audio_comment_mini_player.dart';
 
 /// Arguments for the audio comments screen
 class AudioCommentsScreenArgs {
@@ -45,50 +45,55 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return AppScaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppAppBar(title: 'Comments'),
-      resizeToAvoidBottomInset: false,
+      appBar: null,
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Stack(
-          children: [
-            // Main content
-            Column(
-              children: [
-                // Header section with waveform, play controls, and time
-                AudioCommentHeader(track: widget.track),
-
-                // Comments list section
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Dimensions.screenMarginSmall,
-                    ),
-                    child: CommentsSection(
-                      projectId: widget.projectId,
-                      trackId: widget.track.id,
-                    ),
-                  ),
+        child: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                pinned: true,
+                floating: false,
+                snap: false,
+                automaticallyImplyLeading: true,
+                leading: const BackButton(),
+                expandedHeight: 350,
+                collapsedHeight: 64,
+                backgroundColor: theme.colorScheme.surface,
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.parallax,
+                  stretchModes: const [
+                    StretchMode.zoomBackground,
+                    StretchMode.fadeTitle,
+                  ],
+                  background: AudioCommentHeader(track: widget.track),
+                  titlePadding: EdgeInsets.zero,
+                  title: AudioCommentMiniPlayer(track: widget.track),
                 ),
-                SizedBox(height: Dimensions.space32),
-              ],
-            ),
-
-            // Input modal positioned at bottom, above keyboard
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: keyboardHeight,
-              child: CommentInputModal(
-                projectId: widget.projectId,
-                trackId: widget.track.id,
               ),
+            ];
+          },
+          body: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: Dimensions.screenMarginSmall,
             ),
-          ],
+            child: CommentsSection(
+              projectId: widget.projectId,
+              trackId: widget.track.id,
+            ),
+          ),
+        ),
+      ),
+      persistentFooterWidget: SafeArea(
+        top: false,
+        child: CommentInputModal(
+          projectId: widget.projectId,
+          trackId: widget.track.id,
         ),
       ),
     );
