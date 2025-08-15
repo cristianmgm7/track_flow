@@ -61,3 +61,4 @@ class CacheManagementCleanupRequested extends CacheManagementEvent {
     targetFreeBytes,
   ];
 }
+

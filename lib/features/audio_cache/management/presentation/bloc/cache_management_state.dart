@@ -50,3 +50,4 @@ class CacheManagementState extends Equatable {
     errorMessage,
   ];
 }
+

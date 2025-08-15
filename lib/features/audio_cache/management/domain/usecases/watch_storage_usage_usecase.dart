@@ -11,3 +11,4 @@ class WatchStorageUsageUseCase {
     return _storageRepository.watchStorageUsage();
   }
 }
+

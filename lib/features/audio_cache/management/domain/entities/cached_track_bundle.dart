@@ -31,3 +31,4 @@ class CachedTrackBundle extends Equatable {
     activeDownload,
   ];
 }
+
