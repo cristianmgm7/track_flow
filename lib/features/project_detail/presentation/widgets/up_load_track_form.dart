@@ -8,12 +8,12 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 
 class UploadTrackForm extends StatefulWidget {
   final Project project;
@@ -96,12 +96,12 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
   }
 
   Future<Duration> _getAudioDuration(File file) async {
-    final player = AudioPlayer();
     try {
-      await player.setFilePath(file.path);
-      return player.duration ?? Duration.zero;
-    } finally {
-      await player.dispose();
+      final metadata = await MetadataRetriever.fromFile(file);
+      final ms = metadata.trackDuration ?? 0;
+      return Duration(milliseconds: ms);
+    } catch (_) {
+      return Duration.zero;
     }
   }
 

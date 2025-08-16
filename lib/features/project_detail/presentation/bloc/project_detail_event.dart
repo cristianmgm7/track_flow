@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart';
 
 abstract class ProjectDetailEvent extends Equatable {
   const ProjectDetailEvent();
@@ -29,4 +30,11 @@ class TracksUpdated extends ProjectDetailEvent {
 
 class ClearProjectDetail extends ProjectDetailEvent {
   const ClearProjectDetail();
+}
+
+class ChangeTrackSort extends ProjectDetailEvent {
+  final AudioTrackSort sort;
+  const ChangeTrackSort(this.sort);
+  @override
+  List<Object?> get props => [sort];
 }

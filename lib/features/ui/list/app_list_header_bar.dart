@@ -32,7 +32,7 @@ class AppListHeaderBar extends StatelessWidget {
                   bottom: Dimensions.space8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.background,
                   borderRadius: AppBorders.medium,
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
@@ -52,7 +52,7 @@ class AppListHeaderBar extends StatelessWidget {
                 width: Dimensions.space40,
                 height: Dimensions.space40,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: AppColors.background,
                   borderRadius: AppBorders.medium,
                   border: Border.all(color: AppColors.border, width: 1),
                 ),

@@ -2,11 +2,13 @@ import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart';
 
 class ProjectDetailState extends Equatable {
   final Project? project;
   final List<AudioTrack> tracks;
   final List<UserProfile> collaborators;
+  final AudioTrackSort sort;
 
   final bool isLoadingProject;
   final bool isLoadingTracks;
@@ -20,6 +22,7 @@ class ProjectDetailState extends Equatable {
     required this.project,
     required this.tracks,
     required this.collaborators,
+    this.sort = AudioTrackSort.newest,
     required this.isLoadingProject,
     required this.isLoadingTracks,
     required this.isLoadingCollaborators,
@@ -32,6 +35,7 @@ class ProjectDetailState extends Equatable {
     project: null,
     tracks: [],
     collaborators: [],
+    sort: AudioTrackSort.newest,
     isLoadingProject: false,
     isLoadingTracks: false,
     isLoadingCollaborators: false,
@@ -44,6 +48,7 @@ class ProjectDetailState extends Equatable {
     Project? project,
     List<AudioTrack>? tracks,
     List<UserProfile>? collaborators,
+    AudioTrackSort? sort,
     bool? isLoadingProject,
     bool? isLoadingTracks,
     bool? isLoadingCollaborators,
@@ -55,6 +60,7 @@ class ProjectDetailState extends Equatable {
       project: project ?? this.project,
       tracks: tracks ?? this.tracks,
       collaborators: collaborators ?? this.collaborators,
+      sort: sort ?? this.sort,
       isLoadingProject: isLoadingProject ?? this.isLoadingProject,
       isLoadingTracks: isLoadingTracks ?? this.isLoadingTracks,
       isLoadingCollaborators:
@@ -70,6 +76,7 @@ class ProjectDetailState extends Equatable {
     project,
     tracks,
     collaborators,
+    sort,
     isLoadingProject,
     isLoadingTracks,
     isLoadingCollaborators,
