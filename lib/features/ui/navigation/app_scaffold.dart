@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_gradients.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'app_bar.dart';
 import 'bottom_nav.dart';
 import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
@@ -37,68 +37,29 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: AppGradients.glassmorphismBackground,
-      ),
-      child: Stack(
+    return Scaffold(
+      appBar: appBar,
+      body: Stack(
         children: [
-          // Subtle texture overlay
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topRight,
-                  radius: 1.5,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.02),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.bottomLeft,
-                  radius: 1.2,
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.01),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Main scaffold
-          Scaffold(
-            appBar: appBar,
-            body: Stack(
-              children: [
-                _buildBody(),
-                // App-wide minimal sync indicator pinned at top
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 4,
-                  left: 0,
-                  right: 0,
-                  child: const GlobalSyncIndicator(),
-                ),
-              ],
-            ),
-            bottomNavigationBar: bottomNavigationBar,
-            drawer: drawer,
-            endDrawer: endDrawer,
-            floatingActionButton: floatingActionButton,
-            floatingActionButtonLocation: floatingActionButtonLocation,
-            extendBody: extendBody,
-            extendBodyBehindAppBar: extendBodyBehindAppBar,
-            backgroundColor: Colors.transparent,
-            resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+          _buildBody(),
+          // App-wide minimal sync indicator pinned at top
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 4,
+            left: 0,
+            right: 0,
+            child: const GlobalSyncIndicator(),
           ),
         ],
       ),
+      bottomNavigationBar: bottomNavigationBar,
+      drawer: drawer,
+      endDrawer: endDrawer,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation: floatingActionButtonLocation,
+      extendBody: extendBody,
+      extendBodyBehindAppBar: extendBodyBehindAppBar,
+      backgroundColor: backgroundColor ?? AppColors.surface,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
     );
   }
 

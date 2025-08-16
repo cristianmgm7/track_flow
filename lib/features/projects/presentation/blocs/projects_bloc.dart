@@ -11,6 +11,7 @@ import 'package:trackflow/features/projects/domain/usecases/update_project_useca
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
+import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
 
 @injectable
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
@@ -30,7 +31,10 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<StartWatchingProjects>(_onStartWatchingProjects);
+    on<ChangeProjectsSort>(_onChangeProjectsSort);
   }
+
+  ProjectSort _currentSort = ProjectSort.lastActivityDesc;
 
   Future<void> _onCreateProjectRequested(
     CreateProjectRequested event,
@@ -84,11 +88,14 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
         eitherProjects.fold(
           (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
           (projects) {
+            final sorted = [...projects]
+              ..sort((a, b) => compareProjectsBySort(a, b, _currentSort));
             emit(
               ProjectsLoaded(
-                projects: projects,
+                projects: sorted,
                 isSyncing: false,
                 syncProgress: 1.0,
+                sort: _currentSort,
               ),
             );
           },
@@ -101,6 +108,19 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
             ),
           ),
     );
+  }
+
+  void _onChangeProjectsSort(
+    ChangeProjectsSort event,
+    Emitter<ProjectsState> emit,
+  ) {
+    _currentSort = event.sort;
+    final current = state;
+    if (current is ProjectsLoaded) {
+      final resorted = [...current.projects]
+        ..sort((a, b) => compareProjectsBySort(a, b, _currentSort));
+      emit(current.copyWith(projects: resorted, sort: _currentSort));
+    }
   }
 
   String _mapFailureToMessage(Failure failure) {

@@ -12,6 +12,9 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/components/project_component.dart';
 import 'package:trackflow/features/projects/presentation/widgets/project_list_actions_sheet.dart';
+import 'package:trackflow/features/ui/list/app_list_header_bar.dart';
+import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
+import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});
@@ -21,6 +24,7 @@ class ProjectListScreen extends StatefulWidget {
 }
 
 class _ProjectListScreenState extends State<ProjectListScreen> {
+  bool _isSortMenuOpen = false;
   @override
   void initState() {
     super.initState();
@@ -105,23 +109,80 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                     onAction: _openProjectActionsSheet,
                   );
                 }
-                return AppProjectList(
-                  projects:
-                      projects
-                          .map(
-                            (project) => ProjectCard(
-                              project: project,
-                              onTap:
-                                  () => context.push(
-                                    AppRoutes.projectDetails.replaceAll(
-                                      ':id',
-                                      project.id.value,
-                                    ),
-                                    extra: project,
-                                  ),
-                            ),
-                          )
-                          .toList(),
+                return Stack(
+                  children: [
+                    Column(
+                      children: [
+                        AppListHeaderBar(
+                          leadingText:
+                              'Sort: ${state.sort.label} • ${projects.length}',
+                          trailing: AppPopupMenuButton<ProjectSort>(
+                            tooltip: 'Sort projects',
+                            initialValue: state.sort,
+                            items: const [
+                              AppPopupMenuItem(
+                                value: ProjectSort.lastActivityDesc,
+                                label: 'Last activity',
+                                icon: Icons.update_rounded,
+                              ),
+                              AppPopupMenuItem(
+                                value: ProjectSort.createdDesc,
+                                label: 'Created (newest)',
+                                icon: Icons.schedule_rounded,
+                              ),
+                              AppPopupMenuItem(
+                                value: ProjectSort.nameAsc,
+                                label: 'Name A–Z',
+                                icon: Icons.sort_by_alpha_rounded,
+                              ),
+                              AppPopupMenuItem(
+                                value: ProjectSort.nameDesc,
+                                label: 'Name Z–A',
+                                icon: Icons.sort_rounded,
+                              ),
+                            ],
+                            onOpened:
+                                () => setState(() => _isSortMenuOpen = true),
+                            onClosed:
+                                () => setState(() => _isSortMenuOpen = false),
+                            onSelected: (sort) {
+                              context.read<ProjectsBloc>().add(
+                                ChangeProjectsSort(sort),
+                              );
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: AppProjectList(
+                            projects:
+                                projects
+                                    .map(
+                                      (project) => ProjectCard(
+                                        project: project,
+                                        onTap:
+                                            () => context.push(
+                                              AppRoutes.projectDetails
+                                                  .replaceAll(
+                                                    ':id',
+                                                    project.id.value,
+                                                  ),
+                                              extra: project,
+                                            ),
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_isSortMenuOpen)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          ignoring: true,
+                          child: AppBlurBackdrop(child: Container()),
+                        ),
+                      ),
+                  ],
                 );
               }
               return const AppProjectEmptyState(

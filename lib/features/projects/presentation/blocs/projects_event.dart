@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
+import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
 
 abstract class ProjectsEvent extends Equatable {
   const ProjectsEvent();
@@ -57,4 +58,11 @@ class ProjectsUpdated extends ProjectsEvent {
   const ProjectsUpdated(this.projects);
   @override
   List<Object?> get props => [projects];
+}
+
+class ChangeProjectsSort extends ProjectsEvent {
+  final ProjectSort sort;
+  const ChangeProjectsSort(this.sort);
+  @override
+  List<Object?> get props => [sort];
 }

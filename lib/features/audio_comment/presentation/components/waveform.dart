@@ -4,6 +4,7 @@ import 'package:audio_waveforms/audio_waveforms.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
@@ -120,11 +121,11 @@ class _AudioCommentWaveformDisplayState
                   backgroundColor: Colors.transparent,
                   playerWaveStyle: PlayerWaveStyle(
                     fixedWaveColor: Colors.grey[400]!,
-                    liveWaveColor: Colors.blue,
+                    liveWaveColor: Colors.black,
                     spacing: 3,
                     waveThickness: 2,
                     showSeekLine: true,
-                    seekLineColor: Colors.red,
+                    seekLineColor: AppColors.primary,
                     seekLineThickness: 1.5,
                     scaleFactor: 600,
                     waveCap: StrokeCap.round,
