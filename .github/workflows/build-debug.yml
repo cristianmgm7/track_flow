@@ -186,7 +186,7 @@ jobs:
 
     steps:
       - name: 📢 Notificar éxito
-        if: needs.build-android.result == 'success'
+        if: ${{ needs.build-android.result == 'success' && secrets.SLACK_WEBHOOK_URL != '' }}
         uses: 8398a7/action-slack@v3
         with:
           status: success
@@ -198,7 +198,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: 📢 Notificar fallo
-        if: needs.build-android.result == 'failure'
+        if: ${{ needs.build-android.result == 'failure' && secrets.SLACK_WEBHOOK_URL != '' }}
         uses: 8398a7/action-slack@v3
         with:
           status: failure
