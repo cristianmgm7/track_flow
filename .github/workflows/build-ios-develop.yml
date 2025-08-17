@@ -57,6 +57,7 @@ jobs:
       - name: 🔨 Build IPA (develop)
         run: |
           echo "🚀 Building iOS develop ipa..."
+          export XCODE_XCCONFIG_FLAGS="OTHER_CODE_SIGN_FLAGS=-allowProvisioningUpdates"
           flutter build ipa --flavor develop --release --verbose
 
       - name: 🧭 Locate IPA
