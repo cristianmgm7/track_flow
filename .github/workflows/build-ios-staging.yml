@@ -44,14 +44,6 @@ jobs:
           api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
           profile-type: IOS_APP_STORE
 
-      - name: 🔧 Download provisioning profiles (Staging - Development)
-        uses: apple-actions/download-provisioning-profiles@v3
-        with:
-          bundle-id: com.trackflow.staging
-          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
-          profile-type: IOS_APP_DEVELOPMENT
 
       - name: 🔨 Build IPA (staging)
         run: |
