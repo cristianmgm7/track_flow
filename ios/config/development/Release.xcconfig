@@ -7,3 +7,5 @@ DISPLAY_NAME = TrackFlow Dev
 
 // Firebase configuration file
 FIREBASE_CONFIG_FILE = GoogleService-Info-Dev.plist
+CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = Apple Distribution
