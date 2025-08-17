@@ -137,7 +137,7 @@ jobs:
   build-ios:
     name: 🍎 Build iOS Debug
     runs-on: macos-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.build_ios == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_ios == 'true' }}
 
     strategy:
       matrix:
