@@ -1,7 +1,7 @@
 #include "Generated.xcconfig"
 #include "../../Flutter/Release.xcconfig"
 
-PRODUCT_BUNDLE_IDENTIFIER = com.crd.producer-gmail.com.trackflow.staging
+PRODUCT_BUNDLE_IDENTIFIER = com.trackflow.staging
 PRODUCT_NAME = TrackFlow Staging
 DISPLAY_NAME = TrackFlow Staging
 

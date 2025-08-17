@@ -1,0 +1,69 @@
+name: 🍎 Build iOS Dev → TestFlight
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  build-ios-dev:
+    name: 🍎 iOS Development (TestFlight Internal)
+    runs-on: macos-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.29.3"
+          channel: "stable"
+          cache: true
+
+      - name: 📦 Install dependencies
+        run: flutter pub get
+
+      - name: 🔧 Generate code
+        run: flutter packages pub run build_runner build --delete-conflicting-outputs
+
+      - name: 🔧 Import signing certificates
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+
+      - name: 🔧 Download provisioning profiles (Dev)
+        uses: apple-actions/download-provisioning-profiles@v3
+        with:
+          bundle-id: com.trackflow.dev
+          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+
+      - name: 🔨 Build IPA (development)
+        run: |
+          echo "🚀 Building iOS development ipa..."
+          flutter build ipa --flavor development --release --verbose
+
+      - name: ✅ Verify IPA
+        run: |
+          ipa_file="build/ios/ipa/trackflow.ipa"
+          if [ -f "$ipa_file" ]; then
+            echo "✅ IPA generated"
+            echo "📏 Size: $(du -h $ipa_file | cut -f1)"
+          else
+            echo "❌ IPA not found"
+            ls -la build/ios/ipa/
+            exit 1
+          fi
+
+      - name: 🍎 Upload to TestFlight (Dev)
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: build/ios/ipa/trackflow.ipa
+          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
