@@ -8,7 +8,7 @@ on:
 jobs:
   build-ios-dev:
     name: 🍎 iOS Development (TestFlight Internal)
-    runs-on: macos-latest
+    runs-on: macos-14
 
     steps:
       - name: 📥 Checkout code
