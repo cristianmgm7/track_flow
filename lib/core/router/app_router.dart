@@ -241,12 +241,7 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.userProfile,
-              builder: (context, state) {
-                // Router should not handle authentication checks
-                // AppFlowBloc already handled this at the route level
-                // Create a CurrentUserProfileScreen that gets current user automatically
-                return const CurrentUserProfileScreen();
-              },
+              builder: (context, state) => const CurrentUserProfileScreen(),
             ),
             GoRoute(
               path: AppRoutes.cacheDemo,

@@ -13,7 +13,7 @@ import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:flutter_media_metadata/flutter_media_metadata.dart';
+import 'package:just_audio/just_audio.dart';
 
 class UploadTrackForm extends StatefulWidget {
   final Project project;
@@ -97,9 +97,11 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
 
   Future<Duration> _getAudioDuration(File file) async {
     try {
-      final metadata = await MetadataRetriever.fromFile(file);
-      final ms = metadata.trackDuration ?? 0;
-      return Duration(milliseconds: ms);
+      final player = AudioPlayer();
+      await player.setFilePath(file.path);
+      final duration = player.duration ?? Duration.zero;
+      await player.dispose();
+      return duration;
     } catch (_) {
       return Duration.zero;
     }
