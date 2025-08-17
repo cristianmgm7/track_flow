@@ -43,10 +43,10 @@ jobs:
           api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
           api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
 
-      - name: 🔨 Build IPA (development)
+      - name: 🔨 Build IPA (develop)
         run: |
-          echo "🚀 Building iOS development ipa..."
-          flutter build ipa --flavor development --release --verbose
+          echo "🚀 Building iOS develop ipa..."
+          flutter build ipa --flavor develop --release --verbose
 
       - name: ✅ Verify IPA
         run: |
