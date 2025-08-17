@@ -45,7 +45,7 @@ class AudioCommentComponent extends StatelessWidget {
         horizontal: Dimensions.space12,
         vertical: Dimensions.space8,
       ),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: AppColors.grey700,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -95,19 +95,27 @@ class AudioCommentComponent extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              collaborator.name.isNotEmpty
-                  ? collaborator.name
-                  : comment.createdBy.value,
-              style: AppTextStyle.titleMedium.copyWith(
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                collaborator.name.isNotEmpty
+                    ? collaborator.name
+                    : comment.createdBy.value,
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            SizedBox(width: Dimensions.space8),
             Text(
               createdAtStr,
               style: AppTextStyle.bodySmall.copyWith(
                 color: AppColors.textSecondary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
             ),
           ],
         ),

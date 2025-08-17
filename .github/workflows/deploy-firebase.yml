@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       flavor:
-        description: 'Flavor para distribuir'
+        description: 'Flavor to distribute'
         required: true
         default: 'staging'
         type: choice
@@ -14,12 +14,12 @@ on:
         - development
         - staging
       release_notes:
-        description: 'Notas de la versión'
+        description: 'Release notes'
         required: false
-        default: 'Build automático desde GitHub Actions'
+        default: 'Automatic build from GitHub Actions'
         type: string
       testers_group:
-        description: 'Grupo de testers'
+        description: 'Testers group'
         required: false
         default: 'qa-team'
         type: choice
@@ -30,11 +30,11 @@ on:
 
 jobs:
   deploy-android:
-    name: 📱 Distribuir Android
+    name: 📱 Distribute Android
     runs-on: ubuntu-latest
     
     steps:
-    - name: 📥 Checkout código
+    - name: 📥 Checkout code
       uses: actions/checkout@v4
       with:
         submodules: false
@@ -52,39 +52,39 @@ jobs:
         channel: 'stable'
         cache: true
         
-    - name: 📦 Instalar dependencias
+    - name: 📦 Install dependencies
       run: flutter pub get
       
-    - name: 🔧 Generar código
+    - name: 🔧 Generate code
       run: flutter packages pub run build_runner build --delete-conflicting-outputs
       
-    - name: 🔨 Build APK para distribución
+    - name: 🔨 Build APK for distribution
       run: |
         FLAVOR=${{ github.event.inputs.flavor || 'staging' }}
-        echo "🚀 Building $FLAVOR APK para distribución..."
+        echo "🚀 Building $FLAVOR APK for distribution..."
         flutter build apk --flavor $FLAVOR --release --verbose
         
-    - name: 📝 Preparar notas de release
+    - name: 📝 Prepare release notes
       id: release_notes
       run: |
-        NOTES="${{ github.event.inputs.release_notes || 'Build automático desde GitHub Actions' }}"
+        NOTES="${{ github.event.inputs.release_notes || 'Automatic build from GitHub Actions' }}"
         
         FULL_NOTES=$(cat << EOF
-        🚀 TrackFlow - Build Automático
+        🚀 TrackFlow - Automatic Build
         
         📱 Flavor: ${{ github.event.inputs.flavor || 'staging' }}
         🌿 Branch: ${{ github.ref_name }}
         🔄 Commit: ${{ github.sha }}
-        👤 Autor: ${{ github.actor }}
-        📅 Fecha: $(date '+%Y-%m-%d %H:%M:%S UTC')
+        👤 Author: ${{ github.actor }}
+        📅 Date: $(date '+%Y-%m-%d %H:%M:%S UTC')
         
-        📝 Notas:
+        📝 Notes:
         $NOTES
         
-        🔄 Últimos cambios:
+        🔄 Latest changes:
         ${{ github.event.head_commit.message }}
         
-        📥 Instala y prueba las nuevas funcionalidades!
+        📥 Install and test the new features!
         EOF
         )
         
@@ -92,7 +92,7 @@ jobs:
         echo "$FULL_NOTES" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
         
-    - name: 📱 Distribuir a Firebase App Distribution
+    - name: 📱 Distribute to Firebase App Distribution
       uses: wzieba/Firebase-Distribution-Github-Action@v1
       with:
         appId: ${{ github.event.inputs.flavor == 'development' && secrets.FIREBASE_APP_ID_DEV || secrets.FIREBASE_APP_ID_STAGING }}
@@ -101,7 +101,7 @@ jobs:
         file: build/app/outputs/flutter-apk/app-${{ github.event.inputs.flavor || 'staging' }}-release.apk
         releaseNotes: ${{ steps.release_notes.outputs.notes }}
         
-    - name: 💾 Guardar APK como artefacto
+    - name: 💾 Save APK as artifact
       uses: actions/upload-artifact@v4
       with:
         name: trackflow-${{ github.event.inputs.flavor || 'staging' }}-distribution-apk
@@ -109,32 +109,32 @@ jobs:
         retention-days: 14
         
   notify-testers:
-    name: 🔔 Notificar a Testers
+    name: 🔔 Notify Testers
     runs-on: ubuntu-latest
     needs: deploy-android
     
     steps:
-    - name: 📧 Enviar notificación por Slack
+    - name: 📧 Send Slack notification
       uses: 8398a7/action-slack@v3
       with:
         status: success
         text: |
-          📱 ¡Nueva versión de TrackFlow disponible para testing!
+          📱 New version of TrackFlow available for testing!
           
           🎯 Flavor: ${{ github.event.inputs.flavor || 'staging' }}
-          👥 Grupo: ${{ github.event.inputs.testers_group || 'qa-team' }}
+          👥 Group: ${{ github.event.inputs.testers_group || 'qa-team' }}
           🌿 Branch: ${{ github.ref_name }}
           
-          📝 Notas: ${{ github.event.inputs.release_notes || 'Build automático desde GitHub Actions' }}
+          📝 Notes: ${{ github.event.inputs.release_notes || 'Automatic build from GitHub Actions' }}
           
-          📥 Descarga la app desde Firebase App Distribution
+          📥 Download the app from Firebase App Distribution
           🔗 Link: https://appdistribution.firebase.dev/i/YOUR_DISTRIBUTION_ID
           
-          🧪 Por favor, prueba y reporta cualquier issue encontrado.
+          🧪 Please test and report any issues found.
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         
-    - name: 📧 Enviar email a testers (opcional)
+    - name: 📧 Send email to testers (optional)
       if: github.event.inputs.testers_group == 'beta-testers'
       uses: dawidd6/action-send-mail@v3
       with:
@@ -142,53 +142,53 @@ jobs:
         server_port: 587
         username: ${{ secrets.GMAIL_USERNAME }}
         password: ${{ secrets.GMAIL_PASSWORD }}
-        subject: 🚀 Nueva versión de TrackFlow lista para testing
+        subject: 🚀 New version of TrackFlow ready for testing
         to: ${{ secrets.BETA_TESTERS_EMAIL_LIST }}
         from: TrackFlow Team <${{ secrets.GMAIL_USERNAME }}>
         html_body: |
-          <h2>🚀 Nueva versión de TrackFlow disponible</h2>
+          <h2>🚀 New version of TrackFlow available</h2>
           
-          <p>¡Hola Beta Testers!</p>
+          <p>Hello Beta Testers!</p>
           
-          <p>Tenemos una nueva versión de TrackFlow lista para que la prueben:</p>
+          <p>We have a new version of TrackFlow ready for you to test:</p>
           
           <ul>
             <li><strong>Flavor:</strong> ${{ github.event.inputs.flavor || 'staging' }}</li>
             <li><strong>Branch:</strong> ${{ github.ref_name }}</li>
-            <li><strong>Fecha:</strong> $(date '+%Y-%m-%d %H:%M:%S UTC')</li>
+            <li><strong>Date:</strong> $(date '+%Y-%m-%d %H:%M:%S UTC')</li>
           </ul>
           
-          <h3>📝 Notas de esta versión:</h3>
-          <p>${{ github.event.inputs.release_notes || 'Build automático desde GitHub Actions' }}</p>
+          <h3>📝 Notes for this version:</h3>
+          <p>${{ github.event.inputs.release_notes || 'Automatic build from GitHub Actions' }}</p>
           
-          <h3>📥 Cómo descargar:</h3>
+          <h3>📥 How to download:</h3>
           <ol>
-            <li>Abre Firebase App Distribution en tu dispositivo</li>
-            <li>Busca "TrackFlow"</li>
-            <li>Descarga e instala la nueva versión</li>
+            <li>Open Firebase App Distribution on your device</li>
+            <li>Search for "TrackFlow"</li>
+            <li>Download and install the new version</li>
           </ol>
           
-          <p><strong>🔗 Link directo:</strong> <a href="https://appdistribution.firebase.dev/i/YOUR_DISTRIBUTION_ID">Descargar TrackFlow</a></p>
+          <p><strong>🔗 Direct link:</strong> <a href="https://appdistribution.firebase.dev/i/YOUR_DISTRIBUTION_ID">Download TrackFlow</a></p>
           
-          <h3>🧪 Qué probar:</h3>
+          <h3>🧪 What to test:</h3>
           <ul>
-            <li>Funcionalidades principales de la app</li>
-            <li>Cualquier nueva característica mencionada en las notas</li>
-            <li>Reportar bugs o issues encontrados</li>
+            <li>Main app functionalities</li>
+            <li>Any new features mentioned in the notes</li>
+            <li>Report any bugs or issues found</li>
           </ul>
           
-          <p>¡Gracias por ayudarnos a mejorar TrackFlow! 🎵</p>
+          <p>Thank you for helping us improve TrackFlow! 🎵</p>
           
           <hr>
-          <p><small>Este email fue enviado automáticamente por GitHub Actions.</small></p>
+          <p><small>This email was automatically sent by GitHub Actions.</small></p>
           
   deploy-ios:
-    name: 🍎 Distribuir iOS (TestFlight)
+    name: 🍎 Distribute iOS (TestFlight)
     runs-on: macos-latest
     if: github.event.inputs.flavor != 'development'
     
     steps:
-    - name: 📥 Checkout código
+    - name: 📥 Checkout code
       uses: actions/checkout@v4
       with:
         submodules: false
@@ -200,13 +200,13 @@ jobs:
         channel: 'stable'
         cache: true
         
-    - name: 🔧 Configurar certificados iOS
+    - name: 🔧 Configure iOS certificates
       uses: apple-actions/import-codesign-certs@v3
       with:
         p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
         p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
         
-    - name: 🔧 Configurar provisioning profile
+    - name: 🔧 Configure provisioning profile
       uses: apple-actions/download-provisioning-profiles@v3
       with:
         bundle-id: com.trackflow${{ github.event.inputs.flavor == 'staging' && '.staging' || '' }}
@@ -214,19 +214,19 @@ jobs:
         api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
         api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         
-    - name: 📦 Instalar dependencias
+    - name: 📦 Install dependencies
       run: flutter pub get
       
-    - name: 🔧 Generar código
+    - name: 🔧 Generate code
       run: flutter packages pub run build_runner build --delete-conflicting-outputs
       
-    - name: 🔨 Build iOS para distribución
+    - name: 🔨 Build iOS for distribution
       run: |
         FLAVOR=${{ github.event.inputs.flavor || 'staging' }}
-        echo "🚀 Building iOS $FLAVOR para TestFlight..."
+        echo "🚀 Building iOS $FLAVOR for TestFlight..."
         flutter build ipa --flavor $FLAVOR --release --verbose
         
-    - name: 🍎 Subir a TestFlight
+    - name: 🍎 Upload to TestFlight
       uses: apple-actions/upload-testflight-build@v1
       with:
         app-path: build/ios/ipa/trackflow.ipa
@@ -234,7 +234,7 @@ jobs:
         api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
         api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
         
-    - name: 💾 Guardar IPA como artefacto
+    - name: 💾 Save IPA as artifact
       uses: actions/upload-artifact@v4
       with:
         name: trackflow-${{ github.event.inputs.flavor || 'staging' }}-testflight-ipa

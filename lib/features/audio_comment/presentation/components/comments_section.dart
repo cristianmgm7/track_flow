@@ -117,6 +117,7 @@ class _CommentsSectionState extends State<CommentsSection> {
     }
 
     return ListView.builder(
+      reverse: false,
       itemCount: comments.length,
       itemBuilder: (context, index) {
         final comment = comments[index];

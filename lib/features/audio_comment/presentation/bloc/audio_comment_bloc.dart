@@ -32,7 +32,6 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     AddAudioCommentEvent event,
     Emitter<AudioCommentState> emit,
   ) async {
-    emit(const AudioCommentLoading());
     final result = await addAudioCommentUseCase.call(
       AddAudioCommentParams(
         projectId: event.projectId,
@@ -43,9 +42,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     );
     result.fold(
       (failure) => emit(AudioCommentError(failure.message)),
-      (_) => emit(
-        const AudioCommentOperationSuccess('Comment added successfully'),
-      ),
+      (_) => null,
     );
   }
 
@@ -53,7 +50,6 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     DeleteAudioCommentEvent event,
     Emitter<AudioCommentState> emit,
   ) async {
-    emit(const AudioCommentLoading());
     final result = await deleteAudioCommentUseCase(
       DeleteAudioCommentParams(
         projectId: event.projectId,
@@ -63,9 +59,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     );
     result.fold(
       (failure) => emit(AudioCommentError(failure.message)),
-      (_) => emit(
-        const AudioCommentOperationSuccess('Comment deleted successfully'),
-      ),
+      (_) => null,
     );
   }
 
@@ -76,34 +70,38 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     emit(const AudioCommentLoading());
     // Cancel any previous subscription to avoid cross-track leakage
     await _bundleSubscription?.cancel();
-    _bundleSubscription = watchAudioCommentsBundleUseCase(
-      projectId: event.projectId,
-      trackId: event.trackId,
-    ).listen(
-      (either) => add(AudioCommentsBundleUpdated(either)),
-      onError:
-          (error, _) => add(
-            AudioCommentsBundleUpdated(left(ServerFailure(error.toString()))),
-          ),
-      cancelOnError: false,
-    );
+    _bundleSubscription = watchAudioCommentsBundleUseCase
+        .call(projectId: event.projectId, trackId: event.trackId)
+        .listen(
+          (either) => add(AudioCommentsBundleUpdated(either)),
+          onError:
+              (error, _) => add(
+                AudioCommentsBundleUpdated(
+                  left(ServerFailure(error.toString())),
+                ),
+              ),
+          cancelOnError: false,
+        );
   }
 
   void _onBundleUpdated(
     AudioCommentsBundleUpdated event,
     Emitter<AudioCommentState> emit,
   ) {
-    event.result.fold(
-      (failure) => emit(AudioCommentError(failure.message)),
-      (bundle) => emit(
+    event.result.fold((failure) => emit(AudioCommentError(failure.message)), (
+      bundle,
+    ) {
+      final sorted = [...bundle.comments]
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      emit(
         AudioCommentsLoaded(
-          comments: bundle.comments,
+          comments: sorted,
           collaborators: bundle.collaborators,
           isSyncing: false,
           syncProgress: null,
         ),
-      ),
-    );
+      );
+    });
   }
 
   @override
