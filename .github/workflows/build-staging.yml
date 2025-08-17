@@ -1,0 +1,113 @@
+name: 🚀 Build Staging (Testers)
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: 🤖 Build Android Staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: 🎯 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.29.3"
+          channel: "stable"
+          cache: true
+
+      - name: 📦 Instalar dependencias
+        run: flutter pub get
+
+      - name: 🔧 Generar código
+        run: flutter packages pub run build_runner build --delete-conflicting-outputs
+
+      - name: 🔨 Build APK Staging
+        run: |
+          echo "🚀 Building staging flavor..."
+          flutter build apk --flavor staging --debug --verbose
+
+      - name: ✅ Verificar build
+        run: |
+          apk_file="build/app/outputs/flutter-apk/app-staging-debug.apk"
+          if [ -f "$apk_file" ]; then
+            echo "✅ APK generado exitosamente"
+            echo "📁 Archivo: $apk_file"
+            echo "📏 Tamaño: $(du -h $apk_file | cut -f1)"
+            echo "apk_path=$apk_file" >> $GITHUB_OUTPUT
+          else
+            echo "❌ APK no encontrado"
+            ls -la build/app/outputs/flutter-apk/
+            exit 1
+          fi
+        id: verify_build
+
+      - name: 📱 Subir a Firebase App Distribution (Testers)
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID_STAGING }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: testers
+          file: ${{ steps.verify_build.outputs.apk_path }}
+          releaseNotes: |
+            🚀 Build automático de staging
+
+            📱 Branch: ${{ github.ref_name }}
+            🔄 Commit: ${{ github.sha }}
+            👤 Autor: ${{ github.actor }}
+
+            📝 Cambios recientes:
+            ${{ github.event.head_commit.message }}
+
+      - name: 📦 Subir artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: trackflow-staging-debug-apk
+          path: ${{ steps.verify_build.outputs.apk_path }}
+          retention-days: 7
+
+  notify:
+    name: 🔔 Notificar Resultado
+    runs-on: ubuntu-latest
+    needs: [build-android]
+    if: always()
+
+    steps:
+      - name: 📢 Notificar éxito
+        if: needs.build-android.result == 'success' && vars.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            ✅ Build staging completado exitosamente
+            📱 Rama: ${{ github.ref_name }}
+            👤 Autor: ${{ github.actor }}
+            🎯 Distribuido a: testers
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 📢 Notificar fallo
+        if: needs.build-android.result == 'failure' && vars.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ Build staging falló
+            📱 Rama: ${{ github.ref_name }}
+            👤 Autor: ${{ github.actor }}
+            🔗 Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
