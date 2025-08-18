@@ -29,6 +29,11 @@ jobs:
       - name: 🔧 Generate code
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
 
+      - name: 🔧 Configure Flutter
+        run: |
+          flutter config --no-analytics
+          flutter config --no-cli-animations
+
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
         with:
@@ -44,12 +49,10 @@ jobs:
           api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
           profile-type: IOS_APP_STORE
 
-
       - name: 🔨 Build IPA (staging)
         run: |
           echo "🚀 Building iOS staging ipa..."
-          export XCODE_XCCONFIG_FLAGS="OTHER_CODE_SIGN_FLAGS=-allowProvisioningUpdates"
-          flutter build ipa --flavor staging --release --verbose
+          flutter build ipa --flavor staging --release --verbose --export-options-plist=ios/ExportOptions.plist
 
       - name: 🧭 Locate IPA
         run: |

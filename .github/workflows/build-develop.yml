@@ -35,6 +35,11 @@ jobs:
       - name: 🔧 Generar código
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
 
+      - name: 🔧 Configure Flutter
+        run: |
+          flutter config --no-analytics
+          flutter config --no-cli-animations
+
       - name: 🔨 Build APK Development
         run: |
           echo "🚀 Building development flavor..."
