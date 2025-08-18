@@ -15,7 +15,16 @@ workflows:
         FLAVOR: develop
         SCHEME: develop
         CONFIG: Release-develop
+        BUNDLE_ID: com.trackflow.dev
     scripts:
+      - name: 🔐 Set up keychain
+        script: keychain initialize
+      - name: 🔏 Fetch iOS signing files (App Store)
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+      - name: 🪪 Add certificates to keychain
+        script: keychain add-certificates
+      - name: 🧩 Apply signing to Xcode project
+        script: xcode-project use-profiles
       - name: 📋 Check Flutter version
         script: flutter --version
       - name: 📦 Get dependencies
@@ -54,7 +63,16 @@ workflows:
         FLAVOR: staging
         SCHEME: staging
         CONFIG: Release-staging
+        BUNDLE_ID: com.trackflow.staging
     scripts:
+      - name: 🔐 Set up keychain
+        script: keychain initialize
+      - name: 🔏 Fetch iOS signing files (App Store)
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+      - name: 🪪 Add certificates to keychain
+        script: keychain add-certificates
+      - name: 🧩 Apply signing to Xcode project
+        script: xcode-project use-profiles
       - name: 📋 Check Flutter version
         script: flutter --version
       - name: 📦 Get dependencies
