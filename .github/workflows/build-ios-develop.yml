@@ -53,6 +53,8 @@ jobs:
         run: |
           echo "🚀 Building iOS develop ipa..."
           flutter build ipa --flavor develop --release --verbose --export-options-plist=ios/ExportOptions.plist
+        env:
+          FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
       - name: 🧭 Locate IPA
         run: |
