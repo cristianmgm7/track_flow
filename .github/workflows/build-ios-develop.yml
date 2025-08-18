@@ -42,6 +42,15 @@ jobs:
           pod update FirebaseSharedSwift
           pod install --repo-update
 
+      - name: 🔎 Check Podfile.lock (FirebaseSharedSwift)
+        run: |
+          if [ -f ios/Podfile.lock ]; then
+            echo "FirebaseSharedSwift entries:";
+            grep -n "FirebaseSharedSwift" ios/Podfile.lock || true;
+          else
+            echo "Podfile.lock not found";
+          fi
+
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
         with:
