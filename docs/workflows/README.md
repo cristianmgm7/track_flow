@@ -5,6 +5,7 @@ Complete documentation for TrackFlow's CI/CD pipelines and GitHub Actions workfl
 ## 📖 Documentation Overview
 
 ### 🚀 [Quick Start Guide](./QUICK_START_GUIDE.md)
+
 **Start here!** Essential commands and immediate next steps for using your working CI/CD pipeline.
 
 - ✅ Current workflow status
@@ -14,6 +15,7 @@ Complete documentation for TrackFlow's CI/CD pipelines and GitHub Actions workfl
 - 🎮 Quick reference commands
 
 ### 📋 [Complete GitHub Actions Guide](./GITHUB_ACTIONS_GUIDE.md)
+
 Comprehensive documentation covering all workflows in detail.
 
 - 🧪 CI Workflow (Tests & Analysis)
@@ -24,14 +26,16 @@ Comprehensive documentation covering all workflows in detail.
 - 🔐 Secrets configuration
 - 🛠️ Troubleshooting guide
 
-### 🏗️ [Legacy Guide](./GUIA_GITHUB_ACTIONS.md) *(Spanish)*
-Original setup guide in Spanish - kept for reference.
+### 🏗️ [Legacy Guide](../_archive/GUIA_GITHUB_ACTIONS.md) _(Spanish)_
+
+Original setup guide in Spanish - archived for reference.
 
 ---
 
 ## 🎯 Current Status
 
 ### ✅ **WORKING PERFECTLY**
+
 - **CI Pipeline**: All code quality checks passing
 - **Build System**: APK/AAB generation working
 - **Flutter Setup**: Version 3.29.3 with Dart 3.7.2
@@ -40,6 +44,7 @@ Original setup guide in Spanish - kept for reference.
 - **Code Generation**: Working perfectly
 
 ### ⚠️ **NEXT STEPS**
+
 1. **Fix Unit Tests**: 38 tests failing (blocking green CI)
 2. **Configure Store Secrets**: For automatic app store distribution
 3. **Test Release Process**: Create beta release to verify everything
@@ -49,6 +54,7 @@ Original setup guide in Spanish - kept for reference.
 ## 🚀 Quick Commands
 
 ### Test Your Workflows
+
 ```bash
 # CI Pipeline
 gh workflow run ci.yml --ref your-branch
@@ -62,6 +68,7 @@ gh run watch [RUN_ID]
 ```
 
 ### Create Releases
+
 ```bash
 # Production Release
 git tag v1.0.0

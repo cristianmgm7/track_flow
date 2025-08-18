@@ -1,8 +1,15 @@
+# 📋 TrackFlow - Resumen Completo del Proyecto (Archived)
+
+This document has been archived to keep the main `docs/` clean. Its original content is preserved below.
+
+---
+
 # 📋 TrackFlow - Resumen Completo del Proyecto
 
 ## 🎯 **¿QUÉ ES TRACKFLOW?**
 
 TrackFlow es una plataforma de colaboración musical profesional que permite a productores, músicos e ingenieros de audio trabajar juntos remotamente con:
+
 - 🎵 Comentarios precisos en audio con timestamps
 - 🔄 Gestión profesional de versiones
 - 👥 Colaboración en tiempo real
@@ -13,6 +20,7 @@ TrackFlow es una plataforma de colaboración musical profesional que permite a p
 ## 🏗️ **ARQUITECTURA TÉCNICA**
 
 ### **Stack Tecnológico:**
+
 - **Frontend:** Flutter (Dart)
 - **Arquitectura:** Clean Architecture + Domain-Driven Design (DDD)
 - **Estado:** BLoC Pattern
@@ -22,6 +30,7 @@ TrackFlow es una plataforma de colaboración musical profesional que permite a p
 - **Distribución:** Firebase App Distribution
 
 ### **Estructura del Proyecto:**
+
 ```
 lib/
 ├── core/                 # Kernel compartido
@@ -43,7 +52,8 @@ lib/
 
 TrackFlow tiene 3 ambientes completamente separados:
 
-### 🏠 **Development** 
+### 🏠 **Development**
+
 ```
 Package: com.trackflow.dev
 Firebase: trackflow-dev
@@ -52,8 +62,9 @@ Logs: Habilitados
 ```
 
 ### 🧪 **Staging**
+
 ```
-Package: com.trackflow.staging  
+Package: com.trackflow.staging
 Firebase: trackflow-staging
 Uso: Testing con beta testers
 Logs: Habilitados
@@ -61,9 +72,10 @@ Distribución: Firebase App Distribution automática
 ```
 
 ### 🚀 **Production**
+
 ```
 Package: com.trackflow
-Firebase: trackflow-prod  
+Firebase: trackflow-prod
 Uso: Usuarios finales en tiendas
 Logs: Deshabilitados por seguridad
 Distribución: Google Play Store + App Store
@@ -74,21 +86,24 @@ Distribución: Google Play Store + App Store
 ## 🔥 **CONFIGURACIÓN FIREBASE**
 
 ### **Proyectos Firebase Configurados:**
+
 - `trackflow-dev` - Desarrollo
-- `trackflow-staging` - Testing  
+- `trackflow-staging` - Testing
 - `trackflow-prod` - Producción
 
 ### **Servicios Habilitados:**
+
 - ✅ **Authentication** (Email/Password + Google Sign-In)
 - ✅ **Firestore Database** (NoSQL para proyectos y colaboradores)
 - ✅ **Storage** (Archivos de audio)
 - ✅ **App Distribution** (Distribución a testers)
 
 ### **Archivos de Configuración:**
+
 ```
 firebase/
 ├── google-services-dev.json      # Android Development
-├── google-services-staging.json  # Android Staging  
+├── google-services-staging.json  # Android Staging
 ├── google-services-prod.json     # Android Production
 ├── GoogleService-Info-dev.plist  # iOS Development
 ├── GoogleService-Info-staging.plist # iOS Staging
@@ -107,9 +122,10 @@ lib/
 ### **4 Workflows Configurados:**
 
 #### 1. **`ci.yml`** - Testing y Validación 🧪
+
 ```
 Trigger: Push a cualquier branch, PRs
-Ejecuta: 
+Ejecuta:
   - Tests unitarios
   - Análisis de código (flutter analyze)
   - Coverage de tests
@@ -118,6 +134,7 @@ Ejecuta:
 ```
 
 #### 2. **`build-debug.yml`** - Builds de Desarrollo 🔨
+
 ```
 Trigger: Push a develop, manual
 Ejecuta:
@@ -127,16 +144,18 @@ Ejecuta:
 ```
 
 #### 3. **`build-release.yml`** - Builds de Producción 🚀
+
 ```
 Trigger: Tags (v1.0.0), manual
 Ejecuta:
   - Build App Bundle (.aab) para Google Play
-  - Build IPA (.ipa) para App Store  
+  - Build IPA (.ipa) para App Store
   - Creación de GitHub Release
   - [Opcional] Subida automática a tiendas
 ```
 
 #### 4. **`deploy-firebase.yml`** - Distribución a Testers 📱
+
 ```
 Trigger: Manual
 Ejecuta:
@@ -150,6 +169,7 @@ Ejecuta:
 ## 🔄 **FLUJO DE TRABAJO COMPLETO**
 
 ### **Desarrollo Diario:**
+
 ```
 1. 💻 Crear feature branch
    git checkout -b feature/nueva-funcionalidad
@@ -169,6 +189,7 @@ Ejecuta:
 ```
 
 ### **Release de Producción:**
+
 ```
 1. 🏷️ Crear tag de versión
    git tag v1.0.0
@@ -189,6 +210,7 @@ Ejecuta:
 ## 📱 **SISTEMA DE LOGGING INTELIGENTE**
 
 ### **AppLogger - Consciente de Flavors:**
+
 ```dart
 // En Development/Staging: Logs visibles
 AppLogger.info("Usuario autenticado correctamente");
@@ -198,11 +220,12 @@ AppLogger.info("Usuario autenticado correctamente");
 ```
 
 ### **Configuración por Ambiente:**
+
 ```dart
 static bool get enableLogging {
   switch (FlavorConfig.currentFlavor) {
     case Flavor.development: return true;   // 🔊 Logs habilitados
-    case Flavor.staging: return true;       // 🔊 Logs habilitados  
+    case Flavor.staging: return true;       // 🔊 Logs habilitados
     case Flavor.production: return false;   // 🔇 Logs deshabilitados
   }
 }
@@ -213,18 +236,21 @@ static bool get enableLogging {
 ## 🎵 **CARACTERÍSTICAS PRINCIPALES DE LA APP**
 
 ### **Sistema de Audio:**
+
 - 🎧 Reproducción centralizada con `PlaybackController`
 - 🌊 Visualización de waveform para comentarios precisos
 - 💾 Cache offline para reproducción sin internet
 - 🔄 Sync automático cuando se restaura conexión
 
 ### **Colaboración:**
+
 - 👥 Gestión de permisos por rol (Owner, Admin, Editor, Viewer)
 - 💬 Comentarios en tiempo real con timestamps precisos
 - 🔄 Sincronización automática entre dispositivos
 - 📱 Notificaciones push para actualizaciones
 
 ### **Gestión de Proyectos:**
+
 - 📁 Organización por proyectos musicales
 - 🏷️ Versionado de archivos de audio
 - 👥 Invitación de colaboradores
@@ -235,20 +261,23 @@ static bool get enableLogging {
 ## 🔐 **SEGURIDAD Y PERMISOS**
 
 ### **Autenticación:**
+
 - 📧 Email/Password con Firebase Auth
 - 🔍 Google Sign-In integrado
 - 🔐 Session management automático
 - 🚪 Logout seguro
 
 ### **Permisos por Rol:**
+
 ```
 Owner:    Acceso completo, puede eliminar proyecto
 Admin:    Gestión de usuarios y contenido
-Editor:   Puede subir/editar audio y comentarios  
+Editor:   Puede subir/editar audio y comentarios
 Viewer:   Solo lectura, puede comentar
 ```
 
 ### **Reglas de Firestore:**
+
 - 🔒 **Development:** Acceso abierto (testing)
 - 🔐 **Staging:** Solo usuarios autenticados
 - 🛡️ **Production:** Reglas específicas por colección y rol
@@ -258,12 +287,14 @@ Viewer:   Solo lectura, puede comentar
 ## 📊 **MÉTRICAS Y MONITOREO**
 
 ### **GitHub Actions Dashboard:**
+
 - ✅ Success rate de builds
 - ⏱️ Tiempo promedio de compilación
 - 📦 Tamaño de APKs/IPAs por versión
 - 🐛 Issues detectados por análisis estático
 
 ### **Firebase Analytics (Production):**
+
 - 👥 Usuarios activos diarios/mensuales
 - 🎵 Proyectos creados y reproducciones
 - 💬 Actividad de comentarios
@@ -274,6 +305,7 @@ Viewer:   Solo lectura, puede comentar
 ## 🛠️ **HERRAMIENTAS DE DESARROLLO**
 
 ### **Scripts Personalizados:**
+
 ```bash
 ./scripts/run_flavors.sh [flavor] [mode]    # Ejecutar app
 ./scripts/build_flavors.sh [flavor] [mode]  # Build local
@@ -281,6 +313,7 @@ Viewer:   Solo lectura, puede comentar
 ```
 
 ### **Comandos Esenciales:**
+
 ```bash
 # Desarrollo diario
 flutter pub get
@@ -300,6 +333,7 @@ flutter build appbundle --flavor production --release
 ## 🚀 **ESTADO ACTUAL DEL PROYECTO**
 
 ### ✅ **Completado:**
+
 - 🏗️ Arquitectura Clean + DDD implementada
 - 🎭 3 Flavors configurados y funcionando
 - 🔥 Firebase configurado para todos los ambientes
@@ -309,6 +343,7 @@ flutter build appbundle --flavor production --release
 - 📚 Documentación completa
 
 ### 🔄 **Siguientes Pasos:**
+
 1. 🔐 Configurar secrets en GitHub Actions
 2. 🧪 Probar flujo completo de CI/CD
 3. 📱 Configurar Firebase App Distribution grupos
@@ -320,6 +355,7 @@ flutter build appbundle --flavor production --release
 ## 📈 **ESCALABILIDAD Y FUTURO**
 
 ### **Preparado para Crecer:**
+
 - 🏗️ Arquitectura modular por features
 - 🔧 Dependency injection configurado
 - 🧪 Testing automatizado
@@ -327,6 +363,7 @@ flutter build appbundle --flavor production --release
 - ☁️ Backend serverless con Firebase
 
 ### **Fácil Mantener:**
+
 - 📚 Documentación completa
 - 🤖 Builds automáticos
 - 🔍 Code quality checks
@@ -352,7 +389,7 @@ flutter build appbundle --flavor production --release
 **"Automatizar lo repetitivo, para enfocarnos en crear"**
 
 - 🤖 **Automatización máxima** - Menos trabajo manual, más creatividad
-- 🔒 **Seguridad por diseño** - Cada decisión considera seguridad  
+- 🔒 **Seguridad por diseño** - Cada decisión considera seguridad
 - 📱 **User experience first** - La tecnología sirve a la música
 - 🧠 **Aprender haciendo** - Cada herramienta enseña conceptos valiosos
 - 🎵 **Música ante todo** - La tecnología potencia la creatividad musical

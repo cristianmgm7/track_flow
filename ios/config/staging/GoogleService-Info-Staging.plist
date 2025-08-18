@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>221115151816-neev0i8guab01i3b7j4hgglni17sf3uo.apps.googleusercontent.com</string>
+	<string>221115151816-05jordp94aosr55u5m67n7fml52ncn29.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.221115151816-neev0i8guab01i3b7j4hgglni17sf3uo</string>
+	<string>com.googleusercontent.apps.221115151816-05jordp94aosr55u5m67n7fml52ncn29</string>
 	<key>API_KEY</key>
 	<string>AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.crd.producer-gmail.com.trackflow.staging</string>
+	<string>com.trackflow.staging</string>
 	<key>PROJECT_ID</key>
 	<string>trackflow-staging</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:221115151816:ios:314e8084da41d35e943cfd</string>
+	<string>1:221115151816:ios:ebf0539082ccca85943cfd</string>
 </dict>
 </plist>
