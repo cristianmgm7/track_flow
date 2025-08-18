@@ -1,0 +1,82 @@
+workflows:
+  ios_develop_testflight:
+    name: iOS Develop → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: develop
+    environment:
+      xcode: 16.0
+      flutter: stable
+      groups: [app_store_connect]
+      vars:
+        FLAVOR: develop
+        SCHEME: develop
+        CONFIG: Release-develop
+    scripts:
+      - name: 📋 Check Flutter version
+        script: flutter --version
+      - name: 📦 Get dependencies
+        script: flutter pub get
+      - name: 🔧 Generate code
+        script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🍎 Install iOS dependencies
+        script: cd ios && pod install --repo-update && cd ..
+      - name: 🔨 Build IPA
+        script: flutter build ipa --flavor $FLAVOR --release --verbose
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/**/Logs/**/*.log
+    publishing:
+      app_store_connect:
+        api_key:
+          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+          key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+          private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+
+  ios_staging_testflight:
+    name: iOS Staging → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: staging
+    environment:
+      xcode: 16.0
+      flutter: stable
+      groups: [app_store_connect]
+      vars:
+        FLAVOR: staging
+        SCHEME: staging
+        CONFIG: Release-staging
+    scripts:
+      - name: 📋 Check Flutter version
+        script: flutter --version
+      - name: 📦 Get dependencies
+        script: flutter pub get
+      - name: 🔧 Generate code
+        script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🍎 Install iOS dependencies
+        script: cd ios && pod install --repo-update && cd ..
+      - name: 🔨 Build IPA
+        script: flutter build ipa --flavor $FLAVOR --release --verbose
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/**/Logs/**/*.log
+    publishing:
+      app_store_connect:
+        api_key:
+          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+          key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+          private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        submit_to_testflight: true
+        beta_groups:
+          - Testers
+
+
