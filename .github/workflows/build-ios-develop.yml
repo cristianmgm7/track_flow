@@ -34,6 +34,14 @@ jobs:
           flutter config --no-analytics
           flutter config --no-cli-animations
 
+      - name: 🔧 CocoaPods (update + pin FirebaseSharedSwift)
+        run: |
+          set -e
+          cd ios
+          pod repo update
+          pod update FirebaseSharedSwift
+          pod install --repo-update
+
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
         with:
