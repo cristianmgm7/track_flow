@@ -1,8 +1,7 @@
 name: 🍎 Build iOS Staging → TestFlight
 
 on:
-  push:
-    branches: [staging]
+  # Desactivado para usar Codemagic. Ejecutar sólo manualmente si se necesita.
   workflow_dispatch:
 
 jobs:
