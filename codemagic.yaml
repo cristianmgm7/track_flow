@@ -16,10 +16,16 @@ workflows:
         SCHEME: develop
         CONFIG: Release-develop
     scripts:
-      - flutter --version
-      - flutter pub get
-      - cd ios && pod install --repo-update && cd ..
-      - flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 📋 Check Flutter version
+        script: flutter --version
+      - name: 📦 Get dependencies
+        script: flutter pub get
+      - name: 🔧 Generate code
+        script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🍎 Install iOS dependencies
+        script: cd ios && pod install --repo-update && cd ..
+      - name: 🔨 Build IPA
+        script: flutter build ipa --flavor $FLAVOR --release --verbose
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/**/Logs/**/*.log
@@ -50,10 +56,16 @@ workflows:
         SCHEME: staging
         CONFIG: Release-staging
     scripts:
-      - flutter --version
-      - flutter pub get
-      - cd ios && pod install --repo-update && cd ..
-      - flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 📋 Check Flutter version
+        script: flutter --version
+      - name: 📦 Get dependencies
+        script: flutter pub get
+      - name: 🔧 Generate code
+        script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🍎 Install iOS dependencies
+        script: cd ios && pod install --repo-update && cd ..
+      - name: 🔨 Build IPA
+        script: flutter build ipa --flavor $FLAVOR --release --verbose
     artifacts:
       - build/ios/ipa/*.ipa
       - build/ios/**/Logs/**/*.log
