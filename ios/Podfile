@@ -58,9 +58,10 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-      # Ensure a single Swift version across all configs to satisfy CocoaPods
-      # Use Swift 6.0 on Xcode 16 runners
-      config.build_settings['SWIFT_VERSION'] = '6.0'
+      # Use Swift 5.10 to avoid strict Sendable errors in some plugins
+      config.build_settings['SWIFT_VERSION'] = '5.10'
+      # Downgrade Swift concurrency strictness for third-party pods
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
     end
   end
 
@@ -68,7 +69,8 @@ post_install do |installer|
   installer.aggregate_targets.each do |aggregate_target|
     aggregate_target.user_targets.each do |user_target|
       user_target.build_configurations.each do |config|
-        config.build_settings['SWIFT_VERSION'] = '6.0'
+        config.build_settings['SWIFT_VERSION'] = '5.10'
+        config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
       end
     end
   end
