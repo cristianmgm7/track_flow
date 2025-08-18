@@ -69,7 +69,9 @@ jobs:
       - name: 🔨 Build IPA (develop)
         run: |
           echo "🚀 Building iOS develop ipa..."
-          flutter build ipa --flavor develop --release --verbose --export-options-plist=ios/ExportOptions.plist
+          export NSUnbufferedIO=YES
+          set -o pipefail
+          flutter build ipa --flavor develop --release --verbose --export-options-plist=ios/ExportOptions.plist 2>&1 | tee build_ios.log
         env:
           FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
@@ -98,3 +100,13 @@ jobs:
           issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
           api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+
+      - name: 📦 Upload iOS build logs (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            build_ios.log
+            ~/Library/Developer/Xcode/DerivedData/**/Logs/Build/*.log
+          if-no-files-found: warn
