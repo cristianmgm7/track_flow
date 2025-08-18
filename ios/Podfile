@@ -43,7 +43,13 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Firebase dependencies will auto-resolve to compatible versions
+  # Pin Firebase to older versions compatible with Swift 5.10
+  pod 'FirebaseSharedSwift', '10.28.0'
+  pod 'FirebaseCore', '10.28.0'
+  pod 'FirebaseAuth', '10.28.0'
+  pod 'FirebaseFirestore', '10.28.0'
+  pod 'FirebaseStorage', '10.28.0'
+  pod 'FirebaseDynamicLinks', '10.28.0'
 
   # pod 'BoringSSL-GRPC',
   #   :path => '~/Library/Caches/CocoaPods/GitHub/boringssl-standalone'
