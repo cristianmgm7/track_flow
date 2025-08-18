@@ -56,7 +56,8 @@ post_install do |installer|
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       # Ensure a single Swift version across all configs to satisfy CocoaPods
-      config.build_settings['SWIFT_VERSION'] = '5.0'
+      # Use Swift 5.10 to support newer Firebase sources
+      config.build_settings['SWIFT_VERSION'] = '5.10'
     end
   end
 
@@ -64,7 +65,7 @@ post_install do |installer|
   installer.aggregate_targets.each do |aggregate_target|
     aggregate_target.user_targets.each do |user_target|
       user_target.build_configurations.each do |config|
-        config.build_settings['SWIFT_VERSION'] = '5.0'
+        config.build_settings['SWIFT_VERSION'] = '5.10'
       end
     end
   end
