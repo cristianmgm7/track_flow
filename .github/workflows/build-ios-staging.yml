@@ -52,9 +52,8 @@ jobs:
       - name: 🔨 Build IPA (staging)
         run: |
           echo "🚀 Building iOS staging ipa..."
+          export FLUTTER_XCODE_ARGS="-allowProvisioningUpdates"
           flutter build ipa --flavor staging --release --verbose --export-options-plist=ios/ExportOptions.plist
-        env:
-          FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
       - name: 🧭 Locate IPA
         run: |
