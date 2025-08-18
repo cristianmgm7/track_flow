@@ -19,6 +19,8 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
+      - name: 🪪 Import distribution certificate (.p12)
+        script: keychain add-certificates --certificate $IOS_DIST_P12 --password $IOS_DIST_P12_PASSWORD
       - name: 🔏 Fetch iOS signing files (App Store)
         script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🪪 Add certificates to keychain
@@ -67,6 +69,8 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
+      - name: 🪪 Import distribution certificate (.p12)
+        script: keychain add-certificates --certificate $IOS_DIST_P12 --password $IOS_DIST_P12_PASSWORD
       - name: 🔏 Fetch iOS signing files (App Store)
         script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🪪 Add certificates to keychain
