@@ -43,8 +43,8 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Pin FirebaseSharedSwift to a Swift 5-compatible version to build with Xcode 15
-  pod 'FirebaseSharedSwift', '11.10.0'
+  # Pin FirebaseSharedSwift to a Swift 5-compatible version for CI builds
+  pod 'FirebaseSharedSwift', '10.29.0'
 
   # pod 'BoringSSL-GRPC',
   #   :path => '~/Library/Caches/CocoaPods/GitHub/boringssl-standalone'
