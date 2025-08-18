@@ -27,8 +27,12 @@ workflows:
           else
             echo "IOS_DIST_P12 not provided or file missing; skipping manual import and relying on App Store Connect fetched certs.";
           fi
+      - name: 🔎 List signing identities (debug)
+        script: keychain list-identities || true
       - name: 🔏 Fetch iOS signing files (App Store)
-        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE \
+          || app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🪪 Add certificates to keychain
         script: keychain add-certificates
       - name: 🧩 Apply signing to Xcode project
@@ -83,8 +87,12 @@ workflows:
           else
             echo "IOS_DIST_P12 not provided or file missing; skipping manual import and relying on App Store Connect fetched certs.";
           fi
+      - name: 🔎 List signing identities (debug)
+        script: keychain list-identities || true
       - name: 🔏 Fetch iOS signing files (App Store)
-        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE \
+          || app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🪪 Add certificates to keychain
         script: keychain add-certificates
       - name: 🧩 Apply signing to Xcode project
