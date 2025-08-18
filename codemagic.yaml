@@ -19,10 +19,14 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
-      - name: 🔏 Fetch iOS signing files (App Store)
-        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+      - name: 📜 Ensure iOS Distribution certificate (create if missing)
+        script: |
+          app-store-connect certificates list --type IOS_DISTRIBUTION --save \
+          || app-store-connect certificates create --type IOS_DISTRIBUTION --save
       - name: 🪪 Add certificates to keychain
         script: keychain add-certificates
+      - name: 🔏 Fetch iOS signing files (App Store)
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🧩 Apply signing to Xcode project
         script: xcode-project use-profiles
       - name: 📋 Check Flutter version
@@ -67,10 +71,14 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
-      - name: 🔏 Fetch iOS signing files (App Store)
-        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+      - name: 📜 Ensure iOS Distribution certificate (create if missing)
+        script: |
+          app-store-connect certificates list --type IOS_DISTRIBUTION --save \
+          || app-store-connect certificates create --type IOS_DISTRIBUTION --save
       - name: 🪪 Add certificates to keychain
         script: keychain add-certificates
+      - name: 🔏 Fetch iOS signing files (App Store)
+        script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🧩 Apply signing to Xcode project
         script: xcode-project use-profiles
       - name: 📋 Check Flutter version
