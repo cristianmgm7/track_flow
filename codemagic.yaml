@@ -19,8 +19,14 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
-      - name: 🪪 Import distribution certificate (.p12)
-        script: keychain add-certificates --certificate $IOS_DIST_P12 --password $IOS_DIST_P12_PASSWORD
+      - name: 🪪 Import distribution certificate (.p12) [optional]
+        script: |
+          if [ -n "${IOS_DIST_P12:-}" ] && [ -f "$IOS_DIST_P12" ]; then
+            echo "Importing distribution certificate from $IOS_DIST_P12";
+            keychain add-certificates --certificate "$IOS_DIST_P12" --password "$IOS_DIST_P12_PASSWORD";
+          else
+            echo "IOS_DIST_P12 not provided or file missing; skipping manual import and relying on App Store Connect fetched certs.";
+          fi
       - name: 🔏 Fetch iOS signing files (App Store)
         script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🪪 Add certificates to keychain
@@ -69,8 +75,14 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
-      - name: 🪪 Import distribution certificate (.p12)
-        script: keychain add-certificates --certificate $IOS_DIST_P12 --password $IOS_DIST_P12_PASSWORD
+      - name: 🪪 Import distribution certificate (.p12) [optional]
+        script: |
+          if [ -n "${IOS_DIST_P12:-}" ] && [ -f "$IOS_DIST_P12" ]; then
+            echo "Importing distribution certificate from $IOS_DIST_P12";
+            keychain add-certificates --certificate "$IOS_DIST_P12" --password "$IOS_DIST_P12_PASSWORD";
+          else
+            echo "IOS_DIST_P12 not provided or file missing; skipping manual import and relying on App Store Connect fetched certs.";
+          fi
       - name: 🔏 Fetch iOS signing files (App Store)
         script: app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
       - name: 🪪 Add certificates to keychain
