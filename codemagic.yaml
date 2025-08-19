@@ -63,7 +63,19 @@ workflows:
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build iOS (no codesign)
-        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+        script: |
+          set -euo pipefail
+          case "$FLAVOR" in
+            develop|development)
+              ENTRY="lib/main_development.dart" ;;
+            staging)
+              ENTRY="lib/main_staging.dart" ;;
+            production|prod)
+              ENTRY="lib/main_production.dart" ;;
+            *) echo "Unknown flavor $FLAVOR"; exit 1;;
+          esac
+          echo "Using entrypoint: $ENTRY"
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -166,7 +178,19 @@ workflows:
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build iOS (no codesign)
-        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+        script: |
+          set -euo pipefail
+          case "$FLAVOR" in
+            develop|development)
+              ENTRY="lib/main_development.dart" ;;
+            staging)
+              ENTRY="lib/main_staging.dart" ;;
+            production|prod)
+              ENTRY="lib/main_production.dart" ;;
+            *) echo "Unknown flavor $FLAVOR"; exit 1;;
+          esac
+          echo "Using entrypoint: $ENTRY"
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -269,7 +293,19 @@ workflows:
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build iOS (no codesign)
-        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+        script: |
+          set -euo pipefail
+          case "$FLAVOR" in
+            develop|development)
+              ENTRY="lib/main_development.dart" ;;
+            staging)
+              ENTRY="lib/main_staging.dart" ;;
+            production|prod)
+              ENTRY="lib/main_production.dart" ;;
+            *) echo "Unknown flavor $FLAVOR"; exit 1;;
+          esac
+          echo "Using entrypoint: $ENTRY"
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
