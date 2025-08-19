@@ -41,8 +41,8 @@ workflows:
           done < <(env)
           echo "Installed profiles:"
           ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" || true
-      - name: 🪪 Add certificates to keychain
-        script: keychain add-certificates
+      - name: 🪪 Add certificates to keychain (non-fatal)
+        script: keychain add-certificates || true
       - name: 🧩 Apply signing to Xcode project
         script: xcode-project use-profiles
       - name: 📋 Check Flutter version
@@ -109,8 +109,8 @@ workflows:
           done < <(env)
           echo "Installed profiles:"
           ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" || true
-      - name: 🪪 Add certificates to keychain
-        script: keychain add-certificates
+      - name: 🪪 Add certificates to keychain (non-fatal)
+        script: keychain add-certificates || true
       - name: 🧩 Apply signing to Xcode project
         script: xcode-project use-profiles
       - name: 📋 Check Flutter version
