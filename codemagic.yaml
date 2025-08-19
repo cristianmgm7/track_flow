@@ -82,8 +82,10 @@ workflows:
           IPA_SRC="$(find build -type f -name "*.ipa" | head -n1 || true)"
           if [ -n "${IPA_SRC:-}" ] && [ -f "$IPA_SRC" ]; then
             DEST_IPA="$DEST_DIR/${SCHEME:-Runner}.ipa"
-            echo "Copying $IPA_SRC -> $DEST_IPA"
-            cp -f "$IPA_SRC" "$DEST_IPA"
+            echo "Moving $IPA_SRC -> $DEST_IPA"
+            mv -f "$IPA_SRC" "$DEST_IPA"
+            echo "Removing any other .ipa files to avoid duplicate publish..."
+            find build -type f -name "*.ipa" ! -path "$DEST_IPA" -delete || true
           else
             echo "No IPA found after build"; exit 1;
           fi
@@ -183,8 +185,10 @@ workflows:
           IPA_SRC="$(find build -type f -name "*.ipa" | head -n1 || true)"
           if [ -n "${IPA_SRC:-}" ] && [ -f "$IPA_SRC" ]; then
             DEST_IPA="$DEST_DIR/${SCHEME:-Runner}.ipa"
-            echo "Copying $IPA_SRC -> $DEST_IPA"
-            cp -f "$IPA_SRC" "$DEST_IPA"
+            echo "Moving $IPA_SRC -> $DEST_IPA"
+            mv -f "$IPA_SRC" "$DEST_IPA"
+            echo "Removing any other .ipa files to avoid duplicate publish..."
+            find build -type f -name "*.ipa" ! -path "$DEST_IPA" -delete || true
           else
             echo "No IPA found after build"; exit 1;
           fi
