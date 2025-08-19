@@ -81,17 +81,29 @@ generate_icons_for_flavor() {
     for icon_info in "${ICON_SIZES[@]}"; do
         read -r filename width height <<< "$icon_info"
         local output_path="$output_dir/$filename"
-        
+
         echo "  📱 Creating $filename (${width}x${height})"
-        
-        # Generate icon with rounded corners and proper padding
-        convert "$source_logo" \
-            -resize "${width}x${height}" \
-            -background transparent \
-            -gravity center \
-            -extent "${width}x${height}" \
-            -quality 100 \
-            "$output_path"
+
+        # Generate icons. The App Store marketing icon (1024x1024) MUST NOT contain an alpha channel.
+        # For that specific size, render on a solid white background and explicitly remove alpha.
+        if [[ "$filename" == "Icon-App-1024x1024@1x.png" ]]; then
+            convert "$source_logo" \
+                -resize "${width}x${height}" \
+                -background white \
+                -gravity center \
+                -extent "${width}x${height}" \
+                -alpha remove -alpha off \
+                -quality 100 \
+                "$output_path"
+        else
+            convert "$source_logo" \
+                -resize "${width}x${height}" \
+                -background transparent \
+                -gravity center \
+                -extent "${width}x${height}" \
+                -quality 100 \
+                "$output_path"
+        fi
     done
     
     echo -e "${GREEN}✅ Generated all icons for $flavor${NC}"
