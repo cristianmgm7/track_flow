@@ -29,10 +29,18 @@ workflows:
           fi
       - name: 🔎 List signing identities (debug)
         script: keychain list-identities || true
-      - name: 🔏 Fetch iOS signing files (App Store)
+      - name: 📄 Install manual provisioning profiles (if provided)
         script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE \
-          || app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "Scanning environment for .mobileprovision secure files..."
+          while IFS='=' read -r name value; do
+            if [[ -n "${value:-}" ]] && [[ -f "$value" ]] && [[ "$value" == *.mobileprovision ]]; then
+              echo "Installing provisioning profile from $value"
+              cp "$value" "$HOME/Library/MobileDevice/Provisioning Profiles/"
+            fi
+          done < <(env)
+          echo "Installed profiles:"
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" || true
       - name: 🪪 Add certificates to keychain
         script: keychain add-certificates
       - name: 🧩 Apply signing to Xcode project
@@ -89,10 +97,18 @@ workflows:
           fi
       - name: 🔎 List signing identities (debug)
         script: keychain list-identities || true
-      - name: 🔏 Fetch iOS signing files (App Store)
+      - name: 📄 Install manual provisioning profiles (if provided)
         script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE \
-          || app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "Scanning environment for .mobileprovision secure files..."
+          while IFS='=' read -r name value; do
+            if [[ -n "${value:-}" ]] && [[ -f "$value" ]] && [[ "$value" == *.mobileprovision ]]; then
+              echo "Installing provisioning profile from $value"
+              cp "$value" "$HOME/Library/MobileDevice/Provisioning Profiles/"
+            fi
+          done < <(env)
+          echo "Installed profiles:"
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" || true
       - name: 🪪 Add certificates to keychain
         script: keychain add-certificates
       - name: 🧩 Apply signing to Xcode project
