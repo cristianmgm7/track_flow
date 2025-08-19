@@ -15,14 +15,23 @@ void main() async {
     // ✅ CRITICAL: Set default flavor if not already set (needed for tests)
     if (!FlavorConfig.isInitialized) {
       FlavorConfig.setFlavor(Flavor.development);
-      AppLogger.info('🧪 TEST MODE: Default flavor set to development', tag: 'MAIN');
+      AppLogger.info(
+        '🧪 TEST MODE: Default flavor set to development',
+        tag: 'MAIN',
+      );
     }
 
     // Phase 1: Initialize Firebase FIRST (only if not already initialized)
-    AppLogger.info('🎯 FLAVOR: ${FlavorConfig.name} - Initializing Firebase...', tag: 'MAIN');
-    
+    AppLogger.info(
+      '🎯 FLAVOR: ${FlavorConfig.name} - Initializing Firebase...',
+      tag: 'MAIN',
+    );
+
     // ✅ Skip Firebase in test environment to prevent connection issues
-    const bool isTestMode = bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
+    const bool isTestMode = bool.fromEnvironment(
+      'FLUTTER_TEST',
+      defaultValue: false,
+    );
     if (!isTestMode && Firebase.apps.isEmpty) {
       try {
         // On Apple platforms prefer platform-default configuration to avoid
@@ -33,20 +42,32 @@ void main() async {
         } else {
           await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
         }
-        AppLogger.info('✅ Firebase initialized successfully for ${FlavorConfig.name}', tag: 'MAIN');
+        AppLogger.info(
+          '✅ Firebase initialized successfully for ${FlavorConfig.name}',
+          tag: 'MAIN',
+        );
       } catch (e) {
         AppLogger.error('❌ Firebase initialization failed: $e', tag: 'MAIN');
         // Continue without Firebase for integration tests
         if (kDebugMode) {
-          AppLogger.info('🧪 Continuing in test mode without Firebase', tag: 'MAIN');
+          AppLogger.info(
+            '🧪 Continuing in test mode without Firebase',
+            tag: 'MAIN',
+          );
         } else {
           rethrow;
         }
       }
     } else if (isTestMode) {
-      AppLogger.info('🧪 TEST MODE: Skipping Firebase initialization', tag: 'MAIN');
+      AppLogger.info(
+        '🧪 TEST MODE: Skipping Firebase initialization',
+        tag: 'MAIN',
+      );
     } else {
-      AppLogger.info('✅ Firebase already initialized for ${FlavorConfig.name}', tag: 'MAIN');
+      AppLogger.info(
+        '✅ Firebase already initialized for ${FlavorConfig.name}',
+        tag: 'MAIN',
+      );
     }
 
     // Phase 2: Configure dependencies AFTER Firebase

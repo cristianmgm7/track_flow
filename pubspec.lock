@@ -143,7 +143,7 @@ packages:
     source: hosted
     version: "4.0.4"
   build_resolvers:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: build_resolvers
       sha256: "339086358431fa15d7eca8b6a36e5d783728cf025e559b834f4609a1fcfb7b0a"
@@ -322,10 +322,10 @@ packages:
     dependency: "direct overridden"
     description:
       name: dart_style
-      sha256: "7306ab8a2359a48d22310ad823521d723acfed60ee1f7e37388e8986853b6820"
+      sha256: "99e066ce75c89d6b29903d788a7bb9369cf754f7b24bf70bf4b6d6d6b26853b9"
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.8"
+    version: "2.3.6"
   dartx:
     dependency: transitive
     description:
