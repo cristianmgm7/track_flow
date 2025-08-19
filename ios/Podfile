@@ -43,13 +43,7 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  # Pin Firebase to older versions compatible with Swift 5.10
-  pod 'FirebaseSharedSwift', '10.28.0'
-  pod 'FirebaseCore', '10.28.0'
-  pod 'FirebaseAuth', '10.28.0'
-  pod 'FirebaseFirestore', '10.28.0'
-  pod 'FirebaseStorage', '10.28.0'
-  pod 'FirebaseDynamicLinks', '10.28.0'
+  # Use Firebase versions resolved by FlutterFire (from firebase_core)
 
   # pod 'BoringSSL-GRPC',
   #   :path => '~/Library/Caches/CocoaPods/GitHub/boringssl-standalone'
@@ -63,8 +57,10 @@ post_install do |installer|
     target.build_configurations.each do |config|
       config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
-      # Ensure a single Swift version across all configs to satisfy CocoaPods
-      config.build_settings['SWIFT_VERSION'] = '5.0'
+      # Use Swift 5.10 to avoid strict Sendable errors in some plugins
+      config.build_settings['SWIFT_VERSION'] = '5.10'
+      # Downgrade Swift concurrency strictness for third-party pods
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
     end
   end
 
@@ -72,7 +68,8 @@ post_install do |installer|
   installer.aggregate_targets.each do |aggregate_target|
     aggregate_target.user_targets.each do |user_target|
       user_target.build_configurations.each do |config|
-        config.build_settings['SWIFT_VERSION'] = '5.0'
+        config.build_settings['SWIFT_VERSION'] = '5.10'
+        config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
       end
     end
   end

@@ -33,6 +33,23 @@ jobs:
           flutter config --no-analytics
           flutter config --no-cli-animations
 
+      - name: 🔧 CocoaPods (update + pin FirebaseSharedSwift)
+        run: |
+          set -e
+          cd ios
+          pod repo update
+          pod update FirebaseSharedSwift
+          pod install --repo-update
+
+      - name: 🔎 Check Podfile.lock (FirebaseSharedSwift)
+        run: |
+          if [ -f ios/Podfile.lock ]; then
+            echo "FirebaseSharedSwift entries:";
+            grep -n "FirebaseSharedSwift" ios/Podfile.lock || true;
+          else
+            echo "Podfile.lock not found";
+          fi
+
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
         with:
@@ -52,6 +69,8 @@ jobs:
         run: |
           echo "🚀 Building iOS staging ipa..."
           flutter build ipa --flavor staging --release --verbose --export-options-plist=ios/ExportOptions.plist
+        env:
+          FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
       - name: 🧭 Locate IPA
         run: |

@@ -15,26 +15,89 @@ workflows:
         FLAVOR: develop
         SCHEME: develop
         CONFIG: Release-develop
+        BUNDLE_ID: com.trackflow.dev
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_ID
     scripts:
+      - name: 🧩 Apply signing to Xcode project
+        script: xcode-project use-profiles
       - name: 📋 Check Flutter version
         script: flutter --version
       - name: 📦 Get dependencies
         script: flutter pub get
       - name: 🔧 Generate code
         script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🧮 Set iOS build number (monotonic)
+        script: |
+          set -euo pipefail
+          NEW_BUILD_NUMBER="$(date +%Y%m%d%H%M)"
+          echo "Using build number: $NEW_BUILD_NUMBER"
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
+      - name: 🔥 Prepare Firebase config for flavor
+        script: |
+          set -euo pipefail
+          case "${FLAVOR}" in
+            develop|development)
+              SRC="ios/config/development/GoogleService-Info-Dev.plist"
+              DST="ios/Runner/GoogleService-Info-Dev.plist"
+              ;;
+            staging)
+              SRC="ios/config/staging/GoogleService-Info-Staging.plist"
+              DST="ios/Runner/GoogleService-Info-Staging.plist"
+              ;;
+            production|prod)
+              SRC="ios/config/production/GoogleService-Info-Prod.plist"
+              DST="ios/Runner/GoogleService-Info-Prod.plist"
+              ;;
+            *)
+              echo "Unknown FLAVOR: ${FLAVOR}"; exit 1;
+              ;;
+          esac
+          if [ -f "$SRC" ]; then
+            echo "Copying $SRC -> $DST"
+            cp -f "$SRC" "$DST"
+          else
+            echo "Firebase plist not found at $SRC"; exit 1;
+          fi
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
-      - name: 🔨 Build IPA
-        script: flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 🔨 Build iOS (no codesign)
+        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+      - name: 🏗️ Export IPA with Xcode
+        script: |
+          set -euo pipefail
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme "$SCHEME" \
+            --config "$CONFIG" \
+            --archive-flags="-allowProvisioningUpdates"
+      - name: 📦 Collect IPA artifact
+        script: |
+          set -euo pipefail
+          echo "Searching for generated IPA files..."
+          find build -type f -name "*.ipa" -print || true
+          DEST_DIR="build/ios/ipa"
+          mkdir -p "$DEST_DIR"
+          IPA_SRC="$(find build -type f -name "*.ipa" | head -n1 || true)"
+          if [ -n "${IPA_SRC:-}" ] && [ -f "$IPA_SRC" ]; then
+            DEST_IPA="$DEST_DIR/${SCHEME:-Runner}.ipa"
+            echo "Moving $IPA_SRC -> $DEST_IPA"
+            mv -f "$IPA_SRC" "$DEST_IPA"
+            echo "Removing any other .ipa files to avoid duplicate publish..."
+            find build -type f -name "*.ipa" ! -path "$DEST_IPA" -delete || true
+          else
+            echo "No IPA found after build"; exit 1;
+          fi
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/**/*.ipa
       - build/ios/**/Logs/**/*.log
     publishing:
       app_store_connect:
-        api_key:
-          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-          key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-          private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         beta_groups:
           - Internal Testers
@@ -55,28 +118,89 @@ workflows:
         FLAVOR: staging
         SCHEME: staging
         CONFIG: Release-staging
+        BUNDLE_ID: com.trackflow.staging
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_ID
     scripts:
+      - name: 🧩 Apply signing to Xcode project
+        script: xcode-project use-profiles
       - name: 📋 Check Flutter version
         script: flutter --version
       - name: 📦 Get dependencies
         script: flutter pub get
       - name: 🔧 Generate code
         script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🧮 Set iOS build number (monotonic)
+        script: |
+          set -euo pipefail
+          NEW_BUILD_NUMBER="$(date +%Y%m%d%H%M)"
+          echo "Using build number: $NEW_BUILD_NUMBER"
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
+      - name: 🔥 Prepare Firebase config for flavor
+        script: |
+          set -euo pipefail
+          case "${FLAVOR}" in
+            develop|development)
+              SRC="ios/config/development/GoogleService-Info-Dev.plist"
+              DST="ios/Runner/GoogleService-Info-Dev.plist"
+              ;;
+            staging)
+              SRC="ios/config/staging/GoogleService-Info-Staging.plist"
+              DST="ios/Runner/GoogleService-Info-Staging.plist"
+              ;;
+            production|prod)
+              SRC="ios/config/production/GoogleService-Info-Prod.plist"
+              DST="ios/Runner/GoogleService-Info-Prod.plist"
+              ;;
+            *)
+              echo "Unknown FLAVOR: ${FLAVOR}"; exit 1;
+              ;;
+          esac
+          if [ -f "$SRC" ]; then
+            echo "Copying $SRC -> $DST"
+            cp -f "$SRC" "$DST"
+          else
+            echo "Firebase plist not found at $SRC"; exit 1;
+          fi
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
-      - name: 🔨 Build IPA
-        script: flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 🔨 Build iOS (no codesign)
+        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+      - name: 🏗️ Export IPA with Xcode
+        script: |
+          set -euo pipefail
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme "$SCHEME" \
+            --config "$CONFIG" \
+            --archive-flags="-allowProvisioningUpdates"
+      - name: 📦 Collect IPA artifact
+        script: |
+          set -euo pipefail
+          echo "Searching for generated IPA files..."
+          find build -type f -name "*.ipa" -print || true
+          DEST_DIR="build/ios/ipa"
+          mkdir -p "$DEST_DIR"
+          IPA_SRC="$(find build -type f -name "*.ipa" | head -n1 || true)"
+          if [ -n "${IPA_SRC:-}" ] && [ -f "$IPA_SRC" ]; then
+            DEST_IPA="$DEST_DIR/${SCHEME:-Runner}.ipa"
+            echo "Moving $IPA_SRC -> $DEST_IPA"
+            mv -f "$IPA_SRC" "$DEST_IPA"
+            echo "Removing any other .ipa files to avoid duplicate publish..."
+            find build -type f -name "*.ipa" ! -path "$DEST_IPA" -delete || true
+          else
+            echo "No IPA found after build"; exit 1;
+          fi
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/**/*.ipa
       - build/ios/**/Logs/**/*.log
     publishing:
       app_store_connect:
-        api_key:
-          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
-          key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-          private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         beta_groups:
           - Testers
-
-
