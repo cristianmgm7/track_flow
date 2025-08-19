@@ -101,8 +101,24 @@ workflows:
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build IPA
         script: flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 📦 Collect IPA artifact
+        script: |
+          set -euo pipefail
+          echo "Searching for generated IPA files..."
+          find build -type f -name "*.ipa" -print || true
+          DEST_DIR="build/ios/ipa"
+          mkdir -p "$DEST_DIR"
+          IPA_SRC="$(find build -type f -name "*.ipa" | head -n1 || true)"
+          if [ -n "${IPA_SRC:-}" ] && [ -f "$IPA_SRC" ]; then
+            DEST_IPA="$DEST_DIR/${SCHEME:-Runner}.ipa"
+            echo "Copying $IPA_SRC -> $DEST_IPA"
+            cp -f "$IPA_SRC" "$DEST_IPA"
+          else
+            echo "No IPA found after build"; exit 1;
+          fi
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/**/*.ipa
       - build/ios/**/Logs/**/*.log
     publishing:
       app_store_connect:
@@ -215,8 +231,24 @@ workflows:
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build IPA
         script: flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 📦 Collect IPA artifact
+        script: |
+          set -euo pipefail
+          echo "Searching for generated IPA files..."
+          find build -type f -name "*.ipa" -print || true
+          DEST_DIR="build/ios/ipa"
+          mkdir -p "$DEST_DIR"
+          IPA_SRC="$(find build -type f -name "*.ipa" | head -n1 || true)"
+          if [ -n "${IPA_SRC:-}" ] && [ -f "$IPA_SRC" ]; then
+            DEST_IPA="$DEST_DIR/${SCHEME:-Runner}.ipa"
+            echo "Copying $IPA_SRC -> $DEST_IPA"
+            cp -f "$IPA_SRC" "$DEST_IPA"
+          else
+            echo "No IPA found after build"; exit 1;
+          fi
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/**/*.ipa
       - build/ios/**/Logs/**/*.log
     publishing:
       app_store_connect:
