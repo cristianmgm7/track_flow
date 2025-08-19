@@ -71,6 +71,32 @@ workflows:
         script: flutter pub get
       - name: 🔧 Generate code
         script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🔥 Prepare Firebase config for flavor
+        script: |
+          set -euo pipefail
+          case "${FLAVOR}" in
+            develop|development)
+              SRC="ios/config/development/GoogleService-Info-Dev.plist"
+              DST="ios/Runner/GoogleService-Info-Dev.plist"
+              ;;
+            staging)
+              SRC="ios/config/staging/GoogleService-Info-Staging.plist"
+              DST="ios/Runner/GoogleService-Info-Staging.plist"
+              ;;
+            production|prod)
+              SRC="ios/config/production/GoogleService-Info-Prod.plist"
+              DST="ios/Runner/GoogleService-Info-Prod.plist"
+              ;;
+            *)
+              echo "Unknown FLAVOR: ${FLAVOR}"; exit 1;
+              ;;
+          esac
+          if [ -f "$SRC" ]; then
+            echo "Copying $SRC -> $DST"
+            cp -f "$SRC" "$DST"
+          else
+            echo "Firebase plist not found at $SRC"; exit 1;
+          fi
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build IPA
@@ -159,6 +185,32 @@ workflows:
         script: flutter pub get
       - name: 🔧 Generate code
         script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🔥 Prepare Firebase config for flavor
+        script: |
+          set -euo pipefail
+          case "${FLAVOR}" in
+            develop|development)
+              SRC="ios/config/development/GoogleService-Info-Dev.plist"
+              DST="ios/Runner/GoogleService-Info-Dev.plist"
+              ;;
+            staging)
+              SRC="ios/config/staging/GoogleService-Info-Staging.plist"
+              DST="ios/Runner/GoogleService-Info-Staging.plist"
+              ;;
+            production|prod)
+              SRC="ios/config/production/GoogleService-Info-Prod.plist"
+              DST="ios/Runner/GoogleService-Info-Prod.plist"
+              ;;
+            *)
+              echo "Unknown FLAVOR: ${FLAVOR}"; exit 1;
+              ;;
+          esac
+          if [ -f "$SRC" ]; then
+            echo "Copying $SRC -> $DST"
+            cp -f "$SRC" "$DST"
+          else
+            echo "Firebase plist not found at $SRC"; exit 1;
+          fi
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build IPA
