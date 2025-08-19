@@ -29,7 +29,9 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>com.googleusercontent.apps.664691871365-c4q16q41nd3nrf8v284v3b73fls78jn6</string>
 				<string>com.googleusercontent.apps.221115151816-05jordp94aosr55u5m67n7fml52ncn29</string>
+				<string>com.googleusercontent.apps.192570465818-h9hk0gle48pncklsp138mg8balhlhsne</string>
 			</array>
 		</dict>
 	</array>
@@ -40,7 +42,9 @@
 	<array>
 		<string>https</string>
 		<string>http</string>
+		<string>com.googleusercontent.apps.664691871365-c4q16q41nd3nrf8v284v3b73fls78jn6</string>
 		<string>com.googleusercontent.apps.221115151816-05jordp94aosr55u5m67n7fml52ncn29</string>
+		<string>com.googleusercontent.apps.192570465818-h9hk0gle48pncklsp138mg8balhlhsne</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
