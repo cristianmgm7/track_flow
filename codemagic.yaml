@@ -16,53 +16,10 @@ workflows:
         SCHEME: develop
         CONFIG: Release-develop
         BUNDLE_ID: com.trackflow.dev
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_ID
     scripts:
-      - name: 🔐 Set up keychain
-        script: keychain initialize
-      - name: 📦 Decode signing assets from BASE64 envs (optional)
-        script: |
-          set -euo pipefail
-          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILES_DIR"
-          # Decode distribution certificate if provided as BASE64
-          if [ -n "${IOS_DIST_P12_B64:-}" ]; then
-            echo "$IOS_DIST_P12_B64" | base64 --decode > "$CM_BUILD_DIR/ios_dist.p12"
-            export IOS_DIST_P12="$CM_BUILD_DIR/ios_dist.p12"
-            echo "Decoded IOS_DIST_P12 from IOS_DIST_P12_B64"
-          fi
-          # Decode provisioning profiles if provided as BASE64
-          for NAME in IOS_PROFILE_DEV_B64 IOS_PROFILE_STAGING_B64 IOS_PROFILE_PROD_B64; do
-            VAL="$(printenv "$NAME" || true)"
-            if [ -n "${VAL:-}" ]; then
-              OUT_NAME="${NAME%_B64}.mobileprovision"
-              echo "$VAL" | base64 --decode > "$PROFILES_DIR/$OUT_NAME"
-              echo "Decoded provisioning profile to $PROFILES_DIR/$OUT_NAME"
-            fi
-          done
-      - name: 🪪 Import distribution certificate (.p12) [optional]
-        script: |
-          if [ -n "${IOS_DIST_P12:-}" ] && [ -f "$IOS_DIST_P12" ]; then
-            echo "Importing distribution certificate from $IOS_DIST_P12";
-            keychain add-certificates --certificate "$IOS_DIST_P12" --password "$IOS_DIST_P12_PASSWORD";
-          else
-            echo "IOS_DIST_P12 not provided or file missing; skipping manual import and relying on App Store Connect fetched certs.";
-          fi
-      - name: 🔎 List signing identities (debug)
-        script: keychain list-identities || true
-      - name: 📄 Install manual provisioning profiles (if provided)
-        script: |
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          echo "Scanning environment for .mobileprovision secure files..."
-          while IFS='=' read -r name value; do
-            if [[ -n "${value:-}" ]] && [[ -f "$value" ]] && [[ "$value" == *.mobileprovision ]]; then
-              echo "Installing provisioning profile from $value"
-              cp "$value" "$HOME/Library/MobileDevice/Provisioning Profiles/"
-            fi
-          done < <(env)
-          echo "Installed profiles:"
-          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" || true
-      - name: 🪪 Add certificates to keychain (non-fatal)
-        script: keychain add-certificates || true
       - name: 🧩 Apply signing to Xcode project
         script: xcode-project use-profiles
       - name: 📋 Check Flutter version
@@ -154,53 +111,10 @@ workflows:
         SCHEME: staging
         CONFIG: Release-staging
         BUNDLE_ID: com.trackflow.staging
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_ID
     scripts:
-      - name: 🔐 Set up keychain
-        script: keychain initialize
-      - name: 📦 Decode signing assets from BASE64 envs (optional)
-        script: |
-          set -euo pipefail
-          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILES_DIR"
-          # Decode distribution certificate if provided as BASE64
-          if [ -n "${IOS_DIST_P12_B64:-}" ]; then
-            echo "$IOS_DIST_P12_B64" | base64 --decode > "$CM_BUILD_DIR/ios_dist.p12"
-            export IOS_DIST_P12="$CM_BUILD_DIR/ios_dist.p12"
-            echo "Decoded IOS_DIST_P12 from IOS_DIST_P12_B64"
-          fi
-          # Decode provisioning profiles if provided as BASE64
-          for NAME in IOS_PROFILE_DEV_B64 IOS_PROFILE_STAGING_B64 IOS_PROFILE_PROD_B64; do
-            VAL="$(printenv "$NAME" || true)"
-            if [ -n "${VAL:-}" ]; then
-              OUT_NAME="${NAME%_B64}.mobileprovision"
-              echo "$VAL" | base64 --decode > "$PROFILES_DIR/$OUT_NAME"
-              echo "Decoded provisioning profile to $PROFILES_DIR/$OUT_NAME"
-            fi
-          done
-      - name: 🪪 Import distribution certificate (.p12) [optional]
-        script: |
-          if [ -n "${IOS_DIST_P12:-}" ] && [ -f "$IOS_DIST_P12" ]; then
-            echo "Importing distribution certificate from $IOS_DIST_P12";
-            keychain add-certificates --certificate "$IOS_DIST_P12" --password "$IOS_DIST_P12_PASSWORD";
-          else
-            echo "IOS_DIST_P12 not provided or file missing; skipping manual import and relying on App Store Connect fetched certs.";
-          fi
-      - name: 🔎 List signing identities (debug)
-        script: keychain list-identities || true
-      - name: 📄 Install manual provisioning profiles (if provided)
-        script: |
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          echo "Scanning environment for .mobileprovision secure files..."
-          while IFS='=' read -r name value; do
-            if [[ -n "${value:-}" ]] && [[ -f "$value" ]] && [[ "$value" == *.mobileprovision ]]; then
-              echo "Installing provisioning profile from $value"
-              cp "$value" "$HOME/Library/MobileDevice/Provisioning Profiles/"
-            fi
-          done < <(env)
-          echo "Installed profiles:"
-          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" || true
-      - name: 🪪 Add certificates to keychain (non-fatal)
-        script: keychain add-certificates || true
       - name: 🧩 Apply signing to Xcode project
         script: xcode-project use-profiles
       - name: 📋 Check Flutter version
