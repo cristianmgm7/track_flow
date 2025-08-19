@@ -65,7 +65,7 @@ workflows:
             --workspace ios/Runner.xcworkspace \
             --scheme "$SCHEME" \
             --config "$CONFIG" \
-            --archive-flags "-allowProvisioningUpdates"
+            --archive-flags="-allowProvisioningUpdates"
       - name: 📦 Collect IPA artifact
         script: |
           set -euo pipefail
@@ -160,7 +160,7 @@ workflows:
             --workspace ios/Runner.xcworkspace \
             --scheme "$SCHEME" \
             --config "$CONFIG" \
-            --archive-flags "-allowProvisioningUpdates"
+            --archive-flags="-allowProvisioningUpdates"
       - name: 📦 Collect IPA artifact
         script: |
           set -euo pipefail
