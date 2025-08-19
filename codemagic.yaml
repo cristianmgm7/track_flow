@@ -19,6 +19,26 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
+      - name: 📦 Decode signing assets from BASE64 envs (optional)
+        script: |
+          set -euo pipefail
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+          # Decode distribution certificate if provided as BASE64
+          if [ -n "${IOS_DIST_P12_B64:-}" ]; then
+            echo "$IOS_DIST_P12_B64" | base64 --decode > "$CM_BUILD_DIR/ios_dist.p12"
+            export IOS_DIST_P12="$CM_BUILD_DIR/ios_dist.p12"
+            echo "Decoded IOS_DIST_P12 from IOS_DIST_P12_B64"
+          fi
+          # Decode provisioning profiles if provided as BASE64
+          for NAME in IOS_PROFILE_DEV_B64 IOS_PROFILE_STAGING_B64 IOS_PROFILE_PROD_B64; do
+            VAL="$(printenv "$NAME" || true)"
+            if [ -n "${VAL:-}" ]; then
+              OUT_NAME="${NAME%_B64}.mobileprovision"
+              echo "$VAL" | base64 --decode > "$PROFILES_DIR/$OUT_NAME"
+              echo "Decoded provisioning profile to $PROFILES_DIR/$OUT_NAME"
+            fi
+          done
       - name: 🪪 Import distribution certificate (.p12) [optional]
         script: |
           if [ -n "${IOS_DIST_P12:-}" ] && [ -f "$IOS_DIST_P12" ]; then
@@ -87,6 +107,26 @@ workflows:
     scripts:
       - name: 🔐 Set up keychain
         script: keychain initialize
+      - name: 📦 Decode signing assets from BASE64 envs (optional)
+        script: |
+          set -euo pipefail
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+          # Decode distribution certificate if provided as BASE64
+          if [ -n "${IOS_DIST_P12_B64:-}" ]; then
+            echo "$IOS_DIST_P12_B64" | base64 --decode > "$CM_BUILD_DIR/ios_dist.p12"
+            export IOS_DIST_P12="$CM_BUILD_DIR/ios_dist.p12"
+            echo "Decoded IOS_DIST_P12 from IOS_DIST_P12_B64"
+          fi
+          # Decode provisioning profiles if provided as BASE64
+          for NAME in IOS_PROFILE_DEV_B64 IOS_PROFILE_STAGING_B64 IOS_PROFILE_PROD_B64; do
+            VAL="$(printenv "$NAME" || true)"
+            if [ -n "${VAL:-}" ]; then
+              OUT_NAME="${NAME%_B64}.mobileprovision"
+              echo "$VAL" | base64 --decode > "$PROFILES_DIR/$OUT_NAME"
+              echo "Decoded provisioning profile to $PROFILES_DIR/$OUT_NAME"
+            fi
+          done
       - name: 🪪 Import distribution certificate (.p12) [optional]
         script: |
           if [ -n "${IOS_DIST_P12:-}" ] && [ -f "$IOS_DIST_P12" ]; then
