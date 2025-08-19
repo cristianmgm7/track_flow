@@ -99,8 +99,16 @@ workflows:
           fi
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
-      - name: 🔨 Build IPA
-        script: flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 🔨 Build iOS (no codesign)
+        script: flutter build ios --flavor $FLAVOR --release --no-codesign --verbose
+      - name: 🏗️ Export IPA with Xcode
+        script: |
+          set -euo pipefail
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme "$SCHEME" \
+            --config "$CONFIG" \
+            --archive-flags "-allowProvisioningUpdates"
       - name: 📦 Collect IPA artifact
         script: |
           set -euo pipefail
@@ -229,8 +237,16 @@ workflows:
           fi
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
-      - name: 🔨 Build IPA
-        script: flutter build ipa --flavor $FLAVOR --release --verbose
+      - name: 🔨 Build iOS (no codesign)
+        script: flutter build ios --flavor $FLAVOR --release --no-codesign --verbose
+      - name: 🏗️ Export IPA with Xcode
+        script: |
+          set -euo pipefail
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme "$SCHEME" \
+            --config "$CONFIG" \
+            --archive-flags "-allowProvisioningUpdates"
       - name: 📦 Collect IPA artifact
         script: |
           set -euo pipefail
