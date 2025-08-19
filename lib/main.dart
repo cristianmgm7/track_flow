@@ -25,7 +25,14 @@ void main() async {
     const bool isTestMode = bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
     if (!isTestMode && Firebase.apps.isEmpty) {
       try {
-        await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
+        // On Apple platforms prefer platform-default configuration to avoid
+        // duplicate default app when a GoogleService-Info.plist is present.
+        if (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS) {
+          await Firebase.initializeApp();
+        } else {
+          await Firebase.initializeApp(options: FirebaseConfig.currentPlatform);
+        }
         AppLogger.info('✅ Firebase initialized successfully for ${FlavorConfig.name}', tag: 'MAIN');
       } catch (e) {
         AppLogger.error('❌ Firebase initialization failed: $e', tag: 'MAIN');
