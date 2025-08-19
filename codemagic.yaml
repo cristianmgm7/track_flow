@@ -28,6 +28,12 @@ workflows:
         script: flutter pub get
       - name: 🔧 Generate code
         script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🧮 Set iOS build number (monotonic)
+        script: |
+          set -euo pipefail
+          NEW_BUILD_NUMBER="$(date +%Y%m%d%H%M)"
+          echo "Using build number: $NEW_BUILD_NUMBER"
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
       - name: 🔥 Prepare Firebase config for flavor
         script: |
           set -euo pipefail
@@ -57,7 +63,7 @@ workflows:
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build iOS (no codesign)
-        script: flutter build ios --flavor $FLAVOR --release --no-codesign --verbose
+        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -123,6 +129,12 @@ workflows:
         script: flutter pub get
       - name: 🔧 Generate code
         script: flutter packages pub run build_runner build --delete-conflicting-outputs
+      - name: 🧮 Set iOS build number (monotonic)
+        script: |
+          set -euo pipefail
+          NEW_BUILD_NUMBER="$(date +%Y%m%d%H%M)"
+          echo "Using build number: $NEW_BUILD_NUMBER"
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> "$CM_ENV"
       - name: 🔥 Prepare Firebase config for flavor
         script: |
           set -euo pipefail
@@ -152,7 +164,7 @@ workflows:
       - name: 🍎 Install iOS dependencies
         script: cd ios && pod install --repo-update && cd ..
       - name: 🔨 Build iOS (no codesign)
-        script: flutter build ios --flavor $FLAVOR --release --no-codesign --verbose
+        script: flutter build ios --flavor $FLAVOR --release --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
