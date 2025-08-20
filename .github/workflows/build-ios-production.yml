@@ -1,19 +1,19 @@
-name: 🍎 Build iOS Dev → TestFlight
+name: 🍎 Build iOS Production → TestFlight
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build-ios-dev:
-    name: 🍎 iOS Development (TestFlight Internal)
+  build-ios-production:
+    name: 🍎 iOS Production (TestFlight Internal)
     runs-on: [self-hosted, macOS, X64]
     env:
-      FLAVOR: develop
-      SCHEME: develop
-      CONFIG: Release-develop
-      BUNDLE_ID: com.trackflow.dev
+      FLAVOR: production
+      SCHEME: production
+      CONFIG: Release-production
+      BUNDLE_ID: com.trackflow
 
     steps:
       - name: 📥 Checkout code
@@ -24,8 +24,7 @@ jobs:
       - name: 🎯 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.29.3"
-          channel: "stable"
+          channel: stable
           cache: true
 
       - name: 📦 Install dependencies
@@ -39,22 +38,11 @@ jobs:
           flutter config --no-analytics
           flutter config --no-cli-animations
 
-      - name: 🔧 CocoaPods (update + pin FirebaseSharedSwift)
+      - name: 🔧 CocoaPods
         run: |
           set -e
           cd ios
-          pod repo update
-          pod update FirebaseSharedSwift
           pod install --repo-update
-
-      - name: 🔎 Check Podfile.lock (FirebaseSharedSwift)
-        run: |
-          if [ -f ios/Podfile.lock ]; then
-            echo "FirebaseSharedSwift entries:";
-            grep -n "FirebaseSharedSwift" ios/Podfile.lock || true;
-          else
-            echo "Podfile.lock not found";
-          fi
 
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
@@ -62,7 +50,7 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_DIST_P12_B64 }}
           p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
 
-      - name: 🔧 Download provisioning profiles (Dev)
+      - name: 🔧 Download provisioning profiles (Prod)
         uses: apple-actions/download-provisioning-profiles@v3
         with:
           bundle-id: ${{ env.BUNDLE_ID }}
@@ -76,16 +64,14 @@ jobs:
           NEW_BUILD_NUMBER=$(date +%Y%m%d%H%M)
           echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> $GITHUB_ENV
 
-      - name: 🔥 Copy Firebase plist (develop)
-        run: cp -f ios/config/development/GoogleService-Info-Dev.plist ios/Runner/GoogleService-Info-Dev.plist
+      - name: 🔥 Copy Firebase plist (production)
+        run: cp -f ios/config/production/GoogleService-Info-Prod.plist ios/Runner/GoogleService-Info-Prod.plist
 
-      - name: 🔨 Build IPA (develop)
+      - name: 🔨 Build IPA (production)
         shell: bash
         run: |
-          echo "🚀 Building iOS develop ipa..."
-          export NSUnbufferedIO=YES
-          set -o pipefail
-          flutter build ipa --flavor "$FLAVOR" --release --verbose --export-options-plist=ios/ExportOptions.plist --build-number "$NEW_BUILD_NUMBER" 2>&1 | tee build_ios.log
+          echo "🚀 Building iOS production ipa..."
+          flutter build ipa --flavor "$FLAVOR" --release --verbose --export-options-plist=ios/ExportOptions.plist --build-number "$NEW_BUILD_NUMBER"
         env:
           FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
@@ -102,12 +88,10 @@ jobs:
             echo "✅ IPA generated: $IPA_PATH"
             echo "📏 Size: $(du -h "$IPA_PATH" | cut -f1)"
           else
-            echo "❌ IPA not found"
-            ls -la build/ios/ipa/
-            exit 1
+            echo "❌ IPA not found"; ls -la build/ios/ipa/; exit 1;
           fi
 
-      - name: 🍎 Upload to TestFlight (Dev)
+      - name: 🍎 Upload to TestFlight (Prod)
         uses: apple-actions/upload-testflight-build@v1
         with:
           app-path: ${{ env.IPA_PATH }}
@@ -115,12 +99,4 @@ jobs:
           api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
 
-      - name: 📦 Upload iOS build logs (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build-logs
-          path: |
-            build_ios.log
-            ~/Library/Developer/Xcode/DerivedData/**/Logs/Build/*.log
-          if-no-files-found: warn
+

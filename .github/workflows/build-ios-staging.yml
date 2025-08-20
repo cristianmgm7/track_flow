@@ -1,13 +1,19 @@
 name: 🍎 Build iOS Staging → TestFlight
 
 on:
-  # Desactivado para usar Codemagic. Ejecutar sólo manualmente si se necesita.
+  push:
+    branches: [staging]
   workflow_dispatch:
 
 jobs:
   build-ios-staging:
     name: 🍎 iOS Staging (TestFlight Internal)
-    runs-on: macos-14
+    runs-on: [self-hosted, macOS, X64]
+    env:
+      FLAVOR: staging
+      SCHEME: staging
+      CONFIG: Release-staging
+      BUNDLE_ID: com.trackflow.staging
 
     steps:
       - name: 📥 Checkout code
@@ -53,22 +59,31 @@ jobs:
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
         with:
-          p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          p12-file-base64: ${{ secrets.IOS_DIST_P12_B64 }}
+          p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
 
       - name: 🔧 Download provisioning profiles (Staging)
         uses: apple-actions/download-provisioning-profiles@v3
         with:
-          bundle-id: com.trackflow.staging
-          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          bundle-id: ${{ env.BUNDLE_ID }}
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           profile-type: IOS_APP_STORE
 
+      - name: 🧮 Set build number (timestamp)
+        run: |
+          NEW_BUILD_NUMBER=$(date +%Y%m%d%H%M)
+          echo "NEW_BUILD_NUMBER=$NEW_BUILD_NUMBER" >> $GITHUB_ENV
+
+      - name: 🔥 Copy Firebase plist (staging)
+        run: cp -f ios/config/staging/GoogleService-Info-Staging.plist ios/Runner/GoogleService-Info-Staging.plist
+
       - name: 🔨 Build IPA (staging)
+        shell: bash
         run: |
           echo "🚀 Building iOS staging ipa..."
-          flutter build ipa --flavor staging --release --verbose --export-options-plist=ios/ExportOptions.plist
+          flutter build ipa --flavor "$FLAVOR" --release --verbose --export-options-plist=ios/ExportOptions.plist --build-number "$NEW_BUILD_NUMBER"
         env:
           FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
@@ -94,6 +109,6 @@ jobs:
         uses: apple-actions/upload-testflight-build@v1
         with:
           app-path: ${{ env.IPA_PATH }}
-          issuer-id: ${{ secrets.APPLE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
