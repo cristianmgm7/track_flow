@@ -9,6 +9,10 @@ jobs:
   build-ios-staging:
     name: 🍎 iOS Staging (TestFlight Internal)
     runs-on: [self-hosted, macOS, X64]
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      RUBYOPT: -Eutf-8
 
     steps:
       - name: 📥 Checkout code
