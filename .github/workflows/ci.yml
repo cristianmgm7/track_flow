@@ -1,10 +1,6 @@
 name: 🧪 CI - Tests and Analysis
 
 on:
-  push:
-    branches: [ main, develop, feature/*, fix/*, hotfix/*, production-ready-* ]
-  pull_request:
-    branches: [ main, develop ]
   workflow_dispatch:
 
 jobs:
