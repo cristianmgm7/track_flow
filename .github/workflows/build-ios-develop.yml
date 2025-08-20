@@ -40,13 +40,37 @@ jobs:
           flutter config --no-analytics
           flutter config --no-cli-animations
 
-      - name: 🔧 CocoaPods (update + pin FirebaseSharedSwift)
+      - name: 🔧 CocoaPods (install)
         run: |
           set -e
           cd ios
-          pod repo update
-          pod update FirebaseSharedSwift
-          pod install --repo-update
+          arch -arm64 pod repo update
+          arch -arm64 pod install --repo-update
+      - name: 🧪 Preflight diagnostics
+        run: |
+          set -euo pipefail
+          echo "=== System ===" | tee -a build_ios.log
+          uname -a | tee -a build_ios.log
+          sw_vers | tee -a build_ios.log
+          echo "=== Xcode ===" | tee -a build_ios.log
+          which xcodebuild | tee -a build_ios.log
+          xcodebuild -version | tee -a build_ios.log
+          xcode-select -p | tee -a build_ios.log
+          echo "=== Flutter ===" | tee -a build_ios.log
+          which flutter | tee -a build_ios.log
+          flutter --version | tee -a build_ios.log
+          flutter doctor -v | tee -a build_ios.log || true
+          echo "=== Ruby/Pods ===" | tee -a build_ios.log
+          which ruby | tee -a build_ios.log
+          ruby -v | tee -a build_ios.log
+          which pod | tee -a build_ios.log
+          pod --version | tee -a build_ios.log || true
+          echo "=== Codesign identities ===" | tee -a build_ios.log
+          security find-identity -v -p codesigning | tee -a build_ios.log || true
+          echo "=== Provisioning Profiles ===" | tee -a build_ios.log
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" | tee -a build_ios.log || true
+          echo "=== ExportOptions ===" | tee -a build_ios.log
+          plutil -p ios/ExportOptions.plist | tee -a build_ios.log || cat ios/exportOptions.plist 2>/dev/null | tee -a build_ios.log || true
 
       - name: 🔎 Check Podfile.lock (FirebaseSharedSwift)
         run: |
@@ -93,7 +117,7 @@ jobs:
           echo "🚀 Building iOS develop ipa..."
           export NSUnbufferedIO=YES
           set -o pipefail
-          flutter build ipa --flavor develop --release --verbose --export-options-plist=ios/ExportOptions.plist 2>&1 | tee build_ios.log
+          arch -arm64 flutter build ipa --flavor develop --release --verbose --export-options-plist=ios/ExportOptions.plist 2>&1 | tee -a build_ios.log
         env:
           FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
