@@ -1,0 +1,48 @@
+name: 🧰 Runner Diagnose
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    name: 🧰 Self-hosted runner sanity check
+    runs-on: [self-hosted, macOS, X64]
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🖥️ System info
+        run: |
+          set -x
+          uname -a || true
+          sw_vers || true
+          sysctl hw.ncpu || true
+          df -h || true
+
+      - name: 🛠️ Xcode / Codesign availability
+        run: |
+          set -x
+          which xcodebuild || true
+          xcodebuild -version || true
+          security find-identity -v -p codesigning || true
+
+      - name: 🎯 Setup Flutter and check
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: 🐦 Flutter version
+        run: flutter --version
+
+      - name: 🔐 Secrets presence (masked)
+        run: |
+          for s in IOS_DIST_P12_B64 IOS_DIST_P12_PASSWORD APPLE_ISSUER_ID APPLE_API_KEY_ID APPLE_API_PRIVATE_KEY; do
+            if [ -n "${!s}" ]; then echo "$s=present"; else echo "$s=MISSING"; fi
+          done
+        env:
+          IOS_DIST_P12_B64: ${{ secrets.IOS_DIST_P12_B64 }}
+          IOS_DIST_P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+          APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+
+
