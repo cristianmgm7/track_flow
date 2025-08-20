@@ -70,14 +70,30 @@ jobs:
           security unlock-keychain -p "actions" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
 
-      - name: 🔧 Import signing certificates
-        uses: apple-actions/import-codesign-certs@v3
-        with:
-          p12-file-base64: ${{ secrets.IOS_DIST_P12_B64 }}
-          p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
-          keychain: signing_temp
-          keychain-password: actions
-          create-keychain: false
+      - name: 🔍 Validate .p12 password (non-fatal)
+        run: |
+          set -euo pipefail
+          echo "$IOS_DIST_P12_B64" | base64 --decode > ios_dist.p12
+          if ! openssl pkcs12 -info -in ios_dist.p12 -passin pass:"$IOS_DIST_P12_PASSWORD" -nokeys >/dev/null 2>&1; then
+            echo "❌ Invalid P12 password or corrupted P12"; exit 1;
+          else
+            echo "✅ P12 password OK";
+          fi
+        env:
+          IOS_DIST_P12_B64: ${{ secrets.IOS_DIST_P12_B64 }}
+          IOS_DIST_P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+
+      - name: 🔧 Import signing certificates (manual)
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="$HOME/Library/Keychains/signing_temp.keychain-db"
+          echo "$IOS_DIST_P12_B64" | base64 --decode > ios_dist.p12
+          security import ios_dist.p12 -k "$KEYCHAIN_PATH" -P "$IOS_DIST_P12_PASSWORD" -A -t cert -f pkcs12
+          security set-key-partition-list -S apple-tool:,apple: -s -k actions "$KEYCHAIN_PATH"
+          security find-identity -v -p codesigning || true
+        env:
+          IOS_DIST_P12_B64: ${{ secrets.IOS_DIST_P12_B64 }}
+          IOS_DIST_P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
 
       - name: 🔧 Download provisioning profiles (Staging)
         uses: apple-actions/download-provisioning-profiles@v3
