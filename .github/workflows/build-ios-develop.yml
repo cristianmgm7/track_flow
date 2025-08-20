@@ -55,11 +55,25 @@ jobs:
             echo "Podfile.lock not found";
           fi
 
+      - name: 🧹 Clean Keychain
+        run: |
+          set -e
+          KEYCHAIN_NAME="signing_temp"
+          security list-keychains || true
+          security delete-keychain "$KEYCHAIN_NAME" || true
+          security create-keychain -p "actions" "$KEYCHAIN_NAME"
+          security default-keychain -s "$KEYCHAIN_NAME"
+          security unlock-keychain -p "actions" "$KEYCHAIN_NAME"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_NAME"
+
       - name: 🔧 Import signing certificates
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.IOS_DIST_P12_B64 }}
           p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+          keychain: signing_temp
+          keychain-password: actions
+          create-keychain: false
 
       - name: 🔧 Download provisioning profiles (Dev)
         uses: apple-actions/download-provisioning-profiles@v3
