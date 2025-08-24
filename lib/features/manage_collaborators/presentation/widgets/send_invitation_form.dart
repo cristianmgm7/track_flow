@@ -170,7 +170,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                         ),
                       ),
                       Text(
-                        'Usuario existente encontrado',
+                        'Existing user found',
                         style: AppTextStyle.bodySmall.copyWith(
                           color: AppColors.success,
                           fontWeight: FontWeight.w500,
@@ -215,14 +215,14 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Nuevo usuario',
+                        'New user',
                         style: AppTextStyle.bodyMedium.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.info,
                         ),
                       ),
                       Text(
-                        'Se enviará un enlace mágico para que se registre',
+                        'Is going to be sent a magic link to register',
                         style: AppTextStyle.bodySmall.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -313,7 +313,7 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                   children: [
                     Expanded(
                       child: SecondaryButton(
-                        text: 'Cancelar',
+                        text: 'Cancel',
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ),

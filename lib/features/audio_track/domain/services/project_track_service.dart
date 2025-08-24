@@ -10,13 +10,19 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/waveform/domain/usecases/generate_waveform_usecase.dart';
 
 @lazySingleton
 class ProjectTrackService {
   final AudioTrackRepository trackRepository;
   final AudioStorageRepository audioStorageRepository;
+  final GenerateWaveformUseCase generateWaveformUseCase;
 
-  ProjectTrackService(this.trackRepository, this.audioStorageRepository);
+  ProjectTrackService(
+    this.trackRepository, 
+    this.audioStorageRepository,
+    this.generateWaveformUseCase,
+  );
 
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
@@ -60,6 +66,21 @@ class ProjectTrackService {
           File(url),
           referenceId: 'library',
           canDelete: false,
+        );
+        
+        // Generate waveform after successful upload
+        final waveformResult = await generateWaveformUseCase(
+          GenerateWaveformParams(
+            trackId: track.id,
+            audioFilePath: url,
+          ),
+        );
+        
+        // Log waveform generation result but don't fail upload if waveform fails
+        // Note: In production, consider using a proper logging framework
+        waveformResult.fold(
+          (failure) => {}, // Handle silently
+          (waveform) => {}, // Handle silently
         );
       } catch (_) {}
       return Right(unit);
