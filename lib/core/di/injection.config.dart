@@ -440,7 +440,7 @@ import 'package:trackflow/features/waveform/data/datasources/waveform_local_data
     as _i68;
 import 'package:trackflow/features/waveform/data/repositories/waveform_repository_impl.dart'
     as _i70;
-import 'package:trackflow/features/waveform/data/services/fft_waveform_generator_service.dart'
+import 'package:trackflow/features/waveform/data/services/just_waveform_generator_service.dart'
     as _i67;
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart'
     as _i69;
@@ -606,8 +606,8 @@ extension GetItInjectableX on _i1.GetIt {
             ));
     gh.lazySingleton<_i65.ValidateMagicLinkUseCase>(
         () => _i65.ValidateMagicLinkUseCase(gh<_i29.MagicLinkRepository>()));
-    gh.factory<_i66.WaveformGeneratorService>(
-        () => _i67.FFTWaveformGeneratorService());
+    gh.factory<_i66.WaveformGeneratorService>(() =>
+        _i67.JustWaveformGeneratorService(cacheDir: gh<_i14.Directory>()));
     gh.factory<_i68.WaveformLocalDataSource>(
         () => _i68.WaveformLocalDataSourceImpl(isar: gh<_i26.Isar>()));
     gh.factory<_i69.WaveformRepository>(() => _i70.WaveformRepositoryImpl(
