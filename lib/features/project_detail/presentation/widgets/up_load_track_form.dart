@@ -13,7 +13,6 @@ import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:just_audio/just_audio.dart';
 
 class UploadTrackForm extends StatefulWidget {
   final Project project;
@@ -95,18 +94,6 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
     return null;
   }
 
-  Future<Duration> _getAudioDuration(File file) async {
-    try {
-      final player = AudioPlayer();
-      await player.setFilePath(file.path);
-      final duration = player.duration ?? Duration.zero;
-      await player.dispose();
-      return duration;
-    } catch (_) {
-      return Duration.zero;
-    }
-  }
-
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       _trackTitle = _titleController?.text;
@@ -125,14 +112,12 @@ class _UploadTrackFormState extends State<UploadTrackForm> {
           );
           return;
         }
-        final duration = await _getAudioDuration(file);
 
         if (!mounted) return;
         context.read<AudioTrackBloc>().add(
           UploadAudioTrackEvent(
             name: _trackTitle!,
             file: file,
-            duration: duration,
             projectId: widget.project.id,
           ),
         );
