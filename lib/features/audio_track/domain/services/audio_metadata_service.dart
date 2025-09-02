@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:metadata_god/metadata_god.dart';
+import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 import 'package:trackflow/core/error/failures.dart';
 
 /// Domain service responsible for extracting metadata from audio files
@@ -28,16 +28,16 @@ class AudioMetadataService {
       }
 
       // Read metadata without initializing audio player
-      final metadata = await MetadataGod.readMetadata(file: audioFile.path);
-      final durationMs = metadata.durationMs;
+      final meta = await MetadataRetriever.fromFile(audioFile);
+      final ms = meta.trackDuration; // milliseconds
 
-      if (durationMs == null || durationMs <= 0) {
+      if (ms == null || ms <= 0) {
         return Left(
           AudioProcessingFailure('Could not determine audio duration'),
         );
       }
 
-      return Right(Duration(milliseconds: durationMs));
+      return Right(Duration(milliseconds: ms));
     } catch (e) {
       return Left(
         AudioProcessingFailure('Failed to read metadata: ${e.toString()}'),

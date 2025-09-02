@@ -72,7 +72,7 @@ dependencies:
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   just_waveform: ^0.0.7
-  metadata_god: ^2.0.1
+  flutter_media_metadata: ^1.0.0
 
 dev_dependencies:
   flutter_test:
