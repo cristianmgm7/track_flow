@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:metadata_god/metadata_god.dart';
 import 'package:trackflow/core/error/failures.dart';
 
 /// Domain service responsible for extracting metadata from audio files
@@ -10,7 +10,7 @@ import 'package:trackflow/core/error/failures.dart';
 class AudioMetadataService {
   const AudioMetadataService();
 
-  /// Extract duration from an audio file
+  /// Extract duration from an audio file (no player initialization)
   /// Returns the duration or a failure if the file cannot be processed
   Future<Either<Failure, Duration>> extractDuration(File audioFile) async {
     try {
@@ -27,29 +27,20 @@ class AudioMetadataService {
         return Left(AudioProcessingFailure('Cannot read audio file'));
       }
 
-      final player = AudioPlayer();
-      try {
-        await player
-            .setFilePath(audioFile.path)
-            .timeout(
-              const Duration(seconds: 10),
-              onTimeout: () => throw Exception('Audio loading timed out'),
-            );
+      // Read metadata without initializing audio player
+      final metadata = await MetadataGod.readMetadata(file: audioFile.path);
+      final durationMs = metadata.durationMs;
 
-        final duration = player.duration;
-        if (duration == null) {
-          return Left(
-            AudioProcessingFailure('Could not determine audio duration'),
-          );
-        }
-
-        return Right(duration);
-      } finally {
-        await player.dispose();
+      if (durationMs == null || durationMs <= 0) {
+        return Left(
+          AudioProcessingFailure('Could not determine audio duration'),
+        );
       }
+
+      return Right(Duration(milliseconds: durationMs));
     } catch (e) {
       return Left(
-        AudioProcessingFailure('Failed to process audio file: ${e.toString()}'),
+        AudioProcessingFailure('Failed to read metadata: ${e.toString()}'),
       );
     }
   }

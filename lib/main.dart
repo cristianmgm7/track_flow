@@ -7,6 +7,7 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app/screens/app_error_screen.dart';
 import 'package:trackflow/config/flavor_config.dart';
 import 'package:trackflow/config/firebase_config.dart';
+import 'package:metadata_god/metadata_god.dart';
 
 void main() async {
   try {
@@ -40,6 +41,13 @@ void main() async {
       AppLogger.info('🧪 TEST MODE: Skipping Firebase initialization', tag: 'MAIN');
     } else {
       AppLogger.info('✅ Firebase already initialized for ${FlavorConfig.name}', tag: 'MAIN');
+    }
+
+    // Phase 1.5: Initialize MetadataGod (for audio metadata, no player init)
+    try {
+      await MetadataGod.initialize();
+    } catch (_) {
+      // Non-fatal; continue if metadata init fails
     }
 
     // Phase 2: Configure dependencies AFTER Firebase
