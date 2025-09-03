@@ -34,7 +34,6 @@ class SyncAudioCommentsUseCase {
       userId,
     );
     await projectsEither.fold((failure) {}, (projects) async {
-      await _audioCommentLocalDataSource.deleteAllComments();
       if (projects.isEmpty) {
         return;
       }
@@ -45,12 +44,16 @@ class SyncAudioCommentsUseCase {
       if (allTracks.isEmpty) {
         return;
       }
+
+      // Replace comments per track within a single transaction each to avoid
+      // transient empty emissions in watchers.
       for (final track in allTracks) {
-        final comments = await _audioCommentRemoteDataSource
+        final remoteDtos = await _audioCommentRemoteDataSource
             .getCommentsByTrackId(track.id.value);
-        for (final comment in comments) {
-          await _audioCommentLocalDataSource.cacheComment(comment);
-        }
+        await _audioCommentLocalDataSource.replaceCommentsForTrack(
+          track.id.value,
+          remoteDtos,
+        );
       }
     });
   }

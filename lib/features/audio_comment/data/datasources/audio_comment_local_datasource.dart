@@ -42,6 +42,16 @@ abstract class AudioCommentLocalDataSource {
   /// Clears all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
   Future<Either<Failure, Unit>> clearCache();
+
+  /// Atomically replaces all comments for a given track with the provided list.
+  ///
+  /// Performs delete + batch insert inside a single transaction to ensure
+  /// watchers emit at most one consolidated update, avoiding transient empty
+  /// states in the UI.
+  Future<Either<Failure, Unit>> replaceCommentsForTrack(
+    String trackId,
+    List<AudioCommentDTO> comments,
+  );
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
@@ -152,6 +162,31 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to clear cache: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> replaceCommentsForTrack(
+    String trackId,
+    List<AudioCommentDTO> comments,
+  ) async {
+    try {
+      await _isar.writeTxn(() async {
+        // Delete existing comments for the track
+        await _isar.audioCommentDocuments
+            .filter()
+            .trackIdEqualTo(trackId)
+            .deleteAll();
+
+        if (comments.isEmpty) return;
+
+        // Insert the new set in batch
+        final docs = comments.map(AudioCommentDocument.fromDTO).toList();
+        await _isar.audioCommentDocuments.putAll(docs);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to replace comments for track: $e'));
     }
   }
 }
