@@ -7,7 +7,6 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app/screens/app_error_screen.dart';
 import 'package:trackflow/config/flavor_config.dart';
 import 'package:trackflow/config/firebase_config.dart';
-import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 
 void main() async {
   try {

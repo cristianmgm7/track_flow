@@ -14,7 +14,7 @@ import 'package:trackflow/features/waveform/domain/value_objects/waveform_metada
 
 @Injectable(as: WaveformGeneratorService)
 class JustWaveformGeneratorService implements WaveformGeneratorService {
-  static const int defaultTargetSampleCount = 200;
+  static const int defaultTargetSampleCount = 80;
 
   final Directory _cacheDir;
 
@@ -96,9 +96,9 @@ class JustWaveformGeneratorService implements WaveformGeneratorService {
   List<double> _convertWaveformToAmplitudes(Waveform waveform) {
     final length = waveform.length;
     final amplitudes = List<double>.generate(length, (i) {
-      final minVal = waveform.getPixelMin(i);
+      // Use only the positive peak so UI displays bars above the baseline
       final maxVal = waveform.getPixelMax(i);
-      return math.max(minVal.abs(), maxVal.abs()).toDouble();
+      return math.max(0.0, maxVal.toDouble());
     }, growable: false);
     return amplitudes;
   }

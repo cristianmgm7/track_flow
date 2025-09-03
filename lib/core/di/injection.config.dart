@@ -198,8 +198,6 @@ import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_com
     as _i208;
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart'
     as _i227;
-import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart'
-    as _i155;
 import 'package:trackflow/features/audio_context/domain/services/audio_context_service.dart'
     as _i215;
 import 'package:trackflow/features/audio_context/domain/usecases/load_track_context_usecase.dart'
@@ -454,35 +452,40 @@ import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart
     as _i109;
 
 extension GetItInjectableX on _i1.GetIt {
-// initializes the registration of main-scope dependencies inside of GetIt
+  // initializes the registration of main-scope dependencies inside of GetIt
   Future<_i1.GetIt> init({
     String? environment,
     _i2.EnvironmentFilter? environmentFilter,
   }) async {
-    final gh = _i2.GetItHelper(
-      this,
-      environment,
-      environmentFilter,
-    );
+    final gh = _i2.GetItHelper(this, environment, environmentFilter);
     final appModule = _$AppModule();
     gh.lazySingleton<_i3.AudioBackgroundInitializer>(
-        () => const _i3.AudioBackgroundInitializer());
+      () => const _i3.AudioBackgroundInitializer(),
+    );
     gh.lazySingleton<_i4.AudioMetadataService>(
-        () => const _i4.AudioMetadataService());
+      () => const _i4.AudioMetadataService(),
+    );
     gh.lazySingleton<_i5.AudioPlaybackService>(
-        () => _i6.AudioPlaybackServiceImpl());
+      () => _i6.AudioPlaybackServiceImpl(),
+    );
     gh.lazySingleton<_i7.AudioTrackConflictResolutionService>(
-        () => _i7.AudioTrackConflictResolutionService());
+      () => _i7.AudioTrackConflictResolutionService(),
+    );
     gh.lazySingleton<_i8.AvatarCacheManager>(
-        () => _i8.AvatarCacheManagerImpl());
+      () => _i8.AvatarCacheManagerImpl(),
+    );
     gh.singleton<_i9.BlocStateCleanupService>(
-        () => _i9.BlocStateCleanupService());
+      () => _i9.BlocStateCleanupService(),
+    );
     gh.lazySingleton<_i10.CacheMaintenanceService>(
-        () => _i11.CacheMaintenanceServiceImpl());
+      () => _i11.CacheMaintenanceServiceImpl(),
+    );
     gh.factory<_i12.CleanupCacheUseCase>(
-        () => _i12.CleanupCacheUseCase(gh<_i10.CacheMaintenanceService>()));
+      () => _i12.CleanupCacheUseCase(gh<_i10.CacheMaintenanceService>()),
+    );
     gh.lazySingleton<_i7.ConflictResolutionServiceImpl<dynamic>>(
-        () => _i7.ConflictResolutionServiceImpl<dynamic>());
+      () => _i7.ConflictResolutionServiceImpl<dynamic>(),
+    );
     gh.lazySingleton<_i13.Connectivity>(() => appModule.connectivity);
     gh.singleton<_i14.DeepLinkService>(() => _i14.DeepLinkService());
     await gh.factoryAsync<_i15.Directory>(
@@ -492,773 +495,1050 @@ extension GetItInjectableX on _i1.GetIt {
     gh.singleton<_i16.DynamicLinkService>(() => _i16.DynamicLinkService());
     gh.factory<_i17.ExampleComplexBloc>(() => _i17.ExampleComplexBloc());
     gh.factory<_i17.ExampleConditionalBloc>(
-        () => _i17.ExampleConditionalBloc());
+      () => _i17.ExampleConditionalBloc(),
+    );
     gh.factory<_i17.ExampleNavigationCubit>(
-        () => _i17.ExampleNavigationCubit());
+      () => _i17.ExampleNavigationCubit(),
+    );
     gh.factory<_i17.ExampleSimpleBloc>(() => _i17.ExampleSimpleBloc());
     gh.factory<_i17.ExampleUserProfileBloc>(
-        () => _i17.ExampleUserProfileBloc());
+      () => _i17.ExampleUserProfileBloc(),
+    );
     gh.lazySingleton<_i18.FirebaseAuth>(() => appModule.firebaseAuth);
     gh.lazySingleton<_i19.FirebaseFirestore>(() => appModule.firebaseFirestore);
     gh.lazySingleton<_i20.FirebaseStorage>(() => appModule.firebaseStorage);
-    gh.factory<_i21.GetCacheStorageStatsUseCase>(() =>
-        _i21.GetCacheStorageStatsUseCase(gh<_i10.CacheMaintenanceService>()));
+    gh.factory<_i21.GetCacheStorageStatsUseCase>(
+      () =>
+          _i21.GetCacheStorageStatsUseCase(gh<_i10.CacheMaintenanceService>()),
+    );
     gh.lazySingleton<_i22.GoogleSignIn>(() => appModule.googleSignIn);
     gh.factory<_i23.ImageMaintenanceService>(
-        () => _i23.ImageMaintenanceService());
-    gh.factory<_i24.InitializeAudioPlayerUseCase>(() =>
-        _i24.InitializeAudioPlayerUseCase(
-            playbackService: gh<_i5.AudioPlaybackService>()));
-    gh.lazySingleton<_i25.InternetConnectionChecker>(
-        () => appModule.internetConnectionChecker);
-    gh.lazySingleton<_i26.InvitationRemoteDataSource>(() =>
-        _i26.FirestoreInvitationRemoteDataSource(gh<_i19.FirebaseFirestore>()));
-    await gh.factoryAsync<_i27.Isar>(
-      () => appModule.isar,
-      preResolve: true,
+      () => _i23.ImageMaintenanceService(),
     );
+    gh.factory<_i24.InitializeAudioPlayerUseCase>(
+      () => _i24.InitializeAudioPlayerUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.lazySingleton<_i25.InternetConnectionChecker>(
+      () => appModule.internetConnectionChecker,
+    );
+    gh.lazySingleton<_i26.InvitationRemoteDataSource>(
+      () => _i26.FirestoreInvitationRemoteDataSource(
+        gh<_i19.FirebaseFirestore>(),
+      ),
+    );
+    await gh.factoryAsync<_i27.Isar>(() => appModule.isar, preResolve: true);
     gh.lazySingleton<_i28.MagicLinkLocalDataSource>(
-        () => _i28.MagicLinkLocalDataSourceImpl());
+      () => _i28.MagicLinkLocalDataSourceImpl(),
+    );
     gh.lazySingleton<_i29.MagicLinkRemoteDataSource>(
-        () => _i29.MagicLinkRemoteDataSourceImpl(
-              firestore: gh<_i19.FirebaseFirestore>(),
-              deepLinkService: gh<_i14.DeepLinkService>(),
-            ));
-    gh.factory<_i30.MagicLinkRepository>(() =>
-        _i31.MagicLinkRepositoryImp(gh<_i29.MagicLinkRemoteDataSource>()));
+      () => _i29.MagicLinkRemoteDataSourceImpl(
+        firestore: gh<_i19.FirebaseFirestore>(),
+        deepLinkService: gh<_i14.DeepLinkService>(),
+      ),
+    );
+    gh.factory<_i30.MagicLinkRepository>(
+      () => _i31.MagicLinkRepositoryImp(gh<_i29.MagicLinkRemoteDataSource>()),
+    );
     gh.factory<_i32.NavigationCubit>(() => _i32.NavigationCubit());
-    gh.lazySingleton<_i33.NetworkStateManager>(() => _i33.NetworkStateManager(
-          gh<_i25.InternetConnectionChecker>(),
-          gh<_i13.Connectivity>(),
-        ));
+    gh.lazySingleton<_i33.NetworkStateManager>(
+      () => _i33.NetworkStateManager(
+        gh<_i25.InternetConnectionChecker>(),
+        gh<_i13.Connectivity>(),
+      ),
+    );
     gh.lazySingleton<_i34.NotificationLocalDataSource>(
-        () => _i34.IsarNotificationLocalDataSource(gh<_i27.Isar>()));
-    gh.lazySingleton<_i35.NotificationRemoteDataSource>(() =>
-        _i35.FirestoreNotificationRemoteDataSource(
-            gh<_i19.FirebaseFirestore>()));
+      () => _i34.IsarNotificationLocalDataSource(gh<_i27.Isar>()),
+    );
+    gh.lazySingleton<_i35.NotificationRemoteDataSource>(
+      () => _i35.FirestoreNotificationRemoteDataSource(
+        gh<_i19.FirebaseFirestore>(),
+      ),
+    );
     gh.lazySingleton<_i36.NotificationRepository>(
-        () => _i37.NotificationRepositoryImpl(
-              localDataSource: gh<_i34.NotificationLocalDataSource>(),
-              remoteDataSource: gh<_i35.NotificationRemoteDataSource>(),
-              networkStateManager: gh<_i33.NetworkStateManager>(),
-            ));
+      () => _i37.NotificationRepositoryImpl(
+        localDataSource: gh<_i34.NotificationLocalDataSource>(),
+        remoteDataSource: gh<_i35.NotificationRemoteDataSource>(),
+        networkStateManager: gh<_i33.NetworkStateManager>(),
+      ),
+    );
     gh.lazySingleton<_i38.NotificationService>(
-        () => _i38.NotificationService(gh<_i36.NotificationRepository>()));
-    gh.lazySingleton<_i39.ObserveNotificationsUseCase>(() =>
-        _i39.ObserveNotificationsUseCase(gh<_i36.NotificationRepository>()));
+      () => _i38.NotificationService(gh<_i36.NotificationRepository>()),
+    );
+    gh.lazySingleton<_i39.ObserveNotificationsUseCase>(
+      () => _i39.ObserveNotificationsUseCase(gh<_i36.NotificationRepository>()),
+    );
     gh.factory<_i40.OperationExecutorFactory>(
-        () => _i40.OperationExecutorFactory());
-    gh.factory<_i41.PauseAudioUseCase>(() => _i41.PauseAudioUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
+      () => _i40.OperationExecutorFactory(),
+    );
+    gh.factory<_i41.PauseAudioUseCase>(
+      () => _i41.PauseAudioUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
     gh.lazySingleton<_i42.PendingOperationsLocalDataSource>(
-        () => _i42.IsarPendingOperationsLocalDataSource(gh<_i27.Isar>()));
-    gh.lazySingleton<_i43.PendingOperationsRepository>(() =>
-        _i43.PendingOperationsRepositoryImpl(
-            gh<_i42.PendingOperationsLocalDataSource>()));
+      () => _i42.IsarPendingOperationsLocalDataSource(gh<_i27.Isar>()),
+    );
+    gh.lazySingleton<_i43.PendingOperationsRepository>(
+      () => _i43.PendingOperationsRepositoryImpl(
+        gh<_i42.PendingOperationsLocalDataSource>(),
+      ),
+    );
     gh.factory<_i44.PerformanceMetricsCollector>(
-        () => _i44.PerformanceMetricsCollector());
+      () => _i44.PerformanceMetricsCollector(),
+    );
     gh.lazySingleton<_i45.PlaybackPersistenceRepository>(
-        () => _i46.PlaybackPersistenceRepositoryImpl());
+      () => _i46.PlaybackPersistenceRepositoryImpl(),
+    );
     gh.lazySingleton<_i47.PlaylistLocalDataSource>(
-        () => _i47.PlaylistLocalDataSourceImpl(gh<_i27.Isar>()));
+      () => _i47.PlaylistLocalDataSourceImpl(gh<_i27.Isar>()),
+    );
     gh.lazySingleton<_i48.PlaylistRemoteDataSource>(
-        () => _i48.PlaylistRemoteDataSourceImpl(gh<_i19.FirebaseFirestore>()));
+      () => _i48.PlaylistRemoteDataSourceImpl(gh<_i19.FirebaseFirestore>()),
+    );
     gh.lazySingleton<_i7.ProjectConflictResolutionService>(
-        () => _i7.ProjectConflictResolutionService());
-    gh.lazySingleton<_i49.ProjectRemoteDataSource>(() =>
-        _i49.ProjectsRemoteDatasSourceImpl(
-            firestore: gh<_i19.FirebaseFirestore>()));
+      () => _i7.ProjectConflictResolutionService(),
+    );
+    gh.lazySingleton<_i49.ProjectRemoteDataSource>(
+      () => _i49.ProjectsRemoteDatasSourceImpl(
+        firestore: gh<_i19.FirebaseFirestore>(),
+      ),
+    );
     gh.lazySingleton<_i50.ProjectsLocalDataSource>(
-        () => _i50.ProjectsLocalDataSourceImpl(gh<_i27.Isar>()));
+      () => _i50.ProjectsLocalDataSourceImpl(gh<_i27.Isar>()),
+    );
     gh.lazySingleton<_i51.ResendMagicLinkUseCase>(
-        () => _i51.ResendMagicLinkUseCase(gh<_i30.MagicLinkRepository>()));
-    gh.factory<_i52.ResumeAudioUseCase>(() => _i52.ResumeAudioUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
+      () => _i51.ResendMagicLinkUseCase(gh<_i30.MagicLinkRepository>()),
+    );
+    gh.factory<_i52.ResumeAudioUseCase>(
+      () => _i52.ResumeAudioUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
     gh.factory<_i53.SavePlaybackStateUseCase>(
-        () => _i53.SavePlaybackStateUseCase(
-              persistenceRepository: gh<_i45.PlaybackPersistenceRepository>(),
-              playbackService: gh<_i5.AudioPlaybackService>(),
-            ));
-    gh.factory<_i54.SeekAudioUseCase>(() =>
-        _i54.SeekAudioUseCase(playbackService: gh<_i5.AudioPlaybackService>()));
-    gh.factory<_i55.SetPlaybackSpeedUseCase>(() => _i55.SetPlaybackSpeedUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
-    gh.factory<_i56.SetVolumeUseCase>(() =>
-        _i56.SetVolumeUseCase(playbackService: gh<_i5.AudioPlaybackService>()));
+      () => _i53.SavePlaybackStateUseCase(
+        persistenceRepository: gh<_i45.PlaybackPersistenceRepository>(),
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i54.SeekAudioUseCase>(
+      () => _i54.SeekAudioUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i55.SetPlaybackSpeedUseCase>(
+      () => _i55.SetPlaybackSpeedUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i56.SetVolumeUseCase>(
+      () => _i56.SetVolumeUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
     await gh.factoryAsync<_i57.SharedPreferences>(
       () => appModule.prefs,
       preResolve: true,
     );
-    gh.factory<_i58.SkipToNextUseCase>(() => _i58.SkipToNextUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
-    gh.factory<_i59.SkipToPreviousUseCase>(() => _i59.SkipToPreviousUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
-    gh.factory<_i60.StopAudioUseCase>(() =>
-        _i60.StopAudioUseCase(playbackService: gh<_i5.AudioPlaybackService>()));
+    gh.factory<_i58.SkipToNextUseCase>(
+      () => _i58.SkipToNextUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i59.SkipToPreviousUseCase>(
+      () => _i59.SkipToPreviousUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i60.StopAudioUseCase>(
+      () => _i60.StopAudioUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
     gh.lazySingleton<_i61.SyncMetadataManager>(
-        () => _i61.SyncMetadataManager());
-    gh.factory<_i62.ToggleRepeatModeUseCase>(() => _i62.ToggleRepeatModeUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
-    gh.factory<_i63.ToggleShuffleUseCase>(() => _i63.ToggleShuffleUseCase(
-        playbackService: gh<_i5.AudioPlaybackService>()));
+      () => _i61.SyncMetadataManager(),
+    );
+    gh.factory<_i62.ToggleRepeatModeUseCase>(
+      () => _i62.ToggleRepeatModeUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i63.ToggleShuffleUseCase>(
+      () => _i63.ToggleShuffleUseCase(
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
     gh.lazySingleton<_i64.UserProfileLocalDataSource>(
-        () => _i64.IsarUserProfileLocalDataSource(gh<_i27.Isar>()));
+      () => _i64.IsarUserProfileLocalDataSource(gh<_i27.Isar>()),
+    );
     gh.lazySingleton<_i65.UserProfileRemoteDataSource>(
-        () => _i65.UserProfileRemoteDataSourceImpl(
-              gh<_i19.FirebaseFirestore>(),
-              gh<_i20.FirebaseStorage>(),
-            ));
+      () => _i65.UserProfileRemoteDataSourceImpl(
+        gh<_i19.FirebaseFirestore>(),
+        gh<_i20.FirebaseStorage>(),
+      ),
+    );
     gh.lazySingleton<_i66.ValidateMagicLinkUseCase>(
-        () => _i66.ValidateMagicLinkUseCase(gh<_i30.MagicLinkRepository>()));
-    gh.factory<_i67.WaveformGeneratorService>(() =>
-        _i68.JustWaveformGeneratorService(cacheDir: gh<_i15.Directory>()));
+      () => _i66.ValidateMagicLinkUseCase(gh<_i30.MagicLinkRepository>()),
+    );
+    gh.factory<_i67.WaveformGeneratorService>(
+      () => _i68.JustWaveformGeneratorService(cacheDir: gh<_i15.Directory>()),
+    );
     gh.factory<_i69.WaveformLocalDataSource>(
-        () => _i69.WaveformLocalDataSourceImpl(isar: gh<_i27.Isar>()));
-    gh.factory<_i70.WaveformRepository>(() => _i71.WaveformRepositoryImpl(
-        localDataSource: gh<_i69.WaveformLocalDataSource>()));
+      () => _i69.WaveformLocalDataSourceImpl(isar: gh<_i27.Isar>()),
+    );
+    gh.factory<_i70.WaveformRepository>(
+      () => _i71.WaveformRepositoryImpl(
+        localDataSource: gh<_i69.WaveformLocalDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i72.AppleAuthService>(
-        () => _i72.AppleAuthService(gh<_i18.FirebaseAuth>()));
+      () => _i72.AppleAuthService(gh<_i18.FirebaseAuth>()),
+    );
     gh.lazySingleton<_i73.AudioCommentLocalDataSource>(
-        () => _i73.IsarAudioCommentLocalDataSource(gh<_i27.Isar>()));
-    gh.lazySingleton<_i74.AudioCommentRemoteDataSource>(() =>
-        _i74.FirebaseAudioCommentRemoteDataSource(
-            gh<_i19.FirebaseFirestore>()));
+      () => _i73.IsarAudioCommentLocalDataSource(gh<_i27.Isar>()),
+    );
+    gh.lazySingleton<_i74.AudioCommentRemoteDataSource>(
+      () => _i74.FirebaseAudioCommentRemoteDataSource(
+        gh<_i19.FirebaseFirestore>(),
+      ),
+    );
     gh.lazySingleton<_i75.AudioTrackLocalDataSource>(
-        () => _i75.IsarAudioTrackLocalDataSource(gh<_i27.Isar>()));
+      () => _i75.IsarAudioTrackLocalDataSource(gh<_i27.Isar>()),
+    );
     gh.lazySingleton<_i76.AudioTrackRemoteDataSource>(
-        () => _i76.AudioTrackRemoteDataSourceImpl(
-              gh<_i19.FirebaseFirestore>(),
-              gh<_i20.FirebaseStorage>(),
-            ));
+      () => _i76.AudioTrackRemoteDataSourceImpl(
+        gh<_i19.FirebaseFirestore>(),
+        gh<_i20.FirebaseStorage>(),
+      ),
+    );
     gh.lazySingleton<_i77.CacheStorageLocalDataSource>(
-        () => _i77.CacheStorageLocalDataSourceImpl(gh<_i27.Isar>()));
-    gh.lazySingleton<_i78.CacheStorageRemoteDataSource>(() =>
-        _i78.CacheStorageRemoteDataSourceImpl(gh<_i20.FirebaseStorage>()));
+      () => _i77.CacheStorageLocalDataSourceImpl(gh<_i27.Isar>()),
+    );
+    gh.lazySingleton<_i78.CacheStorageRemoteDataSource>(
+      () => _i78.CacheStorageRemoteDataSourceImpl(gh<_i20.FirebaseStorage>()),
+    );
     gh.lazySingleton<_i79.ConsumeMagicLinkUseCase>(
-        () => _i79.ConsumeMagicLinkUseCase(gh<_i30.MagicLinkRepository>()));
-    gh.factory<_i80.CreateNotificationUseCase>(() =>
-        _i80.CreateNotificationUseCase(gh<_i36.NotificationRepository>()));
+      () => _i79.ConsumeMagicLinkUseCase(gh<_i30.MagicLinkRepository>()),
+    );
+    gh.factory<_i80.CreateNotificationUseCase>(
+      () => _i80.CreateNotificationUseCase(gh<_i36.NotificationRepository>()),
+    );
     gh.factory<_i81.DatabaseHealthMonitor>(
-        () => _i81.DatabaseHealthMonitor(gh<_i27.Isar>()));
-    gh.factory<_i82.DeleteNotificationUseCase>(() =>
-        _i82.DeleteNotificationUseCase(gh<_i36.NotificationRepository>()));
-    gh.factory<_i83.GenerateWaveformUseCase>(() => _i83.GenerateWaveformUseCase(
-          generatorService: gh<_i67.WaveformGeneratorService>(),
-          repository: gh<_i70.WaveformRepository>(),
-        ));
+      () => _i81.DatabaseHealthMonitor(gh<_i27.Isar>()),
+    );
+    gh.factory<_i82.DeleteNotificationUseCase>(
+      () => _i82.DeleteNotificationUseCase(gh<_i36.NotificationRepository>()),
+    );
+    gh.factory<_i83.GenerateWaveformUseCase>(
+      () => _i83.GenerateWaveformUseCase(
+        generatorService: gh<_i67.WaveformGeneratorService>(),
+        repository: gh<_i70.WaveformRepository>(),
+      ),
+    );
     gh.lazySingleton<_i84.GetMagicLinkStatusUseCase>(
-        () => _i84.GetMagicLinkStatusUseCase(gh<_i30.MagicLinkRepository>()));
-    gh.lazySingleton<_i85.GetUnreadNotificationsCountUseCase>(() =>
-        _i85.GetUnreadNotificationsCountUseCase(
-            gh<_i36.NotificationRepository>()));
-    gh.lazySingleton<_i86.GoogleAuthService>(() => _i86.GoogleAuthService(
-          gh<_i22.GoogleSignIn>(),
-          gh<_i18.FirebaseAuth>(),
-        ));
+      () => _i84.GetMagicLinkStatusUseCase(gh<_i30.MagicLinkRepository>()),
+    );
+    gh.lazySingleton<_i85.GetUnreadNotificationsCountUseCase>(
+      () => _i85.GetUnreadNotificationsCountUseCase(
+        gh<_i36.NotificationRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i86.GoogleAuthService>(
+      () => _i86.GoogleAuthService(
+        gh<_i22.GoogleSignIn>(),
+        gh<_i18.FirebaseAuth>(),
+      ),
+    );
     gh.lazySingleton<_i87.InvitationLocalDataSource>(
-        () => _i87.IsarInvitationLocalDataSource(gh<_i27.Isar>()));
+      () => _i87.IsarInvitationLocalDataSource(gh<_i27.Isar>()),
+    );
     gh.lazySingleton<_i88.InvitationRepository>(
-        () => _i89.InvitationRepositoryImpl(
-              localDataSource: gh<_i87.InvitationLocalDataSource>(),
-              remoteDataSource: gh<_i26.InvitationRemoteDataSource>(),
-              networkStateManager: gh<_i33.NetworkStateManager>(),
-            ));
+      () => _i89.InvitationRepositoryImpl(
+        localDataSource: gh<_i87.InvitationLocalDataSource>(),
+        remoteDataSource: gh<_i26.InvitationRemoteDataSource>(),
+        networkStateManager: gh<_i33.NetworkStateManager>(),
+      ),
+    );
     gh.factory<_i90.MarkAsUnreadUseCase>(
-        () => _i90.MarkAsUnreadUseCase(gh<_i36.NotificationRepository>()));
-    gh.lazySingleton<_i91.MarkNotificationAsReadUseCase>(() =>
-        _i91.MarkNotificationAsReadUseCase(gh<_i36.NotificationRepository>()));
-    gh.lazySingleton<_i92.ObservePendingInvitationsUseCase>(() =>
-        _i92.ObservePendingInvitationsUseCase(gh<_i88.InvitationRepository>()));
-    gh.lazySingleton<_i93.ObserveSentInvitationsUseCase>(() =>
-        _i93.ObserveSentInvitationsUseCase(gh<_i88.InvitationRepository>()));
-    gh.lazySingleton<_i94.OnboardingStateLocalDataSource>(() =>
-        _i94.OnboardingStateLocalDataSourceImpl(gh<_i57.SharedPreferences>()));
+      () => _i90.MarkAsUnreadUseCase(gh<_i36.NotificationRepository>()),
+    );
+    gh.lazySingleton<_i91.MarkNotificationAsReadUseCase>(
+      () =>
+          _i91.MarkNotificationAsReadUseCase(gh<_i36.NotificationRepository>()),
+    );
+    gh.lazySingleton<_i92.ObservePendingInvitationsUseCase>(
+      () => _i92.ObservePendingInvitationsUseCase(
+        gh<_i88.InvitationRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i93.ObserveSentInvitationsUseCase>(
+      () => _i93.ObserveSentInvitationsUseCase(gh<_i88.InvitationRepository>()),
+    );
+    gh.lazySingleton<_i94.OnboardingStateLocalDataSource>(
+      () =>
+          _i94.OnboardingStateLocalDataSourceImpl(gh<_i57.SharedPreferences>()),
+    );
     gh.lazySingleton<_i95.PendingOperationsManager>(
-        () => _i95.PendingOperationsManager(
-              gh<_i43.PendingOperationsRepository>(),
-              gh<_i33.NetworkStateManager>(),
-              gh<_i40.OperationExecutorFactory>(),
-            ));
-    gh.factory<_i96.PlaylistOperationExecutor>(() =>
-        _i96.PlaylistOperationExecutor(gh<_i48.PlaylistRemoteDataSource>()));
+      () => _i95.PendingOperationsManager(
+        gh<_i43.PendingOperationsRepository>(),
+        gh<_i33.NetworkStateManager>(),
+        gh<_i40.OperationExecutorFactory>(),
+      ),
+    );
+    gh.factory<_i96.PlaylistOperationExecutor>(
+      () => _i96.PlaylistOperationExecutor(gh<_i48.PlaylistRemoteDataSource>()),
+    );
     gh.lazySingleton<_i97.ProjectIncrementalSyncService>(
-        () => _i97.ProjectIncrementalSyncService(
-              gh<_i49.ProjectRemoteDataSource>(),
-              gh<_i50.ProjectsLocalDataSource>(),
-            ));
-    gh.factory<_i98.ProjectOperationExecutor>(() =>
-        _i98.ProjectOperationExecutor(gh<_i49.ProjectRemoteDataSource>()));
+      () => _i97.ProjectIncrementalSyncService(
+        gh<_i49.ProjectRemoteDataSource>(),
+        gh<_i50.ProjectsLocalDataSource>(),
+      ),
+    );
+    gh.factory<_i98.ProjectOperationExecutor>(
+      () => _i98.ProjectOperationExecutor(gh<_i49.ProjectRemoteDataSource>()),
+    );
     gh.lazySingleton<_i99.SessionStorage>(
-        () => _i99.SessionStorageImpl(prefs: gh<_i57.SharedPreferences>()));
+      () => _i99.SessionStorageImpl(prefs: gh<_i57.SharedPreferences>()),
+    );
     gh.lazySingleton<_i100.SyncAudioCommentsUseCase>(
-        () => _i100.SyncAudioCommentsUseCase(
-              gh<_i74.AudioCommentRemoteDataSource>(),
-              gh<_i73.AudioCommentLocalDataSource>(),
-              gh<_i49.ProjectRemoteDataSource>(),
-              gh<_i99.SessionStorage>(),
-              gh<_i76.AudioTrackRemoteDataSource>(),
-            ));
+      () => _i100.SyncAudioCommentsUseCase(
+        gh<_i74.AudioCommentRemoteDataSource>(),
+        gh<_i73.AudioCommentLocalDataSource>(),
+        gh<_i49.ProjectRemoteDataSource>(),
+        gh<_i99.SessionStorage>(),
+        gh<_i76.AudioTrackRemoteDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i101.SyncNotificationsUseCase>(
-        () => _i101.SyncNotificationsUseCase(
-              gh<_i36.NotificationRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i101.SyncNotificationsUseCase(
+        gh<_i36.NotificationRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i102.SyncProjectsUsingSimpleServiceUseCase>(
-        () => _i102.SyncProjectsUsingSimpleServiceUseCase(
-              gh<_i97.ProjectIncrementalSyncService>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i102.SyncProjectsUsingSimpleServiceUseCase(
+        gh<_i97.ProjectIncrementalSyncService>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i103.SyncUserProfileUseCase>(
-        () => _i103.SyncUserProfileUseCase(
-              gh<_i65.UserProfileRemoteDataSource>(),
-              gh<_i64.UserProfileLocalDataSource>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i103.SyncUserProfileUseCase(
+        gh<_i65.UserProfileRemoteDataSource>(),
+        gh<_i64.UserProfileLocalDataSource>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i104.UserProfileCacheRepository>(
-        () => _i105.UserProfileCacheRepositoryImpl(
-              gh<_i65.UserProfileRemoteDataSource>(),
-              gh<_i64.UserProfileLocalDataSource>(),
-              gh<_i33.NetworkStateManager>(),
-            ));
-    gh.factory<_i106.UserProfileOperationExecutor>(() =>
-        _i106.UserProfileOperationExecutor(
-            gh<_i65.UserProfileRemoteDataSource>()));
-    gh.lazySingleton<_i107.WatchTrackUploadStatusUseCase>(() =>
-        _i107.WatchTrackUploadStatusUseCase(
-            gh<_i95.PendingOperationsManager>()));
-    gh.lazySingleton<_i108.WatchUserProfilesUseCase>(() =>
-        _i108.WatchUserProfilesUseCase(gh<_i104.UserProfileCacheRepository>()));
-    gh.factory<_i109.WaveformBloc>(() => _i109.WaveformBloc(
-          waveformRepository: gh<_i70.WaveformRepository>(),
-          audioPlaybackService: gh<_i5.AudioPlaybackService>(),
-        ));
-    gh.factory<_i110.AudioCommentOperationExecutor>(() =>
-        _i110.AudioCommentOperationExecutor(
-            gh<_i74.AudioCommentRemoteDataSource>()));
-    gh.lazySingleton<_i111.AudioDownloadRepository>(() =>
-        _i112.AudioDownloadRepositoryImpl(
-            remoteDataSource: gh<_i78.CacheStorageRemoteDataSource>()));
-    gh.lazySingleton<_i113.AudioStorageRepository>(() =>
-        _i114.AudioStorageRepositoryImpl(
-            localDataSource: gh<_i77.CacheStorageLocalDataSource>()));
+      () => _i105.UserProfileCacheRepositoryImpl(
+        gh<_i65.UserProfileRemoteDataSource>(),
+        gh<_i64.UserProfileLocalDataSource>(),
+        gh<_i33.NetworkStateManager>(),
+      ),
+    );
+    gh.factory<_i106.UserProfileOperationExecutor>(
+      () => _i106.UserProfileOperationExecutor(
+        gh<_i65.UserProfileRemoteDataSource>(),
+      ),
+    );
+    gh.lazySingleton<_i107.WatchTrackUploadStatusUseCase>(
+      () => _i107.WatchTrackUploadStatusUseCase(
+        gh<_i95.PendingOperationsManager>(),
+      ),
+    );
+    gh.lazySingleton<_i108.WatchUserProfilesUseCase>(
+      () => _i108.WatchUserProfilesUseCase(
+        gh<_i104.UserProfileCacheRepository>(),
+      ),
+    );
+    gh.factory<_i109.WaveformBloc>(
+      () => _i109.WaveformBloc(
+        waveformRepository: gh<_i70.WaveformRepository>(),
+        audioPlaybackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i110.AudioCommentOperationExecutor>(
+      () => _i110.AudioCommentOperationExecutor(
+        gh<_i74.AudioCommentRemoteDataSource>(),
+      ),
+    );
+    gh.lazySingleton<_i111.AudioDownloadRepository>(
+      () => _i112.AudioDownloadRepositoryImpl(
+        remoteDataSource: gh<_i78.CacheStorageRemoteDataSource>(),
+      ),
+    );
+    gh.lazySingleton<_i113.AudioStorageRepository>(
+      () => _i114.AudioStorageRepositoryImpl(
+        localDataSource: gh<_i77.CacheStorageLocalDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i115.AudioTrackIncrementalSyncService>(
-        () => _i115.AudioTrackIncrementalSyncService(
-              gh<_i76.AudioTrackRemoteDataSource>(),
-              gh<_i75.AudioTrackLocalDataSource>(),
-              gh<_i49.ProjectRemoteDataSource>(),
-            ));
-    gh.factory<_i116.AudioTrackOperationExecutor>(() =>
-        _i116.AudioTrackOperationExecutor(
-            gh<_i76.AudioTrackRemoteDataSource>()));
+      () => _i115.AudioTrackIncrementalSyncService(
+        gh<_i76.AudioTrackRemoteDataSource>(),
+        gh<_i75.AudioTrackLocalDataSource>(),
+        gh<_i49.ProjectRemoteDataSource>(),
+      ),
+    );
+    gh.factory<_i116.AudioTrackOperationExecutor>(
+      () => _i116.AudioTrackOperationExecutor(
+        gh<_i76.AudioTrackRemoteDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i117.AuthRemoteDataSource>(
-        () => _i117.AuthRemoteDataSourceImpl(
-              gh<_i18.FirebaseAuth>(),
-              gh<_i86.GoogleAuthService>(),
-            ));
-    gh.lazySingleton<_i118.AuthRepository>(() => _i119.AuthRepositoryImpl(
-          remote: gh<_i117.AuthRemoteDataSource>(),
-          sessionStorage: gh<_i99.SessionStorage>(),
-          networkStateManager: gh<_i33.NetworkStateManager>(),
-          googleAuthService: gh<_i86.GoogleAuthService>(),
-          appleAuthService: gh<_i72.AppleAuthService>(),
-        ));
-    gh.lazySingleton<_i120.CacheKeyRepository>(() =>
-        _i121.CacheKeyRepositoryImpl(
-            localDataSource: gh<_i77.CacheStorageLocalDataSource>()));
-    gh.lazySingleton<_i122.CacheMaintenanceRepository>(() =>
-        _i123.CacheMaintenanceRepositoryImpl(
-            localDataSource: gh<_i77.CacheStorageLocalDataSource>()));
-    gh.factory<_i124.CacheTrackUseCase>(() => _i124.CacheTrackUseCase(
-          gh<_i111.AudioDownloadRepository>(),
-          gh<_i113.AudioStorageRepository>(),
-        ));
+      () => _i117.AuthRemoteDataSourceImpl(
+        gh<_i18.FirebaseAuth>(),
+        gh<_i86.GoogleAuthService>(),
+      ),
+    );
+    gh.lazySingleton<_i118.AuthRepository>(
+      () => _i119.AuthRepositoryImpl(
+        remote: gh<_i117.AuthRemoteDataSource>(),
+        sessionStorage: gh<_i99.SessionStorage>(),
+        networkStateManager: gh<_i33.NetworkStateManager>(),
+        googleAuthService: gh<_i86.GoogleAuthService>(),
+        appleAuthService: gh<_i72.AppleAuthService>(),
+      ),
+    );
+    gh.lazySingleton<_i120.CacheKeyRepository>(
+      () => _i121.CacheKeyRepositoryImpl(
+        localDataSource: gh<_i77.CacheStorageLocalDataSource>(),
+      ),
+    );
+    gh.lazySingleton<_i122.CacheMaintenanceRepository>(
+      () => _i123.CacheMaintenanceRepositoryImpl(
+        localDataSource: gh<_i77.CacheStorageLocalDataSource>(),
+      ),
+    );
+    gh.factory<_i124.CacheTrackUseCase>(
+      () => _i124.CacheTrackUseCase(
+        gh<_i111.AudioDownloadRepository>(),
+        gh<_i113.AudioStorageRepository>(),
+      ),
+    );
     gh.lazySingleton<_i125.CancelInvitationUseCase>(
-        () => _i125.CancelInvitationUseCase(gh<_i88.InvitationRepository>()));
-    gh.factory<_i126.CheckAuthenticationStatusUseCase>(() =>
-        _i126.CheckAuthenticationStatusUseCase(gh<_i118.AuthRepository>()));
+      () => _i125.CancelInvitationUseCase(gh<_i88.InvitationRepository>()),
+    );
+    gh.factory<_i126.CheckAuthenticationStatusUseCase>(
+      () => _i126.CheckAuthenticationStatusUseCase(gh<_i118.AuthRepository>()),
+    );
     gh.factory<_i127.CurrentUserService>(
-        () => _i127.CurrentUserService(gh<_i99.SessionStorage>()));
-    gh.factory<_i128.DeleteCachedAudioUseCase>(() =>
-        _i128.DeleteCachedAudioUseCase(gh<_i113.AudioStorageRepository>()));
-    gh.factory<_i129.DeleteMultipleCachedAudiosUseCase>(() =>
-        _i129.DeleteMultipleCachedAudiosUseCase(
-            gh<_i113.AudioStorageRepository>()));
+      () => _i127.CurrentUserService(gh<_i99.SessionStorage>()),
+    );
+    gh.factory<_i128.DeleteCachedAudioUseCase>(
+      () => _i128.DeleteCachedAudioUseCase(gh<_i113.AudioStorageRepository>()),
+    );
+    gh.factory<_i129.DeleteMultipleCachedAudiosUseCase>(
+      () => _i129.DeleteMultipleCachedAudiosUseCase(
+        gh<_i113.AudioStorageRepository>(),
+      ),
+    );
     gh.lazySingleton<_i130.GenerateMagicLinkUseCase>(
-        () => _i130.GenerateMagicLinkUseCase(
-              gh<_i30.MagicLinkRepository>(),
-              gh<_i118.AuthRepository>(),
-            ));
+      () => _i130.GenerateMagicLinkUseCase(
+        gh<_i30.MagicLinkRepository>(),
+        gh<_i118.AuthRepository>(),
+      ),
+    );
     gh.lazySingleton<_i131.GetAuthStateUseCase>(
-        () => _i131.GetAuthStateUseCase(gh<_i118.AuthRepository>()));
-    gh.factory<_i132.GetCachedTrackPathUseCase>(() =>
-        _i132.GetCachedTrackPathUseCase(gh<_i113.AudioStorageRepository>()));
+      () => _i131.GetAuthStateUseCase(gh<_i118.AuthRepository>()),
+    );
+    gh.factory<_i132.GetCachedTrackPathUseCase>(
+      () => _i132.GetCachedTrackPathUseCase(gh<_i113.AudioStorageRepository>()),
+    );
     gh.factory<_i133.GetCurrentUserUseCase>(
-        () => _i133.GetCurrentUserUseCase(gh<_i118.AuthRepository>()));
-    gh.lazySingleton<_i134.GetPendingInvitationsCountUseCase>(() =>
-        _i134.GetPendingInvitationsCountUseCase(
-            gh<_i88.InvitationRepository>()));
-    gh.factory<_i135.GetPlaylistCacheStatusUseCase>(() =>
-        _i135.GetPlaylistCacheStatusUseCase(
-            gh<_i113.AudioStorageRepository>()));
+      () => _i133.GetCurrentUserUseCase(gh<_i118.AuthRepository>()),
+    );
+    gh.lazySingleton<_i134.GetPendingInvitationsCountUseCase>(
+      () => _i134.GetPendingInvitationsCountUseCase(
+        gh<_i88.InvitationRepository>(),
+      ),
+    );
+    gh.factory<_i135.GetPlaylistCacheStatusUseCase>(
+      () => _i135.GetPlaylistCacheStatusUseCase(
+        gh<_i113.AudioStorageRepository>(),
+      ),
+    );
     gh.factory<_i136.MarkAllNotificationsAsReadUseCase>(
-        () => _i136.MarkAllNotificationsAsReadUseCase(
-              notificationRepository: gh<_i36.NotificationRepository>(),
-              currentUserService: gh<_i127.CurrentUserService>(),
-            ));
-    gh.factory<_i137.NotificationActorBloc>(() => _i137.NotificationActorBloc(
-          createNotificationUseCase: gh<_i80.CreateNotificationUseCase>(),
-          markAsReadUseCase: gh<_i91.MarkNotificationAsReadUseCase>(),
-          markAsUnreadUseCase: gh<_i90.MarkAsUnreadUseCase>(),
-          markAllAsReadUseCase: gh<_i136.MarkAllNotificationsAsReadUseCase>(),
-          deleteNotificationUseCase: gh<_i82.DeleteNotificationUseCase>(),
-        ));
+      () => _i136.MarkAllNotificationsAsReadUseCase(
+        notificationRepository: gh<_i36.NotificationRepository>(),
+        currentUserService: gh<_i127.CurrentUserService>(),
+      ),
+    );
+    gh.factory<_i137.NotificationActorBloc>(
+      () => _i137.NotificationActorBloc(
+        createNotificationUseCase: gh<_i80.CreateNotificationUseCase>(),
+        markAsReadUseCase: gh<_i91.MarkNotificationAsReadUseCase>(),
+        markAsUnreadUseCase: gh<_i90.MarkAsUnreadUseCase>(),
+        markAllAsReadUseCase: gh<_i136.MarkAllNotificationsAsReadUseCase>(),
+        deleteNotificationUseCase: gh<_i82.DeleteNotificationUseCase>(),
+      ),
+    );
     gh.factory<_i138.NotificationWatcherBloc>(
-        () => _i138.NotificationWatcherBloc(
-              notificationRepository: gh<_i36.NotificationRepository>(),
-              currentUserService: gh<_i127.CurrentUserService>(),
-            ));
-    gh.lazySingleton<_i139.OnboardingRepository>(() =>
-        _i140.OnboardingRepositoryImpl(
-            gh<_i94.OnboardingStateLocalDataSource>()));
+      () => _i138.NotificationWatcherBloc(
+        notificationRepository: gh<_i36.NotificationRepository>(),
+        currentUserService: gh<_i127.CurrentUserService>(),
+      ),
+    );
+    gh.lazySingleton<_i139.OnboardingRepository>(
+      () => _i140.OnboardingRepositoryImpl(
+        gh<_i94.OnboardingStateLocalDataSource>(),
+      ),
+    );
     gh.lazySingleton<_i141.OnboardingUseCase>(
-        () => _i141.OnboardingUseCase(gh<_i139.OnboardingRepository>()));
+      () => _i141.OnboardingUseCase(gh<_i139.OnboardingRepository>()),
+    );
     gh.factory<_i142.ProjectInvitationWatcherBloc>(
-        () => _i142.ProjectInvitationWatcherBloc(
-              invitationRepository: gh<_i88.InvitationRepository>(),
-              currentUserService: gh<_i127.CurrentUserService>(),
-            ));
-    gh.factory<_i143.RemovePlaylistCacheUseCase>(() =>
-        _i143.RemovePlaylistCacheUseCase(gh<_i113.AudioStorageRepository>()));
-    gh.factory<_i144.RemoveTrackCacheUseCase>(() =>
-        _i144.RemoveTrackCacheUseCase(gh<_i113.AudioStorageRepository>()));
+      () => _i142.ProjectInvitationWatcherBloc(
+        invitationRepository: gh<_i88.InvitationRepository>(),
+        currentUserService: gh<_i127.CurrentUserService>(),
+      ),
+    );
+    gh.factory<_i143.RemovePlaylistCacheUseCase>(
+      () =>
+          _i143.RemovePlaylistCacheUseCase(gh<_i113.AudioStorageRepository>()),
+    );
+    gh.factory<_i144.RemoveTrackCacheUseCase>(
+      () => _i144.RemoveTrackCacheUseCase(gh<_i113.AudioStorageRepository>()),
+    );
     gh.lazySingleton<_i145.SignOutUseCase>(
-        () => _i145.SignOutUseCase(gh<_i118.AuthRepository>()));
+      () => _i145.SignOutUseCase(gh<_i118.AuthRepository>()),
+    );
     gh.lazySingleton<_i146.SignUpUseCase>(
-        () => _i146.SignUpUseCase(gh<_i118.AuthRepository>()));
+      () => _i146.SignUpUseCase(gh<_i118.AuthRepository>()),
+    );
     gh.lazySingleton<_i147.SyncAudioTracksUsingSimpleServiceUseCase>(
-        () => _i147.SyncAudioTracksUsingSimpleServiceUseCase(
-              gh<_i115.AudioTrackIncrementalSyncService>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i147.SyncAudioTracksUsingSimpleServiceUseCase(
+        gh<_i115.AudioTrackIncrementalSyncService>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i148.SyncUserProfileCollaboratorsUseCase>(
-        () => _i148.SyncUserProfileCollaboratorsUseCase(
-              gh<_i50.ProjectsLocalDataSource>(),
-              gh<_i104.UserProfileCacheRepository>(),
-            ));
-    gh.factory<_i149.TrackUploadStatusCubit>(() => _i149.TrackUploadStatusCubit(
-        gh<_i107.WatchTrackUploadStatusUseCase>()));
-    gh.factory<_i150.WatchStorageUsageUseCase>(() =>
-        _i150.WatchStorageUsageUseCase(gh<_i113.AudioStorageRepository>()));
-    gh.factory<_i151.WatchTrackCacheStatusUseCase>(() =>
-        _i151.WatchTrackCacheStatusUseCase(gh<_i113.AudioStorageRepository>()));
+      () => _i148.SyncUserProfileCollaboratorsUseCase(
+        gh<_i50.ProjectsLocalDataSource>(),
+        gh<_i104.UserProfileCacheRepository>(),
+      ),
+    );
+    gh.factory<_i149.TrackUploadStatusCubit>(
+      () => _i149.TrackUploadStatusCubit(
+        gh<_i107.WatchTrackUploadStatusUseCase>(),
+      ),
+    );
+    gh.factory<_i150.WatchStorageUsageUseCase>(
+      () => _i150.WatchStorageUsageUseCase(gh<_i113.AudioStorageRepository>()),
+    );
+    gh.factory<_i151.WatchTrackCacheStatusUseCase>(
+      () => _i151.WatchTrackCacheStatusUseCase(
+        gh<_i113.AudioStorageRepository>(),
+      ),
+    );
     gh.lazySingleton<_i152.AppleSignInUseCase>(
-        () => _i152.AppleSignInUseCase(gh<_i118.AuthRepository>()));
-    gh.factory<_i153.AudioSourceResolver>(() => _i154.AudioSourceResolverImpl(
-          gh<_i113.AudioStorageRepository>(),
-          gh<_i111.AudioDownloadRepository>(),
-        ));
-    gh.factory<_i155.AudioWaveformBloc>(() => _i155.AudioWaveformBloc(
-          audioPlaybackService: gh<_i5.AudioPlaybackService>(),
-          getCachedTrackPathUseCase: gh<_i132.GetCachedTrackPathUseCase>(),
-        ));
-    gh.factory<_i156.OnboardingBloc>(() => _i156.OnboardingBloc(
-          onboardingUseCase: gh<_i141.OnboardingUseCase>(),
-          getCurrentUserUseCase: gh<_i133.GetCurrentUserUseCase>(),
-        ));
-    gh.factory<_i157.SyncDataManager>(() => _i157.SyncDataManager(
-          syncProjects: gh<_i102.SyncProjectsUsingSimpleServiceUseCase>(),
-          syncAudioTracks: gh<_i147.SyncAudioTracksUsingSimpleServiceUseCase>(),
-          syncAudioComments: gh<_i100.SyncAudioCommentsUseCase>(),
-          syncUserProfile: gh<_i103.SyncUserProfileUseCase>(),
-          syncUserProfileCollaborators:
-              gh<_i148.SyncUserProfileCollaboratorsUseCase>(),
-          syncNotifications: gh<_i101.SyncNotificationsUseCase>(),
-        ));
-    gh.factory<_i158.SyncStatusProvider>(() => _i158.SyncStatusProvider(
-          syncDataManager: gh<_i157.SyncDataManager>(),
-          pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
-        ));
-    gh.factory<_i159.TrackCacheBloc>(() => _i159.TrackCacheBloc(
-          cacheTrackUseCase: gh<_i124.CacheTrackUseCase>(),
-          watchTrackCacheStatusUseCase:
-              gh<_i151.WatchTrackCacheStatusUseCase>(),
-          removeTrackCacheUseCase: gh<_i144.RemoveTrackCacheUseCase>(),
-          getCachedTrackPathUseCase: gh<_i132.GetCachedTrackPathUseCase>(),
-        ));
+      () => _i152.AppleSignInUseCase(gh<_i118.AuthRepository>()),
+    );
+    gh.factory<_i153.AudioSourceResolver>(
+      () => _i154.AudioSourceResolverImpl(
+        gh<_i113.AudioStorageRepository>(),
+        gh<_i111.AudioDownloadRepository>(),
+      ),
+    );
+    gh.factory<_i156.OnboardingBloc>(
+      () => _i156.OnboardingBloc(
+        onboardingUseCase: gh<_i141.OnboardingUseCase>(),
+        getCurrentUserUseCase: gh<_i133.GetCurrentUserUseCase>(),
+      ),
+    );
+    gh.factory<_i157.SyncDataManager>(
+      () => _i157.SyncDataManager(
+        syncProjects: gh<_i102.SyncProjectsUsingSimpleServiceUseCase>(),
+        syncAudioTracks: gh<_i147.SyncAudioTracksUsingSimpleServiceUseCase>(),
+        syncAudioComments: gh<_i100.SyncAudioCommentsUseCase>(),
+        syncUserProfile: gh<_i103.SyncUserProfileUseCase>(),
+        syncUserProfileCollaborators:
+            gh<_i148.SyncUserProfileCollaboratorsUseCase>(),
+        syncNotifications: gh<_i101.SyncNotificationsUseCase>(),
+      ),
+    );
+    gh.factory<_i158.SyncStatusProvider>(
+      () => _i158.SyncStatusProvider(
+        syncDataManager: gh<_i157.SyncDataManager>(),
+        pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
+      ),
+    );
+    gh.factory<_i159.TrackCacheBloc>(
+      () => _i159.TrackCacheBloc(
+        cacheTrackUseCase: gh<_i124.CacheTrackUseCase>(),
+        watchTrackCacheStatusUseCase: gh<_i151.WatchTrackCacheStatusUseCase>(),
+        removeTrackCacheUseCase: gh<_i144.RemoveTrackCacheUseCase>(),
+        getCachedTrackPathUseCase: gh<_i132.GetCachedTrackPathUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i160.BackgroundSyncCoordinator>(
-        () => _i160.BackgroundSyncCoordinator(
-              gh<_i33.NetworkStateManager>(),
-              gh<_i157.SyncDataManager>(),
-              gh<_i95.PendingOperationsManager>(),
-            ));
+      () => _i160.BackgroundSyncCoordinator(
+        gh<_i33.NetworkStateManager>(),
+        gh<_i157.SyncDataManager>(),
+        gh<_i95.PendingOperationsManager>(),
+      ),
+    );
     gh.lazySingleton<_i161.PlaylistRepository>(
-        () => _i162.PlaylistRepositoryImpl(
-              localDataSource: gh<_i47.PlaylistLocalDataSource>(),
-              backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
-              pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
-            ));
+      () => _i162.PlaylistRepositoryImpl(
+        localDataSource: gh<_i47.PlaylistLocalDataSource>(),
+        backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
+        pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
+      ),
+    );
     gh.lazySingleton<_i163.ProjectsRepository>(
-        () => _i164.ProjectsRepositoryImpl(
-              localDataSource: gh<_i50.ProjectsLocalDataSource>(),
-              backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
-              pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
-            ));
+      () => _i164.ProjectsRepositoryImpl(
+        localDataSource: gh<_i50.ProjectsLocalDataSource>(),
+        backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
+        pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
+      ),
+    );
     gh.lazySingleton<_i165.RemoveCollaboratorUseCase>(
-        () => _i165.RemoveCollaboratorUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
-    gh.lazySingleton<_i166.TriggerUpstreamSyncUseCase>(() =>
-        _i166.TriggerUpstreamSyncUseCase(
-            gh<_i160.BackgroundSyncCoordinator>()));
+      () => _i165.RemoveCollaboratorUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
+    gh.lazySingleton<_i166.TriggerUpstreamSyncUseCase>(
+      () => _i166.TriggerUpstreamSyncUseCase(
+        gh<_i160.BackgroundSyncCoordinator>(),
+      ),
+    );
     gh.lazySingleton<_i167.UpdateCollaboratorRoleUseCase>(
-        () => _i167.UpdateCollaboratorRoleUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i167.UpdateCollaboratorRoleUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i168.UpdateProjectUseCase>(
-        () => _i168.UpdateProjectUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i168.UpdateProjectUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i169.UserProfileRepository>(
-        () => _i170.UserProfileRepositoryImpl(
-              localDataSource: gh<_i64.UserProfileLocalDataSource>(),
-              remoteDataSource: gh<_i65.UserProfileRemoteDataSource>(),
-              networkStateManager: gh<_i33.NetworkStateManager>(),
-              backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
-              pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
-              firestore: gh<_i19.FirebaseFirestore>(),
-              sessionStorage: gh<_i99.SessionStorage>(),
-            ));
+      () => _i170.UserProfileRepositoryImpl(
+        localDataSource: gh<_i64.UserProfileLocalDataSource>(),
+        remoteDataSource: gh<_i65.UserProfileRemoteDataSource>(),
+        networkStateManager: gh<_i33.NetworkStateManager>(),
+        backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
+        pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
+        firestore: gh<_i19.FirebaseFirestore>(),
+        sessionStorage: gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i171.WatchAllProjectsUseCase>(
-        () => _i171.WatchAllProjectsUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i171.WatchAllProjectsUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i172.WatchCollaboratorsBundleUseCase>(
-        () => _i172.WatchCollaboratorsBundleUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i108.WatchUserProfilesUseCase>(),
-            ));
+      () => _i172.WatchCollaboratorsBundleUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i108.WatchUserProfilesUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i173.WatchUserProfileUseCase>(
-        () => _i173.WatchUserProfileUseCase(
-              gh<_i169.UserProfileRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i173.WatchUserProfileUseCase(
+        gh<_i169.UserProfileRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i174.AcceptInvitationUseCase>(
-        () => _i174.AcceptInvitationUseCase(
-              invitationRepository: gh<_i88.InvitationRepository>(),
-              projectRepository: gh<_i163.ProjectsRepository>(),
-              userProfileRepository: gh<_i169.UserProfileRepository>(),
-              notificationService: gh<_i38.NotificationService>(),
-            ));
+      () => _i174.AcceptInvitationUseCase(
+        invitationRepository: gh<_i88.InvitationRepository>(),
+        projectRepository: gh<_i163.ProjectsRepository>(),
+        userProfileRepository: gh<_i169.UserProfileRepository>(),
+        notificationService: gh<_i38.NotificationService>(),
+      ),
+    );
     gh.lazySingleton<_i175.AddCollaboratorToProjectUseCase>(
-        () => _i175.AddCollaboratorToProjectUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i175.AddCollaboratorToProjectUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i176.AudioCommentRepository>(
-        () => _i177.AudioCommentRepositoryImpl(
-              remoteDataSource: gh<_i74.AudioCommentRemoteDataSource>(),
-              localDataSource: gh<_i73.AudioCommentLocalDataSource>(),
-              networkStateManager: gh<_i33.NetworkStateManager>(),
-              backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
-              pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
-            ));
+      () => _i177.AudioCommentRepositoryImpl(
+        remoteDataSource: gh<_i74.AudioCommentRemoteDataSource>(),
+        localDataSource: gh<_i73.AudioCommentLocalDataSource>(),
+        networkStateManager: gh<_i33.NetworkStateManager>(),
+        backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
+        pendingOperationsManager: gh<_i95.PendingOperationsManager>(),
+      ),
+    );
     gh.lazySingleton<_i178.AudioTrackRepository>(
-        () => _i179.AudioTrackRepositoryImpl(
-              gh<_i75.AudioTrackLocalDataSource>(),
-              gh<_i160.BackgroundSyncCoordinator>(),
-              gh<_i95.PendingOperationsManager>(),
-            ));
-    gh.factory<_i180.CachePlaylistUseCase>(() => _i180.CachePlaylistUseCase(
-          gh<_i111.AudioDownloadRepository>(),
-          gh<_i178.AudioTrackRepository>(),
-        ));
-    gh.factory<_i181.CheckProfileCompletenessUseCase>(() =>
-        _i181.CheckProfileCompletenessUseCase(
-            gh<_i169.UserProfileRepository>()));
+      () => _i179.AudioTrackRepositoryImpl(
+        gh<_i75.AudioTrackLocalDataSource>(),
+        gh<_i160.BackgroundSyncCoordinator>(),
+        gh<_i95.PendingOperationsManager>(),
+      ),
+    );
+    gh.factory<_i180.CachePlaylistUseCase>(
+      () => _i180.CachePlaylistUseCase(
+        gh<_i111.AudioDownloadRepository>(),
+        gh<_i178.AudioTrackRepository>(),
+      ),
+    );
+    gh.factory<_i181.CheckProfileCompletenessUseCase>(
+      () => _i181.CheckProfileCompletenessUseCase(
+        gh<_i169.UserProfileRepository>(),
+      ),
+    );
     gh.lazySingleton<_i182.CreateProjectUseCase>(
-        () => _i182.CreateProjectUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i182.CreateProjectUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.factory<_i183.CreateUserProfileUseCase>(
-        () => _i183.CreateUserProfileUseCase(
-              gh<_i169.UserProfileRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i183.CreateUserProfileUseCase(
+        gh<_i169.UserProfileRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i184.DeclineInvitationUseCase>(
-        () => _i184.DeclineInvitationUseCase(
-              invitationRepository: gh<_i88.InvitationRepository>(),
-              projectRepository: gh<_i163.ProjectsRepository>(),
-              userProfileRepository: gh<_i169.UserProfileRepository>(),
-              notificationService: gh<_i38.NotificationService>(),
-            ));
+      () => _i184.DeclineInvitationUseCase(
+        invitationRepository: gh<_i88.InvitationRepository>(),
+        projectRepository: gh<_i163.ProjectsRepository>(),
+        userProfileRepository: gh<_i169.UserProfileRepository>(),
+        notificationService: gh<_i38.NotificationService>(),
+      ),
+    );
     gh.lazySingleton<_i185.DeleteProjectUseCase>(
-        () => _i185.DeleteProjectUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i185.DeleteProjectUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i186.FindUserByEmailUseCase>(
-        () => _i186.FindUserByEmailUseCase(gh<_i169.UserProfileRepository>()));
+      () => _i186.FindUserByEmailUseCase(gh<_i169.UserProfileRepository>()),
+    );
     gh.factory<_i187.GetCachedTrackBundlesUseCase>(
-        () => _i187.GetCachedTrackBundlesUseCase(
-              gh<_i10.CacheMaintenanceService>(),
-              gh<_i178.AudioTrackRepository>(),
-              gh<_i169.UserProfileRepository>(),
-              gh<_i163.ProjectsRepository>(),
-              gh<_i111.AudioDownloadRepository>(),
-            ));
+      () => _i187.GetCachedTrackBundlesUseCase(
+        gh<_i10.CacheMaintenanceService>(),
+        gh<_i178.AudioTrackRepository>(),
+        gh<_i169.UserProfileRepository>(),
+        gh<_i163.ProjectsRepository>(),
+        gh<_i111.AudioDownloadRepository>(),
+      ),
+    );
     gh.lazySingleton<_i188.GetProjectByIdUseCase>(
-        () => _i188.GetProjectByIdUseCase(gh<_i163.ProjectsRepository>()));
-    gh.lazySingleton<_i189.GoogleSignInUseCase>(() => _i189.GoogleSignInUseCase(
-          gh<_i118.AuthRepository>(),
-          gh<_i169.UserProfileRepository>(),
-        ));
+      () => _i188.GetProjectByIdUseCase(gh<_i163.ProjectsRepository>()),
+    );
+    gh.lazySingleton<_i189.GoogleSignInUseCase>(
+      () => _i189.GoogleSignInUseCase(
+        gh<_i118.AuthRepository>(),
+        gh<_i169.UserProfileRepository>(),
+      ),
+    );
     gh.lazySingleton<_i190.JoinProjectWithIdUseCase>(
-        () => _i190.JoinProjectWithIdUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
-    gh.lazySingleton<_i191.LeaveProjectUseCase>(() => _i191.LeaveProjectUseCase(
-          gh<_i163.ProjectsRepository>(),
-          gh<_i99.SessionStorage>(),
-        ));
-    gh.factory<_i192.MagicLinkBloc>(() => _i192.MagicLinkBloc(
-          generateMagicLink: gh<_i130.GenerateMagicLinkUseCase>(),
-          validateMagicLink: gh<_i66.ValidateMagicLinkUseCase>(),
-          consumeMagicLink: gh<_i79.ConsumeMagicLinkUseCase>(),
-          resendMagicLink: gh<_i51.ResendMagicLinkUseCase>(),
-          getMagicLinkStatus: gh<_i84.GetMagicLinkStatusUseCase>(),
-          joinProjectWithId: gh<_i190.JoinProjectWithIdUseCase>(),
-          authRepository: gh<_i118.AuthRepository>(),
-        ));
-    gh.factory<_i193.PlayAudioUseCase>(() => _i193.PlayAudioUseCase(
-          audioTrackRepository: gh<_i178.AudioTrackRepository>(),
-          audioStorageRepository: gh<_i113.AudioStorageRepository>(),
-          playbackService: gh<_i5.AudioPlaybackService>(),
-        ));
-    gh.factory<_i194.PlayPlaylistUseCase>(() => _i194.PlayPlaylistUseCase(
-          playlistRepository: gh<_i161.PlaylistRepository>(),
-          audioTrackRepository: gh<_i178.AudioTrackRepository>(),
-          playbackService: gh<_i5.AudioPlaybackService>(),
-          audioStorageRepository: gh<_i113.AudioStorageRepository>(),
-        ));
-    gh.factory<_i195.PlaylistCacheBloc>(() => _i195.PlaylistCacheBloc(
-          cachePlaylistUseCase: gh<_i180.CachePlaylistUseCase>(),
-          getPlaylistCacheStatusUseCase:
-              gh<_i135.GetPlaylistCacheStatusUseCase>(),
-          removePlaylistCacheUseCase: gh<_i143.RemovePlaylistCacheUseCase>(),
-        ));
+      () => _i190.JoinProjectWithIdUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
+    gh.lazySingleton<_i191.LeaveProjectUseCase>(
+      () => _i191.LeaveProjectUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
+    gh.factory<_i192.MagicLinkBloc>(
+      () => _i192.MagicLinkBloc(
+        generateMagicLink: gh<_i130.GenerateMagicLinkUseCase>(),
+        validateMagicLink: gh<_i66.ValidateMagicLinkUseCase>(),
+        consumeMagicLink: gh<_i79.ConsumeMagicLinkUseCase>(),
+        resendMagicLink: gh<_i51.ResendMagicLinkUseCase>(),
+        getMagicLinkStatus: gh<_i84.GetMagicLinkStatusUseCase>(),
+        joinProjectWithId: gh<_i190.JoinProjectWithIdUseCase>(),
+        authRepository: gh<_i118.AuthRepository>(),
+      ),
+    );
+    gh.factory<_i193.PlayAudioUseCase>(
+      () => _i193.PlayAudioUseCase(
+        audioTrackRepository: gh<_i178.AudioTrackRepository>(),
+        audioStorageRepository: gh<_i113.AudioStorageRepository>(),
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i194.PlayPlaylistUseCase>(
+      () => _i194.PlayPlaylistUseCase(
+        playlistRepository: gh<_i161.PlaylistRepository>(),
+        audioTrackRepository: gh<_i178.AudioTrackRepository>(),
+        playbackService: gh<_i5.AudioPlaybackService>(),
+        audioStorageRepository: gh<_i113.AudioStorageRepository>(),
+      ),
+    );
+    gh.factory<_i195.PlaylistCacheBloc>(
+      () => _i195.PlaylistCacheBloc(
+        cachePlaylistUseCase: gh<_i180.CachePlaylistUseCase>(),
+        getPlaylistCacheStatusUseCase:
+            gh<_i135.GetPlaylistCacheStatusUseCase>(),
+        removePlaylistCacheUseCase: gh<_i143.RemovePlaylistCacheUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i196.ProjectCommentService>(
-        () => _i196.ProjectCommentService(gh<_i176.AudioCommentRepository>()));
-    gh.lazySingleton<_i197.ProjectTrackService>(() => _i197.ProjectTrackService(
-          gh<_i178.AudioTrackRepository>(),
-          gh<_i113.AudioStorageRepository>(),
-          gh<_i83.GenerateWaveformUseCase>(),
-        ));
-    gh.factory<_i198.ProjectsBloc>(() => _i198.ProjectsBloc(
-          createProject: gh<_i182.CreateProjectUseCase>(),
-          updateProject: gh<_i168.UpdateProjectUseCase>(),
-          deleteProject: gh<_i185.DeleteProjectUseCase>(),
-          watchAllProjects: gh<_i171.WatchAllProjectsUseCase>(),
-        ));
+      () => _i196.ProjectCommentService(gh<_i176.AudioCommentRepository>()),
+    );
+    gh.lazySingleton<_i197.ProjectTrackService>(
+      () => _i197.ProjectTrackService(
+        gh<_i178.AudioTrackRepository>(),
+        gh<_i113.AudioStorageRepository>(),
+        gh<_i83.GenerateWaveformUseCase>(),
+      ),
+    );
+    gh.factory<_i198.ProjectsBloc>(
+      () => _i198.ProjectsBloc(
+        createProject: gh<_i182.CreateProjectUseCase>(),
+        updateProject: gh<_i168.UpdateProjectUseCase>(),
+        deleteProject: gh<_i185.DeleteProjectUseCase>(),
+        watchAllProjects: gh<_i171.WatchAllProjectsUseCase>(),
+      ),
+    );
     gh.factory<_i199.RestorePlaybackStateUseCase>(
-        () => _i199.RestorePlaybackStateUseCase(
-              persistenceRepository: gh<_i45.PlaybackPersistenceRepository>(),
-              audioTrackRepository: gh<_i178.AudioTrackRepository>(),
-              audioStorageRepository: gh<_i113.AudioStorageRepository>(),
-              playbackService: gh<_i5.AudioPlaybackService>(),
-            ));
+      () => _i199.RestorePlaybackStateUseCase(
+        persistenceRepository: gh<_i45.PlaybackPersistenceRepository>(),
+        audioTrackRepository: gh<_i178.AudioTrackRepository>(),
+        audioStorageRepository: gh<_i113.AudioStorageRepository>(),
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
     gh.lazySingleton<_i200.SendInvitationUseCase>(
-        () => _i200.SendInvitationUseCase(
-              invitationRepository: gh<_i88.InvitationRepository>(),
-              notificationService: gh<_i38.NotificationService>(),
-              findUserByEmail: gh<_i186.FindUserByEmailUseCase>(),
-              magicLinkRepository: gh<_i30.MagicLinkRepository>(),
-              currentUserService: gh<_i127.CurrentUserService>(),
-            ));
-    gh.factory<_i201.SessionCleanupService>(() => _i201.SessionCleanupService(
-          userProfileRepository: gh<_i169.UserProfileRepository>(),
-          projectsRepository: gh<_i163.ProjectsRepository>(),
-          audioTrackRepository: gh<_i178.AudioTrackRepository>(),
-          audioCommentRepository: gh<_i176.AudioCommentRepository>(),
-          invitationRepository: gh<_i88.InvitationRepository>(),
-          playbackPersistenceRepository:
-              gh<_i45.PlaybackPersistenceRepository>(),
-          blocStateCleanupService: gh<_i9.BlocStateCleanupService>(),
-          sessionStorage: gh<_i99.SessionStorage>(),
-        ));
-    gh.factory<_i202.SessionService>(() => _i202.SessionService(
-          checkAuthUseCase: gh<_i126.CheckAuthenticationStatusUseCase>(),
-          getCurrentUserUseCase: gh<_i133.GetCurrentUserUseCase>(),
-          onboardingUseCase: gh<_i141.OnboardingUseCase>(),
-          profileUseCase: gh<_i181.CheckProfileCompletenessUseCase>(),
-        ));
-    gh.lazySingleton<_i203.SignInUseCase>(() => _i203.SignInUseCase(
-          gh<_i118.AuthRepository>(),
-          gh<_i169.UserProfileRepository>(),
-        ));
-    gh.factory<_i204.SyncStatusCubit>(() => _i204.SyncStatusCubit(
-          gh<_i158.SyncStatusProvider>(),
-          gh<_i95.PendingOperationsManager>(),
-          gh<_i166.TriggerUpstreamSyncUseCase>(),
-        ));
+      () => _i200.SendInvitationUseCase(
+        invitationRepository: gh<_i88.InvitationRepository>(),
+        notificationService: gh<_i38.NotificationService>(),
+        findUserByEmail: gh<_i186.FindUserByEmailUseCase>(),
+        magicLinkRepository: gh<_i30.MagicLinkRepository>(),
+        currentUserService: gh<_i127.CurrentUserService>(),
+      ),
+    );
+    gh.factory<_i201.SessionCleanupService>(
+      () => _i201.SessionCleanupService(
+        userProfileRepository: gh<_i169.UserProfileRepository>(),
+        projectsRepository: gh<_i163.ProjectsRepository>(),
+        audioTrackRepository: gh<_i178.AudioTrackRepository>(),
+        audioCommentRepository: gh<_i176.AudioCommentRepository>(),
+        invitationRepository: gh<_i88.InvitationRepository>(),
+        playbackPersistenceRepository: gh<_i45.PlaybackPersistenceRepository>(),
+        blocStateCleanupService: gh<_i9.BlocStateCleanupService>(),
+        sessionStorage: gh<_i99.SessionStorage>(),
+      ),
+    );
+    gh.factory<_i202.SessionService>(
+      () => _i202.SessionService(
+        checkAuthUseCase: gh<_i126.CheckAuthenticationStatusUseCase>(),
+        getCurrentUserUseCase: gh<_i133.GetCurrentUserUseCase>(),
+        onboardingUseCase: gh<_i141.OnboardingUseCase>(),
+        profileUseCase: gh<_i181.CheckProfileCompletenessUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i203.SignInUseCase>(
+      () => _i203.SignInUseCase(
+        gh<_i118.AuthRepository>(),
+        gh<_i169.UserProfileRepository>(),
+      ),
+    );
+    gh.factory<_i204.SyncStatusCubit>(
+      () => _i204.SyncStatusCubit(
+        gh<_i158.SyncStatusProvider>(),
+        gh<_i95.PendingOperationsManager>(),
+        gh<_i166.TriggerUpstreamSyncUseCase>(),
+      ),
+    );
     gh.factory<_i205.UpdateUserProfileUseCase>(
-        () => _i205.UpdateUserProfileUseCase(
-              gh<_i169.UserProfileRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i205.UpdateUserProfileUseCase(
+        gh<_i169.UserProfileRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i206.UploadAudioTrackUseCase>(
-        () => _i206.UploadAudioTrackUseCase(
-              gh<_i197.ProjectTrackService>(),
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-              gh<_i4.AudioMetadataService>(),
-            ));
-    gh.factory<_i207.UserProfileBloc>(() => _i207.UserProfileBloc(
-          updateUserProfileUseCase: gh<_i205.UpdateUserProfileUseCase>(),
-          createUserProfileUseCase: gh<_i183.CreateUserProfileUseCase>(),
-          watchUserProfileUseCase: gh<_i173.WatchUserProfileUseCase>(),
-          checkProfileCompletenessUseCase:
-              gh<_i181.CheckProfileCompletenessUseCase>(),
-          getCurrentUserUseCase: gh<_i133.GetCurrentUserUseCase>(),
-        ));
+      () => _i206.UploadAudioTrackUseCase(
+        gh<_i197.ProjectTrackService>(),
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+        gh<_i4.AudioMetadataService>(),
+      ),
+    );
+    gh.factory<_i207.UserProfileBloc>(
+      () => _i207.UserProfileBloc(
+        updateUserProfileUseCase: gh<_i205.UpdateUserProfileUseCase>(),
+        createUserProfileUseCase: gh<_i183.CreateUserProfileUseCase>(),
+        watchUserProfileUseCase: gh<_i173.WatchUserProfileUseCase>(),
+        checkProfileCompletenessUseCase:
+            gh<_i181.CheckProfileCompletenessUseCase>(),
+        getCurrentUserUseCase: gh<_i133.GetCurrentUserUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i208.WatchAudioCommentsBundleUseCase>(
-        () => _i208.WatchAudioCommentsBundleUseCase(
-              gh<_i178.AudioTrackRepository>(),
-              gh<_i176.AudioCommentRepository>(),
-              gh<_i104.UserProfileCacheRepository>(),
-            ));
+      () => _i208.WatchAudioCommentsBundleUseCase(
+        gh<_i178.AudioTrackRepository>(),
+        gh<_i176.AudioCommentRepository>(),
+        gh<_i104.UserProfileCacheRepository>(),
+      ),
+    );
     gh.lazySingleton<_i209.WatchProjectDetailUseCase>(
-        () => _i209.WatchProjectDetailUseCase(
-              gh<_i163.ProjectsRepository>(),
-              gh<_i178.AudioTrackRepository>(),
-              gh<_i104.UserProfileCacheRepository>(),
-            ));
-    gh.lazySingleton<_i210.WatchTracksByProjectIdUseCase>(() =>
-        _i210.WatchTracksByProjectIdUseCase(gh<_i178.AudioTrackRepository>()));
+      () => _i209.WatchProjectDetailUseCase(
+        gh<_i163.ProjectsRepository>(),
+        gh<_i178.AudioTrackRepository>(),
+        gh<_i104.UserProfileCacheRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i210.WatchTracksByProjectIdUseCase>(
+      () =>
+          _i210.WatchTracksByProjectIdUseCase(gh<_i178.AudioTrackRepository>()),
+    );
     gh.lazySingleton<_i211.AddAudioCommentUseCase>(
-        () => _i211.AddAudioCommentUseCase(
-              gh<_i196.ProjectCommentService>(),
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
+      () => _i211.AddAudioCommentUseCase(
+        gh<_i196.ProjectCommentService>(),
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
     gh.lazySingleton<_i212.AddCollaboratorByEmailUseCase>(
-        () => _i212.AddCollaboratorByEmailUseCase(
-              gh<_i186.FindUserByEmailUseCase>(),
-              gh<_i175.AddCollaboratorToProjectUseCase>(),
-              gh<_i38.NotificationService>(),
-            ));
-    gh.factory<_i213.AppBootstrap>(() => _i213.AppBootstrap(
-          sessionService: gh<_i202.SessionService>(),
-          performanceCollector: gh<_i44.PerformanceMetricsCollector>(),
-          dynamicLinkService: gh<_i16.DynamicLinkService>(),
-          databaseHealthMonitor: gh<_i81.DatabaseHealthMonitor>(),
-        ));
-    gh.factory<_i214.AppFlowBloc>(() => _i214.AppFlowBloc(
-          appBootstrap: gh<_i213.AppBootstrap>(),
-          backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
-          getAuthStateUseCase: gh<_i131.GetAuthStateUseCase>(),
-          sessionCleanupService: gh<_i201.SessionCleanupService>(),
-        ));
+      () => _i212.AddCollaboratorByEmailUseCase(
+        gh<_i186.FindUserByEmailUseCase>(),
+        gh<_i175.AddCollaboratorToProjectUseCase>(),
+        gh<_i38.NotificationService>(),
+      ),
+    );
+    gh.factory<_i213.AppBootstrap>(
+      () => _i213.AppBootstrap(
+        sessionService: gh<_i202.SessionService>(),
+        performanceCollector: gh<_i44.PerformanceMetricsCollector>(),
+        dynamicLinkService: gh<_i16.DynamicLinkService>(),
+        databaseHealthMonitor: gh<_i81.DatabaseHealthMonitor>(),
+      ),
+    );
+    gh.factory<_i214.AppFlowBloc>(
+      () => _i214.AppFlowBloc(
+        appBootstrap: gh<_i213.AppBootstrap>(),
+        backgroundSyncCoordinator: gh<_i160.BackgroundSyncCoordinator>(),
+        getAuthStateUseCase: gh<_i131.GetAuthStateUseCase>(),
+        sessionCleanupService: gh<_i201.SessionCleanupService>(),
+      ),
+    );
     gh.lazySingleton<_i215.AudioContextService>(
-        () => _i216.AudioContextServiceImpl(
-              userProfileRepository: gh<_i169.UserProfileRepository>(),
-              audioTrackRepository: gh<_i178.AudioTrackRepository>(),
-              projectsRepository: gh<_i163.ProjectsRepository>(),
-            ));
-    gh.factory<_i217.AudioPlayerService>(() => _i217.AudioPlayerService(
-          initializeAudioPlayerUseCase: gh<_i24.InitializeAudioPlayerUseCase>(),
-          playAudioUseCase: gh<_i193.PlayAudioUseCase>(),
-          playPlaylistUseCase: gh<_i194.PlayPlaylistUseCase>(),
-          pauseAudioUseCase: gh<_i41.PauseAudioUseCase>(),
-          resumeAudioUseCase: gh<_i52.ResumeAudioUseCase>(),
-          stopAudioUseCase: gh<_i60.StopAudioUseCase>(),
-          skipToNextUseCase: gh<_i58.SkipToNextUseCase>(),
-          skipToPreviousUseCase: gh<_i59.SkipToPreviousUseCase>(),
-          seekAudioUseCase: gh<_i54.SeekAudioUseCase>(),
-          toggleShuffleUseCase: gh<_i63.ToggleShuffleUseCase>(),
-          toggleRepeatModeUseCase: gh<_i62.ToggleRepeatModeUseCase>(),
-          setVolumeUseCase: gh<_i56.SetVolumeUseCase>(),
-          setPlaybackSpeedUseCase: gh<_i55.SetPlaybackSpeedUseCase>(),
-          savePlaybackStateUseCase: gh<_i53.SavePlaybackStateUseCase>(),
-          restorePlaybackStateUseCase: gh<_i199.RestorePlaybackStateUseCase>(),
-          playbackService: gh<_i5.AudioPlaybackService>(),
-        ));
-    gh.factory<_i218.AuthBloc>(() => _i218.AuthBloc(
-          signIn: gh<_i203.SignInUseCase>(),
-          signUp: gh<_i146.SignUpUseCase>(),
-          googleSignIn: gh<_i189.GoogleSignInUseCase>(),
-          appleSignIn: gh<_i152.AppleSignInUseCase>(),
-          signOut: gh<_i145.SignOutUseCase>(),
-        ));
-    gh.factory<_i219.CacheManagementBloc>(() => _i219.CacheManagementBloc(
-          getBundles: gh<_i187.GetCachedTrackBundlesUseCase>(),
-          deleteOne: gh<_i128.DeleteCachedAudioUseCase>(),
-          deleteMany: gh<_i129.DeleteMultipleCachedAudiosUseCase>(),
-          watchUsage: gh<_i150.WatchStorageUsageUseCase>(),
-          getStats: gh<_i21.GetCacheStorageStatsUseCase>(),
-          cleanup: gh<_i12.CleanupCacheUseCase>(),
-        ));
+      () => _i216.AudioContextServiceImpl(
+        userProfileRepository: gh<_i169.UserProfileRepository>(),
+        audioTrackRepository: gh<_i178.AudioTrackRepository>(),
+        projectsRepository: gh<_i163.ProjectsRepository>(),
+      ),
+    );
+    gh.factory<_i217.AudioPlayerService>(
+      () => _i217.AudioPlayerService(
+        initializeAudioPlayerUseCase: gh<_i24.InitializeAudioPlayerUseCase>(),
+        playAudioUseCase: gh<_i193.PlayAudioUseCase>(),
+        playPlaylistUseCase: gh<_i194.PlayPlaylistUseCase>(),
+        pauseAudioUseCase: gh<_i41.PauseAudioUseCase>(),
+        resumeAudioUseCase: gh<_i52.ResumeAudioUseCase>(),
+        stopAudioUseCase: gh<_i60.StopAudioUseCase>(),
+        skipToNextUseCase: gh<_i58.SkipToNextUseCase>(),
+        skipToPreviousUseCase: gh<_i59.SkipToPreviousUseCase>(),
+        seekAudioUseCase: gh<_i54.SeekAudioUseCase>(),
+        toggleShuffleUseCase: gh<_i63.ToggleShuffleUseCase>(),
+        toggleRepeatModeUseCase: gh<_i62.ToggleRepeatModeUseCase>(),
+        setVolumeUseCase: gh<_i56.SetVolumeUseCase>(),
+        setPlaybackSpeedUseCase: gh<_i55.SetPlaybackSpeedUseCase>(),
+        savePlaybackStateUseCase: gh<_i53.SavePlaybackStateUseCase>(),
+        restorePlaybackStateUseCase: gh<_i199.RestorePlaybackStateUseCase>(),
+        playbackService: gh<_i5.AudioPlaybackService>(),
+      ),
+    );
+    gh.factory<_i218.AuthBloc>(
+      () => _i218.AuthBloc(
+        signIn: gh<_i203.SignInUseCase>(),
+        signUp: gh<_i146.SignUpUseCase>(),
+        googleSignIn: gh<_i189.GoogleSignInUseCase>(),
+        appleSignIn: gh<_i152.AppleSignInUseCase>(),
+        signOut: gh<_i145.SignOutUseCase>(),
+      ),
+    );
+    gh.factory<_i219.CacheManagementBloc>(
+      () => _i219.CacheManagementBloc(
+        getBundles: gh<_i187.GetCachedTrackBundlesUseCase>(),
+        deleteOne: gh<_i128.DeleteCachedAudioUseCase>(),
+        deleteMany: gh<_i129.DeleteMultipleCachedAudiosUseCase>(),
+        watchUsage: gh<_i150.WatchStorageUsageUseCase>(),
+        getStats: gh<_i21.GetCacheStorageStatsUseCase>(),
+        cleanup: gh<_i12.CleanupCacheUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i220.DeleteAudioCommentUseCase>(
-        () => _i220.DeleteAudioCommentUseCase(
-              gh<_i196.ProjectCommentService>(),
-              gh<_i163.ProjectsRepository>(),
-              gh<_i99.SessionStorage>(),
-            ));
-    gh.lazySingleton<_i221.DeleteAudioTrack>(() => _i221.DeleteAudioTrack(
-          gh<_i99.SessionStorage>(),
-          gh<_i163.ProjectsRepository>(),
-          gh<_i197.ProjectTrackService>(),
-        ));
+      () => _i220.DeleteAudioCommentUseCase(
+        gh<_i196.ProjectCommentService>(),
+        gh<_i163.ProjectsRepository>(),
+        gh<_i99.SessionStorage>(),
+      ),
+    );
+    gh.lazySingleton<_i221.DeleteAudioTrack>(
+      () => _i221.DeleteAudioTrack(
+        gh<_i99.SessionStorage>(),
+        gh<_i163.ProjectsRepository>(),
+        gh<_i197.ProjectTrackService>(),
+      ),
+    );
     gh.lazySingleton<_i222.EditAudioTrackUseCase>(
-        () => _i222.EditAudioTrackUseCase(
-              gh<_i197.ProjectTrackService>(),
-              gh<_i163.ProjectsRepository>(),
-            ));
+      () => _i222.EditAudioTrackUseCase(
+        gh<_i197.ProjectTrackService>(),
+        gh<_i163.ProjectsRepository>(),
+      ),
+    );
     gh.factory<_i223.LoadTrackContextUseCase>(
-        () => _i223.LoadTrackContextUseCase(gh<_i215.AudioContextService>()));
+      () => _i223.LoadTrackContextUseCase(gh<_i215.AudioContextService>()),
+    );
     gh.factory<_i224.ManageCollaboratorsBloc>(
-        () => _i224.ManageCollaboratorsBloc(
-              removeCollaboratorUseCase: gh<_i165.RemoveCollaboratorUseCase>(),
-              updateCollaboratorRoleUseCase:
-                  gh<_i167.UpdateCollaboratorRoleUseCase>(),
-              leaveProjectUseCase: gh<_i191.LeaveProjectUseCase>(),
-              findUserByEmailUseCase: gh<_i186.FindUserByEmailUseCase>(),
-              addCollaboratorByEmailUseCase:
-                  gh<_i212.AddCollaboratorByEmailUseCase>(),
-              watchCollaboratorsBundleUseCase:
-                  gh<_i172.WatchCollaboratorsBundleUseCase>(),
-            ));
-    gh.factory<_i225.ProjectDetailBloc>(() => _i225.ProjectDetailBloc(
-        watchProjectDetail: gh<_i209.WatchProjectDetailUseCase>()));
+      () => _i224.ManageCollaboratorsBloc(
+        removeCollaboratorUseCase: gh<_i165.RemoveCollaboratorUseCase>(),
+        updateCollaboratorRoleUseCase:
+            gh<_i167.UpdateCollaboratorRoleUseCase>(),
+        leaveProjectUseCase: gh<_i191.LeaveProjectUseCase>(),
+        findUserByEmailUseCase: gh<_i186.FindUserByEmailUseCase>(),
+        addCollaboratorByEmailUseCase:
+            gh<_i212.AddCollaboratorByEmailUseCase>(),
+        watchCollaboratorsBundleUseCase:
+            gh<_i172.WatchCollaboratorsBundleUseCase>(),
+      ),
+    );
+    gh.factory<_i225.ProjectDetailBloc>(
+      () => _i225.ProjectDetailBloc(
+        watchProjectDetail: gh<_i209.WatchProjectDetailUseCase>(),
+      ),
+    );
     gh.factory<_i226.ProjectInvitationActorBloc>(
-        () => _i226.ProjectInvitationActorBloc(
-              sendInvitationUseCase: gh<_i200.SendInvitationUseCase>(),
-              acceptInvitationUseCase: gh<_i174.AcceptInvitationUseCase>(),
-              declineInvitationUseCase: gh<_i184.DeclineInvitationUseCase>(),
-              cancelInvitationUseCase: gh<_i125.CancelInvitationUseCase>(),
-              findUserByEmailUseCase: gh<_i186.FindUserByEmailUseCase>(),
-            ));
-    gh.factory<_i227.AudioCommentBloc>(() => _i227.AudioCommentBloc(
-          addAudioCommentUseCase: gh<_i211.AddAudioCommentUseCase>(),
-          deleteAudioCommentUseCase: gh<_i220.DeleteAudioCommentUseCase>(),
-          watchAudioCommentsBundleUseCase:
-              gh<_i208.WatchAudioCommentsBundleUseCase>(),
-        ));
-    gh.factory<_i228.AudioContextBloc>(() => _i228.AudioContextBloc(
-        loadTrackContextUseCase: gh<_i223.LoadTrackContextUseCase>()));
-    gh.factory<_i229.AudioPlayerBloc>(() => _i229.AudioPlayerBloc(
-        audioPlayerService: gh<_i217.AudioPlayerService>()));
-    gh.factory<_i230.AudioTrackBloc>(() => _i230.AudioTrackBloc(
-          watchAudioTracksByProject: gh<_i210.WatchTracksByProjectIdUseCase>(),
-          deleteAudioTrack: gh<_i221.DeleteAudioTrack>(),
-          uploadAudioTrackUseCase: gh<_i206.UploadAudioTrackUseCase>(),
-          editAudioTrackUseCase: gh<_i222.EditAudioTrackUseCase>(),
-        ));
+      () => _i226.ProjectInvitationActorBloc(
+        sendInvitationUseCase: gh<_i200.SendInvitationUseCase>(),
+        acceptInvitationUseCase: gh<_i174.AcceptInvitationUseCase>(),
+        declineInvitationUseCase: gh<_i184.DeclineInvitationUseCase>(),
+        cancelInvitationUseCase: gh<_i125.CancelInvitationUseCase>(),
+        findUserByEmailUseCase: gh<_i186.FindUserByEmailUseCase>(),
+      ),
+    );
+    gh.factory<_i227.AudioCommentBloc>(
+      () => _i227.AudioCommentBloc(
+        addAudioCommentUseCase: gh<_i211.AddAudioCommentUseCase>(),
+        deleteAudioCommentUseCase: gh<_i220.DeleteAudioCommentUseCase>(),
+        watchAudioCommentsBundleUseCase:
+            gh<_i208.WatchAudioCommentsBundleUseCase>(),
+      ),
+    );
+    gh.factory<_i228.AudioContextBloc>(
+      () => _i228.AudioContextBloc(
+        loadTrackContextUseCase: gh<_i223.LoadTrackContextUseCase>(),
+      ),
+    );
+    gh.factory<_i229.AudioPlayerBloc>(
+      () => _i229.AudioPlayerBloc(
+        audioPlayerService: gh<_i217.AudioPlayerService>(),
+      ),
+    );
+    gh.factory<_i230.AudioTrackBloc>(
+      () => _i230.AudioTrackBloc(
+        watchAudioTracksByProject: gh<_i210.WatchTracksByProjectIdUseCase>(),
+        deleteAudioTrack: gh<_i221.DeleteAudioTrack>(),
+        uploadAudioTrackUseCase: gh<_i206.UploadAudioTrackUseCase>(),
+        editAudioTrackUseCase: gh<_i222.EditAudioTrackUseCase>(),
+      ),
+    );
     return this;
   }
 }

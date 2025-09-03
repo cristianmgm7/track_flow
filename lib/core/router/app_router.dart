@@ -7,7 +7,6 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
-import 'package:trackflow/features/audio_comment/presentation/waveform_bloc/audio_waveform_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
@@ -157,10 +156,6 @@ class AppRouter {
                 // Scope AudioCommentBloc to this screen to avoid cross-track leakage
                 BlocProvider<AudioCommentBloc>(
                   create: (context) => sl<AudioCommentBloc>(),
-                ),
-                // Provide waveform bloc scoped to this screen
-                BlocProvider<AudioWaveformBloc>(
-                  create: (context) => sl<AudioWaveformBloc>(),
                 ),
               ],
               child: AppAudioCommentsScreen(
