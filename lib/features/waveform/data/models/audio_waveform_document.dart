@@ -18,6 +18,12 @@ class AudioWaveformDocument {
   @Index()
   late String trackId;
 
+  // Cache key parts for correctness across devices
+  @Index()
+  String? audioSourceHash;
+  @Index()
+  int? algorithmVersion;
+
   late String amplitudesJson;
   late int sampleRate;
   late int durationMs;
@@ -38,6 +44,8 @@ class AudioWaveformDocument {
     return AudioWaveformDocument()
       ..id = waveform.id.value
       ..trackId = waveform.trackId.value
+      ..audioSourceHash = null
+      ..algorithmVersion = null
       ..amplitudesJson = jsonEncode(waveform.data.amplitudes)
       ..sampleRate = waveform.data.sampleRate
       ..durationMs = waveform.data.duration.inMilliseconds
@@ -48,6 +56,17 @@ class AudioWaveformDocument {
       ..generationMethod = waveform.metadata.generationMethod
       ..generatedAt = waveform.generatedAt
       ..syncMetadata = SyncMetadataDocument.initial();
+  }
+
+  factory AudioWaveformDocument.fromEntityWithKey(
+    AudioWaveform waveform, {
+    required String audioSourceHash,
+    required int algorithmVersion,
+  }) {
+    final doc = AudioWaveformDocument.fromEntity(waveform);
+    doc.audioSourceHash = audioSourceHash;
+    doc.algorithmVersion = algorithmVersion;
+    return doc;
   }
 
   AudioWaveform toEntity() {

@@ -6,7 +6,18 @@ import 'package:trackflow/features/waveform/data/models/audio_waveform_document.
 
 abstract class WaveformLocalDataSource {
   Future<AudioWaveform?> getWaveformByTrackId(AudioTrackId trackId);
+  Future<AudioWaveform?> getByKey({
+    required AudioTrackId trackId,
+    required String audioSourceHash,
+    required int algorithmVersion,
+    required int targetSampleCount,
+  });
   Future<void> saveWaveform(AudioWaveform waveform);
+  Future<void> saveWaveformWithKey(
+    AudioWaveform waveform, {
+    required String audioSourceHash,
+    required int algorithmVersion,
+  });
   Future<void> deleteWaveformsForTrack(AudioTrackId trackId);
   Stream<AudioWaveform> watchWaveformChanges(AudioTrackId trackId);
 }
@@ -28,9 +39,45 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
   }
 
   @override
+  Future<AudioWaveform?> getByKey({
+    required AudioTrackId trackId,
+    required String audioSourceHash,
+    required int algorithmVersion,
+    required int targetSampleCount,
+  }) async {
+    final document = await _isar.audioWaveformDocuments
+        .filter()
+        .trackIdEqualTo(trackId.value)
+        .and()
+        .audioSourceHashEqualTo(audioSourceHash)
+        .and()
+        .algorithmVersionEqualTo(algorithmVersion)
+        .and()
+        .targetSampleCountEqualTo(targetSampleCount)
+        .findFirst();
+    return document?.toEntity();
+  }
+
+  @override
   Future<void> saveWaveform(AudioWaveform waveform) async {
     final document = AudioWaveformDocument.fromEntity(waveform);
     
+    await _isar.writeTxn(() async {
+      await _isar.audioWaveformDocuments.put(document);
+    });
+  }
+
+  @override
+  Future<void> saveWaveformWithKey(
+    AudioWaveform waveform, {
+    required String audioSourceHash,
+    required int algorithmVersion,
+  }) async {
+    final document = AudioWaveformDocument.fromEntityWithKey(
+      waveform,
+      audioSourceHash: audioSourceHash,
+      algorithmVersion: algorithmVersion,
+    );
     await _isar.writeTxn(() async {
       await _isar.audioWaveformDocuments.put(document);
     });
