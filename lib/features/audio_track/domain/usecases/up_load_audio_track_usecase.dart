@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:crypto/crypto.dart' as crypto;
+import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart';
@@ -27,12 +29,14 @@ class UploadAudioTrackUseCase {
   final ProjectsRepository projectDetailRepository;
   final SessionStorage sessionStorage;
   final AudioMetadataService audioMetadataService;
+  final GetOrGenerateWaveform getOrGenerateWaveform;
 
   UploadAudioTrackUseCase(
     this.projectTrackService,
     this.projectDetailRepository,
     this.sessionStorage,
     this.audioMetadataService,
+    this.getOrGenerateWaveform,
   );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
@@ -65,7 +69,23 @@ class UploadAudioTrackUseCase {
             url: params.file.path,
             duration: duration,
           );
-          return result;
+          return await result.fold((f) => Left(f), (track) async {
+            try {
+              final bytes = await params.file.readAsBytes();
+              final audioSourceHash = crypto.sha1.convert(bytes).toString();
+              await getOrGenerateWaveform(
+                GetOrGenerateWaveformParams(
+                  trackId: track.id,
+                  audioFilePath: params.file.path,
+                  audioSourceHash: audioSourceHash,
+                  algorithmVersion: 1,
+                  targetSampleCount: null,
+                  forceRefresh: true,
+                ),
+              );
+            } catch (_) {}
+            return const Right(unit);
+          });
         });
       });
     } catch (e) {

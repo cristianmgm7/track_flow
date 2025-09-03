@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../../../../core/entities/unique_id.dart';
@@ -15,8 +16,6 @@ class AudioCommentsScreenArgs {
   AudioCommentsScreenArgs({required this.projectId, required this.track});
 }
 
-/// Audio comments screen following TrackFlow design system
-/// Replaces hardcoded values with design system constants
 class AppAudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
@@ -47,7 +46,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
 
     return AppScaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: null,
+      appBar: AppAppBar(title: widget.track.name),
       resizeToAvoidBottomInset: true,
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,

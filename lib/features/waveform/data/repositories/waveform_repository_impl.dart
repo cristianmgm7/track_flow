@@ -43,7 +43,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
   @override
   Future<Either<Failure, AudioWaveform>> getOrGenerate({
     required AudioTrackId trackId,
-    required String audioFilePath,
+    String? audioFilePath,
     required String audioSourceHash,
     required int algorithmVersion,
     int? targetSampleCount,
@@ -55,7 +55,8 @@ class WaveformRepositoryImpl implements WaveformRepository {
           trackId: trackId,
           audioSourceHash: audioSourceHash,
           algorithmVersion: algorithmVersion,
-          targetSampleCount: targetSampleCount ??
+          targetSampleCount:
+              targetSampleCount ??
               JustWaveformGeneratorService.defaultTargetSampleCount,
         );
         if (local != null) return Right(local);
@@ -79,7 +80,12 @@ class WaveformRepositoryImpl implements WaveformRepository {
         return Right(remote);
       }
 
-      // Generate locally
+      // Generate locally (only if audioFilePath provided)
+      if (audioFilePath == null) {
+        return Left(
+          ServerFailure('Audio file path required to generate waveform'),
+        );
+      }
       final generatedResult = await _generatorService.generateWaveform(
         trackId,
         audioFilePath,

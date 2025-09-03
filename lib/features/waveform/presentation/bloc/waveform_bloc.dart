@@ -7,6 +7,7 @@ import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart'
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
 import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart';
+import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart';
 
 part 'waveform_event.dart';
 part 'waveform_state.dart';
@@ -16,6 +17,7 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
   final WaveformRepository _waveformRepository;
   final GetOrGenerateWaveform _getOrGenerate;
   final AudioPlaybackService _audioPlaybackService;
+  final GetCachedTrackPathUseCase _getCachedTrackPathUseCase;
 
   StreamSubscription? _sessionSubscription;
   StreamSubscription? _waveformSubscription;
@@ -24,9 +26,11 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
     required WaveformRepository waveformRepository,
     required AudioPlaybackService audioPlaybackService,
     required GetOrGenerateWaveform getOrGenerate,
+    required GetCachedTrackPathUseCase getCachedTrackPathUseCase,
   }) : _waveformRepository = waveformRepository,
        _audioPlaybackService = audioPlaybackService,
        _getOrGenerate = getOrGenerate,
+       _getCachedTrackPathUseCase = getCachedTrackPathUseCase,
        super(const WaveformState()) {
     on<LoadWaveform>(_onLoadWaveform);
     on<WaveformSeekRequested>(_onWaveformSeekRequested);
@@ -74,11 +78,20 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
         );
 
     // Try local first, then remote, then generate if possible
-    if (event.audioFilePath != null && event.audioSourceHash != null) {
-      final result = await _getOrGenerate(
+    if (event.audioSourceHash != null) {
+      String? localPath = event.audioFilePath;
+      if (localPath != null &&
+          (localPath.startsWith('http://') ||
+              localPath.startsWith('https://'))) {
+        final cached = await _getCachedTrackPathUseCase.call(
+          event.trackId.value,
+        );
+        cached.fold((_) => null, (p) => localPath = p ?? localPath);
+      }
+      final result = await _getOrGenerate.call(
         GetOrGenerateWaveformParams(
           trackId: event.trackId,
-          audioFilePath: event.audioFilePath!,
+          audioFilePath: localPath!,
           audioSourceHash: event.audioSourceHash!,
           algorithmVersion: 1, // bump when algorithm changes
           targetSampleCount: event.targetSampleCount,

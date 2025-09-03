@@ -30,7 +30,11 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       // Preserve original extension from the downloaded file if possible
       final originalPath = audioFile.path;
       final detectedExt = _extractExtension(originalPath) ?? '.mp3';
-      final cacheKey = _localDataSource.generateCacheKey(trackId.value, '');
+      // Use the original path/URL to generate a deterministic cache filename
+      final cacheKey = _localDataSource.generateCacheKey(
+        trackId.value,
+        originalPath,
+      );
       final filePathResult = await _localDataSource.getFilePathFromCacheKey(
         cacheKey,
       );

@@ -32,7 +32,7 @@ class AudioCommentPlayer extends StatelessWidget {
           children: [
             SizedBox(
               height: 96,
-              child: EnhancedWaveformDisplay(trackId: track.id, height: 96),
+              child: EnhancedWaveformDisplay(track: track, height: 96),
             ),
             const SizedBox(height: 8),
             Row(
