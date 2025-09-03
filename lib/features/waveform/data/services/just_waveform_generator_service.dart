@@ -96,9 +96,10 @@ class JustWaveformGeneratorService implements WaveformGeneratorService {
   List<double> _convertWaveformToAmplitudes(Waveform waveform) {
     final length = waveform.length;
     final amplitudes = List<double>.generate(length, (i) {
-      // Use only the positive peak so UI displays bars above the baseline
+      // Use the absolute peak (envelope) so values are always non-negative
+      final minVal = waveform.getPixelMin(i);
       final maxVal = waveform.getPixelMax(i);
-      return math.max(0.0, maxVal.toDouble());
+      return math.max(minVal.abs(), maxVal.abs()).toDouble();
     }, growable: false);
     return amplitudes;
   }
