@@ -12,7 +12,7 @@ import '../../domain/services/cache_maintenance_service.dart';
 
 @LazySingleton(as: CacheMaintenanceService)
 class CacheMaintenanceServiceImpl implements CacheMaintenanceService {
-  static const String _cacheSubDirectory = 'audio_cache';
+  static const String _cacheRootPath = 'trackflow/audio';
 
   @override
   Future<Either<CacheFailure, CleanupDetails>> performCleanup({
@@ -486,7 +486,8 @@ class CacheMaintenanceServiceImpl implements CacheMaintenanceService {
   Future<Either<CacheFailure, Directory>> getCacheDirectory() async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
-      final cacheDir = Directory('${appDir.path}/$_cacheSubDirectory');
+      // Use the same directory as CacheStorageLocalDataSourceImpl
+      final cacheDir = Directory('${appDir.path}/$_cacheRootPath');
 
       if (!await cacheDir.exists()) {
         await cacheDir.create(recursive: true);

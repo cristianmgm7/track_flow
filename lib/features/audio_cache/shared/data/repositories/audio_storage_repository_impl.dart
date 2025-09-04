@@ -51,10 +51,11 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
         // Copy the file to the cache location
         final destinationFile = await audioFile.copy(finalDestinationPath);
 
-        // Verify file and calculate checksum
+        // Verify file and calculate checksum (streaming)
         final fileSize = await destinationFile.length();
-        final bytes = await destinationFile.readAsBytes();
-        final checksum = sha1.convert(bytes).toString();
+        final checksumDigest =
+            await sha1.bind(destinationFile.openRead()).first;
+        final checksum = checksumDigest.toString();
 
         // Create unified document with both file and metadata information
         final unifiedDocument =
@@ -127,66 +128,18 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     return await _localDataSource.deleteAudioFile(trackId.value);
   }
 
-  @override
-  Future<Either<CacheFailure, Map<AudioTrackId, CachedAudio>>>
-  getMultipleCachedAudios(List<AudioTrackId> trackIds) async {
-    return await _localDataSource
-        .getMultipleCachedAudios(trackIds.map((id) => id.value).toList())
-        .then(
-          (result) => result.fold((failure) => Left(failure), (audios) {
-            final Map<AudioTrackId, CachedAudio> audioMap = {};
-            for (final audioDoc in audios) {
-              audioMap[AudioTrackId.fromUniqueString(audioDoc.trackId)] =
-                  audioDoc.toCachedAudio();
-            }
-            return Right(audioMap);
-          }),
-        );
-  }
-
-  @override
-  Future<Either<CacheFailure, List<AudioTrackId>>> deleteMultipleAudioFiles(
-    List<AudioTrackId> trackIds,
-  ) async {
-    final result = await _localDataSource.deleteMultipleAudioFiles(
-      trackIds.map((id) => id.value).toList(),
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (deletedIds) => Right(
-        deletedIds.map((id) => AudioTrackId.fromUniqueString(id)).toList(),
-      ),
-    );
-  }
-
-  @override
-  Future<Either<CacheFailure, Map<AudioTrackId, bool>>>
-  checkMultipleAudioExists(List<AudioTrackId> trackIds) async {
-    try {
-      final Map<AudioTrackId, bool> existsMap = {};
-
-      for (final trackId in trackIds) {
-        final result = await _localDataSource.audioExists(trackId.value);
-        result.fold(
-          (failure) => existsMap[trackId] = false,
-          (exists) => existsMap[trackId] = exists,
-        );
-      }
-
-      return Right(existsMap);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to check multiple audio exists: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
+  // Removed batch operations to simplify repository
 
   @override
   Stream<int> watchStorageUsage() {
     return _localDataSource.watchStorageUsage();
+  }
+
+  @override
+  Stream<List<CachedAudio>> watchAllCachedAudios() {
+    return _localDataSource.watchAllCachedAudios().map(
+      (docs) => docs.map((d) => d.toCachedAudio()).toList(),
+    );
   }
 
   @override

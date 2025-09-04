@@ -4,8 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:dartz/dartz.dart' show Unit;
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:dartz/dartz.dart' show Either;
+import 'package:trackflow/features/audio_cache/management/domain/entities/cached_track_bundle.dart';
+import 'package:trackflow/features/audio_cache/management/domain/usecases/watch_cached_track_bundles_usecase.dart';
 import 'package:trackflow/features/audio_cache/management/domain/usecases/delete_cached_audio_usecase.dart';
-import 'package:trackflow/features/audio_cache/management/domain/usecases/delete_multiple_cached_audios_usecase.dart';
+// import 'package:trackflow/features/audio_cache/management/domain/usecases/delete_multiple_cached_audios_usecase.dart';
 import 'package:trackflow/features/audio_cache/management/domain/usecases/get_cached_track_bundles_usecase.dart';
 import 'package:trackflow/features/audio_cache/management/domain/usecases/watch_storage_usage_usecase.dart';
 import 'package:trackflow/features/audio_cache/shared/domain/usecases/cleanup_cache_usecase.dart';
@@ -19,16 +23,18 @@ class CacheManagementBloc
   CacheManagementBloc({
     required GetCachedTrackBundlesUseCase getBundles,
     required DeleteCachedAudioUseCase deleteOne,
-    required DeleteMultipleCachedAudiosUseCase deleteMany,
+    // required DeleteMultipleCachedAudiosUseCase deleteMany,
     required WatchStorageUsageUseCase watchUsage,
     required GetCacheStorageStatsUseCase getStats,
     required CleanupCacheUseCase cleanup,
+    required WatchCachedTrackBundlesUseCase watchBundles,
   }) : _getBundles = getBundles,
        _deleteOne = deleteOne,
-       _deleteMany = deleteMany,
+       // _deleteMany = deleteMany,
        _watchUsage = watchUsage,
        _getStats = getStats,
        _cleanup = cleanup,
+       _watchBundles = watchBundles,
        super(const CacheManagementState()) {
     on<CacheManagementStarted>(_onStarted);
     on<CacheManagementRefreshRequested>(_onRefresh);
@@ -42,12 +48,14 @@ class CacheManagementBloc
 
   final GetCachedTrackBundlesUseCase _getBundles;
   final DeleteCachedAudioUseCase _deleteOne;
-  final DeleteMultipleCachedAudiosUseCase _deleteMany;
+  // final DeleteMultipleCachedAudiosUseCase _deleteMany;
   final WatchStorageUsageUseCase _watchUsage;
   final GetCacheStorageStatsUseCase _getStats;
   final CleanupCacheUseCase _cleanup;
+  final WatchCachedTrackBundlesUseCase _watchBundles;
 
   StreamSubscription<int>? _usageSub;
+  // Reactive bundles subscription managed via emit.onEach; no field needed
 
   Future<void> _onStarted(
     CacheManagementStarted event,
@@ -56,6 +64,9 @@ class CacheManagementBloc
     emit(
       state.copyWith(status: CacheManagementStatus.loading, errorMessage: null),
     );
+
+    // Load bundles immediately so the list shows current cached items
+    await _loadBundles(emit);
 
     // Watch storage usage and refresh stats on each change
     await emit.onEach<int>(
@@ -66,6 +77,27 @@ class CacheManagementBloc
           (failure) => emit(state.copyWith(storageUsageBytes: usage)),
           (stats) => emit(
             state.copyWith(storageUsageBytes: usage, storageStats: stats),
+          ),
+        );
+      },
+    );
+
+    // Reactively watch cached bundles and update state
+    await emit.onEach<Either<Failure, List<CachedTrackBundle>>>(
+      _watchBundles(),
+      onData: (Either<Failure, List<CachedTrackBundle>> either) {
+        either.fold(
+          (failure) => emit(
+            state.copyWith(
+              status: CacheManagementStatus.failure,
+              errorMessage: failure.message,
+            ),
+          ),
+          (bundles) => emit(
+            state.copyWith(
+              status: CacheManagementStatus.success,
+              bundles: bundles,
+            ),
           ),
         );
       },
@@ -148,19 +180,12 @@ class CacheManagementBloc
     Emitter<CacheManagementState> emit,
   ) async {
     if (state.selected.isEmpty) return;
-    final result = await _deleteMany.call(state.selected.toList());
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: CacheManagementStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (deletedIds) async {
-        emit(state.copyWith(selected: {}));
-        await _loadBundles(emit);
-      },
-    );
+    // Iterate single deletions for simplicity
+    for (final trackId in state.selected) {
+      await _deleteOne.call(trackId);
+    }
+    emit(state.copyWith(selected: {}));
+    await _loadBundles(emit);
   }
 
   Future<void> _onCleanupRequested(

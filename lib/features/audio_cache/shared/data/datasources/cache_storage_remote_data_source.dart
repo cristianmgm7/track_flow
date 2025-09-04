@@ -38,6 +38,10 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
   // Track active downloads for cancellation
   final Map<String, bool> _activeDownloads = {};
   final Map<String, bool> _cancelledDownloads = {};
+  final Map<String, StreamSubscription<List<int>>> _downloadSubscriptions = {};
+  final Map<String, IOSink> _downloadSinks = {};
+  final Map<String, File> _downloadFiles = {};
+  final Map<String, http.Client> _downloadClients = {};
 
   CacheStorageRemoteDataSourceImpl(this._storage);
 
@@ -107,8 +111,13 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         );
         final sink = targetFile.openWrite();
 
+        // Track resources for cancellation
+        _downloadSinks[downloadId] = sink;
+        _downloadFiles[downloadId] = targetFile;
+        _downloadClients[downloadId] = client;
+
         // Listen to response stream with progress tracking
-        response.stream.listen(
+        final subscription = response.stream.listen(
           (List<int> chunk) {
             // Check if download was cancelled
             if (_cancelledDownloads[downloadId] == true) return;
@@ -136,6 +145,7 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
             }
           },
         );
+        _downloadSubscriptions[downloadId] = subscription;
 
         // Wait for download completion or cancellation
         await downloadCompleter.future;
@@ -172,9 +182,19 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
           );
         }
       } finally {
-        client.close();
+        try {
+          client.close();
+        } catch (_) {}
         _activeDownloads.remove(downloadId);
         _cancelledDownloads.remove(downloadId);
+        try {
+          await _downloadSubscriptions.remove(downloadId)?.cancel();
+        } catch (_) {}
+        try {
+          await _downloadSinks.remove(downloadId)?.close();
+        } catch (_) {}
+        _downloadFiles.remove(downloadId);
+        _downloadClients.remove(downloadId);
       }
     } catch (e) {
       return Left(
@@ -226,6 +246,24 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
       if (isActive == true) {
         // Mark as cancelled
         _cancelledDownloads[downloadId] = true;
+        // Cancel subscription and close sink
+        try {
+          await _downloadSubscriptions.remove(downloadId)?.cancel();
+        } catch (_) {}
+        try {
+          await _downloadSinks.remove(downloadId)?.close();
+        } catch (_) {}
+        try {
+          _downloadClients.remove(downloadId)?.close();
+        } catch (_) {}
+        // Delete partial file if any
+        final partial = _downloadFiles.remove(downloadId);
+        if (partial != null && await partial.exists()) {
+          try {
+            await partial.delete();
+          } catch (_) {}
+        }
+        _activeDownloads.remove(downloadId);
         return const Right(unit);
       } else {
         return Left(

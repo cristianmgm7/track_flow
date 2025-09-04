@@ -23,11 +23,7 @@ abstract class AudioDownloadRepository {
     void Function(DownloadProgress)? progressCallback,
   });
 
-  /// Download multiple audio files with progress tracking
-  Future<Either<CacheFailure, Map<AudioTrackId, String>>> downloadMultipleAudios(
-    Map<AudioTrackId, String> trackUrlPairs, { // trackId -> audioUrl
-    void Function(AudioTrackId trackId, DownloadProgress)? progressCallback,
-  });
+  // Removed bulk download to simplify architecture
 
   // ===============================================
   // DOWNLOAD MANAGEMENT

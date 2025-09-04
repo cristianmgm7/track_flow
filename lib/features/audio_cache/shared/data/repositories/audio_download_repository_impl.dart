@@ -104,47 +104,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
     }
   }
 
-  @override
-  Future<Either<CacheFailure, Map<AudioTrackId, String>>>
-  downloadMultipleAudios(
-    Map<AudioTrackId, String> trackUrlPairs, {
-    void Function(AudioTrackId trackId, DownloadProgress)? progressCallback,
-  }) async {
-    try {
-      final Map<AudioTrackId, String> downloadedFiles = {};
-
-      for (final entry in trackUrlPairs.entries) {
-        final trackId = entry.key;
-        final audioUrl = entry.value;
-
-        final result = await downloadAudio(
-          trackId,
-          audioUrl,
-          progressCallback: (progress) {
-            progressCallback?.call(trackId, progress);
-          },
-        );
-
-        result.fold(
-          (failure) {
-            // Log failure but continue with other downloads
-          },
-          (filePath) {
-            downloadedFiles[trackId] = filePath;
-          },
-        );
-      }
-
-      return Right(downloadedFiles);
-    } catch (e) {
-      return Left(
-        DownloadCacheFailure(
-          message: 'Failed to download multiple audios: $e',
-          trackId: 'multiple',
-        ),
-      );
-    }
-  }
+  // Removed bulk download method
 
   @override
   Future<Either<CacheFailure, Unit>> cancelDownload(

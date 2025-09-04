@@ -39,6 +39,9 @@ abstract class CacheStorageLocalDataSource {
   Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
   getAllCachedAudios();
 
+  /// Watch all cached audios reactively
+  Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios();
+
   Future<Either<CacheFailure, int>> getTotalStorageUsage();
 
   Future<Either<CacheFailure, List<String>>> getCorruptedFiles();
@@ -150,12 +153,19 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, bool>> audioExists(String trackId) async {
     try {
-      final count =
+      final unifiedDoc =
           await _isar.cachedAudioDocumentUnifieds
               .filter()
               .trackIdEqualTo(trackId)
-              .count();
-      return Right(count > 0);
+              .findFirst();
+
+      if (unifiedDoc == null) {
+        return const Right(false);
+      }
+
+      final file = File(unifiedDoc.filePath);
+      final exists = await file.exists();
+      return Right(exists);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -305,6 +315,14 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         ),
       );
     }
+  }
+
+  @override
+  Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios() {
+    return _isar.cachedAudioDocumentUnifieds
+        .where()
+        .watch(fireImmediately: true)
+        .map((docs) => docs.toList());
   }
 
   @override
@@ -469,7 +487,15 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         .filter()
         .trackIdEqualTo(trackId)
         .watch(fireImmediately: true)
-        .map((docs) => docs.isNotEmpty);
+        .asyncMap((docs) async {
+          if (docs.isEmpty) return false;
+          final doc = docs.first;
+          try {
+            return await File(doc.filePath).exists();
+          } catch (_) {
+            return false;
+          }
+        });
   }
 
   Future<Directory> _getCacheDirectory() async {

@@ -7,6 +7,7 @@ import 'package:trackflow/features/audio_cache/shared/domain/entities/download_p
 import 'package:trackflow/features/audio_cache/shared/domain/failures/cache_failure.dart'
     as cache;
 import 'package:trackflow/features/audio_cache/shared/domain/services/cache_maintenance_service.dart';
+import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
 import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_download_repository.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
@@ -17,6 +18,7 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 class GetCachedTrackBundlesUseCase {
   GetCachedTrackBundlesUseCase(
     this._cacheMaintenanceService,
+    this._audioStorageRepository,
     this._audioTrackRepository,
     this._userProfileRepository,
     this._projectsRepository,
@@ -24,6 +26,8 @@ class GetCachedTrackBundlesUseCase {
   );
 
   final CacheMaintenanceService _cacheMaintenanceService;
+  // ignore: unused_field
+  final AudioStorageRepository _audioStorageRepository;
   final AudioTrackRepository _audioTrackRepository;
   final UserProfileRepository _userProfileRepository;
   final ProjectsRepository _projectsRepository;
@@ -31,6 +35,7 @@ class GetCachedTrackBundlesUseCase {
 
   Future<Either<Failure, List<CachedTrackBundle>>> call() async {
     try {
+      // Prefer reactive index from storage repository; fallback to maintenance
       final cachedEither = await _cacheMaintenanceService.getAllCachedAudios();
 
       return await cachedEither.fold(
@@ -48,43 +53,37 @@ class GetCachedTrackBundlesUseCase {
             }
           });
 
-          final List<CachedTrackBundle> bundles = [];
-          for (final cached in cachedAudios) {
-            final AudioTrackId trackId = AudioTrackId.fromUniqueString(
-              cached.trackId,
-            );
-
-            // Fetch track
-            final trackEither = await _audioTrackRepository.getTrackById(
-              trackId,
-            );
-            AudioTrack? track = trackEither.fold((_) => null, (t) => t);
-
-            // Fetch uploader profile (best-effort)
-            final uploaderEither =
-                track != null
-                    ? await _userProfileRepository.getUserProfile(
-                      track.uploadedBy,
-                    )
-                    : null;
-            final uploader = uploaderEither?.fold((_) => null, (p) => p);
-
-            // Fetch project name (best-effort)
-            String? projectName;
-            if (track != null) {
-              final projectEither = await _projectsRepository.getProjectById(
-                track.projectId,
+          final bundles = await Future.wait(
+            cachedAudios.map((cached) async {
+              final AudioTrackId trackId = AudioTrackId.fromUniqueString(
+                cached.trackId,
               );
-              projectEither.fold((_) => null, (project) {
-                projectName = project.name.value.getOrElse(() => '');
-              });
-            }
 
-            // Active download if any
-            final activeDownload = trackIdToProgress[cached.trackId];
+              final trackEither = await _audioTrackRepository.getTrackById(
+                trackId,
+              );
+              final AudioTrack? track = trackEither.fold((_) => null, (t) => t);
 
-            bundles.add(
-              CachedTrackBundle(
+              final uploaderEither =
+                  track != null
+                      ? await _userProfileRepository.getUserProfile(
+                        track.uploadedBy,
+                      )
+                      : null;
+              final uploader = uploaderEither?.fold((_) => null, (p) => p);
+
+              String? projectName;
+              if (track != null) {
+                final projectEither = await _projectsRepository.getProjectById(
+                  track.projectId,
+                );
+                projectEither.fold((_) => null, (project) {
+                  projectName = project.name.value.getOrElse(() => '');
+                });
+              }
+
+              final activeDownload = trackIdToProgress[cached.trackId];
+              return CachedTrackBundle(
                 cached: cached,
                 track: track,
                 uploader: uploader,
@@ -93,9 +92,9 @@ class GetCachedTrackBundlesUseCase {
                         ? projectName
                         : null,
                 activeDownload: activeDownload,
-              ),
-            );
-          }
+              );
+            }),
+          );
 
           return Right(bundles);
         },

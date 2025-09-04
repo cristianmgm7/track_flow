@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_cache/management/domain/entities/cached_track_bundle.dart';
 
 abstract class CacheManagementEvent extends Equatable {
   const CacheManagementEvent();
@@ -13,6 +14,14 @@ class CacheManagementStarted extends CacheManagementEvent {
 
 class CacheManagementRefreshRequested extends CacheManagementEvent {
   const CacheManagementRefreshRequested();
+}
+
+/// Internal: emitted when cached audios stream updates
+class CacheManagementBundlesUpdated extends CacheManagementEvent {
+  const CacheManagementBundlesUpdated(this.bundles);
+  final List<CachedTrackBundle> bundles;
+  @override
+  List<Object?> get props => [bundles];
 }
 
 class CacheManagementToggleSelect extends CacheManagementEvent {
@@ -61,4 +70,3 @@ class CacheManagementCleanupRequested extends CacheManagementEvent {
     targetFreeBytes,
   ];
 }
-
