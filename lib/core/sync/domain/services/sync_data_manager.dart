@@ -99,6 +99,27 @@ class SyncDataManager {
     }
   }
 
+  /// Scoped incremental sync based on syncKey hints
+  ///
+  /// Supported keys:
+  /// - 'audio_comments_{trackId}' → downstream sync only for that track's comments
+  Future<Either<Failure, Unit>> performIncrementalSyncForKey(
+    String syncKey,
+  ) async {
+    try {
+      if (syncKey.startsWith('audio_comments_')) {
+        final trackId = syncKey.substring('audio_comments_'.length);
+        await _syncAudioComments(scopedTrackId: trackId);
+        return const Right(unit);
+      }
+
+      // Fallback to regular incremental sync
+      return await performIncrementalSync();
+    } catch (e) {
+      return Left(ServerFailure('Scoped incremental sync failed: $e'));
+    }
+  }
+
   /// 🔄 FALLBACK: Full sync when incremental fails
   /// Forces sync of all entities regardless of their individual timing
   Future<Either<Failure, Unit>> performFullSync({

@@ -21,7 +21,7 @@ class SyncAudioCommentsUseCase {
     this._audioTrackRemoteDataSource,
   );
 
-  Future<void> call() async {
+  Future<void> call({String? scopedTrackId, bool force = false}) async {
     final userId =
         await _sessionStorage
             .getUserId(); // Now async - prevents race conditions
@@ -30,6 +30,18 @@ class SyncAudioCommentsUseCase {
       return;
     }
 
+    // Scoped: only sync a specific track's comments
+    if (scopedTrackId != null) {
+      final remoteDtos = await _audioCommentRemoteDataSource
+          .getCommentsByTrackId(scopedTrackId);
+      await _audioCommentLocalDataSource.replaceCommentsForTrack(
+        scopedTrackId,
+        remoteDtos,
+      );
+      return;
+    }
+
+    // Global: sync comments for all tracks of the user's projects
     final projectsEither = await _projectRemoteDataSource.getUserProjects(
       userId,
     );
@@ -45,8 +57,6 @@ class SyncAudioCommentsUseCase {
         return;
       }
 
-      // Replace comments per track within a single transaction each to avoid
-      // transient empty emissions in watchers.
       for (final track in allTracks) {
         final remoteDtos = await _audioCommentRemoteDataSource
             .getCommentsByTrackId(track.id.value);

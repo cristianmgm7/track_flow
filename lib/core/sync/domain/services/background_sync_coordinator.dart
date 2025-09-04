@@ -168,7 +168,7 @@ class BackgroundSyncCoordinator {
       );
 
       // PHASE 2: DOWNSTREAM SYNC - Pull fresh data from remote
-      // This updates local cache with latest remote data
+      // Route scoped syncs when syncKey encodes a scope
       AppLogger.sync(
         'DOWNSTREAM',
         'Starting downstream sync (remote → local)',
@@ -176,7 +176,9 @@ class BackgroundSyncCoordinator {
       );
       final downstreamStartTime = DateTime.now();
 
-      final syncResult = await _syncDataManager.performIncrementalSync();
+      final syncResult = await _syncDataManager.performIncrementalSyncForKey(
+        syncKey,
+      );
 
       final downstreamDuration = DateTime.now().difference(downstreamStartTime);
 
