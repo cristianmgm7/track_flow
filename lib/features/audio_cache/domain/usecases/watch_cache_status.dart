@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/failures/cache_failure.dart';
+import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dart';
 
-import '../../../shared/domain/entities/cached_audio.dart';
-import '../../../shared/domain/entities/download_progress.dart';
-import '../../../shared/domain/repositories/audio_storage_repository.dart';
+import '../entities/cached_audio.dart';
+import '../entities/download_progress.dart';
+import '../repositories/audio_storage_repository.dart';
 
 @injectable
 class WatchTrackCacheStatusUseCase {

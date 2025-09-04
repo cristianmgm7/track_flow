@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
-import '../entities/cleanup_details.dart';
-import '../failures/cache_failure.dart';
-import '../services/cache_maintenance_service.dart';
+import '../../../audio_cache/domain/entities/cleanup_details.dart';
+import '../../../audio_cache/domain/failures/cache_failure.dart';
+import '../../../audio_cache/domain/services/cache_maintenance_service.dart';
 
 @injectable
 class CleanupCacheUseCase {

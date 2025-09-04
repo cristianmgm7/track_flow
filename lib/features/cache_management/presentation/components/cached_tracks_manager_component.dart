@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
-import '../shared/domain/services/cache_maintenance_service.dart';
-import '../shared/domain/entities/cached_audio.dart';
+import '../../../audio_cache/domain/services/cache_maintenance_service.dart';
+import '../../../audio_cache/domain/entities/cached_audio.dart';
 
 /// Component for managing cached tracks
 class CachedTracksManagerComponent extends StatefulWidget {

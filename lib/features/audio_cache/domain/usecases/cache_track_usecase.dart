@@ -2,10 +2,10 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'dart:io';
 
-import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/audio_download_repository.dart';
-import '../../../shared/domain/repositories/audio_storage_repository.dart';
-import '../../../../../core/entities/unique_id.dart';
+import '../failures/cache_failure.dart';
+import '../repositories/audio_download_repository.dart';
+import '../repositories/audio_storage_repository.dart';
+import '../../../../core/entities/unique_id.dart';
 
 @injectable
 class CacheTrackUseCase {

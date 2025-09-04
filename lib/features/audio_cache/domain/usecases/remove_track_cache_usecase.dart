@@ -2,8 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
-import '../../../shared/domain/failures/cache_failure.dart';
-import '../../../shared/domain/repositories/audio_storage_repository.dart';
+import '../failures/cache_failure.dart';
+import '../repositories/audio_storage_repository.dart';
 
 @injectable
 class RemoveTrackCacheUseCase {
