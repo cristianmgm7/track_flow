@@ -147,8 +147,10 @@ import 'package:trackflow/features/audio_cache/data/repositories/audio_storage_r
     as _i115;
 import 'package:trackflow/features/audio_cache/data/repositories/cache_key_repository_impl.dart'
     as _i122;
-import 'package:trackflow/features/audio_cache/data/repositories/cache_maintenance_repository_impl.dart'
+import 'package:trackflow/features/cache_management/data/repositories/cache_maintenance_repository_impl.dart'
     as _i124;
+import 'package:trackflow/features/cache_management/data/datasources/cache_management_local_data_source.dart'
+    as _i235;
 import 'package:trackflow/features/audio_cache/data/services/cache_maintenance_service_impl.dart'
     as _i11;
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_download_repository.dart'
@@ -157,7 +159,7 @@ import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage
     as _i114;
 import 'package:trackflow/features/audio_cache/domain/repositories/cache_key_repository.dart'
     as _i121;
-import 'package:trackflow/features/audio_cache/domain/repositories/cache_maintenance_repository.dart'
+import 'package:trackflow/features/cache_management/domain/repositories/cache_maintenance_repository.dart'
     as _i123;
 import 'package:trackflow/features/audio_cache/domain/services/cache_maintenance_service.dart'
     as _i10;
@@ -167,13 +169,13 @@ import 'package:trackflow/features/cache_management/domain/usecases/get_cache_st
     as _i21;
 import 'package:trackflow/features/audio_cache/domain/usecases/watch_cached_audios_usecase.dart'
     as _i151;
-import 'package:trackflow/features/audio_cache/track/domain/usecases/cache_track_usecase.dart'
+import 'package:trackflow/features/audio_cache/domain/usecases/cache_track_usecase.dart'
     as _i125;
-import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart'
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_track_path_usecase.dart'
     as _i133;
-import 'package:trackflow/features/audio_cache/track/domain/usecases/remove_track_cache_usecase.dart'
+import 'package:trackflow/features/audio_cache/domain/usecases/remove_track_cache_usecase.dart'
     as _i145;
-import 'package:trackflow/features/audio_cache/track/domain/usecases/watch_cache_status.dart'
+import 'package:trackflow/features/audio_cache/domain/usecases/watch_cache_status.dart'
     as _i153;
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart'
     as _i161;
@@ -908,7 +910,9 @@ extension GetItInjectableX on _i1.GetIt {
     );
     gh.lazySingleton<_i123.CacheMaintenanceRepository>(
       () => _i124.CacheMaintenanceRepositoryImpl(
-        localDataSource: gh<_i78.CacheStorageLocalDataSource>(),
+        localDataSource: _i235.CacheManagementLocalDataSourceImpl(
+          local: gh<_i78.CacheStorageLocalDataSource>(),
+        ),
       ),
     );
     gh.factory<_i125.CacheTrackUseCase>(

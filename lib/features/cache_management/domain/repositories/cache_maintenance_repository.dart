@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import '../entities/cache_validation_result.dart';
-import '../failures/cache_failure.dart';
+import '../../../audio_cache/domain/entities/cache_validation_result.dart';
+import '../../../audio_cache/domain/failures/cache_failure.dart';
 
 /// Repository responsible for cache maintenance and validation operations
 /// Follows Single Responsibility Principle - only handles maintenance tasks
@@ -12,7 +12,7 @@ abstract class CacheMaintenanceRepository {
 
   /// Validate entire cache consistency
   Future<Either<CacheFailure, CacheValidationResult>>
-      validateCacheConsistency();
+  validateCacheConsistency();
 
   /// Validate specific cache entry
   Future<Either<CacheFailure, bool>> validateCacheEntry(AudioTrackId trackId);

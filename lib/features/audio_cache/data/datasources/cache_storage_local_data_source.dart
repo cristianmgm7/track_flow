@@ -29,12 +29,7 @@ abstract class CacheStorageLocalDataSource {
     String expectedChecksum,
   );
 
-  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
-  getMultipleCachedAudios(List<String> trackIds);
-
-  Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(
-    List<String> trackIds,
-  );
+  // Removed batch operations to simplify interface
 
   Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
   getAllCachedAudios();
@@ -244,60 +239,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     }
   }
 
-  @override
-  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
-  getMultipleCachedAudios(List<String> trackIds) async {
-    try {
-      final List<CachedAudioDocumentUnified> unifiedDocs = [];
-
-      // Query each track ID individually since Isar doesn't have trackIdIsIn
-      for (final trackId in trackIds) {
-        final doc =
-            await _isar.cachedAudioDocumentUnifieds
-                .filter()
-                .trackIdEqualTo(trackId)
-                .findFirst();
-        if (doc != null) {
-          unifiedDocs.add(doc);
-        }
-      }
-
-      return Right(unifiedDocs);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get multiple cached audios: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, List<String>>> deleteMultipleAudioFiles(
-    List<String> trackIds,
-  ) async {
-    try {
-      final deletedTrackIds = <String>[];
-
-      for (final trackId in trackIds) {
-        final result = await deleteAudioFile(trackId);
-        result.fold(
-          (failure) => null, // Skip failed deletions
-          (_) => deletedTrackIds.add(trackId),
-        );
-      }
-
-      return Right(deletedTrackIds);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to delete multiple audio files: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
+  // Batch operations removed from implementation
 
   @override
   Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>

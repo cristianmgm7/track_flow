@@ -6,19 +6,19 @@ import 'package:crypto/crypto.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_cache/data/models/cached_audio_document_unified.dart';
 
-import '../../domain/entities/cache_validation_result.dart';
-import '../../domain/entities/cached_audio.dart';
-import '../../domain/failures/cache_failure.dart';
+import '../../../audio_cache/domain/entities/cache_validation_result.dart';
+import '../../../audio_cache/domain/entities/cached_audio.dart';
+import '../../../audio_cache/domain/failures/cache_failure.dart';
 import '../../domain/repositories/cache_maintenance_repository.dart';
-import '../datasources/cache_storage_local_data_source.dart';
+import '../datasources/cache_management_local_data_source.dart';
 
 @LazySingleton(as: CacheMaintenanceRepository)
 class CacheMaintenanceRepositoryImpl implements CacheMaintenanceRepository {
-  final CacheStorageLocalDataSource _localDataSource;
+  final CacheManagementLocalDataSource _localDataSource;
   static const String _cacheSubDirectory = 'audio_cache';
 
   CacheMaintenanceRepositoryImpl({
-    required CacheStorageLocalDataSource localDataSource,
+    required CacheManagementLocalDataSource localDataSource,
   }) : _localDataSource = localDataSource;
 
   @override
