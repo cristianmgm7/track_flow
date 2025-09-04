@@ -28,7 +28,5 @@ class AppRoutes {
   // Profile routes
   static const String artistProfile = '/artistprofile/:id';
 
-  // Audio cache demo routes
-  static const String cacheDemo = '/settings/cache-demo';
   static const String cacheManagement = '/settings/cache-management';
 }

@@ -62,21 +62,26 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
             if (state.collaborators.isNotEmpty) ...[
               const SizedBox(height: 16),
               CollaboratorCardsHorizontalList(
-                collaborators: state.collaborators.map((collaborator) {
-                  // Find the role from project collaborators
-                  final projectCollaborator = state.project?.collaborators
-                      .firstWhere((pc) => pc.userId == collaborator.id,
-                          orElse: () => throw StateError('Collaborator not found'));
-                  
-                  return CollaboratorCardData(
-                    id: collaborator.id.value,
-                    name: collaborator.name,
-                    email: collaborator.email,
-                    avatarUrl: collaborator.avatarUrl,
-                    role: projectCollaborator?.role ?? ProjectRole.viewer,
-                    creativeRole: collaborator.creativeRole,
-                  );
-                }).toList(),
+                collaborators:
+                    state.collaborators.map((collaborator) {
+                      // Find the role from project collaborators
+                      final projectCollaborator = state.project?.collaborators
+                          .firstWhere(
+                            (pc) => pc.userId == collaborator.id,
+                            orElse:
+                                () =>
+                                    throw StateError('Collaborator not found'),
+                          );
+
+                      return CollaboratorCardData(
+                        id: collaborator.id.value,
+                        name: collaborator.name,
+                        email: collaborator.email,
+                        avatarUrl: collaborator.avatarUrl,
+                        role: projectCollaborator?.role ?? ProjectRole.viewer,
+                        creativeRole: collaborator.creativeRole,
+                      );
+                    }).toList(),
                 onCardTap: (collaborator) {
                   context.push(
                     AppRoutes.artistProfile.replaceFirst(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart'
-    show showAppActionSheet;
+import 'package:trackflow/features/projects/presentation/widgets/create_project_form.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
@@ -11,7 +11,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dar
 import 'package:trackflow/features/projects/presentation/blocs/projects_event.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/projects/presentation/components/project_component.dart';
-import 'package:trackflow/features/projects/presentation/widgets/project_list_actions_sheet.dart';
 import 'package:trackflow/features/ui/list/app_list_header_bar.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
@@ -32,11 +31,10 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   }
 
   void _openProjectActionsSheet() {
-    showAppActionSheet(
+    showAppFormSheet(
       context: context,
-      title: 'Create something new',
-      actions: ProjectActions.onProjectList(context),
-      initialChildSize: 0.4, // open larger by default to avoid manual drag
+      title: 'Create Project',
+      child: ProjectFormBottomSheet(),
     );
   }
 

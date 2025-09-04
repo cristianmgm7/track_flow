@@ -23,11 +23,12 @@ import 'package:trackflow/features/project_detail/presentation/screens/project_d
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
-import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
+// import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/screens/collaborator_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/current_user_profile_screen.dart';
-import 'package:trackflow/features/audio_cache/screens/cache_demo_screen.dart';
 import 'package:trackflow/features/audio_cache/management/presentation/screens/cache_management_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
@@ -89,7 +90,7 @@ class AppRouter {
         // Handle ready state - allow access to main app routes
         if (flowState is AppFlowReady) {
           // When app is ready, redirect to dashboard if not on a valid route
-          // Valid routes are: dashboard, projects, settings, notifications, and any project details
+          // Valid routes are: dashboard, projects, settings, notifications, user profile, collaborator profile, and any project details
           if (currentLocation == AppRoutes.dashboard ||
               currentLocation == AppRoutes.projects ||
               currentLocation == AppRoutes.settings ||
@@ -97,8 +98,8 @@ class AppRouter {
               currentLocation == AppRoutes.userProfile ||
               currentLocation == AppRoutes.manageCollaborators ||
               currentLocation == AppRoutes.audioComments ||
-              currentLocation == AppRoutes.cacheDemo ||
               currentLocation == AppRoutes.cacheManagement ||
+              currentLocation.startsWith('/artistprofile/') ||
               currentLocation.startsWith('/projects/')) {
             return null; // Allow navigation
           }
@@ -169,8 +170,11 @@ class AppRouter {
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
-            return HeroUserProfileScreen(
-              userId: UserId.fromUniqueString(userId),
+            return BlocProvider<UserProfileBloc>(
+              create: (_) => sl<UserProfileBloc>(),
+              child: CollaboratorProfileScreen(
+                userId: UserId.fromUniqueString(userId),
+              ),
             );
           },
         ),
@@ -238,10 +242,7 @@ class AppRouter {
               path: AppRoutes.userProfile,
               builder: (context, state) => const CurrentUserProfileScreen(),
             ),
-            GoRoute(
-              path: AppRoutes.cacheDemo,
-              builder: (context, state) => const CacheDemoScreen(),
-            ),
+            // Cache demo route removed
             GoRoute(
               path: AppRoutes.cacheManagement,
               builder: (context, state) => const CacheManagementScreen(),

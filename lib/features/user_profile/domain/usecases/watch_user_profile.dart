@@ -133,5 +133,26 @@ class WatchUserProfileUseCase {
     }
   }
 
+  /// Watch any user's profile without enforcing current session user check.
+  /// Use this for viewing collaborator profiles.
+  Stream<Either<Failure, UserProfile?>> callAny(String userId) async* {
+    try {
+      AppLogger.info(
+        'WatchUserProfileUseCase.callAny: Watching profile for userId: $userId',
+        tag: 'WATCH_USER_PROFILE',
+      );
+      yield* _userProfileRepository.watchUserProfile(
+        UserId.fromUniqueString(userId),
+      );
+    } catch (e) {
+      AppLogger.error(
+        'WatchUserProfileUseCase.callAny: Error watching profile: $e',
+        tag: 'WATCH_USER_PROFILE',
+        error: e,
+      );
+      yield Left(ServerFailure('Failed to watch user profile: $e'));
+    }
+  }
+
   // Remote sync is intentionally not triggered here to keep watch local-only
 }

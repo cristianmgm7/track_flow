@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -10,6 +9,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_state.da
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
+import 'package:trackflow/features/ui/feedback/app_feedback_system.dart';
 
 class ProjectFormBottomSheet extends StatefulWidget {
   final Project? project;
@@ -54,11 +54,10 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
         if (state is ProjectCreatedSuccess) {
           Navigator.of(context).pop();
         } else if (state is ProjectsError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${state.message}'),
-              backgroundColor: AppColors.error,
-            ),
+          AppFeedbackSystem.showSnackBar(
+            context,
+            message: 'Error: ${state.message}',
+            type: FeedbackType.error,
           );
         }
       },
