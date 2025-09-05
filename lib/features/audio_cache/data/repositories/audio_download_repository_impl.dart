@@ -13,9 +13,7 @@ import '../datasources/cache_storage_remote_data_source.dart';
 class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
   final CacheStorageRemoteDataSource _remoteDataSource;
 
-  // Active downloads tracking for progress and cancellation
-  final Map<AudioTrackId, String> _activeDownloads =
-      {}; // trackId -> downloadId
+  // Minimal internal progress stream per track (only while downloading)
   final Map<AudioTrackId, StreamController<DownloadProgress>>
   _progressControllers = {};
 
@@ -40,22 +38,14 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           '${tempDir.path}/audio_cache_${trackId.value}_${DateTime.now().millisecondsSinceEpoch}.tmp';
 
       // Download using remote data source
-      String? downloadId;
       final downloadResult = await _remoteDataSource.downloadAudio(
         audioUrl: audioUrl,
         localFilePath: tempFilePath,
         onProgress: (progress) {
-          // Store download ID for cancellation tracking
-          if (downloadId == null) {
-            downloadId =
-                progress.trackId; // This is the download ID from remote source
-            _activeDownloads[trackId] = downloadId!;
-          }
-
-          // Map download ID back to trackId for consistency
-          final trackProgress = progress.copyWith(trackId: trackId.value);
-          progressCallback?.call(trackProgress);
-          progressController.add(trackProgress);
+          // Map remote progress back to this trackId
+          final mapped = progress.copyWith(trackId: trackId.value);
+          progressCallback?.call(mapped);
+          progressController.add(mapped);
         },
       );
 
@@ -67,7 +57,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           );
           progressCallback?.call(failedProgress);
           progressController.add(failedProgress);
-          _cleanupDownload(trackId);
+          _cleanup(trackId);
           return Left(failure);
         },
         (downloadedFile) {
@@ -78,8 +68,8 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
           progressCallback?.call(completedProgress);
           progressController.add(completedProgress);
 
-          // Clean up tracking but keep the file for storage repository
-          _cleanupDownload(trackId);
+          // Clean up controller but keep file for storage repository
+          _cleanup(trackId);
 
           return Right(downloadedFile.path);
         },
@@ -93,7 +83,7 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
 
       // Emit to progress controller if it exists
       _progressControllers[trackId]?.add(failedProgress);
-      _cleanupDownload(trackId);
+      _cleanup(trackId);
 
       return Left(
         DownloadCacheFailure(
@@ -104,214 +94,8 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
     }
   }
 
-  // Removed bulk download method
-
-  @override
-  Future<Either<CacheFailure, Unit>> cancelDownload(
-    AudioTrackId trackId,
-  ) async {
-    try {
-      final downloadId = _activeDownloads[trackId];
-      if (downloadId != null) {
-        final result = await _remoteDataSource.cancelDownload(downloadId);
-        return result.fold((failure) => Left(failure), (_) {
-          // Emit cancelled progress
-          final cancelledProgress = DownloadProgress.failed(
-            trackId.value,
-            'Download cancelled by user',
-          );
-          _progressControllers[trackId]?.add(cancelledProgress);
-
-          _cleanupDownload(trackId);
-          return const Right(unit);
-        });
-      } else {
-        return Left(
-          ValidationCacheFailure(
-            message: 'No active download found for track',
-            field: 'trackId',
-            value: trackId.value,
-          ),
-        );
-      }
-    } catch (e) {
-      return Left(
-        DownloadCacheFailure(
-          message: 'Failed to cancel download: $e',
-          trackId: trackId.value,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, Unit>> pauseDownload(AudioTrackId trackId) async {
-    try {
-      final downloadId = _activeDownloads[trackId];
-      if (downloadId != null) {
-        // For Firebase Storage, we need to cancel and store progress for later resume
-        final result = await _remoteDataSource.cancelDownload(downloadId);
-        return result.fold((failure) => Left(failure), (_) {
-          // Mark as paused in progress controller
-          final pausedProgress = DownloadProgress(
-            trackId: trackId.value,
-            state:
-                DownloadState
-                    .downloading, // Keep as downloading but store pause state internally
-            downloadedBytes: 0, // We'd need to store this from last progress
-            totalBytes: 0,
-          );
-          _progressControllers[trackId]?.add(pausedProgress);
-
-          // Don't cleanup yet - keep for resume
-          return const Right(unit);
-        });
-      } else {
-        return Left(
-          ValidationCacheFailure(
-            message: 'No active download found for track',
-            field: 'trackId',
-            value: trackId.value,
-          ),
-        );
-      }
-    } catch (e) {
-      return Left(
-        DownloadCacheFailure(
-          message: 'Failed to pause download: $e',
-          trackId: trackId.value,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, Unit>> resumeDownload(
-    AudioTrackId trackId,
-  ) async {
-    try {
-      // For Firebase Storage, resuming means starting a new download
-      // In a full implementation, we'd need to store the original URL and progress
-      // For now, return an error indicating resume is not supported with current implementation
-      return Left(
-        ValidationCacheFailure(
-          message:
-              'Download resuming not supported with current Firebase Storage implementation. Please restart download.',
-          field: 'trackId',
-          value: trackId.value,
-        ),
-      );
-    } catch (e) {
-      return Left(
-        DownloadCacheFailure(
-          message: 'Failed to resume download: $e',
-          trackId: trackId.value,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(
-    AudioTrackId trackId,
-  ) async {
-    try {
-      // Check if download is currently active
-      final downloadId = _activeDownloads[trackId];
-      if (downloadId != null) {
-        // Return a basic progress indicating it's active
-        // In a full implementation, we'd store last known progress
-        return Right(
-          DownloadProgress(
-            trackId: trackId.value,
-            state: DownloadState.downloading,
-            downloadedBytes: 0,
-            totalBytes: 0,
-          ),
-        );
-      }
-
-      // No active download
-      return const Right(null);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get download progress: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, List<DownloadProgress>>>
-  getActiveDownloads() async {
-    try {
-      final activeDownloads = <DownloadProgress>[];
-
-      for (final entry in _activeDownloads.entries) {
-        final trackId = entry.key;
-
-        // Create a basic progress object for each active download
-        activeDownloads.add(
-          DownloadProgress(
-            trackId: trackId.value,
-            state: DownloadState.downloading,
-            downloadedBytes: 0, // We'd need to store actual progress
-            totalBytes: 0,
-          ),
-        );
-      }
-
-      return Right(activeDownloads);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get active downloads: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Stream<DownloadProgress> watchDownloadProgress(AudioTrackId trackId) {
-    // Return existing controller stream or create a new one
-    final controller = _progressControllers[trackId];
-    if (controller != null) {
-      return controller.stream;
-    } else {
-      // Create a new controller for future downloads
-      final newController = StreamController<DownloadProgress>.broadcast();
-      _progressControllers[trackId] = newController;
-      return newController.stream;
-    }
-  }
-
-  @override
-  Stream<List<DownloadProgress>> watchActiveDownloads() {
-    // Create a combined stream of all active downloads
-    return Stream.periodic(const Duration(milliseconds: 500), (_) {
-      final activeDownloads = <DownloadProgress>[];
-      for (final trackId in _activeDownloads.keys) {
-        // For active downloads, we could track their last known progress
-        // For now, just indicate they're active
-        activeDownloads.add(
-          DownloadProgress(
-            trackId: trackId.value,
-            state: DownloadState.downloading,
-            downloadedBytes: 0,
-            totalBytes: 0,
-          ),
-        );
-      }
-      return activeDownloads;
-    }).distinct();
-  }
-
-  /// Cleanup download tracking resources
-  void _cleanupDownload(AudioTrackId trackId) {
-    _activeDownloads.remove(trackId);
+  /// Cleanup progress resources
+  void _cleanup(AudioTrackId trackId) {
     _progressControllers[trackId]?.close();
     _progressControllers.remove(trackId);
   }
@@ -322,6 +106,5 @@ class AudioDownloadRepositoryImpl implements AudioDownloadRepository {
       controller.close();
     }
     _progressControllers.clear();
-    _activeDownloads.clear();
   }
 }

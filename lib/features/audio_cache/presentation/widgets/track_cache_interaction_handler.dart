@@ -48,9 +48,7 @@ class TrackCacheInteractionHandler {
 
     final bloc = context.read<TrackCacheBloc>();
 
-    if (currentState is TrackCacheInfoWatching) {
-      _handleInfoWatchingState(context, bloc, currentState);
-    } else if (currentState is TrackCacheStatusLoaded) {
+    if (currentState is TrackCacheStatusLoaded) {
       _handleStatusLoadedState(context, bloc, currentState);
     } else if (currentState is TrackCacheLoading) {
       _handleLoadingState();
@@ -64,20 +62,7 @@ class TrackCacheInteractionHandler {
     onStateChanged?.call();
   }
 
-  /// Handle TrackCacheInfoWatching state
-  void _handleInfoWatchingState(
-    BuildContext context,
-    TrackCacheBloc bloc,
-    TrackCacheInfoWatching state,
-  ) {
-    if (state.isCached) {
-      _removeFromCache(context, bloc);
-    } else if (state.isDownloading) {
-      _handleDownloadingState();
-    } else {
-      _startCaching(bloc);
-    }
-  }
+  // Removed _handleInfoWatchingState since unified info is no longer used
 
   /// Handle TrackCacheStatusLoaded state
   void _handleStatusLoadedState(
@@ -108,12 +93,7 @@ class TrackCacheInteractionHandler {
 
   /// Remove track from cache and show undo if enabled
   void _removeFromCache(BuildContext context, TrackCacheBloc bloc) {
-    bloc.add(
-      RemoveTrackCacheRequested(
-        trackId: config.trackId,
-        referenceId: config.referenceId ?? 'individual',
-      ),
-    );
+    bloc.add(RemoveTrackCacheRequested(trackId: config.trackId));
 
     if (config.enableUndoAction) {
       showUndoSnackBar(context);

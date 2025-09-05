@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cache_storage_stats_usecase.dart';
+import 'package:trackflow/features/cache_management/domain/usecases/get_cache_storage_stats_usecase.dart';
 
 class StorageUsageSummary extends StatelessWidget {
   const StorageUsageSummary({

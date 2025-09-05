@@ -8,7 +8,7 @@ import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import '../services/audio_playback_service.dart';
-import '../../../audio_cache/shared/domain/repositories/audio_storage_repository.dart';
+import '../../../audio_cache/domain/repositories/audio_storage_repository.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
 
 /// Pure playlist playback use case

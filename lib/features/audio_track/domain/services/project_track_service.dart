@@ -9,7 +9,7 @@ import 'package:trackflow/features/projects/domain/value_objects/project_permiss
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 
 @lazySingleton
 class ProjectTrackService {

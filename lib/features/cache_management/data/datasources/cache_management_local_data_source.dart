@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
 
 import '../../../audio_cache/domain/entities/cached_audio.dart';
 import '../../../audio_cache/domain/failures/cache_failure.dart';
@@ -8,6 +9,8 @@ import '../../../audio_cache/data/datasources/cache_storage_local_data_source.da
 
 /// Thin data source for cache management feature.
 /// Delegates to the audio_cache local storage data source.
+///
+
 abstract class CacheManagementLocalDataSource {
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios();
 
@@ -27,6 +30,7 @@ abstract class CacheManagementLocalDataSource {
   Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId);
 }
 
+@LazySingleton(as: CacheManagementLocalDataSource)
 class CacheManagementLocalDataSourceImpl
     implements CacheManagementLocalDataSource {
   final storage.CacheStorageLocalDataSource _delegate;

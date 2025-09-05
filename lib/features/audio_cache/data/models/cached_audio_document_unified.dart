@@ -28,9 +28,7 @@ class CachedAudioDocumentUnified {
   @Enumerated(EnumType.name)
   late CacheStatus status;
 
-  late int referenceCount;
   late DateTime lastAccessed;
-  late List<String> references;
   late int downloadAttempts;
 
   DateTime? lastDownloadAttempt;
@@ -48,10 +46,7 @@ class CachedAudioDocumentUnified {
       ..checksum = audio.checksum
       ..quality = audio.quality
       ..status = audio.status
-      ..referenceCount =
-          1 // Default reference count
       ..lastAccessed = DateTime.now()
-      ..references = ['individual'] // Default reference
       ..downloadAttempts = 0
       ..lastDownloadAttempt = null
       ..failureReason = null
@@ -68,9 +63,7 @@ class CachedAudioDocumentUnified {
       ..checksum = ''
       ..quality = AudioQuality.medium
       ..status = metadata.status
-      ..referenceCount = metadata.referenceCount
       ..lastAccessed = metadata.lastAccessed
-      ..references = List<String>.from(metadata.references)
       ..downloadAttempts = metadata.downloadAttempts
       ..lastDownloadAttempt = metadata.lastDownloadAttempt
       ..failureReason = metadata.failureReason
@@ -89,9 +82,7 @@ class CachedAudioDocumentUnified {
       ..checksum = audio.checksum
       ..quality = audio.quality
       ..status = metadata.status
-      ..referenceCount = metadata.referenceCount
       ..lastAccessed = metadata.lastAccessed
-      ..references = List<String>.from(metadata.references)
       ..downloadAttempts = metadata.downloadAttempts
       ..lastDownloadAttempt = metadata.lastDownloadAttempt
       ..failureReason = metadata.failureReason
@@ -113,9 +104,7 @@ class CachedAudioDocumentUnified {
   CacheMetadata toCacheMetadata() {
     return CacheMetadata(
       trackId: trackId,
-      referenceCount: referenceCount,
       lastAccessed: lastAccessed,
-      references: List<String>.from(references),
       status: status,
       downloadAttempts: downloadAttempts,
       lastDownloadAttempt: lastDownloadAttempt,
@@ -129,9 +118,6 @@ class CachedAudioDocumentUnified {
   bool get isDownloading => status == CacheStatus.downloading;
   bool get isFailed => status == CacheStatus.failed;
   bool get isCorrupted => status == CacheStatus.corrupted;
-
-  bool get hasReferences => references.isNotEmpty;
-  bool get canDelete => references.isEmpty;
 
   bool get shouldRetry {
     if (status != CacheStatus.failed) return false;
@@ -147,20 +133,6 @@ class CachedAudioDocumentUnified {
   // Métodos de actualización
   CachedAudioDocumentUnified updateLastAccessed() {
     lastAccessed = DateTime.now();
-    return this;
-  }
-
-  CachedAudioDocumentUnified addReference(String referenceId) {
-    if (!references.contains(referenceId)) {
-      references.add(referenceId);
-      referenceCount = references.length;
-    }
-    return this;
-  }
-
-  CachedAudioDocumentUnified removeReference(String referenceId) {
-    references.remove(referenceId);
-    referenceCount = references.length;
     return this;
   }
 

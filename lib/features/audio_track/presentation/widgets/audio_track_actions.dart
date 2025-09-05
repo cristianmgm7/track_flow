@@ -8,9 +8,9 @@ import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_event.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_state.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_event.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:async';

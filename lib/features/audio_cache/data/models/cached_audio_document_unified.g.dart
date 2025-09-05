@@ -23,105 +23,85 @@ const CachedAudioDocumentUnifiedSchema = CollectionSchema(
       name: r'cachedAt',
       type: IsarType.dateTime,
     ),
-    r'canDelete': PropertySchema(
-      id: 1,
-      name: r'canDelete',
-      type: IsarType.bool,
-    ),
     r'checksum': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'checksum',
       type: IsarType.string,
     ),
     r'downloadAttempts': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'downloadAttempts',
       type: IsarType.long,
     ),
     r'failureReason': PropertySchema(
-      id: 4,
+      id: 3,
       name: r'failureReason',
       type: IsarType.string,
     ),
     r'filePath': PropertySchema(
-      id: 5,
+      id: 4,
       name: r'filePath',
       type: IsarType.string,
     ),
     r'fileSizeBytes': PropertySchema(
-      id: 6,
+      id: 5,
       name: r'fileSizeBytes',
       type: IsarType.long,
     ),
-    r'hasReferences': PropertySchema(
-      id: 7,
-      name: r'hasReferences',
-      type: IsarType.bool,
-    ),
     r'isCached': PropertySchema(
-      id: 8,
+      id: 6,
       name: r'isCached',
       type: IsarType.bool,
     ),
     r'isCorrupted': PropertySchema(
-      id: 9,
+      id: 7,
       name: r'isCorrupted',
       type: IsarType.bool,
     ),
     r'isDownloading': PropertySchema(
-      id: 10,
+      id: 8,
       name: r'isDownloading',
       type: IsarType.bool,
     ),
     r'isFailed': PropertySchema(
-      id: 11,
+      id: 9,
       name: r'isFailed',
       type: IsarType.bool,
     ),
     r'lastAccessed': PropertySchema(
-      id: 12,
+      id: 10,
       name: r'lastAccessed',
       type: IsarType.dateTime,
     ),
     r'lastDownloadAttempt': PropertySchema(
-      id: 13,
+      id: 11,
       name: r'lastDownloadAttempt',
       type: IsarType.dateTime,
     ),
     r'originalUrl': PropertySchema(
-      id: 14,
+      id: 12,
       name: r'originalUrl',
       type: IsarType.string,
     ),
     r'quality': PropertySchema(
-      id: 15,
+      id: 13,
       name: r'quality',
       type: IsarType.string,
       enumMap: _CachedAudioDocumentUnifiedqualityEnumValueMap,
     ),
-    r'referenceCount': PropertySchema(
-      id: 16,
-      name: r'referenceCount',
-      type: IsarType.long,
-    ),
-    r'references': PropertySchema(
-      id: 17,
-      name: r'references',
-      type: IsarType.stringList,
-    ),
     r'shouldRetry': PropertySchema(
-      id: 18,
+      id: 14,
       name: r'shouldRetry',
       type: IsarType.bool,
     ),
     r'status': PropertySchema(
-      id: 19,
+      id: 15,
       name: r'status',
       type: IsarType.string,
       enumMap: _CachedAudioDocumentUnifiedstatusEnumValueMap,
     ),
     r'trackId': PropertySchema(
-      id: 20,
+      id: 16,
       name: r'trackId',
       type: IsarType.string,
     )
@@ -175,13 +155,6 @@ int _cachedAudioDocumentUnifiedEstimateSize(
     }
   }
   bytesCount += 3 + object.quality.name.length * 3;
-  bytesCount += 3 + object.references.length * 3;
-  {
-    for (var i = 0; i < object.references.length; i++) {
-      final value = object.references[i];
-      bytesCount += value.length * 3;
-    }
-  }
   bytesCount += 3 + object.status.name.length * 3;
   bytesCount += 3 + object.trackId.length * 3;
   return bytesCount;
@@ -194,26 +167,22 @@ void _cachedAudioDocumentUnifiedSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.cachedAt);
-  writer.writeBool(offsets[1], object.canDelete);
-  writer.writeString(offsets[2], object.checksum);
-  writer.writeLong(offsets[3], object.downloadAttempts);
-  writer.writeString(offsets[4], object.failureReason);
-  writer.writeString(offsets[5], object.filePath);
-  writer.writeLong(offsets[6], object.fileSizeBytes);
-  writer.writeBool(offsets[7], object.hasReferences);
-  writer.writeBool(offsets[8], object.isCached);
-  writer.writeBool(offsets[9], object.isCorrupted);
-  writer.writeBool(offsets[10], object.isDownloading);
-  writer.writeBool(offsets[11], object.isFailed);
-  writer.writeDateTime(offsets[12], object.lastAccessed);
-  writer.writeDateTime(offsets[13], object.lastDownloadAttempt);
-  writer.writeString(offsets[14], object.originalUrl);
-  writer.writeString(offsets[15], object.quality.name);
-  writer.writeLong(offsets[16], object.referenceCount);
-  writer.writeStringList(offsets[17], object.references);
-  writer.writeBool(offsets[18], object.shouldRetry);
-  writer.writeString(offsets[19], object.status.name);
-  writer.writeString(offsets[20], object.trackId);
+  writer.writeString(offsets[1], object.checksum);
+  writer.writeLong(offsets[2], object.downloadAttempts);
+  writer.writeString(offsets[3], object.failureReason);
+  writer.writeString(offsets[4], object.filePath);
+  writer.writeLong(offsets[5], object.fileSizeBytes);
+  writer.writeBool(offsets[6], object.isCached);
+  writer.writeBool(offsets[7], object.isCorrupted);
+  writer.writeBool(offsets[8], object.isDownloading);
+  writer.writeBool(offsets[9], object.isFailed);
+  writer.writeDateTime(offsets[10], object.lastAccessed);
+  writer.writeDateTime(offsets[11], object.lastDownloadAttempt);
+  writer.writeString(offsets[12], object.originalUrl);
+  writer.writeString(offsets[13], object.quality.name);
+  writer.writeBool(offsets[14], object.shouldRetry);
+  writer.writeString(offsets[15], object.status.name);
+  writer.writeString(offsets[16], object.trackId);
 }
 
 CachedAudioDocumentUnified _cachedAudioDocumentUnifiedDeserialize(
@@ -224,23 +193,21 @@ CachedAudioDocumentUnified _cachedAudioDocumentUnifiedDeserialize(
 ) {
   final object = CachedAudioDocumentUnified();
   object.cachedAt = reader.readDateTime(offsets[0]);
-  object.checksum = reader.readString(offsets[2]);
-  object.downloadAttempts = reader.readLong(offsets[3]);
-  object.failureReason = reader.readStringOrNull(offsets[4]);
-  object.filePath = reader.readString(offsets[5]);
-  object.fileSizeBytes = reader.readLong(offsets[6]);
-  object.lastAccessed = reader.readDateTime(offsets[12]);
-  object.lastDownloadAttempt = reader.readDateTimeOrNull(offsets[13]);
-  object.originalUrl = reader.readStringOrNull(offsets[14]);
+  object.checksum = reader.readString(offsets[1]);
+  object.downloadAttempts = reader.readLong(offsets[2]);
+  object.failureReason = reader.readStringOrNull(offsets[3]);
+  object.filePath = reader.readString(offsets[4]);
+  object.fileSizeBytes = reader.readLong(offsets[5]);
+  object.lastAccessed = reader.readDateTime(offsets[10]);
+  object.lastDownloadAttempt = reader.readDateTimeOrNull(offsets[11]);
+  object.originalUrl = reader.readStringOrNull(offsets[12]);
   object.quality = _CachedAudioDocumentUnifiedqualityValueEnumMap[
-          reader.readStringOrNull(offsets[15])] ??
+          reader.readStringOrNull(offsets[13])] ??
       AudioQuality.low;
-  object.referenceCount = reader.readLong(offsets[16]);
-  object.references = reader.readStringList(offsets[17]) ?? [];
   object.status = _CachedAudioDocumentUnifiedstatusValueEnumMap[
-          reader.readStringOrNull(offsets[19])] ??
+          reader.readStringOrNull(offsets[15])] ??
       CacheStatus.notCached;
-  object.trackId = reader.readString(offsets[20]);
+  object.trackId = reader.readString(offsets[16]);
   return object;
 }
 
@@ -254,17 +221,17 @@ P _cachedAudioDocumentUnifiedDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readLong(offset)) as P;
-    case 4:
       return (reader.readStringOrNull(offset)) as P;
-    case 5:
+    case 4:
       return (reader.readString(offset)) as P;
-    case 6:
+    case 5:
       return (reader.readLong(offset)) as P;
+    case 6:
+      return (reader.readBool(offset)) as P;
     case 7:
       return (reader.readBool(offset)) as P;
     case 8:
@@ -272,30 +239,22 @@ P _cachedAudioDocumentUnifiedDeserializeProp<P>(
     case 9:
       return (reader.readBool(offset)) as P;
     case 10:
-      return (reader.readBool(offset)) as P;
-    case 11:
-      return (reader.readBool(offset)) as P;
-    case 12:
       return (reader.readDateTime(offset)) as P;
-    case 13:
+    case 11:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 14:
+    case 12:
       return (reader.readStringOrNull(offset)) as P;
-    case 15:
+    case 13:
       return (_CachedAudioDocumentUnifiedqualityValueEnumMap[
               reader.readStringOrNull(offset)] ??
           AudioQuality.low) as P;
-    case 16:
-      return (reader.readLong(offset)) as P;
-    case 17:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 18:
+    case 14:
       return (reader.readBool(offset)) as P;
-    case 19:
+    case 15:
       return (_CachedAudioDocumentUnifiedstatusValueEnumMap[
               reader.readStringOrNull(offset)] ??
           CacheStatus.notCached) as P;
-    case 20:
+    case 16:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -580,16 +539,6 @@ extension CachedAudioDocumentUnifiedQueryFilter on QueryBuilder<
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> canDeleteEqualTo(bool value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'canDelete',
-        value: value,
       ));
     });
   }
@@ -1139,16 +1088,6 @@ extension CachedAudioDocumentUnifiedQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> hasReferencesEqualTo(bool value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'hasReferences',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QAfterFilterCondition> isCachedEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -1669,289 +1608,6 @@ extension CachedAudioDocumentUnifiedQueryFilter on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referenceCountEqualTo(int value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'referenceCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referenceCountGreaterThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'referenceCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referenceCountLessThan(
-    int value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'referenceCount',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referenceCountBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'referenceCount',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'references',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'references',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'references',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'references',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'references',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'references',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-          QAfterFilterCondition>
-      referencesElementContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'references',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-          QAfterFilterCondition>
-      referencesElementMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'references',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'references',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesElementIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'references',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesLengthEqualTo(int length) {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'references',
-        length,
-        true,
-        length,
-        true,
-      );
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'references',
-        0,
-        true,
-        0,
-        true,
-      );
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'references',
-        0,
-        false,
-        999999,
-        true,
-      );
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesLengthLessThan(
-    int length, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'references',
-        0,
-        true,
-        length,
-        include,
-      );
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesLengthGreaterThan(
-    int length, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'references',
-        length,
-        include,
-        999999,
-        true,
-      );
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterFilterCondition> referencesLengthBetween(
-    int lower,
-    int upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.listLength(
-        r'references',
-        lower,
-        includeLower,
-        upper,
-        includeUpper,
-      );
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QAfterFilterCondition> shouldRetryEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -2261,20 +1917,6 @@ extension CachedAudioDocumentUnifiedQuerySortBy on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> sortByCanDelete() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canDelete', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> sortByCanDeleteDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canDelete', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QAfterSortBy> sortByChecksum() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'checksum', Sort.asc);
@@ -2341,20 +1983,6 @@ extension CachedAudioDocumentUnifiedQuerySortBy on QueryBuilder<
       QAfterSortBy> sortByFileSizeBytesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'fileSizeBytes', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> sortByHasReferences() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'hasReferences', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> sortByHasReferencesDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'hasReferences', Sort.desc);
     });
   }
 
@@ -2471,20 +2099,6 @@ extension CachedAudioDocumentUnifiedQuerySortBy on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> sortByReferenceCount() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'referenceCount', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> sortByReferenceCountDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'referenceCount', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QAfterSortBy> sortByShouldRetry() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shouldRetry', Sort.asc);
@@ -2540,20 +2154,6 @@ extension CachedAudioDocumentUnifiedQuerySortThenBy on QueryBuilder<
       QAfterSortBy> thenByCachedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'cachedAt', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> thenByCanDelete() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canDelete', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> thenByCanDeleteDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'canDelete', Sort.desc);
     });
   }
 
@@ -2624,20 +2224,6 @@ extension CachedAudioDocumentUnifiedQuerySortThenBy on QueryBuilder<
       QAfterSortBy> thenByFileSizeBytesDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'fileSizeBytes', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> thenByHasReferences() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'hasReferences', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> thenByHasReferencesDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'hasReferences', Sort.desc);
     });
   }
 
@@ -2768,20 +2354,6 @@ extension CachedAudioDocumentUnifiedQuerySortThenBy on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> thenByReferenceCount() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'referenceCount', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterSortBy> thenByReferenceCountDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'referenceCount', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QAfterSortBy> thenByShouldRetry() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shouldRetry', Sort.asc);
@@ -2834,13 +2406,6 @@ extension CachedAudioDocumentUnifiedQueryWhereDistinct on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QDistinct> distinctByCanDelete() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'canDelete');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QDistinct> distinctByChecksum({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'checksum', caseSensitive: caseSensitive);
@@ -2873,13 +2438,6 @@ extension CachedAudioDocumentUnifiedQueryWhereDistinct on QueryBuilder<
       QDistinct> distinctByFileSizeBytes() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'fileSizeBytes');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QDistinct> distinctByHasReferences() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'hasReferences');
     });
   }
 
@@ -2940,20 +2498,6 @@ extension CachedAudioDocumentUnifiedQueryWhereDistinct on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QDistinct> distinctByReferenceCount() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'referenceCount');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QDistinct> distinctByReferences() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'references');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
       QDistinct> distinctByShouldRetry() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'shouldRetry');
@@ -2991,13 +2535,6 @@ extension CachedAudioDocumentUnifiedQueryProperty on QueryBuilder<
     });
   }
 
-  QueryBuilder<CachedAudioDocumentUnified, bool, QQueryOperations>
-      canDeleteProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'canDelete');
-    });
-  }
-
   QueryBuilder<CachedAudioDocumentUnified, String, QQueryOperations>
       checksumProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -3030,13 +2567,6 @@ extension CachedAudioDocumentUnifiedQueryProperty on QueryBuilder<
       fileSizeBytesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'fileSizeBytes');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, bool, QQueryOperations>
-      hasReferencesProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'hasReferences');
     });
   }
 
@@ -3093,20 +2623,6 @@ extension CachedAudioDocumentUnifiedQueryProperty on QueryBuilder<
       qualityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'quality');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, int, QQueryOperations>
-      referenceCountProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'referenceCount');
-    });
-  }
-
-  QueryBuilder<CachedAudioDocumentUnified, List<String>, QQueryOperations>
-      referencesProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'references');
     });
   }
 

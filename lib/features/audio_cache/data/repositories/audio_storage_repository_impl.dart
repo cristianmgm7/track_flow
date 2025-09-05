@@ -67,11 +67,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
               ..checksum = checksum
               ..quality = AudioQuality.medium
               ..status = CacheStatus.cached
-              ..referenceCount = 1
               ..lastAccessed = DateTime.now()
-              ..references = [
-                if (referenceId != null) referenceId else 'individual',
-              ]
               ..downloadAttempts = 0
               ..lastDownloadAttempt = null
               ..failureReason = null

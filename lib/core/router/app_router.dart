@@ -8,7 +8,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
@@ -27,7 +27,7 @@ import 'package:trackflow/features/settings/presentation/screens/settings_screen
 import 'package:trackflow/features/user_profile/presentation/screens/collaborator_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/current_user_profile_screen.dart';
-import 'package:trackflow/features/audio_cache/management/presentation/screens/cache_management_screen.dart';
+import 'package:trackflow/features/cache_management/presentation/screens/cache_management_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';

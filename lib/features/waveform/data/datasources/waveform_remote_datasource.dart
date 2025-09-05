@@ -23,13 +23,12 @@ abstract class WaveformRemoteDataSource {
   });
 }
 
-@Injectable(as: WaveformRemoteDataSource)
+@LazySingleton(as: WaveformRemoteDataSource)
 class FirebaseStorageWaveformRemoteDataSource
     implements WaveformRemoteDataSource {
   final FirebaseStorage _storage;
 
-  FirebaseStorageWaveformRemoteDataSource({FirebaseStorage? storage})
-    : _storage = storage ?? FirebaseStorage.instance;
+  FirebaseStorageWaveformRemoteDataSource(this._storage);
 
   String _pathFor(
     AudioTrackId trackId,

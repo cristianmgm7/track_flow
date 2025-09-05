@@ -1,8 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/cached_audio.dart';
-import '../../domain/entities/cache_reference.dart';
-import '../../domain/entities/download_progress.dart';
+// Removed download_progress import; progress UI is not handled here
 
 sealed class TrackCacheState extends Equatable {
   const TrackCacheState();
@@ -39,18 +38,7 @@ class TrackCachePathLoaded extends TrackCacheState {
   List<Object?> get props => [trackId, filePath];
 }
 
-class TrackCacheReferenceLoaded extends TrackCacheState {
-  final String trackId;
-  final CacheReference? reference;
-
-  const TrackCacheReferenceLoaded({
-    required this.trackId,
-    required this.reference,
-  });
-
-  @override
-  List<Object?> get props => [trackId, reference];
-}
+// Removed reference-based state
 
 class TrackCacheOperationSuccess extends TrackCacheState {
   final String trackId;
@@ -78,27 +66,4 @@ class TrackCacheOperationFailure extends TrackCacheState {
   List<Object?> get props => [trackId, error];
 }
 
-/// Unified state that combines cache status and download progress
-class TrackCacheInfoWatching extends TrackCacheState {
-  final String trackId;
-  final CacheStatus status;
-  final DownloadProgress progress;
-
-  const TrackCacheInfoWatching({
-    required this.trackId,
-    required this.status,
-    required this.progress,
-  });
-
-  @override
-  List<Object?> get props => [trackId, status, progress];
-
-  /// Convenience getters for common checks
-  bool get isDownloading => status == CacheStatus.downloading;
-  bool get isCached => status == CacheStatus.cached;
-  bool get isFailed => status == CacheStatus.failed;
-  bool get isNotCached => status == CacheStatus.notCached;
-  double get progressPercentage => progress.progressPercentage;
-  String get progressText => progress.formattedProgress;
-  String? get errorMessage => progress.errorMessage;
-}
+// Removed unified progress + status state since UI uses status-only

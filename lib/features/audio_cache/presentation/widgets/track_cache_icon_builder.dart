@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/cached_audio.dart';
-import '../../domain/entities/download_progress.dart';
+// Removed download progress dependency; icon shows status only
 import '../bloc/track_cache_state.dart';
 
 /// Configuration for icon appearance
@@ -31,10 +31,7 @@ class TrackCacheIconBuilder {
     final theme = Theme.of(context);
     final color = config.color ?? theme.primaryColor;
 
-    // Handle unified TrackCacheInfoWatching state
-    if (state is TrackCacheInfoWatching) {
-      return _buildUnifiedIcon(state, color, config);
-    } else if (state is TrackCacheLoading) {
+    if (state is TrackCacheLoading) {
       return _buildLoadingIcon(color, config.size);
     } else if (state is TrackCacheStatusLoaded) {
       return _buildStatusIcon(state.status, color, config);
@@ -49,72 +46,9 @@ class TrackCacheIconBuilder {
     // Default state - show download icon
     return _buildDefaultIcon(color, config.size);
   }
+  // Removed unified icon (status + progress)
 
-  /// Unified icon builder that handles both status and progress
-  Widget _buildUnifiedIcon(
-    TrackCacheInfoWatching state,
-    Color color,
-    TrackCacheIconConfig config,
-  ) {
-    // If downloading, show progress
-    if (state.isDownloading) {
-      return _buildProgressIcon(state.progress, color, config);
-    }
-
-    // Otherwise, show status-based icon
-    return _buildStatusIcon(state.status, color, config);
-  }
-
-  /// Build progress indicator with percentage
-  Widget _buildProgressIcon(
-    DownloadProgress progress,
-    Color color,
-    TrackCacheIconConfig config,
-  ) {
-    final progressValue = progress.progressPercentage;
-    final progressPercent = (progressValue * 100).toInt();
-
-    switch (progress.state) {
-      case DownloadState.downloading:
-        return SizedBox(
-          width: config.size,
-          height: config.size,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CircularProgressIndicator(
-                value: progressValue > 0 ? progressValue : null,
-                strokeWidth: 2,
-                color: color,
-                backgroundColor: color.withValues(alpha: 0.2),
-              ),
-              if (config.showProgress && progressPercent > 0)
-                Text(
-                  '$progressPercent%',
-                  style: TextStyle(
-                    fontSize: config.size * 0.25,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-            ],
-          ),
-        );
-
-      case DownloadState.completed:
-        return Icon(
-          Icons.download_done,
-          color: Colors.green,
-          size: config.size,
-        );
-
-      case DownloadState.failed:
-        return Icon(Icons.error_outline, color: Colors.red, size: config.size);
-
-      default:
-        return _buildDefaultIcon(color, config.size);
-    }
-  }
+  // Removed progress icon builder; we only show status-based icons now
 
   /// Build icon based on cache status
   Widget _buildStatusIcon(

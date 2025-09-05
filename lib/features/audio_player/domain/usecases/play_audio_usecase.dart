@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
@@ -31,9 +31,7 @@ class PlayAudioUseCase {
   Future<Either<AudioFailure, void>> call(AudioTrackId trackId) async {
     try {
       // 1. Get track from business repository
-      final trackResult = await _audioTrackRepository.getTrackById(
-        trackId,
-      );
+      final trackResult = await _audioTrackRepository.getTrackById(trackId);
 
       return await trackResult.fold(
         (failure) async => Left(TrackNotFoundFailure(trackId.value)),

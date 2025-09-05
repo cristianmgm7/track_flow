@@ -7,7 +7,7 @@ import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart'
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
 import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart';
-import 'package:trackflow/features/audio_cache/track/domain/usecases/get_cached_track_path_usecase.dart';
+import 'package:trackflow/features/audio_cache/domain/usecases/get_cached_track_path_usecase.dart';
 
 part 'waveform_event.dart';
 part 'waveform_state.dart';

@@ -2,10 +2,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'dart:async';
 
-import '../../track/domain/usecases/cache_track_usecase.dart';
-import '../../track/domain/usecases/watch_cache_status.dart' as status_usecase;
-import '../../track/domain/usecases/remove_track_cache_usecase.dart';
-import '../../track/domain/usecases/get_cached_track_path_usecase.dart';
+import '../../domain/usecases/cache_track_usecase.dart';
+import '../../domain/usecases/watch_cache_status.dart' as status_usecase;
+import '../../domain/usecases/remove_track_cache_usecase.dart';
+import '../../domain/usecases/get_cached_track_path_usecase.dart';
 import 'track_cache_event.dart';
 import 'track_cache_state.dart';
 

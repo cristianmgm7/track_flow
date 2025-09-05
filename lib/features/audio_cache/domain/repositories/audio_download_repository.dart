@@ -7,7 +7,7 @@ import '../failures/cache_failure.dart';
 /// Follows Single Responsibility Principle - only handles downloading
 abstract class AudioDownloadRepository {
   // ===============================================
-  // DOWNLOAD OPERATIONS
+  // DOWNLOAD OPERATION (MINIMAL API)
   // ===============================================
 
   /// Download audio file
@@ -22,37 +22,4 @@ abstract class AudioDownloadRepository {
     String audioUrl, {
     void Function(DownloadProgress)? progressCallback,
   });
-
-  // Removed bulk download to simplify architecture
-
-  // ===============================================
-  // DOWNLOAD MANAGEMENT
-  // ===============================================
-
-  /// Cancel ongoing download for a track
-  Future<Either<CacheFailure, Unit>> cancelDownload(AudioTrackId trackId);
-
-  /// Pause download (if supported)
-  Future<Either<CacheFailure, Unit>> pauseDownload(AudioTrackId trackId);
-
-  /// Resume paused download
-  Future<Either<CacheFailure, Unit>> resumeDownload(AudioTrackId trackId);
-
-  /// Get current download progress for a track
-  Future<Either<CacheFailure, DownloadProgress?>> getDownloadProgress(
-    AudioTrackId trackId,
-  );
-
-  /// Get all currently active downloads
-  Future<Either<CacheFailure, List<DownloadProgress>>> getActiveDownloads();
-
-  // ===============================================
-  // REACTIVE STREAMS
-  // ===============================================
-
-  /// Watch download progress for a specific track
-  Stream<DownloadProgress> watchDownloadProgress(AudioTrackId trackId);
-
-  /// Watch all active downloads
-  Stream<List<DownloadProgress>> watchActiveDownloads();
 }

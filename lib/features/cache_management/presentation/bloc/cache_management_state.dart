@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/cache_management/domain/entities/cached_track_bundle.dart';
-import 'package:trackflow/features/audio_cache/domain/usecases/get_cache_storage_stats_usecase.dart';
+import 'package:trackflow/features/cache_management/domain/usecases/get_cache_storage_stats_usecase.dart';
 
 enum CacheManagementStatus { initial, loading, success, failure }
 

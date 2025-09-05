@@ -25,34 +25,15 @@ class CacheTrackRequested extends TrackCacheEvent {
   List<Object?> get props => [trackId, audioUrl, policy];
 }
 
-class CacheTrackWithReferenceRequested extends TrackCacheEvent {
-  final String trackId;
-  final String audioUrl;
-  final String referenceId;
-  final ConflictPolicy policy;
-
-  const CacheTrackWithReferenceRequested({
-    required this.trackId,
-    required this.audioUrl,
-    required this.referenceId,
-    this.policy = ConflictPolicy.lastWins,
-  });
-
-  @override
-  List<Object?> get props => [trackId, audioUrl, referenceId, policy];
-}
+// Removed referenced-based caching to simplify API
 
 class RemoveTrackCacheRequested extends TrackCacheEvent {
   final String trackId;
-  final String referenceId;
 
-  const RemoveTrackCacheRequested({
-    required this.trackId,
-    this.referenceId = 'individual',
-  });
+  const RemoveTrackCacheRequested({required this.trackId});
 
   @override
-  List<Object?> get props => [trackId, referenceId];
+  List<Object?> get props => [trackId];
 }
 
 class GetCachedTrackPathRequested extends TrackCacheEvent {
@@ -64,20 +45,7 @@ class GetCachedTrackPathRequested extends TrackCacheEvent {
   List<Object?> get props => [trackId];
 }
 
-/// Unified event to watch both cache status and download progress
-class WatchTrackCacheInfoRequested extends TrackCacheEvent {
-  final String trackId;
-
-  const WatchTrackCacheInfoRequested(this.trackId);
-
-  @override
-  List<Object?> get props => [trackId];
-}
-
-/// Event to stop watching unified track cache info
-class StopWatchingTrackCacheInfo extends TrackCacheEvent {
-  const StopWatchingTrackCacheInfo();
-}
+// Removed unified info watching events (status + progress) since UI doesn't use them
 
 class WatchTrackCacheStatusRequested extends TrackCacheEvent {
   final AudioTrackId trackId;

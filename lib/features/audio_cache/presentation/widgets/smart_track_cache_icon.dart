@@ -123,8 +123,6 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon>
           CacheStatus status;
           if (state is TrackCacheStatusLoaded) {
             status = state.status;
-          } else if (state is TrackCacheInfoWatching) {
-            status = state.status;
           } else {
             status = CacheStatus.notCached;
           }
