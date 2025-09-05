@@ -206,7 +206,12 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         ),
       );
 
-      // 5. Return success only after successful queue
+      // 5. Ensure local URL remains pointing to remote (not cache)
+      // We cannot compute remote URL here; keep current local value (remote URL
+      // should already be persisted from upload). If local was pointing to a
+      // cache path, the player will fallback to remote when cache is missing.
+
+      // 6. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));

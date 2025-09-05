@@ -5,6 +5,7 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 
 /// Handles sync operations for AudioTrack entities
 ///
@@ -13,8 +14,9 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
 @injectable
 class AudioTrackOperationExecutor implements OperationExecutor {
   final AudioTrackRemoteDataSource _remoteDataSource;
+  final AudioTrackLocalDataSource _localDataSource;
 
-  AudioTrackOperationExecutor(this._remoteDataSource);
+  AudioTrackOperationExecutor(this._remoteDataSource, this._localDataSource);
 
   @override
   String get entityType => 'audio_track';
@@ -68,8 +70,12 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     final result = await _remoteDataSource.uploadAudioTrack(audioTrackDto);
     result.fold(
       (failure) => throw Exception('Upload failed: ${failure.message}'),
-      (uploadedDto) {
-        // Successfully uploaded
+      (uploadedDto) async {
+        // Update local cached track URL to remote download URL
+        await _localDataSource.updateTrackUrl(
+          uploadedDto.id.value,
+          uploadedDto.url,
+        );
       },
     );
   }

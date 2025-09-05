@@ -733,9 +733,11 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i72.AudioTrackLocalDataSource>(),
               gh<_i45.ProjectRemoteDataSource>(),
             ));
-    gh.factory<_i113.AudioTrackOperationExecutor>(() =>
-        _i113.AudioTrackOperationExecutor(
-            gh<_i73.AudioTrackRemoteDataSource>()));
+    gh.factory<_i113.AudioTrackOperationExecutor>(
+        () => _i113.AudioTrackOperationExecutor(
+              gh<_i73.AudioTrackRemoteDataSource>(),
+              gh<_i72.AudioTrackLocalDataSource>(),
+            ));
     gh.lazySingleton<_i114.AuthRemoteDataSource>(
         () => _i114.AuthRemoteDataSourceImpl(
               gh<_i15.FirebaseAuth>(),
