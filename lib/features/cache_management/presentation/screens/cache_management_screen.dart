@@ -12,7 +12,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 
 import '../widgets/storage_usage_summary.dart';
 import '../widgets/track_list_view.dart';
-import '../widgets/cleanup_panel.dart';
+// Cleanup panel compacted into header quick action
 
 class CacheManagementScreen extends StatelessWidget {
   const CacheManagementScreen({super.key});
@@ -29,23 +29,55 @@ class CacheManagementScreen extends StatelessWidget {
           showShadow: true,
         ),
         body: Padding(
-          padding: EdgeInsets.all(Dimensions.space16),
+          padding: EdgeInsets.all(Dimensions.space12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Compact header: usage + small cleanup row
               BlocBuilder<CacheManagementBloc, CacheManagementState>(
                 buildWhen:
                     (p, n) =>
                         p.storageUsageBytes != n.storageUsageBytes ||
                         p.storageStats != n.storageStats,
                 builder: (context, state) {
-                  return StorageUsageSummary(
-                    usageBytes: state.storageUsageBytes,
-                    stats: state.storageStats,
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: StorageUsageSummary(
+                          usageBytes: state.storageUsageBytes,
+                          stats: state.storageStats,
+                        ),
+                      ),
+                      SizedBox(width: Dimensions.space12),
+                      // Compact cleanup (button-only)
+                      Expanded(
+                        flex: 2,
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: SizedBox(
+                            height: 40,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                context.read<CacheManagementBloc>().add(
+                                  const CacheManagementCleanupRequested(
+                                    removeCorrupted: true,
+                                    removeOrphaned: true,
+                                    removeTemporary: true,
+                                  ),
+                                );
+                              },
+                              child: const Text('Quick Cleanup'),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
-              SizedBox(height: Dimensions.space16),
+              SizedBox(height: Dimensions.space12),
               Text(
                 'Cached Tracks',
                 style: AppTextStyle.titleLarge.copyWith(
@@ -60,8 +92,6 @@ class CacheManagementScreen extends StatelessWidget {
                   },
                 ),
               ),
-              SizedBox(height: Dimensions.space8),
-              const CleanupPanel(),
             ],
           ),
         ),

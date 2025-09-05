@@ -186,12 +186,6 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     }
   }
 
-  // Removed verifyFileIntegrity and global maintenance methods from DS
-
-  // Batch operations removed from implementation
-
-  // Removed getAllCachedAudios; repository can use watchAllCachedAudios if needed
-
   @override
   Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios() {
     return _isar.cachedAudioDocumentUnifieds
@@ -199,14 +193,6 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         .watch(fireImmediately: true)
         .map((docs) => docs.toList());
   }
-
-  // Removed getTotalStorageUsage from DS
-
-  // Removed corruption/orphan checks from DS
-
-  // Removed corruption/orphan checks from DS
-
-  // Removed watchStorageUsage from DS
 
   @override
   CacheKey generateCacheKey(String trackId, String audioUrl) {

@@ -26,63 +26,39 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     bool canDelete = true,
   }) async {
     try {
-      // Generate storage path for the audio file
-      // Preserve original extension from the downloaded file if possible
-      final originalPath = audioFile.path;
-      final detectedExt = _extractExtension(originalPath) ?? '.mp3';
-      // Use the original path/URL to generate a deterministic cache filename
-      final cacheKey = _localDataSource.generateCacheKey(
-        trackId.value,
-        originalPath,
+      // The file is already in its final cache location
+      final destinationFile = audioFile;
+
+      // Verify file and calculate checksum (streaming)
+      final fileSize = await destinationFile.length();
+      final checksumDigest = await sha1.bind(destinationFile.openRead()).first;
+      final checksum = checksumDigest.toString();
+
+      // Create unified document with both file and metadata information
+      final unifiedDocument =
+          CachedAudioDocumentUnified()
+            ..trackId = trackId.value
+            ..filePath = destinationFile.path
+            ..fileSizeBytes = fileSize
+            ..cachedAt = DateTime.now()
+            ..checksum = checksum
+            ..quality = AudioQuality.medium
+            ..status = CacheStatus.cached
+            ..lastAccessed = DateTime.now()
+            ..downloadAttempts = 0
+            ..lastDownloadAttempt = null
+            ..failureReason = null
+            ..originalUrl = '';
+
+      // Store unified document in local database
+      final storeResult = await _localDataSource.storeUnifiedCachedAudio(
+        unifiedDocument,
       );
-      final filePathResult = await _localDataSource.getFilePathFromCacheKey(
-        cacheKey,
-      );
 
-      return await filePathResult.fold((failure) => Left(failure), (
-        destinationPath,
-      ) async {
-        // If destination path has a different extension, adjust it
-        String finalDestinationPath = destinationPath.replaceAll(
-          RegExp(r'\.[^/.]+$'),
-          detectedExt,
-        );
-
-        // Copy the file to the cache location
-        final destinationFile = await audioFile.copy(finalDestinationPath);
-
-        // Verify file and calculate checksum (streaming)
-        final fileSize = await destinationFile.length();
-        final checksumDigest =
-            await sha1.bind(destinationFile.openRead()).first;
-        final checksum = checksumDigest.toString();
-
-        // Create unified document with both file and metadata information
-        final unifiedDocument =
-            CachedAudioDocumentUnified()
-              ..trackId = trackId.value
-              ..filePath = finalDestinationPath
-              ..fileSizeBytes = fileSize
-              ..cachedAt = DateTime.now()
-              ..checksum = checksum
-              ..quality = AudioQuality.medium
-              ..status = CacheStatus.cached
-              ..lastAccessed = DateTime.now()
-              ..downloadAttempts = 0
-              ..lastDownloadAttempt = null
-              ..failureReason = null
-              ..originalUrl = '';
-
-        // Store unified document in local database
-        final storeResult = await _localDataSource.storeUnifiedCachedAudio(
-          unifiedDocument,
-        );
-
-        return storeResult.fold((failure) => Left(failure), (unifiedDoc) {
-          // Convert back to CachedAudio for return
-          final cachedAudio = unifiedDoc.toCachedAudio();
-          return Right(cachedAudio);
-        });
+      return storeResult.fold((failure) => Left(failure), (unifiedDoc) {
+        // Convert back to CachedAudio for return
+        final cachedAudio = unifiedDoc.toCachedAudio();
+        return Right(cachedAudio);
       });
     } catch (e) {
       return Left(
@@ -191,12 +167,5 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     return _localDataSource.watchTrackCacheStatus(trackId.value);
   }
 
-  String? _extractExtension(String path) {
-    final idx = path.lastIndexOf('.');
-    if (idx == -1) return null;
-    final ext = path.substring(idx).toLowerCase();
-    // basic sanity to avoid query strings or very long suffixes
-    if (ext.length > 5) return null;
-    return ext;
-  }
+  // No longer needed; extension is handled at download time
 }

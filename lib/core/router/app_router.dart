@@ -144,6 +144,12 @@ class AppRouter {
           builder: (context, state) => const ProfileCreationScreen(),
         ),
 
+        // Standalone cache management (outside shell: no mini player/nav)
+        GoRoute(
+          path: AppRoutes.cacheManagement,
+          builder: (context, state) => const CacheManagementScreen(),
+        ),
+
         // Standalone routes (outside shell)
         GoRoute(
           path: AppRoutes.audioComments,
@@ -244,8 +250,8 @@ class AppRouter {
             ),
             // Cache demo route removed
             GoRoute(
-              path: AppRoutes.cacheManagement,
-              builder: (context, state) => const CacheManagementScreen(),
+              path: AppRoutes.settings,
+              builder: (context, state) => const SettingsScreen(),
             ),
           ],
         ),

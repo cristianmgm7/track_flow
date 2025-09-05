@@ -7,6 +7,8 @@ import '../../../audio_cache/domain/entities/cache_validation_result.dart';
 import '../../../audio_cache/domain/failures/cache_failure.dart';
 
 abstract class CacheMaintenanceService {
+  /// Reactive: watch all cached audios from the local index (Isar)
+  Stream<List<CachedAudio>> watchCachedAudios();
   Future<Either<CacheFailure, CleanupDetails>> performCleanup({
     bool removeCorrupted = true,
     bool removeOrphaned = true,

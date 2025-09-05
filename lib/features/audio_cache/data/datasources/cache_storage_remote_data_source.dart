@@ -23,11 +23,7 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
   // ignore: unused_field
   final FirebaseStorage _storage;
 
-  // Track active downloads for cleanup
-  final Map<String, StreamSubscription<List<int>>> _downloadSubscriptions = {};
-  final Map<String, IOSink> _downloadSinks = {};
-  final Map<String, File> _downloadFiles = {};
-  final Map<String, http.Client> _downloadClients = {};
+  // Keep implementation simple: manage resources within method scope
 
   CacheStorageRemoteDataSourceImpl(this._storage);
 
@@ -96,13 +92,8 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         );
         final sink = targetFile.openWrite();
 
-        // Track resources for cancellation
-        _downloadSinks[downloadId] = sink;
-        _downloadFiles[downloadId] = targetFile;
-        _downloadClients[downloadId] = client;
-
         // Listen to response stream with progress tracking
-        final subscription = response.stream.listen(
+        response.stream.listen(
           (List<int> chunk) {
             downloadedBytes += chunk.length;
             sink.add(chunk);
@@ -119,7 +110,7 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
           onDone: () => downloadCompleter.complete(),
           onError: (error) => downloadCompleter.completeError(error),
         );
-        _downloadSubscriptions[downloadId] = subscription;
+        // Wait for completion
 
         // Wait for download completion or cancellation
         await downloadCompleter.future;
@@ -145,14 +136,6 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         try {
           client.close();
         } catch (_) {}
-        try {
-          await _downloadSubscriptions.remove(downloadId)?.cancel();
-        } catch (_) {}
-        try {
-          await _downloadSinks.remove(downloadId)?.close();
-        } catch (_) {}
-        _downloadFiles.remove(downloadId);
-        _downloadClients.remove(downloadId);
       }
     } catch (e) {
       return Left(
@@ -197,22 +180,6 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
     return ext;
   }
 
-  /// Cleanup resources
-  void dispose() {
-    for (final sub in _downloadSubscriptions.values) {
-      sub.cancel();
-    }
-    for (final sink in _downloadSinks.values) {
-      sink.close();
-    }
-    for (final client in _downloadClients.values) {
-      try {
-        client.close();
-      } catch (_) {}
-    }
-    _downloadSubscriptions.clear();
-    _downloadSinks.clear();
-    _downloadFiles.clear();
-    _downloadClients.clear();
-  }
+  // No class-level resources to dispose
+  void dispose() {}
 }

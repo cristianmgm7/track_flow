@@ -12,14 +12,13 @@ import '../../../audio_cache/data/datasources/cache_storage_local_data_source.da
 ///
 
 abstract class CacheManagementLocalDataSource {
+  /// Reactive list of cached audios (Isar-backed)
+  Stream<List<CachedAudio>> watchCachedAudios();
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios();
 
   Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(String trackId);
 
-  Future<Either<CacheFailure, bool>> verifyFileIntegrity(
-    String trackId,
-    String expectedChecksum,
-  );
+  // verifyFileIntegrity is not needed in DS; integrity checks live in service
 
   Future<Either<CacheFailure, bool>> audioExists(String trackId);
 
@@ -38,6 +37,13 @@ class CacheManagementLocalDataSourceImpl
   CacheManagementLocalDataSourceImpl({
     required storage.CacheStorageLocalDataSource local,
   }) : _delegate = local;
+
+  @override
+  Stream<List<CachedAudio>> watchCachedAudios() {
+    return _delegate.watchAllCachedAudios().map(
+      (docs) => docs.map((d) => d.toCachedAudio()).toList(),
+    );
+  }
 
   @override
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios() async {
@@ -66,14 +72,7 @@ class CacheManagementLocalDataSourceImpl
   }
 
   @override
-  Future<Either<CacheFailure, bool>> verifyFileIntegrity(
-    String trackId,
-    String expectedChecksum,
-  ) {
-    // This method was removed from the local DS; verify via repository/service in management layer instead
-    return Future.value(const Right(false));
-  }
-
+  // verifyFileIntegrity removed from DS; handled by service if needed
   @override
   Future<Either<CacheFailure, bool>> audioExists(String trackId) {
     return _delegate.audioExists(trackId);

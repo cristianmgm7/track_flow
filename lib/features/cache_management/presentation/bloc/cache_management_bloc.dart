@@ -12,7 +12,7 @@ import 'package:trackflow/features/cache_management/domain/usecases/get_cache_st
 import 'package:trackflow/features/cache_management/domain/usecases/watch_cached_track_bundles_usecase.dart';
 import 'package:trackflow/features/cache_management/domain/usecases/delete_cached_audio_usecase.dart';
 // import 'package:trackflow/features/audio_cache/management/domain/usecases/delete_multiple_cached_audios_usecase.dart';
-import 'package:trackflow/features/cache_management/domain/usecases/get_cached_track_bundles_usecase.dart';
+// Removed non-reactive get bundles usecase; rely on watch stream only
 import 'package:trackflow/features/cache_management/domain/usecases/watch_storage_usage_usecase.dart';
 import 'cache_management_event.dart';
 import 'cache_management_state.dart';
@@ -21,15 +21,13 @@ import 'cache_management_state.dart';
 class CacheManagementBloc
     extends Bloc<CacheManagementEvent, CacheManagementState> {
   CacheManagementBloc({
-    required GetCachedTrackBundlesUseCase getBundles,
     required DeleteCachedAudioUseCase deleteOne,
     // required DeleteMultipleCachedAudiosUseCase deleteMany,
     required WatchStorageUsageUseCase watchUsage,
     required GetCacheStorageStatsUseCase getStats,
     required CleanupCacheUseCase cleanup,
     required WatchCachedTrackBundlesUseCase watchBundles,
-  }) : _getBundles = getBundles,
-       _deleteOne = deleteOne,
+  }) : _deleteOne = deleteOne,
        // _deleteMany = deleteMany,
        _watchUsage = watchUsage,
        _getStats = getStats,
@@ -46,7 +44,6 @@ class CacheManagementBloc
     on<CacheManagementCleanupRequested>(_onCleanupRequested);
   }
 
-  final GetCachedTrackBundlesUseCase _getBundles;
   final DeleteCachedAudioUseCase _deleteOne;
   // final DeleteMultipleCachedAudiosUseCase _deleteMany;
   final WatchStorageUsageUseCase _watchUsage;
@@ -65,65 +62,47 @@ class CacheManagementBloc
       state.copyWith(status: CacheManagementStatus.loading, errorMessage: null),
     );
 
-    // Load bundles immediately so the list shows current cached items
-    await _loadBundles(emit);
-
-    // Watch storage usage and refresh stats on each change
-    await emit.onEach<int>(
-      _watchUsage.call(),
-      onData: (usage) async {
-        final statsEither = await _getStats.call();
-        statsEither.fold(
-          (failure) => emit(state.copyWith(storageUsageBytes: usage)),
-          (stats) => emit(
-            state.copyWith(storageUsageBytes: usage, storageStats: stats),
-          ),
-        );
-      },
-    );
-
-    // Reactively watch cached bundles and update state
-    await emit.onEach<Either<Failure, List<CachedTrackBundle>>>(
-      _watchBundles(),
-      onData: (Either<Failure, List<CachedTrackBundle>> either) {
-        either.fold(
-          (failure) => emit(
-            state.copyWith(
-              status: CacheManagementStatus.failure,
-              errorMessage: failure.message,
+    // Subscribe to both streams concurrently so bundles start immediately
+    await Future.wait([
+      emit.onEach<int>(
+        _watchUsage.call(),
+        onData: (usage) async {
+          final statsEither = await _getStats.call();
+          statsEither.fold(
+            (failure) => emit(state.copyWith(storageUsageBytes: usage)),
+            (stats) => emit(
+              state.copyWith(storageUsageBytes: usage, storageStats: stats),
             ),
-          ),
-          (bundles) => emit(
-            state.copyWith(
-              status: CacheManagementStatus.success,
-              bundles: bundles,
+          );
+        },
+      ),
+      emit.onEach<Either<Failure, List<CachedTrackBundle>>>(
+        _watchBundles(),
+        onData: (Either<Failure, List<CachedTrackBundle>> either) {
+          either.fold(
+            (failure) => emit(
+              state.copyWith(
+                status: CacheManagementStatus.failure,
+                errorMessage: failure.message,
+              ),
             ),
-          ),
-        );
-      },
-    );
+            (bundles) => emit(
+              state.copyWith(
+                status: CacheManagementStatus.success,
+                bundles: bundles,
+              ),
+            ),
+          );
+        },
+      ),
+    ]);
   }
 
   Future<void> _onRefresh(
     CacheManagementRefreshRequested event,
     Emitter<CacheManagementState> emit,
   ) async {
-    await _loadBundles(emit);
-  }
-
-  Future<void> _loadBundles(Emitter<CacheManagementState> emit) async {
-    final either = await _getBundles.call();
-    either.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: CacheManagementStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (bundles) => emit(
-        state.copyWith(status: CacheManagementStatus.success, bundles: bundles),
-      ),
-    );
+    // No-op: the bundles stream will emit latest automatically
   }
 
   Future<void> _onToggleSelect(
@@ -169,9 +148,7 @@ class CacheManagementBloc
           errorMessage: failure.message,
         ),
       ),
-      (Unit _) async {
-        await _loadBundles(emit);
-      },
+      (Unit _) async {},
     );
   }
 
@@ -185,7 +162,7 @@ class CacheManagementBloc
       await _deleteOne.call(trackId);
     }
     emit(state.copyWith(selected: {}));
-    await _loadBundles(emit);
+    // Stream will emit latest state; nothing to do
   }
 
   Future<void> _onCleanupRequested(
@@ -205,9 +182,7 @@ class CacheManagementBloc
           errorMessage: failure.message,
         ),
       ),
-      (_) async {
-        await _loadBundles(emit);
-      },
+      (_) async {},
     );
   }
 
