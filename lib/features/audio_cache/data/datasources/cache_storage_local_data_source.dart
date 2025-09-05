@@ -24,27 +24,6 @@ abstract class CacheStorageLocalDataSource {
 
   Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId);
 
-  Future<Either<CacheFailure, bool>> verifyFileIntegrity(
-    String trackId,
-    String expectedChecksum,
-  );
-
-  // Removed batch operations to simplify interface
-
-  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
-  getAllCachedAudios();
-
-  /// Watch all cached audios reactively
-  Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios();
-
-  Future<Either<CacheFailure, int>> getTotalStorageUsage();
-
-  Future<Either<CacheFailure, List<String>>> getCorruptedFiles();
-
-  Future<Either<CacheFailure, List<String>>> getOrphanedFiles();
-
-  Stream<int> watchStorageUsage();
-
   CacheKey generateCacheKey(String trackId, String audioUrl);
 
   Future<Either<CacheFailure, String>> getFilePathFromCacheKey(CacheKey key);
@@ -54,6 +33,9 @@ abstract class CacheStorageLocalDataSource {
 
   /// Watch cache status for a single track
   Stream<bool> watchTrackCacheStatus(String trackId);
+
+  /// Streams used by cache_management; kept temporarily
+  Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios();
 }
 
 @LazySingleton(as: CacheStorageLocalDataSource)
@@ -204,60 +186,11 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     }
   }
 
-  @override
-  Future<Either<CacheFailure, bool>> verifyFileIntegrity(
-    String trackId,
-    String expectedChecksum,
-  ) async {
-    try {
-      final unifiedDoc =
-          await _isar.cachedAudioDocumentUnifieds
-              .filter()
-              .trackIdEqualTo(trackId)
-              .findFirst();
-
-      if (unifiedDoc == null) {
-        return const Right(false);
-      }
-
-      final file = File(unifiedDoc.filePath);
-      if (!await file.exists()) {
-        return const Right(false);
-      }
-
-      final bytes = await file.readAsBytes();
-      final actualChecksum = sha1.convert(bytes).toString();
-
-      return Right(actualChecksum == expectedChecksum);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to verify file integrity: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
+  // Removed verifyFileIntegrity and global maintenance methods from DS
 
   // Batch operations removed from implementation
 
-  @override
-  Future<Either<CacheFailure, List<CachedAudioDocumentUnified>>>
-  getAllCachedAudios() async {
-    try {
-      final unifiedDocs =
-          await _isar.cachedAudioDocumentUnifieds.where().findAll();
-
-      return Right(unifiedDocs);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get all cached audios: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
+  // Removed getAllCachedAudios; repository can use watchAllCachedAudios if needed
 
   @override
   Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios() {
@@ -267,117 +200,13 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         .map((docs) => docs.toList());
   }
 
-  @override
-  Future<Either<CacheFailure, int>> getTotalStorageUsage() async {
-    try {
-      final unifiedDocs =
-          await _isar.cachedAudioDocumentUnifieds.where().findAll();
+  // Removed getTotalStorageUsage from DS
 
-      int totalSize = 0;
-      for (final doc in unifiedDocs) {
-        totalSize += doc.fileSizeBytes;
-      }
+  // Removed corruption/orphan checks from DS
 
-      return Right(totalSize);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get total storage usage: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
+  // Removed corruption/orphan checks from DS
 
-  @override
-  Future<Either<CacheFailure, List<String>>> getCorruptedFiles() async {
-    try {
-      final corruptedTrackIds = <String>[];
-
-      final unifiedDocs =
-          await _isar.cachedAudioDocumentUnifieds.where().findAll();
-
-      for (final doc in unifiedDocs) {
-        final file = File(doc.filePath);
-        if (!await file.exists()) {
-          corruptedTrackIds.add(doc.trackId);
-          continue;
-        }
-
-        final bytes = await file.readAsBytes();
-        final actualChecksum = sha1.convert(bytes).toString();
-
-        if (actualChecksum != doc.checksum) {
-          corruptedTrackIds.add(doc.trackId);
-        }
-      }
-
-      return Right(corruptedTrackIds);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get corrupted files: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, List<String>>> getOrphanedFiles() async {
-    try {
-      final orphanedPaths = <String>[];
-      final cacheDir = await _getCacheDirectory();
-
-      if (await cacheDir.exists()) {
-        final files = cacheDir.listSync(recursive: true).whereType<File>();
-
-        for (final file in files) {
-          // Skip temporary files
-          if (file.path.endsWith('.tmp') ||
-              file.path.endsWith('.part') ||
-              file.path.endsWith('.download')) {
-            continue;
-          }
-
-          // Check if file has corresponding database entry
-          final hasEntry =
-              await _isar.cachedAudioDocumentUnifieds
-                  .filter()
-                  .filePathEqualTo(file.path)
-                  .count() >
-              0;
-
-          if (!hasEntry) {
-            orphanedPaths.add(file.path);
-          }
-        }
-      }
-
-      return Right(orphanedPaths);
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get orphaned files: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
-
-  @override
-  Stream<int> watchStorageUsage() {
-    return _isar.cachedAudioDocumentUnifieds
-        .where()
-        .watch(fireImmediately: true)
-        .map((docs) {
-          int totalSize = 0;
-          for (final doc in docs) {
-            totalSize += doc.fileSizeBytes;
-          }
-          return totalSize;
-        });
-  }
+  // Removed watchStorageUsage from DS
 
   @override
   CacheKey generateCacheKey(String trackId, String audioUrl) {

@@ -30,18 +30,14 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.track.url != null) {
-        final hash = _quickHash(widget.track.url!, widget.trackDuration);
-        context.read<WaveformBloc>().add(
-          LoadWaveform(
-            widget.track.id,
-            audioFilePath: widget.track.url,
-            audioSourceHash: hash,
-          ),
-        );
-      } else {
-        context.read<WaveformBloc>().add(LoadWaveform(widget.track.id));
-      }
+      final hash = _quickHash(widget.track.url, widget.trackDuration);
+      context.read<WaveformBloc>().add(
+        LoadWaveform(
+          widget.track.id,
+          audioFilePath: widget.track.url,
+          audioSourceHash: hash,
+        ),
+      );
     });
   }
 
@@ -49,18 +45,14 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
   void didUpdateWidget(EnhancedWaveformDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.track.id != widget.track.id) {
-      if (widget.track.url != null) {
-        final hash = _quickHash(widget.track.url!, widget.trackDuration);
-        context.read<WaveformBloc>().add(
-          LoadWaveform(
-            widget.track.id,
-            audioFilePath: widget.track.url,
-            audioSourceHash: hash,
-          ),
-        );
-      } else {
-        context.read<WaveformBloc>().add(LoadWaveform(widget.track.id));
-      }
+      final hash = _quickHash(widget.track.url, widget.trackDuration);
+      context.read<WaveformBloc>().add(
+        LoadWaveform(
+          widget.track.id,
+          audioFilePath: widget.track.url,
+          audioSourceHash: hash,
+        ),
+      );
     }
   }
 

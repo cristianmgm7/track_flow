@@ -41,11 +41,17 @@ class CacheManagementLocalDataSourceImpl
 
   @override
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios() async {
-    final result = await _delegate.getAllCachedAudios();
-    return result.fold(
-      (failure) => Left(failure),
-      (docs) => Right(docs.map((d) => d.toCachedAudio()).toList()),
-    );
+    try {
+      final docs = await _delegate.watchAllCachedAudios().first;
+      return Right(docs.map((d) => d.toCachedAudio()).toList());
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: e.toString(),
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
   }
 
   @override
@@ -64,7 +70,8 @@ class CacheManagementLocalDataSourceImpl
     String trackId,
     String expectedChecksum,
   ) {
-    return _delegate.verifyFileIntegrity(trackId, expectedChecksum);
+    // This method was removed from the local DS; verify via repository/service in management layer instead
+    return Future.value(const Right(false));
   }
 
   @override

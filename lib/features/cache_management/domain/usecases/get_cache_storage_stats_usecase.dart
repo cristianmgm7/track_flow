@@ -3,7 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../audio_cache/domain/entities/cached_audio.dart';
 import '../../../audio_cache/domain/failures/cache_failure.dart';
-import '../../../audio_cache/domain/services/cache_maintenance_service.dart';
+import '../services/cache_maintenance_service.dart';
 
 @injectable
 class GetCacheStorageStatsUseCase {

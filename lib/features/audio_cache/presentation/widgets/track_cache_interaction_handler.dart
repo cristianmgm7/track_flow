@@ -84,12 +84,7 @@ class TrackCacheInteractionHandler {
     }
   }
 
-  /// Handle downloading state with haptic feedback
-  void _handleDownloadingState() {
-    if (config.enableHapticFeedback) {
-      HapticFeedback.selectionClick();
-    }
-  }
+  // Removed specific downloading handler; not needed with status-only UI
 
   /// Remove track from cache and show undo if enabled
   void _removeFromCache(BuildContext context, TrackCacheBloc bloc) {
@@ -104,10 +99,9 @@ class TrackCacheInteractionHandler {
   void _startCaching(TrackCacheBloc bloc) {
     if (config.referenceId != null) {
       bloc.add(
-        CacheTrackWithReferenceRequested(
+        CacheTrackRequested(
           trackId: config.trackId,
           audioUrl: config.audioUrl,
-          referenceId: config.referenceId!,
           policy: config.conflictPolicy,
         ),
       );

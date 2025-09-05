@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/di/injection.dart';
-import '../../../audio_cache/domain/services/cache_maintenance_service.dart';
+import '../../domain/services/cache_maintenance_service.dart';
 import '../../../audio_cache/domain/entities/cached_audio.dart';
 
 /// Component for displaying cache storage statistics

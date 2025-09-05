@@ -128,7 +128,13 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
   @override
   Stream<int> watchStorageUsage() {
-    return _localDataSource.watchStorageUsage();
+    return _localDataSource.watchAllCachedAudios().map((docs) {
+      int totalSize = 0;
+      for (final d in docs) {
+        totalSize += d.fileSizeBytes;
+      }
+      return totalSize;
+    });
   }
 
   @override
@@ -141,14 +147,12 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   @override
   Future<Either<CacheFailure, int>> getStorageUsage() async {
     try {
-      final audiosResult = await _localDataSource.getAllCachedAudios();
-      return audiosResult.fold((failure) => Left(failure), (audios) {
-        final totalSize = audios.fold<int>(
-          0,
-          (sum, audio) => sum + audio.fileSizeBytes,
-        );
-        return Right(totalSize);
-      });
+      final docs = await _localDataSource.watchAllCachedAudios().first;
+      int totalSize = 0;
+      for (final d in docs) {
+        totalSize += d.fileSizeBytes;
+      }
+      return Right(totalSize);
     } catch (e) {
       return Left(
         StorageCacheFailure(

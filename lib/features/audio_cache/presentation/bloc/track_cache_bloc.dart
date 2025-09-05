@@ -60,7 +60,7 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
   ) async {
     emit(const TrackCacheLoading());
 
-    final result = await _cacheTrackUseCase(
+    final result = await _cacheTrackUseCase.call(
       trackId: event.trackId,
       audioUrl: event.audioUrl,
     );

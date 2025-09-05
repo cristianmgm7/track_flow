@@ -15,29 +15,15 @@ abstract class CacheStorageRemoteDataSource {
     required String localFilePath,
     required Function(DownloadProgress) onProgress,
   });
-
-  /// Cancel an active download
-  Future<Either<CacheFailure, Unit>> cancelDownload(String downloadId);
-
-  /// Get download URL for a given audio reference
-  Future<Either<CacheFailure, String>> getDownloadUrl(String audioReference);
-
-  /// Verify if remote audio exists
-  Future<Either<CacheFailure, bool>> audioExists(String audioReference);
-
-  /// Get audio metadata from remote storage
-  Future<Either<CacheFailure, Map<String, dynamic>>> getAudioMetadata(
-    String audioReference,
-  );
 }
 
 @LazySingleton(as: CacheStorageRemoteDataSource)
 class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
+  // Keep dependency to ease future enhancements; suppress unused warning
+  // ignore: unused_field
   final FirebaseStorage _storage;
 
-  // Track active downloads for cancellation
-  final Map<String, bool> _activeDownloads = {};
-  final Map<String, bool> _cancelledDownloads = {};
+  // Track active downloads for cleanup
   final Map<String, StreamSubscription<List<int>>> _downloadSubscriptions = {};
   final Map<String, IOSink> _downloadSinks = {};
   final Map<String, File> _downloadFiles = {};
@@ -95,8 +81,7 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         // Track this download for cancellation
         final downloadCompleter = Completer<void>();
 
-        // Store cancellation info
-        _activeDownloads[downloadId] = true;
+        // Track active download
 
         // Determine extension from Content-Type header or URL path
         final contentType = response.headers['content-type'] ?? '';
@@ -119,9 +104,6 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         // Listen to response stream with progress tracking
         final subscription = response.stream.listen(
           (List<int> chunk) {
-            // Check if download was cancelled
-            if (_cancelledDownloads[downloadId] == true) return;
-
             downloadedBytes += chunk.length;
             sink.add(chunk);
 
@@ -134,36 +116,14 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
             );
             onProgress(progress);
           },
-          onDone: () {
-            if (_cancelledDownloads[downloadId] != true) {
-              downloadCompleter.complete();
-            }
-          },
-          onError: (error) {
-            if (_cancelledDownloads[downloadId] != true) {
-              downloadCompleter.completeError(error);
-            }
-          },
+          onDone: () => downloadCompleter.complete(),
+          onError: (error) => downloadCompleter.completeError(error),
         );
         _downloadSubscriptions[downloadId] = subscription;
 
         // Wait for download completion or cancellation
         await downloadCompleter.future;
         await sink.close();
-
-        final isCancelled = _cancelledDownloads[downloadId] == true;
-        if (isCancelled) {
-          // Delete partial file if cancelled
-          if (await targetFile.exists()) {
-            await targetFile.delete();
-          }
-          return Left(
-            DownloadCacheFailure(
-              message: 'Download was cancelled',
-              trackId: downloadId,
-            ),
-          );
-        }
 
         // Verify file was downloaded successfully
         if (await targetFile.exists() && await targetFile.length() > 0) {
@@ -185,8 +145,6 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         try {
           client.close();
         } catch (_) {}
-        _activeDownloads.remove(downloadId);
-        _cancelledDownloads.remove(downloadId);
         try {
           await _downloadSubscriptions.remove(downloadId)?.cancel();
         } catch (_) {}
@@ -239,130 +197,22 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
     return ext;
   }
 
-  @override
-  Future<Either<CacheFailure, Unit>> cancelDownload(String downloadId) async {
-    try {
-      final isActive = _activeDownloads[downloadId];
-      if (isActive == true) {
-        // Mark as cancelled
-        _cancelledDownloads[downloadId] = true;
-        // Cancel subscription and close sink
-        try {
-          await _downloadSubscriptions.remove(downloadId)?.cancel();
-        } catch (_) {}
-        try {
-          await _downloadSinks.remove(downloadId)?.close();
-        } catch (_) {}
-        try {
-          _downloadClients.remove(downloadId)?.close();
-        } catch (_) {}
-        // Delete partial file if any
-        final partial = _downloadFiles.remove(downloadId);
-        if (partial != null && await partial.exists()) {
-          try {
-            await partial.delete();
-          } catch (_) {}
-        }
-        _activeDownloads.remove(downloadId);
-        return const Right(unit);
-      } else {
-        return Left(
-          ValidationCacheFailure(
-            message: 'No active download found with ID: $downloadId',
-            field: 'downloadId',
-            value: downloadId,
-          ),
-        );
-      }
-    } catch (e) {
-      return Left(
-        NetworkCacheFailure(
-          message: 'Failed to cancel download: $e',
-          statusCode: null,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, String>> getDownloadUrl(
-    String audioReference,
-  ) async {
-    try {
-      final ref = _storage.ref(audioReference);
-      final downloadUrl = await ref.getDownloadURL();
-      return Right(downloadUrl);
-    } catch (e) {
-      return Left(
-        NetworkCacheFailure(
-          message: 'Failed to get download URL: $e',
-          statusCode: null,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, bool>> audioExists(String audioReference) async {
-    try {
-      final ref = _storage.ref(audioReference);
-      final metadata = await ref.getMetadata();
-      return Right(metadata.size != null && metadata.size! > 0);
-    } catch (e) {
-      if (e is FirebaseException && e.code == 'object-not-found') {
-        return const Right(false);
-      }
-      return Left(
-        NetworkCacheFailure(
-          message: 'Failed to check if audio exists: $e',
-          statusCode: null,
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<Either<CacheFailure, Map<String, dynamic>>> getAudioMetadata(
-    String audioReference,
-  ) async {
-    try {
-      final ref = _storage.ref(audioReference);
-      final metadata = await ref.getMetadata();
-
-      return Right({
-        'size': metadata.size,
-        'contentType': metadata.contentType,
-        'md5Hash': metadata.md5Hash,
-        'cacheControl': metadata.cacheControl,
-        'contentDisposition': metadata.contentDisposition,
-        'contentEncoding': metadata.contentEncoding,
-        'contentLanguage': metadata.contentLanguage,
-        'customMetadata': metadata.customMetadata,
-        'generation': metadata.generation,
-        'metageneration': metadata.metageneration,
-        'name': metadata.name,
-        'fullPath': metadata.fullPath,
-        'bucket': metadata.bucket,
-        'timeCreated': metadata.timeCreated?.toIso8601String(),
-        'updated': metadata.updated?.toIso8601String(),
-      });
-    } catch (e) {
-      return Left(
-        NetworkCacheFailure(
-          message: 'Failed to get audio metadata: $e',
-          statusCode: null,
-        ),
-      );
-    }
-  }
-
-  /// Cleanup method to cancel all active downloads
+  /// Cleanup resources
   void dispose() {
-    // Mark all active downloads as cancelled
-    for (final downloadId in _activeDownloads.keys) {
-      _cancelledDownloads[downloadId] = true;
+    for (final sub in _downloadSubscriptions.values) {
+      sub.cancel();
     }
-    _activeDownloads.clear();
-    _cancelledDownloads.clear();
+    for (final sink in _downloadSinks.values) {
+      sink.close();
+    }
+    for (final client in _downloadClients.values) {
+      try {
+        client.close();
+      } catch (_) {}
+    }
+    _downloadSubscriptions.clear();
+    _downloadSinks.clear();
+    _downloadFiles.clear();
+    _downloadClients.clear();
   }
 }

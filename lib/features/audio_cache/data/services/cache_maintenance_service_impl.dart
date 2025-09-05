@@ -4,11 +4,11 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../cache_management/domain/services/cache_maintenance_service.dart';
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/entities/cleanup_details.dart';
 import '../../domain/entities/cache_validation_result.dart';
 import '../../domain/failures/cache_failure.dart';
-import '../../domain/services/cache_maintenance_service.dart';
 
 @LazySingleton(as: CacheMaintenanceService)
 class CacheMaintenanceServiceImpl implements CacheMaintenanceService {

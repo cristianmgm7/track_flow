@@ -3,12 +3,11 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/cache_management/domain/entities/cached_track_bundle.dart';
-import 'package:trackflow/features/audio_cache/domain/entities/download_progress.dart';
 import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dart'
     as cache;
-import 'package:trackflow/features/audio_cache/domain/services/cache_maintenance_service.dart';
+import '../services/cache_maintenance_service.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
-import 'package:trackflow/features/audio_cache/domain/repositories/audio_download_repository.dart';
+// Removed dependency on AudioDownloadRepository
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
@@ -22,7 +21,6 @@ class GetCachedTrackBundlesUseCase {
     this._audioTrackRepository,
     this._userProfileRepository,
     this._projectsRepository,
-    this._audioDownloadRepository,
   );
 
   final CacheMaintenanceService _cacheMaintenanceService;
@@ -31,7 +29,6 @@ class GetCachedTrackBundlesUseCase {
   final AudioTrackRepository _audioTrackRepository;
   final UserProfileRepository _userProfileRepository;
   final ProjectsRepository _projectsRepository;
-  final AudioDownloadRepository _audioDownloadRepository;
 
   Future<Either<Failure, List<CachedTrackBundle>>> call() async {
     try {
@@ -43,16 +40,6 @@ class GetCachedTrackBundlesUseCase {
           return Left(_toFailure(cacheFailure));
         },
         (cachedAudios) async {
-          // Preload active downloads map for quick lookup
-          final activeDownloadsEither =
-              await _audioDownloadRepository.getActiveDownloads();
-          final Map<String, DownloadProgress> trackIdToProgress = {};
-          activeDownloadsEither.fold((_) => null, (list) {
-            for (final p in list) {
-              trackIdToProgress[p.trackId] = p;
-            }
-          });
-
           final bundles = await Future.wait(
             cachedAudios.map((cached) async {
               final AudioTrackId trackId = AudioTrackId.fromUniqueString(
@@ -82,7 +69,6 @@ class GetCachedTrackBundlesUseCase {
                 });
               }
 
-              final activeDownload = trackIdToProgress[cached.trackId];
               return CachedTrackBundle(
                 cached: cached,
                 track: track,
@@ -91,7 +77,7 @@ class GetCachedTrackBundlesUseCase {
                     (projectName != null && projectName!.isNotEmpty)
                         ? projectName
                         : null,
-                activeDownload: activeDownload,
+                activeDownload: null,
               );
             }),
           );
