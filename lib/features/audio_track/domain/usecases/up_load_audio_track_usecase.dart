@@ -10,6 +10,7 @@ import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart';
 import 'package:trackflow/features/audio_track/domain/services/audio_metadata_service.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 
 class UploadAudioTrackParams {
   final ProjectId projectId;
@@ -30,6 +31,7 @@ class UploadAudioTrackUseCase {
   final SessionStorage sessionStorage;
   final AudioMetadataService audioMetadataService;
   final GetOrGenerateWaveform getOrGenerateWaveform;
+  final AudioStorageRepository audioStorageRepository;
 
   UploadAudioTrackUseCase(
     this.projectTrackService,
@@ -37,6 +39,7 @@ class UploadAudioTrackUseCase {
     this.sessionStorage,
     this.audioMetadataService,
     this.getOrGenerateWaveform,
+    this.audioStorageRepository,
   );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
@@ -71,12 +74,20 @@ class UploadAudioTrackUseCase {
           );
           return await result.fold((f) => Left(f), (track) async {
             try {
-              final bytes = await params.file.readAsBytes();
+              // Prefer cached path stored by ProjectTrackService (AudioStorageRepository)
+              final cachedPathEither = await audioStorageRepository
+                  .getCachedAudioPath(track.id);
+              final waveformPath = cachedPathEither.fold(
+                (_) => params.file.path,
+                (p) => p,
+              );
+
+              final bytes = await File(waveformPath).readAsBytes();
               final audioSourceHash = crypto.sha1.convert(bytes).toString();
               await getOrGenerateWaveform(
                 GetOrGenerateWaveformParams(
                   trackId: track.id,
-                  audioFilePath: params.file.path,
+                  audioFilePath: waveformPath,
                   audioSourceHash: audioSourceHash,
                   algorithmVersion: 1,
                   targetSampleCount: null,

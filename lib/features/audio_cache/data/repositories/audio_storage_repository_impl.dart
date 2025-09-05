@@ -26,8 +26,26 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     bool canDelete = true,
   }) async {
     try {
-      // The file is already in its final cache location
-      final destinationFile = audioFile;
+      // Ensure file is persisted in the fixed cache directory with deterministic name
+      final originalPath = audioFile.path;
+      final cacheKey = _localDataSource.generateCacheKey(
+        trackId.value,
+        originalPath,
+      );
+      final destEither = await _localDataSource.getFilePathFromCacheKey(
+        cacheKey,
+      );
+      final destinationFile = await destEither.fold(
+        (failure) => Future.error(failure.message),
+        (basePath) async {
+          final ext = _extractExtension(originalPath) ?? '.mp3';
+          final finalPath = basePath.replaceAll(RegExp(r'\.[^/.]+$'), ext);
+          if (originalPath != finalPath) {
+            return await audioFile.copy(finalPath);
+          }
+          return audioFile;
+        },
+      );
 
       // Verify file and calculate checksum (streaming)
       final fileSize = await destinationFile.length();
@@ -68,6 +86,14 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
         ),
       );
     }
+  }
+
+  String? _extractExtension(String path) {
+    final idx = path.lastIndexOf('.');
+    if (idx == -1) return null;
+    final ext = path.substring(idx).toLowerCase();
+    if (ext.length > 5) return null;
+    return ext;
   }
 
   @override
