@@ -37,7 +37,6 @@ class TrackVersionDTO {
       fileLocalPath: version.fileLocalPath,
       fileRemoteUrl: version.fileRemoteUrl,
       durationMs: version.durationMs,
-      waveformCachePath: version.waveformCachePath,
       status: version.status.name,
       createdAt: version.createdAt,
       createdBy: version.createdBy.value,
@@ -53,7 +52,6 @@ class TrackVersionDTO {
       fileLocalPath: fileLocalPath,
       fileRemoteUrl: fileRemoteUrl,
       durationMs: durationMs,
-      waveformCachePath: waveformCachePath,
       status: TrackVersionStatus.values.firstWhere(
         (e) => e.name == status,
         orElse: () => TrackVersionStatus.ready,

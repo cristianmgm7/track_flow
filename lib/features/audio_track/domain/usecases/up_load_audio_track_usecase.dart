@@ -12,6 +12,7 @@ import 'package:trackflow/features/audio_track/domain/services/audio_metadata_se
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import 'package:trackflow/features/track_version/domain/usecases/add_track_version_usecase.dart';
+import 'package:trackflow/features/track_version/domain/usecases/set_active_track_version_usecase.dart';
 
 class UploadAudioTrackParams {
   final ProjectId projectId;
@@ -34,6 +35,7 @@ class UploadAudioTrackUseCase {
   final GetOrGenerateWaveform getOrGenerateWaveform;
   final AudioStorageRepository audioStorageRepository;
   final AddTrackVersionUseCase addTrackVersionUseCase;
+  final SetActiveTrackVersionUseCase setActiveTrackVersionUseCase;
 
   UploadAudioTrackUseCase(
     this.projectTrackService,
@@ -43,6 +45,7 @@ class UploadAudioTrackUseCase {
     this.getOrGenerateWaveform,
     this.audioStorageRepository,
     this.addTrackVersionUseCase,
+    this.setActiveTrackVersionUseCase,
   );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
@@ -88,31 +91,38 @@ class UploadAudioTrackUseCase {
               );
 
               return await versionResult.fold((f) => Left(f), (version) async {
-                // 6. TODO: Update AudioTrack with activeVersionId in repository
-                // For now, we'll proceed with waveform generation
-
-                // 7. Generate waveform for the version
-                final cachedPathEither = await audioStorageRepository
-                    .getCachedAudioPath(track.id);
-                final waveformPath = cachedPathEither.fold(
-                  (_) => params.file.path,
-                  (p) => p,
-                );
-
-                final bytes = await File(waveformPath).readAsBytes();
-                final audioSourceHash = crypto.sha1.convert(bytes).toString();
-                await getOrGenerateWaveform(
-                  GetOrGenerateWaveformParams(
+                // 6. Set version as active for the track
+                final setActiveResult = await setActiveTrackVersionUseCase.call(
+                  SetActiveTrackVersionParams(
                     trackId: track.id,
-                    audioFilePath: waveformPath,
-                    audioSourceHash: audioSourceHash,
-                    algorithmVersion: 1,
-                    targetSampleCount: null,
-                    forceRefresh: true,
+                    versionId: version.id,
                   ),
                 );
 
-                return const Right(unit);
+                return await setActiveResult.fold((f) => Left(f), (_) async {
+                  // 7. Generate waveform for the version
+                  final cachedPathEither = await audioStorageRepository
+                      .getCachedAudioPath(track.id);
+                  final waveformPath = cachedPathEither.fold(
+                    (_) => params.file.path,
+                    (p) => p,
+                  );
+
+                  final bytes = await File(waveformPath).readAsBytes();
+                  final audioSourceHash = crypto.sha1.convert(bytes).toString();
+                  await getOrGenerateWaveform(
+                    GetOrGenerateWaveformParams(
+                      trackId: track.id,
+                      audioFilePath: waveformPath,
+                      audioSourceHash: audioSourceHash,
+                      algorithmVersion: 1,
+                      targetSampleCount: null,
+                      forceRefresh: true,
+                    ),
+                  );
+
+                  return const Right(unit);
+                });
               });
             } catch (e) {
               return Left(

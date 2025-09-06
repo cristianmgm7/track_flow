@@ -1046,6 +1046,7 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i195.PlayAudioUseCase>(() => _i195.PlayAudioUseCase(
           audioTrackRepository: gh<_i183.AudioTrackRepository>(),
           audioStorageRepository: gh<_i119.AudioStorageRepository>(),
+          trackVersionRepository: gh<_i61.TrackVersionRepository>(),
           playbackService: gh<_i5.AudioPlaybackService>(),
         ));
     gh.factory<_i196.PlayPlaylistUseCase>(() => _i196.PlayPlaylistUseCase(
@@ -1115,6 +1116,7 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i87.GetOrGenerateWaveform>(),
               gh<_i119.AudioStorageRepository>(),
               gh<_i73.AddTrackVersionUseCase>(),
+              gh<_i105.SetActiveTrackVersionUseCase>(),
             ));
     gh.factory<_i207.UserProfileBloc>(() => _i207.UserProfileBloc(
           updateUserProfileUseCase: gh<_i205.UpdateUserProfileUseCase>(),

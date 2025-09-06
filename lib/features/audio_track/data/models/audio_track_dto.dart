@@ -5,12 +5,13 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 class AudioTrackDTO {
   final AudioTrackId id;
   final String name;
-  final String url;
+  final String url; // cover art url
   final int duration;
   final ProjectId projectId;
   final UserId uploadedBy;
   final DateTime? createdAt;
   final String extension;
+  final TrackVersionId? activeVersionId; // Active version for playback
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
@@ -25,6 +26,7 @@ class AudioTrackDTO {
     required this.uploadedBy,
     this.createdAt,
     required this.extension,
+    this.activeVersionId,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
     this.lastModified,
@@ -45,6 +47,12 @@ class AudioTrackDTO {
               ? (json['createdAt'] as Timestamp).toDate()
               : DateTime.tryParse(json['createdAt'] as String? ?? ''),
       extension: json['extension'] as String,
+      activeVersionId:
+          json['activeVersionId'] != null
+              ? TrackVersionId.fromUniqueString(
+                json['activeVersionId'] as String,
+              )
+              : null,
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
       lastModified:
@@ -64,6 +72,7 @@ class AudioTrackDTO {
       'uploadedBy': uploadedBy.value,
       'createdAt': createdAt?.toIso8601String(),
       'extension': extension,
+      'activeVersionId': activeVersionId?.value,
       // ⭐ NEW: Include sync metadata in JSON
       'version': version,
       'lastModified': lastModified?.toIso8601String(),
@@ -79,6 +88,7 @@ class AudioTrackDTO {
       projectId: projectId,
       uploadedBy: uploadedBy,
       createdAt: createdAt ?? DateTime.now(),
+      activeVersionId: activeVersionId,
     );
   }
 

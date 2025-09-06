@@ -29,6 +29,11 @@ abstract class AudioTrackRepository {
     required String newName,
   });
 
+  Future<Either<Failure, Unit>> setActiveVersion({
+    required AudioTrackId trackId,
+    required TrackVersionId versionId,
+  });
+
   /// Delete all tracks from local cache
   Future<Either<Failure, Unit>> deleteAllTracks();
 }

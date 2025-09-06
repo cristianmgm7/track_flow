@@ -18,49 +18,54 @@ const AudioTrackDocumentSchema = CollectionSchema(
   name: r'AudioTrackDocument',
   id: 692118169096271387,
   properties: {
-    r'createdAt': PropertySchema(
+    r'activeVersionId': PropertySchema(
       id: 0,
+      name: r'activeVersionId',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 1,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'duration': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'duration',
       type: IsarType.long,
     ),
     r'extension': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'extension',
       type: IsarType.string,
     ),
     r'id': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'id',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'name',
       type: IsarType.string,
     ),
     r'projectId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'projectId',
       type: IsarType.string,
     ),
     r'syncMetadata': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'syncMetadata',
       type: IsarType.object,
       target: r'SyncMetadataDocument',
     ),
     r'uploadedBy': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'uploadedBy',
       type: IsarType.string,
     ),
     r'url': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'url',
       type: IsarType.string,
     )
@@ -112,6 +117,12 @@ int _audioTrackDocumentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.activeVersionId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.extension.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
@@ -135,20 +146,21 @@ void _audioTrackDocumentSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeLong(offsets[1], object.duration);
-  writer.writeString(offsets[2], object.extension);
-  writer.writeString(offsets[3], object.id);
-  writer.writeString(offsets[4], object.name);
-  writer.writeString(offsets[5], object.projectId);
+  writer.writeString(offsets[0], object.activeVersionId);
+  writer.writeDateTime(offsets[1], object.createdAt);
+  writer.writeLong(offsets[2], object.duration);
+  writer.writeString(offsets[3], object.extension);
+  writer.writeString(offsets[4], object.id);
+  writer.writeString(offsets[5], object.name);
+  writer.writeString(offsets[6], object.projectId);
   writer.writeObject<SyncMetadataDocument>(
-    offsets[6],
+    offsets[7],
     allOffsets,
     SyncMetadataDocumentSchema.serialize,
     object.syncMetadata,
   );
-  writer.writeString(offsets[7], object.uploadedBy);
-  writer.writeString(offsets[8], object.url);
+  writer.writeString(offsets[8], object.uploadedBy);
+  writer.writeString(offsets[9], object.url);
 }
 
 AudioTrackDocument _audioTrackDocumentDeserialize(
@@ -158,19 +170,20 @@ AudioTrackDocument _audioTrackDocumentDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AudioTrackDocument();
-  object.createdAt = reader.readDateTime(offsets[0]);
-  object.duration = reader.readLong(offsets[1]);
-  object.extension = reader.readString(offsets[2]);
-  object.id = reader.readString(offsets[3]);
-  object.name = reader.readString(offsets[4]);
-  object.projectId = reader.readString(offsets[5]);
+  object.activeVersionId = reader.readStringOrNull(offsets[0]);
+  object.createdAt = reader.readDateTime(offsets[1]);
+  object.duration = reader.readLong(offsets[2]);
+  object.extension = reader.readString(offsets[3]);
+  object.id = reader.readString(offsets[4]);
+  object.name = reader.readString(offsets[5]);
+  object.projectId = reader.readString(offsets[6]);
   object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
-    offsets[6],
+    offsets[7],
     SyncMetadataDocumentSchema.deserialize,
     allOffsets,
   );
-  object.uploadedBy = reader.readString(offsets[7]);
-  object.url = reader.readString(offsets[8]);
+  object.uploadedBy = reader.readString(offsets[8]);
+  object.url = reader.readString(offsets[9]);
   return object;
 }
 
@@ -182,11 +195,11 @@ P _audioTrackDocumentDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
@@ -194,14 +207,16 @@ P _audioTrackDocumentDeserializeProp<P>(
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
       return (reader.readObjectOrNull<SyncMetadataDocument>(
         offset,
         SyncMetadataDocumentSchema.deserialize,
         allOffsets,
       )) as P;
-    case 7:
-      return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -448,6 +463,160 @@ extension AudioTrackDocumentQueryWhere
 
 extension AudioTrackDocumentQueryFilter
     on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QFilterCondition> {
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'activeVersionId',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'activeVersionId',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activeVersionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activeVersionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activeVersionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activeVersionId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'activeVersionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'activeVersionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'activeVersionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'activeVersionId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activeVersionId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      activeVersionIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'activeVersionId',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
       createdAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -1467,6 +1636,20 @@ extension AudioTrackDocumentQueryLinks
 extension AudioTrackDocumentQuerySortBy
     on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QSortBy> {
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByActiveVersionId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeVersionId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByActiveVersionIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeVersionId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
       sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1581,6 +1764,20 @@ extension AudioTrackDocumentQuerySortBy
 
 extension AudioTrackDocumentQuerySortThenBy
     on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QSortThenBy> {
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByActiveVersionId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeVersionId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByActiveVersionIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeVersionId', Sort.desc);
+    });
+  }
+
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
       thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -1711,6 +1908,14 @@ extension AudioTrackDocumentQuerySortThenBy
 extension AudioTrackDocumentQueryWhereDistinct
     on QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct> {
   QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct>
+      distinctByActiveVersionId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activeVersionId',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct>
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -1772,6 +1977,13 @@ extension AudioTrackDocumentQueryProperty
   QueryBuilder<AudioTrackDocument, int, QQueryOperations> isarIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isarId');
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, String?, QQueryOperations>
+      activeVersionIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activeVersionId');
     });
   }
 

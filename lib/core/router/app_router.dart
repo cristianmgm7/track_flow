@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
+import 'package:trackflow/features/audio_track/presentation/screens/track_detail_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
@@ -98,7 +98,7 @@ class AppRouter {
               currentLocation == AppRoutes.notifications ||
               currentLocation == AppRoutes.userProfile ||
               currentLocation == AppRoutes.manageCollaborators ||
-              currentLocation == AppRoutes.audioComments ||
+              currentLocation == AppRoutes.trackDetail ||
               currentLocation == AppRoutes.cacheManagement ||
               currentLocation.startsWith('/artistprofile/') ||
               currentLocation.startsWith('/projects/')) {
@@ -153,9 +153,9 @@ class AppRouter {
 
         // Standalone routes (outside shell)
         GoRoute(
-          path: AppRoutes.audioComments,
+          path: AppRoutes.trackDetail,
           builder: (context, state) {
-            final args = state.extra as AudioCommentsScreenArgs;
+            final args = state.extra as TrackDetailScreenArgs;
             return MultiBlocProvider(
               providers: [
                 BlocProvider<TrackCacheBloc>(
@@ -169,7 +169,7 @@ class AppRouter {
                   create: (context) => sl<TrackVersionsBloc>(),
                 ),
               ],
-              child: AppAudioCommentsScreen(
+              child: TrackDetailScreen(
                 projectId: args.projectId,
                 track: args.track,
                 versionId: args.versionId,

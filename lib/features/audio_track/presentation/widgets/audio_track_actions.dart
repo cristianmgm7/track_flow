@@ -4,7 +4,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
-import 'package:trackflow/features/audio_comment/presentation/screens/app_audio_comments_screen.dart';
+import 'package:trackflow/features/audio_track/presentation/screens/track_detail_screen.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
@@ -27,8 +27,8 @@ class TrackActions {
       subtitle: 'Add feedback or notes to this track',
       onTap: () {
         context.push(
-          AppRoutes.audioComments,
-          extra: AudioCommentsScreenArgs(
+          AppRoutes.trackDetail,
+          extra: TrackDetailScreenArgs(
             projectId: track.projectId,
             track: track,
             versionId: TrackVersionId.fromUniqueString(track.id.value),

@@ -265,6 +265,30 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> setActiveVersion({
+    required AudioTrackId trackId,
+    required TrackVersionId versionId,
+  }) async {
+    try {
+      final result = await localDataSource.setActiveVersion(
+        trackId.value,
+        versionId.value,
+      );
+
+      // Trigger upstream sync to update remote
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'audio_tracks_update',
+        ),
+      );
+
+      return result;
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to set active version: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> deleteAllTracks() async {
     try {
       await localDataSource.deleteAllTracks();
