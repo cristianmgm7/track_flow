@@ -91,6 +91,9 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
       final result = await _getOrGenerate.call(
         GetOrGenerateWaveformParams(
           trackId: event.trackId,
+          versionId:
+              event
+                  .versionId, // ✅ Pass versionId for version-specific waveforms
           audioFilePath: localPath!,
           audioSourceHash: event.audioSourceHash!,
           algorithmVersion: 1, // bump when algorithm changes
@@ -108,9 +111,11 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
         (waveform) => add(_WaveformDataReceived(waveform)),
       );
     } else {
+      // Try to find existing waveform by track and version
       final result = await _waveformRepository.getWaveformByTrackId(
         event.trackId,
       );
+
       result.fold(
         (failure) => emit(
           state.copyWith(
@@ -118,7 +123,21 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
             errorMessage: failure.message,
           ),
         ),
-        (waveform) => add(_WaveformDataReceived(waveform)),
+        (waveform) {
+          // Check if the waveform matches the requested version
+          if (event.versionId != null &&
+              waveform.versionId != event.versionId) {
+            // Waveform exists but for different version, try to generate new one
+            emit(
+              state.copyWith(
+                status: WaveformStatus.error,
+                errorMessage: 'Waveform version mismatch',
+              ),
+            );
+          } else {
+            add(_WaveformDataReceived(waveform));
+          }
+        },
       );
     }
   }

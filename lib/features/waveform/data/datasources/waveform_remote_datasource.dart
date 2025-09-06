@@ -11,6 +11,7 @@ import 'package:trackflow/features/waveform/domain/value_objects/waveform_metada
 abstract class WaveformRemoteDataSource {
   Future<AudioWaveform?> fetchByKey({
     required AudioTrackId trackId,
+    TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
     required int targetSampleCount,
@@ -32,22 +33,31 @@ class FirebaseStorageWaveformRemoteDataSource
 
   String _pathFor(
     AudioTrackId trackId,
+    TrackVersionId? versionId,
     String audioSourceHash,
     int algorithmVersion,
     int targetSampleCount,
   ) {
-    return 'waveforms/${trackId.value}/${audioSourceHash}_${targetSampleCount}_v$algorithmVersion.json';
+    final versionSuffix = versionId != null ? '_v${versionId.value}' : '';
+    return 'waveforms/${trackId.value}/${audioSourceHash}_${targetSampleCount}_alg$algorithmVersion$versionSuffix.json';
   }
 
   @override
   Future<AudioWaveform?> fetchByKey({
     required AudioTrackId trackId,
+    TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
     required int targetSampleCount,
   }) async {
     final ref = _storage.ref().child(
-      _pathFor(trackId, audioSourceHash, algorithmVersion, targetSampleCount),
+      _pathFor(
+        trackId,
+        versionId,
+        audioSourceHash,
+        algorithmVersion,
+        targetSampleCount,
+      ),
     );
     try {
       final data = await ref.getData(5 * 1024 * 1024);
@@ -67,10 +77,15 @@ class FirebaseStorageWaveformRemoteDataSource
   }) async {
     final path = _pathFor(
       waveform.trackId,
+      waveform.versionId,
       audioSourceHash,
       algorithmVersion,
       waveform.data.targetSampleCount,
     );
+    await _upload(path, waveform);
+  }
+
+  Future<void> _upload(String path, AudioWaveform waveform) async {
     final ref = _storage.ref().child(path);
     final jsonBytes = utf8.encode(jsonEncode(_encode(waveform)));
     await ref.putData(

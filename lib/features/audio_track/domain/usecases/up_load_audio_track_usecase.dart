@@ -64,7 +64,7 @@ class UploadAudioTrackUseCase {
           return Left(ServerFailure('User not found'));
         }
 
-        // 3. Get project details
+        // 3. Get project
         final project = await projectDetailRepository.getProjectById(
           params.projectId,
         );
@@ -113,6 +113,7 @@ class UploadAudioTrackUseCase {
                   await getOrGenerateWaveform(
                     GetOrGenerateWaveformParams(
                       trackId: track.id,
+                      versionId: version.id, // ✅ Waveform específico de versión
                       audioFilePath: waveformPath,
                       audioSourceHash: audioSourceHash,
                       algorithmVersion: 1,

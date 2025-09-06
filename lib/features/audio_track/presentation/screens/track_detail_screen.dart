@@ -81,7 +81,12 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
             _buildVersionsSection(theme),
 
             // Audio Player
-            AudioCommentPlayer(track: widget.track),
+            AudioCommentPlayer(
+              track: widget.track,
+              versionId:
+                  widget
+                      .versionId, // ✅ Pass versionId for version-specific playback
+            ),
 
             // Comments Section
             Expanded(

@@ -6,15 +6,18 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
 import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 class EnhancedWaveformDisplay extends StatefulWidget {
   final AudioTrack track;
+  final TrackVersionId? versionId;
   final double height;
   final Duration? trackDuration;
 
   const EnhancedWaveformDisplay({
     super.key,
     required this.track,
+    this.versionId,
     this.height = 80.0,
     this.trackDuration,
   });
@@ -34,6 +37,9 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
       context.read<WaveformBloc>().add(
         LoadWaveform(
           widget.track.id,
+          versionId:
+              widget
+                  .versionId, // ✅ Pass versionId for version-specific waveforms
           audioFilePath: widget.track.url,
           audioSourceHash: hash,
         ),
@@ -49,6 +55,9 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
       context.read<WaveformBloc>().add(
         LoadWaveform(
           widget.track.id,
+          versionId:
+              widget
+                  .versionId, // ✅ Pass versionId for version-specific waveforms
           audioFilePath: widget.track.url,
           audioSourceHash: hash,
         ),

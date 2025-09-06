@@ -13,6 +13,7 @@ abstract class WaveformRepository {
 
   Future<Either<Failure, AudioWaveform>> getOrGenerate({
     required AudioTrackId trackId,
+    TrackVersionId? versionId,
     String? audioFilePath,
     required String audioSourceHash,
     required int algorithmVersion,

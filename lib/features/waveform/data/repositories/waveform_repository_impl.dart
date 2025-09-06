@@ -43,6 +43,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
   @override
   Future<Either<Failure, AudioWaveform>> getOrGenerate({
     required AudioTrackId trackId,
+    TrackVersionId? versionId,
     String? audioFilePath,
     required String audioSourceHash,
     required int algorithmVersion,
@@ -53,6 +54,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
       if (!forceRefresh) {
         final local = await _localDataSource.getByKey(
           trackId: trackId,
+          versionId: versionId,
           audioSourceHash: audioSourceHash,
           algorithmVersion: algorithmVersion,
           targetSampleCount:
@@ -65,6 +67,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
       // Try remote cache
       final remote = await _remoteDataSource.fetchByKey(
         trackId: trackId,
+        versionId: versionId,
         audioSourceHash: audioSourceHash,
         algorithmVersion: algorithmVersion,
         targetSampleCount:

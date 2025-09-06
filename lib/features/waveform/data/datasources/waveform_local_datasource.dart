@@ -8,6 +8,7 @@ abstract class WaveformLocalDataSource {
   Future<AudioWaveform?> getWaveformByTrackId(AudioTrackId trackId);
   Future<AudioWaveform?> getByKey({
     required AudioTrackId trackId,
+    TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
     required int targetSampleCount,
@@ -30,38 +31,43 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
 
   @override
   Future<AudioWaveform?> getWaveformByTrackId(AudioTrackId trackId) async {
-    final document = await _isar.audioWaveformDocuments
-        .filter()
-        .trackIdEqualTo(trackId.value)
-        .findFirst();
-    
+    final document =
+        await _isar.audioWaveformDocuments
+            .filter()
+            .trackIdEqualTo(trackId.value)
+            .findFirst();
+
     return document?.toEntity();
   }
 
   @override
   Future<AudioWaveform?> getByKey({
     required AudioTrackId trackId,
+    TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
     required int targetSampleCount,
   }) async {
-    final document = await _isar.audioWaveformDocuments
-        .filter()
-        .trackIdEqualTo(trackId.value)
-        .and()
-        .audioSourceHashEqualTo(audioSourceHash)
-        .and()
-        .algorithmVersionEqualTo(algorithmVersion)
-        .and()
-        .targetSampleCountEqualTo(targetSampleCount)
-        .findFirst();
+    final document =
+        await _isar.audioWaveformDocuments
+            .filter()
+            .trackIdEqualTo(trackId.value)
+            .and()
+            .versionIdEqualTo(versionId?.value)
+            .and()
+            .audioSourceHashEqualTo(audioSourceHash)
+            .and()
+            .algorithmVersionEqualTo(algorithmVersion)
+            .and()
+            .targetSampleCountEqualTo(targetSampleCount)
+            .findFirst();
     return document?.toEntity();
   }
 
   @override
   Future<void> saveWaveform(AudioWaveform waveform) async {
     final document = AudioWaveformDocument.fromEntity(waveform);
-    
+
     await _isar.writeTxn(() async {
       await _isar.audioWaveformDocuments.put(document);
     });

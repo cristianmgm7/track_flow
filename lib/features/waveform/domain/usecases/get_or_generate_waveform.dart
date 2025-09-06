@@ -7,6 +7,7 @@ import 'package:trackflow/features/waveform/domain/repositories/waveform_reposit
 
 class GetOrGenerateWaveformParams {
   final AudioTrackId trackId;
+  final TrackVersionId? versionId;
   final String audioFilePath;
   final String audioSourceHash;
   final int algorithmVersion;
@@ -15,6 +16,7 @@ class GetOrGenerateWaveformParams {
 
   GetOrGenerateWaveformParams({
     required this.trackId,
+    this.versionId,
     required this.audioFilePath,
     required this.audioSourceHash,
     required this.algorithmVersion,
@@ -33,6 +35,7 @@ class GetOrGenerateWaveform {
   ) {
     return _repository.getOrGenerate(
       trackId: params.trackId,
+      versionId: params.versionId,
       audioFilePath: params.audioFilePath,
       audioSourceHash: params.audioSourceHash,
       algorithmVersion: params.algorithmVersion,

@@ -8,11 +8,13 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_e
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/enhanced_waveform_display.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 class AudioCommentPlayer extends StatelessWidget {
   final AudioTrack track;
+  final TrackVersionId? versionId;
 
-  const AudioCommentPlayer({super.key, required this.track});
+  const AudioCommentPlayer({super.key, required this.track, this.versionId});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,12 @@ class AudioCommentPlayer extends StatelessWidget {
           children: [
             SizedBox(
               height: 96,
-              child: EnhancedWaveformDisplay(track: track, height: 96),
+              child: EnhancedWaveformDisplay(
+                track: track,
+                versionId:
+                    versionId, // ✅ Pass versionId for version-specific waveforms
+                height: 96,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
