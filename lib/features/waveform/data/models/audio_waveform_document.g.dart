@@ -88,6 +88,11 @@ const AudioWaveformDocumentSchema = CollectionSchema(
       id: 13,
       name: r'trackId',
       type: IsarType.string,
+    ),
+    r'versionId': PropertySchema(
+      id: 14,
+      name: r'versionId',
+      type: IsarType.string,
     )
   },
   estimateSize: _audioWaveformDocumentEstimateSize,
@@ -117,6 +122,19 @@ const AudioWaveformDocumentSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'trackId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'versionId': IndexSchema(
+      id: -4747984966447694449,
+      name: r'versionId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'versionId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -181,6 +199,12 @@ int _audioWaveformDocumentEstimateSize(
     }
   }
   bytesCount += 3 + object.trackId.length * 3;
+  {
+    final value = object.versionId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -209,6 +233,7 @@ void _audioWaveformDocumentSerialize(
   );
   writer.writeLong(offsets[12], object.targetSampleCount);
   writer.writeString(offsets[13], object.trackId);
+  writer.writeString(offsets[14], object.versionId);
 }
 
 AudioWaveformDocument _audioWaveformDocumentDeserialize(
@@ -236,6 +261,7 @@ AudioWaveformDocument _audioWaveformDocumentDeserialize(
   );
   object.targetSampleCount = reader.readLong(offsets[12]);
   object.trackId = reader.readString(offsets[13]);
+  object.versionId = reader.readStringOrNull(offsets[14]);
   return object;
 }
 
@@ -278,6 +304,8 @@ P _audioWaveformDocumentDeserializeProp<P>(
       return (reader.readLong(offset)) as P;
     case 13:
       return (reader.readString(offset)) as P;
+    case 14:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -524,6 +552,73 @@ extension AudioWaveformDocumentQueryWhere on QueryBuilder<AudioWaveformDocument,
               indexName: r'trackId',
               lower: [],
               upper: [trackId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterWhereClause>
+      versionIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'versionId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterWhereClause>
+      versionIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'versionId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterWhereClause>
+      versionIdEqualTo(String? versionId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'versionId',
+        value: [versionId],
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterWhereClause>
+      versionIdNotEqualTo(String? versionId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versionId',
+              lower: [],
+              upper: [versionId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versionId',
+              lower: [versionId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versionId',
+              lower: [versionId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versionId',
+              lower: [],
+              upper: [versionId],
               includeUpper: false,
             ));
       }
@@ -1982,6 +2077,162 @@ extension AudioWaveformDocumentQueryFilter on QueryBuilder<
       ));
     });
   }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'versionId',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'versionId',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'versionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'versionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'versionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'versionId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'versionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'versionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+          QAfterFilterCondition>
+      versionIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'versionId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+          QAfterFilterCondition>
+      versionIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'versionId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'versionId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument,
+      QAfterFilterCondition> versionIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'versionId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension AudioWaveformDocumentQueryObject on QueryBuilder<
@@ -2178,6 +2429,20 @@ extension AudioWaveformDocumentQuerySortBy
       sortByTrackIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'trackId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterSortBy>
+      sortByVersionId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'versionId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterSortBy>
+      sortByVersionIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'versionId', Sort.desc);
     });
   }
 }
@@ -2379,6 +2644,20 @@ extension AudioWaveformDocumentQuerySortThenBy
       return query.addSortBy(r'trackId', Sort.desc);
     });
   }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterSortBy>
+      thenByVersionId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'versionId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QAfterSortBy>
+      thenByVersionIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'versionId', Sort.desc);
+    });
+  }
 }
 
 extension AudioWaveformDocumentQueryWhereDistinct
@@ -2474,6 +2753,13 @@ extension AudioWaveformDocumentQueryWhereDistinct
       distinctByTrackId({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'trackId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, AudioWaveformDocument, QDistinct>
+      distinctByVersionId({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'versionId', caseSensitive: caseSensitive);
     });
   }
 }
@@ -2580,6 +2866,13 @@ extension AudioWaveformDocumentQueryProperty on QueryBuilder<
       trackIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'trackId');
+    });
+  }
+
+  QueryBuilder<AudioWaveformDocument, String?, QQueryOperations>
+      versionIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'versionId');
     });
   }
 }

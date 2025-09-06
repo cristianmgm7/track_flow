@@ -11,6 +11,7 @@ import 'package:trackflow/features/audio_track/domain/services/project_track_ser
 import 'package:trackflow/features/audio_track/domain/services/audio_metadata_service.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/track_version/domain/usecases/add_track_version_usecase.dart';
 
 class UploadAudioTrackParams {
   final ProjectId projectId;
@@ -32,6 +33,7 @@ class UploadAudioTrackUseCase {
   final AudioMetadataService audioMetadataService;
   final GetOrGenerateWaveform getOrGenerateWaveform;
   final AudioStorageRepository audioStorageRepository;
+  final AddTrackVersionUseCase addTrackVersionUseCase;
 
   UploadAudioTrackUseCase(
     this.projectTrackService,
@@ -40,6 +42,7 @@ class UploadAudioTrackUseCase {
     this.audioMetadataService,
     this.getOrGenerateWaveform,
     this.audioStorageRepository,
+    this.addTrackVersionUseCase,
   );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
@@ -64,38 +67,58 @@ class UploadAudioTrackUseCase {
         );
 
         return await project.fold((failure) => Left(failure), (project) async {
-          // 4. Add track to project with extracted duration
-          final result = await projectTrackService.addTrackToProject(
+          // 4. Create AudioTrack first (without activeVersionId)
+          final trackResult = await projectTrackService.addTrackToProject(
             project: project,
             requester: UserId.fromUniqueString(userId),
             name: params.name,
-            url: params.file.path,
+            url: params.file.path, // Temporary path, will be updated
             duration: duration,
           );
-          return await result.fold((f) => Left(f), (track) async {
-            try {
-              // Prefer cached path stored by ProjectTrackService (AudioStorageRepository)
-              final cachedPathEither = await audioStorageRepository
-                  .getCachedAudioPath(track.id);
-              final waveformPath = cachedPathEither.fold(
-                (_) => params.file.path,
-                (p) => p,
-              );
 
-              final bytes = await File(waveformPath).readAsBytes();
-              final audioSourceHash = crypto.sha1.convert(bytes).toString();
-              await getOrGenerateWaveform(
-                GetOrGenerateWaveformParams(
+          return await trackResult.fold((f) => Left(f), (track) async {
+            try {
+              // 5. Create TrackVersion (v1) for this track
+              final versionResult = await addTrackVersionUseCase.call(
+                AddTrackVersionParams(
                   trackId: track.id,
-                  audioFilePath: waveformPath,
-                  audioSourceHash: audioSourceHash,
-                  algorithmVersion: 1,
-                  targetSampleCount: null,
-                  forceRefresh: true,
+                  file: params.file,
+                  label: 'v1',
                 ),
               );
-            } catch (_) {}
-            return const Right(unit);
+
+              return await versionResult.fold((f) => Left(f), (version) async {
+                // 6. TODO: Update AudioTrack with activeVersionId in repository
+                // For now, we'll proceed with waveform generation
+
+                // 7. Generate waveform for the version
+                final cachedPathEither = await audioStorageRepository
+                    .getCachedAudioPath(track.id);
+                final waveformPath = cachedPathEither.fold(
+                  (_) => params.file.path,
+                  (p) => p,
+                );
+
+                final bytes = await File(waveformPath).readAsBytes();
+                final audioSourceHash = crypto.sha1.convert(bytes).toString();
+                await getOrGenerateWaveform(
+                  GetOrGenerateWaveformParams(
+                    trackId: track.id,
+                    audioFilePath: waveformPath,
+                    audioSourceHash: audioSourceHash,
+                    algorithmVersion: 1,
+                    targetSampleCount: null,
+                    forceRefresh: true,
+                  ),
+                );
+
+                return const Right(unit);
+              });
+            } catch (e) {
+              return Left(
+                ServerFailure('Version creation failed: ${e.toString()}'),
+              );
+            }
           });
         });
       });

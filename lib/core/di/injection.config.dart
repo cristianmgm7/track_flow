@@ -1114,6 +1114,7 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i4.AudioMetadataService>(),
               gh<_i87.GetOrGenerateWaveform>(),
               gh<_i119.AudioStorageRepository>(),
+              gh<_i73.AddTrackVersionUseCase>(),
             ));
     gh.factory<_i207.UserProfileBloc>(() => _i207.UserProfileBloc(
           updateUserProfileUseCase: gh<_i205.UpdateUserProfileUseCase>(),

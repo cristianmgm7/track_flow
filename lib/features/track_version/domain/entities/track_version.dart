@@ -11,7 +11,6 @@ class TrackVersion extends Equatable {
   final String? fileLocalPath;
   final String? fileRemoteUrl;
   final int? durationMs;
-  final String? waveformCachePath;
   final TrackVersionStatus status;
   final DateTime createdAt;
   final UserId createdBy;
@@ -24,7 +23,6 @@ class TrackVersion extends Equatable {
     this.fileLocalPath,
     this.fileRemoteUrl,
     this.durationMs,
-    this.waveformCachePath,
     required this.status,
     required this.createdAt,
     required this.createdBy,
@@ -38,7 +36,6 @@ class TrackVersion extends Equatable {
     String? fileLocalPath,
     String? fileRemoteUrl,
     int? durationMs,
-    String? waveformCachePath,
     TrackVersionStatus? status,
     DateTime? createdAt,
     UserId? createdBy,
@@ -51,7 +48,6 @@ class TrackVersion extends Equatable {
       fileLocalPath: fileLocalPath ?? this.fileLocalPath,
       fileRemoteUrl: fileRemoteUrl ?? this.fileRemoteUrl,
       durationMs: durationMs ?? this.durationMs,
-      waveformCachePath: waveformCachePath ?? this.waveformCachePath,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       createdBy: createdBy ?? this.createdBy,
@@ -67,7 +63,6 @@ class TrackVersion extends Equatable {
     fileLocalPath,
     fileRemoteUrl,
     durationMs,
-    waveformCachePath,
     status,
     createdAt,
     createdBy,

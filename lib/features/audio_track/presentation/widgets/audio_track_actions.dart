@@ -31,6 +31,7 @@ class TrackActions {
           extra: AudioCommentsScreenArgs(
             projectId: track.projectId,
             track: track,
+            versionId: TrackVersionId.fromUniqueString(track.id.value),
           ),
         );
       },

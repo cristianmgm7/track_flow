@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/audio_source.dart';
 import '../entities/audio_track_metadata.dart';
@@ -16,13 +17,16 @@ class PlayAudioUseCase {
   const PlayAudioUseCase({
     required AudioTrackRepository audioTrackRepository,
     required AudioStorageRepository audioStorageRepository,
+    required TrackVersionRepository trackVersionRepository,
     required AudioPlaybackService playbackService,
   }) : _audioTrackRepository = audioTrackRepository,
        _audioStorageRepository = audioStorageRepository,
+       _trackVersionRepository = trackVersionRepository,
        _playbackService = playbackService;
 
   final AudioTrackRepository _audioTrackRepository;
   final AudioStorageRepository _audioStorageRepository;
+  final TrackVersionRepository _trackVersionRepository;
   final AudioPlaybackService _playbackService;
 
   /// Play audio track by ID
@@ -36,28 +40,54 @@ class PlayAudioUseCase {
       return await trackResult.fold(
         (failure) async => Left(TrackNotFoundFailure(trackId.value)),
         (audioTrack) async {
-          // 2. Convert to pure audio metadata
+          // 2. Determine audio source URL
+          String sourceUrl;
+
+          if (audioTrack.activeVersionId != null) {
+            // Use active version if available
+            final versionResult = await _trackVersionRepository.getById(
+              audioTrack.activeVersionId!,
+            );
+
+            sourceUrl = await versionResult.fold(
+              (failure) async => audioTrack.url, // Fallback to track URL
+              (version) async {
+                // Use version file path if available, otherwise track URL
+                return version.fileLocalPath ??
+                    version.fileRemoteUrl ??
+                    audioTrack.url;
+              },
+            );
+          } else {
+            // Fallback to track URL (for backward compatibility)
+            sourceUrl = audioTrack.url;
+          }
+
+          // 3. Try to get cached path first, fallback to source URL
+          final cacheResult = await _audioStorageRepository.getCachedAudioPath(
+            trackId,
+          );
+          final finalSourceUrl = cacheResult.fold(
+            (cacheFailure) => sourceUrl, // Use source URL if not cached
+            (cachedPath) => cachedPath, // Use cached file if available
+          );
+
+          // 4. Convert to pure audio metadata
           final metadata = AudioTrackMetadata(
             id: trackId,
             title: audioTrack.name,
             artist: audioTrack.uploadedBy.value,
             duration: audioTrack.duration,
-            coverUrl: null, // AudioTrack doesn't have cover URL
+            coverUrl: audioTrack.url, // Use track URL as cover art
           );
 
-          // 3. Try to get cached path first, fallback to streaming URL
-          final cacheResult = await _audioStorageRepository.getCachedAudioPath(
-            trackId,
-          );
-          final sourceUrl = cacheResult.fold(
-            (cacheFailure) => audioTrack.url, // Use streaming URL if not cached
-            (cachedPath) => cachedPath, // Use cached file if available
+          // 5. Create audio source for playback
+          final audioSource = AudioSource(
+            url: finalSourceUrl,
+            metadata: metadata,
           );
 
-          // 4. Create audio source for playback
-          final audioSource = AudioSource(url: sourceUrl, metadata: metadata);
-
-          // 5. Initiate playback (pure audio operation)
+          // 6. Initiate playback (pure audio operation)
           await _playbackService.play(audioSource);
 
           return const Right(null);

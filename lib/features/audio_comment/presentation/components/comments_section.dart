@@ -13,11 +13,13 @@ import 'audio_comment_card.dart';
 /// with proper state management and error handling
 class CommentsSection extends StatefulWidget {
   final ProjectId projectId;
+  final AudioTrackId trackId;
   final TrackVersionId versionId;
 
   const CommentsSection({
     super.key,
     required this.projectId,
+    required this.trackId,
     required this.versionId,
   });
 
@@ -35,9 +37,7 @@ class _CommentsSectionState extends State<CommentsSection> {
         context.read<AudioCommentBloc>().add(
           WatchAudioCommentsBundleEvent(
             widget.projectId,
-            // TrackId should be passed by parent; as a fallback, we use a derivation.
-            // This will be replaced by actual trackId from Track Detail.
-            AudioTrackId.fromUniqueString(widget.versionId.value),
+            widget.trackId,
             widget.versionId,
           ),
         );
@@ -49,14 +49,15 @@ class _CommentsSectionState extends State<CommentsSection> {
   void didUpdateWidget(covariant CommentsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.versionId != widget.versionId ||
-        oldWidget.projectId != widget.projectId) {
+        oldWidget.projectId != widget.projectId ||
+        oldWidget.trackId != widget.trackId) {
       // Re-subscribe for the new track
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         context.read<AudioCommentBloc>().add(
           WatchAudioCommentsBundleEvent(
             widget.projectId,
-            AudioTrackId.fromUniqueString(widget.versionId.value),
+            widget.trackId,
             widget.versionId,
           ),
         );

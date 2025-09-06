@@ -18,6 +18,10 @@ class AudioWaveformDocument {
   @Index()
   late String trackId;
 
+  // Optional scoping per version
+  @Index()
+  String? versionId;
+
   // Cache key parts for correctness across devices
   @Index()
   String? audioSourceHash;
@@ -44,6 +48,7 @@ class AudioWaveformDocument {
     return AudioWaveformDocument()
       ..id = waveform.id.value
       ..trackId = waveform.trackId.value
+      ..versionId = waveform.versionId?.value
       ..audioSourceHash = null
       ..algorithmVersion = null
       ..amplitudesJson = jsonEncode(waveform.data.amplitudes)
@@ -70,12 +75,15 @@ class AudioWaveformDocument {
   }
 
   AudioWaveform toEntity() {
-    final amplitudes = (jsonDecode(amplitudesJson) as List)
-        .cast<double>();
+    final amplitudes = (jsonDecode(amplitudesJson) as List).cast<double>();
 
     return AudioWaveform(
       id: AudioWaveformId.fromUniqueString(id),
       trackId: AudioTrackId.fromUniqueString(trackId),
+      versionId:
+          versionId != null
+              ? TrackVersionId.fromUniqueString(versionId!)
+              : null,
       data: WaveformData(
         amplitudes: amplitudes,
         sampleRate: sampleRate,

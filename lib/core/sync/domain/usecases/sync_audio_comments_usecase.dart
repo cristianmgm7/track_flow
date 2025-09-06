@@ -32,9 +32,11 @@ class SyncAudioCommentsUseCase {
 
     // Scoped: only sync a specific track's comments
     if (scopedTrackId != null) {
+      // NOTE: Comments are version-scoped now. We temporarily treat trackId as versionId
+      // until true versions are wired through sync.
       final remoteDtos = await _audioCommentRemoteDataSource
-          .getCommentsByTrackId(scopedTrackId);
-      await _audioCommentLocalDataSource.replaceCommentsForTrack(
+          .getCommentsByVersionId(scopedTrackId);
+      await _audioCommentLocalDataSource.replaceCommentsForVersion(
         scopedTrackId,
         remoteDtos,
       );
@@ -58,10 +60,12 @@ class SyncAudioCommentsUseCase {
       }
 
       for (final track in allTracks) {
+        // Treat trackId as versionId for now (migration compatibility)
+        final versionId = track.id.value;
         final remoteDtos = await _audioCommentRemoteDataSource
-            .getCommentsByTrackId(track.id.value);
-        await _audioCommentLocalDataSource.replaceCommentsForTrack(
-          track.id.value,
+            .getCommentsByVersionId(versionId);
+        await _audioCommentLocalDataSource.replaceCommentsForVersion(
+          versionId,
           remoteDtos,
         );
       }

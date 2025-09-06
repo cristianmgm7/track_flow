@@ -71,6 +71,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
                 ),
                 child: CommentsSection(
                   projectId: widget.projectId,
+                  trackId: widget.track.id,
                   versionId: widget.versionId,
                 ),
               ),
