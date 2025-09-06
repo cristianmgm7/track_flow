@@ -9,13 +9,9 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 class DeleteAudioCommentParams {
   final AudioCommentId commentId;
   final ProjectId projectId;
-  final AudioTrackId trackId;
+  // No version needed to delete by id
 
-  DeleteAudioCommentParams({
-    required this.commentId,
-    required this.projectId,
-    required this.trackId,
-  });
+  DeleteAudioCommentParams({required this.commentId, required this.projectId});
 }
 
 @lazySingleton
@@ -43,7 +39,6 @@ class DeleteAudioCommentUseCase {
         project: project,
         requester: UserId.fromUniqueString(userId),
         commentId: params.commentId,
-        trackId: params.trackId,
       );
     });
   }

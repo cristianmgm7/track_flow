@@ -13,12 +13,12 @@ import 'audio_comment_card.dart';
 /// with proper state management and error handling
 class CommentsSection extends StatefulWidget {
   final ProjectId projectId;
-  final AudioTrackId trackId;
+  final TrackVersionId versionId;
 
   const CommentsSection({
     super.key,
     required this.projectId,
-    required this.trackId,
+    required this.versionId,
   });
 
   @override
@@ -33,7 +33,13 @@ class _CommentsSectionState extends State<CommentsSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(widget.projectId, widget.trackId),
+          WatchAudioCommentsBundleEvent(
+            widget.projectId,
+            // TrackId should be passed by parent; as a fallback, we use a derivation.
+            // This will be replaced by actual trackId from Track Detail.
+            AudioTrackId.fromUniqueString(widget.versionId.value),
+            widget.versionId,
+          ),
         );
       }
     });
@@ -42,13 +48,17 @@ class _CommentsSectionState extends State<CommentsSection> {
   @override
   void didUpdateWidget(covariant CommentsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.trackId != widget.trackId ||
+    if (oldWidget.versionId != widget.versionId ||
         oldWidget.projectId != widget.projectId) {
       // Re-subscribe for the new track
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(widget.projectId, widget.trackId),
+          WatchAudioCommentsBundleEvent(
+            widget.projectId,
+            AudioTrackId.fromUniqueString(widget.versionId.value),
+            widget.versionId,
+          ),
         );
       });
     }

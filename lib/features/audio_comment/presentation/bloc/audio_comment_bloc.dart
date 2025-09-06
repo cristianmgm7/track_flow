@@ -35,7 +35,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     final result = await addAudioCommentUseCase.call(
       AddAudioCommentParams(
         projectId: event.projectId,
-        trackId: event.trackId,
+        versionId: event.versionId,
         content: event.content,
         timestamp: event.timestamp,
       ),
@@ -53,7 +53,6 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     final result = await deleteAudioCommentUseCase(
       DeleteAudioCommentParams(
         projectId: event.projectId,
-        trackId: event.trackId,
         commentId: event.commentId,
       ),
     );
@@ -71,7 +70,11 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     // Cancel any previous subscription to avoid cross-track leakage
     await _bundleSubscription?.cancel();
     _bundleSubscription = watchAudioCommentsBundleUseCase
-        .call(projectId: event.projectId, trackId: event.trackId)
+        .call(
+          projectId: event.projectId,
+          trackId: event.trackId,
+          versionId: event.versionId,
+        )
         .listen(
           (either) => add(AudioCommentsBundleUpdated(either)),
           onError:

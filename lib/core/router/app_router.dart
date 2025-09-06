@@ -168,6 +168,7 @@ class AppRouter {
               child: AppAudioCommentsScreen(
                 projectId: args.projectId,
                 track: args.track,
+                versionId: args.versionId,
               ),
             );
           },

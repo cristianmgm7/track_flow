@@ -6,6 +6,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+// Uses TrackVersionId only as a value object type from unique_id
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
@@ -37,16 +38,17 @@ class WatchAudioCommentsBundleUseCase {
   Stream<Either<Failure, AudioCommentsBundle>> call({
     required ProjectId projectId,
     required AudioTrackId trackId,
+    required TrackVersionId versionId,
   }) {
-    // Stream of the specific track by ID
+    // Stream of the specific track by ID (header/player)
     final track$ = _audioTrackRepository
         .watchTrackById(trackId)
         .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())))
         .shareReplay(maxSize: 1);
 
-    // Stream of comments for the track
+    // Stream of comments for the version
     final comments$ = _audioCommentRepository
-        .watchCommentsByTrack(trackId)
+        .watchCommentsByVersion(versionId)
         .onErrorReturnWith((e, _) => left(ServerFailure(e.toString())))
         .shareReplay(maxSize: 1);
 

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../../../../core/entities/unique_id.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
+// versionId is used via type import in args; kept if referenced elsewhere
 import '../components/comments_section.dart';
 import '../components/comment_input_modal.dart';
 import '../components/audio_comment_player.dart';
@@ -12,18 +13,25 @@ import '../components/audio_comment_player.dart';
 class AudioCommentsScreenArgs {
   final ProjectId projectId;
   final AudioTrack track;
+  final TrackVersionId versionId; // selected/active version
 
-  AudioCommentsScreenArgs({required this.projectId, required this.track});
+  AudioCommentsScreenArgs({
+    required this.projectId,
+    required this.track,
+    required this.versionId,
+  });
 }
 
 class AppAudioCommentsScreen extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrack track;
+  final TrackVersionId versionId;
 
   const AppAudioCommentsScreen({
     super.key,
     required this.projectId,
     required this.track,
+    required this.versionId,
   });
 
   @override
@@ -63,7 +71,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
                 ),
                 child: CommentsSection(
                   projectId: widget.projectId,
-                  trackId: widget.track.id,
+                  versionId: widget.versionId,
                 ),
               ),
             ),
@@ -74,7 +82,7 @@ class _AppAudioCommentsScreenState extends State<AppAudioCommentsScreen> {
         top: false,
         child: CommentInputModal(
           projectId: widget.projectId,
-          trackId: widget.track.id,
+          versionId: widget.versionId,
         ),
       ),
     );

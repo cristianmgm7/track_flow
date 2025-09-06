@@ -4,7 +4,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 class AudioCommentDTO {
   final String id;
   final String projectId;
-  final String trackId;
+  final String trackId; // stores TrackVersionId for now (pre-schema rename)
   final String createdBy;
   final String content;
   final int timestamp;
@@ -33,7 +33,7 @@ class AudioCommentDTO {
     return AudioCommentDTO(
       id: audioComment.id.value,
       projectId: audioComment.projectId.value,
-      trackId: audioComment.trackId.value,
+      trackId: audioComment.versionId.value,
       createdBy: audioComment.createdBy.value,
       content: audioComment.content,
       timestamp: audioComment.timestamp.inMilliseconds,
@@ -49,7 +49,7 @@ class AudioCommentDTO {
     return AudioComment(
       id: AudioCommentId.fromUniqueString(id),
       projectId: ProjectId.fromUniqueString(projectId),
-      trackId: AudioTrackId.fromUniqueString(trackId),
+      versionId: TrackVersionId.fromUniqueString(trackId),
       createdBy: UserId.fromUniqueString(createdBy),
       content: content,
       timestamp: Duration(milliseconds: timestamp),

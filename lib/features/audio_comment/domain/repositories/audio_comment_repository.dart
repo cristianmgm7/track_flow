@@ -14,8 +14,13 @@ abstract class AudioCommentRepository {
     AudioTrackId trackId,
   );
 
+  /// New: watch comments by specific track version
+  Stream<Either<Failure, List<AudioComment>>> watchCommentsByVersion(
+    TrackVersionId versionId,
+  );
+
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
-  
+
   /// Delete all comments from local cache
   Future<Either<Failure, Unit>> deleteAllComments();
 }

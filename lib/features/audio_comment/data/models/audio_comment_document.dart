@@ -16,7 +16,7 @@ class AudioCommentDocument {
   late String projectId;
 
   @Index()
-  late String trackId;
+  late String trackId; // stores TrackVersionId for now (pre-schema rename)
 
   late String createdBy;
   late String content;

@@ -8,13 +8,13 @@ import 'package:trackflow/features/projects/domain/repositories/projects_reposit
 
 class AddAudioCommentParams {
   final ProjectId projectId;
-  final AudioTrackId trackId;
+  final TrackVersionId versionId;
   final String content;
   final Duration timestamp;
 
   AddAudioCommentParams({
     required this.projectId,
-    required this.trackId,
+    required this.versionId,
     required this.content,
     required this.timestamp,
   });
@@ -44,7 +44,7 @@ class AddAudioCommentUseCase {
       return await projectCommentService.addComment(
         project: project,
         requester: UserId.fromUniqueString(userId),
-        trackId: params.trackId,
+        versionId: params.versionId,
         content: params.content,
         timestamp: params.timestamp,
       );

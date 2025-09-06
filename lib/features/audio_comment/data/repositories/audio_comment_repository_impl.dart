@@ -73,19 +73,25 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   Stream<Either<Failure, List<AudioComment>>> watchCommentsByTrack(
     AudioTrackId trackId,
   ) {
+    // Deprecated in favor of version-scoped watcher. Return empty stream for now.
+    return Stream.value(const Right(<AudioComment>[]));
+  }
+
+  @override
+  Stream<Either<Failure, List<AudioComment>>> watchCommentsByVersion(
+    TrackVersionId versionId,
+  ) {
     try {
       // Trigger background sync when method is called
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_comments_${trackId.value}',
+          syncKey: 'audio_comments_version_${versionId.value}',
         ),
       );
 
-      // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
-      return _localDataSource.watchCommentsByTrack(trackId.value).map((
+      return _localDataSource.watchCommentsByVersion(versionId.value).map((
         localResult,
       ) {
-        // Always return local data immediately
         return localResult.fold(
           (failure) => Left(failure),
           (dtos) => Right(dtos.map((dto) => dto.toDomain()).toList()),
@@ -94,7 +100,9 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     } catch (e) {
       return Stream.value(
         Left(
-          DatabaseFailure('Failed to watch audio comments: ${e.toString()}'),
+          DatabaseFailure(
+            'Failed to watch audio comments by version: ${e.toString()}',
+          ),
         ),
       );
     }
@@ -113,7 +121,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         entityType: 'audio_comment',
         entityId: comment.id.value,
         data: {
-          'trackId': comment.trackId.value,
+          'trackId': comment.versionId.value,
           'projectId': comment.projectId.value,
           'createdBy': comment.createdBy.value,
           'content': comment.content,

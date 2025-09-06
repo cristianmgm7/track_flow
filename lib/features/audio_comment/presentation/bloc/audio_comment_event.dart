@@ -11,30 +11,30 @@ abstract class AudioCommentEvent extends Equatable {
 
 class AddAudioCommentEvent extends AudioCommentEvent {
   final ProjectId projectId;
-  final AudioTrackId trackId;
+  final TrackVersionId versionId;
   final String content;
   final Duration timestamp;
 
   AddAudioCommentEvent(
     this.projectId,
-    this.trackId,
+    this.versionId,
     this.content,
     this.timestamp,
   );
 
   @override
-  List<Object?> get props => [projectId, trackId, content, timestamp];
+  List<Object?> get props => [projectId, versionId, content, timestamp];
 }
 
 class DeleteAudioCommentEvent extends AudioCommentEvent {
   final AudioCommentId commentId;
   final ProjectId projectId;
-  final AudioTrackId trackId;
+  final TrackVersionId versionId;
 
-  DeleteAudioCommentEvent(this.commentId, this.projectId, this.trackId);
+  DeleteAudioCommentEvent(this.commentId, this.projectId, this.versionId);
 
   @override
-  List<Object?> get props => [commentId, projectId, trackId];
+  List<Object?> get props => [commentId, projectId, versionId];
 }
 
 // Removed legacy track-only watcher and comments-updated event in favor of bundle
@@ -42,11 +42,12 @@ class DeleteAudioCommentEvent extends AudioCommentEvent {
 class WatchAudioCommentsBundleEvent extends AudioCommentEvent {
   final ProjectId projectId;
   final AudioTrackId trackId;
+  final TrackVersionId versionId;
 
-  WatchAudioCommentsBundleEvent(this.projectId, this.trackId);
+  WatchAudioCommentsBundleEvent(this.projectId, this.trackId, this.versionId);
 
   @override
-  List<Object?> get props => [projectId, trackId];
+  List<Object?> get props => [projectId, trackId, versionId];
 }
 
 class AudioCommentsBundleUpdated extends AudioCommentEvent {

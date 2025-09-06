@@ -14,15 +14,15 @@ class ProjectCommentService {
 
   ProjectCommentService(this.commentRepository);
 
-  Stream<Either<Failure, List<AudioComment>>> watchCommentsByTrack(
-    AudioTrackId trackId,
+  Stream<Either<Failure, List<AudioComment>>> watchCommentsByVersion(
+    TrackVersionId versionId,
   ) {
-    return commentRepository.watchCommentsByTrack(trackId);
+    return commentRepository.watchCommentsByVersion(versionId);
   }
 
   Future<Either<Failure, Unit>> addComment({
     required Project project,
-    required AudioTrackId trackId,
+    required TrackVersionId versionId,
     required UserId requester,
     required String content,
     required Duration timestamp,
@@ -38,7 +38,7 @@ class ProjectCommentService {
 
     final comment = AudioComment.create(
       projectId: project.id,
-      trackId: trackId,
+      versionId: versionId,
       createdBy: requester,
       content: content,
     ).copyWith(timestamp: timestamp);
@@ -50,7 +50,6 @@ class ProjectCommentService {
     required Project project,
     required UserId requester,
     required AudioCommentId commentId,
-    required AudioTrackId trackId,
   }) async {
     final commentResult = await commentRepository.getCommentById(commentId);
     return commentResult.fold((failure) => Left(failure), (comment) async {
