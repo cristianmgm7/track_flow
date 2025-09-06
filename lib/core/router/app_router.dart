@@ -23,6 +23,7 @@ import 'package:trackflow/features/project_detail/presentation/screens/project_d
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
 // import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/collaborator_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
@@ -163,6 +164,9 @@ class AppRouter {
                 // Scope AudioCommentBloc to this screen to avoid cross-track leakage
                 BlocProvider<AudioCommentBloc>(
                   create: (context) => sl<AudioCommentBloc>(),
+                ),
+                BlocProvider<TrackVersionsBloc>(
+                  create: (context) => sl<TrackVersionsBloc>(),
                 ),
               ],
               child: AppAudioCommentsScreen(
