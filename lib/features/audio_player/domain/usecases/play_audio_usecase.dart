@@ -50,17 +50,15 @@ class PlayAudioUseCase {
             );
 
             sourceUrl = await versionResult.fold(
-              (failure) async => audioTrack.url, // Fallback to track URL
+              (failure) async => '', // No fallback URL available
               (version) async {
-                // Use version file path if available, otherwise track URL
-                return version.fileLocalPath ??
-                    version.fileRemoteUrl ??
-                    audioTrack.url;
+                // Use version file path if available
+                return version.fileLocalPath ?? version.fileRemoteUrl ?? '';
               },
             );
           } else {
-            // Fallback to track URL (for backward compatibility)
-            sourceUrl = audioTrack.url;
+            // No active version set
+            sourceUrl = '';
           }
 
           // 3. Try to get cached path first, fallback to source URL

@@ -6,6 +6,7 @@ targets:
           - "lib/features/projects/data/models/project_document.dart"
           - "lib/features/audio_comment/data/models/audio_comment_document.dart"
           - "lib/features/audio_track/data/models/audio_track_document.dart"
+          - "lib/features/track_version/data/models/track_version_document.dart"
           - "lib/features/user_profile/data/models/user_profile_document.dart"
           - "lib/features/playlist/data/models/playlist_document.dart"
           - "lib/features/playlist/data/models/test_collection.dart"

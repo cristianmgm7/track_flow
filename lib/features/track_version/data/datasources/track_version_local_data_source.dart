@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:isar/isar.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
+import 'package:trackflow/features/track_version/data/models/track_version_document.dart';
 
 abstract class TrackVersionLocalDataSource {
   Future<Either<Failure, TrackVersionDTO>> addVersion({
@@ -29,27 +31,22 @@ abstract class TrackVersionLocalDataSource {
   });
 
   Future<Either<Failure, Unit>> deleteVersion(TrackVersionId versionId);
+
+  // Sync operations
+  Future<Either<Failure, Unit>> cacheVersion(TrackVersionDTO version);
+  Future<Either<Failure, List<TrackVersionDTO>>> getAllVersions();
+  Future<Either<Failure, TrackVersionDTO?>> getVersionById(String id);
+  Stream<Either<Failure, List<TrackVersionDTO>>> watchVersionsByTrackId(
+    String trackId,
+  );
+  Future<Either<Failure, Unit>> clearCache();
 }
 
-/// In-memory local data source used until code generation is wired.
 @LazySingleton(as: TrackVersionLocalDataSource)
-class InMemoryTrackVersionLocalDataSource
-    implements TrackVersionLocalDataSource {
-  final Map<String, List<TrackVersionDTO>> _byTrack = {};
-  final Map<String, StreamController<List<TrackVersionDTO>>> _controllers = {};
+class IsarTrackVersionLocalDataSource implements TrackVersionLocalDataSource {
+  final Isar _isar;
 
-  StreamController<List<TrackVersionDTO>> _controllerFor(String trackId) {
-    return _controllers.putIfAbsent(
-      trackId,
-      () => StreamController<List<TrackVersionDTO>>.broadcast(),
-    );
-  }
-
-  void _emit(String trackId) {
-    final list = [...(_byTrack[trackId] ?? <TrackVersionDTO>[])];
-    list.sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-    _controllerFor(trackId).add(list);
-  }
+  IsarTrackVersionLocalDataSource(this._isar);
 
   @override
   Future<Either<Failure, TrackVersionDTO>> addVersion({
@@ -58,29 +55,37 @@ class InMemoryTrackVersionLocalDataSource
     String? label,
   }) async {
     try {
-      final versions = _byTrack.putIfAbsent(trackId.value, () => []);
-      final next =
-          (versions.isEmpty)
-              ? 1
-              : (versions
-                      .map((e) => e.versionNumber)
-                      .reduce((a, b) => a > b ? a : b) +
-                  1);
+      // Get existing versions for this track to calculate version number
+      final existingVersions =
+          await _isar.trackVersionDocuments
+              .filter()
+              .trackIdEqualTo(trackId.value)
+              .sortByVersionNumberDesc()
+              .findAll();
+
+      final nextVersionNumber =
+          existingVersions.isNotEmpty
+              ? existingVersions.first.versionNumber + 1
+              : 1;
+
       final dto = TrackVersionDTO(
         id: TrackVersionId().value,
         trackId: trackId.value,
-        versionNumber: next,
+        versionNumber: nextVersionNumber,
         label: label,
-        fileLocalPath: null,
+        fileLocalPath: file.path,
         fileRemoteUrl: null,
         durationMs: null,
-        waveformCachePath: null,
         status: 'processing',
         createdAt: DateTime.now(),
         createdBy: UserId().value,
       );
-      versions.add(dto);
-      _emit(trackId.value);
+
+      final document = TrackVersionDocument.forUpload(dto);
+      await _isar.writeTxn(() async {
+        await _isar.trackVersionDocuments.put(document);
+      });
+
       return Right(dto);
     } catch (e) {
       return Left(CacheFailure('Failed to add version: $e'));
@@ -91,21 +96,33 @@ class InMemoryTrackVersionLocalDataSource
   Stream<Either<Failure, List<TrackVersionDTO>>> watchVersionsByTrack(
     AudioTrackId trackId,
   ) {
-    // Emit current then subsequent
-    Future.microtask(() => _emit(trackId.value));
-    return _controllerFor(trackId.value).stream.map((list) => Right(list));
+    try {
+      return _isar.trackVersionDocuments
+          .filter()
+          .trackIdEqualTo(trackId.value)
+          .sortByVersionNumberDesc()
+          .watch(fireImmediately: true)
+          .map<Either<Failure, List<TrackVersionDTO>>>(
+            (documents) => Right(documents.map((doc) => doc.toDTO()).toList()),
+          )
+          .handleError(
+            (e) => Left(CacheFailure('Failed to watch versions: $e')),
+          );
+    } catch (e) {
+      return Stream.value(Left(CacheFailure('Failed to watch versions: $e')));
+    }
   }
 
   @override
   Future<Either<Failure, TrackVersionDTO>> getById(TrackVersionId id) async {
     try {
-      for (final list in _byTrack.values) {
-        final found = list.where((e) => e.id == id.value).firstOrNull;
-        if (found != null) return Right(found);
+      final document = await _isar.trackVersionDocuments.get(id.value.hashCode);
+      if (document != null) {
+        return Right(document.toDTO());
       }
-      return Left(DatabaseFailure('Version not found'));
+      return Left(CacheFailure('Version not found'));
     } catch (e) {
-      return Left(DatabaseFailure('Failed to get version: $e'));
+      return Left(CacheFailure('Failed to get version by id: $e'));
     }
   }
 
@@ -114,13 +131,20 @@ class InMemoryTrackVersionLocalDataSource
     AudioTrackId trackId,
   ) async {
     try {
-      final list = _byTrack[trackId.value] ?? <TrackVersionDTO>[];
-      if (list.isEmpty) return Left(DatabaseFailure('No versions found'));
-      final sorted = [...list]
-        ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber));
-      return Right(sorted.first);
+      // Get the most recent version (highest version number)
+      final document =
+          await _isar.trackVersionDocuments
+              .filter()
+              .trackIdEqualTo(trackId.value)
+              .sortByVersionNumberDesc()
+              .findFirst();
+
+      if (document != null) {
+        return Right(document.toDTO());
+      }
+      return Left(CacheFailure('No versions found for track'));
     } catch (e) {
-      return Left(DatabaseFailure('Failed to get active version: $e'));
+      return Left(CacheFailure('Failed to get active version: $e'));
     }
   }
 
@@ -129,24 +153,87 @@ class InMemoryTrackVersionLocalDataSource
     required AudioTrackId trackId,
     required TrackVersionId versionId,
   }) async {
-    // For linear versions, latest is considered active locally. No-op.
+    // This is handled at the repository level by updating AudioTrack
     return const Right(unit);
   }
 
   @override
   Future<Either<Failure, Unit>> deleteVersion(TrackVersionId versionId) async {
     try {
-      for (final entry in _byTrack.entries) {
-        final before = entry.value.length;
-        entry.value.removeWhere((e) => e.id == versionId.value);
-        if (entry.value.length != before) {
-          _emit(entry.key);
-          break;
-        }
-      }
+      await _isar.writeTxn(() async {
+        await _isar.trackVersionDocuments.delete(versionId.value.hashCode);
+      });
       return const Right(unit);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to delete version: $e'));
+      return Left(CacheFailure('Failed to delete version: $e'));
+    }
+  }
+
+  // Sync operations implementation
+  @override
+  Future<Either<Failure, Unit>> cacheVersion(TrackVersionDTO version) async {
+    try {
+      final document = TrackVersionDocument.fromDTO(version);
+      await _isar.writeTxn(() async {
+        await _isar.trackVersionDocuments.put(document);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to cache version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<TrackVersionDTO>>> getAllVersions() async {
+    try {
+      final documents = await _isar.trackVersionDocuments.where().findAll();
+      final dtos = documents.map((doc) => doc.toDTO()).toList();
+      return Right(dtos);
+    } catch (e) {
+      return Left(CacheFailure('Failed to get all versions: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, TrackVersionDTO?>> getVersionById(String id) async {
+    try {
+      final document = await _isar.trackVersionDocuments.get(id.hashCode);
+      return Right(document?.toDTO());
+    } catch (e) {
+      return Left(CacheFailure('Failed to get version by id: $e'));
+    }
+  }
+
+  @override
+  Stream<Either<Failure, List<TrackVersionDTO>>> watchVersionsByTrackId(
+    String trackId,
+  ) {
+    try {
+      return _isar.trackVersionDocuments
+          .filter()
+          .trackIdEqualTo(trackId)
+          .sortByVersionNumberDesc()
+          .watch(fireImmediately: true)
+          .map<Either<Failure, List<TrackVersionDTO>>>(
+            (documents) => Right(documents.map((doc) => doc.toDTO()).toList()),
+          )
+          .handleError(
+            (e) => Left(CacheFailure('Failed to watch versions: $e')),
+          );
+    } catch (e) {
+      return Stream.value(Left(CacheFailure('Failed to watch versions: $e')));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> clearCache() async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.trackVersionDocuments.clear();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to clear cache: $e'));
     }
   }
 }

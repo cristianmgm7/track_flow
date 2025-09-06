@@ -31,9 +31,9 @@ class UploadAudioTrackUseCase {
   final ProjectTrackService projectTrackService;
   final ProjectsRepository projectDetailRepository;
   final SessionStorage sessionStorage;
-  final AudioMetadataService audioMetadataService;
+  final AudioMetadataService audioMetadataService; // Extracted duration
   final GetOrGenerateWaveform getOrGenerateWaveform;
-  final AudioStorageRepository audioStorageRepository;
+  final AudioStorageRepository audioStorageRepository; // Changed
   final AddTrackVersionUseCase addTrackVersionUseCase;
   final SetActiveTrackVersionUseCase setActiveTrackVersionUseCase;
 
@@ -71,11 +71,12 @@ class UploadAudioTrackUseCase {
 
         return await project.fold((failure) => Left(failure), (project) async {
           // 4. Create AudioTrack first (without activeVersionId)
+          // AudioTrack no longer handles files, only metadata
           final trackResult = await projectTrackService.addTrackToProject(
             project: project,
             requester: UserId.fromUniqueString(userId),
             name: params.name,
-            url: params.file.path, // Temporary path, will be updated
+            url: '', // Empty URL since files are handled by versions
             duration: duration,
           );
 
@@ -101,6 +102,7 @@ class UploadAudioTrackUseCase {
 
                 return await setActiveResult.fold((f) => Left(f), (_) async {
                   // 7. Generate waveform for the version
+                  // Use version's remote URL for waveform generation
                   final cachedPathEither = await audioStorageRepository
                       .getCachedAudioPath(track.id);
                   final waveformPath = cachedPathEither.fold(
