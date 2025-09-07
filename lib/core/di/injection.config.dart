@@ -987,7 +987,10 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i99.SessionStorage>(),
             ));
     gh.lazySingleton<_i178.AddTrackVersionUseCase>(
-        () => _i178.AddTrackVersionUseCase(gh<_i165.TrackVersionRepository>()));
+        () => _i178.AddTrackVersionUseCase(
+              gh<_i165.TrackVersionRepository>(),
+              gh<_i113.AudioStorageRepository>(),
+            ));
     gh.lazySingleton<_i179.AudioCommentRepository>(
         () => _i180.AudioCommentRepositoryImpl(
               remoteDataSource: gh<_i73.AudioCommentRemoteDataSource>(),

@@ -28,115 +28,143 @@ class UploadAudioTrackParams {
 
 @lazySingleton
 class UploadAudioTrackUseCase {
-  final ProjectTrackService projectTrackService;
-  final ProjectsRepository projectDetailRepository;
+  final ProjectTrackService projectTrackService; // Solo para permisos
+  final ProjectsRepository projectsRepository;
   final SessionStorage sessionStorage;
-  final AudioMetadataService audioMetadataService; // Extracted duration
-  final GetOrGenerateWaveform getOrGenerateWaveform;
-  final AudioStorageRepository audioStorageRepository; // Changed
+  final AudioMetadataService audioMetadataService;
+  final AudioStorageRepository audioStorageRepository; // Para subir archivos
   final AddTrackVersionUseCase addTrackVersionUseCase;
   final SetActiveTrackVersionUseCase setActiveTrackVersionUseCase;
+  final GetOrGenerateWaveform getOrGenerateWaveform;
 
   UploadAudioTrackUseCase(
     this.projectTrackService,
-    this.projectDetailRepository,
+    this.projectsRepository,
     this.sessionStorage,
     this.audioMetadataService,
-    this.getOrGenerateWaveform,
     this.audioStorageRepository,
     this.addTrackVersionUseCase,
     this.setActiveTrackVersionUseCase,
+    this.getOrGenerateWaveform,
   );
 
   Future<Either<Failure, Unit>> call(UploadAudioTrackParams params) async {
     try {
-      // 1. Extract audio metadata (duration) in domain layer
+      // 1. EXTRAER METADATA DEL ARCHIVO
       final durationResult = await audioMetadataService.extractDuration(
         params.file,
       );
+      if (durationResult.isLeft()) {
+        return durationResult.map((_) => unit);
+      }
+      final duration = durationResult.getOrElse(() => Duration.zero);
 
-      return await durationResult.fold((failure) => Left(failure), (
-        duration,
-      ) async {
-        // 2. Get user ID
-        final userId = await sessionStorage.getUserId();
-        if (userId == null) {
-          return Left(ServerFailure('User not found'));
-        }
+      // 2. OBTENER USUARIO Y PROYECTO
+      final userId = await sessionStorage.getUserId();
+      if (userId == null)
+        return Left(AuthenticationFailure('User not authenticated'));
 
-        // 3. Get project
-        final project = await projectDetailRepository.getProjectById(
-          params.projectId,
+      final projectResult = await projectsRepository.getProjectById(
+        params.projectId,
+      );
+      if (projectResult.isLeft()) {
+        return projectResult.map((_) => unit);
+      }
+      final project = projectResult.getOrElse(() => throw Exception());
+
+      // 3. VERIFICAR PERMISOS Y CREAR TRACK (usando ProjectTrackService)
+      final permissionCheck = await projectTrackService.addTrackToProject(
+        project: project,
+        requester: UserId.fromUniqueString(userId),
+        name: params.name,
+        url: '', // Temporalmente vacío
+        duration: duration,
+      );
+
+      // Si los permisos fallan, retornar error
+      if (permissionCheck.isLeft()) {
+        return permissionCheck.map((_) => unit);
+      }
+
+      // Extraer el track creado del resultado
+      final track = permissionCheck.getOrElse(() => throw Exception());
+
+      // 4. SUBIR ARCHIVO DE AUDIO (por ahora usamos cache local)
+      final cacheResult = await audioStorageRepository.storeAudio(
+        track.id,
+        params.file,
+        referenceId: 'upload_${track.id.value}',
+        canDelete: false,
+      );
+      if (cacheResult.isLeft()) {
+        // Rollback: eliminar track si falla el cache
+        await projectTrackService.deleteTrack(
+          project: project,
+          requester: UserId.fromUniqueString(userId),
+          trackId: track.id,
         );
+        return Left(CacheFailure('Failed to cache audio file'));
+      }
 
-        return await project.fold((failure) => Left(failure), (project) async {
-          // 4. Create AudioTrack first (without activeVersionId)
-          // AudioTrack no longer handles files, only metadata
-          final trackResult = await projectTrackService.addTrackToProject(
-            project: project,
-            requester: UserId.fromUniqueString(userId),
-            name: params.name,
-            url: '', // Empty URL since files are handled by versions
-            duration: duration,
-          );
+      // 5. CREAR PRIMERA VERSIÓN
+      final versionResult = await addTrackVersionUseCase.call(
+        AddTrackVersionParams(
+          trackId: track.id,
+          file: params.file,
+          label: 'v1',
+        ),
+      );
+      if (versionResult.isLeft()) {
+        // Rollback completo
+        await audioStorageRepository.deleteAudioFile(track.id);
+        await projectTrackService.deleteTrack(
+          project: project,
+          requester: UserId.fromUniqueString(userId),
+          trackId: track.id,
+        );
+        return versionResult.map((_) => unit);
+      }
+      final version = versionResult.getOrElse(() => throw Exception());
 
-          return await trackResult.fold((f) => Left(f), (track) async {
-            try {
-              // 5. Create TrackVersion (v1) for this track
-              final versionResult = await addTrackVersionUseCase.call(
-                AddTrackVersionParams(
-                  trackId: track.id,
-                  file: params.file,
-                  label: 'v1',
-                ),
-              );
+      // 6. ESTABLECER VERSIÓN ACTIVA
+      final setActiveResult = await setActiveTrackVersionUseCase.call(
+        SetActiveTrackVersionParams(trackId: track.id, versionId: version.id),
+      );
+      if (setActiveResult.isLeft()) {
+        // Rollback completo
+        await audioStorageRepository.deleteAudioFile(track.id);
+        await projectTrackService.deleteTrack(
+          project: project,
+          requester: UserId.fromUniqueString(userId),
+          trackId: track.id,
+        );
+        return setActiveResult;
+      }
 
-              return await versionResult.fold((f) => Left(f), (version) async {
-                // 6. Set version as active for the track
-                final setActiveResult = await setActiveTrackVersionUseCase.call(
-                  SetActiveTrackVersionParams(
-                    trackId: track.id,
-                    versionId: version.id,
-                  ),
-                );
+      // 7. GENERAR WAVEFORM (puede fallar sin afectar el éxito)
+      try {
+        final bytes = await params.file.readAsBytes();
+        final audioSourceHash = crypto.sha1.convert(bytes).toString();
 
-                return await setActiveResult.fold((f) => Left(f), (_) async {
-                  // 7. Generate waveform for the version
-                  // Use version's remote URL for waveform generation
-                  final cachedPathEither = await audioStorageRepository
-                      .getCachedAudioPath(track.id);
-                  final waveformPath = cachedPathEither.fold(
-                    (_) => params.file.path,
-                    (p) => p,
-                  );
+        await getOrGenerateWaveform(
+          GetOrGenerateWaveformParams(
+            trackId: track.id,
+            versionId: version.id,
+            audioFilePath: params.file.path,
+            audioSourceHash: audioSourceHash,
+            algorithmVersion: 1,
+            targetSampleCount: null,
+            forceRefresh: true,
+          ),
+        );
+      } catch (e) {
+        // Log error pero no fallar la subida
+        print('Waveform generation failed: $e');
+      }
 
-                  final bytes = await File(waveformPath).readAsBytes();
-                  final audioSourceHash = crypto.sha1.convert(bytes).toString();
-                  await getOrGenerateWaveform(
-                    GetOrGenerateWaveformParams(
-                      trackId: track.id,
-                      versionId: version.id, // ✅ Waveform específico de versión
-                      audioFilePath: waveformPath,
-                      audioSourceHash: audioSourceHash,
-                      algorithmVersion: 1,
-                      targetSampleCount: null,
-                      forceRefresh: true,
-                    ),
-                  );
-
-                  return const Right(unit);
-                });
-              });
-            } catch (e) {
-              return Left(
-                ServerFailure('Version creation failed: ${e.toString()}'),
-              );
-            }
-          });
-        });
-      });
+      return Right(unit);
     } catch (e) {
-      return Left(ServerFailure('Upload failed: ${e.toString()}'));
+      return Left(UnexpectedFailure('Upload failed: $e'));
     }
   }
 }

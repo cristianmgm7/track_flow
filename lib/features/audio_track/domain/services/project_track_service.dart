@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -9,15 +7,13 @@ import 'package:trackflow/features/projects/domain/value_objects/project_permiss
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 
 @lazySingleton
 class ProjectTrackService {
   final AudioTrackRepository trackRepository;
-  final AudioStorageRepository audioStorageRepository;
-  // This service focuses on permissions and track persistence only
+  // This service focuses ONLY on permissions and project-level track operations
 
-  ProjectTrackService(this.trackRepository, this.audioStorageRepository);
+  ProjectTrackService(this.trackRepository);
 
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
@@ -32,6 +28,7 @@ class ProjectTrackService {
     required String url,
     required Duration duration,
   }) async {
+    // 1. Verificar permisos del usuario en el proyecto
     final collaborator = project.collaborators.firstWhere(
       (c) => c.userId == requester,
       orElse: () => throw UserNotCollaboratorException(),
@@ -41,6 +38,7 @@ class ProjectTrackService {
       return Left(ProjectPermissionException());
     }
 
+    // 2. Crear track (solo metadata, sin archivos)
     final track = AudioTrack.create(
       url: url,
       name: name,
@@ -49,24 +47,12 @@ class ProjectTrackService {
       uploadedBy: requester,
     );
 
-    final result = await trackRepository.uploadAudioTrack(
-      file: File(url),
-      track: track,
+    // 3. Persistir track en base de datos (solo metadata)
+    final result = await trackRepository.createTrack(track);
+    return result.fold(
+      (failure) => Left(failure),
+      (createdTrack) => Right(createdTrack),
     );
-    return result.fold((failure) => Left(failure), (_) async {
-      // Persist a stable local copy in the app library for reliable playback
-      try {
-        await audioStorageRepository.storeAudio(
-          track.id,
-          File(url),
-          referenceId: 'library',
-          canDelete: false,
-        );
-
-        // Waveform generation is handled in UploadAudioTrackUseCase after this call
-      } catch (_) {}
-      return Right(track);
-    });
   }
 
   Future<Either<Failure, Unit>> deleteTrack({
@@ -74,24 +60,20 @@ class ProjectTrackService {
     required UserId requester,
     required AudioTrackId trackId,
   }) async {
-    final trackResult = await trackRepository.getTrackById(trackId);
-    return trackResult.fold((failure) => Left(failure), (track) async {
-      final collaborator = project.collaborators.firstWhere(
-        (c) => c.userId == requester,
-        orElse: () => throw UserNotCollaboratorException(),
-      );
-      if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
-        return Left(ProjectPermissionException());
-      }
-      final deleteResult = await trackRepository.deleteTrack(
-        track.id,
-        project.id,
-      );
-      return await deleteResult.fold((failure) => Left(failure), (_) async {
-        await audioStorageRepository.deleteAudioFile(trackId);
-        return Right(unit);
-      });
-    });
+    // 1. Verificar permisos del usuario
+    final collaborator = project.collaborators.firstWhere(
+      (c) => c.userId == requester,
+      orElse: () => throw UserNotCollaboratorException(),
+    );
+
+    if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
+      return Left(ProjectPermissionException());
+    }
+
+    // 2. Eliminar track (solo metadata, archivos se manejan en versiones)
+    final deleteResult = await trackRepository.deleteTrack(trackId, project.id);
+
+    return deleteResult.fold((failure) => Left(failure), (_) => Right(unit));
   }
 
   Future<Either<Failure, Unit>> editTrackName({

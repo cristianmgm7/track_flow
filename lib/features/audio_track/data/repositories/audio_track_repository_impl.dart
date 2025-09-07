@@ -10,7 +10,6 @@ import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'dart:io';
 
 @LazySingleton(as: AudioTrackRepository)
 class AudioTrackRepositoryImpl implements AudioTrackRepository {
@@ -120,36 +119,32 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> uploadAudioTrack({
-    required File file,
-    required AudioTrack track,
-  }) async {
+  Future<Either<Failure, AudioTrack>> createTrack(AudioTrack track) async {
     try {
-      final dto = AudioTrackDTO.fromDomain(
-        track,
-        extension: file.path.split('.').last,
-      );
+      final dto = AudioTrackDTO.fromDomain(track, extension: 'mp3');
 
-      // 1. ALWAYS save locally first (ignore minor cache errors)
-      await localDataSource.cacheTrack(dto);
+      // 1. Save locally first
+      final cacheResult = await localDataSource.cacheTrack(dto);
+      if (cacheResult.isLeft()) {
+        return cacheResult.map(
+          (_) => track,
+        ); // Return track even if cache fails
+      }
 
-      // 2. Try to queue for background sync
+      // 2. Queue for background sync
       final queueResult = await _pendingOperationsManager.addCreateOperation(
         entityType: 'audio_track',
         entityId: track.id.value,
         data: {
-          'filePath': file.path,
           'projectId': track.projectId.value,
           'name': track.name,
           'duration': track.duration.inMilliseconds,
-          'extension': file.path.split('.').last,
           'uploadedBy': track.uploadedBy.value,
           'createdAt': track.createdAt.toIso8601String(),
         },
         priority: SyncPriority.high,
       );
 
-      // 3. Handle queue failure
       if (queueResult.isLeft()) {
         final failure = queueResult.fold((l) => l, (r) => null);
         return Left(
@@ -159,17 +154,9 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
-      // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_tracks_upload',
-        ),
-      );
-
-      // 5. Return success only after successful queue
-      return const Right(unit);
+      return Right(track);
     } catch (e) {
-      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
+      return Left(DatabaseFailure('Failed to create track: $e'));
     }
   }
 
