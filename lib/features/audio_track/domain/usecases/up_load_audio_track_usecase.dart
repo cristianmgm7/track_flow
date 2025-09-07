@@ -28,7 +28,7 @@ class UploadAudioTrackParams {
 
 @lazySingleton
 class UploadAudioTrackUseCase {
-  final ProjectTrackService projectTrackService; // Solo para permisos
+  final ProjectTrackService projectTrackService; // Permits
   final ProjectsRepository projectsRepository;
   final SessionStorage sessionStorage;
   final AudioMetadataService audioMetadataService;
@@ -106,11 +106,15 @@ class UploadAudioTrackUseCase {
         return Left(CacheFailure('Failed to cache audio file'));
       }
 
-      // 5. CREAR PRIMERA VERSIÓN
+      // Obtener la ruta del archivo en cache para la versión
+      final cachedAudio = cacheResult.getOrElse(() => throw Exception());
+      final cachedFile = File(cachedAudio.filePath);
+
+      // 5. CREAR PRIMERA VERSIÓN usando archivo del cache
       final versionResult = await addTrackVersionUseCase.call(
         AddTrackVersionParams(
           trackId: track.id,
-          file: params.file,
+          file: cachedFile, // Usar archivo del cache en lugar del original
           label: 'v1',
         ),
       );

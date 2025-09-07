@@ -8,14 +8,21 @@ import 'package:trackflow/features/track_version/data/datasources/track_version_
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
+import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 @LazySingleton(as: TrackVersionRepository)
 class TrackVersionRepositoryImpl implements TrackVersionRepository {
   final TrackVersionLocalDataSource _local;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
+  final PendingOperationsManager _pendingOperationsManager;
 
-  TrackVersionRepositoryImpl(this._local, this._backgroundSyncCoordinator);
+  TrackVersionRepositoryImpl(
+    this._local,
+    this._backgroundSyncCoordinator,
+    this._pendingOperationsManager,
+  );
 
   @override
   Future<Either<Failure, TrackVersion>> addVersion({
@@ -23,12 +30,35 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
     required File file,
     String? label,
   }) async {
-    final dtoEither = await _local.addVersion(
-      trackId: trackId,
-      file: file,
-      label: label,
-    );
-    return dtoEither.map((dto) => dto.toDomain());
+    try {
+      // 1. Create version locally first (offline-first approach)
+      final localResult = await _local.addVersion(
+        trackId: trackId,
+        file: file,
+        label: label,
+      );
+
+      if (localResult.isLeft()) {
+        return localResult.map((_) => throw Exception());
+      }
+
+      final versionDTO = localResult.getOrElse(() => throw Exception());
+      final version = versionDTO.toDomain();
+
+      // 2. Queue upload operation for background sync
+      await _queueUploadOperation(versionDTO);
+
+      // 3. Trigger background sync to upload file
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'track_version_upload',
+        ),
+      );
+
+      return Right(version);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to add track version: $e'));
+    }
   }
 
   @override
@@ -71,6 +101,13 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         versionId: versionId,
       );
 
+      if (result.isLeft()) {
+        return result;
+      }
+
+      // Queue update operation for background sync
+      await _queueUpdateOperation(trackId, versionId);
+
       // Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
@@ -78,7 +115,6 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         ),
       );
 
-      // 5. Return success only after successful queue
       return result;
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -90,6 +126,13 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
     try {
       final result = await _local.deleteVersion(versionId);
 
+      if (result.isLeft()) {
+        return result;
+      }
+
+      // Queue delete operation for background sync
+      await _queueDeleteOperation(versionId);
+
       // Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
@@ -100,6 +143,79 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       return result;
     } catch (e) {
       return Left(DatabaseFailure('Failed to delete version: $e'));
+    }
+  }
+
+  /// Queue upload operation for background sync
+  Future<void> _queueUploadOperation(dynamic versionDTO) async {
+    try {
+      final operationData = {
+        'versionId': versionDTO.id,
+        'trackId': versionDTO.trackId,
+        'versionNumber': versionDTO.versionNumber,
+        'label': versionDTO.label,
+        'fileLocalPath': versionDTO.fileLocalPath,
+        'durationMs': versionDTO.durationMs,
+        'createdBy': versionDTO.createdBy,
+        'createdAt': versionDTO.createdAt.toIso8601String(),
+      };
+
+      await _pendingOperationsManager.addCreateOperation(
+        entityType: 'track_version',
+        entityId: versionDTO.id,
+        data: operationData,
+        priority: SyncPriority.high, // High priority for audio uploads
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Failed to queue track version upload operation: $e',
+        tag: 'TrackVersionRepositoryImpl',
+        error: e,
+      );
+    }
+  }
+
+  /// Queue update operation for background sync
+  Future<void> _queueUpdateOperation(
+    AudioTrackId trackId,
+    TrackVersionId versionId,
+  ) async {
+    try {
+      final operationData = {
+        'versionId': versionId.value,
+        'trackId': trackId.value,
+        'status': 'active',
+      };
+
+      await _pendingOperationsManager.addUpdateOperation(
+        entityType: 'track_version',
+        entityId: versionId.value,
+        data: operationData,
+        priority: SyncPriority.medium,
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Failed to queue track version update operation: $e',
+        tag: 'TrackVersionRepositoryImpl',
+        error: e,
+      );
+    }
+  }
+
+  /// Queue delete operation for background sync
+  Future<void> _queueDeleteOperation(TrackVersionId versionId) async {
+    try {
+      await _pendingOperationsManager.addDeleteOperation(
+        entityType: 'track_version',
+        entityId: versionId.value,
+        priority: SyncPriority.medium,
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Failed to queue track version delete operation: $e',
+        tag: 'TrackVersionRepositoryImpl',
+        error: e,
+      );
     }
   }
 

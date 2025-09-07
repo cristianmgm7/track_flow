@@ -12,6 +12,10 @@ abstract class TrackVersionRemoteDataSource {
     File audioFile,
   );
 
+  Future<Either<Failure, Unit>> updateTrackVersionMetadata(
+    TrackVersionDTO versionData,
+  );
+
   Future<Either<Failure, Unit>> deleteTrackVersion(String versionId);
 
   Future<List<TrackVersionDTO>> getVersionsByTrackId(String trackId);
@@ -30,14 +34,29 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
     File audioFile,
   ) async {
     try {
-      // 1. Upload file to Storage
-      final fileName = '${versionData.id}.mp3'; // Assuming mp3 for now
+      // 1. Generate unique filename with proper extension
+      final fileExtension = _getFileExtension(audioFile.path);
+      final fileName = '${versionData.id}$fileExtension';
       final storageRef = _storage.ref().child('track_versions/$fileName');
 
-      final uploadTask = await storageRef.putFile(audioFile);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      // 2. Upload file to Firebase Storage with metadata
+      final uploadTask = storageRef.putFile(
+        audioFile,
+        SettableMetadata(
+          contentType: _getContentType(fileExtension),
+          customMetadata: {
+            'trackId': versionData.trackId,
+            'versionNumber': versionData.versionNumber.toString(),
+            'createdBy': versionData.createdBy,
+          },
+        ),
+      );
 
-      // 2. Update DTO with download URL
+      // Wait for upload completion
+      final uploadSnapshot = await uploadTask;
+      final downloadUrl = await uploadSnapshot.ref.getDownloadURL();
+
+      // 3. Update DTO with download URL and mark as ready
       final updatedVersionDTO = TrackVersionDTO(
         id: versionData.id,
         trackId: versionData.trackId,
@@ -46,12 +65,14 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
         fileLocalPath: versionData.fileLocalPath,
         fileRemoteUrl: downloadUrl,
         durationMs: versionData.durationMs,
-        status: versionData.status,
+        status: 'ready', // Mark as ready after successful upload
         createdAt: versionData.createdAt,
         createdBy: versionData.createdBy,
+        version: 1, // Initial version for sync
+        lastModified: DateTime.now(),
       );
 
-      // 3. Save metadata to Firestore
+      // 4. Save metadata to Firestore
       await _firestore
           .collection(TrackVersionDTO.collection)
           .doc(updatedVersionDTO.id)
@@ -60,6 +81,23 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
       return Right(updatedVersionDTO);
     } catch (e) {
       return Left(ServerFailure('Error uploading track version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateTrackVersionMetadata(
+    TrackVersionDTO versionData,
+  ) async {
+    try {
+      // Update only metadata in Firestore (no file re-upload)
+      await _firestore
+          .collection(TrackVersionDTO.collection)
+          .doc(versionData.id)
+          .update(versionData.toJson());
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Error updating track version metadata: $e'));
     }
   }
 
@@ -110,6 +148,33 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
     } catch (e) {
       // Return empty list on error
       return [];
+    }
+  }
+
+  /// Get file extension from file path
+  String _getFileExtension(String filePath) {
+    final lastDot = filePath.lastIndexOf('.');
+    if (lastDot == -1) return '.mp3'; // Default to mp3
+    return filePath.substring(lastDot);
+  }
+
+  /// Get MIME content type based on file extension
+  String _getContentType(String fileExtension) {
+    switch (fileExtension.toLowerCase()) {
+      case '.mp3':
+        return 'audio/mpeg';
+      case '.wav':
+        return 'audio/wav';
+      case '.m4a':
+        return 'audio/mp4';
+      case '.aac':
+        return 'audio/aac';
+      case '.ogg':
+        return 'audio/ogg';
+      case '.flac':
+        return 'audio/flac';
+      default:
+        return 'audio/mpeg'; // Default to mp3
     }
   }
 }
