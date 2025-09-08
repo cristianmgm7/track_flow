@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_track/presentation/screens/track_detail_screen.dart';
+import 'package:trackflow/features/track_version/presentation/screens/track_detail_screen.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';

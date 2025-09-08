@@ -145,16 +145,17 @@ class UploadAudioTrackUseCase {
         return setActiveResult;
       }
 
-      // 7. GENERAR WAVEFORM (puede fallar sin afectar el éxito)
+      // 7. GENERAR WAVEFORM usando archivo del cache (puede fallar sin afectar el éxito)
       try {
-        final bytes = await params.file.readAsBytes();
+        // Usar el archivo del cache para generar el waveform
+        final bytes = await cachedFile.readAsBytes();
         final audioSourceHash = crypto.sha1.convert(bytes).toString();
 
         await getOrGenerateWaveform(
           GetOrGenerateWaveformParams(
             trackId: track.id,
             versionId: version.id,
-            audioFilePath: params.file.path,
+            audioFilePath: cachedFile.path, // ✅ Usar archivo del cache
             audioSourceHash: audioSourceHash,
             algorithmVersion: 1,
             targetSampleCount: null,
