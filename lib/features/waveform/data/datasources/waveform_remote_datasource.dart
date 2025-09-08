@@ -21,6 +21,10 @@ abstract class WaveformRemoteDataSource {
     required String audioSourceHash,
     required int algorithmVersion,
   });
+
+  /// Fetch best-available waveform for a given versionId by listing
+  /// `waveforms/{versionId}/` and picking one JSON file.
+  Future<AudioWaveform?> fetchBestForVersion(TrackVersionId versionId);
 }
 
 @LazySingleton(as: WaveformRemoteDataSource)
@@ -75,6 +79,31 @@ class FirebaseStorageWaveformRemoteDataSource
       waveform.data.targetSampleCount,
     );
     await _upload(path, waveform);
+  }
+
+  @override
+  Future<AudioWaveform?> fetchBestForVersion(TrackVersionId versionId) async {
+    try {
+      // List all waveform files under the version folder
+      final folderRef = _storage.ref().child('waveforms/${versionId.value}');
+      final listResult = await folderRef.listAll();
+      // Prefer JSON objects; if multiple exist, pick the one with highest targetSampleCount by filename heuristic
+      final jsonItems =
+          listResult.items
+              .where((i) => i.name.toLowerCase().endsWith('.json'))
+              .toList();
+      if (jsonItems.isEmpty) return null;
+
+      // Simple heuristic: pick the lexicographically last (often highest targetSampleCount encoded)
+      jsonItems.sort((a, b) => a.name.compareTo(b.name));
+      final chosen = jsonItems.last;
+      final data = await chosen.getData(5 * 1024 * 1024);
+      if (data == null) return null;
+      final map = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
+      return _decode(map);
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _upload(String path, AudioWaveform waveform) async {

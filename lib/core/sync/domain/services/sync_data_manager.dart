@@ -8,7 +8,10 @@ import 'package:trackflow/core/sync/domain/usecases/sync_audio_tracks_using_simp
 import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_user_profile_collaborators_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/sync_notifications_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_track_versions_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/sync_waveforms_usecase.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 /// 📡 DOWNSTREAM SYNC MANAGER (Remote → Local)
 ///
@@ -29,6 +32,8 @@ class SyncDataManager {
   final SyncUserProfileUseCase _syncUserProfile;
   final SyncUserProfileCollaboratorsUseCase _syncUserProfileCollaborators;
   final SyncNotificationsUseCase _syncNotifications;
+  final SyncTrackVersionsUseCase _syncTrackVersions;
+  final SyncWaveformsUseCase _syncWaveforms;
 
   SyncDataManager({
     required SyncProjectsUsingSimpleServiceUseCase syncProjects,
@@ -37,12 +42,16 @@ class SyncDataManager {
     required SyncUserProfileUseCase syncUserProfile,
     required SyncUserProfileCollaboratorsUseCase syncUserProfileCollaborators,
     required SyncNotificationsUseCase syncNotifications,
+    required SyncTrackVersionsUseCase syncTrackVersions,
+    required SyncWaveformsUseCase syncWaveforms,
   }) : _syncProjects = syncProjects,
        _syncAudioTracks = syncAudioTracks,
        _syncAudioComments = syncAudioComments,
        _syncUserProfile = syncUserProfile,
        _syncUserProfileCollaborators = syncUserProfileCollaborators,
-       _syncNotifications = syncNotifications;
+       _syncNotifications = syncNotifications,
+       _syncTrackVersions = syncTrackVersions,
+       _syncWaveforms = syncWaveforms;
 
   // ============================================================================
   // 📡 MAIN SYNC OPERATIONS
@@ -73,6 +82,12 @@ class SyncDataManager {
         // Audio: Simple preservation logic
         _syncAudioTracks(),
         _syncAudioComments(),
+
+        // Track versions: smart incremental sync
+        _syncTrackVersions(),
+
+        // Waveforms: pull from storage by version if missing locally
+        _syncWaveforms(),
 
         // Collaborators: Depends on projects, simple sync
         _syncUserProfileCollaborators(),
@@ -113,6 +128,19 @@ class SyncDataManager {
         return const Right(unit);
       }
 
+      if (syncKey == 'track_versions') {
+        await _syncTrackVersions();
+        return const Right(unit);
+      }
+
+      if (syncKey.startsWith('waveform_')) {
+        final versionId = syncKey.substring('waveform_'.length);
+        await _syncWaveforms(
+          scopedVersionId: TrackVersionId.fromUniqueString(versionId),
+        );
+        return const Right(unit);
+      }
+
       // Fallback to regular incremental sync
       return await performIncrementalSync();
     } catch (e) {
@@ -143,6 +171,7 @@ class SyncDataManager {
       onProgress?.call(0.7);
 
       await Future.wait<void>([_syncAudioTracks(), _syncAudioComments()]);
+      await Future.wait<void>([_syncTrackVersions(), _syncWaveforms()]);
       onProgress?.call(1.0);
 
       final duration = DateTime.now().difference(startTime);
