@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
@@ -103,17 +104,12 @@ class DeleteAudioTrack {
         // 3.3. (Comentarios por versión) Opcional si se requiere limpieza fina
         // Si se implementa deleteByTrackId, esto no es necesario por versión
       }
-
-      // 3.4. Eliminar comentarios por track (si está implementado a nivel repo)
-      // TODO: AudioCommentRepository.deleteByTrackId(params.trackId)
-      // (Actualmente, comentarios son version-scoped; se limpiarán al eliminar versiones si hacemos replace downstream)
-
       // 3.5. Eliminar archivos de audio en cache local (una sola vez)
       try {
         await audioStorageRepository.deleteAudioFile(params.trackId);
       } catch (e) {
         // Log error pero continuar - no es crítico
-        print(
+        AppLogger.warning(
           'Warning: Failed to delete cached audio for track ${params.trackId}: $e',
         );
       }

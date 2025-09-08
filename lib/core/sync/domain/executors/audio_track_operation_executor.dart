@@ -80,16 +80,41 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     );
   }
 
-  /// Execute audio track update (edit name)
+  /// Execute audio track update (edit name or active version)
   Future<void> _executeUpdate(
     SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
     final trackId = operation.entityId;
-    final projectId = operationData['projectId'] ?? '';
-    final newName = operationData['name'] ?? '';
+    final field = operationData['field'] ?? '';
 
-    await _remoteDataSource.editTrackName(trackId, projectId, newName);
+    switch (field) {
+      case 'name':
+        final projectId = operationData['projectId'] ?? '';
+        final newName = operationData['newName'] ?? '';
+        await _remoteDataSource.editTrackName(trackId, projectId, newName);
+        break;
+
+      case 'activeVersion':
+        final activeVersionId = operationData['activeVersionId'] ?? '';
+        final result = await _remoteDataSource.updateActiveVersion(
+          trackId,
+          activeVersionId,
+        );
+        result.fold(
+          (failure) =>
+              throw Exception(
+                'Update active version failed: ${failure.message}',
+              ),
+          (_) {
+            // Successfully updated active version
+          },
+        );
+        break;
+
+      default:
+        throw UnsupportedError('Unknown audio track update field: $field');
+    }
   }
 
   /// Execute audio track deletion

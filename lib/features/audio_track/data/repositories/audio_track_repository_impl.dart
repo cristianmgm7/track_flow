@@ -3,7 +3,6 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
-import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
@@ -15,13 +14,11 @@ import 'package:trackflow/core/utils/app_logger.dart';
 @LazySingleton(as: AudioTrackRepository)
 class AudioTrackRepositoryImpl implements AudioTrackRepository {
   final AudioTrackLocalDataSource localDataSource;
-  final AudioTrackRemoteDataSource remoteDataSource;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
   AudioTrackRepositoryImpl(
     this.localDataSource,
-    this.remoteDataSource,
     this._backgroundSyncCoordinator,
     this._pendingOperationsManager,
   );
@@ -260,7 +257,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     required TrackVersionId versionId,
   }) async {
     try {
-      // Update local first
+      // 1. Update local first
       final localResult = await localDataSource.setActiveVersion(
         trackId.value,
         versionId.value,
@@ -270,21 +267,30 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         return localResult;
       }
 
-      // Update remote immediately
-      final remoteResult = await remoteDataSource.updateActiveVersion(
-        trackId.value,
-        versionId.value,
+      // 2. Queue operation for sync (consistent with offline-first architecture)
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
+        entityType: 'audio_track',
+        entityId: trackId.value,
+        data: {'activeVersionId': versionId.value, 'field': 'activeVersion'},
+        priority: SyncPriority.medium,
       );
 
-      // If remote update fails, still return success since local was updated
-      // The background sync will handle retrying the remote update
-      if (remoteResult.isLeft()) {
-        unawaited(
-          _backgroundSyncCoordinator.triggerUpstreamSync(
-            syncKey: 'audio_tracks_update',
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
           ),
         );
       }
+
+      // 4. Trigger upstream sync only (more efficient for local changes)
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'audio_tracks_update',
+        ),
+      );
 
       return localResult;
     } catch (e) {
