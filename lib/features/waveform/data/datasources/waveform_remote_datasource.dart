@@ -10,7 +10,6 @@ import 'package:trackflow/features/waveform/domain/value_objects/waveform_metada
 
 abstract class WaveformRemoteDataSource {
   Future<AudioWaveform?> fetchByKey({
-    required AudioTrackId trackId,
     TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
@@ -32,32 +31,26 @@ class FirebaseStorageWaveformRemoteDataSource
   FirebaseStorageWaveformRemoteDataSource(this._storage);
 
   String _pathFor(
-    AudioTrackId trackId,
-    TrackVersionId? versionId,
+    TrackVersionId versionId,
     String audioSourceHash,
     int algorithmVersion,
     int targetSampleCount,
   ) {
-    final versionSuffix = versionId != null ? '_v${versionId.value}' : '';
-    return 'waveforms/${trackId.value}/${audioSourceHash}_${targetSampleCount}_alg$algorithmVersion$versionSuffix.json';
+    // Waveforms are now stored by versionId only
+    return 'waveforms/${versionId.value}/${audioSourceHash}_${targetSampleCount}_alg$algorithmVersion.json';
   }
 
   @override
   Future<AudioWaveform?> fetchByKey({
-    required AudioTrackId trackId,
     TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
     required int targetSampleCount,
   }) async {
+    if (versionId == null) return null;
+
     final ref = _storage.ref().child(
-      _pathFor(
-        trackId,
-        versionId,
-        audioSourceHash,
-        algorithmVersion,
-        targetSampleCount,
-      ),
+      _pathFor(versionId, audioSourceHash, algorithmVersion, targetSampleCount),
     );
     try {
       final data = await ref.getData(5 * 1024 * 1024);
@@ -76,7 +69,6 @@ class FirebaseStorageWaveformRemoteDataSource
     required int algorithmVersion,
   }) async {
     final path = _pathFor(
-      waveform.trackId,
       waveform.versionId,
       audioSourceHash,
       algorithmVersion,
@@ -96,7 +88,7 @@ class FirebaseStorageWaveformRemoteDataSource
 
   Map<String, dynamic> _encode(AudioWaveform w) => {
     'id': w.id.value,
-    'trackId': w.trackId.value,
+    'versionId': w.versionId.value,
     'amplitudes': w.data.amplitudes,
     'sampleRate': w.data.sampleRate,
     'durationMs': w.data.duration.inMilliseconds,
@@ -111,7 +103,7 @@ class FirebaseStorageWaveformRemoteDataSource
   AudioWaveform _decode(Map<String, dynamic> m) {
     return AudioWaveform(
       id: AudioWaveformId.fromUniqueString(m['id'] as String),
-      trackId: AudioTrackId.fromUniqueString(m['trackId'] as String),
+      versionId: TrackVersionId.fromUniqueString(m['versionId'] as String),
       data: WaveformData(
         amplitudes:
             (m['amplitudes'] as List)

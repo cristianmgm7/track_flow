@@ -6,8 +6,7 @@ import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart'
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
 
 class GetOrGenerateWaveformParams {
-  final AudioTrackId trackId;
-  final TrackVersionId? versionId;
+  final TrackVersionId versionId;
   final String audioFilePath;
   final String audioSourceHash;
   final int algorithmVersion;
@@ -15,8 +14,7 @@ class GetOrGenerateWaveformParams {
   final bool forceRefresh;
 
   GetOrGenerateWaveformParams({
-    required this.trackId,
-    this.versionId,
+    required this.versionId,
     required this.audioFilePath,
     required this.audioSourceHash,
     required this.algorithmVersion,
@@ -34,7 +32,6 @@ class GetOrGenerateWaveform {
     GetOrGenerateWaveformParams params,
   ) {
     return _repository.getOrGenerate(
-      trackId: params.trackId,
       versionId: params.versionId,
       audioFilePath: params.audioFilePath,
       audioSourceHash: params.audioSourceHash,

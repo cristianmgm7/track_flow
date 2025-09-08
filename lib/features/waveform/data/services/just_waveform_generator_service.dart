@@ -5,12 +5,9 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:just_waveform/just_waveform.dart';
 import 'package:path/path.dart' as p;
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
 import 'package:trackflow/features/waveform/domain/services/waveform_generator_service.dart';
 import 'package:trackflow/features/waveform/domain/value_objects/waveform_data.dart';
-import 'package:trackflow/features/waveform/domain/value_objects/waveform_metadata.dart';
 
 @Injectable(as: WaveformGeneratorService)
 class JustWaveformGeneratorService implements WaveformGeneratorService {
@@ -22,8 +19,7 @@ class JustWaveformGeneratorService implements WaveformGeneratorService {
     : _cacheDir = cacheDir;
 
   @override
-  Future<Either<Failure, AudioWaveform>> generateWaveform(
-    AudioTrackId trackId,
+  Future<Either<Failure, WaveformData>> generateWaveformData(
     String audioFilePath, {
     int? targetSampleCount,
   }) async {
@@ -39,7 +35,10 @@ class JustWaveformGeneratorService implements WaveformGeneratorService {
       }
 
       final waveOutFile = File(
-        p.join(waveformsDir.path, '${trackId.value}.wave'),
+        p.join(
+          waveformsDir.path,
+          'temp_${DateTime.now().millisecondsSinceEpoch}.wave',
+        ),
       );
 
       // Use a reasonable default resolution; we will resample to target if needed
@@ -75,19 +74,8 @@ class JustWaveformGeneratorService implements WaveformGeneratorService {
         targetSampleCount: amplitudes.length,
       );
 
-      final metadata = WaveformMetadata.create(
-        amplitudes: amplitudes,
-        generationMethod: 'just_waveform',
-      );
-
-      final result = AudioWaveform.create(
-        trackId: trackId,
-        data: data,
-        metadata: metadata,
-      );
-
       await _deleteIfExists(waveOutFile);
-      return Right(result);
+      return Right(data);
     } catch (e) {
       return Left(ServerFailure('Failed to generate waveform: $e'));
     }

@@ -5,9 +5,8 @@ import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart'
 import 'package:trackflow/features/waveform/data/models/audio_waveform_document.dart';
 
 abstract class WaveformLocalDataSource {
-  Future<AudioWaveform?> getWaveformByTrackId(AudioTrackId trackId);
+  Future<AudioWaveform?> getWaveformByVersionId(TrackVersionId versionId);
   Future<AudioWaveform?> getByKey({
-    required AudioTrackId trackId,
     TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
@@ -19,8 +18,8 @@ abstract class WaveformLocalDataSource {
     required String audioSourceHash,
     required int algorithmVersion,
   });
-  Future<void> deleteWaveformsForTrack(AudioTrackId trackId);
-  Stream<AudioWaveform> watchWaveformChanges(AudioTrackId trackId);
+  Future<void> deleteWaveformsForVersion(TrackVersionId versionId);
+  Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId);
 }
 
 @Injectable(as: WaveformLocalDataSource)
@@ -30,19 +29,20 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
   WaveformLocalDataSourceImpl({required Isar isar}) : _isar = isar;
 
   @override
-  Future<AudioWaveform?> getWaveformByTrackId(AudioTrackId trackId) async {
+  Future<AudioWaveform?> getWaveformByVersionId(
+    TrackVersionId versionId,
+  ) async {
+    // Filter only by versionId since waveforms are now purely version-based
     final document =
         await _isar.audioWaveformDocuments
             .filter()
-            .trackIdEqualTo(trackId.value)
+            .versionIdEqualTo(versionId.value)
             .findFirst();
-
     return document?.toEntity();
   }
 
   @override
   Future<AudioWaveform?> getByKey({
-    required AudioTrackId trackId,
     TrackVersionId? versionId,
     required String audioSourceHash,
     required int algorithmVersion,
@@ -51,9 +51,7 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
     final document =
         await _isar.audioWaveformDocuments
             .filter()
-            .trackIdEqualTo(trackId.value)
-            .and()
-            .versionIdEqualTo(versionId?.value)
+            .versionIdEqualTo(versionId?.value ?? '')
             .and()
             .audioSourceHashEqualTo(audioSourceHash)
             .and()
@@ -90,20 +88,22 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
   }
 
   @override
-  Future<void> deleteWaveformsForTrack(AudioTrackId trackId) async {
+  Future<void> deleteWaveformsForVersion(TrackVersionId versionId) async {
     await _isar.writeTxn(() async {
+      // Delete all waveforms for this specific version
       await _isar.audioWaveformDocuments
           .filter()
-          .trackIdEqualTo(trackId.value)
+          .versionIdEqualTo(versionId.value)
           .deleteAll();
     });
   }
 
   @override
-  Stream<AudioWaveform> watchWaveformChanges(AudioTrackId trackId) {
+  Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId) {
+    // Watch only waveforms for this specific version
     return _isar.audioWaveformDocuments
         .filter()
-        .trackIdEqualTo(trackId.value)
+        .versionIdEqualTo(versionId.value)
         .watch(fireImmediately: true)
         .where((documents) => documents.isNotEmpty)
         .map((documents) => documents.first.toEntity());

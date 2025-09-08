@@ -15,12 +15,9 @@ class AudioWaveformDocument {
   @Index(unique: true)
   late String id;
 
+  // Waveforms are now scoped purely by version
   @Index()
-  late String trackId;
-
-  // Optional scoping per version
-  @Index()
-  String? versionId;
+  late String versionId;
 
   // Cache key parts for correctness across devices
   @Index()
@@ -47,8 +44,7 @@ class AudioWaveformDocument {
   factory AudioWaveformDocument.fromEntity(AudioWaveform waveform) {
     return AudioWaveformDocument()
       ..id = waveform.id.value
-      ..trackId = waveform.trackId.value
-      ..versionId = waveform.versionId?.value
+      ..versionId = waveform.versionId.value
       ..audioSourceHash = null
       ..algorithmVersion = null
       ..amplitudesJson = jsonEncode(waveform.data.amplitudes)
@@ -79,11 +75,7 @@ class AudioWaveformDocument {
 
     return AudioWaveform(
       id: AudioWaveformId.fromUniqueString(id),
-      trackId: AudioTrackId.fromUniqueString(trackId),
-      versionId:
-          versionId != null
-              ? TrackVersionId.fromUniqueString(versionId!)
-              : null,
+      versionId: TrackVersionId.fromUniqueString(versionId),
       data: WaveformData(
         amplitudes: amplitudes,
         sampleRate: sampleRate,

@@ -8,16 +8,15 @@ abstract class WaveformEvent extends Equatable {
 }
 
 class LoadWaveform extends WaveformEvent {
-  final AudioTrackId trackId;
-  final TrackVersionId? versionId; // Optional: for version-specific waveforms
+  final TrackVersionId
+  versionId; // Required: waveforms are now purely version-based
   final String? audioFilePath; // Optional: to allow generation
   final String? audioSourceHash; // Optional: remote/local key
   final int? targetSampleCount;
   final bool forceRefresh;
 
   const LoadWaveform(
-    this.trackId, {
-    this.versionId,
+    this.versionId, {
     this.audioFilePath,
     this.audioSourceHash,
     this.targetSampleCount,
@@ -26,7 +25,6 @@ class LoadWaveform extends WaveformEvent {
 
   @override
   List<Object?> get props => [
-    trackId,
     versionId,
     audioFilePath,
     audioSourceHash,

@@ -153,8 +153,7 @@ class UploadAudioTrackUseCase {
 
         await getOrGenerateWaveform(
           GetOrGenerateWaveformParams(
-            trackId: track.id,
-            versionId: version.id,
+            versionId: version.id, // ✅ Use versionId as primary identifier
             audioFilePath: cachedFile.path, // ✅ Usar archivo del cache
             audioSourceHash: audioSourceHash,
             algorithmVersion: 1,

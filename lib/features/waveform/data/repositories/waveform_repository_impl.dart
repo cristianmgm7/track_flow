@@ -8,6 +8,7 @@ import 'package:trackflow/features/waveform/data/datasources/waveform_local_data
 import 'package:trackflow/features/waveform/data/datasources/waveform_remote_datasource.dart';
 import 'package:trackflow/features/waveform/domain/services/waveform_generator_service.dart';
 import 'package:trackflow/features/waveform/data/services/just_waveform_generator_service.dart';
+import 'package:trackflow/features/waveform/domain/value_objects/waveform_metadata.dart';
 
 @Injectable(as: WaveformRepository)
 class WaveformRepositoryImpl implements WaveformRepository {
@@ -24,14 +25,20 @@ class WaveformRepositoryImpl implements WaveformRepository {
        _generatorService = generatorService;
 
   @override
-  Future<Either<Failure, AudioWaveform>> getWaveformByTrackId(
-    AudioTrackId trackId,
+  Future<Either<Failure, AudioWaveform>> getWaveformByVersionId(
+    TrackVersionId versionId,
   ) async {
     try {
-      final waveform = await _localDataSource.getWaveformByTrackId(trackId);
+      // Use the getByKey method to find waveform by version
+      final waveform = await _localDataSource.getByKey(
+        versionId: versionId,
+        audioSourceHash: '', // Empty string for lookup without hash
+        algorithmVersion: 0, // Default algorithm version
+        targetSampleCount: 1000, // Default sample count
+      );
       if (waveform == null) {
         return Left(
-          ServerFailure('Waveform not found for track: ${trackId.value}'),
+          ServerFailure('Waveform not found for version: ${versionId.value}'),
         );
       }
       return Right(waveform);
@@ -42,8 +49,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
 
   @override
   Future<Either<Failure, AudioWaveform>> getOrGenerate({
-    required AudioTrackId trackId,
-    TrackVersionId? versionId,
+    required TrackVersionId versionId,
     String? audioFilePath,
     required String audioSourceHash,
     required int algorithmVersion,
@@ -53,7 +59,6 @@ class WaveformRepositoryImpl implements WaveformRepository {
     try {
       if (!forceRefresh) {
         final local = await _localDataSource.getByKey(
-          trackId: trackId,
           versionId: versionId,
           audioSourceHash: audioSourceHash,
           algorithmVersion: algorithmVersion,
@@ -66,7 +71,6 @@ class WaveformRepositoryImpl implements WaveformRepository {
 
       // Try remote cache
       final remote = await _remoteDataSource.fetchByKey(
-        trackId: trackId,
         versionId: versionId,
         audioSourceHash: audioSourceHash,
         algorithmVersion: algorithmVersion,
@@ -89,26 +93,35 @@ class WaveformRepositoryImpl implements WaveformRepository {
           ServerFailure('Audio file path required to generate waveform'),
         );
       }
-      final generatedResult = await _generatorService.generateWaveform(
-        trackId,
+      final generatedResult = await _generatorService.generateWaveformData(
         audioFilePath,
         targetSampleCount: targetSampleCount,
       );
-      return await generatedResult.fold((f) => Left(f), (generated) async {
+      return await generatedResult.fold((f) => Left(f), (data) async {
+        // Create the AudioWaveform entity with the generated data
+        final waveform = AudioWaveform.create(
+          versionId: versionId,
+          data: data,
+          metadata: WaveformMetadata.create(
+            amplitudes: data.amplitudes,
+            generationMethod: 'just_waveform',
+          ),
+        );
+
         await _localDataSource.saveWaveformWithKey(
-          generated,
+          waveform,
           audioSourceHash: audioSourceHash,
           algorithmVersion: algorithmVersion,
         );
         // fire-and-forget upload
         try {
           await _remoteDataSource.uploadByKey(
-            waveform: generated,
+            waveform: waveform,
             audioSourceHash: audioSourceHash,
             algorithmVersion: algorithmVersion,
           );
         } catch (_) {}
-        return Right(generated);
+        return Right(waveform);
       });
     } catch (e) {
       return Left(ServerFailure('Failed to get or generate waveform: $e'));
@@ -116,8 +129,10 @@ class WaveformRepositoryImpl implements WaveformRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> invalidate({required AudioTrackId trackId}) {
-    return deleteWaveformsForTrack(trackId);
+  Future<Either<Failure, Unit>> invalidate({
+    required TrackVersionId versionId,
+  }) {
+    return deleteWaveformsForVersion(versionId);
   }
 
   @override
@@ -131,11 +146,12 @@ class WaveformRepositoryImpl implements WaveformRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteWaveformsForTrack(
-    AudioTrackId trackId,
+  Future<Either<Failure, Unit>> deleteWaveformsForVersion(
+    TrackVersionId versionId,
   ) async {
     try {
-      await _localDataSource.deleteWaveformsForTrack(trackId);
+      // The local data source now handles version-specific deletion internally
+      await _localDataSource.deleteWaveformsForVersion(versionId);
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to delete waveforms: $e'));
@@ -143,7 +159,8 @@ class WaveformRepositoryImpl implements WaveformRepository {
   }
 
   @override
-  Stream<AudioWaveform> watchWaveformChanges(AudioTrackId trackId) {
-    return _localDataSource.watchWaveformChanges(trackId);
+  Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId) {
+    // The local data source now handles version filtering internally
+    return _localDataSource.watchWaveformChanges(versionId);
   }
 }

@@ -4,14 +4,14 @@ enum WaveformStatus { initial, loading, ready, error }
 
 class WaveformState extends Equatable {
   final WaveformStatus status;
-  final AudioTrackId? trackId;
+  final TrackVersionId? versionId;
   final AudioWaveform? waveform;
   final String? errorMessage;
   final Duration currentPosition;
 
   const WaveformState({
     this.status = WaveformStatus.initial,
-    this.trackId,
+    this.versionId,
     this.waveform,
     this.errorMessage,
     this.currentPosition = Duration.zero,
@@ -19,14 +19,14 @@ class WaveformState extends Equatable {
 
   WaveformState copyWith({
     WaveformStatus? status,
-    AudioTrackId? trackId,
+    TrackVersionId? versionId,
     AudioWaveform? waveform,
     String? errorMessage,
     Duration? currentPosition,
   }) {
     return WaveformState(
       status: status ?? this.status,
-      trackId: trackId ?? this.trackId,
+      versionId: versionId ?? this.versionId,
       waveform: waveform ?? this.waveform,
       errorMessage: errorMessage ?? this.errorMessage,
       currentPosition: currentPosition ?? this.currentPosition,
@@ -35,10 +35,10 @@ class WaveformState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        trackId,
-        waveform,
-        errorMessage,
-        currentPosition,
-      ];
+    status,
+    versionId,
+    waveform,
+    errorMessage,
+    currentPosition,
+  ];
 }

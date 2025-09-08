@@ -9,7 +9,7 @@ class InvalidateWaveform {
   final WaveformRepository _repository;
   InvalidateWaveform(this._repository);
 
-  Future<Either<Failure, Unit>> call(AudioTrackId trackId) {
-    return _repository.invalidate(trackId: trackId);
+  Future<Either<Failure, Unit>> call(TrackVersionId versionId) {
+    return _repository.invalidate(versionId: versionId);
   }
 }

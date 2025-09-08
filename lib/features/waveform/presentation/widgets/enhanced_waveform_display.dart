@@ -33,31 +33,27 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final hash = _quickHash(widget.track.url, widget.trackDuration);
-      context.read<WaveformBloc>().add(
-        LoadWaveform(
-          widget.track.id,
-          versionId:
-              widget
-                  .versionId, // ✅ Pass versionId for version-specific waveforms
-          audioFilePath: widget.track.url,
-          audioSourceHash: hash,
-        ),
-      );
+      if (widget.versionId != null) {
+        final hash = _quickHash(widget.track.url, widget.trackDuration);
+        context.read<WaveformBloc>().add(
+          LoadWaveform(
+            widget.versionId!, // ✅ Pass versionId as primary identifier
+            audioFilePath: widget.track.url,
+            audioSourceHash: hash,
+          ),
+        );
+      }
     });
   }
 
   @override
   void didUpdateWidget(EnhancedWaveformDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.track.id != widget.track.id) {
+    if (oldWidget.versionId != widget.versionId && widget.versionId != null) {
       final hash = _quickHash(widget.track.url, widget.trackDuration);
       context.read<WaveformBloc>().add(
         LoadWaveform(
-          widget.track.id,
-          versionId:
-              widget
-                  .versionId, // ✅ Pass versionId for version-specific waveforms
+          widget.versionId!, // ✅ Pass versionId as primary identifier
           audioFilePath: widget.track.url,
           audioSourceHash: hash,
         ),

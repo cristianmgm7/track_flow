@@ -1,11 +1,9 @@
 import 'package:dartz/dartz.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
+import 'package:trackflow/features/waveform/domain/value_objects/waveform_data.dart';
 
 abstract class WaveformGeneratorService {
-  Future<Either<Failure, AudioWaveform>> generateWaveform(
-    AudioTrackId trackId,
+  Future<Either<Failure, WaveformData>> generateWaveformData(
     String audioFilePath, {
     int? targetSampleCount,
   });
