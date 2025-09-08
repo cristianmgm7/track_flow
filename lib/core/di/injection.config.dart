@@ -1014,7 +1014,12 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i99.SessionStorage>(),
             ));
     gh.lazySingleton<_i181.AddTrackVersionUseCase>(
-        () => _i181.AddTrackVersionUseCase(gh<_i168.TrackVersionRepository>()));
+        () => _i181.AddTrackVersionUseCase(
+              gh<_i168.TrackVersionRepository>(),
+              gh<_i4.AudioMetadataService>(),
+              gh<_i116.AudioStorageRepository>(),
+              gh<_i83.GetOrGenerateWaveform>(),
+            ));
     gh.lazySingleton<_i182.AudioCommentRepository>(
         () => _i183.AudioCommentRepositoryImpl(
               remoteDataSource: gh<_i73.AudioCommentRemoteDataSource>(),
@@ -1145,6 +1150,7 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i209.TrackVersionsBloc>(() => _i209.TrackVersionsBloc(
           gh<_i177.WatchTrackVersionsUseCase>(),
           gh<_i206.SetActiveTrackVersionUseCase>(),
+          gh<_i181.AddTrackVersionUseCase>(),
         ));
     gh.factory<_i210.UpdateUserProfileUseCase>(
         () => _i210.UpdateUserProfileUseCase(

@@ -117,9 +117,9 @@ class _UploadVersionFormState extends State<UploadVersionForm> {
       return;
     }
 
-    // For now, just return the selection to the caller. Wiring to BLoC/use case will follow.
+    // Return the selection to the caller. The screen will dispatch BLoC event.
     Navigator.of(context).pop(
-      _UploadVersionResult(
+      UploadVersionResult(
         file: file,
         label: _labelController.text.isEmpty ? null : _labelController.text,
       ),
@@ -168,9 +168,9 @@ class _UploadVersionFormState extends State<UploadVersionForm> {
   }
 }
 
-class _UploadVersionResult {
+class UploadVersionResult {
   final File file;
   final String? label;
 
-  _UploadVersionResult({required this.file, this.label});
+  UploadVersionResult({required this.file, this.label});
 }

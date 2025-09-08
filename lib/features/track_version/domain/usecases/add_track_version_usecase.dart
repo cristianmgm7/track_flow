@@ -5,6 +5,10 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/audio_track/domain/services/audio_metadata_service.dart';
+import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart';
+import 'package:crypto/crypto.dart' as crypto;
 
 class AddTrackVersionParams {
   final AudioTrackId trackId;
@@ -23,14 +27,91 @@ class AddTrackVersionParams {
 @lazySingleton
 class AddTrackVersionUseCase {
   final TrackVersionRepository repository;
-  AddTrackVersionUseCase(this.repository);
+  final AudioMetadataService audioMetadataService;
+  final AudioStorageRepository audioStorageRepository;
+  final GetOrGenerateWaveform getOrGenerateWaveform;
 
-  Future<Either<Failure, TrackVersion>> call(AddTrackVersionParams params) {
-    return repository.addVersion(
-      trackId: params.trackId,
-      file: params.file,
-      label: params.label,
-      duration: params.duration,
-    );
+  AddTrackVersionUseCase(
+    this.repository,
+    this.audioMetadataService,
+    this.audioStorageRepository,
+    this.getOrGenerateWaveform,
+  );
+
+  Future<Either<Failure, TrackVersion>> call(
+    AddTrackVersionParams params,
+  ) async {
+    try {
+      // 1) Ensure file exists
+      if (!await params.file.exists()) {
+        return Left(ValidationFailure('Selected audio file does not exist'));
+      }
+
+      // 2) Extract duration if not provided
+      final Duration duration;
+      if (params.duration != null) {
+        duration = params.duration!;
+      } else {
+        final durationEither = await audioMetadataService.extractDuration(
+          params.file,
+        );
+        if (durationEither.isLeft()) {
+          return durationEither.map((_) => throw Exception());
+        }
+        duration = durationEither.getOrElse(() => Duration.zero);
+      }
+
+      // 3) Cache audio locally under our managed cache for this track
+      final cacheEither = await audioStorageRepository.storeAudio(
+        params.trackId,
+        params.file,
+        referenceId: 'version_add_${DateTime.now().millisecondsSinceEpoch}',
+        canDelete: false,
+      );
+      if (cacheEither.isLeft()) {
+        final failure = cacheEither.fold((l) => l, (r) => null);
+        return Left(CacheFailure(failure?.message ?? 'Failed to cache audio'));
+      }
+      final cached = cacheEither.getOrElse(() => throw Exception());
+      final cachedFile = File(cached.filePath);
+
+      // 4) Create version locally (offline-first) with cached file
+      final addEither = await repository.addVersion(
+        trackId: params.trackId,
+        file: cachedFile,
+        label: params.label,
+        duration: duration,
+      );
+      if (addEither.isLeft()) {
+        // Rollback cache only on hard failure to keep consistency
+        await audioStorageRepository.deleteAudioFile(params.trackId);
+        return addEither;
+      }
+      final version = addEither.getOrElse(() => throw Exception());
+
+      // 5) Fire-and-forget waveform generation using cached file
+      () async {
+        try {
+          final bytes = await cachedFile.readAsBytes();
+          final audioSourceHash = crypto.sha1.convert(bytes).toString();
+          await getOrGenerateWaveform(
+            GetOrGenerateWaveformParams(
+              versionId: version.id,
+              audioFilePath: cachedFile.path,
+              audioSourceHash: audioSourceHash,
+              algorithmVersion: 1,
+              targetSampleCount: null,
+              forceRefresh: true,
+            ),
+          );
+        } catch (_) {
+          // swallow - waveform is best-effort
+        }
+      }();
+
+      return Right(version);
+    } catch (e) {
+      return Left(UnexpectedFailure('Failed to add track version: $e'));
+    }
   }
 }

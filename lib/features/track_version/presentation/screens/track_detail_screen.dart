@@ -177,6 +177,16 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
       ),
       // Keep BLoCs available inside the sheet
       reprovideBlocs: [context.read<TrackVersionsBloc>()],
-    );
+    ).then((result) {
+      if (result is UploadVersionResult) {
+        context.read<TrackVersionsBloc>().add(
+          AddTrackVersionRequested(
+            trackId: widget.track.id,
+            file: result.file,
+            label: result.label,
+          ),
+        );
+      }
+    });
   }
 }

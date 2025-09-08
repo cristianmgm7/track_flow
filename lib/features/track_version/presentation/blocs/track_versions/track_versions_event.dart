@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'dart:io';
 import 'package:trackflow/core/entities/unique_id.dart';
 
 abstract class TrackVersionsEvent extends Equatable {
@@ -16,11 +17,19 @@ class WatchTrackVersionsRequested extends TrackVersionsEvent {
 
 class AddTrackVersionRequested extends TrackVersionsEvent {
   final AudioTrackId trackId;
+  final File file;
   final String? label;
-  AddTrackVersionRequested(this.trackId, {this.label});
+  final Duration? duration;
+
+  AddTrackVersionRequested({
+    required this.trackId,
+    required this.file,
+    this.label,
+    this.duration,
+  });
 
   @override
-  List<Object?> get props => [trackId, label];
+  List<Object?> get props => [trackId, file, label, duration];
 }
 
 class SetActiveTrackVersionRequested extends TrackVersionsEvent {
