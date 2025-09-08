@@ -13,6 +13,7 @@ abstract class TrackVersionLocalDataSource {
     required AudioTrackId trackId,
     required File file,
     String? label,
+    Duration? duration,
   });
 
   Stream<Either<Failure, List<TrackVersionDTO>>> watchVersionsByTrack(
@@ -57,6 +58,7 @@ class IsarTrackVersionLocalDataSource implements TrackVersionLocalDataSource {
     required AudioTrackId trackId,
     required File file,
     String? label,
+    Duration? duration,
   }) async {
     try {
       // Get existing versions for this track to calculate version number
@@ -79,7 +81,7 @@ class IsarTrackVersionLocalDataSource implements TrackVersionLocalDataSource {
         label: label,
         fileLocalPath: file.path,
         fileRemoteUrl: null,
-        durationMs: null,
+        durationMs: duration?.inMilliseconds,
         status: 'processing',
         createdAt: DateTime.now(),
         createdBy: UserId().value,

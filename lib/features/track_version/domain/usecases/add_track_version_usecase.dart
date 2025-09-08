@@ -10,11 +10,13 @@ class AddTrackVersionParams {
   final AudioTrackId trackId;
   final File file;
   final String? label;
+  final Duration? duration; // Add duration parameter
 
   AddTrackVersionParams({
     required this.trackId,
     required this.file,
     this.label,
+    this.duration,
   });
 }
 
@@ -28,6 +30,7 @@ class AddTrackVersionUseCase {
       trackId: params.trackId,
       file: params.file,
       label: params.label,
+      duration: params.duration,
     );
   }
 }

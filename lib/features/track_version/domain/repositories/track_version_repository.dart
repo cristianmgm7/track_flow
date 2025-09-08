@@ -9,6 +9,7 @@ abstract class TrackVersionRepository {
     required AudioTrackId trackId,
     required File file,
     String? label,
+    Duration? duration,
   });
 
   Stream<Either<Failure, List<TrackVersion>>> watchVersionsByTrack(

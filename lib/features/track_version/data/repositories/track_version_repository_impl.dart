@@ -29,6 +29,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
     required AudioTrackId trackId,
     required File file,
     String? label,
+    Duration? duration,
   }) async {
     try {
       // 1. Create version locally first (offline-first approach)
@@ -36,6 +37,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         trackId: trackId,
         file: file,
         label: label,
+        duration: duration,
       );
 
       if (localResult.isLeft()) {

@@ -118,6 +118,7 @@ class UploadAudioTrackUseCase {
           trackId: track.id,
           file: cachedFile, // Usar archivo del cache en lugar del original
           label: 'v1',
+          duration: duration, // Pass the already extracted duration
         ),
       );
       if (versionResult.isLeft()) {
