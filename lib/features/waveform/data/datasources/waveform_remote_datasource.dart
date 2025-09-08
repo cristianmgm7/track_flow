@@ -22,9 +22,18 @@ abstract class WaveformRemoteDataSource {
     required int algorithmVersion,
   });
 
-  /// Fetch best-available waveform for a given versionId by listing
-  /// `waveforms/{versionId}/` and picking one JSON file.
-  Future<AudioWaveform?> fetchBestForVersion(TrackVersionId versionId);
+  /// Fetch best-available waveform at canonical path
+  /// waveforms/{trackId}/{versionId}/best.json
+  Future<AudioWaveform?> fetchBestForVersion({
+    required String trackId,
+    required TrackVersionId versionId,
+  });
+
+  /// Upload best-available waveform to canonical path
+  Future<void> uploadBestForVersion({
+    required String trackId,
+    required AudioWaveform waveform,
+  });
 }
 
 @LazySingleton(as: WaveformRemoteDataSource)
@@ -40,8 +49,12 @@ class FirebaseStorageWaveformRemoteDataSource
     int algorithmVersion,
     int targetSampleCount,
   ) {
-    // Waveforms are now stored by versionId only
+    // Legacy key-based cache path kept for variants and backward compatibility
     return 'waveforms/${versionId.value}/${audioSourceHash}_${targetSampleCount}_alg$algorithmVersion.json';
+  }
+
+  String _bestPathFor(String trackId, TrackVersionId versionId) {
+    return 'waveforms/$trackId/${versionId.value}/best.json';
   }
 
   @override
@@ -82,28 +95,28 @@ class FirebaseStorageWaveformRemoteDataSource
   }
 
   @override
-  Future<AudioWaveform?> fetchBestForVersion(TrackVersionId versionId) async {
+  Future<AudioWaveform?> fetchBestForVersion({
+    required String trackId,
+    required TrackVersionId versionId,
+  }) async {
     try {
-      // List all waveform files under the version folder
-      final folderRef = _storage.ref().child('waveforms/${versionId.value}');
-      final listResult = await folderRef.listAll();
-      // Prefer JSON objects; if multiple exist, pick the one with highest targetSampleCount by filename heuristic
-      final jsonItems =
-          listResult.items
-              .where((i) => i.name.toLowerCase().endsWith('.json'))
-              .toList();
-      if (jsonItems.isEmpty) return null;
-
-      // Simple heuristic: pick the lexicographically last (often highest targetSampleCount encoded)
-      jsonItems.sort((a, b) => a.name.compareTo(b.name));
-      final chosen = jsonItems.last;
-      final data = await chosen.getData(5 * 1024 * 1024);
+      final ref = _storage.ref().child(_bestPathFor(trackId, versionId));
+      final data = await ref.getData(5 * 1024 * 1024);
       if (data == null) return null;
       final map = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
       return _decode(map);
     } catch (_) {
       return null;
     }
+  }
+
+  @override
+  Future<void> uploadBestForVersion({
+    required String trackId,
+    required AudioWaveform waveform,
+  }) async {
+    final path = _bestPathFor(trackId, waveform.versionId);
+    await _upload(path, waveform);
   }
 
   Future<void> _upload(String path, AudioWaveform waveform) async {

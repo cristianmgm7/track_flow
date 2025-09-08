@@ -94,9 +94,16 @@ class SyncWaveformsUseCase {
         );
         if (local != null) continue;
 
-        // Pull best available remote waveform and save
+        // Resolve trackId for canonical path and pull best remote waveform
+        final versionResult = await _trackVersionLocalDataSource.getVersionById(
+          versionIdStr,
+        );
+        final version = versionResult.fold((_) => null, (v) => v);
+        if (version == null) continue;
+
         final remote = await _waveformRemoteDataSource.fetchBestForVersion(
-          versionId,
+          trackId: version.trackId,
+          versionId: versionId,
         );
         if (remote != null) {
           await _waveformLocalDataSource.saveWaveform(remote);
