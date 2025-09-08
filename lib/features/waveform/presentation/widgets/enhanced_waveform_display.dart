@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:crypto/crypto.dart' as crypto;
-import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -34,14 +32,7 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.versionId != null) {
-        final hash = _quickHash(widget.track.url, widget.trackDuration);
-        context.read<WaveformBloc>().add(
-          LoadWaveform(
-            widget.versionId!, // ✅ Pass versionId as primary identifier
-            audioFilePath: widget.track.url,
-            audioSourceHash: hash,
-          ),
-        );
+        context.read<WaveformBloc>().add(LoadWaveform(widget.versionId!));
       }
     });
   }
@@ -50,20 +41,8 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
   void didUpdateWidget(EnhancedWaveformDisplay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.versionId != widget.versionId && widget.versionId != null) {
-      final hash = _quickHash(widget.track.url, widget.trackDuration);
-      context.read<WaveformBloc>().add(
-        LoadWaveform(
-          widget.versionId!, // ✅ Pass versionId as primary identifier
-          audioFilePath: widget.track.url,
-          audioSourceHash: hash,
-        ),
-      );
+      context.read<WaveformBloc>().add(LoadWaveform(widget.versionId!));
     }
-  }
-
-  String _quickHash(String pathOrUrl, Duration? duration) {
-    final input = '$pathOrUrl|${duration?.inMilliseconds ?? 0}';
-    return crypto.sha1.convert(utf8.encode(input)).toString();
   }
 
   @override

@@ -12,7 +12,8 @@ import '../widgets/versions_list.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_event.dart';
 import '../blocs/track_versions/track_versions_state.dart';
-import '../../../audio_track/presentation/widgets/upload_version_dialog.dart';
+import '../../../ui/modals/app_form_sheet.dart';
+import '../widgets/upload_version_form.dart';
 
 /// Arguments for the track detail screen
 class TrackDetailScreenArgs {
@@ -167,13 +168,15 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
   }
 
   void _showUploadVersionDialog() {
-    showDialog(
+    showAppFormSheet(
       context: context,
-      builder:
-          (context) => UploadVersionDialog(
-            trackId: widget.track.id,
-            projectId: widget.projectId,
-          ),
+      title: 'Upload Version',
+      child: UploadVersionForm(
+        trackId: widget.track.id,
+        projectId: widget.projectId,
+      ),
+      // Keep BLoCs available inside the sheet
+      reprovideBlocs: [context.read<TrackVersionsBloc>()],
     );
   }
 }
