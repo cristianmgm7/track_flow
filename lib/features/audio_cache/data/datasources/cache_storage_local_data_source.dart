@@ -156,6 +156,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   @override
   Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId) async {
     try {
+      // Delete DB entries for this track
       final unifiedDoc =
           await _isar.cachedAudioDocumentUnifieds
               .filter()
@@ -163,16 +164,16 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
               .findFirst();
 
       if (unifiedDoc != null) {
-        // Delete file from disk
-        final file = File(unifiedDoc.filePath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-
-        // Delete from database
         await _isar.writeTxn(() async {
           await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
         });
+      }
+
+      // Delete entire track cache folder recursively: Documents/trackflow/audio/{trackId}/
+      final cacheRoot = await _getCacheDirectory();
+      final trackDir = Directory('${cacheRoot.path}/$trackId');
+      if (await trackDir.exists()) {
+        await trackDir.delete(recursive: true);
       }
 
       return const Right(unit);
@@ -205,9 +206,15 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     CacheKey key,
   ) async {
     try {
-      final cacheDir = await _getCacheDirectory();
-      final filename = '${key.trackId}_${key.checksum}.mp3';
-      return Right('${cacheDir.path}/$filename');
+      final cacheRoot = await _getCacheDirectory();
+      final trackId = key.trackId ?? 'unknown_track';
+      final trackDir = Directory('${cacheRoot.path}/$trackId');
+      if (!await trackDir.exists()) {
+        await trackDir.create(recursive: true);
+      }
+      final baseName = key.checksum ?? 'audio';
+      final filename = '$baseName.mp3';
+      return Right('${trackDir.path}/$filename');
     } catch (e) {
       return Left(
         StorageCacheFailure(

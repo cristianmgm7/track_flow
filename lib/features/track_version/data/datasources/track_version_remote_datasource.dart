@@ -146,6 +146,27 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
           final fileRef = _storage.refFromURL(data['fileRemoteUrl'] as String);
           await fileRef.delete();
         }
+
+        // Fallback legacy cleanup: waveforms/{versionId}/** (pre-canonical structure)
+        try {
+          final legacyFolder = _storage.ref().child('waveforms/$versionId');
+          final legacyList = await legacyFolder.listAll();
+          for (final item in legacyList.items) {
+            try {
+              await item.delete();
+            } catch (_) {}
+          }
+          for (final prefix in legacyList.prefixes) {
+            try {
+              final sub = await prefix.listAll();
+              for (final subItem in sub.items) {
+                try {
+                  await subItem.delete();
+                } catch (_) {}
+              }
+            } catch (_) {}
+          }
+        } catch (_) {}
       }
 
       // Delete metadata from Firestore
