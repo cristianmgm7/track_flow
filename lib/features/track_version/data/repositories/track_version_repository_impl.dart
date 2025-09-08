@@ -146,6 +146,15 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Unit>> clearCache() async {
+    try {
+      return await _local.clearCache();
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to clear track versions cache: $e'));
+    }
+  }
+
   /// Queue upload operation for background sync
   Future<void> _queueUploadOperation(dynamic versionDTO) async {
     try {

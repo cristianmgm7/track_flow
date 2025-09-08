@@ -1100,6 +1100,9 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i41.PlaybackPersistenceRepository>(),
           blocStateCleanupService: gh<_i9.BlocStateCleanupService>(),
           sessionStorage: gh<_i99.SessionStorage>(),
+          pendingOperationsRepository: gh<_i39.PendingOperationsRepository>(),
+          waveformRepository: gh<_i69.WaveformRepository>(),
+          trackVersionRepository: gh<_i166.TrackVersionRepository>(),
         ));
     gh.factory<_i203.SessionService>(() => _i203.SessionService(
           checkAuthUseCase: gh<_i125.CheckAuthenticationStatusUseCase>(),

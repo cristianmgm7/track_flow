@@ -20,6 +20,7 @@ abstract class WaveformLocalDataSource {
   });
   Future<void> deleteWaveformsForVersion(TrackVersionId versionId);
   Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId);
+  Future<void> clearAll();
 }
 
 @Injectable(as: WaveformLocalDataSource)
@@ -107,5 +108,12 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
         .watch(fireImmediately: true)
         .where((documents) => documents.isNotEmpty)
         .map((documents) => documents.first.toEntity());
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await _isar.writeTxn(() async {
+      await _isar.audioWaveformDocuments.clear();
+    });
   }
 }

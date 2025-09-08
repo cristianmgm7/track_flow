@@ -23,4 +23,6 @@ abstract class WaveformRepository {
   });
 
   Future<Either<Failure, Unit>> invalidate({required TrackVersionId versionId});
+
+  Future<Either<Failure, Unit>> clearAllWaveforms();
 }

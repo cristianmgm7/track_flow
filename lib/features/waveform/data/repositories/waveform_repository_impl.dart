@@ -163,4 +163,14 @@ class WaveformRepositoryImpl implements WaveformRepository {
     // The local data source now handles version filtering internally
     return _localDataSource.watchWaveformChanges(versionId);
   }
+
+  @override
+  Future<Either<Failure, Unit>> clearAllWaveforms() async {
+    try {
+      await _localDataSource.clearAll();
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Failed to clear waveforms: $e'));
+    }
+  }
 }

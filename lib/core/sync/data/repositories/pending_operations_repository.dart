@@ -8,11 +8,17 @@ import 'package:trackflow/core/sync/data/datasources/pending_operations_local_da
 abstract class PendingOperationsRepository {
   Future<Either<Failure, Unit>> addOperation(SyncOperationDocument operation);
   Future<Either<Failure, List<SyncOperationDocument>>> getPendingOperations();
-  Future<Either<Failure, List<SyncOperationDocument>>> getOperationsByPriority(SyncPriority priority);
+  Future<Either<Failure, List<SyncOperationDocument>>> getOperationsByPriority(
+    SyncPriority priority,
+  );
   Future<Either<Failure, Unit>> markOperationCompleted(int operationId);
-  Future<Either<Failure, Unit>> markOperationFailed(int operationId, String error);
+  Future<Either<Failure, Unit>> markOperationFailed(
+    int operationId,
+    String error,
+  );
   Future<Either<Failure, Unit>> deleteOperation(int operationId);
   Future<Either<Failure, Unit>> clearCompletedOperations();
+  Future<Either<Failure, Unit>> clearAllOperations();
   Future<Either<Failure, int>> getPendingOperationsCount();
   Stream<List<SyncOperationDocument>> watchPendingOperations();
 }
@@ -24,7 +30,9 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   PendingOperationsRepositoryImpl(this._localDataSource);
 
   @override
-  Future<Either<Failure, Unit>> addOperation(SyncOperationDocument operation) async {
+  Future<Either<Failure, Unit>> addOperation(
+    SyncOperationDocument operation,
+  ) async {
     try {
       await _localDataSource.insertOperation(operation);
       return const Right(unit);
@@ -34,7 +42,8 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   }
 
   @override
-  Future<Either<Failure, List<SyncOperationDocument>>> getPendingOperations() async {
+  Future<Either<Failure, List<SyncOperationDocument>>>
+  getPendingOperations() async {
     try {
       final operations = await _localDataSource.getPendingOperations();
       return Right(operations);
@@ -48,7 +57,9 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
     SyncPriority priority,
   ) async {
     try {
-      final operations = await _localDataSource.getOperationsByPriority(priority.name);
+      final operations = await _localDataSource.getOperationsByPriority(
+        priority.name,
+      );
       return Right(operations);
     } catch (e) {
       return Left(DatabaseFailure('Failed to get operations by priority: $e'));
@@ -69,7 +80,10 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> markOperationFailed(int operationId, String error) async {
+  Future<Either<Failure, Unit>> markOperationFailed(
+    int operationId,
+    String error,
+  ) async {
     try {
       final operations = await _localDataSource.getPendingOperations();
       final operation = operations.firstWhere((op) => op.id == operationId);
@@ -102,12 +116,24 @@ class PendingOperationsRepositoryImpl implements PendingOperationsRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> clearAllOperations() async {
+    try {
+      await _localDataSource.clearAllOperations();
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to clear all operations: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, int>> getPendingOperationsCount() async {
     try {
       final count = await _localDataSource.getPendingOperationsCount();
       return Right(count);
     } catch (e) {
-      return Left(DatabaseFailure('Failed to get pending operations count: $e'));
+      return Left(
+        DatabaseFailure('Failed to get pending operations count: $e'),
+      );
     }
   }
 

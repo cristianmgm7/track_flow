@@ -25,4 +25,6 @@ abstract class TrackVersionRepository {
   });
 
   Future<Either<Failure, Unit>> deleteVersion(TrackVersionId versionId);
+
+  Future<Either<Failure, Unit>> clearCache();
 }
