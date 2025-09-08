@@ -12,7 +12,7 @@ import 'package:trackflow/features/audio_track/domain/services/audio_metadata_se
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import 'package:trackflow/features/track_version/domain/usecases/add_track_version_usecase.dart';
-import 'package:trackflow/features/track_version/domain/usecases/set_active_track_version_usecase.dart';
+import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 
 class UploadAudioTrackParams {
   final ProjectId projectId;
@@ -34,7 +34,8 @@ class UploadAudioTrackUseCase {
   final AudioMetadataService audioMetadataService;
   final AudioStorageRepository audioStorageRepository; // Para subir archivos
   final AddTrackVersionUseCase addTrackVersionUseCase;
-  final SetActiveTrackVersionUseCase setActiveTrackVersionUseCase;
+  final AudioTrackRepository
+  audioTrackRepository; // Para actualizar activeVersionId
   final GetOrGenerateWaveform getOrGenerateWaveform;
 
   UploadAudioTrackUseCase(
@@ -44,7 +45,7 @@ class UploadAudioTrackUseCase {
     this.audioMetadataService,
     this.audioStorageRepository,
     this.addTrackVersionUseCase,
-    this.setActiveTrackVersionUseCase,
+    this.audioTrackRepository,
     this.getOrGenerateWaveform,
   );
 
@@ -79,6 +80,7 @@ class UploadAudioTrackUseCase {
         name: params.name,
         url: '', // Temporalmente vacío
         duration: duration,
+        activeVersionId: null, // Inicialmente null, se actualizará después
       );
 
       // Si los permisos fallan, retornar error
@@ -130,11 +132,10 @@ class UploadAudioTrackUseCase {
       }
       final version = versionResult.getOrElse(() => throw Exception());
 
-      // 6. ESTABLECER VERSIÓN ACTIVA
-      final setActiveResult = await setActiveTrackVersionUseCase.call(
-        SetActiveTrackVersionParams(trackId: track.id, versionId: version.id),
-      );
-      if (setActiveResult.isLeft()) {
+      // 6. ACTUALIZAR TRACK CON LA VERSIÓN ACTIVA (directamente via repository)
+      final updateActiveVersionResult = await audioTrackRepository
+          .setActiveVersion(trackId: track.id, versionId: version.id);
+      if (updateActiveVersionResult.isLeft()) {
         // Rollback completo
         await audioStorageRepository.deleteAudioFile(track.id);
         await projectTrackService.deleteTrack(
@@ -142,7 +143,12 @@ class UploadAudioTrackUseCase {
           requester: UserId.fromUniqueString(userId),
           trackId: track.id,
         );
-        return setActiveResult;
+        return Left(
+          updateActiveVersionResult.fold(
+            (l) => l,
+            (_) => UnexpectedFailure('Failed to set active version'),
+          ),
+        );
       }
 
       // 7. GENERAR WAVEFORM usando archivo del cache (puede fallar sin afectar el éxito)

@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
@@ -14,11 +15,13 @@ import 'package:trackflow/core/utils/app_logger.dart';
 @LazySingleton(as: AudioTrackRepository)
 class AudioTrackRepositoryImpl implements AudioTrackRepository {
   final AudioTrackLocalDataSource localDataSource;
+  final AudioTrackRemoteDataSource remoteDataSource;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
   AudioTrackRepositoryImpl(
     this.localDataSource,
+    this.remoteDataSource,
     this._backgroundSyncCoordinator,
     this._pendingOperationsManager,
   );
@@ -257,19 +260,33 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     required TrackVersionId versionId,
   }) async {
     try {
-      final result = await localDataSource.setActiveVersion(
+      // Update local first
+      final localResult = await localDataSource.setActiveVersion(
         trackId.value,
         versionId.value,
       );
 
-      // Trigger upstream sync to update remote
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_tracks_update',
-        ),
+      if (localResult.isLeft()) {
+        return localResult;
+      }
+
+      // Update remote immediately
+      final remoteResult = await remoteDataSource.updateActiveVersion(
+        trackId.value,
+        versionId.value,
       );
 
-      return result;
+      // If remote update fails, still return success since local was updated
+      // The background sync will handle retrying the remote update
+      if (remoteResult.isLeft()) {
+        unawaited(
+          _backgroundSyncCoordinator.triggerUpstreamSync(
+            syncKey: 'audio_tracks_update',
+          ),
+        );
+      }
+
+      return localResult;
     } catch (e) {
       return Left(DatabaseFailure('Failed to set active version: $e'));
     }

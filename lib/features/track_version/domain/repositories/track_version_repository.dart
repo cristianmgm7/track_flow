@@ -15,6 +15,10 @@ abstract class TrackVersionRepository {
     AudioTrackId trackId,
   );
 
+  Future<Either<Failure, List<TrackVersion>>> getVersionsByTrack(
+    AudioTrackId trackId,
+  );
+
   Future<Either<Failure, TrackVersion>> getById(TrackVersionId id);
 
   Future<Either<Failure, TrackVersion>> getActiveVersion(AudioTrackId trackId);

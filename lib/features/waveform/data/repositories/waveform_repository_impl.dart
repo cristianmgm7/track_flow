@@ -150,7 +150,13 @@ class WaveformRepositoryImpl implements WaveformRepository {
     TrackVersionId versionId,
   ) async {
     try {
-      // The local data source now handles version-specific deletion internally
+      // Delete remote waveforms first (if available)
+      // Note: We would need trackId to call remote deletion, but it's not available here
+      // The remote waveform deletion should be handled by the track deletion process
+      // since waveforms are associated with track versions and should be cleaned up
+      // when the version is deleted from Firebase
+
+      // Delete local waveforms
       await _localDataSource.deleteWaveformsForVersion(versionId);
       return const Right(unit);
     } catch (e) {

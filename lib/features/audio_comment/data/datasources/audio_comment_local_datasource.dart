@@ -52,6 +52,9 @@ abstract class AudioCommentLocalDataSource {
     String versionId,
     List<AudioCommentDTO> comments,
   );
+
+  /// Delete all comments for a given version from Isar.
+  Future<Either<Failure, Unit>> deleteByVersion(String versionId);
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
@@ -187,6 +190,21 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to replace comments for track: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteByVersion(String versionId) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments
+            .filter()
+            .trackIdEqualTo(versionId)
+            .deleteAll();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete comments by version: $e'));
     }
   }
 }

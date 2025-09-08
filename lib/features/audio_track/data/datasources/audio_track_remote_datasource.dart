@@ -14,6 +14,11 @@ abstract class AudioTrackRemoteDataSource {
   Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
 
   Future<void> editTrackName(String trackId, String projectId, String newName);
+
+  Future<Either<Failure, Unit>> updateActiveVersion(
+    String trackId,
+    String versionId,
+  );
 }
 
 @LazySingleton(as: AudioTrackRemoteDataSource)
@@ -113,6 +118,26 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       });
     } catch (e) {
       throw Exception('Error updating track name: $e');
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateActiveVersion(
+    String trackId,
+    String versionId,
+  ) async {
+    try {
+      await _firestore
+          .collection(AudioTrackDTO.collection)
+          .doc(trackId)
+          .update({
+            'activeVersionId': versionId,
+            'lastModified': DateTime.now().toIso8601String(),
+          });
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Error updating active version: $e'));
     }
   }
 }

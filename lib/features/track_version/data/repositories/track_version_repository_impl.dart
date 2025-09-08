@@ -77,6 +77,18 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
   }
 
   @override
+  Future<Either<Failure, List<TrackVersion>>> getVersionsByTrack(
+    AudioTrackId trackId,
+  ) async {
+    final dtoEither = await _local.getVersionsByTrack(trackId);
+    return dtoEither.map(
+      (dtos) =>
+          dtos.map((dto) => dto.toDomain()).toList()
+            ..sort((a, b) => b.versionNumber.compareTo(a.versionNumber)),
+    );
+  }
+
+  @override
   Future<Either<Failure, TrackVersion>> getActiveVersion(
     AudioTrackId trackId,
   ) async {

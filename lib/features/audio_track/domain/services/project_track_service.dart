@@ -27,6 +27,7 @@ class ProjectTrackService {
     required String name,
     required String url,
     required Duration duration,
+    TrackVersionId? activeVersionId,
   }) async {
     // 1. Verificar permisos del usuario en el proyecto
     final collaborator = project.collaborators.firstWhere(
@@ -45,6 +46,7 @@ class ProjectTrackService {
       duration: duration,
       projectId: project.id,
       uploadedBy: requester,
+      activeVersionId: activeVersionId,
     );
 
     // 3. Persistir track en base de datos (solo metadata)

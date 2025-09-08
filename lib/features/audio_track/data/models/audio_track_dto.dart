@@ -106,6 +106,7 @@ class AudioTrackDTO {
       duration: track.duration.inMilliseconds,
       createdAt: track.createdAt,
       extension: extension,
+      activeVersionId: track.activeVersionId,
       // ⭐ NEW: Include sync metadata for new tracks
       version: 1, // Initial version for new tracks
       lastModified: track.createdAt, // Use createdAt as initial lastModified

@@ -113,6 +113,34 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
 
       if (docSnapshot.exists) {
         final data = docSnapshot.data();
+        // Delete associated waveform files under waveforms/{trackId}/{versionId}/
+        try {
+          final trackId =
+              (data != null && data['trackId'] != null)
+                  ? data['trackId'] as String
+                  : null;
+          if (trackId != null && trackId.isNotEmpty) {
+            final folderRef = _storage.ref().child(
+              'waveforms/$trackId/$versionId',
+            );
+            final listResult = await folderRef.listAll();
+            for (final item in listResult.items) {
+              try {
+                await item.delete();
+              } catch (_) {}
+            }
+            for (final prefix in listResult.prefixes) {
+              try {
+                final subList = await prefix.listAll();
+                for (final subItem in subList.items) {
+                  try {
+                    await subItem.delete();
+                  } catch (_) {}
+                }
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
         if (data != null && data['fileRemoteUrl'] != null) {
           // Delete file from storage
           final fileRef = _storage.refFromURL(data['fileRemoteUrl'] as String);

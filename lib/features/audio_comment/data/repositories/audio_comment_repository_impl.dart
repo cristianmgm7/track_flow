@@ -9,6 +9,7 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
+import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
@@ -16,8 +17,10 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 @LazySingleton(as: AudioCommentRepository)
 class AudioCommentRepositoryImpl implements AudioCommentRepository {
   final AudioCommentLocalDataSource _localDataSource;
+  final AudioCommentRemoteDataSource _remoteDataSource;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
+  final TrackVersionRepository _trackVersionRepository;
 
   AudioCommentRepositoryImpl({
     required AudioCommentRemoteDataSource remoteDataSource,
@@ -25,9 +28,12 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     required NetworkStateManager networkStateManager,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
+    required TrackVersionRepository trackVersionRepository,
   }) : _localDataSource = localDataSource,
+       _remoteDataSource = remoteDataSource,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
-       _pendingOperationsManager = pendingOperationsManager;
+       _pendingOperationsManager = pendingOperationsManager,
+       _trackVersionRepository = trackVersionRepository;
 
   @override
   Future<Either<Failure, AudioComment>> getCommentById(
@@ -66,6 +72,30 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       return Left(
         DatabaseFailure('Failed to access local cache: ${e.toString()}'),
       );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteByTrackId(AudioTrackId trackId) async {
+    try {
+      final versionsEither = await _trackVersionRepository.getVersionsByTrack(
+        trackId,
+      );
+      if (versionsEither.isLeft()) return versionsEither.map((_) => unit);
+      final versions = versionsEither.getOrElse(() => []);
+
+      // Delete comments per version (remote + local)
+      for (final v in versions) {
+        try {
+          await _remoteDataSource.deleteByVersionId(v.id.value);
+        } catch (_) {}
+        try {
+          await _localDataSource.deleteByVersion(v.id.value);
+        } catch (_) {}
+      }
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to delete comments by track: $e'));
     }
   }
 

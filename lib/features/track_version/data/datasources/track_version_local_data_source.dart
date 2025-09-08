@@ -19,6 +19,10 @@ abstract class TrackVersionLocalDataSource {
     AudioTrackId trackId,
   );
 
+  Future<Either<Failure, List<TrackVersionDTO>>> getVersionsByTrack(
+    AudioTrackId trackId,
+  );
+
   Future<Either<Failure, TrackVersionDTO>> getById(TrackVersionId id);
 
   Future<Either<Failure, TrackVersionDTO>> getActiveVersion(
@@ -110,6 +114,25 @@ class IsarTrackVersionLocalDataSource implements TrackVersionLocalDataSource {
           );
     } catch (e) {
       return Stream.value(Left(CacheFailure('Failed to watch versions: $e')));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<TrackVersionDTO>>> getVersionsByTrack(
+    AudioTrackId trackId,
+  ) async {
+    try {
+      final documents =
+          await _isar.trackVersionDocuments
+              .filter()
+              .trackIdEqualTo(trackId.value)
+              .sortByVersionNumberDesc()
+              .findAll();
+
+      final dtos = documents.map((doc) => doc.toDTO()).toList();
+      return Right(dtos);
+    } catch (e) {
+      return Left(CacheFailure('Failed to get versions by track: $e'));
     }
   }
 
