@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
@@ -26,13 +27,15 @@ class AddTrackVersionParams {
 
 @lazySingleton
 class AddTrackVersionUseCase {
-  final TrackVersionRepository repository;
+  final SessionStorage sessionStorage;
+  final TrackVersionRepository trackVersionRepository;
   final AudioMetadataService audioMetadataService;
   final AudioStorageRepository audioStorageRepository;
   final GetOrGenerateWaveform getOrGenerateWaveform;
 
   AddTrackVersionUseCase(
-    this.repository,
+    this.sessionStorage,
+    this.trackVersionRepository,
     this.audioMetadataService,
     this.audioStorageRepository,
     this.getOrGenerateWaveform,
@@ -42,6 +45,11 @@ class AddTrackVersionUseCase {
     AddTrackVersionParams params,
   ) async {
     try {
+      final userId = await sessionStorage.getUserId();
+      if (userId == null) {
+        return Left(AuthenticationFailure('User not authenticated'));
+      }
+
       // 1) Ensure file exists
       if (!await params.file.exists()) {
         return Left(ValidationFailure('Selected audio file does not exist'));
@@ -76,11 +84,12 @@ class AddTrackVersionUseCase {
       final cachedFile = File(cached.filePath);
 
       // 4) Create version locally (offline-first) with cached file
-      final addEither = await repository.addVersion(
+      final addEither = await trackVersionRepository.addVersion(
         trackId: params.trackId,
         file: cachedFile,
         label: params.label,
         duration: duration,
+        createdBy: UserId.fromUniqueString(userId),
       );
       if (addEither.isLeft()) {
         // Rollback cache only on hard failure to keep consistency

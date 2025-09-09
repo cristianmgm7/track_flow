@@ -26,6 +26,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
 
   @override
   Future<Either<Failure, TrackVersion>> addVersion({
+    required UserId createdBy,
     required AudioTrackId trackId,
     required File file,
     String? label,

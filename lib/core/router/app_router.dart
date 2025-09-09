@@ -24,6 +24,8 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
+import 'package:trackflow/features/track_version/presentation/cubit/track_detail_cubit.dart';
 // import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/collaborator_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
@@ -169,7 +171,17 @@ class AppRouter {
                   create: (context) => sl<TrackVersionsBloc>(),
                 ),
                 BlocProvider<TrackDetailCubit>(
-                  create: (context) => sl<TrackDetailCubit>(),
+                  create: (context) => TrackDetailCubit(args.versionId),
+                ),
+                BlocListener<TrackVersionsBloc, TrackVersionsState>(
+                  listener: (context, state) {
+                    if (state is TrackVersionsLoaded &&
+                        state.activeVersionId != null) {
+                      context.read<TrackDetailCubit>().setActiveVersion(
+                        state.activeVersionId!,
+                      );
+                    }
+                  },
                 ),
               ],
               child: TrackDetailScreen(

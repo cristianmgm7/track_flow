@@ -57,7 +57,7 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
     SetActiveTrackVersionRequested event,
     Emitter<TrackVersionsState> emit,
   ) async {
-    final result = await _setActive(
+    final result = await _setActive.call(
       SetActiveTrackVersionParams(
         trackId: event.trackId,
         versionId: event.versionId,

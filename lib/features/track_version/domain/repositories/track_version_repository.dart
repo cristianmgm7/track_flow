@@ -10,6 +10,7 @@ abstract class TrackVersionRepository {
     required File file,
     String? label,
     Duration? duration,
+    required UserId createdBy,
   });
 
   Stream<Either<Failure, List<TrackVersion>>> watchVersionsByTrack(

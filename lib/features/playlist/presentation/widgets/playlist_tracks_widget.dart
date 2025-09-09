@@ -38,7 +38,8 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
       listener: (context, state) {
         if (state is AudioTrackUploadLoading) {
           setState(() => _isUploadingTrack = true);
-        } else if (state is AudioTrackUploadSuccess || state is AudioTrackError) {
+        } else if (state is AudioTrackUploadSuccess ||
+            state is AudioTrackError) {
           setState(() => _isUploadingTrack = false);
         }
       },
@@ -56,12 +57,14 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
                       : track.projectId,
               onPlay: () {
                 context.read<AudioPlayerBloc>().add(
-                  PlayPlaylistRequested(tracks: widget.tracks, startIndex: index),
+                  PlayPlaylistRequested(
+                    tracks: widget.tracks,
+                    startIndex: index,
+                  ),
                 );
               },
             );
           }),
-          if (_isUploadingTrack) AppTrackShimmerCard(),
         ],
       ),
     );
