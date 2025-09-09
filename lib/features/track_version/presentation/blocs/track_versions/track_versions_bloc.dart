@@ -3,6 +3,8 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/features/track_version/domain/usecases/watch_track_versions_usecase.dart';
 import 'package:trackflow/features/track_version/domain/usecases/set_active_track_version_usecase.dart';
 import 'package:trackflow/features/track_version/domain/usecases/add_track_version_usecase.dart';
+import 'package:trackflow/features/track_version/domain/usecases/rename_track_version_usecase.dart';
+import 'package:trackflow/features/track_version/domain/usecases/delete_track_version_usecase.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_event.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
 
@@ -11,12 +13,21 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
   final WatchTrackVersionsUseCase _watchVersions;
   final SetActiveTrackVersionUseCase _setActive;
   final AddTrackVersionUseCase _addVersion;
+  final RenameTrackVersionUseCase _renameVersion;
+  final DeleteTrackVersionUseCase _deleteVersion;
 
-  TrackVersionsBloc(this._watchVersions, this._setActive, this._addVersion)
-    : super(const TrackVersionsInitial()) {
+  TrackVersionsBloc(
+    this._watchVersions,
+    this._setActive,
+    this._addVersion,
+    this._renameVersion,
+    this._deleteVersion,
+  ) : super(const TrackVersionsInitial()) {
     on<WatchTrackVersionsRequested>(_onWatchRequested);
     on<SetActiveTrackVersionRequested>(_onSetActiveRequested);
     on<AddTrackVersionRequested>(_onAddVersionRequested);
+    on<RenameTrackVersionRequested>(_onRenameVersionRequested);
+    on<DeleteTrackVersionRequested>(_onDeleteVersionRequested);
   }
 
   Future<void> _onWatchRequested(
@@ -66,6 +77,29 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
         label: event.label,
         duration: event.duration,
       ),
+    );
+    result.fold((failure) => emit(TrackVersionsError(failure.message)), (_) {});
+  }
+
+  Future<void> _onRenameVersionRequested(
+    RenameTrackVersionRequested event,
+    Emitter<TrackVersionsState> emit,
+  ) async {
+    final result = await _renameVersion(
+      RenameTrackVersionParams(
+        versionId: event.versionId,
+        newLabel: event.newLabel,
+      ),
+    );
+    result.fold((failure) => emit(TrackVersionsError(failure.message)), (_) {});
+  }
+
+  Future<void> _onDeleteVersionRequested(
+    DeleteTrackVersionRequested event,
+    Emitter<TrackVersionsState> emit,
+  ) async {
+    final result = await _deleteVersion(
+      DeleteTrackVersionParams(versionId: event.versionId),
     );
     result.fold((failure) => emit(TrackVersionsError(failure.message)), (_) {});
   }

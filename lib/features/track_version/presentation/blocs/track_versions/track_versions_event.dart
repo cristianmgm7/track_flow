@@ -40,3 +40,25 @@ class SetActiveTrackVersionRequested extends TrackVersionsEvent {
   @override
   List<Object?> get props => [trackId, versionId];
 }
+
+class RenameTrackVersionRequested extends TrackVersionsEvent {
+  final TrackVersionId versionId;
+  final String? newLabel;
+
+  RenameTrackVersionRequested({
+    required this.versionId,
+    required this.newLabel,
+  });
+
+  @override
+  List<Object?> get props => [versionId, newLabel];
+}
+
+class DeleteTrackVersionRequested extends TrackVersionsEvent {
+  final TrackVersionId versionId;
+
+  DeleteTrackVersionRequested(this.versionId);
+
+  @override
+  List<Object?> get props => [versionId];
+}
