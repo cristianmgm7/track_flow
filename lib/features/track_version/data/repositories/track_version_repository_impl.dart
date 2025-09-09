@@ -161,6 +161,37 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> renameVersion({
+    required TrackVersionId versionId,
+    required String? newLabel,
+  }) async {
+    try {
+      final result = await _local.renameVersion(
+        versionId: versionId,
+        newLabel: newLabel,
+      );
+
+      if (result.isLeft()) {
+        return result;
+      }
+
+      // Queue update operation for background sync
+      await _queueRenameOperation(versionId, newLabel);
+
+      // Trigger upstream sync only (more efficient for local changes)
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'track_versions_update',
+        ),
+      );
+
+      return result;
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to rename version: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> clearCache() async {
     try {
       return await _local.clearCache();
@@ -236,6 +267,33 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
     } catch (e) {
       AppLogger.error(
         'Failed to queue track version delete operation: $e',
+        tag: 'TrackVersionRepositoryImpl',
+        error: e,
+      );
+    }
+  }
+
+  /// Queue rename operation for background sync
+  Future<void> _queueRenameOperation(
+    TrackVersionId versionId,
+    String? newLabel,
+  ) async {
+    try {
+      final operationData = {
+        'versionId': versionId.value,
+        'newLabel': newLabel,
+        'field': 'label',
+      };
+
+      await _pendingOperationsManager.addUpdateOperation(
+        entityType: 'track_version',
+        entityId: versionId.value,
+        data: operationData,
+        priority: SyncPriority.medium,
+      );
+    } catch (e) {
+      AppLogger.error(
+        'Failed to queue track version rename operation: $e',
         tag: 'TrackVersionRepositoryImpl',
         error: e,
       );

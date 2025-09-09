@@ -31,5 +31,10 @@ abstract class TrackVersionRepository {
 
   Future<Either<Failure, Unit>> deleteVersion(TrackVersionId versionId);
 
+  Future<Either<Failure, Unit>> renameVersion({
+    required TrackVersionId versionId,
+    required String? newLabel,
+  });
+
   Future<Either<Failure, Unit>> clearCache();
 }

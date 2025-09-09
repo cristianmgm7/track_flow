@@ -37,6 +37,11 @@ abstract class TrackVersionLocalDataSource {
 
   Future<Either<Failure, Unit>> deleteVersion(TrackVersionId versionId);
 
+  Future<Either<Failure, Unit>> renameVersion({
+    required TrackVersionId versionId,
+    required String? newLabel,
+  });
+
   // Sync operations
   Future<Either<Failure, Unit>> cacheVersion(TrackVersionDTO version);
   Future<Either<Failure, List<TrackVersionDTO>>> getAllVersions();
@@ -191,6 +196,32 @@ class IsarTrackVersionLocalDataSource implements TrackVersionLocalDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to delete version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> renameVersion({
+    required TrackVersionId versionId,
+    required String? newLabel,
+  }) async {
+    try {
+      final document = await _isar.trackVersionDocuments.get(
+        versionId.value.hashCode,
+      );
+      if (document == null) {
+        return Left(CacheFailure('Version not found'));
+      }
+
+      // Update the label
+      document.label = newLabel;
+
+      await _isar.writeTxn(() async {
+        await _isar.trackVersionDocuments.put(document);
+      });
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to rename version: $e'));
     }
   }
 

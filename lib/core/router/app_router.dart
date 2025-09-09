@@ -168,6 +168,9 @@ class AppRouter {
                 BlocProvider<TrackVersionsBloc>(
                   create: (context) => sl<TrackVersionsBloc>(),
                 ),
+                BlocProvider<TrackDetailCubit>(
+                  create: (context) => sl<TrackDetailCubit>(),
+                ),
               ],
               child: TrackDetailScreen(
                 projectId: args.projectId,
