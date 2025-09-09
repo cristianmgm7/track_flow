@@ -1146,7 +1146,7 @@ extension GetItInjectableX on _i1.GetIt {
           profileUseCase: gh<_i186.CheckProfileCompletenessUseCase>(),
         ));
     gh.lazySingleton<_i208.SetActiveTrackVersionUseCase>(() =>
-        _i208.SetActiveTrackVersionUseCase(gh<_i168.TrackVersionRepository>()));
+        _i208.SetActiveTrackVersionUseCase(gh<_i184.AudioTrackRepository>()));
     gh.lazySingleton<_i209.SignInUseCase>(() => _i209.SignInUseCase(
           gh<_i121.AuthRepository>(),
           gh<_i173.UserProfileRepository>(),

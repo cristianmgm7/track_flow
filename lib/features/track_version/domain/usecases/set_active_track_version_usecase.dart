@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
+import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 
 class SetActiveTrackVersionParams {
   final AudioTrackId trackId;
@@ -12,7 +12,7 @@ class SetActiveTrackVersionParams {
 
 @lazySingleton
 class SetActiveTrackVersionUseCase {
-  final TrackVersionRepository repository;
+  final AudioTrackRepository repository;
   SetActiveTrackVersionUseCase(this.repository);
 
   Future<Either<Failure, Unit>> call(SetActiveTrackVersionParams params) {

@@ -172,13 +172,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
                       context.read<TrackDetailCubit>().setActiveVersion(
                         versionId,
                       );
-                      // Also update BLoC active version
-                      context.read<TrackVersionsBloc>().add(
-                        SetActiveTrackVersionRequested(
-                          widget.track.id,
-                          versionId,
-                        ),
-                      );
+                      // Do not persist active version here. That happens via header menu.
                     },
                   ),
                 ),
