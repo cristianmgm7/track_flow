@@ -63,7 +63,7 @@ class PlayVersionUseCase {
 
               // 4. Try to get cached path first, fallback to source URL
               final cacheResult = await _audioStorageRepository
-                  .getCachedAudioPath(audioTrack.id);
+                  .getCachedAudioPath(audioTrack.id, versionId: versionId);
               final finalSourceUrl = cacheResult.fold(
                 (cacheFailure) =>
                     sourceUrl, // Use version source URL if not cached
@@ -110,4 +110,3 @@ class PlayVersionUseCase {
     }
   }
 }
-

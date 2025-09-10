@@ -14,20 +14,23 @@ abstract class AudioStorageRepository {
   /// Store audio file in cache
   ///
   /// [trackId] - Unique identifier for the track
-  /// [audioFile] - The downloaded audio file to store
+  /// [versionId] - Unique identifier for the track version
+  /// [audioFile] - The audio file to store
   ///
   /// Returns cached audio info or failure
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
     AudioTrackId trackId,
-    File audioFile, {
-    String? referenceId,
-    bool canDelete = true,
-  });
+    TrackVersionId versionId,
+    File audioFile,
+  );
 
   /// Get cached audio file path if exists
   ///
   /// Returns absolute file path or failure if not found
-  Future<Either<CacheFailure, String>> getCachedAudioPath(AudioTrackId trackId);
+  Future<Either<CacheFailure, String>> getCachedAudioPath(
+    AudioTrackId trackId, {
+    TrackVersionId? versionId,
+  });
 
   /// Check if audio file exists and is valid
   Future<Either<CacheFailure, bool>> audioExists(AudioTrackId trackId);
@@ -40,6 +43,10 @@ abstract class AudioStorageRepository {
   /// Delete audio file from storage
   /// WARNING: This physically deletes the file - ensure reference counting first
   Future<Either<CacheFailure, Unit>> deleteAudioFile(AudioTrackId trackId);
+
+  /// Validate and clean corrupted cache entries
+  /// Returns the number of cleaned entries
+  Future<Either<CacheFailure, int>> validateAndCleanCache();
 
   // Batch operations removed to simplify interface
 

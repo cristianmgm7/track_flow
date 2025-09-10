@@ -40,16 +40,26 @@ class CacheManagementLocalDataSourceImpl
 
   @override
   Stream<List<CachedAudio>> watchCachedAudios() {
-    return _delegate.watchAllCachedAudios().map(
-      (docs) => docs.map((d) => d.toCachedAudio()).toList(),
-    );
+    return _delegate.watchAllCachedAudios().asyncMap((docs) async {
+      final cachedAudios = <CachedAudio>[];
+      for (final doc in docs) {
+        final cachedAudio = await doc.toCachedAudio();
+        cachedAudios.add(cachedAudio);
+      }
+      return cachedAudios;
+    });
   }
 
   @override
   Future<Either<CacheFailure, List<CachedAudio>>> getAllCachedAudios() async {
     try {
       final docs = await _delegate.watchAllCachedAudios().first;
-      return Right(docs.map((d) => d.toCachedAudio()).toList());
+      final cachedAudios = <CachedAudio>[];
+      for (final doc in docs) {
+        final cachedAudio = await doc.toCachedAudio();
+        cachedAudios.add(cachedAudio);
+      }
+      return Right(cachedAudios);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -67,7 +77,7 @@ class CacheManagementLocalDataSourceImpl
     final result = await _delegate.getCachedAudio(trackId);
     return result.fold(
       (failure) => Left(failure),
-      (doc) => Right(doc?.toCachedAudio()),
+      (doc) async => Right(doc != null ? await doc.toCachedAudio() : null),
     );
   }
 

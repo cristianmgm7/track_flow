@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:crypto/crypto.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../domain/entities/cached_audio.dart';
@@ -21,31 +22,22 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   @override
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
     AudioTrackId trackId,
-    File audioFile, {
-    String? referenceId,
-    bool canDelete = true,
-  }) async {
+    TrackVersionId versionId,
+    File audioFile,
+  ) async {
     try {
-      // Ensure file is persisted in the fixed cache directory with deterministic name
-      final originalPath = audioFile.path;
-      final cacheKey = _localDataSource.generateCacheKey(
-        trackId.value,
-        originalPath,
-      );
-      final destEither = await _localDataSource.getFilePathFromCacheKey(
-        cacheKey,
-      );
-      final destinationFile = await destEither.fold(
-        (failure) => Future.error(failure.message),
-        (basePath) async {
-          final ext = _extractExtension(originalPath) ?? '.mp3';
-          final finalPath = basePath.replaceAll(RegExp(r'\.[^/.]+$'), ext);
-          if (originalPath != finalPath) {
-            return await audioFile.copy(finalPath);
-          }
-          return audioFile;
-        },
-      );
+      // Create file path using trackId/versionId structure
+      final cacheDir = await _getCacheDirectory();
+      final trackDir = Directory('${cacheDir.path}/${trackId.value}');
+      if (!await trackDir.exists()) {
+        await trackDir.create(recursive: true);
+      }
+
+      final ext = _extractExtension(audioFile.path) ?? '.mp3';
+      final filename = '${versionId.value}$ext';
+      final finalPath = '${trackDir.path}/$filename';
+
+      final destinationFile = await audioFile.copy(finalPath);
 
       // Verify file and calculate checksum (streaming)
       final fileSize = await destinationFile.length();
@@ -53,10 +45,15 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       final checksum = checksumDigest.toString();
 
       // Create unified document with both file and metadata information
+      // Guardar ruta relativa para persistencia entre sesiones
+      final relativePath = _getRelativePath(destinationFile.path);
+
       final unifiedDocument =
           CachedAudioDocumentUnified()
             ..trackId = trackId.value
-            ..filePath = destinationFile.path
+            ..versionId = versionId.value
+            ..relativePath =
+                relativePath // Guardar ruta relativa
             ..fileSizeBytes = fileSize
             ..cachedAt = DateTime.now()
             ..checksum = checksum
@@ -73,9 +70,9 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
         unifiedDocument,
       );
 
-      return storeResult.fold((failure) => Left(failure), (unifiedDoc) {
+      return storeResult.fold((failure) => Left(failure), (unifiedDoc) async {
         // Convert back to CachedAudio for return
-        final cachedAudio = unifiedDoc.toCachedAudio();
+        final cachedAudio = await unifiedDoc.toCachedAudio();
         return Right(cachedAudio);
       });
     } catch (e) {
@@ -96,11 +93,145 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     return ext;
   }
 
+  Future<Directory> _getCacheDirectory() async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final cacheDir = Directory('${appDir.path}/trackflow/audio');
+
+    if (!await cacheDir.exists()) {
+      await cacheDir.create(recursive: true);
+    }
+
+    return cacheDir;
+  }
+
+  /// Convert absolute path to relative path for persistence
+  String _getRelativePath(String absolutePath) {
+    try {
+      // Extraer la parte relativa después de '/trackflow/audio/'
+      final trackflowIndex = absolutePath.indexOf('/trackflow/audio/');
+      if (trackflowIndex != -1) {
+        return absolutePath.substring(
+          trackflowIndex + '/trackflow/audio/'.length,
+        );
+      }
+      // Fallback: devolver el path original si no se puede convertir
+      return absolutePath;
+    } catch (e) {
+      return absolutePath;
+    }
+  }
+
+  /// Validate and clean corrupted cache entries
+  /// This should be called at app startup
+  Future<Either<CacheFailure, int>> validateAndCleanCache() async {
+    try {
+      final docs = await _localDataSource.watchAllCachedAudios().first;
+      int cleanedCount = 0;
+
+      for (final doc in docs) {
+        try {
+          // Check if file exists at expected location
+          final exists = await doc.validateFileExists();
+
+          if (!exists) {
+            // File doesn't exist, remove from database
+            await _localDataSource.deleteAudioFile(doc.trackId);
+            cleanedCount++;
+          }
+        } catch (e) {
+          // Error validating file, remove from database
+          await _localDataSource.deleteAudioFile(doc.trackId);
+          cleanedCount++;
+        }
+      }
+
+      return Right(cleanedCount);
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to validate and clean cache: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
+  }
+
   @override
   Future<Either<CacheFailure, String>> getCachedAudioPath(
-    AudioTrackId trackId,
-  ) async {
-    return await _localDataSource.getCachedAudioPath(trackId.value);
+    AudioTrackId trackId, {
+    TrackVersionId? versionId,
+  }) async {
+    try {
+      // Generate expected file path based on new structure
+      final cacheDir = await _getCacheDirectory();
+      final trackDir = Directory('${cacheDir.path}/${trackId.value}');
+
+      if (!await trackDir.exists()) {
+        return Left(
+          StorageCacheFailure(
+            message: 'Track cache directory not found: ${trackId.value}',
+            type: StorageFailureType.fileNotFound,
+          ),
+        );
+      }
+
+      // Try different extensions
+      final extensions = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'];
+
+      if (versionId != null) {
+        // Look for specific version file
+        for (final ext in extensions) {
+          final filePath = '${trackDir.path}/${versionId.value}$ext';
+          final file = File(filePath);
+          if (await file.exists()) {
+            return Right(filePath);
+          }
+        }
+      } else {
+        // Look for any cached file in track directory (legacy compatibility)
+        try {
+          final files = await trackDir.list().toList();
+          for (final file in files) {
+            if (file is File) {
+              final fileName = file.path.split('/').last;
+              // Check if it's an audio file
+              for (final ext in extensions) {
+                if (fileName.endsWith(ext)) {
+                  return Right(file.path);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Directory might not exist or have permission issues
+          return Left(
+            StorageCacheFailure(
+              message: 'Failed to access cache directory: $e',
+              type: StorageFailureType.diskError,
+            ),
+          );
+        }
+      }
+
+      // File not found
+      final versionMsg =
+          versionId != null
+              ? 'version ${versionId.value}'
+              : 'track ${trackId.value}';
+      return Left(
+        StorageCacheFailure(
+          message: 'Cached audio file not found for $versionMsg',
+          type: StorageFailureType.fileNotFound,
+        ),
+      );
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to get cached audio path: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
   }
 
   @override
@@ -115,7 +246,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     final result = await _localDataSource.getCachedAudio(trackId.value);
     return result.fold(
       (failure) => Left(failure),
-      (doc) => Right(doc?.toCachedAudio()),
+      (doc) async => Right(doc != null ? await doc.toCachedAudio() : null),
     );
   }
 
@@ -141,9 +272,14 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
   @override
   Stream<List<CachedAudio>> watchAllCachedAudios() {
-    return _localDataSource.watchAllCachedAudios().map(
-      (docs) => docs.map((d) => d.toCachedAudio()).toList(),
-    );
+    return _localDataSource.watchAllCachedAudios().asyncMap((docs) async {
+      final cachedAudios = <CachedAudio>[];
+      for (final doc in docs) {
+        final cachedAudio = await doc.toCachedAudio();
+        cachedAudios.add(cachedAudio);
+      }
+      return cachedAudios;
+    });
   }
 
   @override

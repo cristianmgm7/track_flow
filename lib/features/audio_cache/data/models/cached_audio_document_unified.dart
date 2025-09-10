@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:isar/isar.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/entities/cache_metadata.dart';
 
@@ -11,10 +13,12 @@ class CachedAudioDocumentUnified {
   @Index(unique: true)
   late String trackId;
 
+  late String versionId;
+
   // ===============================================
   // ARCHIVO FÍSICO
   // ===============================================
-  late String filePath;
+  late String relativePath; // Ruta relativa al directorio de cache
   late int fileSizeBytes;
   late DateTime cachedAt;
   late String checksum;
@@ -40,7 +44,10 @@ class CachedAudioDocumentUnified {
   factory CachedAudioDocumentUnified.fromCachedAudio(CachedAudio audio) {
     return CachedAudioDocumentUnified()
       ..trackId = audio.trackId
-      ..filePath = audio.filePath
+      ..versionId = audio.versionId
+      ..relativePath = _getRelativePath(
+        audio.filePath,
+      ) // Convertir a ruta relativa
       ..fileSizeBytes = audio.fileSizeBytes
       ..cachedAt = audio.cachedAt
       ..checksum = audio.checksum
@@ -56,7 +63,9 @@ class CachedAudioDocumentUnified {
   factory CachedAudioDocumentUnified.fromCacheMetadata(CacheMetadata metadata) {
     return CachedAudioDocumentUnified()
       ..trackId = metadata.trackId
-      ..filePath =
+      ..versionId =
+          '' // Metadata legacy no tiene versionId
+      ..relativePath =
           '' // Will be set when file is downloaded
       ..fileSizeBytes = 0
       ..cachedAt = DateTime.now()
@@ -76,7 +85,10 @@ class CachedAudioDocumentUnified {
   ) {
     return CachedAudioDocumentUnified()
       ..trackId = audio.trackId
-      ..filePath = audio.filePath
+      ..versionId = audio.versionId
+      ..relativePath = _getRelativePath(
+        audio.filePath,
+      ) // Convertir a ruta relativa
       ..fileSizeBytes = audio.fileSizeBytes
       ..cachedAt = audio.cachedAt
       ..checksum = audio.checksum
@@ -89,16 +101,37 @@ class CachedAudioDocumentUnified {
       ..originalUrl = metadata.originalUrl;
   }
 
-  CachedAudio toCachedAudio() {
+  Future<CachedAudio> toCachedAudio() async {
+    // Reconstruir la ruta absoluta desde la relativa
+    final absolutePath = await getAbsolutePath();
+
     return CachedAudio(
       trackId: trackId,
-      filePath: filePath,
+      versionId: versionId,
+      filePath: absolutePath, // Ruta absoluta reconstruida
       fileSizeBytes: fileSizeBytes,
       cachedAt: cachedAt,
       checksum: checksum,
       quality: quality,
       status: status,
     );
+  }
+
+  /// Convert relative path to absolute path
+  Future<String> getAbsolutePath() async {
+    final cacheDir = await _getCacheDirectory();
+    return '${cacheDir.path}/$relativePath';
+  }
+
+  /// Validate if the cached file still exists
+  Future<bool> validateFileExists() async {
+    try {
+      final absolutePath = await getAbsolutePath();
+      final file = File(absolutePath);
+      return await file.exists();
+    } catch (e) {
+      return false;
+    }
   }
 
   CacheMetadata toCacheMetadata() {
@@ -159,6 +192,35 @@ class CachedAudioDocumentUnified {
   CachedAudioDocumentUnified markAsCorrupted() {
     status = CacheStatus.corrupted;
     return this;
+  }
+}
+
+/// Get the cache directory for relative path resolution
+Future<Directory> _getCacheDirectory() async {
+  final appDir = await getApplicationDocumentsDirectory();
+  final cacheDir = Directory('${appDir.path}/trackflow/audio');
+
+  if (!await cacheDir.exists()) {
+    await cacheDir.create(recursive: true);
+  }
+
+  return cacheDir;
+}
+
+/// Convert absolute path to relative path
+String _getRelativePath(String absolutePath) {
+  try {
+    // Extraer la parte relativa después de '/trackflow/audio/'
+    final trackflowIndex = absolutePath.indexOf('/trackflow/audio/');
+    if (trackflowIndex != -1) {
+      return absolutePath.substring(
+        trackflowIndex + '/trackflow/audio/'.length,
+      );
+    }
+    // Fallback: devolver el path original si no se puede convertir
+    return absolutePath;
+  } catch (e) {
+    return absolutePath;
   }
 }
 
