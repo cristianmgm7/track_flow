@@ -12,27 +12,13 @@ import '../widgets/versions_list.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_event.dart';
 import '../blocs/track_versions/track_versions_state.dart';
-import '../../../ui/modals/app_form_sheet.dart';
-import '../widgets/upload_version_form.dart';
-import '../../../ui/menus/app_popup_menu.dart';
-import '../../../ui/dialogs/app_dialog.dart';
-import '../../../ui/forms/app_form_field.dart';
+import '../cubit/track_detail_cubit.dart';
 import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
-import '../cubit/track_detail_cubit.dart';
-
-/// Arguments for the track detail screen
-class TrackDetailScreenArgs {
-  final ProjectId projectId;
-  final AudioTrack track;
-  final TrackVersionId versionId; // selected/active version
-
-  TrackDetailScreenArgs({
-    required this.projectId,
-    required this.track,
-    required this.versionId,
-  });
-}
+import '../components/version_header_component.dart';
+import '../widgets/rename_version_dialog.dart';
+import '../widgets/delete_version_dialog.dart';
+import '../actions/upload_version_actions.dart';
 
 class TrackDetailScreen extends StatefulWidget {
   final ProjectId projectId;
@@ -180,177 +166,63 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
             ],
           ),
           SizedBox(height: Dimensions.space8),
-          _VersionHeader(trackId: widget.track.id),
+          VersionHeaderComponent(
+            trackId: widget.track.id,
+            onRenamePressed: _showRenameDialog,
+            onDeletePressed: _showDeleteConfirmation,
+          ),
         ],
       ),
     );
   }
 
   void _showUploadVersionDialog() {
-    showAppFormSheet(
+    UploadVersionActions.showUploadVersionDialog(
       context: context,
-      title: 'Upload Version',
-      child: UploadVersionForm(
-        trackId: widget.track.id,
-        projectId: widget.projectId,
-      ),
-      // Keep BLoCs available inside the sheet
-      reprovideBlocs: [context.read<TrackVersionsBloc>()],
-    ).then((result) {
-      if (result is UploadVersionResult) {
-        context.read<TrackVersionsBloc>().add(
-          AddTrackVersionRequested(
-            trackId: widget.track.id,
-            file: result.file,
-            label: result.label,
-          ),
-        );
-      }
-    });
-  }
-}
-
-class _VersionHeader extends StatelessWidget {
-  final AudioTrackId trackId;
-  const _VersionHeader({required this.trackId});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return BlocBuilder<TrackDetailCubit, TrackDetailState>(
-      builder: (context, cubitState) {
-        return BlocBuilder<TrackVersionsBloc, TrackVersionsState>(
-          builder: (context, blocState) {
-            if (blocState is! TrackVersionsLoaded) {
-              return const SizedBox.shrink();
-            }
-            final activeId =
-                cubitState.activeVersionId ?? blocState.activeVersionId;
-            final active =
-                activeId != null
-                    ? blocState.versions.firstWhere(
-                      (v) => v.id == activeId,
-                      orElse: () => blocState.versions.first,
-                    )
-                    : blocState.versions.first;
-
-            final label = active.label ?? 'v${active.versionNumber}';
-            final isActive = activeId == active.id;
-
-            return Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      if (isActive)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Icon(
-                            Icons.check_circle,
-                            size: 18,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      Text(
-                        label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                AppPopupMenuButton<String>(
-                  tooltip: 'Version actions',
-                  items: const [
-                    AppPopupMenuItem(
-                      value: 'set_active',
-                      label: 'Set as active',
-                    ),
-                    AppPopupMenuItem(value: 'rename', label: 'Rename label'),
-                    AppPopupMenuItem(value: 'delete', label: 'Delete version'),
-                  ],
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'set_active':
-                        // The cubit is provided by the router and will be updated
-                        context.read<TrackVersionsBloc>().add(
-                          SetActiveTrackVersionRequested(trackId, active.id),
-                        );
-                        break;
-                      case 'rename':
-                        _showRenameDialog(context, active.id, active.label);
-                        break;
-                      case 'delete':
-                        _showDeleteConfirmation(context, active.id);
-                        break;
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
+      trackId: widget.track.id,
+      projectId: widget.projectId,
     );
   }
 
-  void _showRenameDialog(
-    BuildContext context,
-    TrackVersionId versionId,
-    String? currentLabel,
-  ) {
-    final controller = TextEditingController(text: currentLabel);
+  void _showRenameDialog() {
+    // Get current active version info from the state
+    final cubitState = context.read<TrackDetailCubit>().state;
+    final blocState = context.read<TrackVersionsBloc>().state;
 
-    showDialog(
-      context: context,
-      builder:
-          (context) => AppDialog(
-            title: 'Rename Version',
-            content: 'Enter a new label for this version',
-            customContent: AppFormField(
-              label: 'Version Label',
-              controller: controller,
-              hint: 'Version label',
-            ),
-            primaryButtonText: 'Save',
-            secondaryButtonText: 'Cancel',
-            onPrimaryPressed: () {
-              final newLabel =
-                  controller.text.trim().isEmpty
-                      ? null
-                      : controller.text.trim();
-              context.read<TrackVersionsBloc>().add(
-                RenameTrackVersionRequested(
-                  versionId: versionId,
-                  newLabel: newLabel,
-                ),
-              );
-              Navigator.of(context).pop();
-            },
-          ),
-    );
+    if (blocState is TrackVersionsLoaded) {
+      final activeId = cubitState.activeVersionId ?? blocState.activeVersionId;
+      final active =
+          activeId != null
+              ? blocState.versions.firstWhere(
+                (v) => v.id == activeId,
+                orElse: () => blocState.versions.first,
+              )
+              : blocState.versions.first;
+
+      RenameVersionDialog.show(
+        context,
+        versionId: active.id,
+        currentLabel: active.label,
+      );
+    }
   }
 
-  void _showDeleteConfirmation(BuildContext context, TrackVersionId versionId) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AppDialog(
-            title: 'Delete Version',
-            content:
-                'Are you sure you want to delete this version? This action cannot be undone.',
-            primaryButtonText: 'Delete',
-            secondaryButtonText: 'Cancel',
-            isDestructive: true,
-            onPrimaryPressed: () {
-              context.read<TrackVersionsBloc>().add(
-                DeleteTrackVersionRequested(versionId),
-              );
-              Navigator.of(context).pop();
-            },
-          ),
-    );
+  void _showDeleteConfirmation() {
+    // Get current active version info from the state
+    final cubitState = context.read<TrackDetailCubit>().state;
+    final blocState = context.read<TrackVersionsBloc>().state;
+
+    if (blocState is TrackVersionsLoaded) {
+      final activeId = cubitState.activeVersionId ?? blocState.activeVersionId;
+      final active =
+          activeId != null
+              ? blocState.versions.firstWhere(
+                (v) => v.id == activeId,
+                orElse: () => blocState.versions.first,
+              )
+              : blocState.versions.first;
+
+      DeleteVersionDialog.show(context, versionId: active.id);
+    }
   }
 }
