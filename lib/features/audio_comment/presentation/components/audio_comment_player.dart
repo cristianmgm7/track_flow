@@ -70,7 +70,7 @@ class AudioCommentPlayer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                _PlayPause(track: track),
+                _PlayPause(track: track, versionId: versionId),
               ],
             ),
           ],
@@ -88,7 +88,8 @@ class AudioCommentPlayer extends StatelessWidget {
 
 class _PlayPause extends StatelessWidget {
   final AudioTrack track;
-  const _PlayPause({required this.track});
+  final TrackVersionId? versionId;
+  const _PlayPause({required this.track, this.versionId});
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +110,7 @@ class _PlayPause extends StatelessWidget {
                   : () {
                     final audioPlayerBloc = context.read<AudioPlayerBloc>();
                     if (isDifferentTrack) {
-                      audioPlayerBloc.add(PlayAudioRequested(track.id));
+                      audioPlayerBloc.add(PlayVersionRequested(versionId!));
                       return;
                     }
                     if (isPlaying) {

@@ -192,9 +192,9 @@ import 'package:trackflow/features/audio_player/domain/usecases/initialize_audio
     as _i20;
 import 'package:trackflow/features/audio_player/domain/usecases/pause_audio_usecase.dart'
     as _i37;
-import 'package:trackflow/features/audio_player/domain/usecases/play_audio_usecase.dart'
-    as _i199;
 import 'package:trackflow/features/audio_player/domain/usecases/play_playlist_usecase.dart'
+    as _i199;
+import 'package:trackflow/features/audio_player/domain/usecases/play_version_usecase.dart'
     as _i200;
 import 'package:trackflow/features/audio_player/domain/usecases/restore_playback_state_usecase.dart'
     as _i204;
@@ -1092,17 +1092,17 @@ extension GetItInjectableX on _i1.GetIt {
           joinProjectWithId: gh<_i196.JoinProjectWithIdUseCase>(),
           authRepository: gh<_i121.AuthRepository>(),
         ));
-    gh.factory<_i199.PlayAudioUseCase>(() => _i199.PlayAudioUseCase(
-          audioTrackRepository: gh<_i184.AudioTrackRepository>(),
-          audioStorageRepository: gh<_i116.AudioStorageRepository>(),
-          trackVersionRepository: gh<_i168.TrackVersionRepository>(),
-          playbackService: gh<_i5.AudioPlaybackService>(),
-        ));
-    gh.factory<_i200.PlayPlaylistUseCase>(() => _i200.PlayPlaylistUseCase(
+    gh.factory<_i199.PlayPlaylistUseCase>(() => _i199.PlayPlaylistUseCase(
           playlistRepository: gh<_i163.PlaylistRepository>(),
           audioTrackRepository: gh<_i184.AudioTrackRepository>(),
           playbackService: gh<_i5.AudioPlaybackService>(),
           audioStorageRepository: gh<_i116.AudioStorageRepository>(),
+        ));
+    gh.factory<_i200.PlayVersionUseCase>(() => _i200.PlayVersionUseCase(
+          audioTrackRepository: gh<_i184.AudioTrackRepository>(),
+          audioStorageRepository: gh<_i116.AudioStorageRepository>(),
+          trackVersionRepository: gh<_i168.TrackVersionRepository>(),
+          playbackService: gh<_i5.AudioPlaybackService>(),
         ));
     gh.lazySingleton<_i201.ProjectCommentService>(
         () => _i201.ProjectCommentService(gh<_i182.AudioCommentRepository>()));
@@ -1240,8 +1240,9 @@ extension GetItInjectableX on _i1.GetIt {
             ));
     gh.factory<_i225.AudioPlayerService>(() => _i225.AudioPlayerService(
           initializeAudioPlayerUseCase: gh<_i20.InitializeAudioPlayerUseCase>(),
-          playAudioUseCase: gh<_i199.PlayAudioUseCase>(),
-          playPlaylistUseCase: gh<_i200.PlayPlaylistUseCase>(),
+          playVersionUseCase: gh<_i200.PlayVersionUseCase>(),
+          playPlaylistUseCase: gh<_i199.PlayPlaylistUseCase>(),
+          audioTrackRepository: gh<_i184.AudioTrackRepository>(),
           pauseAudioUseCase: gh<_i37.PauseAudioUseCase>(),
           resumeAudioUseCase: gh<_i48.ResumeAudioUseCase>(),
           stopAudioUseCase: gh<_i56.StopAudioUseCase>(),

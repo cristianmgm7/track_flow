@@ -67,6 +67,11 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
             context.read<TrackDetailCubit>().setActiveVersion(
               state.activeVersionId!,
             );
+            // Auto-play the version specified in the route, or the active version if none specified
+            final versionToPlay = widget.versionId;
+            context.read<AudioPlayerBloc>().add(
+              PlayVersionRequested(versionToPlay),
+            );
           }
         }
       },
@@ -150,9 +155,9 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
                   child: VersionsList(
                     trackId: widget.track.id,
                     onVersionSelected: (versionId) {
-                      // Stop current playback when switching versions
+                      // Play the new version directly (seamless transition)
                       context.read<AudioPlayerBloc>().add(
-                        const StopAudioRequested(),
+                        PlayVersionRequested(versionId),
                       );
                       // Update cubit immediately for UI responsiveness
                       context.read<TrackDetailCubit>().setActiveVersion(
