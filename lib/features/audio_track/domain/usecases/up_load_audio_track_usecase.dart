@@ -62,8 +62,9 @@ class UploadAudioTrackUseCase {
 
       // 2. OBTENER USUARIO Y PROYECTO
       final userId = await sessionStorage.getUserId();
-      if (userId == null)
+      if (userId == null) {
         return Left(AuthenticationFailure('User not authenticated'));
+      }
 
       final projectResult = await projectsRepository.getProjectById(
         params.projectId,
@@ -91,54 +92,33 @@ class UploadAudioTrackUseCase {
       // Extraer el track creado del resultado
       final track = permissionCheck.getOrElse(() => throw Exception());
 
-      // 4. SUBIR ARCHIVO DE AUDIO (por ahora usamos cache local)
-      final cacheResult = await audioStorageRepository.storeAudio(
-        track.id,
-        params.file,
-        referenceId: 'upload_${track.id.value}',
-        canDelete: false,
-      );
-      if (cacheResult.isLeft()) {
-        // Rollback: eliminar track si falla el cache
-        await projectTrackService.deleteTrack(
-          project: project,
-          requester: UserId.fromUniqueString(userId),
-          trackId: track.id,
-        );
-        return Left(CacheFailure('Failed to cache audio file'));
-      }
-
-      // Obtener la ruta del archivo en cache para la versión
-      final cachedAudio = cacheResult.getOrElse(() => throw Exception());
-      final cachedFile = File(cachedAudio.filePath);
-
-      // 5. CREAR PRIMERA VERSIÓN usando archivo del cache
-      final versionResult = await addTrackVersionUseCase.call(
+      // 4. CREAR PRIMERA VERSIÓN (antes de cachear)
+      final addVersionResult = await addTrackVersionUseCase(
         AddTrackVersionParams(
           trackId: track.id,
-          file: cachedFile, // Usar archivo del cache en lugar del original
-          label: 'v1',
-          duration: duration, // Pass the already extracted duration
+          file: params.file,
+          label: 'Initial version',
+          duration: duration,
         ),
       );
-      if (versionResult.isLeft()) {
-        // Rollback completo
-        await audioStorageRepository.deleteAudioFile(track.id);
+
+      if (addVersionResult.isLeft()) {
+        // Rollback: eliminar track si falla la versión
         await projectTrackService.deleteTrack(
           project: project,
           requester: UserId.fromUniqueString(userId),
           trackId: track.id,
         );
-        return versionResult.map((_) => unit);
+        return addVersionResult.map((_) => unit);
       }
-      final version = versionResult.getOrElse(() => throw Exception());
 
-      // 6. ACTUALIZAR TRACK CON LA VERSIÓN ACTIVA (directamente via repository)
+      final version = addVersionResult.getOrElse(() => throw Exception());
+
+      // 5. ACTUALIZAR TRACK CON LA VERSIÓN ACTIVA
       final updateActiveVersionResult = await audioTrackRepository
           .setActiveVersion(trackId: track.id, versionId: version.id);
       if (updateActiveVersionResult.isLeft()) {
-        // Rollback completo
-        await audioStorageRepository.deleteAudioFile(track.id);
+        // Rollback: eliminar track si falla actualizar versión activa
         await projectTrackService.deleteTrack(
           project: project,
           requester: UserId.fromUniqueString(userId),
@@ -152,16 +132,15 @@ class UploadAudioTrackUseCase {
         );
       }
 
-      // 7. GENERAR WAVEFORM usando archivo del cache (puede fallar sin afectar el éxito)
+      // 6. GENERAR WAVEFORM usando archivo original (maneja cache internamente)
       try {
-        // Usar el archivo del cache para generar el waveform
-        final bytes = await cachedFile.readAsBytes();
+        final bytes = await params.file.readAsBytes();
         final audioSourceHash = crypto.sha1.convert(bytes).toString();
 
         await getOrGenerateWaveform(
           GetOrGenerateWaveformParams(
-            versionId: version.id, // ✅ Use versionId as primary identifier
-            audioFilePath: cachedFile.path, // ✅ Usar archivo del cache
+            versionId: version.id,
+            audioFilePath: params.file.path,
             audioSourceHash: audioSourceHash,
             algorithmVersion: 1,
             targetSampleCount: null,
@@ -169,8 +148,7 @@ class UploadAudioTrackUseCase {
           ),
         );
       } catch (e) {
-        // Log error pero no fallar la subida
-        print('Waveform generation failed: $e');
+        // Waveform generation is best-effort, don't fail the entire operation
       }
 
       return Right(unit);

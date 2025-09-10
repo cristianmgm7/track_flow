@@ -14,10 +14,19 @@ class WatchTrackCacheStatusUseCase {
 
   WatchTrackCacheStatusUseCase(this._audioStorageRepository);
 
-  /// Watch cache status changes for a track
-  Stream<Either<CacheFailure, CacheStatus>> call(String trackId) {
+  /// Watch cache status changes for a track or specific version
+  Stream<Either<CacheFailure, CacheStatus>> call(
+    String trackId, {
+    String? versionId,
+  }) {
     return _audioStorageRepository
-        .watchTrackCacheStatus(AudioTrackId.fromUniqueString(trackId))
+        .watchTrackCacheStatus(
+          AudioTrackId.fromUniqueString(trackId),
+          versionId:
+              versionId != null
+                  ? TrackVersionId.fromUniqueString(versionId)
+                  : null,
+        )
         .map<Either<CacheFailure, CacheStatus>>(
           (exists) => Right<CacheFailure, CacheStatus>(
             exists ? CacheStatus.cached : CacheStatus.notCached,

@@ -67,8 +67,11 @@ class CacheTrackUseCase {
       );
 
       return await result.fold((failure) => Left(failure), (filePath) async {
+        // TODO: Fix - storeAudio requires versionId parameter
+        // This needs to be updated to pass proper versionId
         final storeResult = await _audioStorageRepository.storeAudio(
           AudioTrackId.fromUniqueString(trackId),
+          TrackVersionId(), // Temporary - needs proper versionId
           File(filePath),
         );
         return storeResult.fold(

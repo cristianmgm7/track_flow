@@ -162,6 +162,31 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     TrackVersionId? versionId,
   }) async {
     try {
+      // Try to get from database first
+      final result = await _localDataSource.getCachedAudioPath(
+        trackId.value,
+        versionId: versionId?.value,
+      );
+
+      return result.fold((failure) {
+        // Fallback to file system search for legacy compatibility
+        return _getCachedAudioPathFromFileSystem(trackId, versionId);
+      }, (path) => Right(path));
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to get cached audio path: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
+  }
+
+  Future<Either<CacheFailure, String>> _getCachedAudioPathFromFileSystem(
+    AudioTrackId trackId,
+    TrackVersionId? versionId,
+  ) async {
+    try {
       // Generate expected file path based on new structure
       final cacheDir = await _getCacheDirectory();
       final trackDir = Directory('${cacheDir.path}/${trackId.value}');
@@ -239,6 +264,17 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     return await _localDataSource.audioExists(trackId.value);
   }
 
+  // New method to check if specific version exists
+  Future<Either<CacheFailure, bool>> audioVersionExists(
+    AudioTrackId trackId,
+    TrackVersionId versionId,
+  ) async {
+    return await _localDataSource.audioExists(
+      trackId.value,
+      versionId: versionId.value,
+    );
+  }
+
   @override
   Future<Either<CacheFailure, CachedAudio?>> getCachedAudio(
     AudioTrackId trackId,
@@ -250,11 +286,37 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     );
   }
 
+  // New method to get cached audio by version
+  Future<Either<CacheFailure, CachedAudio?>> getCachedAudioByVersion(
+    AudioTrackId trackId,
+    TrackVersionId versionId,
+  ) async {
+    final result = await _localDataSource.getCachedAudio(
+      trackId.value,
+      versionId: versionId.value,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (doc) async => Right(doc != null ? await doc.toCachedAudio() : null),
+    );
+  }
+
   @override
   Future<Either<CacheFailure, Unit>> deleteAudioFile(
     AudioTrackId trackId,
   ) async {
     return await _localDataSource.deleteAudioFile(trackId.value);
+  }
+
+  // New method to delete specific version
+  Future<Either<CacheFailure, Unit>> deleteAudioVersionFile(
+    AudioTrackId trackId,
+    TrackVersionId versionId,
+  ) async {
+    return await _localDataSource.deleteAudioFile(
+      trackId.value,
+      versionId: versionId.value,
+    );
   }
 
   // Removed batch operations to simplify repository
@@ -325,8 +387,14 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   @override
-  Stream<bool> watchTrackCacheStatus(AudioTrackId trackId) {
-    return _localDataSource.watchTrackCacheStatus(trackId.value);
+  Stream<bool> watchTrackCacheStatus(
+    AudioTrackId trackId, {
+    TrackVersionId? versionId,
+  }) {
+    return _localDataSource.watchTrackCacheStatus(
+      trackId.value,
+      versionId: versionId?.value,
+    );
   }
 
   // No longer needed; extension is handled at download time

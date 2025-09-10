@@ -49,9 +49,10 @@ class GetCachedTrackPathRequested extends TrackCacheEvent {
 
 class WatchTrackCacheStatusRequested extends TrackCacheEvent {
   final AudioTrackId trackId;
+  final TrackVersionId? versionId;
 
-  const WatchTrackCacheStatusRequested(this.trackId);
+  const WatchTrackCacheStatusRequested(this.trackId, {this.versionId});
 
   @override
-  List<Object?> get props => [trackId];
+  List<Object?> get props => [trackId, versionId];
 }

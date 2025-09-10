@@ -27,7 +27,10 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     on<GetCachedTrackPathRequested>(_onGetCachedTrackPathRequested);
     on<WatchTrackCacheStatusRequested>((event, emit) async {
       await emit.onEach(
-        _watchTrackCacheStatusUseCase(event.trackId.value),
+        _watchTrackCacheStatusUseCase(
+          event.trackId.value,
+          versionId: event.versionId?.value,
+        ),
         onData: (either) {
           either.fold(
             (failure) => emit(

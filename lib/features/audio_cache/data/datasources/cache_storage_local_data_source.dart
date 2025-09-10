@@ -15,14 +15,24 @@ abstract class CacheStorageLocalDataSource {
   );
 
   Future<Either<CacheFailure, CachedAudioDocumentUnified?>> getCachedAudio(
-    String trackId,
-  );
+    String trackId, {
+    String? versionId,
+  });
 
-  Future<Either<CacheFailure, String>> getCachedAudioPath(String trackId);
+  Future<Either<CacheFailure, String>> getCachedAudioPath(
+    String trackId, {
+    String? versionId,
+  });
 
-  Future<Either<CacheFailure, bool>> audioExists(String trackId);
+  Future<Either<CacheFailure, bool>> audioExists(
+    String trackId, {
+    String? versionId,
+  });
 
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId);
+  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+    String trackId, {
+    String? versionId,
+  });
 
   CacheKey generateCacheKey(String trackId, String audioUrl);
 
@@ -31,8 +41,8 @@ abstract class CacheStorageLocalDataSource {
   Future<Either<CacheFailure, CachedAudioDocumentUnified>>
   storeUnifiedCachedAudio(CachedAudioDocumentUnified unifiedDoc);
 
-  /// Watch cache status for a single track
-  Stream<bool> watchTrackCacheStatus(String trackId);
+  /// Watch cache status for a single track or specific version
+  Stream<bool> watchTrackCacheStatus(String trackId, {String? versionId});
 
   /// Streams used by cache_management; kept temporarily
   Stream<List<CachedAudioDocumentUnified>> watchAllCachedAudios();
@@ -66,14 +76,19 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
 
   @override
   Future<Either<CacheFailure, CachedAudioDocumentUnified?>> getCachedAudio(
-    String trackId,
-  ) async {
+    String trackId, {
+    String? versionId,
+  }) async {
     try {
+      final query = _isar.cachedAudioDocumentUnifieds.filter().trackIdEqualTo(
+        trackId,
+      );
+
+      // If versionId is provided, filter by it too
       final unifiedDoc =
-          await _isar.cachedAudioDocumentUnifieds
-              .filter()
-              .trackIdEqualTo(trackId)
-              .findFirst();
+          versionId != null
+              ? await query.versionIdEqualTo(versionId).findFirst()
+              : await query.findFirst();
 
       if (unifiedDoc == null) {
         return const Right(null);
@@ -98,25 +113,33 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
 
   @override
   Future<Either<CacheFailure, String>> getCachedAudioPath(
-    String trackId,
-  ) async {
+    String trackId, {
+    String? versionId,
+  }) async {
     try {
+      final query = _isar.cachedAudioDocumentUnifieds.filter().trackIdEqualTo(
+        trackId,
+      );
+
+      // If versionId is provided, filter by it too
       final unifiedDoc =
-          await _isar.cachedAudioDocumentUnifieds
-              .filter()
-              .trackIdEqualTo(trackId)
-              .findFirst();
+          versionId != null
+              ? await query.versionIdEqualTo(versionId).findFirst()
+              : await query.findFirst();
 
       if (unifiedDoc == null) {
         return Left(
           StorageCacheFailure(
-            message: 'Cached audio not found',
+            message:
+                'Cached audio not found for track $trackId${versionId != null ? ' and version $versionId' : ''}',
             type: StorageFailureType.fileNotFound,
           ),
         );
       }
 
-      return Right(unifiedDoc.filePath);
+      // Return ABSOLUTE path reconstructed from relative
+      final absolutePath = await unifiedDoc.getAbsolutePath();
+      return Right(absolutePath);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -128,19 +151,27 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, bool>> audioExists(String trackId) async {
+  Future<Either<CacheFailure, bool>> audioExists(
+    String trackId, {
+    String? versionId,
+  }) async {
     try {
+      final query = _isar.cachedAudioDocumentUnifieds.filter().trackIdEqualTo(
+        trackId,
+      );
+
+      // If versionId is provided, filter by it too
       final unifiedDoc =
-          await _isar.cachedAudioDocumentUnifieds
-              .filter()
-              .trackIdEqualTo(trackId)
-              .findFirst();
+          versionId != null
+              ? await query.versionIdEqualTo(versionId).findFirst()
+              : await query.findFirst();
 
       if (unifiedDoc == null) {
         return const Right(false);
       }
 
-      final file = File(unifiedDoc.filePath);
+      final absolutePath = await unifiedDoc.getAbsolutePath();
+      final file = File(absolutePath);
       final exists = await file.exists();
       return Right(exists);
     } catch (e) {
@@ -154,26 +185,51 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId) async {
+  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+    String trackId, {
+    String? versionId,
+  }) async {
     try {
-      // Delete DB entries for this track
-      final unifiedDoc =
-          await _isar.cachedAudioDocumentUnifieds
-              .filter()
-              .trackIdEqualTo(trackId)
-              .findFirst();
+      if (versionId != null) {
+        // Delete specific version
+        final unifiedDoc =
+            await _isar.cachedAudioDocumentUnifieds
+                .filter()
+                .trackIdEqualTo(trackId)
+                .versionIdEqualTo(versionId)
+                .findFirst();
 
-      if (unifiedDoc != null) {
-        await _isar.writeTxn(() async {
-          await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
-        });
-      }
+        if (unifiedDoc != null) {
+          await _isar.writeTxn(() async {
+            await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
+          });
 
-      // Delete entire track cache folder recursively: Documents/trackflow/audio/{trackId}/
-      final cacheRoot = await _getCacheDirectory();
-      final trackDir = Directory('${cacheRoot.path}/$trackId');
-      if (await trackDir.exists()) {
-        await trackDir.delete(recursive: true);
+          // Delete the specific version file (ABSOLUTE path)
+          final absolutePath = await unifiedDoc.getAbsolutePath();
+          final file = File(absolutePath);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        }
+      } else {
+        // Delete entire track cache folder recursively: Documents/trackflow/audio/{trackId}/
+        final unifiedDoc =
+            await _isar.cachedAudioDocumentUnifieds
+                .filter()
+                .trackIdEqualTo(trackId)
+                .findFirst();
+
+        if (unifiedDoc != null) {
+          await _isar.writeTxn(() async {
+            await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
+          });
+        }
+
+        final cacheRoot = await _getCacheDirectory();
+        final trackDir = Directory('${cacheRoot.path}/$trackId');
+        if (await trackDir.exists()) {
+          await trackDir.delete(recursive: true);
+        }
       }
 
       return const Right(unit);
@@ -244,22 +300,29 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     }
   }
 
-  /// Watch cache status for a single track
+  /// Watch cache status for a single track or specific version
   @override
-  Stream<bool> watchTrackCacheStatus(String trackId) {
-    return _isar.cachedAudioDocumentUnifieds
-        .filter()
-        .trackIdEqualTo(trackId)
-        .watch(fireImmediately: true)
-        .asyncMap((docs) async {
-          if (docs.isEmpty) return false;
-          final doc = docs.first;
-          try {
-            return await File(doc.filePath).exists();
-          } catch (_) {
-            return false;
-          }
-        });
+  Stream<bool> watchTrackCacheStatus(String trackId, {String? versionId}) {
+    final query = _isar.cachedAudioDocumentUnifieds.filter().trackIdEqualTo(
+      trackId,
+    );
+
+    // If versionId is provided, filter by it too
+    final stream =
+        versionId != null
+            ? query.versionIdEqualTo(versionId).watch(fireImmediately: true)
+            : query.watch(fireImmediately: true);
+
+    return stream.asyncMap((docs) async {
+      if (docs.isEmpty) return false;
+      final doc = docs.first;
+      try {
+        final absolutePath = await doc.getAbsolutePath();
+        return await File(absolutePath).exists();
+      } catch (_) {
+        return false;
+      }
+    });
   }
 
   Future<Directory> _getCacheDirectory() async {

@@ -69,34 +69,37 @@ class AddTrackVersionUseCase {
         duration = durationEither.getOrElse(() => Duration.zero);
       }
 
-      // 3) Cache audio locally under our managed cache for this track
-      final cacheEither = await audioStorageRepository.storeAudio(
-        params.trackId,
-        params.file,
-        referenceId: 'version_add_${DateTime.now().millisecondsSinceEpoch}',
-        canDelete: false,
-      );
-      if (cacheEither.isLeft()) {
-        final failure = cacheEither.fold((l) => l, (r) => null);
-        return Left(CacheFailure(failure?.message ?? 'Failed to cache audio'));
-      }
-      final cached = cacheEither.getOrElse(() => throw Exception());
-      final cachedFile = File(cached.filePath);
-
-      // 4) Create version locally (offline-first) with cached file
+      // 3) Create version first to get versionId, then cache with correct versionId
       final addEither = await trackVersionRepository.addVersion(
         trackId: params.trackId,
-        file: cachedFile,
+        file: params.file,
         label: params.label,
         duration: duration,
         createdBy: UserId.fromUniqueString(userId),
       );
+
       if (addEither.isLeft()) {
-        // Rollback cache only on hard failure to keep consistency
-        await audioStorageRepository.deleteAudioFile(params.trackId);
         return addEither;
       }
+
       final version = addEither.getOrElse(() => throw Exception());
+
+      // 4) Cache audio locally using the actual versionId from created version
+      final cacheEither = await audioStorageRepository.storeAudio(
+        params.trackId,
+        version.id, // Use the actual versionId from the created version
+        params.file,
+      );
+
+      if (cacheEither.isLeft()) {
+        // Rollback version creation if cache fails
+        await trackVersionRepository.deleteVersion(version.id);
+        final failure = cacheEither.fold((l) => l, (r) => null);
+        return Left(CacheFailure(failure?.message ?? 'Failed to cache audio'));
+      }
+
+      final cached = cacheEither.getOrElse(() => throw Exception());
+      final cachedFile = File(cached.filePath);
 
       // 5) Fire-and-forget waveform generation using cached file
       () async {
