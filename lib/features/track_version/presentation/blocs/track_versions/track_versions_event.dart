@@ -9,10 +9,11 @@ abstract class TrackVersionsEvent extends Equatable {
 
 class WatchTrackVersionsRequested extends TrackVersionsEvent {
   final AudioTrackId trackId;
-  WatchTrackVersionsRequested(this.trackId);
+  final TrackVersionId? activeVersionId;
+  WatchTrackVersionsRequested(this.trackId, [this.activeVersionId]);
 
   @override
-  List<Object?> get props => [trackId];
+  List<Object?> get props => [trackId, activeVersionId];
 }
 
 class AddTrackVersionRequested extends TrackVersionsEvent {
@@ -61,4 +62,13 @@ class DeleteTrackVersionRequested extends TrackVersionsEvent {
 
   @override
   List<Object?> get props => [versionId];
+}
+
+class UpdateActiveVersionRequested extends TrackVersionsEvent {
+  final TrackVersionId? activeVersionId;
+
+  UpdateActiveVersionRequested(this.activeVersionId);
+
+  @override
+  List<Object?> get props => [activeVersionId];
 }

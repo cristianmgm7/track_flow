@@ -28,6 +28,7 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
     on<AddTrackVersionRequested>(_onAddVersionRequested);
     on<RenameTrackVersionRequested>(_onRenameVersionRequested);
     on<DeleteTrackVersionRequested>(_onDeleteVersionRequested);
+    on<UpdateActiveVersionRequested>(_onUpdateActiveVersionRequested);
   }
 
   Future<void> _onWatchRequested(
@@ -36,14 +37,20 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
   ) async {
     emit(const TrackVersionsLoading());
     await emit.onEach(
-      _watchVersions(event.trackId),
+      _watchVersions.call(event.trackId),
       onData: (either) {
         either.fold((failure) => emit(TrackVersionsError(failure.message)), (
           versions,
         ) {
-          final active = versions.isEmpty ? null : versions.first.id;
+          // Use the track's activeVersionId if provided, otherwise use the first version
+          final activeVersionId =
+              event.activeVersionId ??
+              (versions.isEmpty ? null : versions.first.id);
           emit(
-            TrackVersionsLoaded(versions: versions, activeVersionId: active),
+            TrackVersionsLoaded(
+              versions: versions,
+              activeVersionId: activeVersionId,
+            ),
           );
         });
       },
@@ -102,5 +109,20 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
       DeleteTrackVersionParams(versionId: event.versionId),
     );
     result.fold((failure) => emit(TrackVersionsError(failure.message)), (_) {});
+  }
+
+  Future<void> _onUpdateActiveVersionRequested(
+    UpdateActiveVersionRequested event,
+    Emitter<TrackVersionsState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is TrackVersionsLoaded) {
+      emit(
+        TrackVersionsLoaded(
+          versions: currentState.versions,
+          activeVersionId: event.activeVersionId,
+        ),
+      );
+    }
   }
 }

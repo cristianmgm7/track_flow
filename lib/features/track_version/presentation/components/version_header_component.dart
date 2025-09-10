@@ -32,6 +32,10 @@ class VersionHeaderComponent extends StatelessWidget {
             }
             final activeId =
                 cubitState.activeVersionId ?? blocState.activeVersionId;
+            if (blocState.versions.isEmpty) {
+              return const SizedBox.shrink();
+            }
+
             final active =
                 activeId != null
                     ? blocState.versions.firstWhere(

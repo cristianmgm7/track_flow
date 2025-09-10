@@ -42,17 +42,11 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     super.initState();
     // Load versions for this track
     context.read<TrackVersionsBloc>().add(
-      WatchTrackVersionsRequested(widget.track.id),
+      WatchTrackVersionsRequested(
+        widget.track.id,
+        widget.track.activeVersionId,
+      ),
     );
-  }
-
-  @override
-  void didUpdateWidget(covariant TrackDetailScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.track.id != widget.track.id) {
-      // Force header and comments section to rebuild with the new track
-      setState(() {});
-    }
   }
 
   @override
@@ -194,7 +188,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     final cubitState = context.read<TrackDetailCubit>().state;
     final blocState = context.read<TrackVersionsBloc>().state;
 
-    if (blocState is TrackVersionsLoaded) {
+    if (blocState is TrackVersionsLoaded && blocState.versions.isNotEmpty) {
       final activeId = cubitState.activeVersionId ?? blocState.activeVersionId;
       final active =
           activeId != null
@@ -217,7 +211,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     final cubitState = context.read<TrackDetailCubit>().state;
     final blocState = context.read<TrackVersionsBloc>().state;
 
-    if (blocState is TrackVersionsLoaded) {
+    if (blocState is TrackVersionsLoaded && blocState.versions.isNotEmpty) {
       final activeId = cubitState.activeVersionId ?? blocState.activeVersionId;
       final active =
           activeId != null

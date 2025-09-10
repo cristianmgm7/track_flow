@@ -1,10 +1,9 @@
-import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/domain/aggregate_root.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
 enum TrackVersionStatus { processing, ready, failed }
 
-class TrackVersion extends Equatable {
-  final TrackVersionId id;
+class TrackVersion extends AggregateRoot<TrackVersionId> {
   final AudioTrackId trackId;
   final int versionNumber; // 1-based
   final String? label;
@@ -16,7 +15,7 @@ class TrackVersion extends Equatable {
   final UserId createdBy;
 
   const TrackVersion({
-    required this.id,
+    required TrackVersionId id,
     required this.trackId,
     required this.versionNumber,
     this.label,
@@ -26,7 +25,7 @@ class TrackVersion extends Equatable {
     required this.status,
     required this.createdAt,
     required this.createdBy,
-  });
+  }) : super(id);
 
   TrackVersion copyWith({
     TrackVersionId? id,
@@ -53,18 +52,4 @@ class TrackVersion extends Equatable {
       createdBy: createdBy ?? this.createdBy,
     );
   }
-
-  @override
-  List<Object?> get props => [
-    id,
-    trackId,
-    versionNumber,
-    label,
-    fileLocalPath,
-    fileRemoteUrl,
-    durationMs,
-    status,
-    createdAt,
-    createdBy,
-  ];
 }

@@ -31,7 +31,7 @@ class TrackActions {
           extra: TrackDetailScreenArgs(
             projectId: track.projectId,
             track: track,
-            versionId: TrackVersionId.fromUniqueString(track.id.value),
+            versionId: track.activeVersionId ?? TrackVersionId(),
           ),
         );
       },
