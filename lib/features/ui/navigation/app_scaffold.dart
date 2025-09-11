@@ -17,6 +17,7 @@ class AppScaffold extends StatelessWidget {
   final Color? backgroundColor;
   final bool resizeToAvoidBottomInset;
   final Widget? persistentFooterWidget;
+  final bool topSafeArea;
 
   const AppScaffold({
     super.key,
@@ -32,6 +33,7 @@ class AppScaffold extends StatelessWidget {
     this.backgroundColor,
     this.resizeToAvoidBottomInset = true,
     this.persistentFooterWidget,
+    this.topSafeArea = true,
   });
 
   @override
@@ -53,9 +55,15 @@ class AppScaffold extends StatelessWidget {
 
   Widget _buildBody() {
     if (persistentFooterWidget != null) {
-      return Column(children: [Expanded(child: body), persistentFooterWidget!]);
+      return SafeArea(
+        bottom: false,
+        top: topSafeArea,
+        child: Column(
+          children: [Expanded(child: body), persistentFooterWidget!],
+        ),
+      );
     }
-    return SafeArea(bottom: false, child: body);
+    return SafeArea(bottom: false, top: topSafeArea, child: body);
   }
 }
 

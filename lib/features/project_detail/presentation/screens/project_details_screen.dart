@@ -51,7 +51,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBar: null, // Remove the default app bar
+      topSafeArea: false,
       body: BlocListener<AudioTrackBloc, AudioTrackState>(
         listener: (context, state) {
           if (state is AudioTrackEditSuccess ||
