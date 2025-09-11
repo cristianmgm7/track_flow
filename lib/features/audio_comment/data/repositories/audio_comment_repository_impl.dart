@@ -112,7 +112,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     TrackVersionId versionId,
   ) {
     try {
-      // Trigger background sync when method is called
+      // Trigger background sync when method is called (version-scoped)
       unawaited(
         _backgroundSyncCoordinator.triggerBackgroundSync(
           syncKey: 'audio_comments_version_${versionId.value}',

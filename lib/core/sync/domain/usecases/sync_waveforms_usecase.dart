@@ -15,8 +15,14 @@ import 'package:trackflow/features/track_version/data/models/track_version_dto.d
 /// and saves them into Isar for UI consumption. No-ops when already cached.
 @lazySingleton
 class SyncWaveformsUseCase {
+  // In-memory throttle to avoid repeated attempts per version
+  static final Map<String, DateTime> _lastAttemptAt = {};
+  static const Duration _attemptTtl = Duration(minutes: 10);
+
   final SessionStorage _sessionStorage;
+  // ignore: unused_field
   final ProjectRemoteDataSource _projectRemoteDataSource;
+  // ignore: unused_field
   final AudioTrackRemoteDataSource _audioTrackRemoteDataSource;
   final TrackVersionLocalDataSource _trackVersionLocalDataSource;
   final WaveformLocalDataSource _waveformLocalDataSource;
@@ -31,6 +37,16 @@ class SyncWaveformsUseCase {
     this._waveformRemoteDataSource,
   );
 
+  /// Expose local track version ids to orchestrators (no network)
+  Future<List<String>> getLocalVersionIds() async {
+    final localVersionsEither =
+        await _trackVersionLocalDataSource.getAllVersions();
+    return localVersionsEither.fold(
+      (_) => <String>[],
+      (versions) => versions.map((e) => e.id).toList(),
+    );
+  }
+
   Future<void> call({TrackVersionId? scopedVersionId}) async {
     final userId = await _sessionStorage.getUserId();
     if (userId == null) return; // Preserve local data when no user
@@ -42,7 +58,7 @@ class SyncWaveformsUseCase {
         return;
       }
 
-      // Try to rely on local versions (already synced by versions use case)
+      // Rely on local versions (already synced by versions stage). If empty, no-op.
       final localVersionsEither =
           await _trackVersionLocalDataSource.getAllVersions();
       final List<TrackVersionDTO> localVersions = localVersionsEither.fold(
@@ -50,30 +66,7 @@ class SyncWaveformsUseCase {
         (v) => v,
       );
 
-      if (localVersions.isEmpty) {
-        // Fallback path: fetch projects -> tracks to ensure we have coverage
-        final projectsEither = await _projectRemoteDataSource.getUserProjects(
-          userId,
-        );
-        await projectsEither.fold((_) async {}, (projects) async {
-          if (projects.isEmpty) return;
-          final projectIds = projects.map((p) => p.id).toList();
-          final tracks = await _audioTrackRemoteDataSource
-              .getTracksByProjectIds(projectIds);
-
-          for (final track in tracks) {
-            final versionsStream = _trackVersionLocalDataSource
-                .watchVersionsByTrackId(track.id.value);
-            // Read one snapshot and proceed
-            final snapshot = await versionsStream.first;
-            final List<TrackVersionDTO> versions = snapshot.fold(
-              (_) => <TrackVersionDTO>[],
-              (v) => v,
-            );
-            await _syncForVersions(versions.map((e) => e.id).toList());
-          }
-        });
-      } else {
+      if (localVersions.isNotEmpty) {
         await _syncForVersions(localVersions.map((e) => e.id).toList());
       }
     } catch (e) {
@@ -94,6 +87,13 @@ class SyncWaveformsUseCase {
         );
         if (local != null) continue;
 
+        // Throttle attempts per version to avoid repeated remote lookups
+        final now = DateTime.now();
+        final last = _lastAttemptAt[versionIdStr];
+        if (last != null && now.difference(last) < _attemptTtl) {
+          continue;
+        }
+
         // Resolve trackId for canonical path and pull best remote waveform
         final versionResult = await _trackVersionLocalDataSource.getVersionById(
           versionIdStr,
@@ -108,6 +108,8 @@ class SyncWaveformsUseCase {
         if (remote != null) {
           await _waveformLocalDataSource.saveWaveform(remote);
         }
+
+        _lastAttemptAt[versionIdStr] = now;
       } catch (_) {
         // best-effort; continue
       }

@@ -22,6 +22,11 @@ class BackgroundSyncCoordinator {
   // Track ongoing background sync operations
   final Set<String> _ongoingSyncs = {};
 
+  // Debounce and coalescing for downstream sync triggers
+  Timer? _debounceTimer;
+  final Set<String> _pendingSyncKeyHints = {};
+  static const Duration _debounceDuration = Duration(milliseconds: 400);
+
   // Subscription to network changes for auto-sync
   StreamSubscription<bool>? _networkSubscription;
 
@@ -42,26 +47,48 @@ class BackgroundSyncCoordinator {
     String syncKey = 'general',
     bool force = false,
   }) async {
-    // Skip if sync is already in progress for this key
-    if (_ongoingSyncs.contains(syncKey) && !force) {
+    // For forced triggers, bypass debounce/coalescing and run immediately
+    if (force) {
+      if (!await _networkStateManager.isConnected) {
+        return;
+      }
+      if (_ongoingSyncs.contains(syncKey)) {
+        return;
+      }
+      _ongoingSyncs.add(syncKey);
+      try {
+        unawaited(_performBackgroundSync(syncKey));
+      } catch (e) {
+        _ongoingSyncs.remove(syncKey);
+      }
       return;
     }
 
-    // Skip if no network connection
-    if (!await _networkStateManager.isConnected) {
-      return;
+    // Non-forced: debounce and coalesce downstream triggers
+    _pendingSyncKeyHints.add(syncKey);
+
+    void scheduleOrRescheduleDebounce() async {
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(_debounceDuration, () async {
+        // If a sync is ongoing, reschedule after debounce to avoid overlap
+        if (_ongoingSyncs.isNotEmpty) {
+          scheduleOrRescheduleDebounce();
+          return;
+        }
+
+        if (!await _networkStateManager.isConnected) {
+          // Drop pending if no network; callers can retrigger later
+          _pendingSyncKeyHints.clear();
+          return;
+        }
+
+        // Use a forced key to run a staged incremental sync once
+        _pendingSyncKeyHints.clear();
+        await triggerBackgroundSync(syncKey: 'forced', force: true);
+      });
     }
 
-    // Mark this sync operation as ongoing
-    _ongoingSyncs.add(syncKey);
-
-    try {
-      // Perform background sync (fire and forget)
-      unawaited(_performBackgroundSync(syncKey));
-    } catch (e) {
-      // Remove from ongoing syncs if immediate error
-      _ongoingSyncs.remove(syncKey);
-    }
+    scheduleOrRescheduleDebounce();
   }
 
   /// Triggers only UPSTREAM sync (pending operations) without downstream

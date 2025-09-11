@@ -17,6 +17,7 @@ class AudioCommentDocument {
 
   @Index()
   late String trackId; // stores TrackVersionId for now (pre-schema rename)
+  // TODO(migration): add versionId field and migrate; for now trackId holds versionId
 
   late String createdBy;
   late String content;

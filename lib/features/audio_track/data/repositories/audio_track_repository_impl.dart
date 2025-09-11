@@ -39,7 +39,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         // Trigger background sync for fresh data (non-blocking)
         unawaited(
           _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'audio_track_${id.value}',
+            syncKey: 'audio_tracks_${localTrack.projectId.value}',
           ),
         );
 

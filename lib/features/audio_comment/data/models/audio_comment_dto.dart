@@ -5,6 +5,7 @@ class AudioCommentDTO {
   final String id;
   final String projectId;
   final String trackId; // stores TrackVersionId for now (pre-schema rename)
+  // Backward-compatible alias: prefer versionId, fallback to trackId on read
   final String createdBy;
   final String content;
   final int timestamp;
@@ -62,6 +63,8 @@ class AudioCommentDTO {
       'id': id,
       'projectId': projectId,
       'trackId': trackId,
+      // During migration also emit versionId for clarity
+      'versionId': trackId,
       'createdBy': createdBy,
       'content': content,
       'timestamp': timestamp,
@@ -73,10 +76,12 @@ class AudioCommentDTO {
   }
 
   factory AudioCommentDTO.fromJson(Map<String, dynamic> json) {
+    final versionId =
+        (json['versionId'] as String?) ?? (json['trackId'] as String);
     return AudioCommentDTO(
       id: json['id'] as String,
       projectId: json['projectId'] as String,
-      trackId: json['trackId'] as String,
+      trackId: versionId,
       createdBy: json['createdBy'] as String,
       content: json['content'] as String,
       timestamp: json['timestamp'] as int,

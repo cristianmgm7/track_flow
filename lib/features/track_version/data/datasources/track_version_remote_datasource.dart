@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 
 abstract class TrackVersionRemoteDataSource {
   Future<Either<Failure, TrackVersionDTO>> uploadTrackVersion(
@@ -184,18 +185,40 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   @override
   Future<List<TrackVersionDTO>> getVersionsByTrackId(String trackId) async {
     try {
-      final querySnapshot =
-          await _firestore
-              .collection(TrackVersionDTO.collection)
-              .where('trackId', isEqualTo: trackId)
-              .orderBy('versionNumber')
-              .get();
+      // Preferred: equality + orderBy for stable ordering
+      try {
+        final querySnapshot =
+            await _firestore
+                .collection(TrackVersionDTO.collection)
+                .where('trackId', isEqualTo: trackId)
+                .orderBy('versionNumber')
+                .get();
 
-      return querySnapshot.docs
-          .map((doc) => TrackVersionDTO.fromJson(doc.data()))
-          .toList();
+        return querySnapshot.docs
+            .map((doc) => TrackVersionDTO.fromJson(doc.data()))
+            .toList();
+      } catch (e) {
+        // Fallback: some Firestore projects may miss the composite index
+        AppLogger.warning(
+          'getVersionsByTrackId fallback without orderBy (likely missing index): $e',
+          tag: 'TrackVersionRemoteDataSource',
+        );
+        final qs =
+            await _firestore
+                .collection(TrackVersionDTO.collection)
+                .where('trackId', isEqualTo: trackId)
+                .get();
+        final items =
+            qs.docs.map((doc) => TrackVersionDTO.fromJson(doc.data())).toList();
+        items.sort((a, b) => a.versionNumber.compareTo(b.versionNumber));
+        return items;
+      }
     } catch (e) {
       // Return empty list on error
+      AppLogger.warning(
+        'getVersionsByTrackId error for trackId=$trackId: $e',
+        tag: 'TrackVersionRemoteDataSource',
+      );
       return [];
     }
   }

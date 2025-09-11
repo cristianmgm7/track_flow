@@ -21,7 +21,7 @@ class SyncAudioCommentsUseCase {
     this._audioTrackRemoteDataSource,
   );
 
-  Future<void> call({String? scopedTrackId, bool force = false}) async {
+  Future<void> call({String? scopedVersionId, bool force = false}) async {
     final userId =
         await _sessionStorage
             .getUserId(); // Now async - prevents race conditions
@@ -30,14 +30,12 @@ class SyncAudioCommentsUseCase {
       return;
     }
 
-    // Scoped: only sync a specific track's comments
-    if (scopedTrackId != null) {
-      // NOTE: Comments are version-scoped now. We temporarily treat trackId as versionId
-      // until true versions are wired through sync.
+    // Scoped: only sync a specific version's comments
+    if (scopedVersionId != null) {
       final remoteDtos = await _audioCommentRemoteDataSource
-          .getCommentsByVersionId(scopedTrackId);
+          .getCommentsByVersionId(scopedVersionId);
       await _audioCommentLocalDataSource.replaceCommentsForVersion(
-        scopedTrackId,
+        scopedVersionId,
         remoteDtos,
       );
       return;
@@ -60,8 +58,7 @@ class SyncAudioCommentsUseCase {
       }
 
       for (final track in allTracks) {
-        // Treat trackId as versionId for now (migration compatibility)
-        final versionId = track.id.value;
+        final versionId = track.id.value; // legacy: track.id stores version id
         final remoteDtos = await _audioCommentRemoteDataSource
             .getCommentsByVersionId(versionId);
         await _audioCommentLocalDataSource.replaceCommentsForVersion(
