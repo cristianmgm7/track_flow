@@ -1647,7 +1647,7 @@ SPEC CHECKSUMS:
   FirebaseFirestoreInternal: 97a2bb5f16951c77753c860d3519379702ab6f8a
   FirebaseSharedSwift: e17c654ef1f1a616b0b33054e663ad1035c8fd40
   FirebaseStorage: e83d1b9c8a5318d46ccfb2955f0d98095e0bf598
-  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_keyboard_visibility: 4625131e43015dbbe759d9b20daaf77e0e3f6619
   flutter_media_metadata: ad56576cf9c9842a1b23ca68195aeb816918de9b
   google_sign_in_ios: b48bb9af78576358a168361173155596c845f0b9

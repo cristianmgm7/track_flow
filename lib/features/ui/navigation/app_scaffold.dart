@@ -55,7 +55,7 @@ class AppScaffold extends StatelessWidget {
     if (persistentFooterWidget != null) {
       return Column(children: [Expanded(child: body), persistentFooterWidget!]);
     }
-    return body;
+    return SafeArea(bottom: false, child: body);
   }
 }
 
