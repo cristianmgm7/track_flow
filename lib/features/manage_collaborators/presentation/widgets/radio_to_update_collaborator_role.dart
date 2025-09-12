@@ -7,7 +7,6 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
-import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/role_option_tile.dart';
 
 class RadioToUpdateCollaboratorRole extends StatefulWidget {

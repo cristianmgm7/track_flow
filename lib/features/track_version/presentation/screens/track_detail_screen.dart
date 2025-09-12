@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
+import '../../../ui/modals/app_form_sheet.dart';
 import '../../../../core/entities/unique_id.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
 import '../../../audio_comment/presentation/components/comments_section.dart';
@@ -15,7 +16,7 @@ import '../cubit/track_detail_cubit.dart';
 import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
 import '../components/versions_section_component.dart';
-import '../widgets/rename_version_dialog.dart';
+import '../widgets/rename_version_form.dart';
 import '../widgets/delete_version_dialog.dart';
 import '../actions/upload_version_actions.dart';
 
@@ -158,10 +159,13 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
               )
               : blocState.versions.first;
 
-      RenameVersionDialog.show(
-        context,
-        versionId: active.id,
-        currentLabel: active.label,
+      showAppFormSheet(
+        context: context,
+        title: 'Rename Version',
+        child: RenameVersionForm(
+          versionId: active.id,
+          currentLabel: active.label,
+        ),
       );
     }
   }

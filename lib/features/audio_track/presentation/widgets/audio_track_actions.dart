@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/track_version/presentation/models/track_detail_screen_args.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
@@ -42,9 +43,18 @@ class TrackActions {
       subtitle: 'Change the track’s title',
       onTap: () {
         showAppFormSheet(
+          minChildSize: 0.7,
+          initialChildSize: 0.7,
+          maxChildSize: 0.7,
+          useRootNavigator: true,
           context: context,
           title: 'Rename Track',
-          child: RenameTrackForm(track: track),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: context.read<AudioTrackBloc>()),
+            ],
+            child: RenameTrackForm(track: track),
+          ),
         );
       },
     ),
