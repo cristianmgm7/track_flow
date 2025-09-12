@@ -242,8 +242,19 @@ class AppRouter {
               path: AppRoutes.projectDetails,
               builder: (context, state) {
                 final project = state.extra as Project;
-                return BlocProvider<ProjectDetailBloc>(
-                  create: (_) => sl<ProjectDetailBloc>(),
+                return MultiBlocProvider(
+                  providers: [
+                    BlocProvider<ProjectDetailBloc>(
+                      create: (_) => sl<ProjectDetailBloc>(),
+                    ),
+                    BlocProvider<ManageCollaboratorsBloc>(
+                      create:
+                          (_) =>
+                              sl<ManageCollaboratorsBloc>()..add(
+                                WatchCollaborators(projectId: project.id),
+                              ),
+                    ),
+                  ],
                   child: ProjectDetailsScreen(project: project),
                 );
               },

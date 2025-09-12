@@ -8,14 +8,13 @@ import '../../../audio_track/domain/entities/audio_track.dart';
 import '../../../audio_comment/presentation/components/comments_section.dart';
 import '../../../audio_comment/presentation/components/comment_input_modal.dart';
 import '../../../audio_comment/presentation/components/audio_comment_player.dart';
-import '../widgets/versions_list.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_event.dart';
 import '../blocs/track_versions/track_versions_state.dart';
 import '../cubit/track_detail_cubit.dart';
 import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
-import '../components/version_header_component.dart';
+import '../components/versions_section_component.dart';
 import '../widgets/rename_version_dialog.dart';
 import '../widgets/delete_version_dialog.dart';
 import '../actions/upload_version_actions.dart';
@@ -88,7 +87,11 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
           child: Column(
             children: [
               // Versions Section
-              _buildVersionsSection(theme),
+              VersionsSectionComponent(
+                trackId: widget.track.id,
+                onRenamePressed: _showRenameDialog,
+                onDeletePressed: _showDeleteConfirmation,
+              ),
 
               // Audio Player
               BlocBuilder<TrackDetailCubit, TrackDetailState>(
@@ -128,49 +131,6 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
                 ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildVersionsSection(ThemeData theme) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.screenMarginSmall,
-        vertical: Dimensions.space8,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 40,
-                  child: VersionsList(
-                    trackId: widget.track.id,
-                    onVersionSelected: (versionId) {
-                      // Play the new version directly (seamless transition)
-                      context.read<AudioPlayerBloc>().add(
-                        PlayVersionRequested(versionId),
-                      );
-                      // Update cubit immediately for UI responsiveness
-                      context.read<TrackDetailCubit>().setActiveVersion(
-                        versionId,
-                      );
-                      // Do not persist active version here. That happens via header menu.
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: Dimensions.space8),
-          VersionHeaderComponent(
-            trackId: widget.track.id,
-            onRenamePressed: _showRenameDialog,
-            onDeletePressed: _showDeleteConfirmation,
-          ),
-        ],
       ),
     );
   }

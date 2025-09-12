@@ -5,9 +5,9 @@ import '../../../../core/entities/unique_id.dart';
 import '../bloc/audio_comment_bloc.dart';
 import '../bloc/audio_comment_state.dart';
 import '../bloc/audio_comment_event.dart';
+import 'audio_comment_card.dart';
 import '../../domain/entities/audio_comment.dart';
 import '../../../user_profile/domain/entities/user_profile.dart';
-import 'audio_comment_card.dart';
 
 /// Comments section component that handles displaying the list of comments
 /// with proper state management and error handling
@@ -146,6 +146,8 @@ class _CommentsSectionState extends State<CommentsSection> {
         return AudioCommentComponent(
           comment: comment,
           collaborator: collaborator,
+          projectId: widget.projectId,
+          versionId: widget.versionId,
         );
       },
     );

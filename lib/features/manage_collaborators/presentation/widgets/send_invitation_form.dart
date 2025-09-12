@@ -309,34 +309,30 @@ class _SendInvitationFormState extends State<SendInvitationForm> {
                 SizedBox(height: Dimensions.space24),
 
                 // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: SecondaryButton(
-                        text: 'Cancel',
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ),
-                    SizedBox(width: Dimensions.space12),
-                    Expanded(
-                      child: BlocBuilder<
-                        ManageCollaboratorsBloc,
-                        ManageCollaboratorsState
-                      >(
-                        builder: (context, state) {
-                          return PrimaryButton(
-                            text: 'Add Collaborator',
-                            onPressed:
-                                _canAddCollaborator(state)
-                                    ? () => _addCollaborator(state)
-                                    : null,
-                            isLoading: state is ManageCollaboratorsLoading,
-                            isDisabled: state is ManageCollaboratorsLoading,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: SecondaryButton(
+                    text: 'Cancel',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+                SizedBox(width: Dimensions.space12),
+                Expanded(
+                  child: BlocBuilder<
+                    ManageCollaboratorsBloc,
+                    ManageCollaboratorsState
+                  >(
+                    builder: (context, state) {
+                      return PrimaryButton(
+                        text: 'Add Collaborator',
+                        onPressed:
+                            _canAddCollaborator(state)
+                                ? () => _addCollaborator(state)
+                                : null,
+                        isLoading: state is ManageCollaboratorsLoading,
+                        isDisabled: state is ManageCollaboratorsLoading,
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
