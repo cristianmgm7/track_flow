@@ -8,7 +8,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
-import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/feedback/app_feedback_system.dart';
 
 class ProjectFormBottomSheet extends StatefulWidget {
@@ -80,22 +79,10 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
             BlocBuilder<ProjectsBloc, ProjectsState>(
               builder: (context, state) {
                 final isLoading = state is ProjectsLoading;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    SecondaryButton(
-                      text: 'Cancel',
-                      onPressed:
-                          isLoading ? null : () => Navigator.of(context).pop(),
-                      isDisabled: isLoading,
-                    ),
-                    SizedBox(width: Dimensions.space8),
-                    PrimaryButton(
-                      text: 'Create Project',
-                      onPressed: isLoading ? null : _saveProject,
-                      isLoading: isLoading,
-                    ),
-                  ],
+                return PrimaryButton(
+                  text: 'Create Project',
+                  onPressed: isLoading ? null : _saveProject,
+                  isLoading: isLoading,
                 );
               },
             ),

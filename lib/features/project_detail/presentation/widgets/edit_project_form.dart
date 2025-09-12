@@ -9,7 +9,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
-import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class EditProjectForm extends StatefulWidget {
   final Project project;
@@ -95,27 +94,10 @@ class _EditProjectFormState extends State<EditProjectForm> {
               },
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: SecondaryButton(
-                    text: 'Cancel',
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                    isDisabled: _isSubmitting,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Save',
-                    onPressed: _isSubmitting ? null : _submit,
-                    isLoading: _isSubmitting,
-                  ),
-                ),
-              ],
+            PrimaryButton(
+              text: 'Save',
+              onPressed: _isSubmitting ? null : _submit,
+              isLoading: _isSubmitting,
             ),
           ],
         ),

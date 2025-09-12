@@ -8,6 +8,7 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/role_option_tile.dart';
 
 class RadioToUpdateCollaboratorRole extends StatefulWidget {
   final ProjectId projectId;
@@ -65,45 +66,6 @@ class _RadioToUpdateCollaboratorRoleState
       ),
     );
     Navigator.of(context).pop();
-  }
-
-  String _getRoleDisplayName(ProjectRoleType role) {
-    switch (role) {
-      case ProjectRoleType.owner:
-        return 'Owner';
-      case ProjectRoleType.admin:
-        return 'Admin';
-      case ProjectRoleType.editor:
-        return 'Editor';
-      case ProjectRoleType.viewer:
-        return 'Viewer';
-    }
-  }
-
-  String _getRoleDescription(ProjectRoleType role) {
-    switch (role) {
-      case ProjectRoleType.owner:
-        return 'Full access to all project operations';
-      case ProjectRoleType.admin:
-        return 'Can manage collaborators and project settings';
-      case ProjectRoleType.editor:
-        return 'Can edit tracks and add comments';
-      case ProjectRoleType.viewer:
-        return 'Read-only access to the project';
-    }
-  }
-
-  IconData _getRoleIcon(ProjectRoleType role) {
-    switch (role) {
-      case ProjectRoleType.owner:
-        return Icons.admin_panel_settings;
-      case ProjectRoleType.admin:
-        return Icons.manage_accounts;
-      case ProjectRoleType.editor:
-        return Icons.edit;
-      case ProjectRoleType.viewer:
-        return Icons.visibility;
-    }
   }
 
   @override
@@ -167,116 +129,27 @@ class _RadioToUpdateCollaboratorRoleState
             ),
           ),
           SizedBox(height: Dimensions.space24),
-          ...assignableRoles.map((role) => _buildRoleOption(role)),
+          ...assignableRoles.map(
+            (role) => RoleOptionTile(
+              role: role,
+              selectedRole: selectedRole,
+              onRoleSelected: (selectedRole) {
+                setState(() {
+                  this.selectedRole = selectedRole;
+                });
+              },
+            ),
+          ),
           SizedBox(height: Dimensions.space24),
-          Row(
-            children: [
-              Expanded(
-                child: SecondaryButton(
-                  text: 'Cancel',
-                  onPressed: () => Navigator.of(context).pop(),
-                  size: ButtonSize.medium,
-                ),
-              ),
-              SizedBox(width: Dimensions.space12),
-              Expanded(
-                child: PrimaryButton(
-                  text: 'Save Changes',
-                  onPressed: isChanged ? _handleSave : null,
-                  isDisabled: !isChanged,
-                  size: ButtonSize.medium,
-                ),
-              ),
-            ],
+          Center(
+            child: PrimaryButton(
+              text: 'Save Changes',
+              onPressed: isChanged ? _handleSave : null,
+              isDisabled: !isChanged,
+              size: ButtonSize.medium,
+            ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRoleOption(ProjectRoleType role) {
-    final isSelected = selectedRole == role;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: Dimensions.space8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-          onTap: () {
-            setState(() {
-              selectedRole = role;
-            });
-          },
-          child: Container(
-            padding: EdgeInsets.all(Dimensions.space16),
-            decoration: BoxDecoration(
-              color:
-                  isSelected
-                      ? AppColors.primary.withValues(alpha: 0.1)
-                      : AppColors.surface,
-              borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: Dimensions.iconMedium,
-                  height: Dimensions.iconMedium,
-                  decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? AppColors.primary
-                            : AppColors.textSecondary.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getRoleIcon(role),
-                    size: Dimensions.iconSmall,
-                    color:
-                        isSelected
-                            ? AppColors.onPrimary
-                            : AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(width: Dimensions.space16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getRoleDisplayName(role),
-                        style: AppTextStyle.bodyLarge.copyWith(
-                          color:
-                              isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: Dimensions.space4),
-                      Text(
-                        _getRoleDescription(role),
-                        style: AppTextStyle.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isSelected)
-                  Icon(
-                    Icons.check_circle,
-                    color: AppColors.primary,
-                    size: Dimensions.iconMedium,
-                  ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

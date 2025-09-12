@@ -32,9 +32,16 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
 
   void _openProjectActionsSheet() {
     showAppFormSheet(
+      minChildSize: 0.7,
+      initialChildSize: 0.7,
+      maxChildSize: 0.7,
       context: context,
       title: 'Create Project',
-      child: ProjectFormBottomSheet(),
+      useRootNavigator: true,
+      child: MultiBlocProvider(
+        providers: [BlocProvider.value(value: context.read<ProjectsBloc>())],
+        child: ProjectFormBottomSheet(),
+      ),
     );
   }
 

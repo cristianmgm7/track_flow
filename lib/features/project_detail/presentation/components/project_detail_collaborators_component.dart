@@ -74,10 +74,6 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.symmetric(horizontal: 16.0),
                   children: [
-                    // Invite collaborator button
-                    InviteCollaboratorButton(
-                      onTap: () => _showInviteCollaboratorForm(context),
-                    ),
                     // Existing collaborators
                     ...state.collaborators.map((collaborator) {
                       // Find the role from project collaborators
@@ -105,6 +101,10 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                         },
                       );
                     }),
+                    // Invite collaborator button at the end
+                    InviteCollaboratorButton(
+                      onTap: () => _showInviteCollaboratorForm(context),
+                    ),
                   ],
                 ),
               ),
@@ -117,9 +117,12 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
 
   void _showInviteCollaboratorForm(BuildContext context) {
     showAppFormSheet(
+      initialChildSize: 0.8,
+      maxChildSize: 0.8,
+      minChildSize: 0.8,
       title: 'Invite Collaborator',
       context: context,
-      useRootNavigator: false,
+      useRootNavigator: true,
       child: MultiBlocProvider(
         providers: [
           BlocProvider<ManageCollaboratorsBloc>.value(
