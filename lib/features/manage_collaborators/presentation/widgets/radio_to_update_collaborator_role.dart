@@ -97,12 +97,7 @@ class _RadioToUpdateCollaboratorRoleState
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: Dimensions.space24),
-            SecondaryButton(
-              text: 'Close',
-              onPressed: () => Navigator.of(context).pop(),
-              size: ButtonSize.medium,
-            ),
+            SizedBox(height: Dimensions.space48),
           ],
         ),
       );
@@ -112,8 +107,8 @@ class _RadioToUpdateCollaboratorRoleState
       padding: EdgeInsets.all(Dimensions.space16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
           Text(
             'Update Collaborator Role',
             style: AppTextStyle.headlineMedium.copyWith(
@@ -141,13 +136,11 @@ class _RadioToUpdateCollaboratorRoleState
             ),
           ),
           SizedBox(height: Dimensions.space24),
-          Center(
-            child: PrimaryButton(
-              text: 'Save Changes',
-              onPressed: isChanged ? _handleSave : null,
-              isDisabled: !isChanged,
-              size: ButtonSize.medium,
-            ),
+          PrimaryButton(
+            text: 'Save Changes',
+            onPressed: isChanged ? _handleSave : null,
+            isDisabled: !isChanged,
+            size: ButtonSize.medium,
           ),
         ],
       ),

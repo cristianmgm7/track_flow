@@ -64,6 +64,7 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             AppFormField(
@@ -76,16 +77,7 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
               },
             ),
             SizedBox(height: Dimensions.space24),
-            BlocBuilder<ProjectsBloc, ProjectsState>(
-              builder: (context, state) {
-                final isLoading = state is ProjectsLoading;
-                return PrimaryButton(
-                  text: 'Create Project',
-                  onPressed: isLoading ? null : _saveProject,
-                  isLoading: isLoading,
-                );
-              },
-            ),
+            PrimaryButton(text: 'Create Project', onPressed: _saveProject),
           ],
         ),
       ),
