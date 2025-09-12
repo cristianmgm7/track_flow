@@ -19,6 +19,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
 
   void _openProjectDetailActionsSheet(BuildContext context) {
     showAppActionSheet(
+      useRootNavigator: true,
       title: 'Project Actions',
       context: context,
       actions: ProjectDetailActions.forProject(context, project),
