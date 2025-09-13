@@ -47,6 +47,29 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     );
   }
 
+  void _showUploadVersionDialog() async {
+    final result = await showAppFormSheet(
+      context: context,
+      title: 'Upload Version',
+      child: UploadVersionForm(
+        trackId: widget.track.id,
+        projectId: widget.projectId,
+      ),
+    );
+
+    if (result is UploadVersionResult) {
+      if (mounted) {
+        context.read<TrackVersionsBloc>().add(
+          AddTrackVersionRequested(
+            trackId: widget.track.id,
+            file: result.file,
+            label: result.label,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -128,26 +151,5 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
         ),
       ),
     );
-  }
-
-  void _showUploadVersionDialog() async {
-    final result = await showAppFormSheet(
-      context: context,
-      title: 'Upload Version',
-      child: UploadVersionForm(
-        trackId: widget.track.id,
-        projectId: widget.projectId,
-      ),
-    );
-
-    if (result is UploadVersionResult) {
-      context.read<TrackVersionsBloc>().add(
-        AddTrackVersionRequested(
-          trackId: widget.track.id,
-          file: result.file,
-          label: result.label,
-        ),
-      );
-    }
   }
 }

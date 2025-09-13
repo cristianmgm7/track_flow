@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/track_version/presentation/widgets/delete_version_dialog.dart';
 import 'package:trackflow/features/track_version/presentation/widgets/rename_version_form.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
@@ -13,8 +14,6 @@ class TrackDetailActions {
     BuildContext context,
     AudioTrackId trackId,
     TrackVersionId versionId,
-    VoidCallback? onRenamePressed,
-    VoidCallback? onDeletePressed,
   ) => [
     AppBottomSheetAction(
       icon: Icons.check_circle,
@@ -51,8 +50,17 @@ class TrackDetailActions {
       title: 'Delete Version',
       subtitle: 'Remove this version permanently',
       onTap: () {
+        // Close the sheet first, then show dialog on the same navigator
         Navigator.of(context).pop();
-        onDeletePressed?.call();
+        showDialog(
+          context: context,
+          useRootNavigator: false,
+          builder:
+              (dialogContext) => BlocProvider.value(
+                value: context.read<TrackVersionsBloc>(),
+                child: DeleteVersionDialog(versionId: versionId),
+              ),
+        );
       },
     ),
   ];

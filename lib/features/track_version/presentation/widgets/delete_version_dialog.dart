@@ -36,6 +36,7 @@ class DeleteVersionDialog extends StatelessWidget {
         );
         Navigator.of(context).pop();
       },
+      onSecondaryPressed: () => Navigator.of(context).pop(),
     );
   }
 }
