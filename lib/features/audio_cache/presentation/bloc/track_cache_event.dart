@@ -13,36 +13,40 @@ abstract class TrackCacheEvent extends Equatable {
 class CacheTrackRequested extends TrackCacheEvent {
   final String trackId;
   final String audioUrl;
+  final String versionId;
   final ConflictPolicy policy;
 
   const CacheTrackRequested({
     required this.trackId,
     required this.audioUrl,
+    required this.versionId,
     this.policy = ConflictPolicy.lastWins,
   });
 
   @override
-  List<Object?> get props => [trackId, audioUrl, policy];
+  List<Object?> get props => [trackId, audioUrl, versionId, policy];
 }
 
 // Removed referenced-based caching to simplify API
 
 class RemoveTrackCacheRequested extends TrackCacheEvent {
   final String trackId;
+  final String? versionId;
 
-  const RemoveTrackCacheRequested({required this.trackId});
+  const RemoveTrackCacheRequested({required this.trackId, this.versionId});
 
   @override
-  List<Object?> get props => [trackId];
+  List<Object?> get props => [trackId, versionId];
 }
 
 class GetCachedTrackPathRequested extends TrackCacheEvent {
   final String trackId;
+  final String? versionId;
 
-  const GetCachedTrackPathRequested(this.trackId);
+  const GetCachedTrackPathRequested(this.trackId, {this.versionId});
 
   @override
-  List<Object?> get props => [trackId];
+  List<Object?> get props => [trackId, versionId];
 }
 
 // Removed unified info watching events (status + progress) since UI doesn't use them

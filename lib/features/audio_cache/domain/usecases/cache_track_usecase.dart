@@ -21,11 +21,13 @@ class CacheTrackUseCase {
   ///
   /// [trackId] - Unique identifier for the track
   /// [audioUrl] - Source URL for the audio file
+  /// [versionId] - Unique identifier for the track version
   ///
   /// Returns success or specific failure for error handling
   Future<Either<CacheFailure, Unit>> call({
     required String trackId,
     required String audioUrl,
+    required String versionId,
   }) async {
     // Validate inputs
     if (trackId.isEmpty) {
@@ -44,6 +46,16 @@ class CacheTrackUseCase {
           message: 'Audio URL cannot be empty',
           field: 'audioUrl',
           value: audioUrl,
+        ),
+      );
+    }
+
+    if (versionId.isEmpty) {
+      return Left(
+        ValidationCacheFailure(
+          message: 'Version ID cannot be empty',
+          field: 'versionId',
+          value: versionId,
         ),
       );
     }
@@ -67,11 +79,9 @@ class CacheTrackUseCase {
       );
 
       return await result.fold((failure) => Left(failure), (filePath) async {
-        // TODO: Fix - storeAudio requires versionId parameter
-        // This needs to be updated to pass proper versionId
         final storeResult = await _audioStorageRepository.storeAudio(
           AudioTrackId.fromUniqueString(trackId),
-          TrackVersionId(), // Temporary - needs proper versionId
+          TrackVersionId.fromUniqueString(versionId),
           File(filePath),
         );
         return storeResult.fold(

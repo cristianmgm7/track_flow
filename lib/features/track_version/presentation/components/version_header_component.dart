@@ -9,6 +9,9 @@ import '../cubit/track_detail_cubit.dart';
 import '../widgets/track_detail_actions_sheet.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
+import 'package:trackflow/features/audio_cache/presentation/widgets/smart_track_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 /// Header component for displaying active version information and actions
 class VersionHeaderComponent extends StatelessWidget {
@@ -98,11 +101,30 @@ class VersionHeaderComponent extends StatelessWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz),
-                    onPressed:
-                        () => _openTrackDetailActionsSheet(context, active.id),
-                    tooltip: 'Version actions',
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (active.status == TrackVersionStatus.ready &&
+                          active.fileRemoteUrl != null)
+                        BlocProvider(
+                          create: (context) => sl<TrackCacheBloc>(),
+                          child: SmartTrackCacheIcon(
+                            trackId: trackId.value,
+                            versionId: active.id.value,
+                            remoteUrl: active.fileRemoteUrl!,
+                            size: 22,
+                          ),
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.more_horiz),
+                        onPressed:
+                            () => _openTrackDetailActionsSheet(
+                              context,
+                              active.id,
+                            ),
+                        tooltip: 'Version actions',
+                      ),
+                    ],
                   ),
                 ],
               ),

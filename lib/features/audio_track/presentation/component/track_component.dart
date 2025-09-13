@@ -15,6 +15,8 @@ import 'package:trackflow/features/audio_track/presentation/widgets/track_upload
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/track_version/domain/usecases/get_version_by_id_usecase.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 
 import 'track_duration_formatter.dart';
 import 'track_info_section.dart';
@@ -93,12 +95,31 @@ class _TrackComponentState extends State<TrackComponent> {
             // Duration
             TrackDurationText(duration: widget.track.duration),
             SizedBox(width: Dimensions.space8),
-            // Cache icon
-            SmartTrackCacheIcon(
-              trackId: widget.track.id.value,
-              audioUrl: widget.track.url,
-              size: Dimensions.iconMedium,
-            ),
+            // Cache icon (version-based)
+            if (widget.track.activeVersionId != null)
+              FutureBuilder(
+                future: sl<GetVersionByIdUseCase>().call(
+                  widget.track.activeVersionId!,
+                ),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const SizedBox.shrink();
+                  }
+                  final either = snapshot.data!;
+                  return either.fold((_) => const SizedBox.shrink(), (version) {
+                    if (version.status != TrackVersionStatus.ready ||
+                        version.fileRemoteUrl == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return SmartTrackCacheIcon(
+                      trackId: widget.track.id.value,
+                      versionId: version.id.value,
+                      remoteUrl: version.fileRemoteUrl!,
+                      size: Dimensions.iconMedium,
+                    );
+                  });
+                },
+              ),
             SizedBox(width: Dimensions.space8),
             // Menu button
             TrackMenuButton(

@@ -111,7 +111,11 @@ class TrackActions {
         } else {
           // 3) Not cached yet → start caching and inform user to retry export when ready
           bloc.add(
-            CacheTrackRequested(trackId: track.id.value, audioUrl: track.url),
+            CacheTrackRequested(
+              trackId: track.id.value,
+              audioUrl: track.url,
+              versionId: track.activeVersionId?.value ?? '',
+            ),
           );
           messenger.showSnackBar(
             SnackBar(

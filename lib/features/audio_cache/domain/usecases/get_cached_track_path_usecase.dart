@@ -14,9 +14,13 @@ class GetCachedTrackPathUseCase {
   /// Get cached track file path if exists
   ///
   /// [trackId] - Unique identifier for the track
+  /// [versionId] - Optional identifier for the track version
   ///
   /// Returns absolute file path or failure if not found
-  Future<Either<CacheFailure, String?>> call(String trackId) async {
+  Future<Either<CacheFailure, String?>> call({
+    required String trackId,
+    String? versionId,
+  }) async {
     if (trackId.isEmpty) {
       return Left(
         ValidationCacheFailure(
@@ -30,6 +34,10 @@ class GetCachedTrackPathUseCase {
     try {
       final result = await _audioStorageRepository.getCachedAudioPath(
         AudioTrackId.fromUniqueString(trackId),
+        versionId:
+            versionId != null && versionId.isNotEmpty
+                ? TrackVersionId.fromUniqueString(versionId)
+                : null,
       );
 
       return result.fold(

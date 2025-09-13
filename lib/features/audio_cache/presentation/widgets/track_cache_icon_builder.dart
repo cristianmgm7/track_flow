@@ -35,10 +35,6 @@ class TrackCacheIconBuilder {
       return _buildLoadingIcon(color, config.size);
     } else if (state is TrackCacheStatusLoaded) {
       return _buildStatusIcon(state.status, color, config);
-    } else if (state is TrackCacheOperationSuccess) {
-      return _buildSuccessIcon(config.size);
-    } else if (state is TrackCacheOperationFailure) {
-      return _buildErrorIcon(config.size);
     } else if (lastKnownStatus != null) {
       return _buildStatusIcon(lastKnownStatus, color, config);
     }
@@ -58,11 +54,7 @@ class TrackCacheIconBuilder {
   ) {
     switch (status) {
       case CacheStatus.cached:
-        return Icon(
-          Icons.download_done,
-          color: Colors.green,
-          size: config.size,
-        );
+        return Icon(Icons.check_circle, color: Colors.green, size: config.size);
 
       case CacheStatus.downloading:
         return SizedBox(
@@ -101,16 +93,6 @@ class TrackCacheIconBuilder {
         backgroundColor: color.withValues(alpha: 0.2),
       ),
     );
-  }
-
-  /// Build success icon
-  Widget _buildSuccessIcon(double size) {
-    return Icon(Icons.check_circle, color: Colors.green, size: size);
-  }
-
-  /// Build error icon
-  Widget _buildErrorIcon(double size) {
-    return Icon(Icons.refresh, color: Colors.red, size: size);
   }
 
   /// Build default download icon

@@ -11,8 +11,11 @@ class RemoveTrackCacheUseCase {
 
   RemoveTrackCacheUseCase(this._audioStorageRepository);
 
-  /// Remove a track from cache
-  Future<Either<CacheFailure, Unit>> call(String trackId) async {
+  /// Remove a track or specific version from cache
+  Future<Either<CacheFailure, Unit>> call({
+    required String trackId,
+    String? versionId,
+  }) async {
     // Validate inputs
     if (trackId.isEmpty) {
       return Left(
@@ -25,6 +28,12 @@ class RemoveTrackCacheUseCase {
     }
 
     try {
+      if (versionId != null && versionId.isNotEmpty) {
+        return await _audioStorageRepository.deleteAudioVersionFile(
+          AudioTrackId.fromUniqueString(trackId),
+          TrackVersionId.fromUniqueString(versionId),
+        );
+      }
       return await _audioStorageRepository.deleteAudioFile(
         AudioTrackId.fromUniqueString(trackId),
       );

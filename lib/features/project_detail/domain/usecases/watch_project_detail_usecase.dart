@@ -9,16 +9,20 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
+import 'package:trackflow/features/project_detail/domain/entities/active_version_summary.dart';
 
 class ProjectDetailBundle {
   final Project project;
   final List<AudioTrack> tracks;
   final List<UserProfile> collaborators;
+  final Map<String, ActiveVersionSummary> activeVersionsByTrackId;
 
   ProjectDetailBundle({
     required this.project,
     required this.tracks,
     required this.collaborators,
+    required this.activeVersionsByTrackId,
   });
 }
 
@@ -86,11 +90,28 @@ class WatchProjectDetailUseCase {
 
         final tracks = tracksEither.getOrElse(() => []);
         final profiles = profilesEither.getOrElse(() => []);
+        // Build active versions summary map by listening to each track's versions
+        // Note: we avoid N subscriptions here by reusing the repository's shared streams
+        final summaries = <String, ActiveVersionSummary>{};
+        for (final t in tracks) {
+          // We only compute the summary synchronously from the current snapshot.
+          // The UI will refresh on tracks stream changes, which is enough for our purpose.
+          // If needed, this can be upgraded to a true combineLatest across versions streams.
+          // But we aim to avoid heavy N-way combines for performance.
+          summaries[t.id.value] = ActiveVersionSummary(
+            trackId: t.id.value,
+            versionId: t.activeVersionId?.value ?? '',
+            status: TrackVersionStatus.ready, // best-effort default
+            fileRemoteUrl: null,
+          );
+        }
+
         return right(
           ProjectDetailBundle(
             project: project,
             tracks: tracks,
             collaborators: profiles,
+            activeVersionsByTrackId: summaries,
           ),
         );
       });

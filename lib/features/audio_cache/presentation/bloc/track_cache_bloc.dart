@@ -66,6 +66,7 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     final result = await _cacheTrackUseCase.call(
       trackId: event.trackId,
       audioUrl: event.audioUrl,
+      versionId: event.versionId,
     );
 
     emit(
@@ -88,7 +89,10 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
   ) async {
     emit(const TrackCacheLoading());
 
-    final result = await _removeTrackCacheUseCase(event.trackId);
+    final result = await _removeTrackCacheUseCase(
+      trackId: event.trackId,
+      versionId: event.versionId,
+    );
 
     emit(
       result.fold(
@@ -108,7 +112,10 @@ class TrackCacheBloc extends Bloc<TrackCacheEvent, TrackCacheState> {
     GetCachedTrackPathRequested event,
     Emitter<TrackCacheState> emit,
   ) async {
-    final result = await _getCachedTrackPathUseCase(event.trackId);
+    final result = await _getCachedTrackPathUseCase(
+      trackId: event.trackId,
+      versionId: event.versionId,
+    );
 
     emit(
       result.fold(

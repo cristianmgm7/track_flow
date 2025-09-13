@@ -12,6 +12,7 @@ import '../bloc/track_cache_state.dart';
 /// Configuration for interaction behavior
 class TrackCacheInteractionConfig {
   final String trackId;
+  final String versionId;
   final String audioUrl;
   final String? referenceId;
   final bool enableHapticFeedback;
@@ -21,6 +22,7 @@ class TrackCacheInteractionConfig {
 
   const TrackCacheInteractionConfig({
     required this.trackId,
+    required this.versionId,
     required this.audioUrl,
     this.referenceId,
     this.enableHapticFeedback = true,
@@ -88,7 +90,12 @@ class TrackCacheInteractionHandler {
 
   /// Remove track from cache and show undo if enabled
   void _removeFromCache(BuildContext context, TrackCacheBloc bloc) {
-    bloc.add(RemoveTrackCacheRequested(trackId: config.trackId));
+    bloc.add(
+      RemoveTrackCacheRequested(
+        trackId: config.trackId,
+        versionId: config.versionId,
+      ),
+    );
 
     if (config.enableUndoAction) {
       showUndoSnackBar(context);
@@ -101,6 +108,7 @@ class TrackCacheInteractionHandler {
       bloc.add(
         CacheTrackRequested(
           trackId: config.trackId,
+          versionId: config.versionId,
           audioUrl: config.audioUrl,
           policy: config.conflictPolicy,
         ),
@@ -109,6 +117,7 @@ class TrackCacheInteractionHandler {
       bloc.add(
         CacheTrackRequested(
           trackId: config.trackId,
+          versionId: config.versionId,
           audioUrl: config.audioUrl,
           policy: config.conflictPolicy,
         ),
@@ -143,6 +152,7 @@ class TrackCacheInteractionHandler {
     context.read<TrackCacheBloc>().add(
       WatchTrackCacheStatusRequested(
         AudioTrackId.fromUniqueString(config.trackId),
+        versionId: TrackVersionId.fromUniqueString(config.versionId),
       ),
     );
   }
@@ -152,6 +162,7 @@ class TrackCacheInteractionHandler {
     context.read<TrackCacheBloc>().add(
       WatchTrackCacheStatusRequested(
         AudioTrackId.fromUniqueString(config.trackId),
+        versionId: TrackVersionId.fromUniqueString(config.versionId),
       ),
     );
   }
