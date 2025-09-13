@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/track_version/presentation/components/version_header_component.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
@@ -110,7 +111,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
             children: [
               // Versions Section
               VersionsSectionComponent(trackId: widget.track.id),
-
+              VersionHeaderComponent(trackId: widget.track.id),
               // Audio Player
               BlocBuilder<TrackDetailCubit, TrackDetailState>(
                 builder:

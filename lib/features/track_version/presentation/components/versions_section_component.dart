@@ -47,7 +47,6 @@ class VersionsSectionComponent extends StatelessWidget {
             ],
           ),
           SizedBox(height: Dimensions.space8),
-          VersionHeaderComponent(trackId: trackId),
         ],
       ),
     );
