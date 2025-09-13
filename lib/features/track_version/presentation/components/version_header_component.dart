@@ -21,6 +21,7 @@ class VersionHeaderComponent extends StatelessWidget {
     TrackVersionId activeVersionId,
   ) {
     showAppActionSheet(
+      showCloseButton: true,
       showHandle: true,
       useRootNavigator: false,
       title: 'Version Actions',

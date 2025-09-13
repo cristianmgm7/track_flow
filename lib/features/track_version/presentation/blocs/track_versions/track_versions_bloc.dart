@@ -37,6 +37,7 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
     Emitter<TrackVersionsState> emit,
   ) async {
     emit(const TrackVersionsLoading());
+    var isFirstEmission = true;
     await emit.onEach(
       _watchBundle.call(event.trackId),
       onData: (either) {
@@ -44,17 +45,23 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
           bundle,
         ) {
           final versions = bundle.versions;
-          // Priority: explicit override from event (e.g., from route) > track.activeVersionId > first version
+          // First emission: allow route override. Afterwards: always reflect DB (track.activeVersionId).
           final activeVersionId =
-              event.activeVersionId ??
-              bundle.track.activeVersionId ??
-              (versions.isEmpty ? null : versions.first.id);
+              isFirstEmission
+                  ? (event.activeVersionId ??
+                      bundle.track.activeVersionId ??
+                      (versions.isEmpty ? null : versions.first.id))
+                  : (bundle.track.activeVersionId ??
+                      (versions.isEmpty ? null : versions.first.id));
           emit(
             TrackVersionsLoaded(
               versions: versions,
               activeVersionId: activeVersionId,
             ),
           );
+          if (isFirstEmission) {
+            isFirstEmission = false;
+          }
         });
       },
       onError: (e, stackTrace) {
