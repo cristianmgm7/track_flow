@@ -16,9 +16,7 @@ import '../cubit/track_detail_cubit.dart';
 import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
 import '../components/versions_section_component.dart';
-import '../widgets/rename_version_form.dart';
-import '../widgets/delete_version_dialog.dart';
-import '../actions/upload_version_actions.dart';
+import '../widgets/upload_version_form.dart';
 
 class TrackDetailScreen extends StatefulWidget {
   final ProjectId projectId;
@@ -88,11 +86,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
           child: Column(
             children: [
               // Versions Section
-              VersionsSectionComponent(
-                trackId: widget.track.id,
-                onRenamePressed: _showRenameDialog,
-                onDeletePressed: _showDeleteConfirmation,
-              ),
+              VersionsSectionComponent(trackId: widget.track.id),
 
               // Audio Player
               BlocBuilder<TrackDetailCubit, TrackDetailState>(
@@ -136,56 +130,24 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     );
   }
 
-  void _showUploadVersionDialog() {
-    UploadVersionActions.showUploadVersionDialog(
+  void _showUploadVersionDialog() async {
+    final result = await showAppFormSheet(
       context: context,
-      trackId: widget.track.id,
-      projectId: widget.projectId,
+      title: 'Upload Version',
+      child: UploadVersionForm(
+        trackId: widget.track.id,
+        projectId: widget.projectId,
+      ),
     );
-  }
 
-  void _showRenameDialog() {
-    // Get current active version info from the state
-    final cubitState = context.read<TrackDetailCubit>().state;
-    final blocState = context.read<TrackVersionsBloc>().state;
-
-    if (blocState is TrackVersionsLoaded && blocState.versions.isNotEmpty) {
-      final activeId = cubitState.activeVersionId ?? blocState.activeVersionId;
-      final active =
-          activeId != null
-              ? blocState.versions.firstWhere(
-                (v) => v.id == activeId,
-                orElse: () => blocState.versions.first,
-              )
-              : blocState.versions.first;
-
-      showAppFormSheet(
-        context: context,
-        title: 'Rename Version',
-        child: RenameVersionForm(
-          versionId: active.id,
-          currentLabel: active.label,
+    if (result is UploadVersionResult) {
+      context.read<TrackVersionsBloc>().add(
+        AddTrackVersionRequested(
+          trackId: widget.track.id,
+          file: result.file,
+          label: result.label,
         ),
       );
-    }
-  }
-
-  void _showDeleteConfirmation() {
-    // Get current active version info from the state
-    final cubitState = context.read<TrackDetailCubit>().state;
-    final blocState = context.read<TrackVersionsBloc>().state;
-
-    if (blocState is TrackVersionsLoaded && blocState.versions.isNotEmpty) {
-      final activeId = cubitState.activeVersionId ?? blocState.activeVersionId;
-      final active =
-          activeId != null
-              ? blocState.versions.firstWhere(
-                (v) => v.id == activeId,
-                orElse: () => blocState.versions.first,
-              )
-              : blocState.versions.first;
-
-      DeleteVersionDialog.show(context, versionId: active.id);
     }
   }
 }

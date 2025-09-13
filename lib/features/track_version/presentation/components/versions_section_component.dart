@@ -10,15 +10,8 @@ import '../widgets/versions_list.dart';
 
 class VersionsSectionComponent extends StatelessWidget {
   final AudioTrackId trackId;
-  final VoidCallback onRenamePressed;
-  final VoidCallback onDeletePressed;
 
-  const VersionsSectionComponent({
-    super.key,
-    required this.trackId,
-    required this.onRenamePressed,
-    required this.onDeletePressed,
-  });
+  const VersionsSectionComponent({super.key, required this.trackId});
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +47,7 @@ class VersionsSectionComponent extends StatelessWidget {
             ],
           ),
           SizedBox(height: Dimensions.space8),
-          VersionHeaderComponent(
-            trackId: trackId,
-            onRenamePressed: onRenamePressed,
-            onDeletePressed: onDeletePressed,
-          ),
+          VersionHeaderComponent(trackId: trackId),
         ],
       ),
     );

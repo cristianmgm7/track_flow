@@ -62,6 +62,7 @@ class _RenameVersionFormState extends State<RenameVersionForm> {
         }
       },
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           AppFormField(

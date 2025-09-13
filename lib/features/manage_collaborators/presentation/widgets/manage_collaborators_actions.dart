@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
@@ -53,10 +54,18 @@ class CollaboratorActions {
       title: 'Remove',
       subtitle: 'Remove from project',
       onTap: () {
-        RemoveCollaboratorDialog(
-          projectId: project.id,
-          collaboratorId: collaborator.id.value,
-          collaboratorName: collaborator.name,
+        showDialog(
+          context: context,
+          useRootNavigator: false,
+          builder:
+              (dialogContext) => BlocProvider.value(
+                value: context.read<ManageCollaboratorsBloc>(),
+                child: RemoveCollaboratorDialog(
+                  projectId: project.id,
+                  collaboratorId: collaborator.id.value,
+                  collaboratorName: collaborator.name,
+                ),
+              ),
         );
       },
     ),

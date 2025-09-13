@@ -1,24 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/entities/unique_id.dart';
-import '../../../ui/menus/app_popup_menu.dart';
+import '../../../ui/modals/app_bottom_sheet.dart';
+import '../../../ui/modals/app_form_sheet.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
-import '../blocs/track_versions/track_versions_event.dart';
 import '../blocs/track_versions/track_versions_state.dart';
 import '../cubit/track_detail_cubit.dart';
+import '../widgets/track_detail_actions_sheet.dart';
+import '../widgets/rename_version_form.dart';
+import '../widgets/delete_version_dialog.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 
 /// Header component for displaying active version information and actions
 class VersionHeaderComponent extends StatelessWidget {
   final AudioTrackId trackId;
-  final VoidCallback? onRenamePressed;
-  final VoidCallback? onDeletePressed;
 
-  const VersionHeaderComponent({
-    super.key,
-    required this.trackId,
-    this.onRenamePressed,
-    this.onDeletePressed,
-  });
+  const VersionHeaderComponent({super.key, required this.trackId});
+
+  void _openTrackDetailActionsSheet(
+    BuildContext context,
+    TrackVersionId activeVersionId,
+  ) {
+    showAppActionSheet(
+      showHandle: true,
+      useRootNavigator: true,
+      title: 'Version Actions',
+      context: context,
+      actions: TrackDetailActions.forVersion(
+        context,
+        trackId,
+        activeVersionId,
+        () => _showRenameDialog(context, activeVersionId),
+        () => _showDeleteConfirmation(context, activeVersionId),
+      ),
+      initialChildSize: 0.5,
+    );
+  }
+
+  void _showRenameDialog(BuildContext context, TrackVersionId versionId) {
+    // Get current version info from the state
+    final blocState = context.read<TrackVersionsBloc>().state;
+
+    if (blocState is TrackVersionsLoaded && blocState.versions.isNotEmpty) {
+      final activeVersion = blocState.versions.firstWhere(
+        (v) => v.id == versionId,
+        orElse: () => blocState.versions.first,
+      );
+
+      showAppFormSheet(
+        context: context,
+        title: 'Rename Version',
+        child: RenameVersionForm(
+          versionId: versionId,
+          currentLabel: activeVersion.label,
+        ),
+      );
+    }
+  }
+
+  void _showDeleteConfirmation(BuildContext context, TrackVersionId versionId) {
+    DeleteVersionDialog.show(context, versionId: versionId);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,35 +111,28 @@ class VersionHeaderComponent extends StatelessWidget {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(width: 8),
+                      // Upload status badge for the active version
+                      if (active.status == TrackVersionStatus.processing)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else if (active.status == TrackVersionStatus.failed)
+                        const Icon(
+                          Icons.error_outline,
+                          size: 18,
+                          color: AppColors.error,
+                        ),
                     ],
                   ),
                 ),
-                AppPopupMenuButton<String>(
+                IconButton(
+                  icon: const Icon(Icons.more_horiz),
+                  onPressed:
+                      () => _openTrackDetailActionsSheet(context, active.id),
                   tooltip: 'Version actions',
-                  items: const [
-                    AppPopupMenuItem(
-                      value: 'set_active',
-                      label: 'Set as active',
-                    ),
-                    AppPopupMenuItem(value: 'rename', label: 'Rename label'),
-                    AppPopupMenuItem(value: 'delete', label: 'Delete version'),
-                  ],
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'set_active':
-                        // The cubit is provided by the router and will be updated
-                        context.read<TrackVersionsBloc>().add(
-                          SetActiveTrackVersionRequested(trackId, active.id),
-                        );
-                        break;
-                      case 'rename':
-                        onRenamePressed?.call();
-                        break;
-                      case 'delete':
-                        onDeletePressed?.call();
-                        break;
-                    }
-                  },
                 ),
               ],
             );

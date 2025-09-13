@@ -4,6 +4,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
 import 'package:trackflow/features/track_version/presentation/cubit/track_detail_cubit.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 
 class VersionsList extends StatelessWidget {
   final AudioTrackId trackId;
@@ -68,6 +70,21 @@ class VersionsList extends StatelessWidget {
                         if (isGloballyActive) ...[
                           const SizedBox(width: 6),
                           const Icon(Icons.check_circle, size: 16),
+                        ],
+                        if (v.status == TrackVersionStatus.processing) ...[
+                          const SizedBox(width: 6),
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ] else if (v.status == TrackVersionStatus.failed) ...[
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.error_outline,
+                            size: 16,
+                            color: AppColors.error,
+                          ),
                         ],
                       ],
                     ),
