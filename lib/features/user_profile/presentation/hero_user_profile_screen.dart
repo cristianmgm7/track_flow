@@ -44,6 +44,7 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text('User Profile'), centerTitle: true),
       backgroundColor: AppColors.background,
       body: BlocListener<AppFlowBloc, AppFlowState>(
         listener: (context, appFlowState) {

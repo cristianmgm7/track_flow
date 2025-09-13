@@ -68,12 +68,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // User Profile Section
             const UserProfileSection(),
             SizedBox(height: Dimensions.space16),
-
-            // Preferences Card (removed temporarily)
-            // const Preferences(),
-            // SizedBox(height: Dimensions.space16),
-
-            // Developer/Debug Section
             Card(
               color: AppColors.surface,
               child: Padding(

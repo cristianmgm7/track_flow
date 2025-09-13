@@ -79,8 +79,6 @@ class TrackActions {
       title: 'Download',
       subtitle: 'Save this track to your device',
       onTap: () async {
-        Navigator.of(context).pop(); // Close the action sheet
-
         final bloc = context.read<TrackCacheBloc>();
         final messenger = ScaffoldMessenger.of(context);
 
