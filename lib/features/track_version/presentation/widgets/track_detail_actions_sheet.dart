@@ -23,7 +23,6 @@ class TrackDetailActions {
         context.read<TrackVersionsBloc>().add(
           SetActiveTrackVersionRequested(trackId, versionId),
         );
-        context.pop();
       },
     ),
     AppBottomSheetAction(
@@ -50,8 +49,6 @@ class TrackDetailActions {
       title: 'Delete Version',
       subtitle: 'Remove this version permanently',
       onTap: () {
-        // Close the sheet first, then show dialog on the same navigator
-        Navigator.of(context).pop();
         showDialog(
           context: context,
           useRootNavigator: false,

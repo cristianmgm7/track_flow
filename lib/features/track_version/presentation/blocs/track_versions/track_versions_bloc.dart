@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/features/track_version/domain/usecases/watch_track_versions_usecase.dart';
+// import 'package:trackflow/features/track_version/domain/usecases/watch_track_versions_usecase.dart';
+import 'package:trackflow/features/track_version/domain/usecases/watch_track_versions_bundle_usecase.dart';
 import 'package:trackflow/features/track_version/domain/usecases/set_active_track_version_usecase.dart';
 import 'package:trackflow/features/track_version/domain/usecases/add_track_version_usecase.dart';
 import 'package:trackflow/features/track_version/domain/usecases/rename_track_version_usecase.dart';
@@ -10,14 +11,14 @@ import 'package:trackflow/features/track_version/presentation/blocs/track_versio
 
 @injectable
 class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
-  final WatchTrackVersionsUseCase _watchVersions;
+  final WatchTrackVersionsBundleUseCase _watchBundle;
   final SetActiveTrackVersionUseCase _setActive;
   final AddTrackVersionUseCase _addVersion;
   final RenameTrackVersionUseCase _renameVersion;
   final DeleteTrackVersionUseCase _deleteVersion;
 
   TrackVersionsBloc(
-    this._watchVersions,
+    this._watchBundle,
     this._setActive,
     this._addVersion,
     this._renameVersion,
@@ -37,14 +38,16 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
   ) async {
     emit(const TrackVersionsLoading());
     await emit.onEach(
-      _watchVersions.call(event.trackId),
+      _watchBundle.call(event.trackId),
       onData: (either) {
         either.fold((failure) => emit(TrackVersionsError(failure.message)), (
-          versions,
+          bundle,
         ) {
-          // Use the track's activeVersionId if provided, otherwise use the first version
+          final versions = bundle.versions;
+          // Priority: explicit override from event (e.g., from route) > track.activeVersionId > first version
           final activeVersionId =
               event.activeVersionId ??
+              bundle.track.activeVersionId ??
               (versions.isEmpty ? null : versions.first.id);
           emit(
             TrackVersionsLoaded(

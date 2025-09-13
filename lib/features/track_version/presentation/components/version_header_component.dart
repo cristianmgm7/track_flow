@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import '../../../../core/entities/unique_id.dart';
 import '../../../ui/modals/app_bottom_sheet.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
@@ -56,51 +57,54 @@ class VersionHeaderComponent extends StatelessWidget {
             final label = active.label ?? 'v${active.versionNumber}';
             final isActive = activeId == active.id;
 
-            return Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      if (isActive)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Icon(
-                            Icons.check_circle,
-                            size: 18,
-                            color: theme.colorScheme.primary,
+            return Padding(
+              padding: EdgeInsets.symmetric(horizontal: Dimensions.space12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (isActive)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              Icons.check_circle,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
+                        Text(
+                          label,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      Text(
-                        label,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(width: 8),
-                      // Upload status badge for the active version
-                      if (active.status == TrackVersionStatus.processing)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      else if (active.status == TrackVersionStatus.failed)
-                        const Icon(
-                          Icons.error_outline,
-                          size: 18,
-                          color: AppColors.error,
-                        ),
-                    ],
+                        const SizedBox(width: 8),
+                        // Upload status badge for the active version
+                        if (active.status == TrackVersionStatus.processing)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        else if (active.status == TrackVersionStatus.failed)
+                          const Icon(
+                            Icons.error_outline,
+                            size: 18,
+                            color: AppColors.error,
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.more_horiz),
-                  onPressed:
-                      () => _openTrackDetailActionsSheet(context, active.id),
-                  tooltip: 'Version actions',
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz),
+                    onPressed:
+                        () => _openTrackDetailActionsSheet(context, active.id),
+                    tooltip: 'Version actions',
+                  ),
+                ],
+              ),
             );
           },
         );
