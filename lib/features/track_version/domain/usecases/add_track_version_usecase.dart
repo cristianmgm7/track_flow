@@ -8,8 +8,7 @@ import 'package:trackflow/features/track_version/domain/entities/track_version.d
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import 'package:trackflow/features/audio_track/domain/services/audio_metadata_service.dart';
-import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart';
-import 'package:crypto/crypto.dart' as crypto;
+import 'package:trackflow/features/waveform/domain/usecases/generate_and_store_waveform.dart';
 
 class AddTrackVersionParams {
   final AudioTrackId trackId;
@@ -31,14 +30,14 @@ class AddTrackVersionUseCase {
   final TrackVersionRepository trackVersionRepository;
   final AudioMetadataService audioMetadataService;
   final AudioStorageRepository audioStorageRepository;
-  final GetOrGenerateWaveform getOrGenerateWaveform;
+  final GenerateAndStoreWaveform generateAndStoreWaveform;
 
   AddTrackVersionUseCase(
     this.sessionStorage,
     this.trackVersionRepository,
     this.audioMetadataService,
     this.audioStorageRepository,
-    this.getOrGenerateWaveform,
+    this.generateAndStoreWaveform,
   );
 
   Future<Either<Failure, TrackVersion>> call(
@@ -101,19 +100,15 @@ class AddTrackVersionUseCase {
       final cached = cacheEither.getOrElse(() => throw Exception());
       final cachedFile = File(cached.filePath);
 
-      // 5) Fire-and-forget waveform generation using cached file
+      // 5) Fire-and-forget canonical waveform generation using cached file
       () async {
         try {
-          final bytes = await cachedFile.readAsBytes();
-          final audioSourceHash = crypto.sha1.convert(bytes).toString();
-          await getOrGenerateWaveform(
-            GetOrGenerateWaveformParams(
+          await generateAndStoreWaveform(
+            GenerateAndStoreWaveformParams(
+              trackId: params.trackId,
               versionId: version.id,
               audioFilePath: cachedFile.path,
-              audioSourceHash: audioSourceHash,
-              algorithmVersion: 1,
               targetSampleCount: null,
-              forceRefresh: true,
             ),
           );
         } catch (_) {

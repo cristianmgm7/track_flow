@@ -49,11 +49,21 @@ class SyncWaveformsUseCase {
 
   Future<void> call({TrackVersionId? scopedVersionId}) async {
     final userId = await _sessionStorage.getUserId();
-    if (userId == null) return; // Preserve local data when no user
+    if (userId == null) {
+      AppLogger.info(
+        'SyncWaveformsUseCase: No user ID, skipping sync',
+        tag: 'SYNC_WAVEFORMS',
+      );
+      return; // Preserve local data when no user
+    }
 
     try {
       // Scoped: only sync a specific version's waveform
       if (scopedVersionId != null) {
+        AppLogger.info(
+          'SyncWaveformsUseCase: Starting scoped sync for version ${scopedVersionId.value}',
+          tag: 'SYNC_WAVEFORMS',
+        );
         await _syncForVersions(<String>[scopedVersionId.value]);
         return;
       }
@@ -66,8 +76,18 @@ class SyncWaveformsUseCase {
         (v) => v,
       );
 
+      AppLogger.info(
+        'SyncWaveformsUseCase: Found ${localVersions.length} local versions',
+        tag: 'SYNC_WAVEFORMS',
+      );
+
       if (localVersions.isNotEmpty) {
         await _syncForVersions(localVersions.map((e) => e.id).toList());
+      } else {
+        AppLogger.warning(
+          'SyncWaveformsUseCase: No local versions found, skipping waveform sync',
+          tag: 'SYNC_WAVEFORMS',
+        );
       }
     } catch (e) {
       AppLogger.warning(
@@ -78,19 +98,39 @@ class SyncWaveformsUseCase {
   }
 
   Future<void> _syncForVersions(List<String> versionIds) async {
+    AppLogger.info(
+      'SyncWaveformsUseCase: Processing ${versionIds.length} versions',
+      tag: 'SYNC_WAVEFORMS',
+    );
+
     for (final versionIdStr in versionIds) {
       try {
         final versionId = TrackVersionId.fromUniqueString(versionIdStr);
+        AppLogger.debug(
+          'SyncWaveformsUseCase: Processing version $versionIdStr',
+          tag: 'SYNC_WAVEFORMS',
+        );
+
         // If already cached locally, skip
         final local = await _waveformLocalDataSource.getWaveformByVersionId(
           versionId,
         );
-        if (local != null) continue;
+        if (local != null) {
+          AppLogger.debug(
+            'SyncWaveformsUseCase: Version $versionIdStr already cached locally, skipping',
+            tag: 'SYNC_WAVEFORMS',
+          );
+          continue;
+        }
 
         // Throttle attempts per version to avoid repeated remote lookups
         final now = DateTime.now();
         final last = _lastAttemptAt[versionIdStr];
         if (last != null && now.difference(last) < _attemptTtl) {
+          AppLogger.debug(
+            'SyncWaveformsUseCase: Version $versionIdStr throttled (last attempt: $last)',
+            tag: 'SYNC_WAVEFORMS',
+          );
           continue;
         }
 
@@ -99,20 +139,53 @@ class SyncWaveformsUseCase {
           versionIdStr,
         );
         final version = versionResult.fold((_) => null, (v) => v);
-        if (version == null) continue;
+        if (version == null) {
+          AppLogger.warning(
+            'SyncWaveformsUseCase: Could not resolve version $versionIdStr from local data',
+            tag: 'SYNC_WAVEFORMS',
+          );
+          continue;
+        }
 
-        final remote = await _waveformRemoteDataSource.fetchBestForVersion(
+        AppLogger.debug(
+          'SyncWaveformsUseCase: Fetching canonical remote waveform for version $versionIdStr (track: ${version.trackId})',
+          tag: 'SYNC_WAVEFORMS',
+        );
+        final remote = await _waveformRemoteDataSource.fetchCanonicalForVersion(
           trackId: version.trackId,
           versionId: versionId,
         );
+
         if (remote != null) {
+          AppLogger.info(
+            'SyncWaveformsUseCase: Canonical remote waveform found for version $versionIdStr, saving locally',
+            tag: 'SYNC_WAVEFORMS',
+          );
           await _waveformLocalDataSource.saveWaveform(remote);
+          AppLogger.debug(
+            'SyncWaveformsUseCase: Successfully saved waveform for version $versionIdStr',
+            tag: 'SYNC_WAVEFORMS',
+          );
+        } else {
+          AppLogger.warning(
+            'SyncWaveformsUseCase: No canonical remote waveform found for version $versionIdStr',
+            tag: 'SYNC_WAVEFORMS',
+          );
         }
 
         _lastAttemptAt[versionIdStr] = now;
-      } catch (_) {
+      } catch (e) {
+        AppLogger.warning(
+          'SyncWaveformsUseCase: Error processing version $versionIdStr: $e',
+          tag: 'SYNC_WAVEFORMS',
+        );
         // best-effort; continue
       }
     }
+
+    AppLogger.info(
+      'SyncWaveformsUseCase: Completed processing ${versionIds.length} versions',
+      tag: 'SYNC_WAVEFORMS',
+    );
   }
 }

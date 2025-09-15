@@ -10,10 +10,10 @@ abstract class WaveformEvent extends Equatable {
 class LoadWaveform extends WaveformEvent {
   final TrackVersionId
   versionId; // Required: waveforms are now purely version-based
-  final String? audioFilePath; // Optional: to allow generation
-  final String? audioSourceHash; // Optional: remote/local key
-  final int? targetSampleCount;
-  final bool forceRefresh;
+  final String? audioFilePath; // unused now
+  final String? audioSourceHash; // unused now
+  final int? targetSampleCount; // unused now
+  final bool forceRefresh; // unused now
 
   const LoadWaveform(
     this.versionId, {

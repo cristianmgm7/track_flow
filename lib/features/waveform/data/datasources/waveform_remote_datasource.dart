@@ -9,33 +9,17 @@ import 'package:trackflow/features/waveform/domain/value_objects/waveform_data.d
 import 'package:trackflow/features/waveform/domain/value_objects/waveform_metadata.dart';
 
 abstract class WaveformRemoteDataSource {
-  Future<AudioWaveform?> fetchByKey({
-    TrackVersionId? versionId,
-    required String audioSourceHash,
-    required int algorithmVersion,
-    required int targetSampleCount,
-  });
-
-  Future<void> uploadByKey({
-    required AudioWaveform waveform,
-    required String audioSourceHash,
-    required int algorithmVersion,
-  });
-
-  /// Fetch best-available waveform at canonical path
-  /// waveforms/{trackId}/{versionId}/best.json
-  Future<AudioWaveform?> fetchBestForVersion({
+  /// Canonical only: waveforms/{trackId}/{versionId}.json
+  Future<AudioWaveform?> fetchCanonicalForVersion({
     required String trackId,
     required TrackVersionId versionId,
   });
 
-  /// Upload best-available waveform to canonical path
-  Future<void> uploadBestForVersion({
+  Future<void> uploadCanonical({
     required String trackId,
     required AudioWaveform waveform,
   });
 
-  /// Delete all waveforms for a specific version
   Future<void> deleteWaveformsForVersion({
     required String trackId,
     required TrackVersionId versionId,
@@ -49,64 +33,17 @@ class FirebaseStorageWaveformRemoteDataSource
 
   FirebaseStorageWaveformRemoteDataSource(this._storage);
 
-  String _pathFor(
-    TrackVersionId versionId,
-    String audioSourceHash,
-    int algorithmVersion,
-    int targetSampleCount,
-  ) {
-    // Legacy key-based cache path kept for variants and backward compatibility
-    return 'waveforms/${versionId.value}/${audioSourceHash}_${targetSampleCount}_alg$algorithmVersion.json';
-  }
-
-  String _bestPathFor(String trackId, TrackVersionId versionId) {
-    return 'waveforms/$trackId/${versionId.value}/best.json';
+  String _canonicalPath(String trackId, TrackVersionId versionId) {
+    return 'waveforms/$trackId/${versionId.value}.json';
   }
 
   @override
-  Future<AudioWaveform?> fetchByKey({
-    TrackVersionId? versionId,
-    required String audioSourceHash,
-    required int algorithmVersion,
-    required int targetSampleCount,
-  }) async {
-    if (versionId == null) return null;
-
-    final ref = _storage.ref().child(
-      _pathFor(versionId, audioSourceHash, algorithmVersion, targetSampleCount),
-    );
-    try {
-      final data = await ref.getData(5 * 1024 * 1024);
-      if (data == null) return null;
-      final map = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
-      return _decode(map);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  @override
-  Future<void> uploadByKey({
-    required AudioWaveform waveform,
-    required String audioSourceHash,
-    required int algorithmVersion,
-  }) async {
-    final path = _pathFor(
-      waveform.versionId,
-      audioSourceHash,
-      algorithmVersion,
-      waveform.data.targetSampleCount,
-    );
-    await _upload(path, waveform);
-  }
-
-  @override
-  Future<AudioWaveform?> fetchBestForVersion({
+  Future<AudioWaveform?> fetchCanonicalForVersion({
     required String trackId,
     required TrackVersionId versionId,
   }) async {
     try {
-      final ref = _storage.ref().child(_bestPathFor(trackId, versionId));
+      final ref = _storage.ref().child(_canonicalPath(trackId, versionId));
       final data = await ref.getData(5 * 1024 * 1024);
       if (data == null) return null;
       final map = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
@@ -117,11 +54,11 @@ class FirebaseStorageWaveformRemoteDataSource
   }
 
   @override
-  Future<void> uploadBestForVersion({
+  Future<void> uploadCanonical({
     required String trackId,
     required AudioWaveform waveform,
   }) async {
-    final path = _bestPathFor(trackId, waveform.versionId);
+    final path = _canonicalPath(trackId, waveform.versionId);
     await _upload(path, waveform);
   }
 
@@ -131,21 +68,15 @@ class FirebaseStorageWaveformRemoteDataSource
     required TrackVersionId versionId,
   }) async {
     try {
-      // Delete the "best" waveform first
-      final bestPath = _bestPathFor(trackId, versionId);
-      final bestRef = _storage.ref().child(bestPath);
+      // Delete canonical waveform
+      final canonicalRef = _storage.ref().child(
+        _canonicalPath(trackId, versionId),
+      );
       try {
-        await bestRef.delete();
+        await canonicalRef.delete();
       } catch (_) {
-        // Best waveform might not exist, continue
+        // Might not exist
       }
-
-      // Note: For variant waveforms, we would need to list all files in the
-      // waveforms/{trackId}/{versionId}/ directory and delete them.
-      // For now, we'll only delete the "best" waveform since variants
-      // are typically cleaned up through cache management.
-      // In a production app, you might want to implement a more comprehensive
-      // cleanup that lists and deletes all variant files.
     } catch (e) {
       // Log but don't throw - waveform deletion failures shouldn't stop track deletion
       print(

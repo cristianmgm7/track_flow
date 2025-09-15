@@ -90,7 +90,16 @@ class SyncDataManager {
       AppLogger.sync('DOWNSTREAM', 'Stage D (comments + waveforms) starting');
       // Prefer explicit per-version scoped sync to ensure downstream actually happens
       final versionIds = await _syncWaveforms.getLocalVersionIds();
+      AppLogger.sync(
+        'DOWNSTREAM',
+        'Found ${versionIds.length} local version IDs for waveform sync',
+      );
+
       if (versionIds.isNotEmpty) {
+        AppLogger.sync(
+          'DOWNSTREAM',
+          'Starting scoped waveform sync for ${versionIds.length} versions',
+        );
         await Future.wait<void>([
           // Comments for each version
           ...versionIds.map((id) => _syncAudioComments(scopedVersionId: id)),
@@ -103,6 +112,10 @@ class SyncDataManager {
         ]);
       } else {
         // Fallback: run generic syncs (no-ops if nothing to do)
+        AppLogger.sync(
+          'DOWNSTREAM',
+          'No local versions found, running generic waveform sync',
+        );
         await Future.wait<void>([_syncAudioComments(), _syncWaveforms()]);
       }
       AppLogger.sync('DOWNSTREAM', 'Stage D (comments + waveforms) completed');

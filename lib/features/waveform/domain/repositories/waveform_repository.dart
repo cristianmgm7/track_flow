@@ -13,16 +13,14 @@ abstract class WaveformRepository {
   );
   Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId);
 
-  Future<Either<Failure, AudioWaveform>> getOrGenerate({
-    required TrackVersionId versionId,
-    String? audioFilePath,
-    required String audioSourceHash,
-    required int algorithmVersion,
-    int? targetSampleCount,
-    bool forceRefresh = false,
-  });
-
   Future<Either<Failure, Unit>> invalidate({required TrackVersionId versionId});
 
   Future<Either<Failure, Unit>> clearAllWaveforms();
+
+  /// Store waveform locally and upload to canonical remote path
+  /// waveforms/{trackId}/{versionId}.json
+  Future<Either<Failure, Unit>> storeCanonicalWaveform({
+    required AudioTrackId trackId,
+    required AudioWaveform waveform,
+  });
 }

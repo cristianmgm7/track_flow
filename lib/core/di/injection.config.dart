@@ -333,7 +333,7 @@ import 'package:trackflow/features/magic_link/domain/usecases/consume_magic_link
 import 'package:trackflow/features/magic_link/domain/usecases/generate_magic_link_use_case.dart'
     as _i129;
 import 'package:trackflow/features/magic_link/domain/usecases/get_magic_link_status_use_case.dart'
-    as _i82;
+    as _i83;
 import 'package:trackflow/features/magic_link/domain/usecases/resend_magic_link_use_case.dart'
     as _i47;
 import 'package:trackflow/features/magic_link/domain/usecases/validate_magic_link_use_case.dart'
@@ -468,8 +468,8 @@ import 'package:trackflow/features/waveform/domain/repositories/waveform_reposit
     as _i69;
 import 'package:trackflow/features/waveform/domain/services/waveform_generator_service.dart'
     as _i65;
-import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart'
-    as _i83;
+import 'package:trackflow/features/waveform/domain/usecases/generate_and_store_waveform.dart'
+    as _i82;
 import 'package:trackflow/features/waveform/domain/usecases/invalidate_waveform.dart'
     as _i86;
 import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart'
@@ -643,7 +643,6 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i69.WaveformRepository>(() => _i70.WaveformRepositoryImpl(
           localDataSource: gh<_i67.WaveformLocalDataSource>(),
           remoteDataSource: gh<_i68.WaveformRemoteDataSource>(),
-          generatorService: gh<_i65.WaveformGeneratorService>(),
         ));
     gh.lazySingleton<_i71.AppleAuthService>(
         () => _i71.AppleAuthService(gh<_i15.FirebaseAuth>()));
@@ -668,10 +667,13 @@ extension GetItInjectableX on _i1.GetIt {
         () => _i80.DatabaseHealthMonitor(gh<_i23.Isar>()));
     gh.factory<_i81.DeleteNotificationUseCase>(() =>
         _i81.DeleteNotificationUseCase(gh<_i32.NotificationRepository>()));
-    gh.lazySingleton<_i82.GetMagicLinkStatusUseCase>(
-        () => _i82.GetMagicLinkStatusUseCase(gh<_i26.MagicLinkRepository>()));
-    gh.factory<_i83.GetOrGenerateWaveform>(
-        () => _i83.GetOrGenerateWaveform(gh<_i69.WaveformRepository>()));
+    gh.factory<_i82.GenerateAndStoreWaveform>(
+        () => _i82.GenerateAndStoreWaveform(
+              gh<_i69.WaveformRepository>(),
+              gh<_i65.WaveformGeneratorService>(),
+            ));
+    gh.lazySingleton<_i83.GetMagicLinkStatusUseCase>(
+        () => _i83.GetMagicLinkStatusUseCase(gh<_i26.MagicLinkRepository>()));
     gh.lazySingleton<_i84.GetUnreadNotificationsCountUseCase>(() =>
         _i84.GetUnreadNotificationsCountUseCase(
             gh<_i32.NotificationRepository>()));
@@ -778,7 +780,6 @@ extension GetItInjectableX on _i1.GetIt {
     gh.factory<_i112.WaveformBloc>(() => _i112.WaveformBloc(
           waveformRepository: gh<_i69.WaveformRepository>(),
           audioPlaybackService: gh<_i5.AudioPlaybackService>(),
-          getOrGenerate: gh<_i83.GetOrGenerateWaveform>(),
         ));
     gh.factory<_i113.AudioCommentOperationExecutor>(() =>
         _i113.AudioCommentOperationExecutor(
@@ -1025,7 +1026,7 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i168.TrackVersionRepository>(),
               gh<_i4.AudioMetadataService>(),
               gh<_i116.AudioStorageRepository>(),
-              gh<_i83.GetOrGenerateWaveform>(),
+              gh<_i82.GenerateAndStoreWaveform>(),
             ));
     gh.lazySingleton<_i182.AudioCommentRepository>(
         () => _i183.AudioCommentRepositoryImpl(
@@ -1090,7 +1091,7 @@ extension GetItInjectableX on _i1.GetIt {
           validateMagicLink: gh<_i64.ValidateMagicLinkUseCase>(),
           consumeMagicLink: gh<_i78.ConsumeMagicLinkUseCase>(),
           resendMagicLink: gh<_i47.ResendMagicLinkUseCase>(),
-          getMagicLinkStatus: gh<_i82.GetMagicLinkStatusUseCase>(),
+          getMagicLinkStatus: gh<_i83.GetMagicLinkStatusUseCase>(),
           joinProjectWithId: gh<_i196.JoinProjectWithIdUseCase>(),
           authRepository: gh<_i121.AuthRepository>(),
         ));

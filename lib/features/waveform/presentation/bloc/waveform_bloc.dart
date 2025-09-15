@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
-import 'package:trackflow/features/waveform/domain/usecases/get_or_generate_waveform.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart';
 
 part 'waveform_event.dart';
@@ -14,7 +14,6 @@ part 'waveform_state.dart';
 @injectable
 class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
   final WaveformRepository _waveformRepository;
-  final GetOrGenerateWaveform _getOrGenerate;
   final AudioPlaybackService _audioPlaybackService;
 
   StreamSubscription? _sessionSubscription;
@@ -23,10 +22,8 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
   WaveformBloc({
     required WaveformRepository waveformRepository,
     required AudioPlaybackService audioPlaybackService,
-    required GetOrGenerateWaveform getOrGenerate,
   }) : _waveformRepository = waveformRepository,
        _audioPlaybackService = audioPlaybackService,
-       _getOrGenerate = getOrGenerate,
        super(const WaveformState()) {
     on<LoadWaveform>(_onLoadWaveform);
     on<WaveformSeekRequested>(_onWaveformSeekRequested);
@@ -50,8 +47,21 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
   ) async {
     if (state.versionId == event.versionId &&
         state.status == WaveformStatus.ready) {
+      AppLogger.debug(
+        'WaveformBloc: Waveform already loaded for version ${event.versionId.value}, skipping',
+        tag: 'WAVEFORM_BLOC',
+      );
       return; // Already loaded for this version
     }
+
+    AppLogger.info(
+      'WaveformBloc: Loading waveform for version ${event.versionId.value}',
+      tag: 'WAVEFORM_BLOC',
+    );
+    AppLogger.debug(
+      'WaveformBloc: audioSourceHash: ${event.audioSourceHash}, audioFilePath: ${event.audioFilePath}',
+      tag: 'WAVEFORM_BLOC',
+    );
 
     emit(
       state.copyWith(
@@ -73,50 +83,36 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
               (error) => add(_WaveformDataReceived(null, error.toString())),
         );
 
-    // Try local first, then remote, then generate if possible
-    if (event.audioSourceHash != null) {
-      String? localPath = event.audioFilePath;
-      if (localPath != null &&
-          (localPath.startsWith('http://') ||
-              localPath.startsWith('https://'))) {
-        // Since we don't have trackId anymore, we can't use the cache use case
-        // The audioFilePath should already be the correct path
-      }
-      final result = await _getOrGenerate.call(
-        GetOrGenerateWaveformParams(
-          versionId: event.versionId,
-          audioFilePath: localPath!,
-          audioSourceHash: event.audioSourceHash!,
-          algorithmVersion: 1, // bump when algorithm changes
-          targetSampleCount: event.targetSampleCount,
-          forceRefresh: event.forceRefresh,
-        ),
-      );
-      result.fold(
-        (failure) => emit(
-          state.copyWith(
-            status: WaveformStatus.error,
-            errorMessage: failure.message,
-          ),
-        ),
-        (waveform) => add(_WaveformDataReceived(waveform)),
-      );
-    } else {
-      // Try to find existing waveform by version
-      final result = await _waveformRepository.getWaveformByVersionId(
-        event.versionId,
-      );
+    // Only attempt to load existing waveform by version
+    AppLogger.debug(
+      'WaveformBloc: Loading waveform by versionId ${event.versionId.value}',
+      tag: 'WAVEFORM_BLOC',
+    );
+    final result = await _waveformRepository.getWaveformByVersionId(
+      event.versionId,
+    );
 
-      result.fold(
-        (failure) => emit(
+    result.fold(
+      (failure) => {
+        AppLogger.warning(
+          'WaveformBloc: getWaveformByVersionId failed for version ${event.versionId.value}: ${failure.message}',
+          tag: 'WAVEFORM_BLOC',
+        ),
+        emit(
           state.copyWith(
             status: WaveformStatus.error,
             errorMessage: failure.message,
           ),
         ),
-        (waveform) => add(_WaveformDataReceived(waveform)),
-      );
-    }
+      },
+      (waveform) => {
+        AppLogger.info(
+          'WaveformBloc: getWaveformByVersionId succeeded for version ${event.versionId.value}',
+          tag: 'WAVEFORM_BLOC',
+        ),
+        add(_WaveformDataReceived(waveform)),
+      },
+    );
   }
 
   void _onWaveformDataReceived(
