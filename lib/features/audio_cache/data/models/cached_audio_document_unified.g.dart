@@ -117,14 +117,19 @@ const CachedAudioDocumentUnifiedSchema = CollectionSchema(
   deserializeProp: _cachedAudioDocumentUnifiedDeserializeProp,
   idName: r'isarId',
   indexes: {
-    r'trackId': IndexSchema(
-      id: -8614467705999066844,
-      name: r'trackId',
+    r'trackId_versionId': IndexSchema(
+      id: -3019718201538164811,
+      name: r'trackId_versionId',
       unique: true,
       replace: false,
       properties: [
         IndexPropertySchema(
           name: r'trackId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        ),
+        IndexPropertySchema(
+          name: r'versionId',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -312,60 +317,95 @@ void _cachedAudioDocumentUnifiedAttach(
 
 extension CachedAudioDocumentUnifiedByIndex
     on IsarCollection<CachedAudioDocumentUnified> {
-  Future<CachedAudioDocumentUnified?> getByTrackId(String trackId) {
-    return getByIndex(r'trackId', [trackId]);
+  Future<CachedAudioDocumentUnified?> getByTrackIdVersionId(
+      String trackId, String versionId) {
+    return getByIndex(r'trackId_versionId', [trackId, versionId]);
   }
 
-  CachedAudioDocumentUnified? getByTrackIdSync(String trackId) {
-    return getByIndexSync(r'trackId', [trackId]);
+  CachedAudioDocumentUnified? getByTrackIdVersionIdSync(
+      String trackId, String versionId) {
+    return getByIndexSync(r'trackId_versionId', [trackId, versionId]);
   }
 
-  Future<bool> deleteByTrackId(String trackId) {
-    return deleteByIndex(r'trackId', [trackId]);
+  Future<bool> deleteByTrackIdVersionId(String trackId, String versionId) {
+    return deleteByIndex(r'trackId_versionId', [trackId, versionId]);
   }
 
-  bool deleteByTrackIdSync(String trackId) {
-    return deleteByIndexSync(r'trackId', [trackId]);
+  bool deleteByTrackIdVersionIdSync(String trackId, String versionId) {
+    return deleteByIndexSync(r'trackId_versionId', [trackId, versionId]);
   }
 
-  Future<List<CachedAudioDocumentUnified?>> getAllByTrackId(
-      List<String> trackIdValues) {
-    final values = trackIdValues.map((e) => [e]).toList();
-    return getAllByIndex(r'trackId', values);
+  Future<List<CachedAudioDocumentUnified?>> getAllByTrackIdVersionId(
+      List<String> trackIdValues, List<String> versionIdValues) {
+    final len = trackIdValues.length;
+    assert(versionIdValues.length == len,
+        'All index values must have the same length');
+    final values = <List<dynamic>>[];
+    for (var i = 0; i < len; i++) {
+      values.add([trackIdValues[i], versionIdValues[i]]);
+    }
+
+    return getAllByIndex(r'trackId_versionId', values);
   }
 
-  List<CachedAudioDocumentUnified?> getAllByTrackIdSync(
-      List<String> trackIdValues) {
-    final values = trackIdValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'trackId', values);
+  List<CachedAudioDocumentUnified?> getAllByTrackIdVersionIdSync(
+      List<String> trackIdValues, List<String> versionIdValues) {
+    final len = trackIdValues.length;
+    assert(versionIdValues.length == len,
+        'All index values must have the same length');
+    final values = <List<dynamic>>[];
+    for (var i = 0; i < len; i++) {
+      values.add([trackIdValues[i], versionIdValues[i]]);
+    }
+
+    return getAllByIndexSync(r'trackId_versionId', values);
   }
 
-  Future<int> deleteAllByTrackId(List<String> trackIdValues) {
-    final values = trackIdValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'trackId', values);
+  Future<int> deleteAllByTrackIdVersionId(
+      List<String> trackIdValues, List<String> versionIdValues) {
+    final len = trackIdValues.length;
+    assert(versionIdValues.length == len,
+        'All index values must have the same length');
+    final values = <List<dynamic>>[];
+    for (var i = 0; i < len; i++) {
+      values.add([trackIdValues[i], versionIdValues[i]]);
+    }
+
+    return deleteAllByIndex(r'trackId_versionId', values);
   }
 
-  int deleteAllByTrackIdSync(List<String> trackIdValues) {
-    final values = trackIdValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'trackId', values);
+  int deleteAllByTrackIdVersionIdSync(
+      List<String> trackIdValues, List<String> versionIdValues) {
+    final len = trackIdValues.length;
+    assert(versionIdValues.length == len,
+        'All index values must have the same length');
+    final values = <List<dynamic>>[];
+    for (var i = 0; i < len; i++) {
+      values.add([trackIdValues[i], versionIdValues[i]]);
+    }
+
+    return deleteAllByIndexSync(r'trackId_versionId', values);
   }
 
-  Future<Id> putByTrackId(CachedAudioDocumentUnified object) {
-    return putByIndex(r'trackId', object);
+  Future<Id> putByTrackIdVersionId(CachedAudioDocumentUnified object) {
+    return putByIndex(r'trackId_versionId', object);
   }
 
-  Id putByTrackIdSync(CachedAudioDocumentUnified object,
+  Id putByTrackIdVersionIdSync(CachedAudioDocumentUnified object,
       {bool saveLinks = true}) {
-    return putByIndexSync(r'trackId', object, saveLinks: saveLinks);
+    return putByIndexSync(r'trackId_versionId', object, saveLinks: saveLinks);
   }
 
-  Future<List<Id>> putAllByTrackId(List<CachedAudioDocumentUnified> objects) {
-    return putAllByIndex(r'trackId', objects);
+  Future<List<Id>> putAllByTrackIdVersionId(
+      List<CachedAudioDocumentUnified> objects) {
+    return putAllByIndex(r'trackId_versionId', objects);
   }
 
-  List<Id> putAllByTrackIdSync(List<CachedAudioDocumentUnified> objects,
+  List<Id> putAllByTrackIdVersionIdSync(
+      List<CachedAudioDocumentUnified> objects,
       {bool saveLinks = true}) {
-    return putAllByIndexSync(r'trackId', objects, saveLinks: saveLinks);
+    return putAllByIndexSync(r'trackId_versionId', objects,
+        saveLinks: saveLinks);
   }
 }
 
@@ -450,28 +490,28 @@ extension CachedAudioDocumentUnifiedQueryWhere on QueryBuilder<
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterWhereClause> trackIdEqualTo(String trackId) {
+      QAfterWhereClause> trackIdEqualToAnyVersionId(String trackId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'trackId',
+        indexName: r'trackId_versionId',
         value: [trackId],
       ));
     });
   }
 
   QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
-      QAfterWhereClause> trackIdNotEqualTo(String trackId) {
+      QAfterWhereClause> trackIdNotEqualToAnyVersionId(String trackId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'trackId',
+              indexName: r'trackId_versionId',
               lower: [],
               upper: [trackId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'trackId',
+              indexName: r'trackId_versionId',
               lower: [trackId],
               includeLower: false,
               upper: [],
@@ -479,15 +519,62 @@ extension CachedAudioDocumentUnifiedQueryWhere on QueryBuilder<
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'trackId',
+              indexName: r'trackId_versionId',
               lower: [trackId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'trackId',
+              indexName: r'trackId_versionId',
               lower: [],
               upper: [trackId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
+          QAfterWhereClause>
+      trackIdVersionIdEqualTo(String trackId, String versionId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'trackId_versionId',
+        value: [trackId, versionId],
+      ));
+    });
+  }
+
+  QueryBuilder<CachedAudioDocumentUnified, CachedAudioDocumentUnified,
+          QAfterWhereClause>
+      trackIdEqualToVersionIdNotEqualTo(String trackId, String versionId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'trackId_versionId',
+              lower: [trackId],
+              upper: [trackId, versionId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'trackId_versionId',
+              lower: [trackId, versionId],
+              includeLower: false,
+              upper: [trackId],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'trackId_versionId',
+              lower: [trackId, versionId],
+              includeLower: false,
+              upper: [trackId],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'trackId_versionId',
+              lower: [trackId],
+              upper: [trackId, versionId],
               includeUpper: false,
             ));
       }

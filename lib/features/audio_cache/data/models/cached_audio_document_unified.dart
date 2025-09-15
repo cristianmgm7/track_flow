@@ -8,9 +8,10 @@ part 'cached_audio_document_unified.g.dart';
 
 @collection
 class CachedAudioDocumentUnified {
-  Id get isarId => fastHash(trackId);
+  Id get isarId => fastHash('$trackId|$versionId');
 
-  @Index(unique: true)
+  // Unique per (trackId, versionId) so multiple versions can coexist
+  @Index(unique: true, composite: [CompositeIndex('versionId')])
   late String trackId;
 
   late String versionId;

@@ -134,13 +134,19 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
           final exists = await doc.validateFileExists();
 
           if (!exists) {
-            // File doesn't exist, remove from database
-            await _localDataSource.deleteAudioFile(doc.trackId);
+            // File doesn't exist, remove specific version entry
+            await _localDataSource.deleteAudioFile(
+              doc.trackId,
+              versionId: doc.versionId,
+            );
             cleanedCount++;
           }
         } catch (e) {
-          // Error validating file, remove from database
-          await _localDataSource.deleteAudioFile(doc.trackId);
+          // Error validating file, remove specific version entry
+          await _localDataSource.deleteAudioFile(
+            doc.trackId,
+            versionId: doc.versionId,
+          );
           cleanedCount++;
         }
       }

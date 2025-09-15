@@ -11,6 +11,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/features/project_detail/domain/entities/active_version_summary.dart';
+import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 
 class ProjectDetailBundle {
   final Project project;
@@ -31,11 +32,13 @@ class WatchProjectDetailUseCase {
   final ProjectsRepository _projectsRepository;
   final AudioTrackRepository _audioTrackRepository;
   final UserProfileCacheRepository _userProfileCacheRepository;
+  final TrackVersionRepository _trackVersionRepository;
 
   WatchProjectDetailUseCase(
     this._projectsRepository,
     this._audioTrackRepository,
     this._userProfileCacheRepository,
+    this._trackVersionRepository,
   );
 
   Stream<Either<Failure, ProjectDetailBundle>> call({
@@ -94,16 +97,52 @@ class WatchProjectDetailUseCase {
         // Note: we avoid N subscriptions here by reusing the repository's shared streams
         final summaries = <String, ActiveVersionSummary>{};
         for (final t in tracks) {
-          // We only compute the summary synchronously from the current snapshot.
-          // The UI will refresh on tracks stream changes, which is enough for our purpose.
-          // If needed, this can be upgraded to a true combineLatest across versions streams.
-          // But we aim to avoid heavy N-way combines for performance.
-          summaries[t.id.value] = ActiveVersionSummary(
-            trackId: t.id.value,
-            versionId: t.activeVersionId?.value ?? '',
-            status: TrackVersionStatus.ready, // best-effort default
-            fileRemoteUrl: null,
-          );
+          final activeId = t.activeVersionId;
+          if (activeId == null) {
+            summaries[t.id.value] = ActiveVersionSummary(
+              trackId: t.id.value,
+              versionId: '',
+              status: TrackVersionStatus.processing,
+              fileRemoteUrl: null,
+              durationMs: null,
+            );
+            continue;
+          }
+
+          final activeEither = _trackVersionRepository.getById(activeId);
+          activeEither.then((res) {
+            res.fold(
+              (_) {
+                summaries[t.id.value] = ActiveVersionSummary(
+                  trackId: t.id.value,
+                  versionId: activeId.value,
+                  status: TrackVersionStatus.failed,
+                  fileRemoteUrl: null,
+                  durationMs: null,
+                );
+              },
+              (v) {
+                summaries[t.id.value] = ActiveVersionSummary(
+                  trackId: t.id.value,
+                  versionId: v.id.value,
+                  status: v.status,
+                  fileRemoteUrl: v.fileRemoteUrl,
+                  durationMs: v.durationMs,
+                );
+              },
+            );
+          });
+          // Note: this is a synchronous combine; we best-effort fill summaries.
+          // Next emissions from tracks$ will refresh this data as versions persist.
+          if (!summaries.containsKey(t.id.value)) {
+            summaries[t.id.value] = ActiveVersionSummary(
+              trackId: t.id.value,
+              versionId: activeId.value,
+              status: TrackVersionStatus.processing,
+              fileRemoteUrl: null,
+              durationMs: null,
+            );
+          }
         }
 
         return right(

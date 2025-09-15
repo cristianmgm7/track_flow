@@ -5,11 +5,13 @@ class ActiveVersionSummary {
   final String versionId;
   final TrackVersionStatus status;
   final String? fileRemoteUrl;
+  final int? durationMs;
 
   const ActiveVersionSummary({
     required this.trackId,
     required this.versionId,
     required this.status,
     required this.fileRemoteUrl,
+    required this.durationMs,
   });
 }

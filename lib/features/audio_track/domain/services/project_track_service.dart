@@ -26,7 +26,7 @@ class ProjectTrackService {
     required UserId requester,
     required String name,
     required String url,
-    required Duration duration,
+    Duration? duration,
     TrackVersionId? activeVersionId,
   }) async {
     // 1. Verificar permisos del usuario en el proyecto
@@ -43,7 +43,7 @@ class ProjectTrackService {
     final track = AudioTrack.create(
       url: url,
       name: name,
-      duration: duration,
+      duration: duration ?? Duration.zero,
       projectId: project.id,
       uploadedBy: requester,
       activeVersionId: activeVersionId,

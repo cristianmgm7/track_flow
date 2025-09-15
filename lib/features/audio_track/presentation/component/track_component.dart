@@ -15,7 +15,8 @@ import 'package:trackflow/features/audio_track/presentation/widgets/track_upload
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/track_version/domain/usecases/get_version_by_id_usecase.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:trackflow/features/project_detail/domain/entities/active_version_summary.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 
 import 'track_duration_formatter.dart';
@@ -43,6 +44,18 @@ class TrackComponent extends StatefulWidget {
 class _TrackComponentState extends State<TrackComponent> {
   @override
   Widget build(BuildContext context) {
+    // Select active version summary for this track from ProjectDetailBloc
+    final summary = context.select<ProjectDetailBloc, ActiveVersionSummary?>(
+      (bloc) => bloc.state.activeVersionsByTrackId[widget.track.id.value],
+    );
+
+    // Derive duration to display: use active version duration if track is zero
+    final Duration displayedDuration =
+        (widget.track.duration.inMilliseconds == 0 &&
+                summary?.durationMs != null)
+            ? Duration(milliseconds: summary!.durationMs!)
+            : widget.track.duration;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => sl<TrackCacheBloc>()),
@@ -92,33 +105,19 @@ class _TrackComponentState extends State<TrackComponent> {
               ),
             ),
             SizedBox(width: Dimensions.space8),
-            // Duration
-            TrackDurationText(duration: widget.track.duration),
+            // Duration (from version if available)
+            TrackDurationText(duration: displayedDuration),
             SizedBox(width: Dimensions.space8),
-            // Cache icon (version-based)
-            if (widget.track.activeVersionId != null)
-              FutureBuilder(
-                future: sl<GetVersionByIdUseCase>().call(
-                  widget.track.activeVersionId!,
-                ),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const SizedBox.shrink();
-                  }
-                  final either = snapshot.data!;
-                  return either.fold((_) => const SizedBox.shrink(), (version) {
-                    if (version.status != TrackVersionStatus.ready ||
-                        version.fileRemoteUrl == null) {
-                      return const SizedBox.shrink();
-                    }
-                    return SmartTrackCacheIcon(
-                      trackId: widget.track.id.value,
-                      versionId: version.id.value,
-                      remoteUrl: version.fileRemoteUrl!,
-                      size: Dimensions.iconMedium,
-                    );
-                  });
-                },
+            // Cache icon (version-based) without injecting usecase
+            if (summary != null &&
+                summary.versionId.isNotEmpty &&
+                summary.status == TrackVersionStatus.ready &&
+                summary.fileRemoteUrl != null)
+              SmartTrackCacheIcon(
+                trackId: widget.track.id.value,
+                versionId: summary.versionId,
+                remoteUrl: summary.fileRemoteUrl!,
+                size: Dimensions.iconMedium,
               ),
             SizedBox(width: Dimensions.space8),
             // Menu button
