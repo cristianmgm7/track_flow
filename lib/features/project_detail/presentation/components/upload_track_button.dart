@@ -68,6 +68,7 @@ class UploadTrackButton extends StatelessWidget {
             color: AppColors.primary,
             size: Dimensions.iconSmall,
           ),
+          const SizedBox(width: Dimensions.space16),
         ],
       ),
     );

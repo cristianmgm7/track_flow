@@ -21,7 +21,16 @@ class CachedTrackTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = bundle.track?.name ?? 'Unknown Track';
+    final trackName = bundle.track?.name ?? 'Unknown Track';
+
+    // Include version info in title if available
+    final versionSuffix =
+        bundle.version != null
+            ? ' (v${bundle.version!.versionNumber}${bundle.version!.label != null ? ' - ${bundle.version!.label}' : ''})'
+            : ' (Version ${bundle.versionId})';
+
+    final title = '$trackName$versionSuffix';
+
     final subtitlePieces = <String>[];
     if (bundle.projectName != null && bundle.projectName!.isNotEmpty) {
       subtitlePieces.add(bundle.projectName!);
@@ -99,7 +108,15 @@ class CachedTrackTile extends StatelessWidget {
     final quality = bundle.cached.quality.name;
     final status = bundle.cached.status.name;
     final progress = bundle.activeDownload?.formattedProgress;
+
+    // Add version information
+    final versionInfo =
+        bundle.version != null
+            ? 'v${bundle.version!.versionNumber}${bundle.version!.label != null ? ' (${bundle.version!.label})' : ''}'
+            : 'Version ${bundle.versionId}';
+
     final pieces = [
+      versionInfo,
       size,
       quality,
       status,

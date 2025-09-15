@@ -64,6 +64,20 @@ class _SmartTrackCacheIconState extends State<SmartTrackCacheIcon> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant SmartTrackCacheIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trackId != widget.trackId ||
+        oldWidget.versionId != widget.versionId) {
+      context.read<TrackCacheBloc>().add(
+        WatchTrackCacheStatusRequested(
+          AudioTrackId.fromUniqueString(widget.trackId),
+          versionId: TrackVersionId.fromUniqueString(widget.versionId),
+        ),
+      );
+    }
+  }
+
   void _handleTap(TrackCacheState currentState) {
     final bloc = context.read<TrackCacheBloc>();
 

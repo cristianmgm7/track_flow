@@ -2,11 +2,14 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_event.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
@@ -116,14 +119,14 @@ class _UploadVersionFormState extends State<UploadVersionForm> {
       );
       return;
     }
-
-    // Return the selection to the caller. The screen will dispatch BLoC event.
-    Navigator.of(context).pop(
-      UploadVersionResult(
+    context.read<TrackVersionsBloc>().add(
+      AddTrackVersionRequested(
+        trackId: widget.trackId,
         file: file,
-        label: _labelController.text.isEmpty ? null : _labelController.text,
+        label: _labelController.text,
       ),
     );
+    Navigator.of(context).pop();
   }
 
   @override
@@ -166,11 +169,4 @@ class _UploadVersionFormState extends State<UploadVersionForm> {
       ),
     );
   }
-}
-
-class UploadVersionResult {
-  final File file;
-  final String? label;
-
-  UploadVersionResult({required this.file, this.label});
 }

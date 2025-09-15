@@ -106,13 +106,16 @@ class VersionHeaderComponent extends StatelessWidget {
                     children: [
                       if (active.status == TrackVersionStatus.ready &&
                           active.fileRemoteUrl != null)
-                        BlocProvider(
-                          create: (context) => sl<TrackCacheBloc>(),
-                          child: SmartTrackCacheIcon(
-                            trackId: trackId.value,
-                            versionId: active.id.value,
-                            remoteUrl: active.fileRemoteUrl!,
-                            size: 22,
+                        KeyedSubtree(
+                          key: ValueKey(active.id.value),
+                          child: BlocProvider(
+                            create: (context) => sl<TrackCacheBloc>(),
+                            child: SmartTrackCacheIcon(
+                              trackId: trackId.value,
+                              versionId: active.id.value,
+                              remoteUrl: active.fileRemoteUrl!,
+                              size: 22,
+                            ),
                           ),
                         ),
                       IconButton(

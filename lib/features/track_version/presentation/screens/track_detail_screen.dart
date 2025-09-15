@@ -48,27 +48,18 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     );
   }
 
-  void _showUploadVersionDialog() async {
-    final result = await showAppFormSheet(
+  void _showUploadVersionForm() {
+    showAppFormSheet(
       context: context,
       title: 'Upload Version',
-      child: UploadVersionForm(
-        trackId: widget.track.id,
-        projectId: widget.projectId,
+      child: BlocProvider.value(
+        value: context.read<TrackVersionsBloc>(),
+        child: UploadVersionForm(
+          trackId: widget.track.id,
+          projectId: widget.projectId,
+        ),
       ),
     );
-
-    if (result is UploadVersionResult) {
-      if (mounted) {
-        context.read<TrackVersionsBloc>().add(
-          AddTrackVersionRequested(
-            trackId: widget.track.id,
-            file: result.file,
-            label: result.label,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -98,7 +89,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
           actions: [
             AppIconButton(
               icon: Icons.add,
-              onPressed: _showUploadVersionDialog,
+              onPressed: _showUploadVersionForm,
               tooltip: 'Upload new version',
             ),
           ],

@@ -110,22 +110,35 @@ class TrackActions {
           ], text: 'Export ${track.name}');
         } else {
           // 3) Not cached yet → start caching and inform user to retry export when ready
-          bloc.add(
-            CacheTrackRequested(
-              trackId: track.id.value,
-              audioUrl: track.url,
-              versionId: track.activeVersionId?.value ?? '',
-            ),
-          );
-          messenger.showSnackBar(
-            SnackBar(
-              content: Text(
-                'Downloading ${track.name}... Tap Download again to save when ready',
+          final activeVersionId = track.activeVersionId;
+          if (activeVersionId != null) {
+            bloc.add(
+              CacheTrackRequested(
+                trackId: track.id.value,
+                audioUrl: track.url,
+                versionId: activeVersionId.value,
               ),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+            );
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Downloading ${track.name}... Tap Download again to save when ready',
+                ),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          } else {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Cannot download ${track.name}: No active version available',
+                ),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
       },
     ),
