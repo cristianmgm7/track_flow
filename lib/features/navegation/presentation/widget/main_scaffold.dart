@@ -57,6 +57,7 @@ class _MainScaffoldState extends State<MainScaffold> {
           }
         },
         child: AppScaffold(
+          topSafeArea: false,
           body: Column(
             children: [
               Expanded(child: widget.child),

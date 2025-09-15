@@ -92,16 +92,19 @@ class _HeaderBackground extends StatelessWidget {
                   profile.avatarLocalPath!.isNotEmpty) ||
               (profile.avatarUrl.isNotEmpty))
             Positioned.fill(
-              child: ImageUtils.createAdaptiveImageWidget(
-                imagePath:
-                    (profile.avatarLocalPath != null &&
-                            profile.avatarLocalPath!.isNotEmpty)
-                        ? profile.avatarLocalPath!
-                        : profile.avatarUrl,
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-                fallbackWidget: Container(color: AppColors.grey700),
+              child: Hero(
+                tag: profile.avatarUrl,
+                child: ImageUtils.createAdaptiveImageWidget(
+                  imagePath:
+                      (profile.avatarLocalPath != null &&
+                              profile.avatarLocalPath!.isNotEmpty)
+                          ? profile.avatarLocalPath!
+                          : profile.avatarUrl,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  fallbackWidget: Container(color: AppColors.grey700),
+                ),
               ),
             )
           else
