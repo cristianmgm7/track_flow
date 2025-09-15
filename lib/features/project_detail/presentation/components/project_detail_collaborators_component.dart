@@ -99,6 +99,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                             ),
                           );
                         },
+                        id: collaborator.id.value,
                       );
                     }),
                     // Invite collaborator button at the end
