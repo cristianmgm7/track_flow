@@ -9,6 +9,8 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/enhanced_waveform_display.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
 
 class AudioCommentPlayer extends StatelessWidget {
   final AudioTrack track;
@@ -19,6 +21,28 @@ class AudioCommentPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // Determine which versionId to use
+    final TrackVersionId? effectiveVersionId =
+        versionId ?? track.activeVersionId;
+
+    // Derive duration from the loaded versions when available
+    final Duration displayedDuration = context
+        .select<TrackVersionsBloc, Duration>((bloc) {
+          final state = bloc.state;
+          if (state is TrackVersionsLoaded && effectiveVersionId != null) {
+            if (state.versions.isNotEmpty) {
+              final v = state.versions.firstWhere(
+                (vv) => vv.id == effectiveVersionId,
+                orElse: () => state.versions.first,
+              );
+              if (v.durationMs != null) {
+                return Duration(milliseconds: v.durationMs!);
+              }
+            }
+          }
+          return track.duration;
+        });
 
     return SafeArea(
       top: true,
@@ -64,13 +88,13 @@ class AudioCommentPlayer extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  _format(track.duration),
+                  _format(displayedDuration),
                   style: AppTextStyle.caption.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(width: 12),
-                _PlayPause(track: track, versionId: versionId),
+                _PlayPause(track: track, versionId: effectiveVersionId),
               ],
             ),
           ],
