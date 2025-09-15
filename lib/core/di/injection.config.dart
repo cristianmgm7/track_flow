@@ -261,7 +261,7 @@ import 'package:trackflow/features/auth/data/repositories/auth_repository_impl.d
 import 'package:trackflow/features/auth/data/services/apple_auth_service.dart'
     as _i71;
 import 'package:trackflow/features/auth/data/services/google_auth_service.dart'
-    as _i85;
+    as _i86;
 import 'package:trackflow/features/auth/domain/repositories/auth_repository.dart'
     as _i121;
 import 'package:trackflow/features/auth/domain/usecases/apple_sign_in_usecase.dart'
@@ -470,8 +470,8 @@ import 'package:trackflow/features/waveform/domain/services/waveform_generator_s
     as _i65;
 import 'package:trackflow/features/waveform/domain/usecases/generate_and_store_waveform.dart'
     as _i82;
-import 'package:trackflow/features/waveform/domain/usecases/invalidate_waveform.dart'
-    as _i86;
+import 'package:trackflow/features/waveform/domain/usecases/get_waveform_by_version.dart'
+    as _i85;
 import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart'
     as _i112;
 
@@ -677,12 +677,12 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i84.GetUnreadNotificationsCountUseCase>(() =>
         _i84.GetUnreadNotificationsCountUseCase(
             gh<_i32.NotificationRepository>()));
-    gh.lazySingleton<_i85.GoogleAuthService>(() => _i85.GoogleAuthService(
+    gh.factory<_i85.GetWaveformByVersion>(
+        () => _i85.GetWaveformByVersion(gh<_i69.WaveformRepository>()));
+    gh.lazySingleton<_i86.GoogleAuthService>(() => _i86.GoogleAuthService(
           gh<_i18.GoogleSignIn>(),
           gh<_i15.FirebaseAuth>(),
         ));
-    gh.factory<_i86.InvalidateWaveform>(
-        () => _i86.InvalidateWaveform(gh<_i69.WaveformRepository>()));
     gh.lazySingleton<_i87.InvitationLocalDataSource>(
         () => _i87.IsarInvitationLocalDataSource(gh<_i23.Isar>()));
     gh.lazySingleton<_i88.InvitationRepository>(
@@ -806,13 +806,13 @@ extension GetItInjectableX on _i1.GetIt {
     gh.lazySingleton<_i120.AuthRemoteDataSource>(
         () => _i120.AuthRemoteDataSourceImpl(
               gh<_i15.FirebaseAuth>(),
-              gh<_i85.GoogleAuthService>(),
+              gh<_i86.GoogleAuthService>(),
             ));
     gh.lazySingleton<_i121.AuthRepository>(() => _i122.AuthRepositoryImpl(
           remote: gh<_i120.AuthRemoteDataSource>(),
           sessionStorage: gh<_i99.SessionStorage>(),
           networkStateManager: gh<_i29.NetworkStateManager>(),
-          googleAuthService: gh<_i85.GoogleAuthService>(),
+          googleAuthService: gh<_i86.GoogleAuthService>(),
           appleAuthService: gh<_i71.AppleAuthService>(),
         ));
     gh.lazySingleton<_i123.CacheManagementLocalDataSource>(() =>

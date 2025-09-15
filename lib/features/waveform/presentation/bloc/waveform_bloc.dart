@@ -6,6 +6,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
+import 'package:trackflow/features/waveform/domain/usecases/get_waveform_by_version.dart';
 import 'package:trackflow/features/audio_player/domain/services/audio_playback_service.dart';
 
 part 'waveform_event.dart';
@@ -13,16 +14,15 @@ part 'waveform_state.dart';
 
 @injectable
 class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
-  final WaveformRepository _waveformRepository;
+  final GetWaveformByVersion _getWaveformByVersion;
   final AudioPlaybackService _audioPlaybackService;
 
   StreamSubscription? _sessionSubscription;
-  StreamSubscription? _waveformSubscription;
 
   WaveformBloc({
     required WaveformRepository waveformRepository,
     required AudioPlaybackService audioPlaybackService,
-  }) : _waveformRepository = waveformRepository,
+  }) : _getWaveformByVersion = GetWaveformByVersion(waveformRepository),
        _audioPlaybackService = audioPlaybackService,
        super(const WaveformState()) {
     on<LoadWaveform>(_onLoadWaveform);
@@ -71,26 +71,14 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
       ),
     );
 
-    // Cancel previous waveform subscription
-    await _waveformSubscription?.cancel();
-
-    // Listen to waveform changes
-    _waveformSubscription = _waveformRepository
-        .watchWaveformChanges(event.versionId)
-        .listen(
-          (waveform) => add(_WaveformDataReceived(waveform)),
-          onError:
-              (error) => add(_WaveformDataReceived(null, error.toString())),
-        );
+    // No stream subscription: single fetch only
 
     // Only attempt to load existing waveform by version
     AppLogger.debug(
       'WaveformBloc: Loading waveform by versionId ${event.versionId.value}',
       tag: 'WAVEFORM_BLOC',
     );
-    final result = await _waveformRepository.getWaveformByVersionId(
-      event.versionId,
-    );
+    final result = await _getWaveformByVersion.call(event.versionId);
 
     result.fold(
       (failure) => {
@@ -119,11 +107,14 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
     _WaveformDataReceived event,
     Emitter<WaveformState> emit,
   ) {
-    if (event.error != null) {
+    if (event.waveform == null) {
       emit(
-        state.copyWith(status: WaveformStatus.error, errorMessage: event.error),
+        state.copyWith(
+          status: WaveformStatus.error,
+          errorMessage: 'Waveform not found',
+        ),
       );
-    } else if (event.waveform != null) {
+    } else {
       emit(
         state.copyWith(
           status: WaveformStatus.ready,
@@ -157,7 +148,6 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
   @override
   Future<void> close() {
     _sessionSubscription?.cancel();
-    _waveformSubscription?.cancel();
     return super.close();
   }
 }

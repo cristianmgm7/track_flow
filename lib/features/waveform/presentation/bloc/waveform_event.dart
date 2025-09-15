@@ -44,12 +44,11 @@ class WaveformSeekRequested extends WaveformEvent {
 
 class _WaveformDataReceived extends WaveformEvent {
   final AudioWaveform? waveform;
-  final String? error;
 
-  const _WaveformDataReceived(this.waveform, [this.error]);
+  const _WaveformDataReceived(this.waveform);
 
   @override
-  List<Object?> get props => [waveform, error];
+  List<Object?> get props => [waveform];
 }
 
 class _PlaybackPositionUpdated extends WaveformEvent {

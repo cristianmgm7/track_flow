@@ -52,25 +52,6 @@ class WaveformRepositoryImpl implements WaveformRepository {
     }
   }
 
-  // getOrGenerate removed; generation handled by use case, remote/local by canonical methods
-
-  @override
-  Future<Either<Failure, Unit>> invalidate({
-    required TrackVersionId versionId,
-  }) {
-    return deleteWaveformsForVersion(versionId);
-  }
-
-  @override
-  Future<Either<Failure, Unit>> saveWaveform(AudioWaveform waveform) async {
-    try {
-      await _localDataSource.saveWaveform(waveform);
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure('Failed to save waveform: $e'));
-    }
-  }
-
   @override
   Future<Either<Failure, Unit>> deleteWaveformsForVersion(
     TrackVersionId versionId,

@@ -7,13 +7,10 @@ abstract class WaveformRepository {
   Future<Either<Failure, AudioWaveform>> getWaveformByVersionId(
     TrackVersionId versionId,
   );
-  Future<Either<Failure, Unit>> saveWaveform(AudioWaveform waveform);
   Future<Either<Failure, Unit>> deleteWaveformsForVersion(
     TrackVersionId versionId,
   );
   Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId);
-
-  Future<Either<Failure, Unit>> invalidate({required TrackVersionId versionId});
 
   Future<Either<Failure, Unit>> clearAllWaveforms();
 
