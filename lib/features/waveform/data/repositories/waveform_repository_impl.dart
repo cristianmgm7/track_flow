@@ -2,7 +2,6 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
 import 'package:trackflow/features/waveform/data/datasources/waveform_local_datasource.dart';
@@ -24,30 +23,14 @@ class WaveformRepositoryImpl implements WaveformRepository {
     TrackVersionId versionId,
   ) async {
     try {
-      AppLogger.debug(
-        'WaveformRepositoryImpl: Looking up waveform for version ${versionId.value} (no hash)',
-        tag: 'WAVEFORM_REPO',
-      );
       final waveform = await _localDataSource.getWaveformByVersionId(versionId);
       if (waveform == null) {
-        AppLogger.warning(
-          'WaveformRepositoryImpl: No waveform found locally for version ${versionId.value}',
-          tag: 'WAVEFORM_REPO',
-        );
         return Left(
           ServerFailure('Waveform not found for version: ${versionId.value}'),
         );
       }
-      AppLogger.debug(
-        'WaveformRepositoryImpl: Found waveform locally for version ${versionId.value}',
-        tag: 'WAVEFORM_REPO',
-      );
       return Right(waveform);
     } catch (e) {
-      AppLogger.error(
-        'WaveformRepositoryImpl: Error getting waveform for version ${versionId.value}: $e',
-        tag: 'WAVEFORM_REPO',
-      );
       return Left(ServerFailure('Failed to get waveform: $e'));
     }
   }

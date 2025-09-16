@@ -232,6 +232,31 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, Unit>> deleteCommentsByVersion(
+    TrackVersionId versionId,
+  ) async {
+    try {
+      // Delete remote comments first
+      try {
+        await _remoteDataSource.deleteByVersionId(versionId.value);
+      } catch (_) {
+        // Ignore remote deletion errors - continue with local deletion
+      }
+
+      // Delete local comments
+      try {
+        await _localDataSource.deleteByVersion(versionId.value);
+      } catch (e) {
+        return Left(DatabaseFailure('Failed to delete local comments: $e'));
+      }
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to delete comments by version: $e'));
+    }
+  }
+
   // Helper method for fire-and-forget background operations
   void unawaited(Future future) {
     future.catchError((error) {

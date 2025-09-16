@@ -26,4 +26,9 @@ abstract class AudioCommentRepository {
 
   /// Delete all comments belonging to a track (by iterating its versions)
   Future<Either<Failure, Unit>> deleteByTrackId(AudioTrackId trackId);
+
+  /// Delete all comments for a specific track version
+  Future<Either<Failure, Unit>> deleteCommentsByVersion(
+    TrackVersionId versionId,
+  );
 }
