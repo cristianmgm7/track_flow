@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -40,47 +41,75 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR-DEV-WEB-API-KEY',
-    appId: 'YOUR-DEV-WEB-APP-ID',
-    messagingSenderId: 'YOUR-DEV-SENDER-ID',
-    projectId: 'trackflow-dev',
-    authDomain: 'trackflow-dev.firebaseapp.com',
-    storageBucket: 'trackflow-dev.firebasestorage.app',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: dotenv.env['WEB_API_KEY'] ?? 'YOUR-DEV-WEB-API-KEY',
+    appId: dotenv.env['WEB_APP_ID'] ?? 'YOUR-DEV-WEB-APP-ID',
+    messagingSenderId:
+        dotenv.env['WEB_MESSAGING_SENDER_ID'] ?? 'YOUR-DEV-SENDER-ID',
+    projectId: dotenv.env['WEB_PROJECT_ID'] ?? 'trackflow-dev',
+    authDomain:
+        dotenv.env['WEB_AUTH_DOMAIN'] ?? 'trackflow-dev.firebaseapp.com',
+    storageBucket:
+        dotenv.env['WEB_STORAGE_BUCKET'] ?? 'trackflow-dev.firebasestorage.app',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBm3x-cGCnFlPhDnorG4wRIdt4M-MmQvY8',
-    appId: '1:664691871365:android:7ba3bcfca58beafeeca3ec',
-    messagingSenderId: '664691871365',
-    projectId: 'trackflow-dev',
-    storageBucket: 'trackflow-dev.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey:
+        dotenv.env['ANDROID_API_KEY'] ??
+        'AIzaSyBm3x-cGCnFlPhDnorG4wRIdt4M-MmQvY8',
+    appId:
+        dotenv.env['ANDROID_APP_ID'] ??
+        '1:664691871365:android:7ba3bcfca58beafeeca3ec',
+    messagingSenderId:
+        dotenv.env['ANDROID_MESSAGING_SENDER_ID'] ?? '664691871365',
+    projectId: dotenv.env['ANDROID_PROJECT_ID'] ?? 'trackflow-dev',
+    storageBucket:
+        dotenv.env['ANDROID_STORAGE_BUCKET'] ??
+        'trackflow-dev.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
-    appId: '1:664691871365:ios:6e653980f04b2b53eca3ec',
-    messagingSenderId: '664691871365',
-    projectId: 'trackflow-dev',
-    storageBucket: 'trackflow-dev.firebasestorage.app',
-    iosBundleId: 'com.crd.producer-gmail.com.trackflow.dev',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey:
+        dotenv.env['IOS_API_KEY'] ?? 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
+    appId:
+        dotenv.env['IOS_APP_ID'] ?? '1:664691871365:ios:6e653980f04b2b53eca3ec',
+    messagingSenderId: dotenv.env['IOS_MESSAGING_SENDER_ID'] ?? '664691871365',
+    projectId: dotenv.env['IOS_PROJECT_ID'] ?? 'trackflow-dev',
+    storageBucket:
+        dotenv.env['IOS_STORAGE_BUCKET'] ?? 'trackflow-dev.firebasestorage.app',
+    iosBundleId:
+        dotenv.env['IOS_BUNDLE_ID'] ??
+        'com.crd.producer-gmail.com.trackflow.dev',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
-    appId: '1:664691871365:ios:6e653980f04b2b53eca3ec',
-    messagingSenderId: '664691871365',
-    projectId: 'trackflow-dev',
-    storageBucket: 'trackflow-dev.firebasestorage.app',
-    iosBundleId: 'com.crd.producer-gmail.com.trackflow.dev',
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey:
+        dotenv.env['MACOS_API_KEY'] ??
+        'AIzaSyArwxA-Gy9r4EmDHcZdcv-IlU1ul80J0E4',
+    appId:
+        dotenv.env['MACOS_APP_ID'] ??
+        '1:664691871365:ios:6e653980f04b2b53eca3ec',
+    messagingSenderId:
+        dotenv.env['MACOS_MESSAGING_SENDER_ID'] ?? '664691871365',
+    projectId: dotenv.env['MACOS_PROJECT_ID'] ?? 'trackflow-dev',
+    storageBucket:
+        dotenv.env['MACOS_STORAGE_BUCKET'] ??
+        'trackflow-dev.firebasestorage.app',
+    iosBundleId:
+        dotenv.env['MACOS_BUNDLE_ID'] ??
+        'com.crd.producer-gmail.com.trackflow.dev',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR-DEV-WEB-API-KEY',
-    appId: 'YOUR-DEV-WINDOWS-APP-ID',
-    messagingSenderId: 'YOUR-DEV-SENDER-ID',
-    projectId: 'trackflow-dev',
-    authDomain: 'trackflow-dev.firebaseapp.com',
-    storageBucket: 'trackflow-dev.firebasestorage.app',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: dotenv.env['WINDOWS_API_KEY'] ?? 'YOUR-DEV-WEB-API-KEY',
+    appId: dotenv.env['WINDOWS_APP_ID'] ?? 'YOUR-DEV-WINDOWS-APP-ID',
+    messagingSenderId:
+        dotenv.env['WINDOWS_MESSAGING_SENDER_ID'] ?? 'YOUR-DEV-SENDER-ID',
+    projectId: dotenv.env['WINDOWS_PROJECT_ID'] ?? 'trackflow-dev',
+    authDomain:
+        dotenv.env['WINDOWS_AUTH_DOMAIN'] ?? 'trackflow-dev.firebaseapp.com',
+    storageBucket:
+        dotenv.env['WINDOWS_STORAGE_BUCKET'] ??
+        'trackflow-dev.firebasestorage.app',
   );
 }

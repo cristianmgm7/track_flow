@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart' as core_ids;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import '../entities/audio_failure.dart';
 import '../entities/playback_session.dart';
 import '../entities/audio_source.dart';
@@ -78,13 +78,17 @@ class RestorePlaybackStateUseCase {
                   );
 
                   // Try to get cached path first, fallback to streaming URL
-                  final cacheResult = await _audioStorageRepository.getCachedAudioPath(trackId);
+                  final cacheResult = await _audioStorageRepository
+                      .getCachedAudioPath(trackId);
                   final sourceUrl = cacheResult.fold(
-                    (cacheFailure) => audioTrack.url, // Use streaming URL if not cached
-                    (cachedPath) => cachedPath,        // Use cached file if available
+                    (cacheFailure) =>
+                        audioTrack.url, // Use streaming URL if not cached
+                    (cachedPath) => cachedPath, // Use cached file if available
                   );
 
-                  audioSources.add(AudioSource(url: sourceUrl, metadata: metadata));
+                  audioSources.add(
+                    AudioSource(url: sourceUrl, metadata: metadata),
+                  );
                 },
               );
             } catch (e) {

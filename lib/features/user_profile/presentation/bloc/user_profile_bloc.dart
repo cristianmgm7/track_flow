@@ -34,6 +34,7 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
     required this.getCurrentUserUseCase,
   }) : super(UserProfileInitial()) {
     on<WatchUserProfile>(_onWatchUserProfile);
+    on<WatchAnyUserProfile>(_onWatchAnyUserProfile);
     on<SaveUserProfile>(_onSaveUserProfile);
     on<CreateUserProfile>(_onCreateUserProfile);
     on<ClearUserProfile>(_onClearUserProfile);
@@ -168,6 +169,68 @@ class UserProfileBloc extends Bloc<UserProfileEvent, UserProfileState>
     } catch (e) {
       AppLogger.error(
         'UserProfileBloc: Exception watching profile: $e',
+        tag: 'USER_PROFILE_BLOC',
+        error: e,
+      );
+      emit(UserProfileError());
+    }
+  }
+
+  Future<void> _onWatchAnyUserProfile(
+    WatchAnyUserProfile event,
+    Emitter<UserProfileState> emit,
+  ) async {
+    AppLogger.info(
+      'UserProfileBloc: WatchAnyUserProfile event received - userId: ${event.userId}',
+      tag: 'USER_PROFILE_BLOC',
+    );
+
+    emit(UserProfileLoading());
+
+    try {
+      final stream = watchUserProfileUseCase.callAny(event.userId);
+
+      await emit.onEach<Either<Failure, UserProfile?>>(
+        stream,
+        onData: (eitherProfile) {
+          eitherProfile.fold(
+            (failure) {
+              AppLogger.error(
+                'UserProfileBloc: Profile watch (any) failed: ${failure.message}',
+                tag: 'USER_PROFILE_BLOC',
+                error: failure,
+              );
+              emit(UserProfileError());
+            },
+            (profile) {
+              if (profile != null) {
+                emit(
+                  UserProfileLoaded(
+                    profile: profile,
+                    isSyncing: false,
+                    syncProgress: null,
+                  ),
+                );
+              } else {
+                if (state is! UserProfileLoading) {
+                  emit(UserProfileLoading());
+                }
+              }
+            },
+          );
+        },
+        onError: (error, stackTrace) {
+          AppLogger.error(
+            'UserProfileBloc: Error watching profile (any): $error',
+            tag: 'USER_PROFILE_BLOC',
+            error: error,
+          );
+          emit(UserProfileError());
+        },
+      );
+    } catch (e) {
+      AppLogger.error(
+        'UserProfileBloc: Exception watching profile (any): $e',
         tag: 'USER_PROFILE_BLOC',
         error: e,
       );

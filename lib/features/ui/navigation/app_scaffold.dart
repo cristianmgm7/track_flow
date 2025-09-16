@@ -3,7 +3,6 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'app_bar.dart';
 import 'bottom_nav.dart';
-import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
 
 class AppScaffold extends StatelessWidget {
   final Widget body;
@@ -18,6 +17,7 @@ class AppScaffold extends StatelessWidget {
   final Color? backgroundColor;
   final bool resizeToAvoidBottomInset;
   final Widget? persistentFooterWidget;
+  final bool topSafeArea;
 
   const AppScaffold({
     super.key,
@@ -33,24 +33,14 @@ class AppScaffold extends StatelessWidget {
     this.backgroundColor,
     this.resizeToAvoidBottomInset = true,
     this.persistentFooterWidget,
+    this.topSafeArea = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar,
-      body: Stack(
-        children: [
-          _buildBody(),
-          // App-wide minimal sync indicator pinned at top
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 4,
-            left: 0,
-            right: 0,
-            child: const GlobalSyncIndicator(),
-          ),
-        ],
-      ),
+      body: _buildBody(),
       bottomNavigationBar: bottomNavigationBar,
       drawer: drawer,
       endDrawer: endDrawer,
@@ -65,9 +55,15 @@ class AppScaffold extends StatelessWidget {
 
   Widget _buildBody() {
     if (persistentFooterWidget != null) {
-      return Column(children: [Expanded(child: body), persistentFooterWidget!]);
+      return SafeArea(
+        bottom: false,
+        top: topSafeArea,
+        child: Column(
+          children: [Expanded(child: body), persistentFooterWidget!],
+        ),
+      );
     }
-    return body;
+    return SafeArea(bottom: false, top: topSafeArea, child: body);
   }
 }
 

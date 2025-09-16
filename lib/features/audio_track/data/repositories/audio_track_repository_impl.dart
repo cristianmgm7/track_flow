@@ -10,7 +10,6 @@ import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'dart:io';
 
 @LazySingleton(as: AudioTrackRepository)
 class AudioTrackRepositoryImpl implements AudioTrackRepository {
@@ -40,7 +39,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         // Trigger background sync for fresh data (non-blocking)
         unawaited(
           _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'audio_track_${id.value}',
+            syncKey: 'audio_tracks_${localTrack.projectId.value}',
           ),
         );
 
@@ -120,36 +119,32 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> uploadAudioTrack({
-    required File file,
-    required AudioTrack track,
-  }) async {
+  Future<Either<Failure, AudioTrack>> createTrack(AudioTrack track) async {
     try {
-      final dto = AudioTrackDTO.fromDomain(
-        track,
-        extension: file.path.split('.').last,
-      );
+      final dto = AudioTrackDTO.fromDomain(track, extension: 'mp3');
 
-      // 1. ALWAYS save locally first (ignore minor cache errors)
-      await localDataSource.cacheTrack(dto);
+      // 1. Save locally first
+      final cacheResult = await localDataSource.cacheTrack(dto);
+      if (cacheResult.isLeft()) {
+        return cacheResult.map(
+          (_) => track,
+        ); // Return track even if cache fails
+      }
 
-      // 2. Try to queue for background sync
+      // 2. Queue for background sync
       final queueResult = await _pendingOperationsManager.addCreateOperation(
         entityType: 'audio_track',
         entityId: track.id.value,
         data: {
-          'filePath': file.path,
           'projectId': track.projectId.value,
           'name': track.name,
           'duration': track.duration.inMilliseconds,
-          'extension': file.path.split('.').last,
           'uploadedBy': track.uploadedBy.value,
           'createdAt': track.createdAt.toIso8601String(),
         },
         priority: SyncPriority.high,
       );
 
-      // 3. Handle queue failure
       if (queueResult.isLeft()) {
         final failure = queueResult.fold((l) => l, (r) => null);
         return Left(
@@ -159,17 +154,9 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
-      // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_tracks_upload',
-        ),
-      );
-
-      // 5. Return success only after successful queue
-      return const Right(unit);
+      return Right(track);
     } catch (e) {
-      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
+      return Left(DatabaseFailure('Failed to create track: $e'));
     }
   }
 
@@ -206,7 +193,12 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         ),
       );
 
-      // 5. Return success only after successful queue
+      // 5. Ensure local URL remains pointing to remote (not cache)
+      // We cannot compute remote URL here; keep current local value (remote URL
+      // should already be persisted from upload). If local was pointing to a
+      // cache path, the player will fallback to remote when cache is missing.
+
+      // 6. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
@@ -256,6 +248,53 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> setActiveVersion({
+    required AudioTrackId trackId,
+    required TrackVersionId versionId,
+  }) async {
+    try {
+      // 1. Update local first
+      final localResult = await localDataSource.setActiveVersion(
+        trackId.value,
+        versionId.value,
+      );
+
+      if (localResult.isLeft()) {
+        return localResult;
+      }
+
+      // 2. Queue operation for sync (consistent with offline-first architecture)
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
+        entityType: 'audio_track',
+        entityId: trackId.value,
+        data: {'activeVersionId': versionId.value, 'field': 'activeVersion'},
+        priority: SyncPriority.medium,
+      );
+
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger upstream sync only (more efficient for local changes)
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'audio_tracks_update',
+        ),
+      );
+
+      return localResult;
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to set active version: $e'));
     }
   }
 

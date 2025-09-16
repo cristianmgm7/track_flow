@@ -25,7 +25,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
       super(const AudioPlayerInitial()) {
     // Register event handlers
     on<AudioPlayerInitializeRequested>(_onInitializeRequested);
-    on<PlayAudioRequested>(_onPlayAudioRequested);
+    on<PlayVersionRequested>(_onPlayVersionRequested);
     on<PlayPlaylistRequested>(_onPlayPlaylistRequested);
     on<PauseAudioRequested>(_onPauseAudioRequested);
     on<ResumeAudioRequested>(_onResumeAudioRequested);
@@ -102,13 +102,13 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     }
   }
 
-  Future<void> _onPlayAudioRequested(
-    PlayAudioRequested event,
+  Future<void> _onPlayVersionRequested(
+    PlayVersionRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
     emit(AudioPlayerBuffering(currentSession));
 
-    final result = await _audioPlayerService.playAudio(event.trackId);
+    final result = await _audioPlayerService.playVersion(event.versionId);
 
     result.fold((failure) => emit(AudioPlayerError(failure, currentSession)), (
       _,
@@ -256,14 +256,35 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     final currentId = currentSession.currentTrack?.id;
     if (currentId == null || currentId != event.trackId) {
       emit(AudioPlayerBuffering(currentSession));
-      final playResult = await _audioPlayerService.playAudio(event.trackId);
-      playResult.fold(
-        (failure) {
-          emit(AudioPlayerError(failure, currentSession));
-          return;
-        },
-        (_) {},
-      );
+
+      // For PlayAndSeek, we need to get the active version of the track
+      try {
+        final versionResult = await _audioPlayerService
+            .getActiveVersionForTrack(event.trackId);
+        versionResult.fold(
+          (failure) {
+            emit(AudioPlayerError(failure, currentSession));
+            return;
+          },
+          (versionId) async {
+            final playResult = await _audioPlayerService.playVersion(versionId);
+            playResult.fold((failure) {
+              emit(AudioPlayerError(failure, currentSession));
+              return;
+            }, (_) {});
+          },
+        );
+      } catch (e) {
+        emit(
+          AudioPlayerError(
+            AudioPlayerFailure(
+              'Failed to get active version for track: ${e.toString()}',
+            ),
+            currentSession,
+          ),
+        );
+        return;
+      }
     }
     // Then seek
     try {

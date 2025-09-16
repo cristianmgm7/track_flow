@@ -10,7 +10,6 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_sliver_header.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
-import 'package:trackflow/features/audio_cache/playlist/presentation/bloc/playlist_cache_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/core/di/injection.dart';
@@ -52,7 +51,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBar: null, // Remove the default app bar
+      topSafeArea: false,
       body: BlocListener<AudioTrackBloc, AudioTrackState>(
         listener: (context, state) {
           if (state is AudioTrackEditSuccess ||
@@ -117,13 +116,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                       ),
                       const SizedBox(height: 8),
                       // PlaylistWidget para los tracks del proyecto
-                      BlocProvider<PlaylistCacheBloc>(
-                        create: (_) => sl<PlaylistCacheBloc>(),
-                        child: PlaylistWidget(
-                          playlist: playlist,
-                          tracks: tracks,
-                          projectId: project.id.value,
-                        ),
+                      PlaylistWidget(
+                        playlist: playlist,
+                        tracks: tracks,
+                        projectId: project.id.value,
                       ),
                       // Collaborators Section
                       ProjectDetailCollaboratorsComponent(state: state),

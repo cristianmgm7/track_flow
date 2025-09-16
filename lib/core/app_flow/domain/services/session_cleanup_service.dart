@@ -10,6 +10,9 @@ import 'package:trackflow/features/invitations/domain/repositories/invitation_re
 import 'package:trackflow/features/audio_player/domain/repositories/playback_persistence_repository.dart';
 import 'package:trackflow/core/app_flow/domain/services/bloc_state_cleanup_service.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
+import 'package:trackflow/core/sync/data/repositories/pending_operations_repository.dart';
+import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
+import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 
 /// Service responsible for comprehensive session cleanup
 ///
@@ -25,6 +28,9 @@ class SessionCleanupService {
   final PlaybackPersistenceRepository _playbackPersistenceRepository;
   final BlocStateCleanupService _blocStateCleanupService;
   final SessionStorage _sessionStorage;
+  final PendingOperationsRepository _pendingOperationsRepository;
+  final WaveformRepository _waveformRepository;
+  final TrackVersionRepository _trackVersionRepository;
 
   // Prevent multiple concurrent cleanup operations
   bool _isCleanupInProgress = false;
@@ -38,6 +44,9 @@ class SessionCleanupService {
     required PlaybackPersistenceRepository playbackPersistenceRepository,
     required BlocStateCleanupService blocStateCleanupService,
     required SessionStorage sessionStorage,
+    required PendingOperationsRepository pendingOperationsRepository,
+    required WaveformRepository waveformRepository,
+    required TrackVersionRepository trackVersionRepository,
   }) : _userProfileRepository = userProfileRepository,
        _projectsRepository = projectsRepository,
        _audioTrackRepository = audioTrackRepository,
@@ -45,7 +54,10 @@ class SessionCleanupService {
        _invitationRepository = invitationRepository,
        _playbackPersistenceRepository = playbackPersistenceRepository,
        _blocStateCleanupService = blocStateCleanupService,
-       _sessionStorage = sessionStorage;
+       _sessionStorage = sessionStorage,
+       _pendingOperationsRepository = pendingOperationsRepository,
+       _waveformRepository = waveformRepository,
+       _trackVersionRepository = trackVersionRepository;
 
   /// Clear all user-related data from local storage
   ///
@@ -116,6 +128,15 @@ class SessionCleanupService {
 
         // Clear invitations
         _invitationRepository.clearCache(),
+
+        // Clear waveform cache
+        _waveformRepository.clearAllWaveforms(),
+
+        // Clear track versions cache
+        _trackVersionRepository.clearCache(),
+
+        // Clear pending sync operations
+        _pendingOperationsRepository.clearAllOperations(),
 
         // Clear notifications
         _clearNotifications(),

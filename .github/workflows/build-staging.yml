@@ -1,8 +1,6 @@
 name: 🚀 Build Staging (Testers)
 
 on:
-  push:
-    branches: [staging]
   workflow_dispatch:
 
 jobs:

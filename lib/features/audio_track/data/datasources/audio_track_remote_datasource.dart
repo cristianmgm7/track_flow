@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
@@ -16,88 +14,50 @@ abstract class AudioTrackRemoteDataSource {
   Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
 
   Future<void> editTrackName(String trackId, String projectId, String newName);
+
+  Future<Either<Failure, Unit>> updateActiveVersion(
+    String trackId,
+    String versionId,
+  );
 }
 
 @LazySingleton(as: AudioTrackRemoteDataSource)
 class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
 
-  AudioTrackRemoteDataSourceImpl(this._firestore, this._storage);
+  AudioTrackRemoteDataSourceImpl(this._firestore);
 
   @override
   Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(
     AudioTrackDTO trackData,
   ) async {
     try {
-      // Extract extension from the DTO, not from the URL
-      final ext = trackData.extension;
-      final fileName = '${trackData.id.value}.$ext';
-      final storageRef = _storage.ref().child(
-        '${AudioTrackDTO.collection}/$fileName',
-      );
-      final uploadTask = await storageRef.putFile(File(trackData.url));
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      final updatedTrackDTO = AudioTrackDTO(
-        id: trackData.id,
-        name: trackData.name,
-        url: downloadUrl,
-        projectId: trackData.projectId,
-        duration: trackData.duration,
-        uploadedBy: trackData.uploadedBy,
-        createdAt: trackData.createdAt,
-        extension: ext,
-      );
+      // AudioTrack only stores metadata, no file upload
+      // Files are now handled by TrackVersionRemoteDataSource
 
       await _firestore
           .collection(AudioTrackDTO.collection)
-          .doc(updatedTrackDTO.id.value)
-          .set(updatedTrackDTO.toJson());
+          .doc(trackData.id.value)
+          .set(trackData.toJson());
 
-      return Right(updatedTrackDTO);
+      return Right(trackData);
     } catch (e) {
-      return Left(ServerFailure('Error uploading audio track: $e'));
+      return Left(ServerFailure('Error saving audio track metadata: $e'));
     }
   }
 
   @override
   Future<Either<Failure, Unit>> deleteAudioTrack(String trackId) async {
     try {
-      // Fetch the track document to get the extension
-      final docSnapshot =
-          await _firestore
-              .collection(AudioTrackDTO.collection)
-              .doc(trackId)
-              .get();
-
-      String? ext;
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data();
-        if (data != null && data['extension'] != null) {
-          ext = data['extension'] as String;
-        }
-      }
-
+      // AudioTrack only stores metadata, file deletion is handled by TrackVersion
       await _firestore
           .collection(AudioTrackDTO.collection)
           .doc(trackId)
           .delete();
 
-      if (ext != null) {
-        final fileName = '$trackId.$ext';
-        final storageRef = _storage.ref().child(
-          '${AudioTrackDTO.collection}/$fileName',
-        );
-        try {
-          await storageRef.delete();
-        } catch (e) {
-          // Ignore if file does not exist
-        }
-      }
       return const Right(unit);
     } catch (e) {
-      return Left(ServerFailure('Error deleting audio track: $e'));
+      return Left(ServerFailure('Error deleting audio track metadata: $e'));
     }
   }
 
@@ -158,6 +118,26 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       });
     } catch (e) {
       throw Exception('Error updating track name: $e');
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateActiveVersion(
+    String trackId,
+    String versionId,
+  ) async {
+    try {
+      await _firestore
+          .collection(AudioTrackDTO.collection)
+          .doc(trackId)
+          .update({
+            'activeVersionId': versionId,
+            'lastModified': DateTime.now().toIso8601String(),
+          });
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Error updating active version: $e'));
     }
   }
 }

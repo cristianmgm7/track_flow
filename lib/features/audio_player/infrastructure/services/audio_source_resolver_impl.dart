@@ -2,8 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../../core/error/failures.dart';
-import '../../../audio_cache/shared/domain/repositories/audio_storage_repository.dart';
-import '../../../audio_cache/shared/domain/repositories/audio_download_repository.dart';
+import '../../../audio_cache/domain/repositories/audio_storage_repository.dart';
+import '../../../audio_cache/domain/repositories/audio_download_repository.dart';
 import '../../domain/services/audio_source_resolver.dart';
 import '../../../../../core/entities/unique_id.dart';
 
@@ -94,10 +94,7 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
 
       // Use audio download repository for background caching
       final audioTrackId = AudioTrackId.fromUniqueString(effectiveTrackId);
-      await _audioDownloadRepository.downloadAudio(
-        audioTrackId,
-        url,
-      );
+      await _audioDownloadRepository.downloadAudio(audioTrackId, url);
     } catch (e) {
       // Handle caching errors silently to not interrupt playback
     }

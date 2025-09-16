@@ -11,6 +11,12 @@ class WatchUserProfile extends UserProfileEvent {
   WatchUserProfile({this.userId});
 }
 
+/// Watch a profile for any user id (no session check). For collaborator viewing.
+class WatchAnyUserProfile extends UserProfileEvent {
+  final String userId;
+  WatchAnyUserProfile(this.userId);
+}
+
 class SaveUserProfile extends UserProfileEvent {
   final UserProfile profile;
   SaveUserProfile(this.profile);

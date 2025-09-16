@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -9,7 +7,6 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
-import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class EditProjectForm extends StatefulWidget {
   final Project project;
@@ -45,14 +42,11 @@ class _EditProjectFormState extends State<EditProjectForm> {
 
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isSubmitting = true);
       final updatedProject = widget.project.copyWith(
         name: ProjectName(_nameController?.text ?? ''),
         description: ProjectDescription(_descriptionController.text),
       );
       context.read<ProjectsBloc>().add(UpdateProjectRequested(updatedProject));
-      setState(() => _isSubmitting = false);
-      Navigator.of(context).pop();
     }
   }
 
@@ -62,7 +56,6 @@ class _EditProjectFormState extends State<EditProjectForm> {
       listener: (context, state) {
         if (state is ProjectOperationSuccess) {
           Navigator.of(context).pop();
-          context.go(AppRoutes.projects);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -95,27 +88,10 @@ class _EditProjectFormState extends State<EditProjectForm> {
               },
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: SecondaryButton(
-                    text: 'Cancel',
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                    isDisabled: _isSubmitting,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Save',
-                    onPressed: _isSubmitting ? null : _submit,
-                    isLoading: _isSubmitting,
-                  ),
-                ),
-              ],
+            PrimaryButton(
+              text: 'Save',
+              onPressed: _isSubmitting ? null : _submit,
+              isLoading: _isSubmitting,
             ),
           ],
         ),

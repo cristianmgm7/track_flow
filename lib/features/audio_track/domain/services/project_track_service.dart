@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
@@ -9,14 +7,13 @@ import 'package:trackflow/features/projects/domain/value_objects/project_permiss
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_cache/shared/domain/repositories/audio_storage_repository.dart';
 
 @lazySingleton
 class ProjectTrackService {
   final AudioTrackRepository trackRepository;
-  final AudioStorageRepository audioStorageRepository;
+  // This service focuses ONLY on permissions and project-level track operations
 
-  ProjectTrackService(this.trackRepository, this.audioStorageRepository);
+  ProjectTrackService(this.trackRepository);
 
   Stream<Either<Failure, List<AudioTrack>>> watchTracksByProject(
     ProjectId projectId,
@@ -24,13 +21,15 @@ class ProjectTrackService {
     return trackRepository.watchTracksByProject(projectId);
   }
 
-  Future<Either<Failure, Unit>> addTrackToProject({
+  Future<Either<Failure, AudioTrack>> addTrackToProject({
     required Project project,
     required UserId requester,
     required String name,
     required String url,
-    required Duration duration,
+    Duration? duration,
+    TrackVersionId? activeVersionId,
   }) async {
+    // 1. Verificar permisos del usuario en el proyecto
     final collaborator = project.collaborators.firstWhere(
       (c) => c.userId == requester,
       orElse: () => throw UserNotCollaboratorException(),
@@ -40,30 +39,22 @@ class ProjectTrackService {
       return Left(ProjectPermissionException());
     }
 
+    // 2. Crear track (solo metadata, sin archivos)
     final track = AudioTrack.create(
       url: url,
       name: name,
-      duration: duration,
+      duration: duration ?? Duration.zero,
       projectId: project.id,
       uploadedBy: requester,
+      activeVersionId: activeVersionId,
     );
 
-    final result = await trackRepository.uploadAudioTrack(
-      file: File(url),
-      track: track,
+    // 3. Persistir track en base de datos (solo metadata)
+    final result = await trackRepository.createTrack(track);
+    return result.fold(
+      (failure) => Left(failure),
+      (createdTrack) => Right(createdTrack),
     );
-    return result.fold((failure) => Left(failure), (_) async {
-      // Persist a stable local copy in the app library for reliable playback
-      try {
-        await audioStorageRepository.storeAudio(
-          track.id,
-          File(url),
-          referenceId: 'library',
-          canDelete: false,
-        );
-      } catch (_) {}
-      return Right(unit);
-    });
   }
 
   Future<Either<Failure, Unit>> deleteTrack({
@@ -71,24 +62,20 @@ class ProjectTrackService {
     required UserId requester,
     required AudioTrackId trackId,
   }) async {
-    final trackResult = await trackRepository.getTrackById(trackId);
-    return trackResult.fold((failure) => Left(failure), (track) async {
-      final collaborator = project.collaborators.firstWhere(
-        (c) => c.userId == requester,
-        orElse: () => throw UserNotCollaboratorException(),
-      );
-      if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
-        return Left(ProjectPermissionException());
-      }
-      final deleteResult = await trackRepository.deleteTrack(
-        track.id,
-        project.id,
-      );
-      return await deleteResult.fold((failure) => Left(failure), (_) async {
-        await audioStorageRepository.deleteAudioFile(trackId);
-        return Right(unit);
-      });
-    });
+    // 1. Verificar permisos del usuario
+    final collaborator = project.collaborators.firstWhere(
+      (c) => c.userId == requester,
+      orElse: () => throw UserNotCollaboratorException(),
+    );
+
+    if (!collaborator.hasPermission(ProjectPermission.deleteTrack)) {
+      return Left(ProjectPermissionException());
+    }
+
+    // 2. Eliminar track (solo metadata, archivos se manejan en versiones)
+    final deleteResult = await trackRepository.deleteTrack(trackId, project.id);
+
+    return deleteResult.fold((failure) => Left(failure), (_) => Right(unit));
   }
 
   Future<Either<Failure, Unit>> editTrackName({

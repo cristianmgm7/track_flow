@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:trackflow/features/project_detail/presentation/components/collaborator_card.dart';
+import 'package:trackflow/features/project_detail/presentation/components/invite_collaborator_button.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/widgets/send_invitation_form.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
+import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
 
 class ProjectDetailCollaboratorsComponent extends StatelessWidget {
   final ProjectDetailState state;
@@ -42,7 +49,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                       extra: state.project,
                     );
                   },
-                  icon: const Icon(Icons.more_horiz_outlined),
+                  icon: const Icon(Icons.chevron_right),
                 ),
               ],
             ),
@@ -61,34 +68,72 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
             ],
             if (state.collaborators.isNotEmpty) ...[
               const SizedBox(height: 16),
-              CollaboratorCardsHorizontalList(
-                collaborators: state.collaborators.map((collaborator) {
-                  // Find the role from project collaborators
-                  final projectCollaborator = state.project?.collaborators
-                      .firstWhere((pc) => pc.userId == collaborator.id,
-                          orElse: () => throw StateError('Collaborator not found'));
-                  
-                  return CollaboratorCardData(
-                    id: collaborator.id.value,
-                    name: collaborator.name,
-                    email: collaborator.email,
-                    avatarUrl: collaborator.avatarUrl,
-                    role: projectCollaborator?.role ?? ProjectRole.viewer,
-                    creativeRole: collaborator.creativeRole,
-                  );
-                }).toList(),
-                onCardTap: (collaborator) {
-                  context.push(
-                    AppRoutes.artistProfile.replaceFirst(
-                      ':id',
-                      collaborator.id,
+              SizedBox(
+                height: 240.0,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  children: [
+                    // Existing collaborators
+                    ...state.collaborators.map((collaborator) {
+                      // Find the role from project collaborators
+                      final projectCollaborator = state.project?.collaborators
+                          .firstWhere(
+                            (pc) => pc.userId == collaborator.id,
+                            orElse:
+                                () =>
+                                    throw StateError('Collaborator not found'),
+                          );
+
+                      return CollaboratorCard(
+                        name: collaborator.name,
+                        email: collaborator.email,
+                        avatarUrl: collaborator.avatarUrl,
+                        role: projectCollaborator?.role ?? ProjectRole.viewer,
+                        creativeRole: collaborator.creativeRole,
+                        onTap: () {
+                          context.push(
+                            AppRoutes.artistProfile.replaceFirst(
+                              ':id',
+                              collaborator.id.value,
+                            ),
+                          );
+                        },
+                        id: collaborator.id.value,
+                      );
+                    }),
+                    // Invite collaborator button at the end
+                    InviteCollaboratorButton(
+                      onTap: () => _showInviteCollaboratorForm(context),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  void _showInviteCollaboratorForm(BuildContext context) {
+    showAppFormSheet(
+      initialChildSize: 0.8,
+      maxChildSize: 0.8,
+      minChildSize: 0.8,
+      title: 'Invite Collaborator',
+      context: context,
+      useRootNavigator: true,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<ManageCollaboratorsBloc>.value(
+            value: context.read<ManageCollaboratorsBloc>(),
+          ),
+          BlocProvider<ProjectInvitationActorBloc>(
+            create: (context) => sl<ProjectInvitationActorBloc>(),
+          ),
+        ],
+        child: SendInvitationForm(projectId: state.project!.id),
       ),
     );
   }

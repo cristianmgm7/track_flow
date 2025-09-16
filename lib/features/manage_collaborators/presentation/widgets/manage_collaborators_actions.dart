@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
-import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/remove_colaborator_dialog.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -34,6 +34,8 @@ class CollaboratorActions {
           (c) => c.userId == collaborator.id,
         );
         showAppContentModal(
+          showCloseButton: true,
+          showHandle: true,
           context: context,
           title: 'Edit Role',
           reprovideBlocs: [bloc],
@@ -52,14 +54,18 @@ class CollaboratorActions {
       title: 'Remove',
       subtitle: 'Remove from project',
       onTap: () {
-        showAppFormSheet(
+        showDialog(
           context: context,
-          title: 'Remove Collaborator',
-          child: RemoveCollaboratorDialog(
-            projectId: project.id,
-            collaboratorId: collaborator.id.value,
-            collaboratorName: collaborator.name,
-          ),
+          useRootNavigator: false,
+          builder:
+              (dialogContext) => BlocProvider.value(
+                value: context.read<ManageCollaboratorsBloc>(),
+                child: RemoveCollaboratorDialog(
+                  projectId: project.id,
+                  collaboratorId: collaborator.id.value,
+                  collaboratorName: collaborator.name,
+                ),
+              ),
         );
       },
     ),

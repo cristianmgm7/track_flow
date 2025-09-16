@@ -20,6 +20,11 @@ abstract class AudioTrackLocalDataSource {
   );
   Future<Either<Failure, Unit>> clearCache();
   Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName);
+  Future<Either<Failure, Unit>> updateTrackUrl(String trackId, String newUrl);
+  Future<Either<Failure, Unit>> setActiveVersion(
+    String trackId,
+    String versionId,
+  );
 }
 
 @LazySingleton(as: AudioTrackLocalDataSource)
@@ -150,6 +155,44 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to update track name: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateTrackUrl(
+    String trackId,
+    String newUrl,
+  ) async {
+    try {
+      await _isar.writeTxn(() async {
+        final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
+        if (track != null) {
+          track.url = newUrl;
+          await _isar.audioTrackDocuments.put(track);
+        }
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to update track url: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> setActiveVersion(
+    String trackId,
+    String versionId,
+  ) async {
+    try {
+      await _isar.writeTxn(() async {
+        final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
+        if (track != null) {
+          track.activeVersionId = versionId;
+          await _isar.audioTrackDocuments.put(track);
+        }
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to set active version: $e'));
     }
   }
 }

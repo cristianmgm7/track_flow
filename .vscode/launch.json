@@ -11,7 +11,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_development.dart",
-            "deviceId": "AE92D3D7-702A-41B2-9AC4-E20A6536333D",
+            "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
             "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
         },
         {
@@ -20,7 +20,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_staging.dart",
-            "deviceId": "AE92D3D7-702A-41B2-9AC4-E20A6536333D",
+            "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
             "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
         },
         {
@@ -29,7 +29,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_production.dart",
-            "deviceId": "AE92D3D7-702A-41B2-9AC4-E20A6536333D",
+            "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
             "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         

@@ -25,18 +25,16 @@ class WatchAudioTracksByProjectEvent extends AudioTrackEvent {
 class UploadAudioTrackEvent extends AudioTrackEvent {
   final File file;
   final String name;
-  final Duration duration;
   final ProjectId projectId;
 
   const UploadAudioTrackEvent({
     required this.file,
     required this.name,
-    required this.duration,
     required this.projectId,
   });
 
   @override
-  List<Object> get props => [file, name, duration, projectId];
+  List<Object> get props => [file, name, projectId];
 }
 
 class DeleteAudioTrackEvent extends AudioTrackEvent {

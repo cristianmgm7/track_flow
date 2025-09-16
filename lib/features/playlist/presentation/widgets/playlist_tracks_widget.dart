@@ -10,6 +10,10 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 import 'package:trackflow/features/ui/track/track_card.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/project_detail/presentation/components/upload_track_button.dart';
+import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/up_load_track_form.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 
 class PlaylistTracksWidget extends StatefulWidget {
   final Playlist playlist;
@@ -38,7 +42,8 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
       listener: (context, state) {
         if (state is AudioTrackUploadLoading) {
           setState(() => _isUploadingTrack = true);
-        } else if (state is AudioTrackUploadSuccess || state is AudioTrackError) {
+        } else if (state is AudioTrackUploadSuccess ||
+            state is AudioTrackError) {
           setState(() => _isUploadingTrack = false);
         }
       },
@@ -56,13 +61,37 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
                       : track.projectId,
               onPlay: () {
                 context.read<AudioPlayerBloc>().add(
-                  PlayPlaylistRequested(tracks: widget.tracks, startIndex: index),
+                  PlayPlaylistRequested(
+                    tracks: widget.tracks,
+                    startIndex: index,
+                  ),
                 );
               },
             );
           }),
-          if (_isUploadingTrack) AppTrackShimmerCard(),
+          // Add upload track button at the end
+          if (widget.projectId != null)
+            UploadTrackButton(
+              projectId: ProjectId.fromUniqueString(widget.projectId!),
+              onTap:
+                  _isUploadingTrack
+                      ? null
+                      : () => _showUploadTrackForm(context),
+            ),
         ],
+      ),
+    );
+  }
+
+  void _showUploadTrackForm(BuildContext context) {
+    final projectDetailBloc = context.read<ProjectDetailBloc>();
+    showAppFormSheet(
+      context: context,
+      title: 'Upload Track',
+      useRootNavigator: true,
+      child: BlocProvider.value(
+        value: projectDetailBloc,
+        child: UploadTrackForm(project: projectDetailBloc.state.project!),
       ),
     );
   }

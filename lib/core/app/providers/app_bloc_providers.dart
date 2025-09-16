@@ -10,6 +10,7 @@ import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_blo
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
+import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart';
 
 /// Factory for creating BLoC providers following SOLID principles
 ///
@@ -60,6 +61,7 @@ class AppBlocProviders {
                 sl<AudioPlayerBloc>()
                   ..add(const AudioPlayerInitializeRequested()),
       ),
+      BlocProvider<WaveformBloc>(create: (context) => sl<WaveformBloc>()),
     ];
   }
 

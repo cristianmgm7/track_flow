@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_dialog.dart';
@@ -30,9 +32,18 @@ class ProjectDetailActions {
       subtitle: 'Edit project name, description or visibility',
       onTap: () {
         showAppFormSheet(
+          minChildSize: 0.7,
+          initialChildSize: 0.7,
+          maxChildSize: 0.7,
           context: context,
           title: 'Edit Project',
-          child: EditProjectForm(project: project),
+          useRootNavigator: true,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: context.read<ProjectsBloc>()),
+            ],
+            child: EditProjectForm(project: project),
+          ),
         );
       },
     ),

@@ -7,7 +7,6 @@ import 'package:trackflow/features/playlist/presentation/utils/playlist_utils.da
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/play_pause_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/shuffle_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/repeat_button.dart';
-import 'package:trackflow/features/audio_cache/playlist/presentation/widgets/playlist_cache_icon.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart';
@@ -62,11 +61,6 @@ class _PlaylistControlsWidgetState extends State<PlaylistControlsWidget> {
               onPressed: () => player.add(ToggleRepeatModeRequested()),
             ),
             const SizedBox(width: 8),
-            PlaylistCacheIcon(
-              playlistId: widget.playlist.id.value,
-              trackIds: widget.playlist.trackIds,
-              size: 28.0,
-            ),
             const SizedBox(width: 8),
             // Track sort menu
             BlocBuilder<ProjectDetailBloc, ProjectDetailState>(

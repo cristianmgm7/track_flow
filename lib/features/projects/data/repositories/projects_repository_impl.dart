@@ -162,7 +162,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         // Trigger background sync for fresh data (non-blocking)
         unawaited(
           _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'project_${projectId.value}',
+            syncKey: 'projects_${localProject.ownerId.value}',
           ),
         );
 

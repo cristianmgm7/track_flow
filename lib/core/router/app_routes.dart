@@ -23,12 +23,10 @@ class AppRoutes {
   static const String profileCreation = '/profile/create';
 
   // Audio comment routes
-  static const String audioComments = '/audio-comments';
+  static const String trackDetail = '/track-detail';
 
   // Profile routes
   static const String artistProfile = '/artistprofile/:id';
 
-  // Audio cache demo routes
-  static const String cacheDemo = '/settings/cache-demo';
   static const String cacheManagement = '/settings/cache-management';
 }

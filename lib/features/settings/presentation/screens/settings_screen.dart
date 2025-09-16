@@ -8,7 +8,6 @@ import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/features/settings/presentation/widgets/user_profile_section.dart';
-import 'package:trackflow/features/settings/presentation/widgets/preferences.dart';
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
@@ -69,12 +68,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // User Profile Section
             const UserProfileSection(),
             SizedBox(height: Dimensions.space16),
-
-            // Preferences Card
-            const Preferences(),
-            SizedBox(height: Dimensions.space16),
-
-            // Developer/Debug Section
             Card(
               color: AppColors.surface,
               child: Padding(
@@ -89,26 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     SizedBox(height: Dimensions.space12),
-                    ListTile(
-                      leading: Icon(Icons.cached, color: AppColors.textPrimary),
-                      title: Text(
-                        'Audio Cache Demo',
-                        style: AppTextStyle.bodyLarge.copyWith(
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Test new audio caching system',
-                        style: AppTextStyle.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      trailing: Icon(
-                        Icons.arrow_forward_ios,
-                        color: AppColors.textSecondary,
-                      ),
-                      onTap: () => context.go(AppRoutes.cacheDemo),
-                    ),
+                    // Audio Cache Demo removed
                     ListTile(
                       leading: Icon(
                         Icons.storage,

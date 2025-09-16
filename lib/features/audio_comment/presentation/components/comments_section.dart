@@ -5,20 +5,22 @@ import '../../../../core/entities/unique_id.dart';
 import '../bloc/audio_comment_bloc.dart';
 import '../bloc/audio_comment_state.dart';
 import '../bloc/audio_comment_event.dart';
+import 'audio_comment_card.dart';
 import '../../domain/entities/audio_comment.dart';
 import '../../../user_profile/domain/entities/user_profile.dart';
-import 'audio_comment_card.dart';
 
 /// Comments section component that handles displaying the list of comments
 /// with proper state management and error handling
 class CommentsSection extends StatefulWidget {
   final ProjectId projectId;
   final AudioTrackId trackId;
+  final TrackVersionId versionId;
 
   const CommentsSection({
     super.key,
     required this.projectId,
     required this.trackId,
+    required this.versionId,
   });
 
   @override
@@ -33,7 +35,11 @@ class _CommentsSectionState extends State<CommentsSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(widget.projectId, widget.trackId),
+          WatchAudioCommentsBundleEvent(
+            widget.projectId,
+            widget.trackId,
+            widget.versionId,
+          ),
         );
       }
     });
@@ -42,13 +48,18 @@ class _CommentsSectionState extends State<CommentsSection> {
   @override
   void didUpdateWidget(covariant CommentsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.trackId != widget.trackId ||
-        oldWidget.projectId != widget.projectId) {
+    if (oldWidget.versionId != widget.versionId ||
+        oldWidget.projectId != widget.projectId ||
+        oldWidget.trackId != widget.trackId) {
       // Re-subscribe for the new track
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(widget.projectId, widget.trackId),
+          WatchAudioCommentsBundleEvent(
+            widget.projectId,
+            widget.trackId,
+            widget.versionId,
+          ),
         );
       });
     }
@@ -135,6 +146,8 @@ class _CommentsSectionState extends State<CommentsSection> {
         return AudioCommentComponent(
           comment: comment,
           collaborator: collaborator,
+          projectId: widget.projectId,
+          versionId: widget.versionId,
         );
       },
     );

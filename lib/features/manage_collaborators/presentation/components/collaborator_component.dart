@@ -53,7 +53,7 @@ class CollaboratorComponent extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const Icon(Icons.more_horiz_outlined),
             ],
           ),
         ),

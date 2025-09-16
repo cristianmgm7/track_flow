@@ -5,8 +5,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/track/track_cover_art.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/bloc/track_cache_bloc.dart';
-import 'package:trackflow/features/audio_cache/track/presentation/widgets/smart_track_cache_icon.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_cache/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -15,6 +15,9 @@ import 'package:trackflow/features/audio_track/presentation/widgets/track_upload
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:trackflow/features/project_detail/domain/entities/active_version_summary.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 
 import 'track_duration_formatter.dart';
 import 'track_info_section.dart';
@@ -41,6 +44,18 @@ class TrackComponent extends StatefulWidget {
 class _TrackComponentState extends State<TrackComponent> {
   @override
   Widget build(BuildContext context) {
+    // Select active version summary for this track from ProjectDetailBloc
+    final summary = context.select<ProjectDetailBloc, ActiveVersionSummary?>(
+      (bloc) => bloc.state.activeVersionsByTrackId[widget.track.id.value],
+    );
+
+    // Derive duration to display: use active version duration if track is zero
+    final Duration displayedDuration =
+        (widget.track.duration.inMilliseconds == 0 &&
+                summary?.durationMs != null)
+            ? Duration(milliseconds: summary!.durationMs!)
+            : widget.track.duration;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => sl<TrackCacheBloc>()),
@@ -90,15 +105,20 @@ class _TrackComponentState extends State<TrackComponent> {
               ),
             ),
             SizedBox(width: Dimensions.space8),
-            // Duration
-            TrackDurationText(duration: widget.track.duration),
+            // Duration (from version if available)
+            TrackDurationText(duration: displayedDuration),
             SizedBox(width: Dimensions.space8),
-            // Cache icon
-            SmartTrackCacheIcon(
-              trackId: widget.track.id.value,
-              audioUrl: widget.track.url,
-              size: Dimensions.iconMedium,
-            ),
+            // Cache icon (version-based) without injecting usecase
+            if (summary != null &&
+                summary.versionId.isNotEmpty &&
+                summary.status == TrackVersionStatus.ready &&
+                summary.fileRemoteUrl != null)
+              SmartTrackCacheIcon(
+                trackId: widget.track.id.value,
+                versionId: summary.versionId,
+                remoteUrl: summary.fileRemoteUrl!,
+                size: Dimensions.iconMedium,
+              ),
             SizedBox(width: Dimensions.space8),
             // Menu button
             TrackMenuButton(

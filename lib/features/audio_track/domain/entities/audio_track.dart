@@ -3,11 +3,12 @@ import 'package:trackflow/core/entities/unique_id.dart';
 
 class AudioTrack extends AggregateRoot<AudioTrackId> {
   final String name;
-  final String url;
-  final Duration duration;
+  final String url; // Cover art URL
+  final Duration duration; // Duration of active version
   final ProjectId projectId;
   final UserId uploadedBy;
   final DateTime createdAt;
+  final TrackVersionId? activeVersionId; // Active version for playback
 
   const AudioTrack({
     required AudioTrackId id,
@@ -17,6 +18,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     required this.projectId,
     required this.uploadedBy,
     required this.createdAt,
+    this.activeVersionId,
   }) : super(id);
 
   factory AudioTrack.create({
@@ -25,6 +27,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     required Duration duration,
     required ProjectId projectId,
     required UserId uploadedBy,
+    TrackVersionId? activeVersionId,
   }) {
     return AudioTrack(
       id: AudioTrackId(),
@@ -34,6 +37,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
       projectId: projectId,
       uploadedBy: uploadedBy,
       createdAt: DateTime.now(),
+      activeVersionId: activeVersionId,
     );
   }
 
@@ -45,6 +49,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     ProjectId? projectId,
     UserId? uploadedBy,
     DateTime? createdAt,
+    TrackVersionId? activeVersionId,
   }) {
     return AudioTrack(
       id: id ?? this.id,
@@ -54,9 +59,9 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
       projectId: projectId ?? this.projectId,
       uploadedBy: uploadedBy ?? this.uploadedBy,
       createdAt: createdAt ?? this.createdAt,
+      activeVersionId: activeVersionId ?? this.activeVersionId,
     );
   }
-
 
   bool belongsToProject(ProjectId projectId) {
     return this.projectId == projectId;

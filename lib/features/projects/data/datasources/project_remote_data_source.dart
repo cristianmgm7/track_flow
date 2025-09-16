@@ -28,16 +28,13 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   @override
   Future<Either<Failure, ProjectDTO>> createProject(ProjectDTO project) async {
     try {
-      // Generate a new document reference with a unique ID.
-      final docRef = _firestore.collection(ProjectDTO.collection).doc();
+      // Use the existing project ID to maintain consistency with offline storage
+      final docRef = _firestore.collection(ProjectDTO.collection).doc(project.id);
 
-      // Create a new project DTO that includes the generated ID.
-      final projectWithId = project.copyWith(id: docRef.id);
+      // Write the DTO to Firestore with the original ID
+      await docRef.set(project.toFirestore());
 
-      // Write the DTO to Firestore.
-      await docRef.set(projectWithId.toFirestore());
-
-      return Right(projectWithId);
+      return Right(project);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         return Left(
