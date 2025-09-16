@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app/my_app.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -20,6 +21,11 @@ void main() async {
         tag: 'MAIN',
       );
     }
+
+    // Load environment variables
+    String envFile = '.env.${FlavorConfig.name}';
+    await dotenv.load(fileName: envFile);
+    AppLogger.info('Loaded environment file: $envFile', tag: 'MAIN');
 
     // Phase 1: Initialize Firebase FIRST (only if not already initialized)
     AppLogger.info(

@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -40,47 +41,78 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'YOUR-STAGING-WEB-API-KEY',
-    appId: 'YOUR-STAGING-WEB-APP-ID',
-    messagingSenderId: 'YOUR-STAGING-SENDER-ID',
-    projectId: 'trackflow-staging',
-    authDomain: 'trackflow-staging.firebaseapp.com',
-    storageBucket: 'trackflow-staging.firebasestorage.app',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: dotenv.env['WEB_API_KEY'] ?? 'YOUR-STAGING-WEB-API-KEY',
+    appId: dotenv.env['WEB_APP_ID'] ?? 'YOUR-STAGING-WEB-APP-ID',
+    messagingSenderId:
+        dotenv.env['WEB_MESSAGING_SENDER_ID'] ?? 'YOUR-STAGING-SENDER-ID',
+    projectId: dotenv.env['WEB_PROJECT_ID'] ?? 'trackflow-staging',
+    authDomain:
+        dotenv.env['WEB_AUTH_DOMAIN'] ?? 'trackflow-staging.firebaseapp.com',
+    storageBucket:
+        dotenv.env['WEB_STORAGE_BUCKET'] ??
+        'trackflow-staging.firebasestorage.app',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB0SG-ZaTQNBG4wu0-F1fRsVbqNtuq4JjU',
-    appId: '1:221115151816:android:1362a8ff85c13d07943cfd',
-    messagingSenderId: '221115151816',
-    projectId: 'trackflow-staging',
-    storageBucket: 'trackflow-staging.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey:
+        dotenv.env['ANDROID_API_KEY'] ??
+        'AIzaSyB0SG-ZaTQNBG4wu0-F1fRsVbqNtuq4JjU',
+    appId:
+        dotenv.env['ANDROID_APP_ID'] ??
+        '1:221115151816:android:1362a8ff85c13d07943cfd',
+    messagingSenderId:
+        dotenv.env['ANDROID_MESSAGING_SENDER_ID'] ?? '221115151816',
+    projectId: dotenv.env['ANDROID_PROJECT_ID'] ?? 'trackflow-staging',
+    storageBucket:
+        dotenv.env['ANDROID_STORAGE_BUCKET'] ??
+        'trackflow-staging.firebasestorage.app',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218',
-    appId: '1:221115151816:ios:314e8084da41d35e943cfd',
-    messagingSenderId: '221115151816',
-    projectId: 'trackflow-staging',
-    storageBucket: 'trackflow-staging.firebasestorage.app',
-    iosBundleId: 'com.crd.producer-gmail.com.trackflow.staging',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey:
+        dotenv.env['IOS_API_KEY'] ?? 'AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218',
+    appId:
+        dotenv.env['IOS_APP_ID'] ?? '1:221115151816:ios:314e8084da41d35e943cfd',
+    messagingSenderId: dotenv.env['IOS_MESSAGING_SENDER_ID'] ?? '221115151816',
+    projectId: dotenv.env['IOS_PROJECT_ID'] ?? 'trackflow-staging',
+    storageBucket:
+        dotenv.env['IOS_STORAGE_BUCKET'] ??
+        'trackflow-staging.firebasestorage.app',
+    iosBundleId:
+        dotenv.env['IOS_BUNDLE_ID'] ??
+        'com.crd.producer-gmail.com.trackflow.staging',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218',
-    appId: '1:221115151816:ios:314e8084da41d35e943cfd',
-    messagingSenderId: '221115151816',
-    projectId: 'trackflow-staging',
-    storageBucket: 'trackflow-staging.firebasestorage.app',
-    iosBundleId: 'com.crd.producer-gmail.com.trackflow.staging',
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey:
+        dotenv.env['MACOS_API_KEY'] ??
+        'AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218',
+    appId:
+        dotenv.env['MACOS_APP_ID'] ??
+        '1:221115151816:ios:314e8084da41d35e943cfd',
+    messagingSenderId:
+        dotenv.env['MACOS_MESSAGING_SENDER_ID'] ?? '221115151816',
+    projectId: dotenv.env['MACOS_PROJECT_ID'] ?? 'trackflow-staging',
+    storageBucket:
+        dotenv.env['MACOS_STORAGE_BUCKET'] ??
+        'trackflow-staging.firebasestorage.app',
+    iosBundleId:
+        dotenv.env['MACOS_BUNDLE_ID'] ??
+        'com.crd.producer-gmail.com.trackflow.staging',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'YOUR-STAGING-WEB-API-KEY',
-    appId: 'YOUR-STAGING-WINDOWS-APP-ID',
-    messagingSenderId: 'YOUR-STAGING-SENDER-ID',
-    projectId: 'trackflow-staging',
-    authDomain: 'trackflow-staging.firebaseapp.com',
-    storageBucket: 'trackflow-staging.firebasestorage.app',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: dotenv.env['WINDOWS_API_KEY'] ?? 'YOUR-STAGING-WEB-API-KEY',
+    appId: dotenv.env['WINDOWS_APP_ID'] ?? 'YOUR-STAGING-WINDOWS-APP-ID',
+    messagingSenderId:
+        dotenv.env['WINDOWS_MESSAGING_SENDER_ID'] ?? 'YOUR-STAGING-SENDER-ID',
+    projectId: dotenv.env['WINDOWS_PROJECT_ID'] ?? 'trackflow-staging',
+    authDomain:
+        dotenv.env['WINDOWS_AUTH_DOMAIN'] ??
+        'trackflow-staging.firebaseapp.com',
+    storageBucket:
+        dotenv.env['WINDOWS_STORAGE_BUCKET'] ??
+        'trackflow-staging.firebasestorage.app',
   );
 }
