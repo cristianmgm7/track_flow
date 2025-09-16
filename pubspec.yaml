@@ -144,6 +144,9 @@ flutter:
     - assets/images/ios_dark_sq_SI@1x.png
     - assets/images/ios_dark_sq_SU@1x.png
     - assets/logo/
+    - .env.development
+    - .env.staging
+    - .env.production
 
   # fonts:
   #   - family: Roboto
