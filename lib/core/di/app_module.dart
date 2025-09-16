@@ -14,12 +14,13 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_docum
 import 'package:trackflow/features/audio_track/data/models/audio_track_document.dart';
 import 'package:trackflow/features/playlist/data/models/playlist_document.dart';
 import 'package:trackflow/features/projects/data/models/project_document.dart';
+import 'package:trackflow/features/track_version/data/models/track_version_document.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_document.dart';
-import 'package:trackflow/features/audio_cache/shared/data/models/cached_audio_document_unified.dart';
-import 'package:trackflow/features/audio_cache/shared/data/models/cache_reference_document.dart';
+import 'package:trackflow/features/audio_cache/data/models/cached_audio_document_unified.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/invitations/data/models/invitation_document.dart';
 import 'package:trackflow/core/notifications/data/models/notification_document.dart';
+import 'package:trackflow/features/waveform/data/models/audio_waveform_document.dart';
 
 // NEW SERVICES - SOLID Architecture
 // These imports are used by the generated injection.config.dart
@@ -67,10 +68,11 @@ abstract class AppModule {
       PlaylistDocumentSchema,
       UserProfileDocumentSchema,
       CachedAudioDocumentUnifiedSchema,
-      CacheReferenceDocumentSchema,
       SyncOperationDocumentSchema,
       InvitationDocumentSchema,
       NotificationDocumentSchema, // Required for notification system
+      AudioWaveformDocumentSchema, // New waveform document
+      TrackVersionDocumentSchema, // New track version document
     ];
 
     return await Isar.open(schemas, directory: dir.path);

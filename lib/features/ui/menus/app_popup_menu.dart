@@ -105,6 +105,180 @@ class AppPopupMenuItem<T> {
   }
 }
 
+/// Menu item data class for the menu API
+class AppMenuItem<T> {
+  final T value;
+  final String label;
+  final String? subtitle;
+  final IconData? icon;
+  final Color? iconColor;
+  final Color? textColor;
+  final bool enabled;
+
+  const AppMenuItem({
+    required this.value,
+    required this.label,
+    this.subtitle,
+    this.icon,
+    this.iconColor,
+    this.textColor,
+    this.enabled = true,
+  });
+
+  AppMenuItem<T> copyWith({
+    T? value,
+    String? label,
+    String? subtitle,
+    IconData? icon,
+    Color? iconColor,
+    Color? textColor,
+    bool? enabled,
+  }) {
+    return AppMenuItem<T>(
+      value: value ?? this.value,
+      label: label ?? this.label,
+      subtitle: subtitle ?? this.subtitle,
+      icon: icon ?? this.icon,
+      iconColor: iconColor ?? this.iconColor,
+      textColor: textColor ?? this.textColor,
+      enabled: enabled ?? this.enabled,
+    );
+  }
+}
+
+/// Unified Menu API for TrackFlow - Similar to Modal API pattern
+Future<T?> showAppMenu<T>({
+  required BuildContext context,
+  required List<AppMenuItem<T>> items,
+  required ValueChanged<T> onSelected,
+  RelativeRect? position,
+  Offset? positionOffset,
+  Widget? icon,
+  String? tooltip,
+  double elevation = 6,
+  VoidCallback? onOpened,
+  VoidCallback? onClosed,
+  bool useRootNavigator = true,
+  Color? backgroundColor,
+  BorderRadius? borderRadius,
+}) {
+  final RenderBox overlay =
+      Overlay.of(context).context.findRenderObject() as RenderBox;
+
+  final RelativeRect menuPosition =
+      position ??
+      RelativeRect.fromLTRB(
+        positionOffset?.dx ?? 0,
+        positionOffset?.dy ?? 0,
+        overlay.size.width - (positionOffset?.dx ?? 0),
+        overlay.size.height - (positionOffset?.dy ?? 0),
+      );
+
+  return showMenu<T>(
+    context: context,
+    position: menuPosition,
+    color: backgroundColor ?? AppColors.surface,
+    shape: RoundedRectangleBorder(
+      borderRadius: borderRadius ?? AppBorders.medium,
+    ),
+    elevation: elevation,
+    useRootNavigator: useRootNavigator,
+    items:
+        items.map((item) {
+          return PopupMenuItem<T>(
+            value: item.value,
+            enabled: item.enabled,
+            child: Row(
+              children: [
+                if (item.icon != null) ...[
+                  Icon(
+                    item.icon,
+                    color: item.iconColor ?? AppColors.textPrimary,
+                    size: Dimensions.iconMedium,
+                  ),
+                  SizedBox(width: Dimensions.space12),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.label,
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          color: item.textColor ?? AppColors.textPrimary,
+                        ),
+                      ),
+                      if (item.subtitle != null) ...[
+                        SizedBox(height: Dimensions.space2),
+                        Text(
+                          item.subtitle!,
+                          style: AppTextStyle.bodySmall.copyWith(
+                            color:
+                                item.textColor?.withValues(alpha: 0.7) ??
+                                AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+  ).then((value) {
+    if (value != null) {
+      onSelected(value);
+    }
+    onClosed?.call();
+    return value;
+  });
+}
+
+/// Convenience function for simple string-based menus
+Future<String?> showAppStringMenu({
+  required BuildContext context,
+  required List<String> options,
+  required ValueChanged<String> onSelected,
+  RelativeRect? position,
+  Offset? positionOffset,
+  List<IconData>? icons,
+  List<String>? subtitles,
+  String? tooltip,
+  double elevation = 6,
+  VoidCallback? onOpened,
+  VoidCallback? onClosed,
+  bool useRootNavigator = true,
+}) {
+  final items = List<AppMenuItem<String>>.generate(
+    options.length,
+    (index) => AppMenuItem<String>(
+      value: options[index],
+      label: options[index],
+      subtitle:
+          subtitles != null && index < subtitles.length
+              ? subtitles[index]
+              : null,
+      icon: icons != null && index < icons.length ? icons[index] : null,
+    ),
+  );
+
+  return showAppMenu<String>(
+    context: context,
+    items: items,
+    onSelected: onSelected,
+    position: position,
+    positionOffset: positionOffset,
+    tooltip: tooltip,
+    elevation: elevation,
+    onOpened: onOpened,
+    onClosed: onClosed,
+    useRootNavigator: useRootNavigator,
+  );
+}
+
 /// An overlay route to create a soft diffusion blur behind popup menus.
 /// Use with showMenu by wrapping root with this barrier before the menu opens
 /// if a manual effect is required elsewhere.

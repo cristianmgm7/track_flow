@@ -103,11 +103,13 @@ class AppDialog extends StatelessWidget {
 
     if (secondaryButtonText != null) {
       actions.add(
-        SecondaryButton(
-          text: secondaryButtonText!,
-          onPressed: isLoading ? null : onSecondaryPressed,
-          isDisabled: isLoading,
-          size: ButtonSize.small,
+        Expanded(
+          child: SecondaryButton(
+            text: secondaryButtonText!,
+            onPressed: isLoading ? null : onSecondaryPressed,
+            isDisabled: isLoading,
+            size: ButtonSize.medium,
+          ),
         ),
       );
     }
@@ -118,27 +120,21 @@ class AppDialog extends StatelessWidget {
       }
 
       actions.add(
-        PrimaryButton(
-          text: primaryButtonText!,
-          onPressed: onPrimaryPressed,
-          isLoading: isLoading,
-          isDisabled: isLoading,
-          size: ButtonSize.small,
-          isDestructive: isDestructive,
+        Expanded(
+          child: PrimaryButton(
+            text: primaryButtonText!,
+            onPressed: onPrimaryPressed,
+            isLoading: isLoading,
+            isDisabled: isLoading,
+            size: ButtonSize.medium,
+            isDestructive: isDestructive,
+          ),
         ),
       );
     }
 
     return actions.isNotEmpty
-        ? [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: actions,
-            ),
-          ),
-        ]
+        ? [Row(mainAxisAlignment: MainAxisAlignment.end, children: actions)]
         : [];
   }
 }

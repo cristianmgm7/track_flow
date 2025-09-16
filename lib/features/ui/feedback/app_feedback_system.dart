@@ -40,7 +40,7 @@ class AppFeedbackSystem {
     String? actionLabel,
     VoidCallback? onAction,
     FeedbackType type = FeedbackType.info,
-    Duration duration = const Duration(seconds: 4),
+    Duration duration = const Duration(seconds: 2),
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       AppSnackBar(

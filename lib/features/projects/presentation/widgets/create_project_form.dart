@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -9,7 +8,7 @@ import 'package:trackflow/features/projects/presentation/blocs/projects_event.da
 import 'package:trackflow/features/projects/presentation/blocs/projects_state.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
-import 'package:trackflow/features/ui/buttons/secondary_button.dart';
+import 'package:trackflow/features/ui/feedback/app_feedback_system.dart';
 
 class ProjectFormBottomSheet extends StatefulWidget {
   final Project? project;
@@ -54,11 +53,10 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
         if (state is ProjectCreatedSuccess) {
           Navigator.of(context).pop();
         } else if (state is ProjectsError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error: ${state.message}'),
-              backgroundColor: AppColors.error,
-            ),
+          AppFeedbackSystem.showSnackBar(
+            context,
+            message: 'Error: ${state.message}',
+            type: FeedbackType.error,
           );
         }
       },
@@ -66,6 +64,7 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
             AppFormField(
@@ -78,28 +77,7 @@ class _ProjectFormBottomSheetState extends State<ProjectFormBottomSheet> {
               },
             ),
             SizedBox(height: Dimensions.space24),
-            BlocBuilder<ProjectsBloc, ProjectsState>(
-              builder: (context, state) {
-                final isLoading = state is ProjectsLoading;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    SecondaryButton(
-                      text: 'Cancel',
-                      onPressed:
-                          isLoading ? null : () => Navigator.of(context).pop(),
-                      isDisabled: isLoading,
-                    ),
-                    SizedBox(width: Dimensions.space8),
-                    PrimaryButton(
-                      text: 'Create Project',
-                      onPressed: isLoading ? null : _saveProject,
-                      isLoading: isLoading,
-                    ),
-                  ],
-                );
-              },
-            ),
+            PrimaryButton(text: 'Create Project', onPressed: _saveProject),
           ],
         ),
       ),

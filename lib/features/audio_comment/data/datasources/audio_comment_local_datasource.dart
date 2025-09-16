@@ -15,10 +15,10 @@ abstract class AudioCommentLocalDataSource {
   /// Used in: AudioCommentRepositoryImpl (for local deletion after remote deletion)
   Future<Either<Failure, Unit>> deleteCachedComment(String commentId);
 
-  /// Returns a list of cached comments for a given track (one-time fetch).
+  /// Returns a list of cached comments for a given track version (one-time fetch).
   /// Used in: AudioCommentRepositoryImpl (for business logic or non-reactive UI)
-  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(
-    String trackId,
+  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByVersion(
+    String versionId,
   );
 
   /// Returns a single cached comment by its ID.
@@ -33,15 +33,28 @@ abstract class AudioCommentLocalDataSource {
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
   Future<Either<Failure, Unit>> deleteAllComments();
 
-  /// Watches and streams all comments for a given track (reactive, for UI updates).
+  /// Watches and streams all comments for a given track version (reactive, for UI updates).
   /// Used in: UI (Bloc/Cubit/ViewModel) for offline-first, real-time comment updates
-  Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(
-    String trackId,
+  Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByVersion(
+    String versionId,
   );
 
   /// Clears all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
   Future<Either<Failure, Unit>> clearCache();
+
+  /// Atomically replaces all comments for a given track version with the provided list.
+  ///
+  /// Performs delete + batch insert inside a single transaction to ensure
+  /// watchers emit at most one consolidated update, avoiding transient empty
+  /// states in the UI.
+  Future<Either<Failure, Unit>> replaceCommentsForVersion(
+    String versionId,
+    List<AudioCommentDTO> comments,
+  );
+
+  /// Delete all comments for a given version from Isar.
+  Future<Either<Failure, Unit>> deleteByVersion(String versionId);
 }
 
 @LazySingleton(as: AudioCommentLocalDataSource)
@@ -76,14 +89,14 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByTrack(
-    String trackId,
+  Future<Either<Failure, List<AudioCommentDTO>>> getCachedCommentsByVersion(
+    String versionId,
   ) async {
     try {
       final commentDocs =
           await _isar.audioCommentDocuments
               .filter()
-              .trackIdEqualTo(trackId)
+              .trackIdEqualTo(versionId)
               .findAll();
       return Right(commentDocs.map((doc) => doc.toDTO()).toList());
     } catch (e) {
@@ -127,13 +140,13 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
   }
 
   @override
-  Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByTrack(
-    String trackId,
+  Stream<Either<Failure, List<AudioCommentDTO>>> watchCommentsByVersion(
+    String versionId,
   ) {
     return _isar.audioCommentDocuments
         .where()
         .filter()
-        .trackIdEqualTo(trackId)
+        .trackIdEqualTo(versionId)
         .watch(fireImmediately: true)
         .map(
           (docs) => right<Failure, List<AudioCommentDTO>>(
@@ -152,6 +165,46 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(CacheFailure('Failed to clear cache: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> replaceCommentsForVersion(
+    String versionId,
+    List<AudioCommentDTO> comments,
+  ) async {
+    try {
+      await _isar.writeTxn(() async {
+        // Delete existing comments for the track
+        await _isar.audioCommentDocuments
+            .filter()
+            .trackIdEqualTo(versionId)
+            .deleteAll();
+
+        if (comments.isEmpty) return;
+
+        // Insert the new set in batch
+        final docs = comments.map(AudioCommentDocument.fromDTO).toList();
+        await _isar.audioCommentDocuments.putAll(docs);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to replace comments for track: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteByVersion(String versionId) async {
+    try {
+      await _isar.writeTxn(() async {
+        await _isar.audioCommentDocuments
+            .filter()
+            .trackIdEqualTo(versionId)
+            .deleteAll();
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to delete comments by version: $e'));
     }
   }
 }

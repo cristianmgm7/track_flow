@@ -5,6 +5,7 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 
 /// Handles sync operations for AudioTrack entities
 ///
@@ -13,8 +14,9 @@ import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
 @injectable
 class AudioTrackOperationExecutor implements OperationExecutor {
   final AudioTrackRemoteDataSource _remoteDataSource;
+  final AudioTrackLocalDataSource _localDataSource;
 
-  AudioTrackOperationExecutor(this._remoteDataSource);
+  AudioTrackOperationExecutor(this._remoteDataSource, this._localDataSource);
 
   @override
   String get entityType => 'audio_track';
@@ -68,22 +70,51 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     final result = await _remoteDataSource.uploadAudioTrack(audioTrackDto);
     result.fold(
       (failure) => throw Exception('Upload failed: ${failure.message}'),
-      (uploadedDto) {
-        // Successfully uploaded
+      (uploadedDto) async {
+        // Update local cached track URL to remote download URL
+        await _localDataSource.updateTrackUrl(
+          uploadedDto.id.value,
+          uploadedDto.url,
+        );
       },
     );
   }
 
-  /// Execute audio track update (edit name)
+  /// Execute audio track update (edit name or active version)
   Future<void> _executeUpdate(
     SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
     final trackId = operation.entityId;
-    final projectId = operationData['projectId'] ?? '';
-    final newName = operationData['name'] ?? '';
+    final field = operationData['field'] ?? '';
 
-    await _remoteDataSource.editTrackName(trackId, projectId, newName);
+    switch (field) {
+      case 'name':
+        final projectId = operationData['projectId'] ?? '';
+        final newName = operationData['newName'] ?? '';
+        await _remoteDataSource.editTrackName(trackId, projectId, newName);
+        break;
+
+      case 'activeVersion':
+        final activeVersionId = operationData['activeVersionId'] ?? '';
+        final result = await _remoteDataSource.updateActiveVersion(
+          trackId,
+          activeVersionId,
+        );
+        result.fold(
+          (failure) =>
+              throw Exception(
+                'Update active version failed: ${failure.message}',
+              ),
+          (_) {
+            // Successfully updated active version
+          },
+        );
+        break;
+
+      default:
+        throw UnsupportedError('Unknown audio track update field: $field');
+    }
   }
 
   /// Execute audio track deletion

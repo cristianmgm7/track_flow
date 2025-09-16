@@ -86,3 +86,25 @@ class PlaylistId extends ValueObject<String> {
 
   const PlaylistId._(super.value); // ✅ Fixed: removed : super._();
 }
+
+class AudioWaveformId extends ValueObject<String> {
+  factory AudioWaveformId() => AudioWaveformId._(const Uuid().v4());
+
+  factory AudioWaveformId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return AudioWaveformId._(input);
+  }
+
+  const AudioWaveformId._(super.value);
+}
+
+class TrackVersionId extends ValueObject<String> {
+  factory TrackVersionId() => TrackVersionId._(const Uuid().v4());
+
+  factory TrackVersionId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return TrackVersionId._(input);
+  }
+
+  const TrackVersionId._(super.value);
+}

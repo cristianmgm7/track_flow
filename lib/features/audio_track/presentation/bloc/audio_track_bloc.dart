@@ -43,7 +43,6 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
       UploadAudioTrackParams(
         file: event.file,
         name: event.name,
-        duration: event.duration,
         projectId: event.projectId,
       ),
     );

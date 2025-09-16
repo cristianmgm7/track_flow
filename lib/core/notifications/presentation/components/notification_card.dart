@@ -3,6 +3,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
+import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 import 'package:trackflow/core/notifications/domain/entities/notification.dart'
     as app_notification;
 
@@ -130,7 +131,7 @@ class NotificationCard extends StatelessWidget {
   }
 
   Widget _buildActions() {
-    return PopupMenuButton<String>(
+    return AppPopupMenuButton<String>(
       icon: Icon(
         Icons.more_vert,
         color: AppColors.textSecondary,
@@ -146,47 +147,21 @@ class NotificationCard extends StatelessWidget {
             break;
         }
       },
-      itemBuilder:
-          (context) => [
-            PopupMenuItem(
-              value: 'mark_read',
-              child: Row(
-                children: [
-                  Icon(
-                    notification.isUnread
-                        ? Icons.mark_email_read
-                        : Icons.mark_email_unread,
-                    size: Dimensions.iconSmall,
-                    color: AppColors.textSecondary,
-                  ),
-                  SizedBox(width: Dimensions.space8),
-                  Text(
-                    notification.isUnread ? 'Mark as read' : 'Mark as unread',
-                    style: AppTextStyle.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.delete_outline,
-                    size: Dimensions.iconSmall,
-                    color: AppColors.error,
-                  ),
-                  SizedBox(width: Dimensions.space8),
-                  Text(
-                    'Delete',
-                    style: AppTextStyle.bodySmall.copyWith(
-                      color: AppColors.error,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      items: [
+        AppPopupMenuItem<String>(
+          value: 'mark_read',
+          label: notification.isUnread ? 'Mark as read' : 'Mark as unread',
+          icon:
+              notification.isUnread
+                  ? Icons.mark_email_read
+                  : Icons.mark_email_unread,
+        ),
+        AppPopupMenuItem<String>(
+          value: 'delete',
+          label: 'Delete',
+          icon: Icons.delete_outline,
+        ),
+      ],
     );
   }
 

@@ -18,19 +18,19 @@ class AudioPlayerInitializeRequested extends AudioPlayerEvent {
   const AudioPlayerInitializeRequested();
 }
 
-/// Play a specific audio track by ID
-/// Context (collaborators, project info) will be provided externally
-class PlayAudioRequested extends AudioPlayerEvent {
-  const PlayAudioRequested(this.trackId);
+/// Play a specific version by ID
+/// Ignores track.activeVersionId and plays the specified version directly
+class PlayVersionRequested extends AudioPlayerEvent {
+  const PlayVersionRequested(this.versionId);
 
-  /// Track ID to play - NO collaborator or business context
-  final AudioTrackId trackId;
-
-  @override
-  List<Object?> get props => [trackId];
+  /// Version ID to play - uses version's file and track's metadata
+  final TrackVersionId versionId;
 
   @override
-  String toString() => 'PlayAudioRequested(trackId: $trackId)';
+  List<Object?> get props => [versionId];
+
+  @override
+  String toString() => 'PlayVersionRequested(versionId: $versionId)';
 }
 
 /// Play a playlist starting from specified index
@@ -108,7 +108,8 @@ class PlayAndSeekRequested extends AudioPlayerEvent {
   List<Object?> get props => [trackId, position];
 
   @override
-  String toString() => 'PlayAndSeekRequested(trackId: $trackId, position: $position)';
+  String toString() =>
+      'PlayAndSeekRequested(trackId: $trackId, position: $position)';
 }
 
 /// Toggle shuffle mode on/off

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
@@ -17,6 +19,7 @@ class CollaboratorCard extends StatelessWidget {
   final VoidCallback? onTap;
   final double? width;
   final double? height;
+  final String id;
 
   const CollaboratorCard({
     super.key,
@@ -28,6 +31,7 @@ class CollaboratorCard extends StatelessWidget {
     this.onTap,
     this.width,
     this.height,
+    required this.id,
   });
 
   @override
@@ -37,7 +41,8 @@ class CollaboratorCard extends StatelessWidget {
     final cardHeight = height ?? 240.0;
 
     return GestureDetector(
-      onTap: onTap,
+      onTap:
+          () => context.push(AppRoutes.artistProfile.replaceFirst(':id', id)),
       child: Container(
         width: cardWidth,
         height: cardHeight,
@@ -86,11 +91,14 @@ class CollaboratorCard extends StatelessWidget {
 
   Widget _buildBackgroundImage() {
     if (avatarUrl.isNotEmpty) {
-      return ImageUtils.createAdaptiveImageWidget(
-        imagePath: avatarUrl,
-        width: double.infinity,
-        height: double.infinity,
-        fit: BoxFit.cover,
+      return Hero(
+        tag: avatarUrl,
+        child: ImageUtils.createAdaptiveImageWidget(
+          imagePath: avatarUrl,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+        ),
       );
     } else {
       // Default avatar background
@@ -276,6 +284,7 @@ class CollaboratorCardsHorizontalList extends StatelessWidget {
             creativeRole: collaborator.creativeRole,
             height: cardHeight,
             onTap: () => onCardTap?.call(collaborator),
+            id: collaborator.id,
           );
         },
       ),

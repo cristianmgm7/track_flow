@@ -45,3 +45,7 @@ app.*.map.json
 /android/app/release
 
 /firepit-log.txt
+
+# Environment variables
+.env*
+!.env.example

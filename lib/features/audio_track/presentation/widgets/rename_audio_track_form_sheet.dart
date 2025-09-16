@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
-import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class RenameTrackForm extends StatefulWidget {
   final AudioTrack track;
@@ -67,26 +67,11 @@ class _RenameTrackFormState extends State<RenameTrackForm> {
               return null;
             },
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: SecondaryButton(
-                  text: 'Cancel',
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.of(context).pop(),
-                  isDisabled: _isSubmitting,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: PrimaryButton(
-                  text: 'Rename',
-                  onPressed: _isSubmitting ? null : _submit,
-                  isLoading: _isSubmitting,
-                ),
-              ),
-            ],
+          const SizedBox(height: Dimensions.space24),
+          PrimaryButton(
+            text: 'Rename',
+            onPressed: _isSubmitting ? null : _submit,
+            isLoading: _isSubmitting,
           ),
         ],
       ),

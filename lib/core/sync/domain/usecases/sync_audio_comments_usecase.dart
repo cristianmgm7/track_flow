@@ -21,7 +21,7 @@ class SyncAudioCommentsUseCase {
     this._audioTrackRemoteDataSource,
   );
 
-  Future<void> call() async {
+  Future<void> call({String? scopedVersionId, bool force = false}) async {
     final userId =
         await _sessionStorage
             .getUserId(); // Now async - prevents race conditions
@@ -30,11 +30,22 @@ class SyncAudioCommentsUseCase {
       return;
     }
 
+    // Scoped: only sync a specific version's comments
+    if (scopedVersionId != null) {
+      final remoteDtos = await _audioCommentRemoteDataSource
+          .getCommentsByVersionId(scopedVersionId);
+      await _audioCommentLocalDataSource.replaceCommentsForVersion(
+        scopedVersionId,
+        remoteDtos,
+      );
+      return;
+    }
+
+    // Global: sync comments for all tracks of the user's projects
     final projectsEither = await _projectRemoteDataSource.getUserProjects(
       userId,
     );
     await projectsEither.fold((failure) {}, (projects) async {
-      await _audioCommentLocalDataSource.deleteAllComments();
       if (projects.isEmpty) {
         return;
       }
@@ -45,12 +56,15 @@ class SyncAudioCommentsUseCase {
       if (allTracks.isEmpty) {
         return;
       }
+
       for (final track in allTracks) {
-        final comments = await _audioCommentRemoteDataSource
-            .getCommentsByTrackId(track.id.value);
-        for (final comment in comments) {
-          await _audioCommentLocalDataSource.cacheComment(comment);
-        }
+        final versionId = track.id.value; // legacy: track.id stores version id
+        final remoteDtos = await _audioCommentRemoteDataSource
+            .getCommentsByVersionId(versionId);
+        await _audioCommentLocalDataSource.replaceCommentsForVersion(
+          versionId,
+          remoteDtos,
+        );
       }
     });
   }

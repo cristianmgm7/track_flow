@@ -1,8 +1,6 @@
 name: 🔨 Build Develop (Internal)
 
 on:
-  push:
-    branches: [develop]
   workflow_dispatch:
 
 jobs:

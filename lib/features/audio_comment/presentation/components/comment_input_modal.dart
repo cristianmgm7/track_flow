@@ -20,12 +20,12 @@ import '../bloc/audio_comment_event.dart';
 /// - Timestamp header display
 class CommentInputModal extends StatefulWidget {
   final ProjectId projectId;
-  final AudioTrackId trackId;
+  final TrackVersionId versionId;
 
   const CommentInputModal({
     super.key,
     required this.projectId,
-    required this.trackId,
+    required this.versionId,
   });
 
   @override
@@ -88,7 +88,7 @@ class _CommentInputModalState extends State<CommentInputModal>
       context.read<AudioCommentBloc>().add(
         AddAudioCommentEvent(
           widget.projectId,
-          widget.trackId,
+          widget.versionId,
           text,
           _capturedTimestamp ?? Duration.zero,
         ),

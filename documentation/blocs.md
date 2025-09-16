@@ -141,7 +141,7 @@ BLoCs are organized by features following Clean Architecture and are registered 
 **Métodos públicos (eventos que maneja):**
 
 - `AudioPlayerInitializeRequested` - Inicializar reproductor
-- `PlayAudioRequested` - Reproducir track específico
+- `PlayVersionRequested` - Reproducir versión específica
 - `PlayPlaylistRequested` - Reproducir playlist
 - `PauseAudioRequested` - Pausar reproducción
 - `ResumeAudioRequested` - Reanudar reproducción

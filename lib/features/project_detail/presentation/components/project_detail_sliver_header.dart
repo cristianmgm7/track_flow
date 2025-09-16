@@ -19,6 +19,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
 
   void _openProjectDetailActionsSheet(BuildContext context) {
     showAppActionSheet(
+      useRootNavigator: true,
       title: 'Project Actions',
       context: context,
       actions: ProjectDetailActions.forProject(context, project),
@@ -125,7 +126,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
                           const Spacer(),
                           IconButton(
                             icon: const Icon(
-                              Icons.more_vert,
+                              Icons.more_horiz_outlined,
                               color: Colors.white,
                             ),
                             onPressed:

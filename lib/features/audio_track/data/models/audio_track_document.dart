@@ -23,6 +23,7 @@ class AudioTrackDocument {
   late String uploadedBy;
   late DateTime createdAt;
   late String extension;
+  String? activeVersionId; // Active version for playback
 
   /// Sync metadata for offline-first functionality
   SyncMetadataDocument? syncMetadata;
@@ -42,6 +43,7 @@ class AudioTrackDocument {
       ..uploadedBy = dto.uploadedBy.value
       ..createdAt = dto.createdAt ?? DateTime.now()
       ..extension = dto.extension
+      ..activeVersionId = dto.activeVersionId?.value
       // ⭐ NEW: Use sync metadata from DTO if available (from remote)
       ..syncMetadata =
           syncMeta ??
@@ -66,6 +68,7 @@ class AudioTrackDocument {
       ..uploadedBy = dto.uploadedBy.value
       ..createdAt = dto.createdAt ?? DateTime.now()
       ..extension = dto.extension
+      ..activeVersionId = dto.activeVersionId?.value
       ..syncMetadata = SyncMetadataDocument.fromRemote(
         version: version ?? 1,
         lastModified: lastModified ?? DateTime.now(),
@@ -83,6 +86,7 @@ class AudioTrackDocument {
       ..uploadedBy = dto.uploadedBy.value
       ..createdAt = dto.createdAt ?? DateTime.now()
       ..extension = dto.extension
+      ..activeVersionId = dto.activeVersionId?.value
       ..syncMetadata = SyncMetadataDocument.initial();
   }
 
@@ -96,6 +100,10 @@ class AudioTrackDocument {
       uploadedBy: UserId.fromUniqueString(_cleanId(uploadedBy)),
       createdAt: createdAt,
       extension: extension.isNotEmpty ? extension : '',
+      activeVersionId:
+          activeVersionId != null
+              ? TrackVersionId.fromUniqueString(_cleanId(activeVersionId!))
+              : null,
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata?.version ?? 1,
       lastModified: syncMetadata?.lastModified ?? createdAt,

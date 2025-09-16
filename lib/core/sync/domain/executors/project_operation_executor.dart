@@ -78,7 +78,11 @@ class ProjectOperationExecutor implements OperationExecutor {
               : null,
     );
 
-    await _remoteDataSource.createProject(projectDto);
+    final result = await _remoteDataSource.createProject(projectDto);
+    result.fold(
+      (failure) => throw Exception('Failed to create project: ${failure.message}'),
+      (_) => {}, // Success case
+    );
   }
 
   /// Execute project update
@@ -119,11 +123,19 @@ class ProjectOperationExecutor implements OperationExecutor {
               : null,
     );
 
-    await _remoteDataSource.updateProject(projectDto);
+    final result = await _remoteDataSource.updateProject(projectDto);
+    result.fold(
+      (failure) => throw Exception('Failed to update project: ${failure.message}'),
+      (_) => {}, // Success case
+    );
   }
 
   /// Execute project deletion
   Future<void> _executeDelete(SyncOperationDocument operation) async {
-    await _remoteDataSource.deleteProject(operation.entityId);
+    final result = await _remoteDataSource.deleteProject(operation.entityId);
+    result.fold(
+      (failure) => throw Exception('Failed to delete project: ${failure.message}'),
+      (_) => {}, // Success case
+    );
   }
 }

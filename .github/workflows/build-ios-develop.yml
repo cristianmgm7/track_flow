@@ -14,12 +14,17 @@ jobs:
       SCHEME: develop
       CONFIG: Release-develop
       BUNDLE_ID: com.trackflow.dev
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      RUBYOPT: -Eutf-8
 
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           submodules: false
+          fetch-depth: 0
+          clean: false
 
       - name: 🎯 Setup Flutter
         uses: subosito/flutter-action@v2
@@ -39,13 +44,37 @@ jobs:
           flutter config --no-analytics
           flutter config --no-cli-animations
 
-      - name: 🔧 CocoaPods (update + pin FirebaseSharedSwift)
+      - name: 🔧 CocoaPods (install)
         run: |
           set -e
           cd ios
-          pod repo update
-          pod update FirebaseSharedSwift
-          pod install --repo-update
+          arch -arm64 pod repo update
+          arch -arm64 pod install --repo-update
+      - name: 🧪 Preflight diagnostics
+        run: |
+          set -euo pipefail
+          echo "=== System ===" | tee -a build_ios.log
+          uname -a | tee -a build_ios.log
+          sw_vers | tee -a build_ios.log
+          echo "=== Xcode ===" | tee -a build_ios.log
+          which xcodebuild | tee -a build_ios.log
+          xcodebuild -version | tee -a build_ios.log
+          xcode-select -p | tee -a build_ios.log
+          echo "=== Flutter ===" | tee -a build_ios.log
+          which flutter | tee -a build_ios.log
+          flutter --version | tee -a build_ios.log
+          flutter doctor -v | tee -a build_ios.log || true
+          echo "=== Ruby/Pods ===" | tee -a build_ios.log
+          which ruby | tee -a build_ios.log
+          ruby -v | tee -a build_ios.log
+          which pod | tee -a build_ios.log
+          pod --version | tee -a build_ios.log || true
+          echo "=== Codesign identities ===" | tee -a build_ios.log
+          security find-identity -v -p codesigning | tee -a build_ios.log || true
+          echo "=== Provisioning Profiles ===" | tee -a build_ios.log
+          ls -la "$HOME/Library/MobileDevice/Provisioning Profiles" | tee -a build_ios.log || true
+          echo "=== ExportOptions ===" | tee -a build_ios.log
+          plutil -p ios/ExportOptions.plist | tee -a build_ios.log || cat ios/exportOptions.plist 2>/dev/null | tee -a build_ios.log || true
 
       - name: 🔎 Check Podfile.lock (FirebaseSharedSwift)
         run: |
@@ -56,20 +85,53 @@ jobs:
             echo "Podfile.lock not found";
           fi
 
-      - name: 🔧 Import signing certificates
-        uses: apple-actions/import-codesign-certs@v3
-        with:
-          p12-file-base64: ${{ secrets.IOS_DIST_P12_B64 }}
-          p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+      - name: 🧹 Clean Keychain
+        run: |
+          set -e
+          KEYCHAIN_NAME="signing_temp"
+          KEYCHAIN_PATH="$HOME/Library/Keychains/${KEYCHAIN_NAME}.keychain-db"
+          security list-keychains -d user || true
+          security delete-keychain "$KEYCHAIN_PATH" || true
+          security create-keychain -p "actions" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+          security unlock-keychain -p "actions" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
 
-      - name: 🔧 Download provisioning profiles (Dev)
-        uses: apple-actions/download-provisioning-profiles@v3
-        with:
-          bundle-id: ${{ env.BUNDLE_ID }}
-          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-          profile-type: IOS_APP_STORE
+      - name: 🔍 Validate .p12 password (non-fatal)
+        run: |
+          set -euo pipefail
+          echo "$IOS_DIST_P12_B64" | base64 --decode > ios_dist.p12
+          if ! openssl pkcs12 -info -in ios_dist.p12 -passin pass:"$IOS_DIST_P12_PASSWORD" -nokeys >/dev/null 2>&1; then
+            echo "❌ Invalid P12 password or corrupted P12"; exit 1;
+          else
+            echo "✅ P12 password OK";
+          fi
+        env:
+          IOS_DIST_P12_B64: ${{ secrets.IOS_DIST_P12_B64 }}
+          IOS_DIST_P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+
+      - name: 🔧 Import signing certificates (manual)
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="$HOME/Library/Keychains/signing_temp.keychain-db"
+          echo "$IOS_DIST_P12_B64" | base64 --decode > ios_dist.p12
+          security import ios_dist.p12 -k "$KEYCHAIN_PATH" -P "$IOS_DIST_P12_PASSWORD" -A -t cert -f pkcs12
+          security set-key-partition-list -S apple-tool:,apple: -s -k actions "$KEYCHAIN_PATH"
+          security find-identity -v -p codesigning || true
+        env:
+          IOS_DIST_P12_B64: ${{ secrets.IOS_DIST_P12_B64 }}
+          IOS_DIST_P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+
+      - name: 📄 Install provisioning profile (Dev from secret)
+        run: |
+          set -euo pipefail
+          PROFILES_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+          echo "$IOS_PROFILE_DEV_B64" | base64 --decode > "$PROFILES_DIR/TrackFlow_Dev_AppStore.mobileprovision"
+          echo "Installed profiles:" && ls -la "$PROFILES_DIR"
+        env:
+          IOS_PROFILE_DEV_B64: ${{ secrets.IOS_PROFILE_DEV_B64 }}
 
       - name: 🧮 Set build number (timestamp)
         run: |
@@ -85,7 +147,7 @@ jobs:
           echo "🚀 Building iOS develop ipa..."
           export NSUnbufferedIO=YES
           set -o pipefail
-          flutter build ipa --flavor "$FLAVOR" --release --verbose --export-options-plist=ios/ExportOptions.plist --build-number "$NEW_BUILD_NUMBER" 2>&1 | tee build_ios.log
+          arch -arm64 flutter build ipa --flavor develop --release --verbose --export-options-plist=ios/ExportOptions.plist --build-number "$NEW_BUILD_NUMBER" 2>&1 | tee -a build_ios.log
         env:
           FLUTTER_XCODE_ARGS: "-allowProvisioningUpdates"
 
