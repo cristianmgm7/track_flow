@@ -1494,9 +1494,9 @@ PODS:
   - RecaptchaInterop (101.0.0)
   - record_darwin (1.0.0):
     - Flutter
-  - SDWebImage (5.21.1):
-    - SDWebImage/Core (= 5.21.1)
-  - SDWebImage/Core (5.21.1)
+  - SDWebImage (5.21.2):
+    - SDWebImage/Core (= 5.21.2)
+  - SDWebImage/Core (5.21.2)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
@@ -1669,13 +1669,13 @@ SPEC CHECKSUMS:
   ReachabilitySwift: 32793e867593cfc1177f5d16491e3a197d2fccda
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   record_darwin: fb1f375f1d9603714f55b8708a903bbb91ffdb0a
-  SDWebImage: f29024626962457f3470184232766516dee8dfea
+  SDWebImage: 9f177d83116802728e122410fb25ad88f5c7608a
   share_plus: de6030e33b4e106470e09322d87cf2a4258d2d1d
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
 
-PODFILE CHECKSUM: 6c089785137ceb6016d23d0f9eb66cbd2507b756
+PODFILE CHECKSUM: 3b9cfc73609541d372462437ff35f052851028ec
 
 COCOAPODS: 1.16.2

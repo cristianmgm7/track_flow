@@ -45,8 +45,7 @@ target 'Runner' do
 
   # Use Firebase versions resolved by FlutterFire (from firebase_core)
 
-  # pod 'BoringSSL-GRPC',
-  #   :path => '~/Library/Caches/CocoaPods/GitHub/boringssl-standalone'
+  # pod 'BoringSSL-GRPC', '0.0.37' # Version is managed by Firebase dependencies
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 end
