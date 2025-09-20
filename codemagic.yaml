@@ -66,6 +66,9 @@ workflows:
           echo "Cleaning CocoaPods cache..."
           pod cache clean --all || true
           rm -rf ~/.cocoapods || true
+          echo "Cleaning derived data and module cache..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode || true
           cd ios
           echo "Installing pods with fresh cache..."
           pod install --repo-update
@@ -83,7 +86,7 @@ workflows:
             *) echo "Unknown flavor $FLAVOR"; exit 1;;
           esac
           echo "Using entrypoint: $ENTRY"
-          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios --enable-experiment=modules
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -189,6 +192,9 @@ workflows:
           echo "Cleaning CocoaPods cache..."
           pod cache clean --all || true
           rm -rf ~/.cocoapods || true
+          echo "Cleaning derived data and module cache..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode || true
           cd ios
           echo "Installing pods with fresh cache..."
           pod install --repo-update
@@ -206,7 +212,7 @@ workflows:
             *) echo "Unknown flavor $FLAVOR"; exit 1;;
           esac
           echo "Using entrypoint: $ENTRY"
-          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios --enable-experiment=modules
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -312,6 +318,9 @@ workflows:
           echo "Cleaning CocoaPods cache..."
           pod cache clean --all || true
           rm -rf ~/.cocoapods || true
+          echo "Cleaning derived data and module cache..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode || true
           cd ios
           echo "Installing pods with fresh cache..."
           pod install --repo-update
@@ -329,7 +338,7 @@ workflows:
             *) echo "Unknown flavor $FLAVOR"; exit 1;;
           esac
           echo "Using entrypoint: $ENTRY"
-          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios --enable-experiment=modules
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
