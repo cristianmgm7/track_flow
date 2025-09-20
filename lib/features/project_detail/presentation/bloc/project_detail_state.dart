@@ -15,7 +15,6 @@ class ProjectDetailState extends Equatable {
   final bool isLoadingProject;
   final bool isLoadingTracks;
   final bool isLoadingCollaborators;
-
   final String? projectError;
   final String? tracksError;
   final String? collaboratorsError;
