@@ -9,7 +9,7 @@ import '../../../../core/entities/unique_id.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
 import '../../../audio_comment/presentation/components/comments_section.dart';
 import '../../../audio_comment/presentation/components/comment_input_modal.dart';
-import '../../../audio_comment/presentation/components/audio_comment_player.dart';
+import '../../../waveform/presentation/widgets/audio_comment_player.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_event.dart';
 import '../blocs/track_versions/track_versions_state.dart';
