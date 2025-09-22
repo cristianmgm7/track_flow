@@ -9,6 +9,7 @@ import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
 import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
+import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart';
 
 /// Compact controls for the audio comment player: current time, total duration, play/pause.
 class AudioCommentControls extends StatelessWidget {
@@ -49,11 +50,19 @@ class AudioCommentControls extends StatelessWidget {
       children: [
         // Current time
         BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-          builder: (context, state) {
-            Duration position = Duration.zero;
-            if (state is AudioPlayerSessionState &&
-                state.session.currentTrack?.id == track.id) {
-              position = state.session.position;
+          builder: (context, playerState) {
+            // Show preview position while scrubbing, otherwise live playback position
+            final waveformState = context.watch<WaveformBloc>().state;
+            Duration position;
+            if (waveformState.isScrubbing &&
+                waveformState.previewPosition != null) {
+              position = waveformState.previewPosition!;
+            } else {
+              position = Duration.zero;
+              if (playerState is AudioPlayerSessionState &&
+                  playerState.session.currentTrack?.id == track.id) {
+                position = playerState.session.position;
+              }
             }
             return Text(
               _format(position),

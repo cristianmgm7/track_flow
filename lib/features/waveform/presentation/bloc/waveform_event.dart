@@ -42,6 +42,30 @@ class WaveformSeekRequested extends WaveformEvent {
   List<Object?> get props => [position];
 }
 
+class WaveformScrubStarted extends WaveformEvent {
+  const WaveformScrubStarted();
+}
+
+class WaveformScrubUpdated extends WaveformEvent {
+  final Duration previewPosition;
+  const WaveformScrubUpdated(this.previewPosition);
+
+  @override
+  List<Object?> get props => [previewPosition];
+}
+
+class WaveformScrubCancelled extends WaveformEvent {
+  const WaveformScrubCancelled();
+}
+
+class WaveformScrubCommitted extends WaveformEvent {
+  final Duration position;
+  const WaveformScrubCommitted(this.position);
+
+  @override
+  List<Object?> get props => [position];
+}
+
 class _WaveformDataReceived extends WaveformEvent {
   final AudioWaveform? waveform;
 
