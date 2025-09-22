@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
 /// State for managing track detail screen UI
@@ -18,51 +19,12 @@ class TrackDetailState extends Equatable {
   List<Object?> get props => [activeVersionId];
 }
 
-/// Events for track detail screen
-abstract class TrackDetailEvent extends Equatable {
-  const TrackDetailEvent();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class SetActiveVersionRequested extends TrackDetailEvent {
-  final TrackVersionId versionId;
-
-  const SetActiveVersionRequested(this.versionId);
-
-  @override
-  List<Object?> get props => [versionId];
-}
-
-class StartRenamingRequested extends TrackDetailEvent {
-  const StartRenamingRequested();
-}
-
-class FinishRenamingRequested extends TrackDetailEvent {
-  final String? newLabel;
-
-  const FinishRenamingRequested(this.newLabel);
-
-  @override
-  List<Object?> get props => [newLabel];
-}
-
 /// Cubit to manage track detail screen state
+@injectable
 class TrackDetailCubit extends Cubit<TrackDetailState> {
-  TrackDetailCubit(TrackVersionId initialVersionId)
-    : super(TrackDetailState(activeVersionId: initialVersionId));
+  TrackDetailCubit() : super(const TrackDetailState());
 
   void setActiveVersion(TrackVersionId versionId) {
     emit(state.copyWith(activeVersionId: versionId));
-  }
-
-  void startRenaming() {
-    emit(state.copyWith());
-  }
-
-  void finishRenaming(String? newLabel) {
-    emit(state.copyWith());
-    // Here we could dispatch rename if needed
   }
 }

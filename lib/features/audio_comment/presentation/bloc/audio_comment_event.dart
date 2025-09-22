@@ -1,8 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:dartz/dartz.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_bundle_usecase.dart';
 
 abstract class AudioCommentEvent extends Equatable {
   @override
@@ -50,10 +47,4 @@ class WatchAudioCommentsBundleEvent extends AudioCommentEvent {
   List<Object?> get props => [projectId, trackId, versionId];
 }
 
-class AudioCommentsBundleUpdated extends AudioCommentEvent {
-  final Either<Failure, AudioCommentsBundle> result;
-  AudioCommentsBundleUpdated(this.result);
-
-  @override
-  List<Object?> get props => [result];
-}
+// Internal update event removed; now handled with emit.onEach stream handler

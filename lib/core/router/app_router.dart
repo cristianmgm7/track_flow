@@ -3,41 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
-import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/track_version/presentation/models/track_detail_screen_args.dart';
 import 'package:trackflow/features/track_version/presentation/screens/track_detail_screen.dart';
-import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
-import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
-import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
-import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
 import 'package:trackflow/features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/screens/project_details_screen.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/settings/presentation/screens/settings_screen.dart';
-import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
-import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
-import 'package:trackflow/features/track_version/presentation/cubit/track_detail_cubit.dart';
-// import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/collaborator_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/current_user_profile_screen.dart';
 import 'package:trackflow/features/cache_management/presentation/screens/cache_management_screen.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
-import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/screens/notification_center_screen.dart';
-import 'package:trackflow/features/invitations/presentation/blocs/watcher/project_invitation_watcher_bloc.dart';
+import 'package:trackflow/core/app/providers/app_bloc_providers.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -147,8 +133,6 @@ class AppRouter {
           path: AppRoutes.profileCreation,
           builder: (context, state) => const ProfileCreationScreen(),
         ),
-
-        // Standalone cache management (outside shell: no mini player/nav)
         GoRoute(
           path: AppRoutes.cacheManagement,
           builder: (context, state) => const CacheManagementScreen(),
@@ -160,31 +144,7 @@ class AppRouter {
           builder: (context, state) {
             final args = state.extra as TrackDetailScreenArgs;
             return MultiBlocProvider(
-              providers: [
-                BlocProvider<TrackCacheBloc>(
-                  create: (context) => sl<TrackCacheBloc>(),
-                ),
-                // Scope AudioCommentBloc to this screen to avoid cross-track leakage
-                BlocProvider<AudioCommentBloc>(
-                  create: (context) => sl<AudioCommentBloc>(),
-                ),
-                BlocProvider<TrackVersionsBloc>(
-                  create: (context) => sl<TrackVersionsBloc>(),
-                ),
-                BlocProvider<TrackDetailCubit>(
-                  create: (context) => TrackDetailCubit(args.versionId),
-                ),
-                BlocListener<TrackVersionsBloc, TrackVersionsState>(
-                  listener: (context, state) {
-                    if (state is TrackVersionsLoaded &&
-                        state.activeVersionId != null) {
-                      context.read<TrackDetailCubit>().setActiveVersion(
-                        state.activeVersionId!,
-                      );
-                    }
-                  },
-                ),
-              ],
+              providers: AppBlocProviders.getTrackDetailProviders(),
               child: TrackDetailScreen(
                 projectId: args.projectId,
                 track: args.track,
@@ -197,8 +157,8 @@ class AppRouter {
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
-            return BlocProvider<UserProfileBloc>(
-              create: (_) => sl<UserProfileBloc>(),
+            return MultiBlocProvider(
+              providers: AppBlocProviders.getArtistProfileProviders(),
               child: CollaboratorProfileScreen(
                 userId: UserId.fromUniqueString(userId),
               ),
@@ -211,18 +171,7 @@ class AppRouter {
           navigatorKey: _shellNavigatorKey,
           builder:
               (context, state, child) => MultiBlocProvider(
-                providers: [
-                  BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
-                  BlocProvider<AudioContextBloc>(
-                    create: (_) => sl<AudioContextBloc>(),
-                  ),
-                  BlocProvider<NotificationWatcherBloc>(
-                    create: (_) => sl<NotificationWatcherBloc>(),
-                  ),
-                  BlocProvider<ProjectInvitationWatcherBloc>(
-                    create: (_) => sl<ProjectInvitationWatcherBloc>(),
-                  ),
-                ],
+                providers: AppBlocProviders.getMainShellProviders(),
                 child: MainScaffold(child: child),
               ),
           routes: [
@@ -243,18 +192,9 @@ class AppRouter {
               builder: (context, state) {
                 final project = state.extra as Project;
                 return MultiBlocProvider(
-                  providers: [
-                    BlocProvider<ProjectDetailBloc>(
-                      create: (_) => sl<ProjectDetailBloc>(),
-                    ),
-                    BlocProvider<ManageCollaboratorsBloc>(
-                      create:
-                          (_) =>
-                              sl<ManageCollaboratorsBloc>()..add(
-                                WatchCollaborators(projectId: project.id),
-                              ),
-                    ),
-                  ],
+                  providers: AppBlocProviders.getProjectDetailsProviders(
+                    project,
+                  ),
                   child: ProjectDetailsScreen(project: project),
                 );
               },
@@ -267,11 +207,10 @@ class AppRouter {
               path: AppRoutes.manageCollaborators,
               builder: (context, state) {
                 final project = state.extra as Project;
-                return BlocProvider<ManageCollaboratorsBloc>(
-                  create:
-                      (_) =>
-                          sl<ManageCollaboratorsBloc>()
-                            ..add(WatchCollaborators(projectId: project.id)),
+                return MultiBlocProvider(
+                  providers: AppBlocProviders.getManageCollaboratorsProviders(
+                    project,
+                  ),
                   child: ManageCollaboratorsScreen(project: project),
                 );
               },
