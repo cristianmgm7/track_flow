@@ -7,6 +7,7 @@ import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/waveform_painter.dart'
     as static_wave;
+import 'package:trackflow/features/waveform/presentation/widgets/waveform_progress_painter.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/waveform_overlay.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/waveform_gestures.dart';
 
@@ -126,6 +127,19 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
             painter: static_wave.WaveformPainter(
               amplitudes: waveform.data.normalizedAmplitudes,
               waveColor: Colors.grey[400]!,
+            ),
+          ),
+          // Progress bars (left of playhead or preview while scrubbing)
+          CustomPaint(
+            size: Size.fromHeight(widget.height),
+            painter: WaveformProgressPainter(
+              amplitudes: waveform.data.normalizedAmplitudes,
+              duration: duration,
+              progress:
+                  state.isScrubbing && state.previewPosition != null
+                      ? state.previewPosition!
+                      : state.currentPosition,
+              progressColor: AppColors.primary.withOpacity(0.6),
             ),
           ),
           // Overlay with playhead and preview head
