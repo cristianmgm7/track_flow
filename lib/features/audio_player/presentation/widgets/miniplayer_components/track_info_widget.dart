@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/audio_player_bloc.dart';
 import '../../bloc/audio_player_state.dart';
 import '../../../../audio_context/presentation/bloc/audio_context_bloc.dart';
 import '../../../../audio_context/presentation/bloc/audio_context_state.dart';
@@ -54,13 +55,13 @@ class TrackInfoBuilder implements ITrackInfoBuilder {
 class TrackInfoWidget extends StatefulWidget {
   const TrackInfoWidget({
     super.key,
-    required this.state,
+    this.state, // Make optional for backwards compatibility
     required this.onTap,
     this.trackContextService,
     this.trackInfoBuilder,
   });
 
-  final AudioPlayerState state;
+  final AudioPlayerState? state; // Optional, will use BlocBuilder if null
   final VoidCallback onTap;
   final ITrackContextService? trackContextService;
   final ITrackInfoBuilder? trackInfoBuilder;
@@ -85,6 +86,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
     if (trackId != _currentTrackId && trackId.isNotEmpty) {
       _currentTrackId = trackId;
       if (!mounted) return;
+      // Load context for the new track
       _contextService.loadTrackContext(context, trackId);
     }
   }
@@ -92,7 +94,21 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final trackInfo = _infoBuilder.buildFromState(widget.state);
+    
+    // Use BlocBuilder if no state provided, otherwise use provided state
+    if (widget.state != null) {
+      return _buildTrackInfo(context, theme, widget.state!);
+    } else {
+      return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+        builder: (context, state) {
+          return _buildTrackInfo(context, theme, state);
+        },
+      );
+    }
+  }
+
+  Widget _buildTrackInfo(BuildContext context, ThemeData theme, AudioPlayerState state) {
+    final trackInfo = _infoBuilder.buildFromState(state);
 
     // Trigger only when props change; avoid scheduling after unmount
     if (mounted) {

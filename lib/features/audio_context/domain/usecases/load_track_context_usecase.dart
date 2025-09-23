@@ -83,7 +83,7 @@ class LoadTrackContextUseCase {
 
     return result.fold(
       (_) => null,
-      (Project project) => project.name.value.getOrElse(() => null),
+      (Project project) => project.name.value.fold((_) => null, (name) => name),
     );
   }
 
@@ -94,8 +94,14 @@ class LoadTrackContextUseCase {
     final activeVersionResult = await _trackVersionRepository.getActiveVersion(
       trackId,
     );
-    if (activeVersionResult.isRight()) {
-      return activeVersionResult.getOrElse(() => null);
+
+    final activeVersion = activeVersionResult.fold<TrackVersion?>(
+      (_) => null,
+      (version) => version,
+    );
+
+    if (activeVersion != null) {
+      return activeVersion;
     }
 
     final activeVersionId = track.activeVersionId;
@@ -106,7 +112,10 @@ class LoadTrackContextUseCase {
     final fallbackResult = await _trackVersionRepository.getById(
       activeVersionId,
     );
-    return fallbackResult.getOrElse(() => null);
+    return fallbackResult.fold<TrackVersion?>(
+      (_) => null,
+      (version) => version,
+    );
   }
 
   TrackContextCollaborator _mapUserProfile(profile.UserProfile user) {
@@ -115,7 +124,6 @@ class LoadTrackContextUseCase {
       name: user.name,
       email: user.email,
       avatarUrl: user.avatarUrl,
-      role: user.role?.name,
     );
   }
 

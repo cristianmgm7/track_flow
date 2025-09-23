@@ -453,13 +453,17 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   }
 
   void _onDurationChanged(Duration? duration) {
-    if (duration != null) {
-      // Note: We'll need to update the current track's duration
-      // This might require updating the queue's current track
-      _updateSession(
-        _currentSession.copyWith(
-          // duration: duration, // Will implement when PlaybackSession supports this
-        ),
+    if (duration != null && _currentSession.currentTrack != null) {
+      // Update the current track's duration with actual audio duration
+      final updatedTrack = _currentSession.currentTrack!.copyWith(
+        duration: duration,
+      );
+
+      _updateSession(_currentSession.copyWith(currentTrack: updatedTrack));
+
+      AppLogger.info(
+        'Duration updated for track ${updatedTrack.id.value}: ${duration.toString()}',
+        tag: 'AUDIO_PLAYBACK',
       );
     }
   }

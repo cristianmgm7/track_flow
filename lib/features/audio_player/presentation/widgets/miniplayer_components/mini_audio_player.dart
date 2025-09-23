@@ -88,7 +88,6 @@ class MiniAudioPlayer extends StatelessWidget {
                         if (config.showTrackInfo)
                           Expanded(
                             child: TrackInfoWidget(
-                              state: state,
                               onTap:
                                   () => modalPresentationService
                                       .showFullPlayerModal(context),

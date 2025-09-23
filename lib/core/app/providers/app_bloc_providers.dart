@@ -75,6 +75,10 @@ class AppBlocProviders {
                   ..add(const AudioPlayerInitializeRequested()),
       ),
       BlocProvider<WaveformBloc>(create: (context) => sl<WaveformBloc>()),
+      // Global AudioContextBloc for MiniAudioPlayer and background playback
+      BlocProvider<AudioContextBloc>(
+        create: (context) => sl<AudioContextBloc>(),
+      ),
     ];
   }
 
@@ -111,7 +115,7 @@ class AppBlocProviders {
   static List<BlocProvider> getMainShellProviders() {
     return [
       BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
-      BlocProvider<AudioContextBloc>(create: (_) => sl<AudioContextBloc>()),
+      // AudioContextBloc moved to getAudioProviders() for global access
       BlocProvider<NotificationWatcherBloc>(
         create: (_) => sl<NotificationWatcherBloc>(),
       ),

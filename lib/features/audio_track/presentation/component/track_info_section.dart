@@ -7,6 +7,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_state.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 /// Configuration for track info section display
 class TrackInfoConfig {
