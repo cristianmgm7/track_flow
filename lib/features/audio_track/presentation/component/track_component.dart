@@ -9,29 +9,28 @@ import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_blo
 import 'package:trackflow/features/audio_cache/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+// removed unused direct AudioTrack import
 import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/track_upload_status_badge.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
-import 'package:trackflow/features/project_detail/domain/entities/active_version_summary.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
+import 'package:trackflow/features/playlist/presentation/models/track_row_view_model.dart';
 
 import 'track_duration_formatter.dart';
 import 'track_info_section.dart';
 import 'track_menu_button.dart';
 
 class TrackComponent extends StatefulWidget {
-  final AudioTrack track;
+  final TrackRowViewModel vm;
   final VoidCallback? onPlay;
   final VoidCallback? onComment;
   final ProjectId projectId;
 
   const TrackComponent({
     super.key,
-    required this.track,
+    required this.vm,
     this.onPlay,
     this.onComment,
     required this.projectId,
@@ -44,17 +43,7 @@ class TrackComponent extends StatefulWidget {
 class _TrackComponentState extends State<TrackComponent> {
   @override
   Widget build(BuildContext context) {
-    // Select active version summary for this track from ProjectDetailBloc
-    final summary = context.select<ProjectDetailBloc, ActiveVersionSummary?>(
-      (bloc) => bloc.state.activeVersionsByTrackId[widget.track.id.value],
-    );
-
-    // Derive duration to display: use active version duration if track is zero
-    final Duration displayedDuration =
-        (widget.track.duration.inMilliseconds == 0 &&
-                summary?.durationMs != null)
-            ? Duration(milliseconds: summary!.durationMs!)
-            : widget.track.duration;
+    final track = widget.vm.track;
 
     return MultiBlocProvider(
       providers: [
@@ -63,11 +52,10 @@ class _TrackComponentState extends State<TrackComponent> {
           create:
               (context) =>
                   sl<AudioContextBloc>()
-                    ..add(LoadTrackContextRequested(widget.track.id)),
+                    ..add(LoadTrackContextRequested(track.id)),
         ),
         BlocProvider(
-          create:
-              (context) => sl<TrackUploadStatusCubit>()..watch(widget.track.id),
+          create: (context) => sl<TrackUploadStatusCubit>()..watch(track.id),
         ),
       ],
       child: BaseCard(
@@ -77,7 +65,7 @@ class _TrackComponentState extends State<TrackComponent> {
           } else {
             // Sensible default: play this single track if no handler provided
             context.read<AudioPlayerBloc>().add(
-              PlayPlaylistRequested(tracks: [widget.track], startIndex: 0),
+              PlayPlaylistRequested(tracks: [track], startIndex: 0),
             );
           }
         },
@@ -92,37 +80,36 @@ class _TrackComponentState extends State<TrackComponent> {
           children: [
             // Track cover art with dynamic icons
             TrackCoverArt(
-              track: widget.track,
+              track: track,
               size: Dimensions.avatarLarge,
               // Future: imageUrl: track.coverArtUrl,
             ),
             SizedBox(width: Dimensions.space12),
             TrackInfoSection(
-              track: widget.track,
+              track: track,
               statusBadge: TrackUploadStatusBadge(
-                trackId: widget.track.id,
+                trackId: track.id,
                 onRetry: () => context.read<SyncStatusCubit>().retryUpstream(),
               ),
             ),
             SizedBox(width: Dimensions.space8),
-            // Duration (from version if available)
-            TrackDurationText(duration: displayedDuration),
+            // Duration provided by VM (already resolved)
+            TrackDurationText(duration: widget.vm.displayedDuration),
             SizedBox(width: Dimensions.space8),
             // Cache icon (version-based) without injecting usecase
-            if (summary != null &&
-                summary.versionId.isNotEmpty &&
-                summary.status == TrackVersionStatus.ready &&
-                summary.fileRemoteUrl != null)
+            if (widget.vm.activeVersionId != null &&
+                widget.vm.status == TrackVersionStatus.ready &&
+                widget.vm.cacheableRemoteUrl != null)
               SmartTrackCacheIcon(
-                trackId: widget.track.id.value,
-                versionId: summary.versionId,
-                remoteUrl: summary.fileRemoteUrl!,
+                trackId: track.id.value,
+                versionId: widget.vm.activeVersionId!,
+                remoteUrl: widget.vm.cacheableRemoteUrl!,
                 size: Dimensions.iconMedium,
               ),
             SizedBox(width: Dimensions.space8),
             // Menu button
             TrackMenuButton(
-              track: widget.track,
+              track: track,
               projectId: widget.projectId,
               size: Dimensions.iconMedium,
             ),

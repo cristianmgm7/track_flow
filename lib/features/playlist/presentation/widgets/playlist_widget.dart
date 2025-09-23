@@ -6,6 +6,10 @@ import 'package:trackflow/features/playlist/presentation/widgets/playlist_contro
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_status_widget.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_tracks_widget.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/playlist/presentation/cubit/playlist_cubit.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 class PlaylistWidget extends StatefulWidget {
   final Playlist playlist;
@@ -32,24 +36,37 @@ class _PlaylistWidgetState extends State<PlaylistWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        PlaylistControlsWidget(
-          playlist: widget.playlist,
-          tracks: widget.tracks,
-          onMenuOpened: () => setState(() => _isMenuOpen = true),
-          onMenuClosed: () => setState(() => _isMenuOpen = false),
-        ),
-        PlaylistStatusWidget(playlist: widget.playlist),
-        const SizedBox(height: 8),
-        PlaylistTracksWidget(
-          playlist: widget.playlist,
-          tracks: widget.tracks,
-          collaboratorsByTrackId: widget.collaboratorsByTrackId,
-          projectId: widget.projectId,
-        ),
-      ],
+    final projectIdForWatch =
+        widget.projectId != null
+            ? ProjectId.fromUniqueString(widget.projectId!)
+            : (widget.tracks.isNotEmpty ? widget.tracks.first.projectId : null);
+
+    final content = BlocProvider(
+      create:
+          (_) =>
+              sl<PlaylistCubit>()..watch(
+                projectIdForWatch ??
+                    ProjectId.fromUniqueString('unknown-project'),
+              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          PlaylistControlsWidget(
+            playlist: widget.playlist,
+            tracks: widget.tracks,
+            onMenuOpened: () => setState(() => _isMenuOpen = true),
+            onMenuClosed: () => setState(() => _isMenuOpen = false),
+          ),
+          PlaylistStatusWidget(playlist: widget.playlist),
+          const SizedBox(height: 8),
+          PlaylistTracksWidget(
+            playlist: widget.playlist,
+            tracks: widget.tracks,
+            collaboratorsByTrackId: widget.collaboratorsByTrackId,
+            projectId: widget.projectId,
+          ),
+        ],
+      ),
     );
 
     return Stack(

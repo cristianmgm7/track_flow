@@ -5,6 +5,7 @@ import 'package:trackflow/features/audio_track/presentation/component/track_comp
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/features/playlist/presentation/models/track_row_view_model.dart';
 
 class ProjectDetailTracksComponent extends StatelessWidget {
   final ProjectDetailState state;
@@ -57,7 +58,10 @@ class ProjectDetailTracksComponent extends StatelessWidget {
               ...state.tracks.map((track) {
                 final index = state.tracks.indexOf(track);
                 return TrackComponent(
-                  track: track,
+                  vm: TrackRowViewModel(
+                    track: track,
+                    displayedDuration: track.duration,
+                  ),
                   projectId: state.project!.id,
                   onPlay: () {
                     context.read<AudioPlayerBloc>().add(

@@ -10,8 +10,7 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_sliver_header.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
-import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
+// removed unused audio track listener imports
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
@@ -52,84 +51,63 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       topSafeArea: false,
-      body: BlocListener<AudioTrackBloc, AudioTrackState>(
-        listener: (context, state) {
-          if (state is AudioTrackEditSuccess ||
-              state is AudioTrackDeleteSuccess ||
-              state is AudioTrackUploadSuccess) {
-            // No manual refresh needed if stream is alive, but keep it idempotent
-            context.read<ProjectDetailBloc>().add(
-              WatchProjectDetail(projectId: widget.project.id),
-            );
-          } else if (state is AudioTrackError) {
-            // Show error message for track operation failures
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Track operation failed: ${state.message}'),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 3),
-              ),
+      body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+        builder: (context, state) {
+          if (state.isLoadingProject && state.project == null) {
+            return const Center(
+              child: AppLoading(message: 'Loading project...'),
             );
           }
-        },
-        child: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
-          builder: (context, state) {
-            if (state.isLoadingProject && state.project == null) {
-              return const Center(
-                child: AppLoading(message: 'Loading project...'),
-              );
-            }
 
-            if (state.projectError != null && state.project == null) {
-              return AppProjectErrorState(
-                message: 'Error loading project:  ${state.projectError}',
-                onRetry:
-                    () => context.read<ProjectDetailBloc>().add(
-                      WatchProjectDetail(projectId: widget.project.id),
-                    ),
-              );
-            }
-
-            final project = state.project;
-            if (project == null) {
-              return const AppProjectEmptyState(
-                message: 'No project found',
-                subtitle: 'The project you are looking for does not exist.',
-              );
-            }
-
-            // getting the tracks to build the playlist
-            final tracks = state.tracks;
-            final playlist = project.toPlaylist(tracks);
-
-            return CustomScrollView(
-              slivers: [
-                ProjectDetailSliverHeader(project: project),
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      BlocProvider(
-                        create: (_) => sl<SyncStatusCubit>(),
-                        child: const GlobalSyncIndicator(),
-                      ),
-                      const SizedBox(height: 8),
-                      // PlaylistWidget para los tracks del proyecto
-                      PlaylistWidget(
-                        playlist: playlist,
-                        tracks: tracks,
-                        projectId: project.id.value,
-                      ),
-                      // Collaborators Section
-                      ProjectDetailCollaboratorsComponent(state: state),
-                    ],
+          if (state.projectError != null && state.project == null) {
+            return AppProjectErrorState(
+              message: 'Error loading project:  ${state.projectError}',
+              onRetry:
+                  () => context.read<ProjectDetailBloc>().add(
+                    WatchProjectDetail(projectId: widget.project.id),
                   ),
-                ),
-              ],
             );
-          },
-        ),
+          }
+
+          final project = state.project;
+          if (project == null) {
+            return const AppProjectEmptyState(
+              message: 'No project found',
+              subtitle: 'The project you are looking for does not exist.',
+            );
+          }
+
+          // getting the tracks to build the playlist
+          final tracks = state.tracks;
+          final playlist = project.toPlaylist(tracks);
+
+          return CustomScrollView(
+            slivers: [
+              ProjectDetailSliverHeader(project: project),
+              SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    BlocProvider(
+                      create: (_) => sl<SyncStatusCubit>(),
+                      child: const GlobalSyncIndicator(),
+                    ),
+                    const SizedBox(height: 8),
+                    // PlaylistWidget para los tracks del proyecto
+                    PlaylistWidget(
+                      playlist: playlist,
+                      tracks: tracks,
+                      projectId: project.id.value,
+                    ),
+                    // Collaborators Section
+                    ProjectDetailCollaboratorsComponent(state: state),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

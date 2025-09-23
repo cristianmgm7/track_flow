@@ -64,7 +64,6 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
                 project: bundle.project,
                 tracks: sortedTracks,
                 collaborators: bundle.collaborators,
-                activeVersionsByTrackId: bundle.activeVersionsByTrackId,
                 isLoadingProject: false,
                 isLoadingTracks: false,
                 isLoadingCollaborators: false,
