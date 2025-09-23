@@ -14,6 +14,8 @@ import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_event.dart';
 
 class ProjectDetailsScreen extends StatefulWidget {
   final Project project;
@@ -33,6 +35,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
     context.read<ProjectDetailBloc>().add(
       WatchProjectDetail(projectId: widget.project.id),
     );
+    context.read<PlaylistBloc>().add(WatchPlaylist(widget.project.id));
   }
 
   @override

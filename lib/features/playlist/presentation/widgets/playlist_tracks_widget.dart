@@ -15,8 +15,13 @@ import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/up_load_track_form.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/playlist/presentation/cubit/playlist_cubit.dart';
-import 'package:trackflow/features/playlist/presentation/cubit/playlist_state.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_state.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
+import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
+import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 class PlaylistTracksWidget extends StatefulWidget {
   final Playlist playlist;
@@ -50,7 +55,7 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
           setState(() => _isUploadingTrack = false);
         }
       },
-      child: BlocBuilder<PlaylistCubit, PlaylistState>(
+      child: BlocBuilder<PlaylistBloc, PlaylistState>(
         builder: (context, state) {
           final items = state.items;
           final tracksForPlayer = state.tracks;
@@ -60,7 +65,7 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
             tracks: [
               ...List.generate(items.length, (index) {
                 final vm = items[index];
-                return TrackComponent(
+                final row = TrackComponent(
                   vm: vm,
                   projectId:
                       widget.projectId != null
@@ -74,6 +79,23 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
                       ),
                     );
                   },
+                );
+                return MultiBlocProvider(
+                  providers: [
+                    BlocProvider(create: (_) => sl<TrackCacheBloc>()),
+                    BlocProvider(
+                      create:
+                          (_) =>
+                              sl<AudioContextBloc>()
+                                ..add(LoadTrackContextRequested(vm.track.id)),
+                    ),
+                    BlocProvider(
+                      create:
+                          (_) =>
+                              sl<TrackUploadStatusCubit>()..watch(vm.track.id),
+                    ),
+                  ],
+                  child: row,
                 );
               }),
               if (widget.projectId != null)

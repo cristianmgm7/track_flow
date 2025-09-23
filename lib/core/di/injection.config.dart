@@ -382,7 +382,7 @@ import 'package:trackflow/features/playlist/domain/repositories/playlist_reposit
     as _i160;
 import 'package:trackflow/features/playlist/domain/usecases/watch_project_playlist_usecase.dart'
     as _i216;
-import 'package:trackflow/features/playlist/presentation/cubit/playlist_cubit.dart'
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart'
     as _i236;
 import 'package:trackflow/features/project_detail/domain/usecases/watch_project_detail_usecase.dart'
     as _i215;
@@ -1325,10 +1325,8 @@ extension GetItInjectableX on _i1.GetIt {
               watchCollaboratorsBundleUseCase:
                   gh<_i173.WatchCollaboratorsBundleUseCase>(),
             ));
-    gh.factory<_i236.PlaylistCubit>(() => _i236.PlaylistCubit(
-          gh<_i218.WatchTracksByProjectIdUseCase>(),
-          gh<_i216.WatchProjectPlaylistUseCase>(),
-        ));
+    gh.factory<_i236.PlaylistBloc>(
+        () => _i236.PlaylistBloc(gh<_i216.WatchProjectPlaylistUseCase>()));
     gh.factory<_i237.ProjectDetailBloc>(() => _i237.ProjectDetailBloc(
         watchProjectDetail: gh<_i215.WatchProjectDetailUseCase>()));
     gh.factory<_i238.ProjectInvitationActorBloc>(

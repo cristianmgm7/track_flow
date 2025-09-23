@@ -3,6 +3,7 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
@@ -117,6 +118,7 @@ class AppBlocProviders {
       BlocProvider<ProjectInvitationWatcherBloc>(
         create: (_) => sl<ProjectInvitationWatcherBloc>(),
       ),
+      BlocProvider<PlaylistBloc>(create: (_) => sl<PlaylistBloc>()),
     ];
   }
 

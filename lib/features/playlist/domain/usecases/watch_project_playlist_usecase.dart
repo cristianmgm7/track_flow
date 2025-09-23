@@ -4,6 +4,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
+import 'package:trackflow/features/playlist/domain/entities/playlist_tracks_bundle.dart';
 import 'package:trackflow/features/playlist/domain/entities/track_summary.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
@@ -18,7 +19,7 @@ class WatchProjectPlaylistUseCase {
     this._trackVersionRepository,
   );
 
-  Stream<Either<Failure, List<TrackSummary>>> call(ProjectId projectId) {
+  Stream<Either<Failure, PlaylistTracksBundle>> call(ProjectId projectId) {
     final tracks$ = _audioTrackRepository
         .watchTracksByProject(projectId)
         .shareReplay(maxSize: 1);
@@ -29,7 +30,9 @@ class WatchProjectPlaylistUseCase {
         tracks,
       ) {
         if (tracks.isEmpty) {
-          return Stream.value(right(<TrackSummary>[]));
+          return Stream.value(
+            right(const PlaylistTracksBundle(tracks: [], summaries: [])),
+          );
         }
 
         // For each track, watch its versions and derive an "active" version summary.
@@ -79,7 +82,7 @@ class WatchProjectPlaylistUseCase {
 
         // Combine all per-track streams into one snapshot list, maintain order of tracks
         return Rx.combineLatestList<Either<Failure, TrackSummary>>(perTrack$)
-            .map<Either<Failure, List<TrackSummary>>>((list) {
+            .map<Either<Failure, PlaylistTracksBundle>>((list) {
               Failure? firstFailure;
               for (final e in list) {
                 e.fold((f) => firstFailure ??= f, (_) {});
@@ -93,7 +96,9 @@ class WatchProjectPlaylistUseCase {
                   () => TrackSummary(trackId: tracks[i].id),
                 ),
               );
-              return right(ordered);
+              return right(
+                PlaylistTracksBundle(tracks: tracks, summaries: ordered),
+              );
             })
             .onErrorReturnWith(
               (e, _) =>
