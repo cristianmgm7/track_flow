@@ -177,15 +177,21 @@ class AppRouter {
           routes: [
             GoRoute(
               path: AppRoutes.dashboard,
-              builder: (context, state) => const ProjectListScreen(),
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: ProjectListScreen()),
             ),
             GoRoute(
               path: AppRoutes.projects,
-              builder: (context, state) => const ProjectListScreen(),
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: ProjectListScreen()),
             ),
             GoRoute(
               path: AppRoutes.notifications,
-              builder: (context, state) => const NotificationCenterScreen(),
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: NotificationCenterScreen()),
             ),
             GoRoute(
               path: AppRoutes.projectDetails,
@@ -201,7 +207,9 @@ class AppRouter {
             ),
             GoRoute(
               path: AppRoutes.settings,
-              builder: (context, state) => const SettingsScreen(),
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: SettingsScreen()),
             ),
             GoRoute(
               path: AppRoutes.manageCollaborators,
@@ -222,7 +230,9 @@ class AppRouter {
             // Cache demo route removed
             GoRoute(
               path: AppRoutes.settings,
-              builder: (context, state) => const SettingsScreen(),
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: SettingsScreen()),
             ),
           ],
         ),

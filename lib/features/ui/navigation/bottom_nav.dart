@@ -29,7 +29,7 @@ class AppBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-    
+
     return Container(
       decoration: BoxDecoration(
         boxShadow:
@@ -71,27 +71,27 @@ class AppBottomNavigation extends StatelessWidget {
                 top: Dimensions.space2,
                 bottom: Dimensions.space2 + bottomPadding,
               ),
-                child: Row(
-                  children:
-                      items.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final item = entry.value;
-                        final isSelected = index == currentIndex;
+              child: Row(
+                children:
+                    items.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final item = entry.value;
+                      final isSelected = index == currentIndex;
 
-                        return Expanded(
-                          child: _AppBottomNavigationItemWidget(
-                            item: item,
-                            isSelected: isSelected,
-                            onTap: () => onTap(index),
-                            selectedItemColor:
-                                selectedItemColor ?? AppColors.primary,
-                            unselectedItemColor:
-                                unselectedItemColor ?? AppColors.textSecondary,
-                            showLabel: showLabels,
-                          ),
-                        );
-                      }).toList(),
-                ),
+                      return Expanded(
+                        child: _AppBottomNavigationItemWidget(
+                          item: item,
+                          isSelected: isSelected,
+                          onTap: () => onTap(index),
+                          selectedItemColor:
+                              selectedItemColor ?? AppColors.primary,
+                          unselectedItemColor:
+                              unselectedItemColor ?? AppColors.textSecondary,
+                          showLabel: showLabels,
+                        ),
+                      );
+                    }).toList(),
+              ),
             ),
           ),
         ),
@@ -142,7 +142,6 @@ class _AppBottomNavigationItemWidgetState
   late AnimationController _tapAnimationController;
   late AnimationController _selectionAnimationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _backgroundOpacityAnimation;
   late Animation<double> _selectionAnimation;
 
   @override
@@ -163,13 +162,6 @@ class _AppBottomNavigationItemWidgetState
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _tapAnimationController, curve: Curves.easeInOut),
-    );
-
-    _backgroundOpacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _selectionAnimationController,
-        curve: Curves.easeInOut,
-      ),
     );
 
     _selectionAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -252,36 +244,27 @@ class _AppBottomNavigationItemWidgetState
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: Dimensions.space12,
-                vertical: Dimensions.space4,
+                vertical: Dimensions.space6,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icon with selection background
-                  Container(
-                    padding: EdgeInsets.all(Dimensions.space6),
-                    decoration: BoxDecoration(
-                      color:
-                          widget.isSelected
-                              ? selectedColor.withValues(
-                                alpha: 0.1 * _backgroundOpacityAnimation.value,
-                              )
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(
-                        Dimensions.radiusLarge,
-                      ),
-                    ),
+                  // Icon only for selection emphasis
+                  SizedBox(
+                    height: 32,
+                    width: 32,
                     child: Stack(
+                      alignment: Alignment.center,
                       children: [
                         AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
+                          duration: const Duration(milliseconds: 160),
                           transitionBuilder: (
                             Widget child,
                             Animation<double> animation,
                           ) {
-                            return ScaleTransition(
-                              scale: animation,
+                            return FadeTransition(
+                              opacity: animation,
                               child: child,
                             );
                           },
@@ -289,7 +272,11 @@ class _AppBottomNavigationItemWidgetState
                             widget.isSelected && widget.item.activeIcon != null
                                 ? widget.item.activeIcon!
                                 : widget.item.icon,
-                            key: ValueKey(widget.isSelected),
+                            key: ValueKey(
+                              widget.isSelected
+                                  ? 'selected-${widget.item.activeIcon ?? widget.item.icon.codePoint}'
+                                  : 'unselected-${widget.item.icon.codePoint}',
+                            ),
                             size: 26, // Slightly larger for iOS feel
                             color: iconColor,
                           ),
