@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_context/domain/usecases/load_track_context_usecase.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import '../../domain/entities/track_context.dart';
 import 'audio_context_event.dart';
 import 'audio_context_state.dart';
@@ -76,7 +77,7 @@ class AudioContextBloc extends Bloc<AudioContextEvent, AudioContextState> {
   }
 
   /// Convenience getters for current context
-  UserProfile? get collaborator => currentContext?.collaborator;
+  TrackContextCollaborator? get collaborator => currentContext?.collaborator;
   String? get projectId => currentContext?.projectId;
   String? get projectName => currentContext?.projectName;
   DateTime? get uploadedAt => currentContext?.uploadedAt;

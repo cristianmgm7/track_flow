@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import '../../domain/entities/track_context.dart';
 
 /// Audio context states for business domain information
@@ -38,19 +39,26 @@ class AudioContextLoaded extends AudioContextState {
   final TrackContext context;
 
   // Convenience getters for UI
-  UserProfile? get collaborator => context.collaborator;
+  TrackContextCollaborator? get collaborator => context.collaborator;
   String? get projectId => context.projectId;
   String? get projectName => context.projectName;
   DateTime? get uploadedAt => context.uploadedAt;
   List<String>? get tags => context.tags;
   String? get description => context.description;
   String get trackId => context.trackId;
+  String? get activeVersionId => context.activeVersionId;
+  int? get activeVersionNumber => context.activeVersionNumber;
+  String? get activeVersionLabel => context.activeVersionLabel;
+  TrackVersionStatus? get activeVersionStatus => context.activeVersionStatus;
+  Duration? get activeVersionDuration => context.activeVersionDuration;
+  String? get activeVersionFileUrl => context.activeVersionFileUrl;
 
   @override
   List<Object?> get props => [context];
 
   @override
-  String toString() => 'AudioContextLoaded(trackId: ${context.trackId}, '
+  String toString() =>
+      'AudioContextLoaded(trackId: ${context.trackId}, '
       'collaborator: ${collaborator?.name}, project: $projectName)';
 }
 
@@ -65,7 +73,8 @@ class AudioContextError extends AudioContextState {
   List<Object?> get props => [message, trackId];
 
   @override
-  String toString() => 'AudioContextError(message: $message, trackId: $trackId)';
+  String toString() =>
+      'AudioContextError(message: $message, trackId: $trackId)';
 }
 
 /// Context not found for track
