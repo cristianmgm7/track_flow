@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
@@ -67,7 +68,11 @@ class _MainScaffoldState extends State<MainScaffold> {
                   if (state is AudioPlayerPlaying ||
                       state is AudioPlayerPaused ||
                       state is AudioPlayerBuffering) {
-                    return const MiniAudioPlayer();
+                    return const MiniAudioPlayer(
+                      config: MiniAudioPlayerConfig(
+                        backgroundColor: AppColors.grey400,
+                      ),
+                    );
                   }
                   return const SizedBox.shrink();
                 },
