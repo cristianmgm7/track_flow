@@ -122,7 +122,6 @@ class AppBlocProviders {
       BlocProvider<ProjectInvitationWatcherBloc>(
         create: (_) => sl<ProjectInvitationWatcherBloc>(),
       ),
-      BlocProvider<PlaylistBloc>(create: (_) => sl<PlaylistBloc>()),
     ];
   }
 
@@ -159,6 +158,7 @@ class AppBlocProviders {
                 sl<ManageCollaboratorsBloc>()
                   ..add(WatchCollaborators(projectId: project.id)),
       ),
+      BlocProvider<PlaylistBloc>(create: (_) => sl<PlaylistBloc>()),
     ];
   }
 
