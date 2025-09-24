@@ -39,6 +39,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       _setupListeners();
 
       // Update session with current track and loading state
+
       _updateSession(
         _currentSession.copyWith(
           currentTrack: source.metadata,

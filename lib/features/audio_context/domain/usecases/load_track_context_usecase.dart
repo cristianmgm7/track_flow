@@ -44,6 +44,11 @@ class LoadTrackContextUseCase {
       final projectName = await _loadProjectName(track.projectId);
       final activeVersion = await _loadActiveVersion(trackId, track);
 
+      final mappedDuration = _mapDuration(
+        activeVersion?.durationMs,
+        track.duration,
+      );
+
       final context = TrackContext(
         trackId: track.id.value,
         collaborator: collaborator,
@@ -57,10 +62,7 @@ class LoadTrackContextUseCase {
         activeVersionNumber: activeVersion?.versionNumber,
         activeVersionLabel: activeVersion?.label,
         activeVersionStatus: activeVersion?.status,
-        activeVersionDuration: _mapDuration(
-          activeVersion?.durationMs,
-          track.duration,
-        ),
+        activeVersionDuration: mappedDuration,
         activeVersionFileUrl: activeVersion?.fileRemoteUrl,
       );
 

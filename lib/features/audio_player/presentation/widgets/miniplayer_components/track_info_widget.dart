@@ -19,6 +19,13 @@ class TrackDisplayInfo {
   });
 }
 
+class TrackContextInfo {
+  final String artistName;
+  final Duration? duration;
+
+  const TrackContextInfo({required this.artistName, this.duration});
+}
+
 abstract class ITrackInfoBuilder {
   TrackDisplayInfo buildFromState(AudioPlayerState state);
 }
@@ -27,7 +34,8 @@ class TrackInfoBuilder implements ITrackInfoBuilder {
   @override
   TrackDisplayInfo buildFromState(AudioPlayerState state) {
     String title = 'No track';
-    String duration = '';
+    String duration =
+        ''; // Duration will come from AudioContext, not AudioPlayer
     String trackId = '';
 
     if (state is AudioPlayerSessionState) {
@@ -35,10 +43,6 @@ class TrackInfoBuilder implements ITrackInfoBuilder {
       if (session.currentTrack != null) {
         title = session.currentTrack!.title;
         trackId = session.currentTrack!.id.value;
-
-        if (session.duration != null) {
-          duration = DurationFormatter.format(session.duration!);
-        }
       }
     } else if (state is AudioPlayerReady) {
       title = 'Ready to play';
@@ -52,6 +56,32 @@ class TrackInfoBuilder implements ITrackInfoBuilder {
   }
 }
 
+abstract class ITrackContextInfoBuilder {
+  TrackContextInfo buildFromState(AudioContextState state);
+}
+
+class TrackContextInfoBuilder implements ITrackContextInfoBuilder {
+  @override
+  TrackContextInfo buildFromState(AudioContextState state) {
+    String artistName = '';
+    Duration? duration;
+
+    if (state is AudioContextLoaded) {
+      final context = state.context;
+      artistName = context.collaborator?.name ?? 'Unknown Artist';
+      duration = context.activeVersionDuration;
+
+      print('🎯 CONTEXT INFO: Artist: $artistName, Duration: $duration');
+    } else if (state is AudioContextLoading) {
+      artistName = 'Loading artist...';
+    } else if (state is AudioContextError) {
+      artistName = 'Tap to retry';
+    }
+
+    return TrackContextInfo(artistName: artistName, duration: duration);
+  }
+}
+
 class TrackInfoWidget extends StatefulWidget {
   const TrackInfoWidget({
     super.key,
@@ -59,12 +89,14 @@ class TrackInfoWidget extends StatefulWidget {
     required this.onTap,
     this.trackContextService,
     this.trackInfoBuilder,
+    this.contextInfoBuilder,
   });
 
   final AudioPlayerState? state; // Optional, will use BlocBuilder if null
   final VoidCallback onTap;
   final ITrackContextService? trackContextService;
   final ITrackInfoBuilder? trackInfoBuilder;
+  final ITrackContextInfoBuilder? contextInfoBuilder;
 
   @override
   State<TrackInfoWidget> createState() => _TrackInfoWidgetState();
@@ -74,12 +106,15 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
   String? _currentTrackId;
   late final ITrackContextService _contextService;
   late final ITrackInfoBuilder _infoBuilder;
+  late final ITrackContextInfoBuilder _contextInfoBuilder;
 
   @override
   void initState() {
     super.initState();
     _contextService = widget.trackContextService ?? TrackContextService();
     _infoBuilder = widget.trackInfoBuilder ?? TrackInfoBuilder();
+    _contextInfoBuilder =
+        widget.contextInfoBuilder ?? TrackContextInfoBuilder();
   }
 
   void _handleTrackChange(String trackId) {
@@ -94,7 +129,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Use BlocBuilder if no state provided, otherwise use provided state
     if (widget.state != null) {
       return _buildTrackInfo(context, theme, widget.state!);
@@ -107,7 +142,11 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
     }
   }
 
-  Widget _buildTrackInfo(BuildContext context, ThemeData theme, AudioPlayerState state) {
+  Widget _buildTrackInfo(
+    BuildContext context,
+    ThemeData theme,
+    AudioPlayerState state,
+  ) {
     final trackInfo = _infoBuilder.buildFromState(state);
 
     // Trigger only when props change; avoid scheduling after unmount
@@ -137,19 +176,17 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
             ),
             BlocBuilder<AudioContextBloc, AudioContextState>(
               builder: (context, contextState) {
-                String displayArtist = '';
-
-                if (contextState is AudioContextLoaded &&
-                    contextState.context.collaborator != null) {
-                  displayArtist = contextState.context.collaborator!.name;
-                } else if (contextState is AudioContextLoading) {
-                  displayArtist = 'Loading artist...';
-                } else if (contextState is AudioContextError) {
-                  displayArtist = 'Tap to retry';
-                }
+                final contextInfo = _contextInfoBuilder.buildFromState(
+                  contextState,
+                );
+                final displayArtist = contextInfo.artistName;
+                final durationFromContext =
+                    contextInfo.duration != null
+                        ? DurationFormatter.format(contextInfo.duration!)
+                        : '';
 
                 return (displayArtist.isNotEmpty ||
-                        trackInfo.duration.isNotEmpty)
+                        durationFromContext.isNotEmpty)
                     ? Padding(
                       padding: const EdgeInsets.only(top: 2.0),
                       child: SizedBox(
@@ -170,7 +207,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                               ),
                             ],
                             if (displayArtist.isNotEmpty &&
-                                trackInfo.duration.isNotEmpty) ...[
+                                durationFromContext.isNotEmpty) ...[
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 4.0,
@@ -184,9 +221,9 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                                 ),
                               ),
                             ],
-                            if (trackInfo.duration.isNotEmpty)
+                            if (durationFromContext.isNotEmpty)
                               Text(
-                                trackInfo.duration,
+                                durationFromContext,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.textTheme.bodySmall?.color
                                       ?.withValues(alpha: 0.7),
