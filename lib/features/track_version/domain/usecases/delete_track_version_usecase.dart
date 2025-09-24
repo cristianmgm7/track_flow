@@ -42,6 +42,7 @@ class DeleteTrackVersionUseCase {
 
       // Delete waveforms for the version
       final waveformResult = await waveformRepository.deleteWaveformsForVersion(
+        trackVersion.trackId,
         params.versionId,
       );
       if (waveformResult.isLeft()) {

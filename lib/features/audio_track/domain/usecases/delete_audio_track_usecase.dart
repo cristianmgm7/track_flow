@@ -94,7 +94,10 @@ class DeleteAudioTrack {
         // 3.2. Eliminar waveforms locales para esta versión
         // (waveforms remotas se eliminan cuando se elimina la versión)
         try {
-          await waveformRepository.deleteWaveformsForVersion(version.id);
+          await waveformRepository.deleteWaveformsForVersion(
+            params.trackId,
+            version.id,
+          );
         } catch (e) {
           // Log error pero continuar - no es crítico
           print(
