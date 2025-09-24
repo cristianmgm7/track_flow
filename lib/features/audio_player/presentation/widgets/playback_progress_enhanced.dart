@@ -8,8 +8,8 @@ import '../../../audio_context/presentation/bloc/audio_context_state.dart';
 
 /// Enhanced playback progress slider that gets duration from AudioContext
 /// and position from AudioPlayer for accurate progress tracking
-class PlaybackProgress extends StatefulWidget {
-  const PlaybackProgress({
+class PlaybackProgressEnhanced extends StatefulWidget {
+  const PlaybackProgressEnhanced({
     super.key,
     this.height = 4.0,
     this.thumbRadius = 8.0,
@@ -29,10 +29,11 @@ class PlaybackProgress extends StatefulWidget {
   final TextStyle? timeTextStyle;
 
   @override
-  State<PlaybackProgress> createState() => _PlaybackProgressState();
+  State<PlaybackProgressEnhanced> createState() =>
+      _PlaybackProgressEnhancedState();
 }
 
-class _PlaybackProgressState extends State<PlaybackProgress> {
+class _PlaybackProgressEnhancedState extends State<PlaybackProgressEnhanced> {
   bool _isDragging = false;
   double _dragPosition = 0.0;
 
