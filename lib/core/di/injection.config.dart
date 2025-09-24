@@ -1304,6 +1304,7 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i162.ProjectsRepository>(),
               gh<_i96.SessionStorage>(),
               gh<_i203.ProjectTrackService>(),
+              gh<_i231.DeleteAudioTrack>(),
             ));
     gh.lazySingleton<_i233.EditAudioTrackUseCase>(
         () => _i233.EditAudioTrackUseCase(
