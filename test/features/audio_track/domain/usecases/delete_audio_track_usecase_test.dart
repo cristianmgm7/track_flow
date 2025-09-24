@@ -174,11 +174,13 @@ void main() {
           ).called(1);
           verify(
             mockWaveformRepository.deleteWaveformsForVersion(
+              testTrackId,
               testVersions[0].id,
             ),
           ).called(1);
           verify(
             mockWaveformRepository.deleteWaveformsForVersion(
+              testTrackId,
               testVersions[1].id,
             ),
           ).called(1);
