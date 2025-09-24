@@ -1,6 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:audio_service/audio_service.dart';
+import '../../../features/audio_player/infrastructure/services/background_audio_handler.dart';
 
 /// Initializes audio background capabilities and audio session
 ///
@@ -17,6 +19,12 @@ class AudioBackgroundInitializer {
       androidNotificationChannelName: 'Playback',
       androidNotificationOngoing: true,
     );
+
+    // Note: AudioService initialization with custom handler
+    // This would be initialized when needed, not at app startup
+    // Example: await AudioService.init(builder: () => MyHandler());
+
+    // For now, we rely on just_audio_background for basic functionality
 
     // Configure system audio session for music playback
     final session = await AudioSession.instance;
