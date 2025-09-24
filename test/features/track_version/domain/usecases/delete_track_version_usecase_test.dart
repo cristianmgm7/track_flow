@@ -146,7 +146,9 @@ void main() {
         );
 
         // Verify no related data deletion was attempted
-        verifyNever(mockWaveformRepository.deleteWaveformsForVersion(any));
+         verifyNever(
+           mockWaveformRepository.deleteWaveformsForVersion(any, any),
+         );
         verifyNever(mockAudioCommentRepository.deleteCommentsByVersion(any));
         verifyNever(
           mockAudioStorageRepository.deleteAudioVersionFile(any, any),
