@@ -59,7 +59,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
 
       // 2. Queue for background sync to delete remotely
       final queueResult = await _pendingOperationsManager.addOperation(
-        entityType: 'waveform',
+        entityType: 'audio_waveform',
         entityId: versionId.value,
         operationType: 'delete',
         priority: SyncPriority.medium,
@@ -79,7 +79,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
       // 4. Trigger upstream sync only (more efficient for deletions)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'waveforms_delete_${versionId.value}',
+          syncKey: 'audio_waveforms_delete_${versionId.value}',
         ),
       );
 
