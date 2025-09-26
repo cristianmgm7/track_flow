@@ -173,23 +173,10 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
   /// Trigger background sync without blocking the UI
   void _triggerBackgroundSync() {
-    // Fire and forget - NO await
-    unawaited(_performBackgroundSync());
-  }
-
-  Future<void> _performBackgroundSync() async {
-    try {
-      AppLogger.info('Starting background sync', tag: 'APP_FLOW_BLOC');
-
-      await _backgroundSyncCoordinator.triggerBackgroundSync(
-        syncKey: 'app_startup_sync',
-      );
-
-      AppLogger.info('Background sync completed', tag: 'APP_FLOW_BLOC');
-    } catch (e) {
-      AppLogger.warning('Background sync failed: $e', tag: 'APP_FLOW_BLOC');
-      // Don't emit error state - background sync failures shouldn't affect UI
-    }
+    _backgroundSyncCoordinator.triggerBackgroundSync(
+      syncKey: 'app_startup_sync',
+      force: true,
+    );
   }
 
   // Helper method for fire-and-forget background operations
