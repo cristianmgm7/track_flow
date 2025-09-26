@@ -125,6 +125,13 @@ class SyncDataManager {
     String syncKey,
   ) async {
     try {
+      final handled = await runSyncFor(syncKey);
+      if (!handled) {
+        AppLogger.debug(
+          'No downstream route registered for sync key: $syncKey',
+          tag: _tag,
+        );
+      }
       return const Right(unit);
     } catch (e, stackTrace) {
       AppLogger.error(
