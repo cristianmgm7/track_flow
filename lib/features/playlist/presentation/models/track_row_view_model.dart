@@ -26,6 +26,3 @@ class TrackRowViewModel extends Equatable {
     status,
   ];
 }
-
-
-

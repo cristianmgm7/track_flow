@@ -4,6 +4,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/track_version/data/datasources/track_version_remote_datasource.dart';
 import 'package:trackflow/features/track_version/data/datasources/track_version_local_data_source.dart';
 import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -66,7 +67,6 @@ class TrackVersionIncrementalSyncService {
 
       return await projectsResult.fold(
         (failure) async {
-          // 🚨 Failed to get projects - preserve local data
           AppLogger.warning(
             'Failed to fetch user projects: ${failure.message}',
             tag: 'TrackVersionSyncService',
@@ -83,7 +83,6 @@ class TrackVersionIncrementalSyncService {
             return const Right(0);
           }
 
-          // 3. 🎵 Get project IDs and fetch track versions
           final projectIds = projects.map((p) => p.id).toList();
 
           if (projectIds.isEmpty) {
@@ -100,22 +99,13 @@ class TrackVersionIncrementalSyncService {
           return versionsResult.fold((failure) => Left(failure), (
             remoteVersions,
           ) async {
-            // ✅ Remote fetch succeeded - apply smart updates
-            AppLogger.sync(
-              'TRACK_VERSIONS',
-              'Fetched ${remoteVersions.length} versions from remote',
-              syncKey: userId,
-            );
-
-            // 4. 🧠 Smart logic: only update what changed
             final updateCount = await _updateChangedVersions(remoteVersions);
 
-            // 5. 📝 Mark as synced (update timestamp)
             await _markVersionsAsSynced();
 
             AppLogger.sync(
               'TRACK_VERSIONS',
-              'Smart sync completed - updated $updateCount versions',
+              'Sync completed - updated $updateCount versions',
               syncKey: userId,
             );
 
@@ -208,41 +198,57 @@ class TrackVersionIncrementalSyncService {
   Future<int> _updateChangedVersions(
     List<TrackVersionDTO> remoteVersions,
   ) async {
-    int updateCount = 0;
+    var updateCount = 0;
+    var deleteCount = 0;
+
+    final localResult = await _localDataSource.getAllVersions();
+    final localVersions = localResult.fold((failure) {
+      AppLogger.warning(
+        'Failed to load local versions for sync: ${failure.message}',
+        tag: 'TrackVersionSyncService',
+      );
+      return <TrackVersionDTO>[];
+    }, (versions) => versions);
+
+    final localMap = {for (final version in localVersions) version.id: version};
+    final remoteIds = <String>{};
 
     for (final remoteVersion in remoteVersions) {
-      try {
-        // Get local version if it exists
-        final localResult = await _localDataSource.getVersionById(
-          remoteVersion.id,
-        );
-        final localVersion = localResult.fold(
-          (failure) => null,
-          (version) => version,
-        );
+      remoteIds.add(remoteVersion.id);
 
-        // Check if update is needed
-        if (localVersion == null ||
-            _hasVersionChanged(localVersion, remoteVersion)) {
-          // Update needed
-          await _localDataSource.cacheVersion(remoteVersion);
-          updateCount++;
-
-          AppLogger.database(
-            'Updated version: ${remoteVersion.id}',
-            table: 'track_versions',
-          );
-        }
-      } catch (e) {
-        AppLogger.warning(
-          'Failed to update version ${remoteVersion.id}: $e',
-          tag: 'TrackVersionSyncService',
+      final localVersion = localMap[remoteVersion.id];
+      if (localVersion == null ||
+          _hasVersionChanged(localVersion, remoteVersion)) {
+        final cacheResult = await _localDataSource.cacheVersion(remoteVersion);
+        cacheResult.fold(
+          (failure) => AppLogger.warning(
+            'Failed to cache version ${remoteVersion.id}: ${failure.message}',
+            tag: 'TrackVersionSyncService',
+          ),
+          (_) {
+            updateCount++;
+          },
         );
-        // Continue with other versions
       }
     }
 
-    return updateCount;
+    final idsToRemove = localMap.keys.toSet().difference(remoteIds);
+    for (final idToRemove in idsToRemove) {
+      final deleteResult = await _localDataSource.deleteVersion(
+        TrackVersionId.fromUniqueString(idToRemove),
+      );
+      deleteResult.fold(
+        (failure) => AppLogger.warning(
+          'Failed to remove local version $idToRemove: ${failure.message}',
+          tag: 'TrackVersionSyncService',
+        ),
+        (_) {
+          deleteCount++;
+        },
+      );
+    }
+
+    return updateCount + deleteCount;
   }
 
   /// 🔍 Simple change detection

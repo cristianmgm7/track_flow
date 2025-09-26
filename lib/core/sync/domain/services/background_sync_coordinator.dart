@@ -175,60 +175,33 @@ class BackgroundSyncCoordinator {
 
       AppLogger.sync('INIT', 'Starting background sync', syncKey: syncKey);
 
-      // PHASE 1: UPSTREAM SYNC - Push pending local changes first
-      // This ensures local changes are preserved before pulling fresh data
-      AppLogger.sync(
-        'UPSTREAM',
-        'Starting upstream sync (pending operations)',
-        syncKey: syncKey,
-      );
       final upstreamStartTime = DateTime.now();
-
       await _pendingOperationsManager.processPendingOperations();
-
       final upstreamDuration = DateTime.now().difference(upstreamStartTime);
       AppLogger.sync(
         'UPSTREAM',
-        'Upstream sync completed',
+        'Completed in ${upstreamDuration.inMilliseconds}ms',
         syncKey: syncKey,
-        duration: upstreamDuration.inMilliseconds,
       );
 
-      // PHASE 2: DOWNSTREAM SYNC - Pull fresh data from remote
-      // Route scoped syncs when syncKey encodes a scope
-      AppLogger.sync(
-        'DOWNSTREAM',
-        'Starting downstream sync (remote → local)',
-        syncKey: syncKey,
-      );
       final downstreamStartTime = DateTime.now();
-
       final syncResult = await _syncDataManager.performIncrementalSyncForKey(
         syncKey,
       );
-
       final downstreamDuration = DateTime.now().difference(downstreamStartTime);
 
-      // Log sync result (but don't throw on failure - this is background)
       syncResult.fold(
         (failure) {
           AppLogger.sync(
             'DOWNSTREAM',
-            'Downstream sync failed: ${failure.message}',
+            'Failed after ${downstreamDuration.inMilliseconds}ms: ${failure.message}',
             syncKey: syncKey,
-            duration: downstreamDuration.inMilliseconds,
           );
         },
         (_) {
           AppLogger.sync(
-            'DOWNSTREAM',
-            'Downstream sync completed',
-            syncKey: syncKey,
-            duration: downstreamDuration.inMilliseconds,
-          );
-          AppLogger.sync(
             'COMPLETE',
-            'Full background sync completed successfully',
+            'Background sync completed in ${downstreamDuration.inMilliseconds}ms downstream',
             syncKey: syncKey,
           );
         },
@@ -265,27 +238,17 @@ class BackgroundSyncCoordinator {
 
       AppLogger.sync('INIT', 'Starting upstream sync only', syncKey: syncKey);
 
-      // PHASE 1: UPSTREAM SYNC - Push pending local changes first
-      // This ensures local changes are preserved before pulling fresh data
-      AppLogger.sync(
-        'UPSTREAM',
-        'Starting upstream sync (pending operations)',
-        syncKey: syncKey,
-      );
       final upstreamStartTime = DateTime.now();
-
       await _pendingOperationsManager.processPendingOperations();
-
       final upstreamDuration = DateTime.now().difference(upstreamStartTime);
       AppLogger.sync(
         'UPSTREAM',
-        'Upstream sync completed',
+        'Completed in ${upstreamDuration.inMilliseconds}ms',
         syncKey: syncKey,
-        duration: upstreamDuration.inMilliseconds,
       );
       AppLogger.sync(
         'COMPLETE',
-        'Upstream sync only completed successfully',
+        'Upstream sync completed successfully',
         syncKey: syncKey,
       );
     } catch (e) {

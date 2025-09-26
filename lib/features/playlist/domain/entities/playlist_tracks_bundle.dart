@@ -12,3 +12,4 @@ class PlaylistTracksBundle extends Equatable {
   List<Object?> get props => [tracks, summaries];
 }
 
+

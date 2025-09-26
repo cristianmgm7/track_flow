@@ -38,7 +38,9 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
       // 1. Generate unique filename with proper extension
       final fileExtension = _getFileExtension(audioFile.path);
       final fileName = '${versionData.id}$fileExtension';
-      final storageRef = _storage.ref().child('track_versions/$fileName');
+      final storageRef = _storage.ref().child(
+        'track_versions/${versionData.trackId}/$fileName',
+      );
 
       // 2. Upload file to Firebase Storage with metadata
       final uploadTask = storageRef.putFile(
@@ -114,60 +116,16 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
 
       if (docSnapshot.exists) {
         final data = docSnapshot.data();
-        // Delete associated waveform files under waveforms/{trackId}/{versionId}/
-        try {
-          final trackId =
-              (data != null && data['trackId'] != null)
-                  ? data['trackId'] as String
-                  : null;
-          if (trackId != null && trackId.isNotEmpty) {
-            final folderRef = _storage.ref().child(
-              'waveforms/$trackId/$versionId',
-            );
-            final listResult = await folderRef.listAll();
-            for (final item in listResult.items) {
-              try {
-                await item.delete();
-              } catch (_) {}
-            }
-            for (final prefix in listResult.prefixes) {
-              try {
-                final subList = await prefix.listAll();
-                for (final subItem in subList.items) {
-                  try {
-                    await subItem.delete();
-                  } catch (_) {}
-                }
-              } catch (_) {}
-            }
-          }
-        } catch (_) {}
+        // NOTE: Waveform deletion is now handled by WaveformOperationExecutor
+        // through the background sync system. This ensures proper offline-first behavior
+        // and avoids duplicate responsibility between TrackVersion and Waveform datasources.
         if (data != null && data['fileRemoteUrl'] != null) {
           // Delete file from storage
           final fileRef = _storage.refFromURL(data['fileRemoteUrl'] as String);
           await fileRef.delete();
         }
 
-        // Fallback legacy cleanup: waveforms/{versionId}/** (pre-canonical structure)
-        try {
-          final legacyFolder = _storage.ref().child('waveforms/$versionId');
-          final legacyList = await legacyFolder.listAll();
-          for (final item in legacyList.items) {
-            try {
-              await item.delete();
-            } catch (_) {}
-          }
-          for (final prefix in legacyList.prefixes) {
-            try {
-              final sub = await prefix.listAll();
-              for (final subItem in sub.items) {
-                try {
-                  await subItem.delete();
-                } catch (_) {}
-              }
-            } catch (_) {}
-          }
-        } catch (_) {}
+        // Legacy waveform cleanup is also handled by WaveformOperationExecutor
       }
 
       // Delete metadata from Firestore

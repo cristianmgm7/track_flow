@@ -68,20 +68,14 @@ class FirebaseStorageWaveformRemoteDataSource
     required TrackVersionId versionId,
   }) async {
     try {
-      // Delete canonical waveform
-      final canonicalRef = _storage.ref().child(
+      // Simple deletion: waveforms/{trackId}/{versionId}.json
+      final waveformRef = _storage.ref().child(
         _canonicalPath(trackId, versionId),
       );
-      try {
-        await canonicalRef.delete();
-      } catch (_) {
-        // Might not exist
-      }
+      await waveformRef.delete();
     } catch (e) {
-      // Log but don't throw - waveform deletion failures shouldn't stop track deletion
-      print(
-        'Warning: Failed to delete remote waveforms for version ${versionId.value}: $e',
-      );
+      // Don't throw - waveform deletion failures shouldn't stop track deletion
+      // Silently continue as this is expected behavior for non-critical cleanup
     }
   }
 

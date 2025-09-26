@@ -26,6 +26,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 /// 5. ⚡ SMART: Each use case handles its own timing and changes
 @injectable
 class SyncDataManager {
+  static const String _tag = 'SyncDataManager';
+
   final SyncProjectsUsingSimpleServiceUseCase _syncProjects;
   final SyncAudioTracksUsingSimpleServiceUseCase _syncAudioTracks;
   final SyncAudioCommentsUseCase _syncAudioComments;
@@ -61,10 +63,6 @@ class SyncDataManager {
   /// Each use case handles its own timing and change detection
   Future<Either<Failure, Unit>> performIncrementalSync() async {
     try {
-      AppLogger.sync(
-        'DOWNSTREAM',
-        'Starting smart sync with individual use case logic',
-      );
       final startTime = DateTime.now();
 
       // Each use case is responsible for its own timing/TTL and change detection.
@@ -84,22 +82,11 @@ class SyncDataManager {
       // Stage C: depends on tracks
       await _syncTrackVersions();
 
-      AppLogger.sync('DOWNSTREAM', 'Stage C (versions) completed');
-
       // Stage D: depends on versions (run in parallel)
-      AppLogger.sync('DOWNSTREAM', 'Stage D (comments + waveforms) starting');
       // Prefer explicit per-version scoped sync to ensure downstream actually happens
       final versionIds = await _syncWaveforms.getLocalVersionIds();
-      AppLogger.sync(
-        'DOWNSTREAM',
-        'Found ${versionIds.length} local version IDs for waveform sync',
-      );
 
       if (versionIds.isNotEmpty) {
-        AppLogger.sync(
-          'DOWNSTREAM',
-          'Starting scoped waveform sync for ${versionIds.length} versions',
-        );
         await Future.wait<void>([
           // Comments for each version
           ...versionIds.map((id) => _syncAudioComments(scopedVersionId: id)),
@@ -112,19 +99,13 @@ class SyncDataManager {
         ]);
       } else {
         // Fallback: run generic syncs (no-ops if nothing to do)
-        AppLogger.sync(
-          'DOWNSTREAM',
-          'No local versions found, running generic waveform sync',
-        );
         await Future.wait<void>([_syncAudioComments(), _syncWaveforms()]);
       }
-      AppLogger.sync('DOWNSTREAM', 'Stage D (comments + waveforms) completed');
 
       final duration = DateTime.now().difference(startTime);
       AppLogger.sync(
         'DOWNSTREAM',
-        'Smart incremental sync completed',
-        duration: duration.inMilliseconds,
+        'Incremental sync completed in ${duration.inMilliseconds}ms',
       );
 
       return const Right(unit);
@@ -138,71 +119,129 @@ class SyncDataManager {
     }
   }
 
-  /// Scoped incremental sync based on syncKey hints
-  ///
-  /// Supported keys:
-  /// - 'audio_comments_{versionId}' → downstream sync only for that version's comments
+  /// Scoped incremental sync based on syncKey hints.
+  /// See [_syncRoutes] for supported keys and routing behaviour.
   Future<Either<Failure, Unit>> performIncrementalSyncForKey(
     String syncKey,
   ) async {
     try {
-      // App startup: run staged incremental sync
-      if (syncKey == 'app_startup_sync' || syncKey == 'forced') {
-        return await performIncrementalSync();
-      }
-
-      // Projects (scoped keys map to smart global projects sync for now)
-      if (syncKey.startsWith('project_') || syncKey.startsWith('projects_')) {
-        await _syncProjects();
-        return const Right(unit);
-      }
-
-      // Audio tracks (scoped keys map to smart global tracks sync for now)
-      if (syncKey.startsWith('audio_track_') ||
-          syncKey.startsWith('audio_tracks_')) {
-        await _syncAudioTracks();
-        return const Right(unit);
-      }
-
-      // Comments (version-scoped)
-      if (syncKey.startsWith('audio_comments_version_')) {
-        final versionId = syncKey.substring('audio_comments_version_'.length);
-        await _syncAudioComments(scopedVersionId: versionId);
-        return const Right(unit);
-      }
-
-      // Backward compatibility: treat legacy audio_comments_{id} as version id
-      if (syncKey.startsWith('audio_comments_')) {
-        final versionId = syncKey.substring('audio_comments_'.length);
-        await _syncAudioComments(scopedVersionId: versionId);
-        return const Right(unit);
-      }
-
-      // Track versions (global or future scoped routing)
-      if (syncKey == 'track_versions') {
-        await _syncTrackVersions();
-        return const Right(unit);
-      }
-
-      if (syncKey.startsWith('waveform_')) {
-        final versionId = syncKey.substring('waveform_'.length);
-        await _syncWaveforms(
-          scopedVersionId: TrackVersionId.fromUniqueString(versionId),
-        );
-        return const Right(unit);
-      }
-
-      // Playlists not integrated yet: ignore playlist-related keys for now
-      if (syncKey.startsWith('playlist_') || syncKey == 'playlists_refresh') {
-        return const Right(unit);
-      }
-
-      // Unrecognized key: no-op to avoid triggering broad downstream syncs
       return const Right(unit);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error(
+        'Scoped incremental sync failed: $e',
+        tag: _tag,
+        error: e,
+        stackTrace: stackTrace,
+      );
       return Left(ServerFailure('Scoped incremental sync failed: $e'));
     }
   }
+
+  /// Attempts to execute the downstream sync associated with [syncKey].
+  /// Returns `true` when a route was found and executed successfully.
+  Future<bool> runSyncFor(String syncKey) async {
+    final route = _syncRoutes[syncKey];
+    if (route != null) {
+      await route();
+      return true;
+    }
+
+    for (final matcher in _patternRoutes) {
+      final result = await matcher(syncKey);
+      if (result) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  late final Map<String, Future<void> Function()> _syncRoutes = {
+    'app_startup_sync': () async {
+      await performIncrementalSync();
+    },
+    'forced': () async {
+      await performIncrementalSync();
+    },
+    'connectivity_restored': () async {
+      await performIncrementalSync();
+    },
+    'general': () async {
+      await performIncrementalSync();
+    },
+    'projects_refresh': () async {
+      await _syncProjects();
+    },
+    'track_versions': () async {
+      await _syncTrackVersions();
+    },
+    'audio_tracks_refresh': () async {
+      await _syncAudioTracks();
+    },
+    'audio_comments_refresh': () async {
+      await _syncAudioComments();
+    },
+    'waveforms_refresh': () async {
+      await _syncWaveforms();
+    },
+    'user_profile_refresh': () async {
+      await _syncUserProfile();
+    },
+    'notifications_refresh': () async {
+      await _syncNotifications();
+    },
+  };
+
+  late final List<Future<bool> Function(String)> _patternRoutes = [
+    (key) async {
+      if (key.startsWith('projects_') || key.startsWith('project_')) {
+        await _syncProjects();
+        return true;
+      }
+      return false;
+    },
+    (key) async {
+      if (key.startsWith('audio_tracks_') || key.startsWith('audio_track_')) {
+        await _syncAudioTracks();
+        return true;
+      }
+      return false;
+    },
+    (key) async {
+      if (key.startsWith('audio_comments_version_')) {
+        final versionId = key.substring('audio_comments_version_'.length);
+        await _syncAudioComments(scopedVersionId: versionId);
+        return true;
+      }
+      return false;
+    },
+    (key) async {
+      if (key.startsWith('audio_comments_')) {
+        final versionId = key.substring('audio_comments_'.length);
+        await _syncAudioComments(scopedVersionId: versionId);
+        return true;
+      }
+      return false;
+    },
+    (key) async {
+      if (key.startsWith('track_versions_') ||
+          key.startsWith('track_version_')) {
+        await _syncTrackVersions();
+        return true;
+      }
+      return false;
+    },
+    (key) async {
+      if (key.startsWith('waveform_')) {
+        final versionId = key.substring('waveform_'.length);
+        await _syncWaveforms(
+          scopedVersionId: TrackVersionId.fromUniqueString(versionId),
+        );
+        return true;
+      }
+      return false;
+    },
+  ];
 
   /// 🔄 FALLBACK: Full sync when incremental fails
   /// Forces sync of all entities regardless of their individual timing
@@ -210,7 +249,6 @@ class SyncDataManager {
     void Function(double progress)? onProgress,
   }) async {
     try {
-      AppLogger.sync('DOWNSTREAM', 'Starting full sync (fallback mode)');
       final startTime = DateTime.now();
 
       onProgress?.call(0.1);
@@ -233,8 +271,7 @@ class SyncDataManager {
       final duration = DateTime.now().difference(startTime);
       AppLogger.sync(
         'DOWNSTREAM',
-        'Full sync completed',
-        duration: duration.inMilliseconds,
+        'Full sync completed in ${duration.inMilliseconds}ms',
       );
 
       return const Right(unit);
