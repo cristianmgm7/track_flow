@@ -21,12 +21,12 @@ import 'package:trackflow/core/utils/app_logger.dart';
 /// 4. 🧹 CLEANUP: Removes completed operations and those exceeding the retry limit
 @lazySingleton
 class PendingOperationsManager {
-  final PendingOperationsRepository _repository;
+  final PendingOperationsRepository _repositoryPendingOperations;
   final NetworkStateManager _networkStateManager;
   final OperationExecutorFactory _executorFactory;
 
   PendingOperationsManager(
-    this._repository,
+    this._repositoryPendingOperations,
     this._networkStateManager,
     this._executorFactory,
   );
@@ -51,7 +51,7 @@ class PendingOperationsManager {
       operationData: data != null ? jsonEncode(data) : null,
     );
 
-    final result = await _repository.addOperation(operation);
+    final result = await _repositoryPendingOperations.addOperation(operation);
     return result.fold(
       (failure) =>
           Left(failure), // ❌ Queue failed - Repository must handle this
@@ -124,7 +124,7 @@ class PendingOperationsManager {
     const retryDelay = Duration(seconds: 2);
 
     for (int attempt = 1; attempt <= maxRetries; attempt++) {
-      final result = await _repository.getPendingOperations();
+      final result = await _repositoryPendingOperations.getPendingOperations();
 
       await result.fold(
         (failure) async {
@@ -214,7 +214,7 @@ class PendingOperationsManager {
   Future<void> _processOperation(SyncOperationDocument operation) async {
     // 🚫 Skip if operation exceeded retry limit
     if (!operation.canRetry()) {
-      await _repository.deleteOperation(operation.id);
+      await _repositoryPendingOperations.deleteOperation(operation.id);
       return;
     }
 
@@ -223,10 +223,13 @@ class PendingOperationsManager {
       await _executeOperation(operation);
 
       // ✅ Success: Mark as completed (will be cleaned up later)
-      await _repository.markOperationCompleted(operation.id);
+      await _repositoryPendingOperations.markOperationCompleted(operation.id);
     } catch (e) {
       // ❌ Failed: Increment retry count, will retry later
-      await _repository.markOperationFailed(operation.id, e.toString());
+      await _repositoryPendingOperations.markOperationFailed(
+        operation.id,
+        e.toString(),
+      );
     }
   }
 
@@ -246,20 +249,22 @@ class PendingOperationsManager {
 
   /// 📈 Count pending operations for UI progress indicators
   Future<int> getPendingOperationsCount() async {
-    final result = await _repository.getPendingOperationsCount();
+    final result =
+        await _repositoryPendingOperations.getPendingOperationsCount();
     return result.fold((failure) => 0, (count) => count);
   }
 
   /// 👀 Stream pending operations for real-time UI updates
   Stream<List<SyncOperationDocument>> watchPendingOperations() {
-    return _repository.watchPendingOperations();
+    return _repositoryPendingOperations.watchPendingOperations();
   }
 
   /// 🏥 Get upstream sync health status for monitoring and debugging
   /// Returns information about queue health, error rates, and processing status
   Future<Map<String, dynamic>> getUpstreamSyncHealth() async {
     try {
-      final pendingResult = await _repository.getPendingOperations();
+      final pendingResult =
+          await _repositoryPendingOperations.getPendingOperations();
 
       return await pendingResult.fold(
         (failure) async {
@@ -341,7 +346,7 @@ class PendingOperationsManager {
   /// 🗑️ Remove completed operations to keep queue manageable
   /// BackgroundSyncCoordinator calls this periodically
   Future<void> clearCompletedOperations() async {
-    await _repository.clearCompletedOperations();
+    await _repositoryPendingOperations.clearCompletedOperations();
   }
 
   // ============================================================================

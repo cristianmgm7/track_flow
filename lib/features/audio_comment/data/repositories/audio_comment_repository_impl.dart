@@ -171,10 +171,14 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         );
       }
 
-      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_comments_create',
+          syncKey: 'audio_comments_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_comments_version_${comment.versionId.value}',
         ),
       );
 
@@ -208,10 +212,14 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         );
       }
 
-      // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_comments_delete',
+          syncKey: 'audio_comments_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_comments_version_${commentId.value}',
         ),
       );
 

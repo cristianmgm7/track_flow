@@ -53,7 +53,6 @@ class ProjectIncrementalSyncService {
 
       return await remoteResult.fold(
         (failure) async {
-          // 🚨 Remote fetch failed - preserve local data
           AppLogger.warning(
             'Failed to fetch remote projects: ${failure.message}',
             tag: 'ProjectSyncService',
@@ -61,22 +60,13 @@ class ProjectIncrementalSyncService {
           return Left(failure);
         },
         (remoteProjects) async {
-          // ✅ Remote fetch succeeded - apply smart updates
-          AppLogger.sync(
-            'PROJECTS',
-            'Fetched ${remoteProjects.length} projects from remote',
-            syncKey: userId,
-          );
-
-          // 3. 🧠 Smart logic: only update what changed
           final updateCount = await _updateChangedProjects(remoteProjects);
 
-          // 4. 📝 Mark as synced (update timestamp)
           await _markProjectsAsSynced();
 
           AppLogger.sync(
             'PROJECTS',
-            'Smart sync completed - updated $updateCount projects',
+            'Sync completed - updated $updateCount projects',
             syncKey: userId,
           );
 
@@ -162,10 +152,6 @@ class ProjectIncrementalSyncService {
       try {
         await _localDataSource.removeCachedProject(idToRemove);
         deleteCount++;
-        AppLogger.database(
-          'Removed locally deleted project: $idToRemove',
-          table: 'projects',
-        );
       } catch (e) {
         AppLogger.warning(
           'Failed to remove project $idToRemove: $e',
@@ -190,14 +176,8 @@ class ProjectIncrementalSyncService {
         // Check if update is needed
         if (localProject == null ||
             _hasProjectChanged(localProject, remoteProject)) {
-          // Update needed
           await _localDataSource.cacheProject(remoteProject);
           updateCount++;
-
-          AppLogger.database(
-            'Updated project: ${remoteProject.name}',
-            table: 'projects',
-          );
         }
       } catch (e) {
         AppLogger.warning(
