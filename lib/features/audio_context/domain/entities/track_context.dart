@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 
 /// Track context containing business domain information
 /// This is separate from pure audio concerns and provides collaboration context
@@ -12,13 +13,19 @@ class TrackContext extends Equatable {
     this.lastModified,
     this.tags,
     this.description,
+    this.activeVersionId,
+    this.activeVersionNumber,
+    this.activeVersionLabel,
+    this.activeVersionStatus,
+    this.activeVersionDuration,
+    this.activeVersionFileUrl,
   });
 
   /// The audio track ID this context refers to
   final String trackId;
 
   /// User who uploaded/owns this track
-  final UserProfile? collaborator;
+  final TrackContextCollaborator? collaborator;
 
   /// Project this track belongs to
   final String? projectId;
@@ -38,27 +45,47 @@ class TrackContext extends Equatable {
   /// Track description or notes
   final String? description;
 
+  /// Active track version information sourced from track versions domain
+  final String? activeVersionId;
+  final int? activeVersionNumber;
+  final String? activeVersionLabel;
+  final TrackVersionStatus? activeVersionStatus;
+  final Duration? activeVersionDuration;
+  final String? activeVersionFileUrl;
+
   @override
   List<Object?> get props => [
-        trackId,
-        collaborator,
-        projectId,
-        projectName,
-        uploadedAt,
-        lastModified,
-        tags,
-        description,
-      ];
+    trackId,
+    collaborator,
+    projectId,
+    projectName,
+    uploadedAt,
+    lastModified,
+    tags,
+    description,
+    activeVersionId,
+    activeVersionNumber,
+    activeVersionLabel,
+    activeVersionStatus,
+    activeVersionDuration,
+    activeVersionFileUrl,
+  ];
 
   TrackContext copyWith({
     String? trackId,
-    UserProfile? collaborator,
+    TrackContextCollaborator? collaborator,
     String? projectId,
     String? projectName,
     DateTime? uploadedAt,
     DateTime? lastModified,
     List<String>? tags,
     String? description,
+    String? activeVersionId,
+    int? activeVersionNumber,
+    String? activeVersionLabel,
+    TrackVersionStatus? activeVersionStatus,
+    Duration? activeVersionDuration,
+    String? activeVersionFileUrl,
   }) {
     return TrackContext(
       trackId: trackId ?? this.trackId,
@@ -69,16 +96,24 @@ class TrackContext extends Equatable {
       lastModified: lastModified ?? this.lastModified,
       tags: tags ?? this.tags,
       description: description ?? this.description,
+      activeVersionId: activeVersionId ?? this.activeVersionId,
+      activeVersionNumber: activeVersionNumber ?? this.activeVersionNumber,
+      activeVersionLabel: activeVersionLabel ?? this.activeVersionLabel,
+      activeVersionStatus: activeVersionStatus ?? this.activeVersionStatus,
+      activeVersionDuration:
+          activeVersionDuration ?? this.activeVersionDuration,
+      activeVersionFileUrl: activeVersionFileUrl ?? this.activeVersionFileUrl,
     );
   }
 
   @override
-  String toString() => 'TrackContext(trackId: $trackId, collaborator: ${collaborator?.name}, project: $projectName)';
+  String toString() =>
+      'TrackContext(trackId: $trackId, collaborator: ${collaborator?.name}, project: $projectName)';
 }
 
-/// User profile information for track context
-class UserProfile extends Equatable {
-  const UserProfile({
+/// Lightweight collaborator information used by track context
+class TrackContextCollaborator extends Equatable {
+  const TrackContextCollaborator({
     required this.id,
     required this.name,
     this.email,
@@ -96,5 +131,5 @@ class UserProfile extends Equatable {
   List<Object?> get props => [id, name, email, avatarUrl, role];
 
   @override
-  String toString() => 'UserProfile(id: $id, name: $name)';
+  String toString() => 'TrackContextCollaborator(id: $id, name: $name)';
 }

@@ -28,9 +28,8 @@ class VersionsSectionComponent extends StatelessWidget {
                   context.read<AudioPlayerBloc>().add(
                     PlayVersionRequested(versionId),
                   );
-                  // Update cubit immediately for UI responsiveness
+                  // Update UI-only selection via cubit (do not persist here)
                   context.read<TrackDetailCubit>().setActiveVersion(versionId);
-                  // Do not persist active version here. That happens via header menu.
                 },
               ),
             ),

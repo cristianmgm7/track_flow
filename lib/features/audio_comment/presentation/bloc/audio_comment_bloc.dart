@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_bundle_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart';
@@ -8,24 +9,25 @@ import 'audio_comment_state.dart';
 
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'dart:async';
 
 @injectable
 class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   final AddAudioCommentUseCase addAudioCommentUseCase;
   final WatchAudioCommentsBundleUseCase watchAudioCommentsBundleUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
-  StreamSubscription<Either<Failure, AudioCommentsBundle>>? _bundleSubscription;
+  // No manual subscription; managed by emit.onEach with restartable transformer
 
   AudioCommentBloc({
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
     required this.watchAudioCommentsBundleUseCase,
   }) : super(const AudioCommentInitial()) {
-    on<WatchAudioCommentsBundleEvent>(_onWatchBundle);
+    on<WatchAudioCommentsBundleEvent>(
+      _onWatchBundle,
+      transformer: _restartable(),
+    );
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
-    on<AudioCommentsBundleUpdated>(_onBundleUpdated);
   }
 
   Future<void> _onAddAudioComment(
@@ -67,49 +69,45 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     Emitter<AudioCommentState> emit,
   ) async {
     emit(const AudioCommentLoading());
-    // Cancel any previous subscription to avoid cross-track leakage
-    await _bundleSubscription?.cancel();
-    _bundleSubscription = watchAudioCommentsBundleUseCase
-        .call(
-          projectId: event.projectId,
-          trackId: event.trackId,
-          versionId: event.versionId,
-        )
-        .listen(
-          (either) => add(AudioCommentsBundleUpdated(either)),
-          onError:
-              (error, _) => add(
-                AudioCommentsBundleUpdated(
-                  left(ServerFailure(error.toString())),
-                ),
-              ),
-          cancelOnError: false,
-        );
-  }
+    final stream = watchAudioCommentsBundleUseCase.call(
+      projectId: event.projectId,
+      trackId: event.trackId,
+      versionId: event.versionId,
+    );
 
-  void _onBundleUpdated(
-    AudioCommentsBundleUpdated event,
-    Emitter<AudioCommentState> emit,
-  ) {
-    event.result.fold((failure) => emit(AudioCommentError(failure.message)), (
-      bundle,
-    ) {
-      final sorted = [...bundle.comments]
-        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      emit(
-        AudioCommentsLoaded(
-          comments: sorted,
-          collaborators: bundle.collaborators,
-          isSyncing: false,
-          syncProgress: null,
-        ),
-      );
-    });
+    await emit.onEach<Either<Failure, AudioCommentsBundle>>(
+      stream,
+      onData: (either) {
+        either.fold((failure) => emit(AudioCommentError(failure.message)), (
+          bundle,
+        ) {
+          final sorted = [...bundle.comments]
+            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          emit(
+            AudioCommentsLoaded(
+              comments: sorted,
+              collaborators: bundle.collaborators,
+              isSyncing: false,
+              syncProgress: null,
+            ),
+          );
+        });
+      },
+      onError: (error, stackTrace) {
+        emit(AudioCommentError(error.toString()));
+      },
+    );
   }
 
   @override
   Future<void> close() async {
-    await _bundleSubscription?.cancel();
+    // No manual subscription to cancel
     return super.close();
+  }
+
+  // Restartable transformer using RxDart's switchMap semantics
+  EventTransformer<WatchAudioCommentsBundleEvent>
+  _restartable<WatchAudioCommentsBundleEvent>() {
+    return (events, mapper) => events.switchMap(mapper);
   }
 }

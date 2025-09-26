@@ -27,6 +27,10 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
        super(const WaveformState()) {
     on<LoadWaveform>(_onLoadWaveform);
     on<WaveformSeekRequested>(_onWaveformSeekRequested);
+    on<WaveformScrubStarted>(_onScrubStarted);
+    on<WaveformScrubUpdated>(_onScrubUpdated);
+    on<WaveformScrubCancelled>(_onScrubCancelled);
+    on<WaveformScrubCommitted>(_onScrubCommitted);
     on<_WaveformDataReceived>(_onWaveformDataReceived);
     on<_PlaybackPositionUpdated>(_onPlaybackPositionUpdated);
 
@@ -136,11 +140,78 @@ class WaveformBloc extends Bloc<WaveformEvent, WaveformState> {
     }
   }
 
+  void _onScrubStarted(
+    WaveformScrubStarted event,
+    Emitter<WaveformState> emit,
+  ) {
+    final wasPlaying = _audioPlaybackService.currentSession.isPlaying;
+    emit(
+      state.copyWith(
+        isScrubbing: true,
+        dragStartPlaybackPosition: state.currentPosition,
+        previewPosition: state.currentPosition,
+        wasPlayingBeforeScrub: wasPlaying,
+      ),
+    );
+    // Option: auto-pause while scrubbing for stability
+    if (wasPlaying) {
+      _audioPlaybackService.pause();
+    }
+  }
+
+  void _onScrubUpdated(
+    WaveformScrubUpdated event,
+    Emitter<WaveformState> emit,
+  ) {
+    emit(state.copyWith(previewPosition: event.previewPosition));
+  }
+
+  void _onScrubCancelled(
+    WaveformScrubCancelled event,
+    Emitter<WaveformState> emit,
+  ) {
+    final shouldResume = state.wasPlayingBeforeScrub == true;
+    emit(
+      state.copyWith(
+        isScrubbing: false,
+        previewPosition: null,
+        dragStartPlaybackPosition: null,
+        wasPlayingBeforeScrub: null,
+      ),
+    );
+    if (shouldResume) {
+      _audioPlaybackService.resume();
+    }
+  }
+
+  Future<void> _onScrubCommitted(
+    WaveformScrubCommitted event,
+    Emitter<WaveformState> emit,
+  ) async {
+    try {
+      await _audioPlaybackService.seek(event.position);
+    } catch (_) {}
+    // Now update UI state after seek completes and resume if needed
+    final shouldResume = state.wasPlayingBeforeScrub == true;
+    emit(
+      state.copyWith(
+        isScrubbing: false,
+        previewPosition: null,
+        dragStartPlaybackPosition: null,
+        wasPlayingBeforeScrub: null,
+      ),
+    );
+    if (shouldResume) {
+      await _audioPlaybackService.resume();
+    }
+  }
+
   void _onPlaybackPositionUpdated(
     _PlaybackPositionUpdated event,
     Emitter<WaveformState> emit,
   ) {
     if (state.status == WaveformStatus.ready) {
+      // Do not override preview while scrubbing; keep live playback position though
       emit(state.copyWith(currentPosition: event.position));
     }
   }

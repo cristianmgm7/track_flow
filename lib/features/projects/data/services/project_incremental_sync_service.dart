@@ -53,7 +53,6 @@ class ProjectIncrementalSyncService {
 
       return await remoteResult.fold(
         (failure) async {
-          // 🚨 Remote fetch failed - preserve local data
           AppLogger.warning(
             'Failed to fetch remote projects: ${failure.message}',
             tag: 'ProjectSyncService',
@@ -61,22 +60,13 @@ class ProjectIncrementalSyncService {
           return Left(failure);
         },
         (remoteProjects) async {
-          // ✅ Remote fetch succeeded - apply smart updates
-          AppLogger.sync(
-            'PROJECTS',
-            'Fetched ${remoteProjects.length} projects from remote',
-            syncKey: userId,
-          );
-
-          // 3. 🧠 Smart logic: only update what changed
           final updateCount = await _updateChangedProjects(remoteProjects);
 
-          // 4. 📝 Mark as synced (update timestamp)
           await _markProjectsAsSynced();
 
           AppLogger.sync(
             'PROJECTS',
-            'Smart sync completed - updated $updateCount projects',
+            'Sync completed - updated $updateCount projects',
             syncKey: userId,
           );
 
@@ -136,9 +126,41 @@ class ProjectIncrementalSyncService {
   }
 
   /// 🧠 Smart update: only change projects that actually changed
+  /// AND remove projects deleted by other users
   Future<int> _updateChangedProjects(List<ProjectDTO> remoteProjects) async {
     int updateCount = 0;
+    int deleteCount = 0;
 
+    // 1. Get ALL local projects for this user (including soft-deleted)
+    final localResult = await _localDataSource.getAllProjects();
+    final allLocalProjects = localResult.fold(
+      (failure) => <ProjectDTO>[],
+      (projects) => projects,
+    );
+
+    // Filter out soft-deleted projects for comparison
+    final localProjects = allLocalProjects.where((p) => !p.isDeleted).toList();
+
+    // 2. Create sets for efficient lookup
+    final remoteIds = remoteProjects.map((p) => p.id).toSet();
+    final localIds = localProjects.map((p) => p.id).toSet();
+
+    // 3. 🗑️ REMOVE projects that exist locally but not remotely
+    // (these were deleted by other users)
+    final idsToRemove = localIds.difference(remoteIds);
+    for (final idToRemove in idsToRemove) {
+      try {
+        await _localDataSource.removeCachedProject(idToRemove);
+        deleteCount++;
+      } catch (e) {
+        AppLogger.warning(
+          'Failed to remove project $idToRemove: $e',
+          tag: 'ProjectSyncService',
+        );
+      }
+    }
+
+    // 4. ➕ ADD/UPDATE projects from remote
     for (final remoteProject in remoteProjects) {
       try {
         // Get local version if it exists
@@ -154,14 +176,8 @@ class ProjectIncrementalSyncService {
         // Check if update is needed
         if (localProject == null ||
             _hasProjectChanged(localProject, remoteProject)) {
-          // Update needed
           await _localDataSource.cacheProject(remoteProject);
           updateCount++;
-
-          AppLogger.database(
-            'Updated project: ${remoteProject.name}',
-            table: 'projects',
-          );
         }
       } catch (e) {
         AppLogger.warning(
@@ -172,7 +188,8 @@ class ProjectIncrementalSyncService {
       }
     }
 
-    return updateCount;
+    // Return total changes (updates + deletions)
+    return updateCount + deleteCount;
   }
 
   /// 🔍 Simple change detection (like we had in repository)
@@ -181,6 +198,7 @@ class ProjectIncrementalSyncService {
     return local.name != remote.name ||
         local.description != remote.description ||
         local.collaborators.length != remote.collaborators.length ||
+        local.isDeleted != remote.isDeleted || // Handle soft delete changes
         (remote.updatedAt != null &&
             (local.updatedAt == null ||
                 remote.updatedAt!.isAfter(local.updatedAt!)));
@@ -204,15 +222,19 @@ class ProjectIncrementalSyncService {
   Future<Map<String, dynamic>> getSyncStatistics(String userId) async {
     try {
       final localResult = await _localDataSource.getAllProjects();
-      final localCount = localResult.fold(
-        (failure) => 0,
-        (projects) => projects.length,
+      final allProjects = localResult.fold(
+        (failure) => <ProjectDTO>[],
+        (projects) => projects,
       );
+
+      final activeProjects = allProjects.where((p) => !p.isDeleted).toList();
 
       return {
         'userId': userId,
-        'localProjectsCount': localCount,
-        'syncStrategy': 'smart_timestamp_based',
+        'totalProjectsCount': allProjects.length,
+        'activeProjectsCount': activeProjects.length,
+        'deletedProjectsCount': allProjects.length - activeProjects.length,
+        'syncStrategy': 'smart_timestamp_based_with_deletions',
         'timestamp': DateTime.now().toIso8601String(),
       };
     } catch (e) {

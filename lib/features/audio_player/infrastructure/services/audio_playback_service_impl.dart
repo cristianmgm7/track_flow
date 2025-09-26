@@ -6,7 +6,9 @@ import 'package:just_audio/just_audio.dart' as ja show AudioSource;
 import 'package:audio_service/audio_service.dart' as bg;
 import 'package:trackflow/core/utils/app_logger.dart';
 
+import '../../../audio_context/infrastructure/services/track_context_background_service.dart';
 import '../../domain/entities/audio_source.dart';
+import '../../domain/entities/audio_track_metadata.dart';
 import '../../domain/entities/audio_queue.dart';
 import '../../domain/entities/playback_session.dart';
 import '../../domain/entities/playback_state.dart';
@@ -39,6 +41,7 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
       _setupListeners();
 
       // Update session with current track and loading state
+
       _updateSession(
         _currentSession.copyWith(
           currentTrack: source.metadata,
@@ -53,18 +56,8 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
         'Audio play requested | isLocal=$isLocalFilePath | url=$url',
         tag: 'AUDIO_PLAYBACK',
       );
-      // Build MediaItem required by just_audio_background
-      final mediaItem = bg.MediaItem(
-        id: source.metadata.id.value,
-        title: source.metadata.title,
-        artist: source.metadata.artist,
-        duration: source.metadata.duration,
-        artUri:
-            source.metadata.coverUrl != null &&
-                    source.metadata.coverUrl!.isNotEmpty
-                ? Uri.parse(source.metadata.coverUrl!)
-                : null,
-      );
+      // Build MediaItem with enhanced context info for background
+      final mediaItem = await _buildEnhancedMediaItem(source.metadata);
 
       // Resolve URI
       late final Uri resolvedUri;
@@ -418,9 +411,45 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     }
   }
 
+  /// Build enhanced MediaItem with background context information
+  /// This ensures notifications show rich info even when app is closed
+  Future<bg.MediaItem> _buildEnhancedMediaItem(
+    AudioTrackMetadata metadata,
+  ) async {
+    final trackId = metadata.id.value;
+    final title = metadata.title;
+
+    // Get enhanced context information from background service
+    final backgroundInfo = await TrackContextBackgroundService.instance
+        .getTrackInfoForBackground(trackId, title);
+
+    return bg.MediaItem(
+      id: trackId,
+      title: title,
+      artist: backgroundInfo.artist, // Rich artist from collaborator
+      duration: backgroundInfo.duration, // Accurate duration from TrackVersion
+      album: backgroundInfo.projectName, // Project name as album
+      artUri:
+          metadata.coverUrl != null && metadata.coverUrl!.isNotEmpty
+              ? Uri.parse(metadata.coverUrl!)
+              : null,
+    );
+  }
+
+  /// Example method: Get track info for background notifications
+  /// This would be called by background audio service when app is closed
+  Future<bg.MediaItem?> getCurrentMediaItemForBackground() async {
+    final session = _currentSession;
+    if (session.currentTrack == null) return null;
+
+    return await _buildEnhancedMediaItem(session.currentTrack!);
+  }
+
   @override
   Future<void> dispose() async {
     try {
+      // Clear background cache when service is disposed
+      TrackContextBackgroundService.instance.clearCurrentContext();
       await _audioPlayer.dispose();
       await _sessionController.close();
     } catch (e) {
@@ -453,13 +482,17 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
   }
 
   void _onDurationChanged(Duration? duration) {
-    if (duration != null) {
-      // Note: We'll need to update the current track's duration
-      // This might require updating the queue's current track
-      _updateSession(
-        _currentSession.copyWith(
-          // duration: duration, // Will implement when PlaybackSession supports this
-        ),
+    if (duration != null && _currentSession.currentTrack != null) {
+      // Update the current track's duration with actual audio duration
+      final updatedTrack = _currentSession.currentTrack!.copyWith(
+        duration: duration,
+      );
+
+      _updateSession(_currentSession.copyWith(currentTrack: updatedTrack));
+
+      AppLogger.info(
+        'Duration updated for track ${updatedTrack.id.value}: ${duration.toString()}',
+        tag: 'AUDIO_PLAYBACK',
       );
     }
   }

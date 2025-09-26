@@ -154,6 +154,17 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'audio_tracks_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${track.projectId.value}',
+        ),
+      );
+
       return Right(track);
     } catch (e) {
       return Left(DatabaseFailure('Failed to create track: $e'));
@@ -189,7 +200,12 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_tracks_delete',
+          syncKey: 'audio_tracks_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${projectId.value}',
         ),
       );
 
@@ -240,7 +256,12 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_tracks_update',
+          syncKey: 'audio_tracks_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${projectId.value}',
         ),
       );
 
@@ -288,7 +309,12 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_tracks_update',
+          syncKey: 'audio_tracks_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'audio_tracks_${trackId.value}',
         ),
       );
 

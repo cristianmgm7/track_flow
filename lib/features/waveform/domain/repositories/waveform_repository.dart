@@ -8,6 +8,7 @@ abstract class WaveformRepository {
     TrackVersionId versionId,
   );
   Future<Either<Failure, Unit>> deleteWaveformsForVersion(
+    AudioTrackId trackId,
     TrackVersionId versionId,
   );
   Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId);

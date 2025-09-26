@@ -18,6 +18,12 @@ class AudioBackgroundInitializer {
       androidNotificationOngoing: true,
     );
 
+    // Note: AudioService initialization with custom handler
+    // This would be initialized when needed, not at app startup
+    // Example: await AudioService.init(builder: () => MyHandler());
+
+    // For now, we rely on just_audio_background for basic functionality
+
     // Configure system audio session for music playback
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.music());

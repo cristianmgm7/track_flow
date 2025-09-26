@@ -63,7 +63,6 @@ class AudioTrackIncrementalSyncService {
 
       return await projectsResult.fold(
         (failure) async {
-          // 🚨 Failed to get projects - preserve local data
           AppLogger.warning(
             'Failed to fetch user projects: ${failure.message}',
             tag: 'AudioTrackSyncService',
@@ -87,22 +86,13 @@ class AudioTrackIncrementalSyncService {
           return tracksResult.fold((failure) => Left(failure), (
             remoteTracks,
           ) async {
-            // ✅ Remote fetch succeeded - apply smart updates
-            AppLogger.sync(
-              'AUDIO_TRACKS',
-              'Fetched ${remoteTracks.length} tracks from remote',
-              syncKey: userId,
-            );
-
-            // 4. 🧠 Smart logic: only update what changed
             final updateCount = await _updateChangedTracks(remoteTracks);
 
-            // 5. 📝 Mark as synced (update timestamp)
             await _markTracksAsSynced();
 
             AppLogger.sync(
               'AUDIO_TRACKS',
-              'Smart sync completed - updated $updateCount tracks',
+              'Sync completed - updated $updateCount tracks',
               syncKey: userId,
             );
 
@@ -177,40 +167,55 @@ class AudioTrackIncrementalSyncService {
 
   /// 🧠 Smart update: only change tracks that actually changed
   Future<int> _updateChangedTracks(List<AudioTrackDTO> remoteTracks) async {
-    int updateCount = 0;
+    var updateCount = 0;
+    var deleteCount = 0;
+
+    final localResult = await _localDataSource.getAllTracks();
+    final localTracks = localResult.fold((failure) {
+      AppLogger.warning(
+        'Failed to load local tracks for sync: ${failure.message}',
+        tag: 'AudioTrackSyncService',
+      );
+      return <AudioTrackDTO>[];
+    }, (tracks) => tracks);
+
+    final localMap = {for (final track in localTracks) track.id.value: track};
+    final remoteIds = <String>{};
 
     for (final remoteTrack in remoteTracks) {
-      try {
-        // Get local version if it exists using available method
-        final localResult = await _localDataSource.getTrackById(
-          remoteTrack.id.value,
-        );
-        final localTrack = localResult.fold(
-          (failure) => null,
-          (track) => track,
-        );
+      final remoteId = remoteTrack.id.value;
+      remoteIds.add(remoteId);
 
-        // Check if update is needed
-        if (localTrack == null || _hasTrackChanged(localTrack, remoteTrack)) {
-          // Update needed
-          await _localDataSource.cacheTrack(remoteTrack);
-          updateCount++;
-
-          AppLogger.database(
-            'Updated track: ${remoteTrack.name}',
-            table: 'audio_tracks',
-          );
-        }
-      } catch (e) {
-        AppLogger.warning(
-          'Failed to update track ${remoteTrack.name}: $e',
-          tag: 'AudioTrackSyncService',
+      final localTrack = localMap[remoteId];
+      if (localTrack == null || _hasTrackChanged(localTrack, remoteTrack)) {
+        final cacheResult = await _localDataSource.cacheTrack(remoteTrack);
+        cacheResult.fold(
+          (failure) => AppLogger.warning(
+            'Failed to cache track ${remoteTrack.name}: ${failure.message}',
+            tag: 'AudioTrackSyncService',
+          ),
+          (_) {
+            updateCount++;
+          },
         );
-        // Continue with other tracks
       }
     }
 
-    return updateCount;
+    final idsToRemove = localMap.keys.toSet().difference(remoteIds);
+    for (final idToRemove in idsToRemove) {
+      final deleteResult = await _localDataSource.deleteTrack(idToRemove);
+      deleteResult.fold(
+        (failure) => AppLogger.warning(
+          'Failed to remove local track $idToRemove: ${failure.message}',
+          tag: 'AudioTrackSyncService',
+        ),
+        (_) {
+          deleteCount++;
+        },
+      );
+    }
+
+    return updateCount + deleteCount;
   }
 
   /// 🔍 Simple change detection (like we had in repository)

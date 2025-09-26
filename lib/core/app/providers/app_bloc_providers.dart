@@ -3,6 +3,7 @@ import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
@@ -11,6 +12,18 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_b
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
+import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
+import 'package:trackflow/core/notifications/presentation/blocs/watcher/notification_watcher_bloc.dart';
+import 'package:trackflow/features/invitations/presentation/blocs/watcher/project_invitation_watcher_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
+import 'package:trackflow/features/track_version/presentation/cubit/track_detail_cubit.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
+import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 /// Factory for creating BLoC providers following SOLID principles
 ///
@@ -62,6 +75,10 @@ class AppBlocProviders {
                   ..add(const AudioPlayerInitializeRequested()),
       ),
       BlocProvider<WaveformBloc>(create: (context) => sl<WaveformBloc>()),
+      // Global AudioContextBloc for MiniAudioPlayer and background playback
+      BlocProvider<AudioContextBloc>(
+        create: (context) => sl<AudioContextBloc>(),
+      ),
     ];
   }
 
@@ -92,5 +109,68 @@ class AppBlocProviders {
       default:
         return [];
     }
+  }
+
+  /// Get providers for the main app shell (dashboard, projects, etc.)
+  static List<BlocProvider> getMainShellProviders() {
+    return [
+      BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
+      // AudioContextBloc moved to getAudioProviders() for global access
+      BlocProvider<NotificationWatcherBloc>(
+        create: (_) => sl<NotificationWatcherBloc>(),
+      ),
+      BlocProvider<ProjectInvitationWatcherBloc>(
+        create: (_) => sl<ProjectInvitationWatcherBloc>(),
+      ),
+    ];
+  }
+
+  /// Get providers for track detail screen
+  static List<BlocProvider> getTrackDetailProviders() {
+    return [
+      BlocProvider<TrackCacheBloc>(create: (context) => sl<TrackCacheBloc>()),
+      BlocProvider<AudioCommentBloc>(
+        create: (context) => sl<AudioCommentBloc>(),
+      ),
+      BlocProvider<TrackVersionsBloc>(
+        create: (context) => sl<TrackVersionsBloc>(),
+      ),
+      BlocProvider<TrackDetailCubit>(
+        create: (context) => sl<TrackDetailCubit>(),
+      ),
+    ];
+  }
+
+  /// Get providers for artist profile screen
+  static List<BlocProvider> getArtistProfileProviders() {
+    return [
+      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
+    ];
+  }
+
+  /// Get providers for project details screen
+  static List<BlocProvider> getProjectDetailsProviders(Project project) {
+    return [
+      BlocProvider<ProjectDetailBloc>(create: (_) => sl<ProjectDetailBloc>()),
+      BlocProvider<ManageCollaboratorsBloc>(
+        create:
+            (_) =>
+                sl<ManageCollaboratorsBloc>()
+                  ..add(WatchCollaborators(projectId: project.id)),
+      ),
+      BlocProvider<PlaylistBloc>(create: (_) => sl<PlaylistBloc>()),
+    ];
+  }
+
+  /// Get providers for manage collaborators screen
+  static List<BlocProvider> getManageCollaboratorsProviders(Project project) {
+    return [
+      BlocProvider<ManageCollaboratorsBloc>(
+        create:
+            (_) =>
+                sl<ManageCollaboratorsBloc>()
+                  ..add(WatchCollaborators(projectId: project.id)),
+      ),
+    ];
   }
 }

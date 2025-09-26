@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+// duplicate import removed
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
@@ -14,6 +14,14 @@ import 'package:trackflow/features/project_detail/presentation/components/upload
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/up_load_track_form.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
+import 'package:trackflow/features/playlist/presentation/bloc/playlist_state.dart';
+import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
+import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
+import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
+import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 class PlaylistTracksWidget extends StatefulWidget {
   final Playlist playlist;
@@ -47,38 +55,60 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
           setState(() => _isUploadingTrack = false);
         }
       },
-      child: AppTrackList(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        tracks: [
-          ...widget.tracks.map((track) {
-            final index = widget.tracks.indexOf(track);
-            return TrackComponent(
-              track: track,
-              projectId:
-                  widget.projectId != null
-                      ? ProjectId.fromUniqueString(widget.projectId!)
-                      : track.projectId,
-              onPlay: () {
-                context.read<AudioPlayerBloc>().add(
-                  PlayPlaylistRequested(
-                    tracks: widget.tracks,
-                    startIndex: index,
-                  ),
+      child: BlocBuilder<PlaylistBloc, PlaylistState>(
+        builder: (context, state) {
+          final items = state.items;
+          final tracksForPlayer = state.tracks;
+          return AppTrackList(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            tracks: [
+              ...List.generate(items.length, (index) {
+                final vm = items[index];
+                final row = TrackComponent(
+                  vm: vm,
+                  projectId:
+                      widget.projectId != null
+                          ? ProjectId.fromUniqueString(widget.projectId!)
+                          : vm.track.projectId,
+                  onPlay: () {
+                    context.read<AudioPlayerBloc>().add(
+                      PlayPlaylistRequested(
+                        tracks: tracksForPlayer,
+                        startIndex: index,
+                      ),
+                    );
+                  },
                 );
-              },
-            );
-          }),
-          // Add upload track button at the end
-          if (widget.projectId != null)
-            UploadTrackButton(
-              projectId: ProjectId.fromUniqueString(widget.projectId!),
-              onTap:
-                  _isUploadingTrack
-                      ? null
-                      : () => _showUploadTrackForm(context),
-            ),
-        ],
+                return MultiBlocProvider(
+                  providers: [
+                    BlocProvider(create: (_) => sl<TrackCacheBloc>()),
+                    BlocProvider(
+                      create:
+                          (_) =>
+                              sl<AudioContextBloc>()
+                                ..add(LoadTrackContextRequested(vm.track.id)),
+                    ),
+                    BlocProvider(
+                      create:
+                          (_) =>
+                              sl<TrackUploadStatusCubit>()..watch(vm.track.id),
+                    ),
+                  ],
+                  child: row,
+                );
+              }),
+              if (widget.projectId != null)
+                UploadTrackButton(
+                  projectId: ProjectId.fromUniqueString(widget.projectId!),
+                  onTap:
+                      _isUploadingTrack
+                          ? null
+                          : () => _showUploadTrackForm(context),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

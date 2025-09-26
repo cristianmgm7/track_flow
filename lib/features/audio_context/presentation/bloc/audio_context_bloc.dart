@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_context/domain/usecases/load_track_context_usecase.dart';
 import '../../domain/entities/track_context.dart';
+import '../../infrastructure/services/track_context_background_service.dart';
 import 'audio_context_event.dart';
 import 'audio_context_state.dart';
 
@@ -48,6 +49,8 @@ class AudioContextBloc extends Bloc<AudioContextEvent, AudioContextState> {
           );
         },
         (context) {
+          // Update background service cache
+          TrackContextBackgroundService.instance.updateCurrentContext(context);
           emit(AudioContextLoaded(context));
         },
       );
@@ -76,7 +79,7 @@ class AudioContextBloc extends Bloc<AudioContextEvent, AudioContextState> {
   }
 
   /// Convenience getters for current context
-  UserProfile? get collaborator => currentContext?.collaborator;
+  TrackContextCollaborator? get collaborator => currentContext?.collaborator;
   String? get projectId => currentContext?.projectId;
   String? get projectName => currentContext?.projectName;
   DateTime? get uploadedAt => currentContext?.uploadedAt;

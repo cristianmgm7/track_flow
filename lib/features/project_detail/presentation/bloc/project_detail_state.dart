@@ -3,19 +3,17 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart';
-import 'package:trackflow/features/project_detail/domain/entities/active_version_summary.dart';
 
 class ProjectDetailState extends Equatable {
   final Project? project;
   final List<AudioTrack> tracks;
   final List<UserProfile> collaborators;
   final AudioTrackSort sort;
-  final Map<String, ActiveVersionSummary> activeVersionsByTrackId;
+  // Removed activeVersionsByTrackId from project detail; handled by playlist
 
   final bool isLoadingProject;
   final bool isLoadingTracks;
   final bool isLoadingCollaborators;
-
   final String? projectError;
   final String? tracksError;
   final String? collaboratorsError;
@@ -24,7 +22,6 @@ class ProjectDetailState extends Equatable {
     required this.project,
     required this.tracks,
     required this.collaborators,
-    this.activeVersionsByTrackId = const {},
     this.sort = AudioTrackSort.newest,
     required this.isLoadingProject,
     required this.isLoadingTracks,
@@ -38,7 +35,6 @@ class ProjectDetailState extends Equatable {
     project: null,
     tracks: [],
     collaborators: [],
-    activeVersionsByTrackId: {},
     sort: AudioTrackSort.newest,
     isLoadingProject: false,
     isLoadingTracks: false,
@@ -52,7 +48,6 @@ class ProjectDetailState extends Equatable {
     Project? project,
     List<AudioTrack>? tracks,
     List<UserProfile>? collaborators,
-    Map<String, ActiveVersionSummary>? activeVersionsByTrackId,
     AudioTrackSort? sort,
     bool? isLoadingProject,
     bool? isLoadingTracks,
@@ -65,8 +60,6 @@ class ProjectDetailState extends Equatable {
       project: project ?? this.project,
       tracks: tracks ?? this.tracks,
       collaborators: collaborators ?? this.collaborators,
-      activeVersionsByTrackId:
-          activeVersionsByTrackId ?? this.activeVersionsByTrackId,
       sort: sort ?? this.sort,
       isLoadingProject: isLoadingProject ?? this.isLoadingProject,
       isLoadingTracks: isLoadingTracks ?? this.isLoadingTracks,
@@ -83,7 +76,7 @@ class ProjectDetailState extends Equatable {
     project,
     tracks,
     collaborators,
-    activeVersionsByTrackId,
+    // activeVersionsByTrackId removed
     sort,
     isLoadingProject,
     isLoadingTracks,

@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'dart:async';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
@@ -49,20 +50,43 @@ class WaveformRepositoryImpl implements WaveformRepository {
 
   @override
   Future<Either<Failure, Unit>> deleteWaveformsForVersion(
+    AudioTrackId trackId,
     TrackVersionId versionId,
   ) async {
     try {
-      // Delete remote waveforms first (if available)
-      // Note: We would need trackId to call remote deletion, but it's not available here
-      // The remote waveform deletion should be handled by the track deletion process
-      // since waveforms are associated with track versions and should be cleaned up
-      // when the version is deleted from Firebase
-
-      // Delete local waveforms
+      // 1. ALWAYS delete locally first (offline-first principle)
       await _localDataSource.deleteWaveformsForVersion(versionId);
+
+      // 2. Queue for background sync to delete remotely
+      final queueResult = await _pendingOperationsManager.addOperation(
+        entityType: 'audio_waveform',
+        entityId: versionId.value,
+        operationType: 'delete',
+        priority: SyncPriority.medium,
+        data: {'trackId': trackId.value, 'versionId': versionId.value},
+      );
+
+      // 3. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue waveform deletion: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 4. Trigger upstream sync only (more efficient for deletions)
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'audio_waveforms_delete_${versionId.value}',
+        ),
+      );
+
+      // 5. Return success after successful local deletion and queuing
       return const Right(unit);
     } catch (e) {
-      return Left(ServerFailure('Failed to delete waveforms: $e'));
+      return Left(DatabaseFailure('Critical waveform deletion error: $e'));
     }
   }
 

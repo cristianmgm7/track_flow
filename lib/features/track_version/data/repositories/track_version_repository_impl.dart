@@ -126,7 +126,12 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       // Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_update',
+          syncKey: 'track_versions_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'track_versions_${trackId.value}',
         ),
       );
 
@@ -151,7 +156,12 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       // Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_update',
+          syncKey: 'track_versions_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'track_versions_${versionId.value}',
         ),
       );
 
@@ -182,7 +192,12 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       // Trigger upstream sync only (more efficient for local changes)
       unawaited(
         _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_update',
+          syncKey: 'track_versions_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'track_versions_${versionId.value}',
         ),
       );
 
@@ -265,6 +280,16 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         entityId: versionId.value,
         priority: SyncPriority.medium,
       );
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'track_versions_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'track_versions_${versionId.value}',
+        ),
+      );
     } catch (e) {
       AppLogger.error(
         'Failed to queue track version delete operation: $e',
@@ -291,6 +316,16 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         entityId: versionId.value,
         data: operationData,
         priority: SyncPriority.medium,
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerUpstreamSync(
+          syncKey: 'track_versions_upstream',
+        ),
+      );
+      unawaited(
+        _backgroundSyncCoordinator.triggerBackgroundSync(
+          syncKey: 'track_versions_${versionId.value}',
+        ),
       );
     } catch (e) {
       AppLogger.error(

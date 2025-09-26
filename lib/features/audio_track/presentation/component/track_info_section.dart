@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/audio_context/domain/entities/track_context.dart';
 import 'package:trackflow/features/ui/animations/soundbar_animation.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
@@ -8,6 +7,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_s
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_state.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 /// Configuration for track info section display
 class TrackInfoConfig {

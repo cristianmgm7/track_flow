@@ -60,8 +60,19 @@ workflows:
           else
             echo "Firebase plist not found at $SRC"; exit 1;
           fi
-      - name: 🍎 Install iOS dependencies
-        script: cd ios && pod install --repo-update && cd ..
+      - name: 🍎 Clean and install iOS dependencies
+        script: |
+          set -euo pipefail
+          echo "Cleaning CocoaPods cache..."
+          pod cache clean --all || true
+          rm -rf ~/.cocoapods || true
+          echo "Cleaning derived data and module cache..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode || true
+          cd ios
+          echo "Installing pods with fresh cache..."
+          pod install --repo-update
+          cd ..
       - name: 🔨 Build iOS (no codesign)
         script: |
           set -euo pipefail
@@ -75,7 +86,7 @@ workflows:
             *) echo "Unknown flavor $FLAVOR"; exit 1;;
           esac
           echo "Using entrypoint: $ENTRY"
-          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios --enable-experiment=modules
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -175,8 +186,19 @@ workflows:
           else
             echo "Firebase plist not found at $SRC"; exit 1;
           fi
-      - name: 🍎 Install iOS dependencies
-        script: cd ios && pod install --repo-update && cd ..
+      - name: 🍎 Clean and install iOS dependencies
+        script: |
+          set -euo pipefail
+          echo "Cleaning CocoaPods cache..."
+          pod cache clean --all || true
+          rm -rf ~/.cocoapods || true
+          echo "Cleaning derived data and module cache..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode || true
+          cd ios
+          echo "Installing pods with fresh cache..."
+          pod install --repo-update
+          cd ..
       - name: 🔨 Build iOS (no codesign)
         script: |
           set -euo pipefail
@@ -190,7 +212,7 @@ workflows:
             *) echo "Unknown flavor $FLAVOR"; exit 1;;
           esac
           echo "Using entrypoint: $ENTRY"
-          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios --enable-experiment=modules
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail
@@ -290,8 +312,19 @@ workflows:
           else
             echo "Firebase plist not found at $SRC"; exit 1;
           fi
-      - name: 🍎 Install iOS dependencies
-        script: cd ios && pod install --repo-update && cd ..
+      - name: 🍎 Clean and install iOS dependencies
+        script: |
+          set -euo pipefail
+          echo "Cleaning CocoaPods cache..."
+          pod cache clean --all || true
+          rm -rf ~/.cocoapods || true
+          echo "Cleaning derived data and module cache..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData || true
+          rm -rf ~/Library/Caches/com.apple.dt.Xcode || true
+          cd ios
+          echo "Installing pods with fresh cache..."
+          pod install --repo-update
+          cd ..
       - name: 🔨 Build iOS (no codesign)
         script: |
           set -euo pipefail
@@ -305,7 +338,7 @@ workflows:
             *) echo "Unknown flavor $FLAVOR"; exit 1;;
           esac
           echo "Using entrypoint: $ENTRY"
-          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose
+          flutter build ios --flavor $FLAVOR --release -t $ENTRY --no-codesign --build-number $NEW_BUILD_NUMBER --verbose --dart-define=FLUTTER_TARGET_PLATFORM=ios --enable-experiment=modules
       - name: 🏗️ Export IPA with Xcode
         script: |
           set -euo pipefail

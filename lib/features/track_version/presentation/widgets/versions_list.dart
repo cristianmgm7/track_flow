@@ -90,7 +90,6 @@ class VersionsList extends StatelessWidget {
                     ),
                     selected: isSelected,
                     onSelected: (_) {
-                      // Only update local selection via cubit
                       context.read<TrackDetailCubit>().setActiveVersion(v.id);
                       onVersionSelected?.call(v.id);
                     },

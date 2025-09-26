@@ -7,7 +7,7 @@ import '../../../audio_track/domain/entities/audio_track.dart';
 // versionId is used via type import in args; kept if referenced elsewhere
 import '../components/comments_section.dart';
 import '../components/comment_input_modal.dart';
-import '../components/audio_comment_player.dart';
+import '../../../waveform/presentation/widgets/audio_comment_player.dart';
 
 /// Arguments for the audio comments screen
 class AudioCommentsScreenArgs {

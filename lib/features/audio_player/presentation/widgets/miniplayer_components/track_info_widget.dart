@@ -1,69 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/audio_player_bloc.dart';
 import '../../bloc/audio_player_state.dart';
 import '../../../../audio_context/presentation/bloc/audio_context_bloc.dart';
 import '../../../../audio_context/presentation/bloc/audio_context_state.dart';
+import '../../../../audio_context/presentation/bloc/audio_context_event.dart';
+import '../../../../../core/entities/unique_id.dart';
 import 'duration_formatter.dart';
-import 'track_context_service.dart';
 
-class TrackDisplayInfo {
-  final String title;
-  final String duration;
-  final String trackId;
-
-  const TrackDisplayInfo({
-    required this.title,
-    required this.duration,
-    required this.trackId,
-  });
-}
-
-abstract class ITrackInfoBuilder {
-  TrackDisplayInfo buildFromState(AudioPlayerState state);
-}
-
-class TrackInfoBuilder implements ITrackInfoBuilder {
-  @override
-  TrackDisplayInfo buildFromState(AudioPlayerState state) {
-    String title = 'No track';
-    String duration = '';
-    String trackId = '';
-
-    if (state is AudioPlayerSessionState) {
-      final session = state.session;
-      if (session.currentTrack != null) {
-        title = session.currentTrack!.title;
-        trackId = session.currentTrack!.id.value;
-
-        if (session.duration != null) {
-          duration = DurationFormatter.format(session.duration!);
-        }
-      }
-    } else if (state is AudioPlayerReady) {
-      title = 'Ready to play';
-    } else if (state is AudioPlayerLoading) {
-      title = 'Loading...';
-    } else if (state is AudioPlayerError) {
-      title = 'Error';
-    }
-
-    return TrackDisplayInfo(title: title, duration: duration, trackId: trackId);
-  }
-}
-
+/// Simple, focused widget for displaying track information in the mini player
 class TrackInfoWidget extends StatefulWidget {
-  const TrackInfoWidget({
-    super.key,
-    required this.state,
-    required this.onTap,
-    this.trackContextService,
-    this.trackInfoBuilder,
-  });
+  const TrackInfoWidget({super.key, required this.onTap});
 
-  final AudioPlayerState state;
   final VoidCallback onTap;
-  final ITrackContextService? trackContextService;
-  final ITrackInfoBuilder? trackInfoBuilder;
 
   @override
   State<TrackInfoWidget> createState() => _TrackInfoWidgetState();
@@ -71,121 +20,156 @@ class TrackInfoWidget extends StatefulWidget {
 
 class _TrackInfoWidgetState extends State<TrackInfoWidget> {
   String? _currentTrackId;
-  late final ITrackContextService _contextService;
-  late final ITrackInfoBuilder _infoBuilder;
-
-  @override
-  void initState() {
-    super.initState();
-    _contextService = widget.trackContextService ?? TrackContextService();
-    _infoBuilder = widget.trackInfoBuilder ?? TrackInfoBuilder();
-  }
-
-  void _handleTrackChange(String trackId) {
-    if (trackId != _currentTrackId && trackId.isNotEmpty) {
-      _currentTrackId = trackId;
-      if (!mounted) return;
-      _contextService.loadTrackContext(context, trackId);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final trackInfo = _infoBuilder.buildFromState(widget.state);
 
-    // Trigger only when props change; avoid scheduling after unmount
-    if (mounted) {
+    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+      builder: (context, playerState) {
+        // Extract track info from player state
+        String title = 'No track';
+        String trackId = '';
+
+        if (playerState is AudioPlayerSessionState) {
+          final session = playerState.session;
+          if (session.currentTrack != null) {
+            title = session.currentTrack!.title;
+            trackId = session.currentTrack!.id.value;
+            _loadContextIfNeeded(trackId);
+          }
+        } else if (playerState is AudioPlayerReady) {
+          title = 'Ready to play';
+        }
+
+        return GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Track title
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                // Artist and duration from context
+                BlocBuilder<AudioContextBloc, AudioContextState>(
+                  builder: (context, contextState) {
+                    if (contextState is AudioContextLoaded) {
+                      final context = contextState.context;
+                      final artist =
+                          context.collaborator?.name ?? 'Unknown Artist';
+                      final duration = context.activeVersionDuration;
+
+                      final durationText =
+                          duration != null && duration.inMilliseconds > 0
+                              ? DurationFormatter.format(duration)
+                              : '';
+
+                      final hasSecondLine =
+                          artist.isNotEmpty || durationText.isNotEmpty;
+
+                      return hasSecondLine
+                          ? Padding(
+                            padding: const EdgeInsets.only(top: 2.0),
+                            child: Row(
+                              children: [
+                                if (artist.isNotEmpty) ...[
+                                  Flexible(
+                                    child: Text(
+                                      artist,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color
+                                                ?.withOpacity(0.7),
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (durationText.isNotEmpty) ...[
+                                    Text(
+                                      ' • ',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .textTheme
+                                                .bodySmall
+                                                ?.color
+                                                ?.withOpacity(0.5),
+                                          ),
+                                    ),
+                                  ],
+                                ],
+                                if (durationText.isNotEmpty)
+                                  Text(
+                                    durationText,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.textTheme.bodySmall?.color
+                                          ?.withOpacity(0.7),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          )
+                          : const SizedBox.shrink();
+                    } else if (contextState is AudioContextLoading) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(
+                          'Loading artist...',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.textTheme.bodySmall?.color
+                                ?.withOpacity(0.5),
+                          ),
+                        ),
+                      );
+                    } else if (contextState is AudioContextError) {
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 2.0),
+                        child: Text(
+                          'Tap to retry',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error.withOpacity(0.7),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Load track context when track changes
+  void _loadContextIfNeeded(String trackId) {
+    if (trackId != _currentTrackId && trackId.isNotEmpty) {
+      _currentTrackId = trackId;
+
+      // Trigger context loading using postframe callback to avoid build conflicts
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _handleTrackChange(trackInfo.trackId);
+
+        context.read<AudioContextBloc>().add(
+          LoadTrackContextRequested(AudioTrackId.fromUniqueString(trackId)),
+        );
       });
     }
-
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        padding: const EdgeInsets.only(right: 12.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              trackInfo.title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            BlocBuilder<AudioContextBloc, AudioContextState>(
-              builder: (context, contextState) {
-                String displayArtist = '';
-
-                if (contextState is AudioContextLoaded &&
-                    contextState.context.collaborator != null) {
-                  displayArtist = contextState.context.collaborator!.name;
-                } else if (contextState is AudioContextLoading) {
-                  displayArtist = 'Loading artist...';
-                } else if (contextState is AudioContextError) {
-                  displayArtist = 'Tap to retry';
-                }
-
-                return (displayArtist.isNotEmpty ||
-                        trackInfo.duration.isNotEmpty)
-                    ? Padding(
-                      padding: const EdgeInsets.only(top: 2.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: Row(
-                          children: [
-                            if (displayArtist.isNotEmpty) ...[
-                              Flexible(
-                                child: Text(
-                                  displayArtist,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color
-                                        ?.withValues(alpha: 0.7),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                            if (displayArtist.isNotEmpty &&
-                                trackInfo.duration.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4.0,
-                                ),
-                                child: Text(
-                                  '•',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.textTheme.bodySmall?.color
-                                        ?.withValues(alpha: 0.7),
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (trackInfo.duration.isNotEmpty)
-                              Text(
-                                trackInfo.duration,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.textTheme.bodySmall?.color
-                                      ?.withValues(alpha: 0.7),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    )
-                    : const SizedBox.shrink();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

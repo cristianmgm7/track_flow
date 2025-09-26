@@ -4,7 +4,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_b
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/playlist/presentation/utils/playlist_utils.dart';
-import 'package:trackflow/features/playlist/presentation/widgets/buttons/play_pause_button.dart';
+import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/shuffle_button.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/buttons/repeat_button.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
@@ -110,13 +110,14 @@ class _PlaylistControlsWidgetState extends State<PlaylistControlsWidget> {
               },
             ),
             const SizedBox(width: 8),
-            PlayPauseButton(
+            AudioPlayPauseButton(
               isPlaying:
                   isPlayingFromThisPlaylist &&
                   playerState is AudioPlayerPlaying,
               isBuffering:
                   isPlayingFromThisPlaylist &&
                   playerState is AudioPlayerBuffering,
+              size: 48,
               onPressed: () {
                 if (isPlayingFromThisPlaylist &&
                     playerState is AudioPlayerPlaying) {
