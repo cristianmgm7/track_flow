@@ -1,272 +1,93 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
-import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
-import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
-import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart';
+import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
+import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
+import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
-/// 🎵 SIMPLE AUDIO TRACK SYNC SERVICE
-///
-/// Pragmatic service that handles downstream sync for audio tracks:
-/// - Fetches user projects to get track IDs
-/// - Fetches all remote tracks for those projects
-/// - Compares with local cache
-/// - Only updates tracks that actually changed
-/// - Uses simple timestamp logic (15 min intervals)
-///
-/// ✅ CLEAN ARCHITECTURE:
-/// - Repository stays clean (only CRUD)
-/// - Service handles sync complexity
-/// - Use case orchestrates the flow
-///
-/// 🚀 STRATEGY (Option 2 - Smart Logic):
-/// 1. Check if sync is needed (15 min since last sync)
-/// 2. Fetch user projects to get project IDs
-/// 3. Fetch all remote tracks for those projects
-/// 4. Smart comparison - only update changed tracks
-/// 5. Preserve local data on failures
 @LazySingleton()
-class AudioTrackIncrementalSyncService {
+class AudioTrackIncrementalSyncService
+    implements IncrementalSyncService<AudioTrackDTO> {
   final AudioTrackRemoteDataSource _remoteDataSource;
   final AudioTrackLocalDataSource _localDataSource;
-  final ProjectRemoteDataSource _projectRemoteDataSource;
 
   AudioTrackIncrementalSyncService(
     this._remoteDataSource,
     this._localDataSource,
-    this._projectRemoteDataSource,
   );
 
-  /// 🔄 Perform smart sync with timestamp logic
-  /// Returns the number of tracks updated
-  Future<Either<Failure, int>> performSmartSync(String userId) async {
-    try {
-      AppLogger.sync('AUDIO_TRACKS', 'Starting smart sync', syncKey: userId);
-
-      // 1. 📅 Check if sync is needed (15 min intervals)
-      final shouldSync = await _shouldSyncTracks();
-      if (!shouldSync) {
-        AppLogger.sync(
-          'AUDIO_TRACKS',
-          'Skipping sync - data is fresh',
-          syncKey: userId,
-        );
-        return const Right(0);
-      }
-
-      // 2. 📋 Get user projects first
-      final projectsResult = await _projectRemoteDataSource.getUserProjects(
-        userId,
-      );
-
-      return await projectsResult.fold(
-        (failure) async {
-          AppLogger.warning(
-            'Failed to fetch user projects: ${failure.message}',
-            tag: 'AudioTrackSyncService',
-          );
-          return Left(failure);
-        },
-        (projects) async {
-          if (projects.isEmpty) {
-            AppLogger.sync(
-              'AUDIO_TRACKS',
-              'No projects found - skipping sync',
-              syncKey: userId,
-            );
-            return const Right(0);
-          }
-
-          // 3. 🎵 Get project IDs and fetch tracks
-          final projectIds = projects.map((p) => p.id).toList();
-          final tracksResult = await _getTracksForProjects(projectIds);
-
-          return tracksResult.fold((failure) => Left(failure), (
-            remoteTracks,
-          ) async {
-            final updateCount = await _updateChangedTracks(remoteTracks);
-
-            await _markTracksAsSynced();
-
-            AppLogger.sync(
-              'AUDIO_TRACKS',
-              'Sync completed - updated $updateCount tracks',
-              syncKey: userId,
-            );
-
-            return Right(updateCount);
-          });
-        },
-      );
-    } catch (e) {
-      AppLogger.error(
-        'Smart sync failed: $e',
-        tag: 'AudioTrackSyncService',
-        error: e,
-      );
-      return Left(ServerFailure('Smart sync failed: $e'));
-    }
-  }
-
-  /// 🎵 Get tracks for multiple projects
-  Future<Either<Failure, List<AudioTrackDTO>>> _getTracksForProjects(
-    List<String> projectIds,
+  @override
+  Future<Either<Failure, List<AudioTrackDTO>>> getModifiedSince(
+    DateTime lastSyncTime,
+    String userId,
   ) async {
-    try {
-      final tracks = await _remoteDataSource.getTracksByProjectIds(projectIds);
-      return Right(tracks);
-    } catch (e) {
-      return Left(ServerFailure('Failed to fetch tracks for projects: $e'));
-    }
+    return const Right([]);
   }
 
-  /// 📅 Check if sync is needed (simple timestamp logic)
-  Future<bool> _shouldSyncTracks() async {
-    try {
-      // Get all local tracks and find the most recent sync time
-      final localResult = await _localDataSource.getAllTracks();
-
-      return localResult.fold(
-        (failure) => true, // Error getting local = sync needed
-        (localTracks) {
-          if (localTracks.isEmpty) {
-            return true; // No local tracks = sync needed
-          }
-
-          // Find the most recent sync time
-          DateTime? mostRecentSync;
-          for (final track in localTracks) {
-            final trackSyncTime = track.lastModified ?? track.createdAt;
-            if (trackSyncTime != null &&
-                (mostRecentSync == null ||
-                    trackSyncTime.isAfter(mostRecentSync))) {
-              mostRecentSync = trackSyncTime;
-            }
-          }
-
-          if (mostRecentSync == null) {
-            return true; // No sync metadata = sync needed
-          }
-
-          // Check if 15 minutes have passed
-          final now = DateTime.now();
-          final timeSinceSync = now.difference(mostRecentSync);
-          return timeSinceSync.inMinutes >= 15;
-        },
-      );
-    } catch (e) {
-      AppLogger.warning(
-        'Error checking track sync need: $e - defaulting to sync',
-        tag: 'AudioTrackSyncService',
-      );
-      return true; // Default to sync on error
-    }
+  @override
+  Future<Either<Failure, bool>> hasModifiedSince(
+    DateTime lastSyncTime,
+    String userId,
+  ) async {
+    return const Right(true);
   }
 
-  /// 🧠 Smart update: only change tracks that actually changed
-  Future<int> _updateChangedTracks(List<AudioTrackDTO> remoteTracks) async {
-    var updateCount = 0;
-    var deleteCount = 0;
-
-    final localResult = await _localDataSource.getAllTracks();
-    final localTracks = localResult.fold((failure) {
-      AppLogger.warning(
-        'Failed to load local tracks for sync: ${failure.message}',
-        tag: 'AudioTrackSyncService',
-      );
-      return <AudioTrackDTO>[];
-    }, (tracks) => tracks);
-
-    final localMap = {for (final track in localTracks) track.id.value: track};
-    final remoteIds = <String>{};
-
-    for (final remoteTrack in remoteTracks) {
-      final remoteId = remoteTrack.id.value;
-      remoteIds.add(remoteId);
-
-      final localTrack = localMap[remoteId];
-      if (localTrack == null || _hasTrackChanged(localTrack, remoteTrack)) {
-        final cacheResult = await _localDataSource.cacheTrack(remoteTrack);
-        cacheResult.fold(
-          (failure) => AppLogger.warning(
-            'Failed to cache track ${remoteTrack.name}: ${failure.message}',
-            tag: 'AudioTrackSyncService',
-          ),
-          (_) {
-            updateCount++;
-          },
-        );
-      }
-    }
-
-    final idsToRemove = localMap.keys.toSet().difference(remoteIds);
-    for (final idToRemove in idsToRemove) {
-      final deleteResult = await _localDataSource.deleteTrack(idToRemove);
-      deleteResult.fold(
-        (failure) => AppLogger.warning(
-          'Failed to remove local track $idToRemove: ${failure.message}',
-          tag: 'AudioTrackSyncService',
-        ),
-        (_) {
-          deleteCount++;
-        },
-      );
-    }
-
-    return updateCount + deleteCount;
+  @override
+  Future<Either<Failure, DateTime>> getServerTimestamp() async {
+    return Right(DateTime.now().toUtc());
   }
 
-  /// 🔍 Simple change detection (like we had in repository)
-  bool _hasTrackChanged(AudioTrackDTO local, AudioTrackDTO remote) {
-    // Compare key fields that indicate change
-    return local.name != remote.name ||
-        local.duration != remote.duration ||
-        local.projectId != remote.projectId ||
-        local.uploadedBy != remote.uploadedBy ||
-        (remote.lastModified != null &&
-            (local.lastModified == null ||
-                remote.lastModified!.isAfter(local.lastModified!)));
+  @override
+  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
+    DateTime lastSyncTime,
+    String userId,
+  ) async {
+    return const Right([]);
   }
 
-  /// 📝 Mark tracks as synced (simple timestamp update)
-  Future<void> _markTracksAsSynced() async {
-    try {
-      // For now, we rely on the fact that tracks were just updated
-      // with fresh remote data, so their timestamps are current
-      AppLogger.info(
-        'Audio tracks marked as synced',
-        tag: 'AudioTrackSyncService',
-      );
-    } catch (e) {
-      AppLogger.warning(
-        'Failed to mark tracks as synced: $e',
-        tag: 'AudioTrackSyncService',
-      );
-    }
+  @override
+  Future<Either<Failure, List<String>>> getDeletedSince(
+    DateTime lastSyncTime,
+    String userId,
+  ) async {
+    return const Right([]);
   }
 
-  /// 📊 Get simple sync statistics for monitoring
-  Future<Map<String, dynamic>> getSyncStatistics(String userId) async {
-    try {
-      final localResult = await _localDataSource.getAllTracks();
-      final localCount = localResult.fold(
-        (failure) => 0,
-        (tracks) => tracks.length,
-      );
+  @override
+  Future<Either<Failure, IncrementalSyncResult<AudioTrackDTO>>>
+  performIncrementalSync(DateTime lastSyncTime, String userId) async {
+    // TODO: Implement proper incremental sync
+    return Right(
+      IncrementalSyncResult(
+        modifiedItems: [],
+        deletedItemIds: [],
+        serverTimestamp: DateTime.now().toUtc(),
+        totalProcessed: 0,
+      ),
+    );
+  }
 
-      return {
-        'userId': userId,
-        'localTracksCount': localCount,
-        'syncStrategy': 'smart_timestamp_based',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-    } catch (e) {
-      return {
-        'error': 'Failed to get sync statistics: $e',
-        'timestamp': DateTime.now().toIso8601String(),
-      };
-    }
+  @override
+  Future<Either<Failure, IncrementalSyncResult<AudioTrackDTO>>> performFullSync(
+    String userId,
+  ) async {
+    return performIncrementalSync(
+      DateTime.fromMillisecondsSinceEpoch(0),
+      userId,
+    );
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getSyncStatistics(
+    String userId,
+  ) async {
+    return Right({
+      'userId': userId,
+      'totalTracks': 0,
+      'syncStrategy': 'placeholder',
+      'lastSync': DateTime.now().toIso8601String(),
+    });
   }
 }

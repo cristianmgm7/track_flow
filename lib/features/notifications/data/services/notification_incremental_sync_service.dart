@@ -2,13 +2,13 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
-import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
+import 'package:trackflow/core/notifications/domain/entities/notification.dart';
 
 @LazySingleton()
-class TrackVersionIncrementalSyncService
-    implements IncrementalSyncService<TrackVersionDTO> {
+class NotificationIncrementalSyncService
+    implements IncrementalSyncService<Notification> {
   @override
-  Future<Either<Failure, List<TrackVersionDTO>>> getModifiedSince(
+  Future<Either<Failure, List<Notification>>> getModifiedSince(
     DateTime lastSyncTime,
     String userId,
   ) async {
@@ -45,7 +45,7 @@ class TrackVersionIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, IncrementalSyncResult<TrackVersionDTO>>>
+  Future<Either<Failure, IncrementalSyncResult<Notification>>>
   performIncrementalSync(DateTime lastSyncTime, String userId) async {
     return Right(
       IncrementalSyncResult(
@@ -58,8 +58,9 @@ class TrackVersionIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, IncrementalSyncResult<TrackVersionDTO>>>
-  performFullSync(String userId) async {
+  Future<Either<Failure, IncrementalSyncResult<Notification>>> performFullSync(
+    String userId,
+  ) async {
     return performIncrementalSync(
       DateTime.fromMillisecondsSinceEpoch(0),
       userId,
@@ -72,7 +73,7 @@ class TrackVersionIncrementalSyncService
   ) async {
     return Right({
       'userId': userId,
-      'totalVersions': 0,
+      'totalNotifications': 0,
       'syncStrategy': 'placeholder',
       'lastSync': DateTime.now().toIso8601String(),
     });
