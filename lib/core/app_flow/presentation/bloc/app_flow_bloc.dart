@@ -113,7 +113,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       // Trigger background sync if user is ready (non-blocking)
       if (bootstrapResult.state == AppInitialState.dashboard &&
           bootstrapResult.userSession?.currentUser != null) {
-        _backgroundSyncCoordinator.performFullSync(
+        _backgroundSyncCoordinator.pullDownstream(
           bootstrapResult.userSession!.currentUser!.id.value,
         );
       }

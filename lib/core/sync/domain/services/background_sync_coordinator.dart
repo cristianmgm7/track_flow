@@ -41,7 +41,7 @@ class BackgroundSyncCoordinator {
   }
 
   /// Perform full sync (upstream + downstream)
-  Future<void> performFullSync(String userId) async {
+  Future<void> pullDownstream(String userId) async {
     const operationKey = 'pull_full';
 
     if (_ongoingOperations.contains(operationKey)) return;

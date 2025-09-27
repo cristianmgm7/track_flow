@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
+import 'package:trackflow/core/sync/domain/value_objects/Incremental_sync_result.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_local_datasource.dart';

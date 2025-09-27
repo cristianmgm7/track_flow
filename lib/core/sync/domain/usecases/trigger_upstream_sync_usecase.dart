@@ -7,10 +7,7 @@ class TriggerUpstreamSyncUseCase {
 
   TriggerUpstreamSyncUseCase(this._coordinator);
 
-  Future<void> call({
-    String syncKey = 'manual_retry',
-    bool force = true,
-  }) async {
-    await _coordinator.triggerUpstreamSync(syncKey: syncKey, force: force);
+  Future<void> call() async {
+    await _coordinator.pushUpstream();
   }
 }
