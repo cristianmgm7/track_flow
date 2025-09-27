@@ -135,4 +135,58 @@ class MockProjectRemoteDataSource extends _i1.Mock
           ),
         )),
       ) as _i4.Future<_i2.Either<_i5.Failure, List<_i6.ProjectDTO>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, List<_i6.ProjectDTO>>>
+      getUserProjectsModifiedSince(
+    DateTime? since,
+    String? userId,
+  ) =>
+          (super.noSuchMethod(
+            Invocation.method(
+              #getUserProjectsModifiedSince,
+              [
+                since,
+                userId,
+              ],
+            ),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, List<_i6.ProjectDTO>>>.value(
+                    _FakeEither_0<_i5.Failure, List<_i6.ProjectDTO>>(
+              this,
+              Invocation.method(
+                #getUserProjectsModifiedSince,
+                [
+                  since,
+                  userId,
+                ],
+              ),
+            )),
+          ) as _i4.Future<_i2.Either<_i5.Failure, List<_i6.ProjectDTO>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, bool>> hasUserProjectsModifiedSince(
+    DateTime? since,
+    String? userId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #hasUserProjectsModifiedSince,
+          [
+            since,
+            userId,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i5.Failure, bool>>.value(
+            _FakeEither_0<_i5.Failure, bool>(
+          this,
+          Invocation.method(
+            #hasUserProjectsModifiedSince,
+            [
+              since,
+              userId,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i5.Failure, bool>>);
 }

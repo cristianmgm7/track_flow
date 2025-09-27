@@ -16,6 +16,18 @@ abstract class ProjectRemoteDataSource {
   Future<Either<Failure, ProjectDTO>> getProjectById(String projectId);
 
   Future<Either<Failure, List<ProjectDTO>>> getUserProjects(String userId);
+
+  /// Get projects modified since a specific timestamp (for incremental sync)
+  Future<Either<Failure, List<ProjectDTO>>> getUserProjectsModifiedSince(
+    DateTime since,
+    String userId,
+  );
+
+  /// Check if there are projects modified since a specific timestamp
+  Future<Either<Failure, bool>> hasUserProjectsModifiedSince(
+    DateTime since,
+    String userId,
+  );
 }
 
 @LazySingleton(as: ProjectRemoteDataSource)
@@ -29,7 +41,9 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   Future<Either<Failure, ProjectDTO>> createProject(ProjectDTO project) async {
     try {
       // Use the existing project ID to maintain consistency with offline storage
-      final docRef = _firestore.collection(ProjectDTO.collection).doc(project.id);
+      final docRef = _firestore
+          .collection(ProjectDTO.collection)
+          .doc(project.id);
 
       // Write the DTO to Firestore with the original ID
       await docRef.set(project.toFirestore());
@@ -209,6 +223,129 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
       return Right(allProjects);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ProjectDTO>>> getUserProjectsModifiedSince(
+    DateTime since,
+    String userId,
+  ) async {
+    try {
+      AppLogger.network(
+        'Getting projects modified since ${since.toIso8601String()} for user: $userId',
+        url: 'firestore://projects',
+      );
+
+      // Query for owned projects modified since timestamp
+      final ownedProjectsFuture =
+          _firestore
+              .collection(ProjectDTO.collection)
+              .where('ownerId', isEqualTo: userId)
+              .where('updatedAt', isGreaterThan: since)
+              .get();
+
+      // Query for collaborator projects modified since timestamp
+      final collaboratorProjectsFuture =
+          _firestore
+              .collection(ProjectDTO.collection)
+              .where('collaboratorIds', arrayContains: userId)
+              .where('updatedAt', isGreaterThan: since)
+              .get();
+
+      AppLogger.network(
+        'Executing incremental Firestore queries for user projects',
+      );
+
+      // Wait for both queries to complete
+      final results = await Future.wait([
+        ownedProjectsFuture,
+        collaboratorProjectsFuture,
+      ]);
+
+      final ownedProjects = results[0];
+      final collaboratorProjects = results[1];
+
+      AppLogger.network(
+        'Found ${ownedProjects.docs.length} modified owned projects',
+      );
+      AppLogger.network(
+        'Found ${collaboratorProjects.docs.length} modified collaborator projects',
+      );
+
+      // Combine and deduplicate projects
+      final modifiedProjects = <ProjectDTO>[];
+      final seenIds = <String>{};
+
+      // Add owned projects
+      for (final doc in ownedProjects.docs) {
+        if (!seenIds.contains(doc.id)) {
+          seenIds.add(doc.id);
+          modifiedProjects.add(ProjectDTO.fromFirestore(doc));
+        }
+      }
+
+      // Add collaborator projects
+      for (final doc in collaboratorProjects.docs) {
+        if (!seenIds.contains(doc.id)) {
+          seenIds.add(doc.id);
+          modifiedProjects.add(ProjectDTO.fromFirestore(doc));
+        }
+      }
+
+      AppLogger.network(
+        'Total modified projects found: ${modifiedProjects.length}',
+      );
+      return Right(modifiedProjects);
+    } catch (e) {
+      return Left(ServerFailure('Failed to get modified projects: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> hasUserProjectsModifiedSince(
+    DateTime since,
+    String userId,
+  ) async {
+    try {
+      AppLogger.network(
+        'Checking if projects modified since ${since.toIso8601String()} for user: $userId',
+        url: 'firestore://projects',
+      );
+
+      // Query for owned projects modified since timestamp (limit 1 for efficiency)
+      final ownedProjectsFuture =
+          _firestore
+              .collection(ProjectDTO.collection)
+              .where('ownerId', isEqualTo: userId)
+              .where('updatedAt', isGreaterThan: since)
+              .limit(1)
+              .get();
+
+      // Query for collaborator projects modified since timestamp (limit 1 for efficiency)
+      final collaboratorProjectsFuture =
+          _firestore
+              .collection(ProjectDTO.collection)
+              .where('collaboratorIds', arrayContains: userId)
+              .where('updatedAt', isGreaterThan: since)
+              .limit(1)
+              .get();
+
+      // Wait for both queries to complete
+      final results = await Future.wait([
+        ownedProjectsFuture,
+        collaboratorProjectsFuture,
+      ]);
+
+      final hasOwnedModified = results[0].docs.isNotEmpty;
+      final hasCollaboratorModified = results[1].docs.isNotEmpty;
+
+      final hasModified = hasOwnedModified || hasCollaboratorModified;
+
+      AppLogger.network('Projects modified since timestamp: $hasModified');
+      return Right(hasModified);
+    } catch (e) {
+      return Left(ServerFailure('Failed to check for modified projects: $e'));
     }
   }
 }
