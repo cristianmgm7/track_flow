@@ -52,17 +52,8 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
         );
       }
 
-      // 4. Trigger background sync (no condition check - coordinator handles it)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'projects_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'projects_${project.ownerId.value}',
-        ),
-      );
+      // 4. Trigger upstream sync
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success only after successful queue
       return Right(project);
@@ -99,16 +90,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       }
 
       // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'projects_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'projects_${project.ownerId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success only after successful queue
       return const Right(unit);
@@ -141,16 +123,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       }
 
       // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'projects_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'projects_${projectId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success only after successful queue
       return const Right(unit);
@@ -174,23 +147,12 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
       // 2. If found locally, return it and trigger background refresh
       if (localProject != null) {
-        // Trigger background sync for fresh data (non-blocking)
-        unawaited(
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'projects_${localProject.ownerId.value}',
-          ),
-        );
+        // No sync in get methods - just return local data
 
         return Right(localProject);
       }
 
-      // 3. Not found locally - trigger background fetch and return not found
-      // This is offline-first: we don't block waiting for network
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'project_${projectId.value}',
-        ),
-      );
+      // 3. Not found locally - return not found (no sync in get methods)
 
       // Return "not found locally" instead of network error
       return Left(DatabaseFailure('Project not found in local cache'));
@@ -203,12 +165,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
   @override
   Stream<Either<Failure, List<Project>>> watchLocalProjects(UserId ownerId) {
-    // Trigger background sync when method is called
-    unawaited(
-      _backgroundSyncCoordinator.triggerBackgroundSync(
-        syncKey: 'projects_${ownerId.value}',
-      ),
-    );
+    // NO sync in watch methods - just return local data stream
 
     return _localDataSource
         .watchAllProjects(ownerId.value)
@@ -229,12 +186,7 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
 
   @override
   Stream<Either<Failure, Project?>> watchProjectById(ProjectId projectId) {
-    // Trigger background sync for this project id (non-blocking)
-    unawaited(
-      _backgroundSyncCoordinator.triggerBackgroundSync(
-        syncKey: 'project_${projectId.value}',
-      ),
-    );
+    // NO sync in watch methods - just return local data stream
 
     return _localDataSource
         .watchProjectById(projectId.value)

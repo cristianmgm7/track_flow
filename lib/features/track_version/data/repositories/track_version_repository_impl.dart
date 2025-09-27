@@ -52,11 +52,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       await _queueUploadOperation(versionDTO);
 
       // 3. Trigger background sync to upload file
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_version_upload',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       return Right(version);
     } catch (e) {
@@ -124,16 +120,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       await _queueUpdateOperation(trackId, versionId);
 
       // Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'track_versions_${trackId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       return result;
     } catch (e) {
@@ -154,16 +141,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       await _queueDeleteOperation(versionId);
 
       // Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'track_versions_${versionId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       return result;
     } catch (e) {
@@ -190,17 +168,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
       await _queueRenameOperation(versionId, newLabel);
 
       // Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'track_versions_${versionId.value}',
-        ),
-      );
-
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
       return result;
     } catch (e) {
       return Left(DatabaseFailure('Failed to rename version: $e'));
@@ -280,16 +248,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         entityId: versionId.value,
         priority: SyncPriority.medium,
       );
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'track_versions_${versionId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
     } catch (e) {
       AppLogger.error(
         'Failed to queue track version delete operation: $e',
@@ -317,16 +276,7 @@ class TrackVersionRepositoryImpl implements TrackVersionRepository {
         data: operationData,
         priority: SyncPriority.medium,
       );
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'track_versions_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'track_versions_${versionId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
     } catch (e) {
       AppLogger.error(
         'Failed to queue track version rename operation: $e',

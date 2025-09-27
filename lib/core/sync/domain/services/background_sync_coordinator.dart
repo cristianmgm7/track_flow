@@ -27,7 +27,7 @@ class BackgroundSyncCoordinator {
 
   /// Push pending operations to remote
   Future<void> pushUpstream() async {
-    const operationKey = 'upstream';
+    const operationKey = 'push_upstream';
 
     if (_ongoingOperations.contains(operationKey)) return;
     if (!await _networkStateManager.isConnected) return;
@@ -42,14 +42,14 @@ class BackgroundSyncCoordinator {
 
   /// Perform full sync (upstream + downstream)
   Future<void> performFullSync(String userId) async {
-    const operationKey = 'full';
+    const operationKey = 'pull_full';
 
     if (_ongoingOperations.contains(operationKey)) return;
     if (!await _networkStateManager.isConnected) return;
 
     _ongoingOperations.add(operationKey);
     try {
-      await _syncCoordinator.performFullSync(userId);
+      await _syncCoordinator.pullAll(userId);
     } finally {
       _ongoingOperations.remove(operationKey);
     }

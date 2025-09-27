@@ -61,11 +61,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
 
       // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'playlists_create',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success only after successful queue
       return const Right(unit);
@@ -79,13 +75,6 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     try {
       // 1. ALWAYS try local cache first
       final either = await _localDataSource.getAllPlaylists();
-
-      // 2. Trigger background sync for fresh data (non-blocking)
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'playlists_refresh',
-        ),
-      );
 
       // 3. Return local data immediately
       return either.fold(
@@ -104,14 +93,6 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     try {
       // 1. ALWAYS try local cache first
       final either = await _localDataSource.getPlaylistById(id.value);
-
-      // 2. Trigger background sync for fresh data (non-blocking)
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'playlist_${id.value}',
-        ),
-      );
-
       // 3. Return local data immediately
       return either.fold(
         (failure) => Left(failure),
@@ -159,11 +140,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
 
       // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'playlists_update',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream()); //
 
       // 5. Return success only after successful queue
       return const Right(unit);
@@ -200,11 +177,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
       }
 
       // 4. Trigger upstream sync only (more efficient for local changes)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'playlists_delete',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream()); //
 
       // 5. Return success only after successful queue
       return const Right(unit);
