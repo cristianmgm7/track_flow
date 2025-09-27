@@ -36,22 +36,11 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
 
       // 2. If found locally, return it and trigger background refresh
       if (localTrack != null) {
-        // Trigger background sync for fresh data (non-blocking)
-        unawaited(
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'audio_tracks_${localTrack.projectId.value}',
-          ),
-        );
-
         return Right(localTrack);
       }
 
       // 3. Not found locally - trigger background fetch and return not found
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_track_${id.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       return Left(DatabaseFailure('Audio track not found in local cache'));
     } catch (e) {
@@ -64,13 +53,6 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   @override
   Stream<Either<Failure, AudioTrack>> watchTrackById(AudioTrackId id) {
     try {
-      // Trigger background sync when method is called
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_track_${id.value}',
-        ),
-      );
-
       return localDataSource.watchTrackById(id.value).map((eitherDto) {
         return eitherDto.fold(
           (failure) => Left(failure),
@@ -94,13 +76,6 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     ProjectId projectId,
   ) {
     try {
-      // Trigger background sync when method is called
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_tracks_${projectId.value}',
-        ),
-      );
-
       // CACHE-ASIDE PATTERN: Return local data immediately + trigger background sync
       return localDataSource.watchTracksByProject(projectId.value).map((
         localResult,
@@ -155,11 +130,6 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       }
 
       unawaited(_backgroundSyncCoordinator.pushUpstream());
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_tracks_${track.projectId.value}',
-        ),
-      );
 
       return Right(track);
     } catch (e) {
@@ -195,11 +165,6 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
 
       // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(_backgroundSyncCoordinator.pushUpstream());
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_tracks_${projectId.value}',
-        ),
-      );
 
       // 5. Ensure local URL remains pointing to remote (not cache)
       // We cannot compute remote URL here; keep current local value (remote URL
@@ -247,11 +212,6 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
 
       // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(_backgroundSyncCoordinator.pushUpstream());
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_tracks_${projectId.value}',
-        ),
-      );
 
       // 5. Return success only after successful queue
       return const Right(unit);
@@ -296,11 +256,6 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
 
       // 4. Trigger upstream sync only (more efficient for local changes)
       unawaited(_backgroundSyncCoordinator.pushUpstream());
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_tracks_${trackId.value}',
-        ),
-      );
 
       return localResult;
     } catch (e) {
