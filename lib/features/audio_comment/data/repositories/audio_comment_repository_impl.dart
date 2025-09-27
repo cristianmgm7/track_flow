@@ -51,21 +51,13 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       // 2. If found locally, return it and trigger background refresh
       if (localComment != null) {
         // Trigger background sync for fresh data (non-blocking)
-        unawaited(
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'audio_comment_${commentId.value}',
-          ),
-        );
+        unawaited(_backgroundSyncCoordinator.pushUpstream());
 
         return Right(localComment);
       }
 
       // 3. Not found locally - trigger background fetch and return not found
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_comment_${commentId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       return Left(DatabaseFailure('Audio comment not found in local cache'));
     } catch (e) {

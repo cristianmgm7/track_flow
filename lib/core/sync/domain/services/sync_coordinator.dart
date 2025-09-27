@@ -53,7 +53,7 @@ class SyncCoordinator {
   );
 
   /// 🚀 Full sync on app startup (first time)
-  Future<void> performFullSync(String userId) async {
+  Future<void> pullAll(String userId) async {
     AppLogger.sync('COORDINATOR', 'Starting full sync for user: $userId');
 
     // Sync in dependency order: profile/projects → collaborators/tracks → versions → comments/waveforms

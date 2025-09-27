@@ -111,8 +111,11 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       emit(blocState);
 
       // Trigger background sync if user is ready (non-blocking)
-      if (bootstrapResult.state == AppInitialState.dashboard) {
-        _triggerBackgroundSync();
+      if (bootstrapResult.state == AppInitialState.dashboard &&
+          bootstrapResult.userSession?.currentUser != null) {
+        _backgroundSyncCoordinator.performFullSync(
+          bootstrapResult.userSession!.currentUser!.id.value,
+        );
       }
 
       AppLogger.info(
@@ -169,14 +172,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       case AppInitialState.error:
         return AppFlowError('App initialization failed');
     }
-  }
-
-  /// Trigger background sync without blocking the UI
-  void _triggerBackgroundSync() {
-    _backgroundSyncCoordinator.triggerBackgroundSync(
-      syncKey: 'app_startup_sync',
-      force: true,
-    );
   }
 
   // Helper method for fire-and-forget background operations
