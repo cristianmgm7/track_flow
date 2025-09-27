@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
-import 'package:trackflow/core/sync/domain/services/sync_data_manager.dart';
+import 'package:trackflow/core/sync/domain/services/sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 
 /// Provides read-only access to sync status for UI components
@@ -15,16 +15,16 @@ import 'package:trackflow/core/sync/domain/services/pending_operations_manager.d
 ///
 /// What it does NOT do:
 /// - Trigger sync operations (that's BackgroundSyncCoordinator's job)
-/// - Handle sync logic (that's SyncDataManager/PendingOperationsManager's job)
+/// - Handle sync logic (that's SyncCoordinator/PendingOperationsManager's job)
 @injectable
 class SyncStatusProvider {
-  final SyncDataManager _syncDataManager;
+  final SyncCoordinator _syncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
   SyncStatusProvider({
-    required SyncDataManager syncDataManager,
+    required SyncCoordinator syncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
-  }) : _syncDataManager = syncDataManager,
+  }) : _syncCoordinator = syncCoordinator,
        _pendingOperationsManager = pendingOperationsManager;
 
   /// Get the current sync state for UI display
@@ -34,7 +34,7 @@ class SyncStatusProvider {
   /// - Sync progress percentage
   /// - Any sync errors
   Future<SyncState> getCurrentSyncState() async {
-    final result = await _syncDataManager.getCurrentSyncState();
+    final result = await _syncCoordinator.getCurrentSyncState();
     return result.fold(
       (failure) => SyncState.error('Failed to get sync state'),
       (syncState) => syncState,
@@ -48,7 +48,7 @@ class SyncStatusProvider {
   /// - Update progress bars
   /// - Display sync status messages
   Stream<SyncState> watchSyncState() {
-    return _syncDataManager.watchSyncState();
+    return _syncCoordinator.watchSyncState();
   }
 
   /// Get count of pending operations for UI badges/indicators

@@ -1,6 +1,9 @@
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
+import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart';
 import 'package:trackflow/features/audio_track/data/services/audio_track_incremental_sync_service.dart';
@@ -299,5 +302,23 @@ class SyncCoordinator {
           _getLastSyncTime(_waveformsLastSyncKey).toIso8601String(),
       'strategy': 'central_coordinator_with_incremental_services',
     };
+  }
+
+  /// Get current sync state for UI display
+  Future<Either<Failure, SyncState>> getCurrentSyncState() async {
+    try {
+      // For now, return a simple complete state
+      // TODO: Implement proper sync state tracking
+      return Right(SyncState.complete());
+    } catch (e) {
+      return Left(ServerFailure('Failed to get sync state: $e'));
+    }
+  }
+
+  /// Watch sync state changes for reactive UI updates
+  Stream<SyncState> watchSyncState() {
+    // For now, return a simple stream that emits complete state
+    // TODO: Implement proper sync state streaming
+    return Stream.value(SyncState.complete());
   }
 }
