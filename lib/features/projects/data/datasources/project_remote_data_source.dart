@@ -239,46 +239,48 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
               .where('updatedAt', isGreaterThan: since)
               .get();
 
-      // Query for collaborator projects modified since timestamp
+      // Query for collaborator projects (both modified and new)
+      // Get all projects where user is collaborator, then filter locally
       final collaboratorProjectsFuture =
           _firestore
               .collection(ProjectDTO.collection)
               .where('collaboratorIds', arrayContains: userId)
-              .where('updatedAt', isGreaterThan: since)
-              .get();
-
-      // Query for NEW collaborator projects created since timestamp
-      // This catches projects where the user was added as collaborator
-      final newCollaboratorProjectsFuture =
-          _firestore
-              .collection(ProjectDTO.collection)
-              .where('collaboratorIds', arrayContains: userId)
-              .where('createdAt', isGreaterThan: since)
               .get();
 
       AppLogger.network(
         'Executing incremental Firestore queries for user projects',
       );
 
-      // Wait for all queries to complete
+      // Wait for both queries to complete
       final results = await Future.wait([
         ownedProjectsFuture,
         collaboratorProjectsFuture,
-        newCollaboratorProjectsFuture,
       ]);
 
       final ownedProjects = results[0];
-      final collaboratorProjects = results[1];
-      final newCollaboratorProjects = results[2];
+      final allCollaboratorProjects = results[1];
 
       AppLogger.network(
         'Found ${ownedProjects.docs.length} modified owned projects',
       );
       AppLogger.network(
-        'Found ${collaboratorProjects.docs.length} modified collaborator projects',
+        'Found ${allCollaboratorProjects.docs.length} total collaborator projects',
       );
+
+      // Filter collaborator projects locally (modified or new since timestamp)
+      final relevantCollaboratorProjects =
+          allCollaboratorProjects.docs.where((doc) {
+            final data = doc.data();
+            final updatedAt = data['updatedAt'];
+            final createdAt = data['createdAt'];
+
+            // Include if modified since timestamp OR created since timestamp
+            return (updatedAt != null && updatedAt.toDate().isAfter(since)) ||
+                (createdAt != null && createdAt.toDate().isAfter(since));
+          }).toList();
+
       AppLogger.network(
-        'Found ${newCollaboratorProjects.docs.length} new collaborator projects',
+        'Found ${relevantCollaboratorProjects.length} relevant collaborator projects',
       );
 
       // Combine and deduplicate projects
@@ -293,16 +295,8 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         }
       }
 
-      // Add collaborator projects (modified)
-      for (final doc in collaboratorProjects.docs) {
-        if (!seenIds.contains(doc.id)) {
-          seenIds.add(doc.id);
-          modifiedProjects.add(ProjectDTO.fromFirestore(doc));
-        }
-      }
-
-      // Add new collaborator projects (created)
-      for (final doc in newCollaboratorProjects.docs) {
+      // Add relevant collaborator projects
+      for (final doc in relevantCollaboratorProjects) {
         if (!seenIds.contains(doc.id)) {
           seenIds.add(doc.id);
           modifiedProjects.add(ProjectDTO.fromFirestore(doc));

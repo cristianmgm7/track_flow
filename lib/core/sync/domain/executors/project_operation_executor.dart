@@ -91,6 +91,13 @@ class ProjectOperationExecutor implements OperationExecutor {
     SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
+    // ✅ Ensure timestamps exist for incremental queries
+    final now = DateTime.now().toUtc();
+    operationData['updatedAt'] =
+        operationData['updatedAt'] ?? now.toIso8601String();
+    operationData['lastModified'] =
+        operationData['lastModified'] ?? operationData['updatedAt'];
+
     // ✅ FIXED: Use complete data from operationData instead of creating incomplete DTO
     final projectDto = ProjectDTO(
       id: operation.entityId,

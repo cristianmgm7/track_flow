@@ -71,11 +71,18 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       // 1. ALWAYS update locally first
       await _localDataSource.cacheProject(projectDto);
 
+      // Ensure timestamps for incremental detection
+      final nowIso = DateTime.now().toUtc().toIso8601String();
+      final operationData =
+          projectDto.toMap()
+            ..['updatedAt'] = nowIso
+            ..['lastModified'] = nowIso;
+
       // 2. Try to queue for background sync
       final queueResult = await _pendingOperationsManager.addUpdateOperation(
         entityType: 'project',
         entityId: project.id.value,
-        data: projectDto.toMap(),
+        data: operationData,
         priority: SyncPriority.medium,
       );
 
@@ -107,11 +114,19 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
       // 1. ALWAYS hard delete locally first (remove from cache)
       await _localDataSource.removeCachedProject(project.id.value);
 
+      // Ensure soft delete flags and timestamps for incremental detection
+      final nowIso = DateTime.now().toUtc().toIso8601String();
+      final operationData =
+          projectDto.toMap()
+            ..['isDeleted'] = true
+            ..['updatedAt'] = nowIso
+            ..['lastModified'] = nowIso;
+
       // 2. Try to queue for background sync (soft delete in remote)
       final queueResult = await _pendingOperationsManager.addUpdateOperation(
         entityType: 'project',
         entityId: project.id.value,
-        data: projectDto.toMap(), // Include complete DTO with isDeleted: true
+        data: operationData, // Include complete DTO with isDeleted: true
         priority: SyncPriority.medium,
       );
 
