@@ -69,9 +69,9 @@ class DeleteProjectUseCase {
         },
       );
 
-      // 3) Delete the project itself
+      // 3) Delete the project itself (soft delete)
       final projectDeletionResult = await _projectsRepository.deleteProject(
-        updatedProject.id,
+        updatedProject,
       );
 
       // 4) Handle the result

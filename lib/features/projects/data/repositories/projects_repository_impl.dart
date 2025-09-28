@@ -100,15 +100,18 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
   }
 
   @override
-  Future<Either<Failure, Unit>> deleteProject(ProjectId projectId) async {
+  Future<Either<Failure, Unit>> deleteProject(Project project) async {
     try {
-      // 1. ALWAYS soft delete locally first
-      await _localDataSource.removeCachedProject(projectId.value);
+      final projectDto = ProjectDTO.fromDomain(project);
 
-      // 2. Try to queue for background sync
-      final queueResult = await _pendingOperationsManager.addDeleteOperation(
+      // 1. ALWAYS hard delete locally first (remove from cache)
+      await _localDataSource.removeCachedProject(project.id.value);
+
+      // 2. Try to queue for background sync (soft delete in remote)
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
         entityType: 'project',
-        entityId: projectId.value,
+        entityId: project.id.value,
+        data: projectDto.toMap(), // Include complete DTO with isDeleted: true
         priority: SyncPriority.medium,
       );
 
