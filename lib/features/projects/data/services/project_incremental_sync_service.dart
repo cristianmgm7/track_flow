@@ -65,12 +65,14 @@ class ProjectIncrementalSyncService
     String userId,
   ) async {
     try {
-      final result = await _remoteDataSource.hasUserProjectsModifiedSince(
+      // Use getUserProjectsModifiedSince and check if list is empty
+      final result = await _remoteDataSource.getUserProjectsModifiedSince(
         lastSyncTime,
         userId,
       );
 
-      return result.fold((failure) => Left(failure), (hasModified) {
+      return result.fold((failure) => Left(failure), (projects) {
+        final hasModified = projects.isNotEmpty;
         AppLogger.sync(
           'PROJECTS',
           'Has modified projects since ${lastSyncTime.toIso8601String()}: $hasModified',
@@ -109,9 +111,48 @@ class ProjectIncrementalSyncService
     DateTime lastSyncTime,
     String userId,
   ) async {
-    // TODO: Implement when soft deletes are tracked
-    // This would require a separate collection for deleted items
-    return const Right([]);
+    try {
+      AppLogger.sync(
+        'PROJECTS',
+        'Getting deleted projects since ${lastSyncTime.toIso8601String()}',
+        syncKey: userId,
+      );
+
+      // Get all modified projects (including deleted ones)
+      final result = await _remoteDataSource.getUserProjectsModifiedSince(
+        lastSyncTime,
+        userId,
+      );
+
+      return result.fold((failure) => Left(failure), (projects) {
+        // Filter only projects marked as deleted
+        final deletedIds =
+            projects
+                .where(
+                  (p) =>
+                      p.isDeleted &&
+                      p.updatedAt != null &&
+                      p.updatedAt!.isAfter(lastSyncTime),
+                )
+                .map((p) => p.id)
+                .toList();
+
+        AppLogger.sync(
+          'PROJECTS',
+          'Found ${deletedIds.length} deleted projects',
+          syncKey: userId,
+        );
+
+        return Right(deletedIds);
+      });
+    } catch (e) {
+      AppLogger.error(
+        'Failed to get deleted projects: $e',
+        tag: 'ProjectIncrementalSyncService',
+        error: e,
+      );
+      return Left(ServerFailure('Failed to get deleted projects: $e'));
+    }
   }
 
   @override
@@ -124,7 +165,7 @@ class ProjectIncrementalSyncService
         syncKey: userId,
       );
 
-      // 1. Get modified projects
+      // 1. Get all modified projects (including deleted ones)
       final modifiedResult = await getModifiedSince(lastSyncTime, userId);
       if (modifiedResult.isLeft()) {
         return modifiedResult.fold(
@@ -133,30 +174,32 @@ class ProjectIncrementalSyncService
         );
       }
 
-      final modifiedProjects = modifiedResult.getOrElse(() => []);
+      final allModifiedProjects = modifiedResult.getOrElse(() => []);
 
-      // 2. Get deleted projects (placeholder for now)
-      final deletedResult = await getDeletedSince(lastSyncTime, userId);
-      if (deletedResult.isLeft()) {
-        return deletedResult.fold(
-          (failure) => Left(failure),
-          (_) => throw UnimplementedError(),
-        );
-      }
+      // 2. Separate active and deleted projects
+      final activeProjects =
+          allModifiedProjects.where((p) => !p.isDeleted).toList();
+      final deletedProjects =
+          allModifiedProjects.where((p) => p.isDeleted).toList();
+      final deletedIds = deletedProjects.map((p) => p.id).toList();
 
-      final deletedIds = deletedResult.getOrElse(() => []);
+      AppLogger.sync(
+        'PROJECTS',
+        'Found ${activeProjects.length} active projects, ${deletedIds.length} deleted projects',
+        syncKey: userId,
+      );
 
       // 3. Update local cache
-      await _updateLocalCache(modifiedProjects, deletedIds);
+      await _updateLocalCache(activeProjects, deletedIds);
 
       // 4. Get server timestamp for next sync
       final serverTimestamp = DateTime.now().toUtc();
 
       final result = IncrementalSyncResult(
-        modifiedItems: modifiedProjects,
+        modifiedItems: activeProjects,
         deletedItemIds: deletedIds,
         serverTimestamp: serverTimestamp,
-        totalProcessed: modifiedProjects.length + deletedIds.length,
+        totalProcessed: activeProjects.length + deletedIds.length,
       );
 
       AppLogger.sync(

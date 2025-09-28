@@ -52,11 +52,68 @@ class SyncCoordinator {
     this._waveformsService,
   );
 
-  /// 🚀 Full sync on app startup (first time)
-  Future<void> pullAll(String userId) async {
+  /// 🚀 Pull remote data with specific sync key
+  Future<void> pull(String userId, {String syncKey = 'general'}) async {
+    AppLogger.sync(
+      'COORDINATOR',
+      'Starting pull sync for user: $userId, key: $syncKey',
+    );
+
+    switch (syncKey) {
+      case 'appstartup':
+        await _performStartupSync(userId);
+        break;
+      case 'full':
+        await _performFullSync(userId);
+        break;
+      default:
+        await performIncrementalSync(userId);
+        break;
+    }
+
+    AppLogger.sync(
+      'COORDINATOR',
+      'Pull sync completed for user: $userId, key: $syncKey',
+    );
+  }
+
+  /// 🚀 Startup sync - Only critical data for app initialization
+  Future<void> _performStartupSync(String userId) async {
+    AppLogger.sync('COORDINATOR', 'Starting startup sync for user: $userId');
+
+    // Only sync the most critical data for startup
+    await _syncEntity(
+      _userProfileService,
+      _userProfileLastSyncKey,
+      'user_profile',
+      userId,
+      isFullSync: true, // Incremental for faster startup
+    );
+
+    await _syncEntity(
+      _projectsService,
+      _projectsLastSyncKey,
+      'projects',
+      userId,
+      isFullSync: false, // Incremental for faster startup
+    );
+
+    await _syncEntity(
+      _collaboratorsService,
+      _collaboratorsLastSyncKey,
+      'collaborators',
+      userId,
+      isFullSync: false, // Incremental for faster startup
+    );
+
+    AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
+  }
+
+  /// 🔄 Full sync - All entities (for manual sync or connectivity restore)
+  Future<void> _performFullSync(String userId) async {
     AppLogger.sync('COORDINATOR', 'Starting full sync for user: $userId');
 
-    // Sync in dependency order: profile/projects → collaborators/tracks → versions → comments/waveforms
+    // Sync all entities in dependency order
     await _syncEntity(
       _userProfileService,
       _userProfileLastSyncKey,

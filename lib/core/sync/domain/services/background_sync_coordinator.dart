@@ -40,16 +40,37 @@ class BackgroundSyncCoordinator {
     }
   }
 
-  /// Perform full sync (upstream + downstream)
-  Future<void> pullDownstream(String userId) async {
-    const operationKey = 'pull_full';
+  /// Perform startup sync (upstream + critical downstream data)
+  Future<void> performStartupSync(String userId) async {
+    const operationKey = 'startup_sync';
 
     if (_ongoingOperations.contains(operationKey)) return;
     if (!await _networkStateManager.isConnected) return;
 
     _ongoingOperations.add(operationKey);
     try {
-      await _syncCoordinator.pullAll(userId);
+      // 1. Push pending operations first
+      await _pendingOperationsManager.processPendingOperations();
+      // 2. Pull critical data for startup
+      await _syncCoordinator.pull(userId, syncKey: 'appstartup');
+    } finally {
+      _ongoingOperations.remove(operationKey);
+    }
+  }
+
+  /// Perform full sync (upstream + downstream)
+  Future<void> performFullSync(String userId) async {
+    const operationKey = 'full_sync';
+
+    if (_ongoingOperations.contains(operationKey)) return;
+    if (!await _networkStateManager.isConnected) return;
+
+    _ongoingOperations.add(operationKey);
+    try {
+      // 1. Push pending operations first
+      await _pendingOperationsManager.processPendingOperations();
+      // 2. Pull all data
+      await _syncCoordinator.pull(userId, syncKey: 'full');
     } finally {
       _ongoingOperations.remove(operationKey);
     }
