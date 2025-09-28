@@ -4,6 +4,7 @@ import 'package:dartz/dartz.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:path/path.dart' as p;
 // import 'package:path_provider/path_provider.dart';
@@ -22,6 +23,16 @@ abstract class UserProfileRemoteDataSource {
   Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesByIds(
     List<String> userIds,
   );
+
+  /// Get user profiles modified since a specific timestamp for specific user IDs
+  Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesModifiedSince(
+    DateTime since,
+    List<String> userIds,
+  );
+
+  /// Get metadata for user profiles modified since a specific timestamp for specific user IDs
+  Future<Either<Failure, List<EntityMetadata>>>
+  getUserProfilesMetadataModifiedSince(DateTime since, List<String> userIds);
 }
 
 @LazySingleton(as: UserProfileRemoteDataSource)
@@ -116,6 +127,66 @@ class UserProfileRemoteDataSourceImpl implements UserProfileRemoteDataSource {
                 .get();
         result.addAll(
           query.docs.map((doc) => UserProfileDTO.fromJson(doc.data())),
+        );
+      }
+      return right(result);
+    } on FirebaseException catch (e) {
+      return left(ServerFailure(e.message ?? 'An error occurred'));
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<UserProfileDTO>>> getUserProfilesModifiedSince(
+    DateTime since,
+    List<String> userIds,
+  ) async {
+    try {
+      // Firestore limita a 10 IDs por whereIn
+      final List<UserProfileDTO> result = [];
+      for (var i = 0; i < userIds.length; i += 10) {
+        final batch = userIds.skip(i).take(10).toList();
+        final query =
+            await _firestore
+                .collection(UserProfileDTO.collection)
+                .where('id', whereIn: batch)
+                .where('lastModified', isGreaterThan: since)
+                .get();
+        result.addAll(
+          query.docs.map((doc) => UserProfileDTO.fromJson(doc.data())),
+        );
+      }
+      return right(result);
+    } on FirebaseException catch (e) {
+      return left(ServerFailure(e.message ?? 'An error occurred'));
+    } catch (e) {
+      return left(UnexpectedFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<EntityMetadata>>>
+  getUserProfilesMetadataModifiedSince(
+    DateTime since,
+    List<String> userIds,
+  ) async {
+    try {
+      // Firestore limita a 10 IDs por whereIn
+      final List<EntityMetadata> result = [];
+      for (var i = 0; i < userIds.length; i += 10) {
+        final batch = userIds.skip(i).take(10).toList();
+        final query =
+            await _firestore
+                .collection(UserProfileDTO.collection)
+                .where('id', whereIn: batch)
+                .where('lastModified', isGreaterThan: since)
+                .get();
+        result.addAll(
+          query.docs.map((doc) {
+            final data = doc.data();
+            return EntityMetadata.fromMap(data, 'user_profile');
+          }),
         );
       }
       return right(result);
