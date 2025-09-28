@@ -25,6 +25,70 @@ class ProjectIncrementalSyncService
   ProjectIncrementalSyncService(this._remoteDataSource, this._localDataSource);
 
   @override
+  Future<Either<Failure, IncrementalSyncResult<ProjectDTO>>>
+  performIncrementalSync(DateTime lastSyncTime, String userId) async {
+    try {
+      AppLogger.sync(
+        'PROJECTS',
+        'Starting incremental sync from ${lastSyncTime.toIso8601String()}',
+        syncKey: userId,
+      );
+
+      // 1. Get all modified projects (including deleted ones)
+      final modifiedResult = await getModifiedSince(lastSyncTime, userId);
+      if (modifiedResult.isLeft()) {
+        return modifiedResult.fold(
+          (failure) => Left(failure),
+          (_) => throw UnimplementedError(),
+        );
+      }
+
+      final allModifiedProjects = modifiedResult.getOrElse(() => []);
+
+      // 2. Separate active and deleted projects
+      final activeProjects =
+          allModifiedProjects.where((p) => !p.isDeleted).toList();
+      final deletedProjects =
+          allModifiedProjects.where((p) => p.isDeleted).toList();
+      final deletedIds = deletedProjects.map((p) => p.id).toList();
+
+      AppLogger.sync(
+        'PROJECTS',
+        'Found ${activeProjects.length} active projects, ${deletedIds.length} deleted projects',
+        syncKey: userId,
+      );
+
+      // 3. Update local cache
+      await _updateLocalCache(activeProjects, deletedIds);
+
+      // 4. Get server timestamp for next sync
+      final serverTimestamp = DateTime.now().toUtc();
+
+      final result = IncrementalSyncResult(
+        modifiedItems: activeProjects,
+        deletedItemIds: deletedIds,
+        serverTimestamp: serverTimestamp,
+        totalProcessed: activeProjects.length + deletedIds.length,
+      );
+
+      AppLogger.sync(
+        'PROJECTS',
+        'Incremental sync completed: ${result.totalChanges} changes',
+        syncKey: userId,
+      );
+
+      return Right(result);
+    } catch (e) {
+      AppLogger.error(
+        'Incremental sync failed: $e',
+        tag: 'ProjectIncrementalSyncService',
+        error: e,
+      );
+      return Left(ServerFailure('Incremental sync failed: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, List<ProjectDTO>>> getModifiedSince(
     DateTime lastSyncTime,
     String userId,
@@ -93,9 +157,9 @@ class ProjectIncrementalSyncService
         userId,
       );
 
-      return result.fold((failure) => Left(failure), (projects) {
+      return result.fold((failure) => Left(failure), (projects) async {
         // Filter only projects marked as deleted
-        final deletedIds =
+        final deletedProjects =
             projects
                 .where(
                   (p) =>
@@ -103,14 +167,28 @@ class ProjectIncrementalSyncService
                       p.updatedAt != null &&
                       p.updatedAt!.isAfter(lastSyncTime),
                 )
-                .map((p) => p.id)
                 .toList();
+
+        final deletedIds = deletedProjects.map((p) => p.id).toList();
 
         AppLogger.sync(
           'PROJECTS',
           'Found ${deletedIds.length} deleted projects',
           syncKey: userId,
         );
+
+        // Remove deleted projects from local cache
+        for (final deletedProject in deletedProjects) {
+          final removeResult = await _localDataSource.removeCachedProject(
+            deletedProject.id,
+          );
+          if (removeResult.isLeft()) {
+            AppLogger.error(
+              'Failed to remove deleted project ${deletedProject.id}: ${removeResult.fold((l) => l.message, (r) => '')}',
+              tag: 'ProjectIncrementalSyncService',
+            );
+          }
+        }
 
         return Right(deletedIds);
       });
@@ -121,70 +199,6 @@ class ProjectIncrementalSyncService
         error: e,
       );
       return Left(ServerFailure('Failed to get deleted projects: $e'));
-    }
-  }
-
-  @override
-  Future<Either<Failure, IncrementalSyncResult<ProjectDTO>>>
-  performIncrementalSync(DateTime lastSyncTime, String userId) async {
-    try {
-      AppLogger.sync(
-        'PROJECTS',
-        'Starting incremental sync from ${lastSyncTime.toIso8601String()}',
-        syncKey: userId,
-      );
-
-      // 1. Get all modified projects (including deleted ones)
-      final modifiedResult = await getModifiedSince(lastSyncTime, userId);
-      if (modifiedResult.isLeft()) {
-        return modifiedResult.fold(
-          (failure) => Left(failure),
-          (_) => throw UnimplementedError(),
-        );
-      }
-
-      final allModifiedProjects = modifiedResult.getOrElse(() => []);
-
-      // 2. Separate active and deleted projects
-      final activeProjects =
-          allModifiedProjects.where((p) => !p.isDeleted).toList();
-      final deletedProjects =
-          allModifiedProjects.where((p) => p.isDeleted).toList();
-      final deletedIds = deletedProjects.map((p) => p.id).toList();
-
-      AppLogger.sync(
-        'PROJECTS',
-        'Found ${activeProjects.length} active projects, ${deletedIds.length} deleted projects',
-        syncKey: userId,
-      );
-
-      // 3. Update local cache
-      await _updateLocalCache(activeProjects, deletedIds);
-
-      // 4. Get server timestamp for next sync
-      final serverTimestamp = DateTime.now().toUtc();
-
-      final result = IncrementalSyncResult(
-        modifiedItems: activeProjects,
-        deletedItemIds: deletedIds,
-        serverTimestamp: serverTimestamp,
-        totalProcessed: activeProjects.length + deletedIds.length,
-      );
-
-      AppLogger.sync(
-        'PROJECTS',
-        'Incremental sync completed: ${result.totalChanges} changes',
-        syncKey: userId,
-      );
-
-      return Right(result);
-    } catch (e) {
-      AppLogger.error(
-        'Incremental sync failed: $e',
-        tag: 'ProjectIncrementalSyncService',
-        error: e,
-      );
-      return Left(ServerFailure('Incremental sync failed: $e'));
     }
   }
 
@@ -269,14 +283,26 @@ class ProjectIncrementalSyncService
     List<ProjectDTO> modifiedProjects,
     List<String> deletedIds,
   ) async {
-    // Update modified projects
+    // Update modified projects with proper sync metadata
     for (final project in modifiedProjects) {
-      await _localDataSource.cacheProject(project);
+      final cacheResult = await _localDataSource.cacheProject(project);
+      if (cacheResult.isLeft()) {
+        AppLogger.error(
+          'Failed to cache project ${project.id}: ${cacheResult.fold((l) => l.message, (r) => '')}',
+          tag: 'ProjectIncrementalSyncService',
+        );
+      }
     }
 
-    // Remove deleted projects
+    // Soft delete removed projects (mark as deleted for sync)
     for (final id in deletedIds) {
-      await _localDataSource.removeCachedProject(id);
+      final deleteResult = await _localDataSource.removeCachedProject(id);
+      if (deleteResult.isLeft()) {
+        AppLogger.error(
+          'Failed to remove project $id: ${deleteResult.fold((l) => l.message, (r) => '')}',
+          tag: 'ProjectIncrementalSyncService',
+        );
+      }
     }
   }
 }

@@ -40,7 +40,14 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
           .doc(project.id);
 
       // Write the DTO to Firestore with the original ID
-      await docRef.set(project.toFirestore());
+      // Ensure server timestamps for sync detection
+      final data = project.toFirestore();
+      data['updatedAt'] = FieldValue.serverTimestamp();
+      data['lastModified'] = FieldValue.serverTimestamp();
+      // Optionally set createdAt if missing
+      data['createdAt'] = data['createdAt'] ?? FieldValue.serverTimestamp();
+
+      await docRef.set(data);
 
       return Right(project);
     } on FirebaseException catch (e) {
@@ -64,10 +71,15 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   @override
   Future<Either<Failure, Unit>> updateProject(ProjectDTO project) async {
     try {
+      // Merge client data with server timestamps for reliable incremental detection
+      final data = project.toFirestore();
+      data['updatedAt'] = FieldValue.serverTimestamp();
+      data['lastModified'] = FieldValue.serverTimestamp();
+
       await _firestore
           .collection(ProjectDTO.collection)
           .doc(project.id)
-          .update(project.toFirestore());
+          .update(data);
       return Right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
@@ -93,10 +105,12 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
   @override
   Future<Either<Failure, Unit>> deleteProject(String projectId) async {
     try {
-      await _firestore
-          .collection(ProjectDTO.collection)
-          .doc(projectId)
-          .delete();
+      // Soft delete: mark as deleted with server timestamp
+      await _firestore.collection(ProjectDTO.collection).doc(projectId).update({
+        'isDeleted': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+        'lastModified': FieldValue.serverTimestamp(),
+      });
       return Right(unit);
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
@@ -237,6 +251,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
               .collection(ProjectDTO.collection)
               .where('ownerId', isEqualTo: userId)
               .where('updatedAt', isGreaterThan: since)
+              .orderBy('updatedAt')
               .get();
 
       // Query for collaborator projects (both modified and new)

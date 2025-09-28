@@ -32,13 +32,40 @@
             "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
             "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
+        {
+            "name": "🚀 Dev (iOS Simulator2)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_development.dart",
+            "deviceId": "9B0D41EB-34B7-426B-A378-207A2DADE44D",
+            "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
+        },
+        {
+            "name": "🧪 Staging (iOS Simulator2)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_staging.dart",
+            "deviceId": "9B0D41EB-34B7-426B-A378-207A2DADE44D",
+            "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
+        },
+        {
+            "name": "🎯 Prod (iOS Simulator2)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "debug",
+            "program": "lib/main_production.dart",
+            "deviceId": "9B0D41EB-34B7-426B-A378-207A2DADE44D",
+            "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
+        },
         
         // === Tu iPhone Físico ===
         {
             "name": "🚀 Dev (Tu iPhone)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "debug",
+            "flutterMode": "release",
             "program": "lib/main_development.dart",
             "deviceId": "00008030-00010C31110A802E",
             "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
