@@ -82,18 +82,6 @@ class UserProfileIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    final result = await getModifiedSince(lastSyncTime, userId);
-    return result.fold(
-      (failure) => Left(failure),
-      (profiles) => Right(profiles.isNotEmpty),
-    );
-  }
-
-  @override
   Future<Either<Failure, DateTime>> getServerTimestamp() async {
     return Right(DateTime.now().toUtc());
   }

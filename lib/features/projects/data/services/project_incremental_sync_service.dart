@@ -60,37 +60,6 @@ class ProjectIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      // Use getUserProjectsModifiedSince and check if list is empty
-      final result = await _remoteDataSource.getUserProjectsModifiedSince(
-        lastSyncTime,
-        userId,
-      );
-
-      return result.fold((failure) => Left(failure), (projects) {
-        final hasModified = projects.isNotEmpty;
-        AppLogger.sync(
-          'PROJECTS',
-          'Has modified projects since ${lastSyncTime.toIso8601String()}: $hasModified',
-          syncKey: userId,
-        );
-        return Right(hasModified);
-      });
-    } catch (e) {
-      AppLogger.error(
-        'Failed to check for modified projects: $e',
-        tag: 'ProjectIncrementalSyncService',
-        error: e,
-      );
-      return Left(ServerFailure('Failed to check for modified projects: $e'));
-    }
-  }
-
-  @override
   Future<Either<Failure, DateTime>> getServerTimestamp() async {
     // For Firestore, we can use a server timestamp approximation
     // In a real implementation, you might want a dedicated endpoint

@@ -50,25 +50,6 @@ class AudioCommentIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      // For now, always return true to trigger sync
-      // TODO: Implement hasCommentsModifiedSince in remote data source
-      return const Right(true);
-    } catch (e) {
-      AppLogger.error(
-        'Failed to check for modified comments: $e',
-        tag: 'AudioCommentIncrementalSyncService',
-        error: e,
-      );
-      return Left(ServerFailure('Failed to check for modified comments: $e'));
-    }
-  }
-
-  @override
   Future<Either<Failure, DateTime>> getServerTimestamp() async {
     return Right(DateTime.now().toUtc());
   }

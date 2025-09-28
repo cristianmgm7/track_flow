@@ -34,23 +34,6 @@ abstract class IncrementalSyncService<T> {
     String userId,
   );
 
-  /// Check if there are modifications since the specified timestamp
-  ///
-  /// This is a lightweight operation that checks if any data has been
-  /// modified without actually fetching the data. Useful for determining
-  /// if a full sync is needed.
-  ///
-  /// [lastSyncTime] - Timestamp to check against
-  /// [userId] - User ID for user-specific data filtering
-  ///
-  /// Returns:
-  /// - Success: true if there are modifications, false otherwise
-  /// - Failure: Network or server errors
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  );
-
   /// Get the current server timestamp
   ///
   /// This method fetches the authoritative server timestamp to ensure

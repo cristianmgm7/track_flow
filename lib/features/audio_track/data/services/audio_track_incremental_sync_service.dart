@@ -27,14 +27,6 @@ class AudioTrackIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    return const Right(true);
-  }
-
-  @override
   Future<Either<Failure, DateTime>> getServerTimestamp() async {
     return Right(DateTime.now().toUtc());
   }
