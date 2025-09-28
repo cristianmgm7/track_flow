@@ -153,67 +153,95 @@ class UserProfileCollaboratorIncrementalSyncService
   @override
   Future<Either<Failure, IncrementalSyncResult<UserProfileDTO>>>
   performIncrementalSync(DateTime lastSyncTime, String userId) async {
-    try {
-      AppLogger.sync(
-        'USER_PROFILES',
-        'Starting incremental sync from ${lastSyncTime.toIso8601String()}',
-        syncKey: userId,
-      );
-
-      // Get modified profiles
-      final modifiedResult = await getModifiedSince(lastSyncTime, userId);
-      if (modifiedResult.isLeft()) {
-        return modifiedResult.fold(
-          (failure) => Left(failure),
-          (_) => throw UnimplementedError(),
-        );
-      }
-
-      final modifiedProfiles = modifiedResult.getOrElse(() => []);
-
-      AppLogger.sync(
-        'USER_PROFILES',
-        'Found ${modifiedProfiles.length} modified collaborator profiles',
-        syncKey: userId,
-      );
-
-      // Update local cache
-      await _updateLocalCache(modifiedProfiles);
-
-      // Get server timestamp for next sync
-      final serverTimestamp = DateTime.now().toUtc();
-
-      final result = IncrementalSyncResult(
-        modifiedItems: modifiedProfiles,
-        deletedItemIds: [], // No deletions handled for now
-        serverTimestamp: serverTimestamp,
-        totalProcessed: modifiedProfiles.length,
-      );
-
-      AppLogger.sync(
-        'USER_PROFILES',
-        'Incremental sync completed: ${result.totalChanges} changes',
-        syncKey: userId,
-      );
-
-      return Right(result);
-    } catch (e) {
-      AppLogger.error(
-        'Incremental sync failed: $e',
-        tag: 'UserProfileCollaboratorIncrementalSyncService',
-        error: e,
-      );
-      return Left(ServerFailure('Incremental sync failed: $e'));
-    }
+    // For collaborators, we do full sync since incremental based on timestamps
+    // doesn't work well when collaborators are derived from projects
+    return performFullSync(userId);
   }
 
   @override
   Future<Either<Failure, IncrementalSyncResult<UserProfileDTO>>>
   performFullSync(String userId) async {
-    return performIncrementalSync(
-      DateTime.fromMillisecondsSinceEpoch(0),
-      userId,
-    );
+    try {
+      AppLogger.sync(
+        'USER_PROFILES',
+        'Starting full sync for user $userId',
+        syncKey: userId,
+      );
+
+      // Get current collaborators from projects
+      final collaboratorsResult = await _getCurrentCollaboratorIds(userId);
+      if (collaboratorsResult.isLeft()) {
+        return collaboratorsResult.fold(
+          (failure) => Left(failure),
+          (_) => throw UnimplementedError(),
+        );
+      }
+
+      final collaboratorIds = collaboratorsResult.getOrElse(() => []);
+
+      if (collaboratorIds.isEmpty) {
+        AppLogger.sync(
+          'USER_PROFILES',
+          'No collaborators found for full sync',
+          syncKey: userId,
+        );
+        return Right(
+          IncrementalSyncResult(
+            modifiedItems: [],
+            deletedItemIds: [],
+            serverTimestamp: DateTime.now().toUtc(),
+            wasFullSync: true,
+            totalProcessed: 0,
+          ),
+        );
+      }
+
+      // Get all profiles for current collaborators
+      final result = await _remoteDataSource.getUserProfilesByIds(
+        collaboratorIds,
+      );
+
+      if (result.isLeft()) {
+        return result.fold(
+          (failure) => Left(failure),
+          (_) => throw UnimplementedError(),
+        );
+      }
+
+      final profiles = result.getOrElse(() => []);
+
+      AppLogger.sync(
+        'USER_PROFILES',
+        'Fetched ${profiles.length} collaborator profiles',
+        syncKey: userId,
+      );
+
+      // Update local cache with all profiles
+      await _updateLocalCache(profiles);
+
+      final syncResult = IncrementalSyncResult(
+        modifiedItems: profiles,
+        deletedItemIds: [],
+        serverTimestamp: DateTime.now().toUtc(),
+        wasFullSync: true,
+        totalProcessed: profiles.length,
+      );
+
+      AppLogger.sync(
+        'USER_PROFILES',
+        'Full sync completed: ${syncResult.totalChanges} profiles synced',
+        syncKey: userId,
+      );
+
+      return Right(syncResult);
+    } catch (e) {
+      AppLogger.error(
+        'Full sync failed: $e',
+        tag: 'UserProfileCollaboratorIncrementalSyncService',
+        error: e,
+      );
+      return Left(ServerFailure('Full sync failed: $e'));
+    }
   }
 
   @override
