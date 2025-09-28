@@ -247,24 +247,38 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
               .where('updatedAt', isGreaterThan: since)
               .get();
 
+      // Query for NEW collaborator projects created since timestamp
+      // This catches projects where the user was added as collaborator
+      final newCollaboratorProjectsFuture =
+          _firestore
+              .collection(ProjectDTO.collection)
+              .where('collaboratorIds', arrayContains: userId)
+              .where('createdAt', isGreaterThan: since)
+              .get();
+
       AppLogger.network(
         'Executing incremental Firestore queries for user projects',
       );
 
-      // Wait for both queries to complete
+      // Wait for all queries to complete
       final results = await Future.wait([
         ownedProjectsFuture,
         collaboratorProjectsFuture,
+        newCollaboratorProjectsFuture,
       ]);
 
       final ownedProjects = results[0];
       final collaboratorProjects = results[1];
+      final newCollaboratorProjects = results[2];
 
       AppLogger.network(
         'Found ${ownedProjects.docs.length} modified owned projects',
       );
       AppLogger.network(
         'Found ${collaboratorProjects.docs.length} modified collaborator projects',
+      );
+      AppLogger.network(
+        'Found ${newCollaboratorProjects.docs.length} new collaborator projects',
       );
 
       // Combine and deduplicate projects
@@ -279,7 +293,7 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         }
       }
 
-      // Add collaborator projects
+      // Add collaborator projects (modified)
       for (final doc in collaboratorProjects.docs) {
         if (!seenIds.contains(doc.id)) {
           seenIds.add(doc.id);
@@ -287,9 +301,15 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         }
       }
 
-      AppLogger.network(
-        'Total modified projects found: ${modifiedProjects.length}',
-      );
+      // Add new collaborator projects (created)
+      for (final doc in newCollaboratorProjects.docs) {
+        if (!seenIds.contains(doc.id)) {
+          seenIds.add(doc.id);
+          modifiedProjects.add(ProjectDTO.fromFirestore(doc));
+        }
+      }
+
+      AppLogger.network('Total projects found: ${modifiedProjects.length}');
       return Right(modifiedProjects);
     } catch (e) {
       return Left(ServerFailure('Failed to get modified projects: $e'));

@@ -240,18 +240,18 @@ class MockProjectsRepository extends _i1.Mock
 
   @override
   _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>> deleteProject(
-          _i9.ProjectId? projectId) =>
+          _i8.Project? project) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteProject,
-          [projectId],
+          [project],
         ),
         returnValue: _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>>.value(
             _FakeEither_0<_i7.Failure, _i2.Unit>(
           this,
           Invocation.method(
             #deleteProject,
-            [projectId],
+            [project],
           ),
         )),
       ) as _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>>);
