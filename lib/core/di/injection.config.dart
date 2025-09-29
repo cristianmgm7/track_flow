@@ -760,6 +760,7 @@ extension GetItInjectableX on _i1.GetIt {
         () => _i114.AudioTrackIncrementalSyncService(
               gh<_i76.AudioTrackRemoteDataSource>(),
               gh<_i75.AudioTrackLocalDataSource>(),
+              gh<_i47.ProjectsLocalDataSource>(),
             ));
     gh.factory<_i115.AudioTrackOperationExecutor>(
         () => _i115.AudioTrackOperationExecutor(

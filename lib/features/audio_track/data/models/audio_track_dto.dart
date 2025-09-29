@@ -12,6 +12,7 @@ class AudioTrackDTO {
   final DateTime? createdAt;
   final String extension;
   final TrackVersionId? activeVersionId; // Active version for playback
+  final bool isDeleted;
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
@@ -27,6 +28,7 @@ class AudioTrackDTO {
     this.createdAt,
     required this.extension,
     this.activeVersionId,
+    this.isDeleted = false,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
     this.lastModified,
@@ -53,6 +55,7 @@ class AudioTrackDTO {
                 json['activeVersionId'] as String,
               )
               : null,
+      isDeleted: json['isDeleted'] as bool? ?? false,
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
       lastModified:
@@ -73,6 +76,7 @@ class AudioTrackDTO {
       'createdAt': createdAt?.toIso8601String(),
       'extension': extension,
       'activeVersionId': activeVersionId?.value,
+      'isDeleted': isDeleted,
       // ⭐ NEW: Include sync metadata in JSON
       'version': version,
       'lastModified': lastModified?.toIso8601String(),
@@ -89,6 +93,7 @@ class AudioTrackDTO {
       uploadedBy: uploadedBy,
       createdAt: createdAt ?? DateTime.now(),
       activeVersionId: activeVersionId,
+      isDeleted: isDeleted,
     );
   }
 

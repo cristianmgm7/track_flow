@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
 abstract class AudioTrackRemoteDataSource {
@@ -18,6 +19,12 @@ abstract class AudioTrackRemoteDataSource {
   Future<Either<Failure, Unit>> updateActiveVersion(
     String trackId,
     String versionId,
+  );
+
+  /// Get audio tracks modified since a specific timestamp for specific project IDs
+  Future<Either<Failure, List<AudioTrackDTO>>> getAudioTracksModifiedSince(
+    DateTime since,
+    List<String> projectIds,
   );
 }
 
@@ -49,15 +56,16 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   @override
   Future<Either<Failure, Unit>> deleteAudioTrack(String trackId) async {
     try {
-      // AudioTrack only stores metadata, file deletion is handled by TrackVersion
-      await _firestore
-          .collection(AudioTrackDTO.collection)
-          .doc(trackId)
-          .delete();
+      // Soft delete: mark as deleted with server timestamp
+      await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
+        {'isDeleted': true, 'lastModified': DateTime.now().toIso8601String()},
+      );
 
       return const Right(unit);
     } catch (e) {
-      return Left(ServerFailure('Error deleting audio track metadata: $e'));
+      return Left(
+        ServerFailure('Error soft deleting audio track metadata: $e'),
+      );
     }
   }
 
@@ -138,6 +146,49 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Error updating active version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<AudioTrackDTO>>> getAudioTracksModifiedSince(
+    DateTime since,
+    List<String> projectIds,
+  ) async {
+    try {
+      if (projectIds.isEmpty) {
+        return const Right([]);
+      }
+
+      final List<AudioTrackDTO> allTracks = [];
+      // Firestore 'whereIn' clause is limited to 10 elements.
+      // We process the projectIds in chunks of 10 to be safe.
+      for (var i = 0; i < projectIds.length; i += 10) {
+        final sublist = projectIds.sublist(
+          i,
+          i + 10 > projectIds.length ? projectIds.length : i + 10,
+        );
+
+        final snapshot =
+            await _firestore
+                .collection(AudioTrackDTO.collection)
+                .where('projectId', whereIn: sublist)
+                .where('lastModified', isGreaterThan: since)
+                .orderBy('lastModified')
+                .get();
+
+        final tracks =
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return AudioTrackDTO.fromJson(data);
+            }).toList();
+
+        allTracks.addAll(tracks);
+      }
+
+      return Right(allTracks);
+    } catch (e) {
+      return Left(ServerFailure('Error getting modified audio tracks: $e'));
     }
   }
 }

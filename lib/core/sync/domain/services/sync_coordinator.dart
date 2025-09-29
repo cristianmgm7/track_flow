@@ -99,6 +99,13 @@ class SyncCoordinator {
       userId,
       isFullSync: false, // Incremental for faster startup
     );
+    await _syncEntity(
+      _tracksService,
+      _tracksLastSyncKey,
+      'audio_tracks',
+      userId,
+      isFullSync: false, // Incremental for faster startup
+    );
 
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
   }
