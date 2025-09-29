@@ -236,6 +236,14 @@ class AudioTrackIncrementalSyncService
         syncKey: userId,
       );
 
+      if (deletedIds.isNotEmpty) {
+        AppLogger.sync(
+          'AUDIO_TRACKS',
+          'Deleted track IDs: ${deletedIds.join(", ")}',
+          syncKey: userId,
+        );
+      }
+
       // 3. Update local cache
       await _updateLocalCache(activeTracks, deletedIds);
 
@@ -390,11 +398,22 @@ class AudioTrackIncrementalSyncService
 
     // Soft delete removed tracks (mark as deleted for sync)
     for (final id in deletedIds) {
+      AppLogger.sync(
+        'AUDIO_TRACKS',
+        'Deleting track $id from local cache',
+        syncKey: 'sync',
+      );
       final deleteResult = await _localDataSource.deleteTrack(id);
       if (deleteResult.isLeft()) {
         AppLogger.error(
           'Failed to delete audio track $id: ${deleteResult.fold((l) => l.message, (r) => '')}',
           tag: 'AudioTrackIncrementalSyncService',
+        );
+      } else {
+        AppLogger.sync(
+          'AUDIO_TRACKS',
+          'Successfully deleted track $id from local cache',
+          syncKey: 'sync',
         );
       }
     }

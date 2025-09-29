@@ -58,7 +58,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     try {
       // Soft delete: mark as deleted with server timestamp
       await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
-        {'isDeleted': true, 'lastModified': DateTime.now().toIso8601String()},
+        {'isDeleted': true, 'lastModified': FieldValue.serverTimestamp()},
       );
 
       return const Right(unit);
