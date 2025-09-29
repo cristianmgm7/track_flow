@@ -123,6 +123,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     try {
       await _firestore.collection('audio_tracks').doc(trackId).update({
         'name': newName,
+        'lastModified': FieldValue.serverTimestamp(),
       });
     } catch (e) {
       throw Exception('Error updating track name: $e');
@@ -135,13 +136,12 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     String versionId,
   ) async {
     try {
-      await _firestore
-          .collection(AudioTrackDTO.collection)
-          .doc(trackId)
-          .update({
-            'activeVersionId': versionId,
-            'lastModified': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
+        {
+          'activeVersionId': versionId,
+          'lastModified': FieldValue.serverTimestamp(),
+        },
+      );
 
       return const Right(unit);
     } catch (e) {
