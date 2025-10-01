@@ -104,7 +104,7 @@ class SyncCoordinator {
       _tracksLastSyncKey,
       'audio_tracks',
       userId,
-      isFullSync: true, // Incremental for faster startup
+      isFullSync: false, // Incremental for faster startup
     );
 
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
@@ -136,8 +136,12 @@ class SyncCoordinator {
     bool isFullSync = false,
   }) async {
     try {
+      // If no sync key exists, force full sync
+      final hasSyncKey = _prefs.getInt(prefsKey) != null;
+      final shouldDoFullSync = isFullSync || !hasSyncKey;
+
       final result =
-          isFullSync
+          shouldDoFullSync
               ? await service.performFullSync(userId)
               : await service.performIncrementalSync(
                 _getLastSyncTime(prefsKey),
@@ -255,5 +259,26 @@ class SyncCoordinator {
     // For now, return a simple stream that emits complete state
     // TODO: Implement proper sync state streaming
     return Stream.value(SyncState.complete());
+  }
+
+  /// Clear all sync keys from SharedPreferences (for logout)
+  Future<void> clearAllSyncKeys() async {
+    AppLogger.sync(
+      'COORDINATOR',
+      'Clearing all sync keys from SharedPreferences',
+    );
+
+    await Future.wait([
+      _prefs.remove(_projectsLastSyncKey),
+      _prefs.remove(_tracksLastSyncKey),
+      _prefs.remove(_commentsLastSyncKey),
+      _prefs.remove(_userProfileLastSyncKey),
+      _prefs.remove(_collaboratorsLastSyncKey),
+      _prefs.remove(_notificationsLastSyncKey),
+      _prefs.remove(_trackVersionsLastSyncKey),
+      _prefs.remove(_waveformsLastSyncKey),
+    ]);
+
+    AppLogger.sync('COORDINATOR', 'All sync keys cleared successfully');
   }
 }

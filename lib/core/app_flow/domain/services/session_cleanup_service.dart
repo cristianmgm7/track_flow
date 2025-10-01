@@ -13,6 +13,7 @@ import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/core/sync/data/repositories/pending_operations_repository.dart';
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
+import 'package:trackflow/core/sync/domain/services/sync_coordinator.dart';
 
 /// Service responsible for comprehensive session cleanup
 ///
@@ -31,6 +32,7 @@ class SessionCleanupService {
   final PendingOperationsRepository _pendingOperationsRepository;
   final WaveformRepository _waveformRepository;
   final TrackVersionRepository _trackVersionRepository;
+  final SyncCoordinator _syncCoordinator;
 
   // Prevent multiple concurrent cleanup operations
   bool _isCleanupInProgress = false;
@@ -47,6 +49,7 @@ class SessionCleanupService {
     required PendingOperationsRepository pendingOperationsRepository,
     required WaveformRepository waveformRepository,
     required TrackVersionRepository trackVersionRepository,
+    required SyncCoordinator syncCoordinator,
   }) : _userProfileRepository = userProfileRepository,
        _projectsRepository = projectsRepository,
        _audioTrackRepository = audioTrackRepository,
@@ -57,7 +60,8 @@ class SessionCleanupService {
        _sessionStorage = sessionStorage,
        _pendingOperationsRepository = pendingOperationsRepository,
        _waveformRepository = waveformRepository,
-       _trackVersionRepository = trackVersionRepository;
+       _trackVersionRepository = trackVersionRepository,
+       _syncCoordinator = syncCoordinator;
 
   /// Clear all user-related data from local storage
   ///
@@ -143,6 +147,9 @@ class SessionCleanupService {
 
         // Clear playback persistence data
         _clearPlaybackData(),
+
+        // Clear sync keys from SharedPreferences
+        _clearSyncKeys(),
       ];
 
       // Execute all cleanup tasks in parallel for better performance
@@ -230,6 +237,16 @@ class SessionCleanupService {
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to clear playback data: $e'));
+    }
+  }
+
+  /// Helper method to clear sync keys from SharedPreferences
+  Future<Either<Failure, Unit>> _clearSyncKeys() async {
+    try {
+      await _syncCoordinator.clearAllSyncKeys();
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Failed to clear sync keys: $e'));
     }
   }
 }

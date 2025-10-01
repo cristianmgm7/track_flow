@@ -1107,6 +1107,7 @@ extension GetItInjectableX on _i1.GetIt {
           pendingOperationsRepository: gh<_i40.PendingOperationsRepository>(),
           waveformRepository: gh<_i172.WaveformRepository>(),
           trackVersionRepository: gh<_i161.TrackVersionRepository>(),
+          syncCoordinator: gh<_i140.SyncCoordinator>(),
         ));
     gh.factory<_i204.SessionService>(() => _i204.SessionService(
           checkAuthUseCase: gh<_i122.CheckAuthenticationStatusUseCase>(),
