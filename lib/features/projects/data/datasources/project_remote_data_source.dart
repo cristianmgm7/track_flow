@@ -245,12 +245,13 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
         url: 'firestore://projects',
       );
 
+      final DateTime safeSince = since.subtract(const Duration(minutes: 5));
       // Query for owned projects modified since timestamp
       final ownedProjectsFuture =
           _firestore
               .collection(ProjectDTO.collection)
               .where('ownerId', isEqualTo: userId)
-              .where('updatedAt', isGreaterThan: since)
+              .where('updatedAt', isGreaterThan: safeSince)
               .orderBy('updatedAt')
               .get();
 
@@ -260,6 +261,8 @@ class ProjectsRemoteDatasSourceImpl implements ProjectRemoteDataSource {
           _firestore
               .collection(ProjectDTO.collection)
               .where('collaboratorIds', arrayContains: userId)
+              .where('updatedAt', isGreaterThan: safeSince)
+              .orderBy('updatedAt')
               .get();
 
       AppLogger.network(
