@@ -1,10 +1,10 @@
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:dartz/dartz.dart';
-import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart';
 import 'package:trackflow/features/audio_track/data/services/audio_track_incremental_sync_service.dart';
 import 'package:trackflow/features/audio_comment/data/services/audio_comment_incremental_sync_service.dart';
@@ -113,6 +113,20 @@ class SyncCoordinator {
       userId,
       isFullSync: false, // Incremental for faster startup
     );
+    await _syncEntity(
+      _waveformsService,
+      _waveformsLastSyncKey,
+      'waveforms',
+      userId,
+      isFullSync: false, // Incremental for faster startup
+    );
+    await _syncEntity(
+      _commentsService,
+      _commentsLastSyncKey,
+      'comments',
+      userId,
+      isFullSync: false, // Incremental for faster startup
+    );
 
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
   }
@@ -132,6 +146,77 @@ class SyncCoordinator {
       userId,
       isFullSync: forceFullSync,
     );
+  }
+
+  /// 🎯 Sync specific entity type by name (for BackgroundSyncCoordinator)
+  Future<void> syncEntityByType(String userId, String entityType) async {
+    switch (entityType) {
+      case 'audio_comments':
+        await _syncEntity(
+          _commentsService,
+          _commentsLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      case 'waveforms':
+        await _syncEntity(
+          _waveformsService,
+          _waveformsLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      case 'track_versions':
+        await _syncEntity(
+          _trackVersionsService,
+          _trackVersionsLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      case 'audio_tracks':
+        await _syncEntity(
+          _tracksService,
+          _tracksLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      case 'projects':
+        await _syncEntity(
+          _projectsService,
+          _projectsLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      case 'user_profile':
+        await _syncEntity(
+          _userProfileService,
+          _userProfileLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      case 'collaborators':
+        await _syncEntity(
+          _collaboratorsService,
+          _collaboratorsLastSyncKey,
+          entityType,
+          userId,
+          isFullSync: false,
+        );
+        break;
+      default:
+        AppLogger.warning('Unknown entity type for sync: $entityType');
+    }
   }
 
   /// 🔧 Core sync logic

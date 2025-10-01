@@ -129,7 +129,7 @@ class FirebaseAudioCommentRemoteDataSource
 
       return Right(all);
     } catch (e) {
-      return Left(ServerFailure('Failed to get modified comments'));
+      return Left(ServerFailure('Failed to get modified comments: $e'));
     }
   }
 }

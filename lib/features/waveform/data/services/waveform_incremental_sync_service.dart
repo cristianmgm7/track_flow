@@ -50,8 +50,6 @@ class WaveformIncrementalSyncService
       // 1) Get current local track versions (active and known)
       final versionsResult = await _versionLocalDataSource.getAllVersions();
       final versions = versionsResult.getOrElse(() => <TrackVersionDTO>[]);
-      final versionIds =
-          versions.map((v) => TrackVersionId.fromUniqueString(v.id)).toList();
 
       // 2) Ensure local waveforms exist for each version; fetch remote canonical if missing
       int downloads = 0;
