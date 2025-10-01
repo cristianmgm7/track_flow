@@ -45,40 +45,6 @@ abstract class IncrementalSyncService<T> {
   /// - Failure: Network or server errors
   Future<Either<Failure, DateTime>> getServerTimestamp();
 
-  /// Get metadata for entities (without full content)
-  ///
-  /// This method fetches only metadata (ID, timestamps, versions) for
-  /// entities modified since the specified time. Useful for conflict
-  /// detection and lightweight sync operations.
-  ///
-  /// [lastSyncTime] - Timestamp of the last successful sync
-  /// [userId] - User ID for user-specific data filtering
-  ///
-  /// Returns:
-  /// - Success: List of entity metadata
-  /// - Failure: Network, server, or other sync-related failures
-  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
-    DateTime lastSyncTime,
-    String userId,
-  );
-
-  /// Get items that have been deleted since the specified timestamp
-  ///
-  /// Many systems maintain a separate deleted items collection or use
-  /// soft deletes. This method should fetch items that have been deleted
-  /// since the last sync to properly remove them from local cache.
-  ///
-  /// [lastSyncTime] - Timestamp of the last successful sync
-  /// [userId] - User ID for user-specific data filtering
-  ///
-  /// Returns:
-  /// - Success: List of IDs of deleted items
-  /// - Failure: Network or server errors
-  Future<Either<Failure, List<String>>> getDeletedSince(
-    DateTime lastSyncTime,
-    String userId,
-  );
-
   /// Perform complete incremental sync operation (Fetch + Cache)
   ///
   /// This is the main method that use cases should call for incremental sync.

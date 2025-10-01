@@ -43,10 +43,14 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       // AudioTrack only stores metadata, no file upload
       // Files are now handled by TrackVersionRemoteDataSource
 
+      final data = Map<String, dynamic>.from(trackData.toJson());
+      // Ensure server authoritative timestamp
+      data['lastModified'] = FieldValue.serverTimestamp();
+
       await _firestore
           .collection(AudioTrackDTO.collection)
           .doc(trackData.id.value)
-          .set(trackData.toJson());
+          .set(data);
 
       return Right(trackData);
     } catch (e) {
@@ -74,10 +78,14 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO trackData) async {
     try {
       // Update track with complete data including sync metadata
+      final data = Map<String, dynamic>.from(trackData.toJson());
+      // Ensure server authoritative timestamp regardless of client value
+      data['lastModified'] = FieldValue.serverTimestamp();
+
       await _firestore
           .collection(AudioTrackDTO.collection)
           .doc(trackData.id.value)
-          .update(trackData.toJson());
+          .update(data);
 
       return const Right(unit);
     } catch (e) {
@@ -176,6 +184,8 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       }
 
       final List<AudioTrackDTO> allTracks = [];
+      // Use a small buffer to avoid missing server-timestamped writes near the cursor boundary
+      final DateTime safeSince = since.subtract(const Duration(minutes: 5));
       // Firestore 'whereIn' clause is limited to 10 elements.
       // We process the projectIds in chunks of 10 to be safe.
       for (var i = 0; i < projectIds.length; i += 10) {
@@ -184,11 +194,13 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
           i + 10 > projectIds.length ? projectIds.length : i + 10,
         );
 
+        // Single query using a buffered cursor; both updates and soft-deletes
+        // are captured via lastModified
         final snapshot =
             await _firestore
                 .collection(AudioTrackDTO.collection)
                 .where('projectId', whereIn: sublist)
-                .where('lastModified', isGreaterThan: since)
+                .where('lastModified', isGreaterThan: safeSince)
                 .orderBy('lastModified')
                 .get();
 

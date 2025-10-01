@@ -84,98 +84,6 @@ class AudioTrackIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    // For now, return empty - can be implemented if metadata-only queries are needed
-    return const Right([]);
-  }
-
-  @override
-  Future<Either<Failure, List<String>>> getDeletedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    try {
-      AppLogger.sync(
-        'AUDIO_TRACKS',
-        'Getting deleted audio tracks since ${lastSyncTime.toIso8601String()}',
-        syncKey: userId,
-      );
-
-      // Get user's project IDs
-      final projectIdsResult = await _getUserProjectIds(userId);
-      if (projectIdsResult.isLeft()) {
-        return projectIdsResult.fold(
-          (failure) => Left(failure),
-          (_) => throw UnimplementedError(),
-        );
-      }
-
-      final projectIds = projectIdsResult.getOrElse(() => []);
-
-      if (projectIds.isEmpty) {
-        AppLogger.sync(
-          'AUDIO_TRACKS',
-          'No projects found for deleted tracks',
-          syncKey: userId,
-        );
-        return const Right([]);
-      }
-
-      // Get all modified tracks (including deleted ones)
-      final result = await _remoteDataSource.getAudioTracksModifiedSince(
-        lastSyncTime,
-        projectIds,
-      );
-
-      return result.fold((failure) => Left(failure), (tracks) async {
-        // Filter only tracks marked as deleted
-        final deletedTracks =
-            tracks
-                .where(
-                  (t) =>
-                      t.isDeleted &&
-                      t.lastModified != null &&
-                      t.lastModified!.isAfter(lastSyncTime),
-                )
-                .toList();
-
-        final deletedIds = deletedTracks.map((t) => t.id.value).toList();
-
-        AppLogger.sync(
-          'AUDIO_TRACKS',
-          'Found ${deletedIds.length} deleted audio tracks',
-          syncKey: userId,
-        );
-
-        // Remove deleted tracks from local cache
-        for (final deletedTrack in deletedTracks) {
-          final removeResult = await _localDataSource.deleteTrack(
-            deletedTrack.id.value,
-          );
-          if (removeResult.isLeft()) {
-            AppLogger.error(
-              'Failed to remove deleted audio track ${deletedTrack.id}: ${removeResult.fold((l) => l.message, (r) => '')}',
-              tag: 'AudioTrackIncrementalSyncService',
-            );
-          }
-        }
-
-        return Right(deletedIds);
-      });
-    } catch (e) {
-      AppLogger.error(
-        'Failed to get deleted audio tracks: $e',
-        tag: 'AudioTrackIncrementalSyncService',
-        error: e,
-      );
-      return Left(ServerFailure('Failed to get deleted audio tracks: $e'));
-    }
-  }
-
-  @override
   Future<Either<Failure, IncrementalSyncResult<AudioTrackDTO>>>
   performIncrementalSync(DateTime lastSyncTime, String userId) async {
     try {
@@ -247,8 +155,19 @@ class AudioTrackIncrementalSyncService
       // 3. Update local cache
       await _updateLocalCache(activeTracks, deletedIds);
 
-      // 4. Get server timestamp for next sync
-      final serverTimestamp = DateTime.now().toUtc();
+      // 4. Compute next cursor using max lastModified from server to avoid clock skew
+      DateTime serverTimestamp = lastSyncTime;
+      for (final t in allModifiedTracks) {
+        if (t.lastModified != null &&
+            t.lastModified!.isAfter(serverTimestamp)) {
+          serverTimestamp = t.lastModified!;
+        }
+      }
+      // Fallback to now when there are no modified items
+      serverTimestamp =
+          serverTimestamp == lastSyncTime
+              ? DateTime.now().toUtc()
+              : serverTimestamp.toUtc();
 
       final result = IncrementalSyncResult(
         modifiedItems: activeTracks,
