@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
 abstract class AudioTrackRemoteDataSource {
@@ -11,6 +10,8 @@ abstract class AudioTrackRemoteDataSource {
   );
 
   Future<Either<Failure, Unit>> deleteAudioTrack(String trackId);
+
+  Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO trackData);
 
   Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
 
@@ -66,6 +67,21 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       return Left(
         ServerFailure('Error soft deleting audio track metadata: $e'),
       );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO trackData) async {
+    try {
+      // Update track with complete data including sync metadata
+      await _firestore
+          .collection(AudioTrackDTO.collection)
+          .doc(trackData.id.value)
+          .update(trackData.toJson());
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Error updating audio track: $e'));
     }
   }
 

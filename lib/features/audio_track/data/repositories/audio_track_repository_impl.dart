@@ -143,17 +143,40 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
     ProjectId projectId,
   ) async {
     try {
-      // 1. ALWAYS soft delete locally first
+      // 1. Get track data before deletion for sync operation
+      final trackResult = await localDataSource.getTrackById(trackId.value);
+      if (trackResult.isLeft()) {
+        return Left(DatabaseFailure('Track not found: ${trackId.value}'));
+      }
+
+      final trackDto = trackResult.getOrElse(() => null);
+      if (trackDto == null) {
+        return Left(DatabaseFailure('Track not found: ${trackId.value}'));
+      }
+
+      // 2. ALWAYS soft delete locally first
       await localDataSource.deleteTrack(trackId.value);
 
-      // 2. Try to queue for background sync
-      final queueResult = await _pendingOperationsManager.addDeleteOperation(
+      // 3. Try to queue for background sync with complete track data
+      final queueResult = await _pendingOperationsManager.addOperation(
         entityType: 'audio_track',
         entityId: trackId.value,
+        operationType: 'delete',
         priority: SyncPriority.high,
+        data: {
+          'name': trackDto.name,
+          'url': trackDto.url,
+          'duration': trackDto.duration,
+          'projectId': trackDto.projectId.value,
+          'uploadedBy': trackDto.uploadedBy.value,
+          'createdAt': trackDto.createdAt?.toIso8601String(),
+          'extension': trackDto.extension,
+          'version': trackDto.version,
+          'lastModified': trackDto.lastModified?.toIso8601String(),
+        },
       );
 
-      // 3. Handle queue failure
+      // 4. Handle queue failure
       if (queueResult.isLeft()) {
         final failure = queueResult.fold((l) => l, (r) => null);
         return Left(
@@ -163,15 +186,15 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         );
       }
 
-      // 4. Trigger upstream sync only (more efficient for local changes)
+      // 5. Trigger upstream sync only (more efficient for local changes)
       unawaited(_backgroundSyncCoordinator.pushUpstream());
 
-      // 5. Ensure local URL remains pointing to remote (not cache)
+      // 6. Ensure local URL remains pointing to remote (not cache)
       // We cannot compute remote URL here; keep current local value (remote URL
       // should already be persisted from upload). If local was pointing to a
       // cache path, the player will fallback to remote when cache is missing.
 
-      // 6. Return success only after successful queue
+      // 7. Return success only after successful queue
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));

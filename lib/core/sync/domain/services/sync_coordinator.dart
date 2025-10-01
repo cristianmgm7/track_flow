@@ -104,7 +104,7 @@ class SyncCoordinator {
       _tracksLastSyncKey,
       'audio_tracks',
       userId,
-      isFullSync: false, // Incremental for faster startup
+      isFullSync: true, // Incremental for faster startup
     );
 
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
