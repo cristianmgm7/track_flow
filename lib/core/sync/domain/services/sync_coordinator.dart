@@ -106,6 +106,13 @@ class SyncCoordinator {
       userId,
       isFullSync: false, // Incremental for faster startup
     );
+    await _syncEntity(
+      _trackVersionsService,
+      _trackVersionsLastSyncKey,
+      'track_versions',
+      userId,
+      isFullSync: false, // Incremental for faster startup
+    );
 
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
   }

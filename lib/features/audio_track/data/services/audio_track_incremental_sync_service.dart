@@ -163,10 +163,10 @@ class AudioTrackIncrementalSyncService
           serverTimestamp = t.lastModified!;
         }
       }
-      // Fallback to now when there are no modified items
+      // Do NOT advance cursor when there are no changes
       serverTimestamp =
-          serverTimestamp == lastSyncTime
-              ? DateTime.now().toUtc()
+          allModifiedTracks.isEmpty
+              ? lastSyncTime.toUtc()
               : serverTimestamp.toUtc();
 
       final result = IncrementalSyncResult(
@@ -233,23 +233,44 @@ class AudioTrackIncrementalSyncService
       }
 
       // Get all tracks for user's projects
-      final tracks = await _remoteDataSource.getTracksByProjectIds(projectIds);
+      final allTracks = await _remoteDataSource.getTracksByProjectIds(
+        projectIds,
+      );
 
       AppLogger.sync(
         'AUDIO_TRACKS',
-        'Fetched ${tracks.length} audio tracks for ${projectIds.length} projects',
+        'Fetched ${allTracks.length} total audio tracks for ${projectIds.length} projects',
         syncKey: userId,
       );
 
-      // Update local cache with all tracks
-      await _updateLocalCache(tracks, []);
+      // Filter out deleted tracks - only sync active tracks
+      final activeTracks = allTracks.where((t) => !t.isDeleted).toList();
+      final deletedTracks = allTracks.where((t) => t.isDeleted).toList();
+
+      AppLogger.sync(
+        'AUDIO_TRACKS',
+        'Full sync: ${activeTracks.length} active tracks, ${deletedTracks.length} deleted tracks (filtered out)',
+        syncKey: userId,
+      );
+
+      if (deletedTracks.isNotEmpty) {
+        final deletedIds = deletedTracks.map((t) => t.id.value).toList();
+        AppLogger.sync(
+          'AUDIO_TRACKS',
+          'Filtered out deleted track IDs: ${deletedIds.join(", ")}',
+          syncKey: userId,
+        );
+      }
+
+      // Update local cache with only active tracks
+      await _updateLocalCache(activeTracks, []);
 
       final syncResult = IncrementalSyncResult(
-        modifiedItems: tracks,
+        modifiedItems: activeTracks,
         deletedItemIds: [],
         serverTimestamp: DateTime.now().toUtc(),
         wasFullSync: true,
-        totalProcessed: tracks.length,
+        totalProcessed: activeTracks.length,
       );
 
       AppLogger.sync(
