@@ -9,6 +9,10 @@ abstract class AudioCommentRemoteDataSource {
   Future<Either<Failure, Unit>> deleteComment(String commentId);
   Future<List<AudioCommentDTO>> getCommentsByVersionId(String versionId);
   Future<Either<Failure, Unit>> deleteByVersionId(String versionId);
+  Future<Either<Failure, List<AudioCommentDTO>>> getCommentsModifiedSince(
+    DateTime since,
+    List<String> versionIds,
+  );
 }
 
 @LazySingleton(as: AudioCommentRemoteDataSource)
@@ -22,6 +26,7 @@ class FirebaseAudioCommentRemoteDataSource
   Future<Either<Failure, Unit>> addComment(AudioCommentDTO comment) async {
     try {
       final data = comment.toJson();
+      data['lastModified'] = FieldValue.serverTimestamp();
       await _firestore
           .collection(AudioCommentDTO.collection)
           .doc(comment.id)
@@ -35,10 +40,14 @@ class FirebaseAudioCommentRemoteDataSource
   @override
   Future<Either<Failure, Unit>> deleteComment(String commentId) async {
     try {
+      // Soft delete
       await _firestore
           .collection(AudioCommentDTO.collection)
           .doc(commentId)
-          .delete();
+          .update({
+            'isDeleted': true,
+            'lastModified': FieldValue.serverTimestamp(),
+          });
       return Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to delete comment'));
@@ -52,6 +61,7 @@ class FirebaseAudioCommentRemoteDataSource
           await _firestore
               .collection(AudioCommentDTO.collection)
               .where('trackId', isEqualTo: versionId)
+              .where('isDeleted', isEqualTo: false)
               .get();
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -73,12 +83,53 @@ class FirebaseAudioCommentRemoteDataSource
               .where('trackId', isEqualTo: versionId)
               .get();
       for (final doc in query.docs) {
-        batch.delete(doc.reference);
+        batch.update(doc.reference, {
+          'isDeleted': true,
+          'lastModified': FieldValue.serverTimestamp(),
+        });
       }
       await batch.commit();
       return Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to delete comments by versionId'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<AudioCommentDTO>>> getCommentsModifiedSince(
+    DateTime since,
+    List<String> versionIds,
+  ) async {
+    try {
+      if (versionIds.isEmpty) return const Right([]);
+      final List<AudioCommentDTO> all = [];
+      final safeSince = since.subtract(const Duration(minutes: 2));
+
+      for (var i = 0; i < versionIds.length; i += 10) {
+        final sublist = versionIds.sublist(
+          i,
+          i + 10 > versionIds.length ? versionIds.length : i + 10,
+        );
+        final snapshot =
+            await _firestore
+                .collection(AudioCommentDTO.collection)
+                .where('trackId', whereIn: sublist)
+                .where('lastModified', isGreaterThan: safeSince)
+                .orderBy('lastModified')
+                .get();
+
+        final items =
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return AudioCommentDTO.fromJson(data);
+            }).toList();
+        all.addAll(items);
+      }
+
+      return Right(all);
+    } catch (e) {
+      return Left(ServerFailure('Failed to get modified comments'));
     }
   }
 }

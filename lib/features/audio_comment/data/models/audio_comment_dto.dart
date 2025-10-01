@@ -12,6 +12,7 @@ class AudioCommentDTO {
   final String createdAt;
 
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
+  final bool isDeleted;
   final int version;
   final DateTime? lastModified;
 
@@ -24,6 +25,7 @@ class AudioCommentDTO {
     required this.timestamp,
     required this.createdAt,
     // ⭐ NEW: Sync metadata fields
+    this.isDeleted = false,
     this.version = 1,
     this.lastModified,
   });
@@ -70,6 +72,7 @@ class AudioCommentDTO {
       'timestamp': timestamp,
       'createdAt': createdAt,
       // ⭐ NEW: Include sync metadata in JSON
+      'isDeleted': isDeleted,
       'version': version,
       'lastModified': lastModified?.toIso8601String(),
     };
@@ -87,6 +90,7 @@ class AudioCommentDTO {
       timestamp: json['timestamp'] as int,
       createdAt: json['createdAt'] as String,
       // ⭐ NEW: Parse sync metadata from JSON
+      isDeleted: json['isDeleted'] as bool? ?? false,
       version: json['version'] as int? ?? 1,
       lastModified:
           json['lastModified'] != null

@@ -7,6 +7,7 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
+import 'package:trackflow/features/track_version/data/datasources/track_version_local_data_source.dart';
 
 /// 🎵 AUDIO COMMENT INCREMENTAL SYNC SERVICE
 ///
@@ -17,10 +18,12 @@ class AudioCommentIncrementalSyncService
     implements IncrementalSyncService<AudioCommentDTO> {
   final AudioCommentRemoteDataSource _remoteDataSource;
   final AudioCommentLocalDataSource _localDataSource;
+  final TrackVersionLocalDataSource _versionLocalDataSource;
 
   AudioCommentIncrementalSyncService(
     this._remoteDataSource,
     this._localDataSource,
+    this._versionLocalDataSource,
   );
 
   @override
@@ -35,10 +38,17 @@ class AudioCommentIncrementalSyncService
         syncKey: userId,
       );
 
-      // For now, return empty - need to implement remote incremental methods
-      // TODO: Add getCommentsModifiedSince to remote data source
-      AppLogger.warning('AudioComment incremental fetch not implemented yet');
-      return const Right([]);
+      // Derive versionIds from local track versions
+      final versionsResult = await _versionLocalDataSource.getAllVersions();
+      final versions = versionsResult.getOrElse(() => []);
+      final versionIds = versions.map((v) => v.id).toList();
+      if (versionIds.isEmpty) return const Right([]);
+
+      final result = await _remoteDataSource.getCommentsModifiedSince(
+        lastSyncTime,
+        versionIds,
+      );
+      return result;
     } catch (e) {
       AppLogger.error(
         'Failed to get modified comments: $e',
@@ -80,28 +90,40 @@ class AudioCommentIncrementalSyncService
         syncKey: userId,
       );
 
-      // For now, implement basic sync - fetch all comments for user's versions
-      // TODO: Replace with true incremental logic when remote methods are ready
+      final modifiedResult = await getModifiedSince(lastSyncTime, userId);
+      if (modifiedResult.isLeft()) {
+        return modifiedResult.fold(
+          (l) => Left(l),
+          (_) => throw UnimplementedError(),
+        );
+      }
+      final all = modifiedResult.getOrElse(() => []);
+      final active = all.where((c) => !(c.isDeleted)).toList();
+      final deleted = all.where((c) => c.isDeleted).toList();
 
-      // For now, implement basic sync - clear and refetch approach
-      // TODO: Implement proper incremental logic with version tracking
+      for (final c in active) {
+        await _localDataSource.cacheComment(c);
+      }
+      for (final c in deleted) {
+        await _localDataSource.deleteCachedComment(c.id);
+      }
 
-      await _localDataSource.clearCache();
-
-      // Since we don't have a way to track which versions have comments,
-      // we'll use a placeholder approach for now
-      List<AudioCommentDTO> allComments = [];
-
-      AppLogger.warning(
-        'AudioComment sync: Using basic clear/refetch - needs proper version tracking',
-        tag: 'AudioCommentIncrementalSyncService',
-      );
+      // Compute next cursor from max lastModified, do not advance if empty
+      DateTime serverTimestamp = lastSyncTime;
+      for (final c in all) {
+        if (c.lastModified != null &&
+            c.lastModified!.isAfter(serverTimestamp)) {
+          serverTimestamp = c.lastModified!;
+        }
+      }
+      serverTimestamp =
+          all.isEmpty ? lastSyncTime.toUtc() : serverTimestamp.toUtc();
 
       final result = IncrementalSyncResult(
-        modifiedItems: allComments,
-        deletedItemIds: [],
-        serverTimestamp: DateTime.now().toUtc(),
-        totalProcessed: allComments.length,
+        modifiedItems: active,
+        deletedItemIds: deleted.map((c) => c.id).toList(),
+        serverTimestamp: serverTimestamp,
+        totalProcessed: all.length,
       );
 
       AppLogger.sync(
@@ -127,7 +149,7 @@ class AudioCommentIncrementalSyncService
     try {
       AppLogger.sync('AUDIO_COMMENTS', 'Starting full sync', syncKey: userId);
 
-      // Same as incremental for now - fetch all comments
+      // Use very old cursor to pull everything for local versions
       return performIncrementalSync(
         DateTime.fromMillisecondsSinceEpoch(0),
         userId,

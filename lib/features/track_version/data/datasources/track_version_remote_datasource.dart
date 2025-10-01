@@ -143,6 +143,7 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
             await _firestore
                 .collection(TrackVersionDTO.collection)
                 .where('trackId', isEqualTo: trackId)
+                .where('isDeleted', isEqualTo: false)
                 .orderBy('versionNumber')
                 .get();
 
