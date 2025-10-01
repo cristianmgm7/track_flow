@@ -118,6 +118,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
             await _firestore
                 .collection(AudioTrackDTO.collection)
                 .where('projectId', whereIn: sublist)
+                .where('isDeleted', isEqualTo: false)
                 .get();
 
         final tracks =

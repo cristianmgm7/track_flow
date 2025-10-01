@@ -20,6 +20,12 @@ abstract class TrackVersionRemoteDataSource {
   Future<Either<Failure, Unit>> deleteTrackVersion(String versionId);
 
   Future<List<TrackVersionDTO>> getVersionsByTrackId(String trackId);
+
+  /// Get track versions modified since a specific timestamp for specific track IDs
+  Future<Either<Failure, List<TrackVersionDTO>>> getTrackVersionsModifiedSince(
+    DateTime since,
+    List<String> trackIds,
+  );
 }
 
 @LazySingleton(as: TrackVersionRemoteDataSource)
@@ -71,15 +77,18 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
         status: 'ready', // Mark as ready after successful upload
         createdAt: versionData.createdAt,
         createdBy: versionData.createdBy,
+        isDeleted: false,
         version: 1, // Initial version for sync
-        lastModified: DateTime.now(),
+        lastModified: null, // will be set by serverTimestamp
       );
 
-      // 4. Save metadata to Firestore
+      // 4. Save metadata to Firestore with server timestamps
+      final data = updatedVersionDTO.toJson();
+      data['lastModified'] = FieldValue.serverTimestamp();
       await _firestore
           .collection(TrackVersionDTO.collection)
           .doc(updatedVersionDTO.id)
-          .set(updatedVersionDTO.toJson());
+          .set(data);
 
       return Right(updatedVersionDTO);
     } catch (e) {
@@ -93,10 +102,12 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   ) async {
     try {
       // Update only metadata in Firestore (no file re-upload)
+      final data = versionData.toJson();
+      data['lastModified'] = FieldValue.serverTimestamp();
       await _firestore
           .collection(TrackVersionDTO.collection)
           .doc(versionData.id)
-          .update(versionData.toJson());
+          .update(data);
 
       return const Right(unit);
     } catch (e) {
@@ -107,32 +118,15 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   @override
   Future<Either<Failure, Unit>> deleteTrackVersion(String versionId) async {
     try {
-      // Get version data to delete file from storage
-      final docSnapshot =
-          await _firestore
-              .collection(TrackVersionDTO.collection)
-              .doc(versionId)
-              .get();
-
-      if (docSnapshot.exists) {
-        final data = docSnapshot.data();
-        // NOTE: Waveform deletion is now handled by WaveformOperationExecutor
-        // through the background sync system. This ensures proper offline-first behavior
-        // and avoids duplicate responsibility between TrackVersion and Waveform datasources.
-        if (data != null && data['fileRemoteUrl'] != null) {
-          // Delete file from storage
-          final fileRef = _storage.refFromURL(data['fileRemoteUrl'] as String);
-          await fileRef.delete();
-        }
-
-        // Legacy waveform cleanup is also handled by WaveformOperationExecutor
-      }
-
-      // Delete metadata from Firestore
+      // Soft delete: flag isDeleted and set server lastModified. Physical file
+      // cleanup is handled by background tasks to preserve offline-first behavior.
       await _firestore
           .collection(TrackVersionDTO.collection)
           .doc(versionId)
-          .delete();
+          .update({
+            'isDeleted': true,
+            'lastModified': FieldValue.serverTimestamp(),
+          });
 
       return const Right(unit);
     } catch (e) {
@@ -205,6 +199,49 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
         return 'audio/flac';
       default:
         return 'audio/mpeg'; // Default to mp3
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<TrackVersionDTO>>> getTrackVersionsModifiedSince(
+    DateTime since,
+    List<String> trackIds,
+  ) async {
+    try {
+      if (trackIds.isEmpty) {
+        return const Right([]);
+      }
+
+      final List<TrackVersionDTO> all = [];
+      final safeSince = since.subtract(const Duration(minutes: 2));
+
+      for (var i = 0; i < trackIds.length; i += 10) {
+        final sublist = trackIds.sublist(
+          i,
+          i + 10 > trackIds.length ? trackIds.length : i + 10,
+        );
+
+        final snapshot =
+            await _firestore
+                .collection(TrackVersionDTO.collection)
+                .where('trackId', whereIn: sublist)
+                .where('lastModified', isGreaterThan: safeSince)
+                .orderBy('lastModified')
+                .get();
+
+        final items =
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return TrackVersionDTO.fromJson(data);
+            }).toList();
+
+        all.addAll(items);
+      }
+
+      return Right(all);
+    } catch (e) {
+      return Left(ServerFailure('Error getting modified track versions: $e'));
     }
   }
 }
