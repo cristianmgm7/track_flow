@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/theme/app_theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
@@ -11,6 +12,8 @@ import 'package:trackflow/core/app/services/app_initializer.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import 'package:trackflow/core/sync/domain/usecases/trigger_foreground_sync_usecase.dart';
+import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -35,6 +38,7 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
   late final GoRouter _router;
   late final DynamicLinkHandler _dynamicLinkHandler;
   late final AppInitializer _appInitializer;
+  late final TriggerForegroundSyncUseCase _triggerForegroundSync;
 
   @override
   void initState() {
@@ -56,6 +60,10 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
     );
 
     _appInitializer = AppInitializer(appFlowBloc: context.read());
+    _triggerForegroundSync = TriggerForegroundSyncUseCase(
+      sl<BackgroundSyncCoordinator>(),
+      sl<SessionService>(),
+    );
 
     // Start initialization
     _appInitializer.initialize();
@@ -82,6 +90,15 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
         context.read<AudioPlayerBloc>().add(const SavePlaybackStateRequested());
       } catch (_) {}
     }
+
+    // Trigger foreground sync when app becomes active
+    if (state == AppLifecycleState.resumed) {
+      // Best-effort sync; avoid throwing inside lifecycle callback
+      try {
+        _triggerForegroundSync.call();
+      } catch (_) {}
+    }
+
     super.didChangeAppLifecycleState(state);
   }
 

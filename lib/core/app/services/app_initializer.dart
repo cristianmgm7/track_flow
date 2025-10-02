@@ -75,6 +75,9 @@ class AppInitializer {
         // Clean up old temporary images (non-blocking)
         await ImageUtils.cleanupOldImages();
 
+        // Setup app lifecycle listener for foreground sync
+        _setupAppLifecycleListener();
+
         AppLogger.info('Maintenance tasks completed', tag: 'APP_INITIALIZER');
       } catch (e) {
         AppLogger.warning(
@@ -84,6 +87,13 @@ class AppInitializer {
         // Don't rethrow - maintenance failures shouldn't break app startup
       }
     });
+  }
+
+  /// Setup app lifecycle listener for foreground sync
+  void _setupAppLifecycleListener() {
+    // TODO: Add WidgetsBindingObserver to listen for app lifecycle changes
+    // When app comes to foreground, trigger non-critical entity sync
+    // This would need to be implemented in the main app widget or a lifecycle service
   }
 
   /// Initialize audio background capabilities (non-blocking)
