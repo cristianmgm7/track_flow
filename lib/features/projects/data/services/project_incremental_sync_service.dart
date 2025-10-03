@@ -16,7 +16,7 @@ import 'package:trackflow/features/projects/data/models/project_dto.dart';
 /// ✅ TRUE INCREMENTAL: Only fetches modified data from remote
 /// ✅ EFFICIENT: Uses timestamp-based queries
 /// ✅ RELIABLE: Proper error handling and fallbacks
-@LazySingleton()
+@LazySingleton(as: IncrementalSyncService<ProjectDTO>)
 class ProjectIncrementalSyncService
     implements IncrementalSyncService<ProjectDTO> {
   final ProjectRemoteDataSource _remoteDataSource;

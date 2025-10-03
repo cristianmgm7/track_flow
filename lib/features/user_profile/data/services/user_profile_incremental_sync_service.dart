@@ -13,7 +13,7 @@ import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dar
 /// Handles sync for the current user's profile.
 /// Special case: only one profile (current user), so "incremental" means
 /// checking if the remote profile is newer than local cache.
-@LazySingleton()
+@LazySingleton(as: IncrementalSyncService<UserProfileDTO>)
 class UserProfileIncrementalSyncService
     implements IncrementalSyncService<UserProfileDTO> {
   final UserProfileRemoteDataSource _remoteDataSource;

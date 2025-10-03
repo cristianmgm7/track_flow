@@ -10,7 +10,7 @@ import 'package:trackflow/features/track_version/data/datasources/track_version_
 import 'package:trackflow/features/track_version/data/datasources/track_version_local_data_source.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
 
-@LazySingleton()
+@LazySingleton(as: IncrementalSyncService<TrackVersionDTO>)
 class TrackVersionIncrementalSyncService
     implements IncrementalSyncService<TrackVersionDTO> {
   final TrackVersionRemoteDataSource _remoteDataSource;

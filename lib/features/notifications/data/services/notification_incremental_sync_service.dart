@@ -5,7 +5,7 @@ import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dar
 import 'package:trackflow/core/notifications/domain/entities/notification.dart';
 import 'package:trackflow/core/sync/domain/value_objects/Incremental_sync_result.dart';
 
-@LazySingleton()
+@LazySingleton(as: IncrementalSyncService<Notification>)
 class NotificationIncrementalSyncService
     implements IncrementalSyncService<Notification> {
   @override

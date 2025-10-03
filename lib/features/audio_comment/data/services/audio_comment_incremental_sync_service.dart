@@ -13,7 +13,7 @@ import 'package:trackflow/features/track_version/data/datasources/track_version_
 ///
 /// Implements IncrementalSyncService for audio comments.
 /// Handles incremental sync of comments for track versions.
-@LazySingleton()
+@LazySingleton(as: IncrementalSyncService<AudioCommentDTO>)
 class AudioCommentIncrementalSyncService
     implements IncrementalSyncService<AudioCommentDTO> {
   final AudioCommentRemoteDataSource _remoteDataSource;

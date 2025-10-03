@@ -9,7 +9,7 @@ import 'package:trackflow/features/user_profile/data/datasources/user_profile_lo
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart';
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 
-@LazySingleton()
+@lazySingleton
 class UserProfileCollaboratorIncrementalSyncService
     implements IncrementalSyncService<UserProfileDTO> {
   final UserProfileRemoteDataSource _remoteDataSource;

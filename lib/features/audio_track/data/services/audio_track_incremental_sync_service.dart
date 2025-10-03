@@ -9,7 +9,7 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_remo
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
 
-@LazySingleton()
+@LazySingleton(as: IncrementalSyncService<AudioTrackDTO>)
 class AudioTrackIncrementalSyncService
     implements IncrementalSyncService<AudioTrackDTO> {
   final AudioTrackRemoteDataSource _remoteDataSource;
