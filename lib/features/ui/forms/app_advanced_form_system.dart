@@ -480,7 +480,7 @@ class _DynamicFormState extends State<DynamicForm> {
         Text(field.label, style: AppTextStyle.labelMedium),
         SizedBox(height: Dimensions.space8),
         DropdownButtonFormField<String>(
-          value: selectedValue,
+          initialValue: selectedValue,
           decoration: InputDecoration(
             border: OutlineInputBorder(borderRadius: AppBorders.medium),
             errorText: _errors[field.key],

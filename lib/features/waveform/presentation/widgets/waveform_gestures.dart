@@ -28,7 +28,7 @@ class WaveformGestures extends StatelessWidget {
             GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
               () => PanGestureRecognizer(),
               (PanGestureRecognizer instance) {
-                Duration? _lastPreview;
+                Duration? lastPreview;
                 instance
                   ..onStart = (details) {
                     onScrubStarted();
@@ -38,12 +38,12 @@ class WaveformGestures extends StatelessWidget {
                     if (box == null) return;
                     final local = box.globalToLocal(details.globalPosition);
                     final pos = positionFromX(local.dx, box.size.width);
-                    _lastPreview = pos;
+                    lastPreview = pos;
                     onScrubUpdated(pos);
                   }
                   ..onEnd = (details) {
-                    if (_lastPreview != null) {
-                      onScrubCommitted(_lastPreview!);
+                    if (lastPreview != null) {
+                      onScrubCommitted(lastPreview!);
                     } else {
                       onScrubCancelled();
                     }

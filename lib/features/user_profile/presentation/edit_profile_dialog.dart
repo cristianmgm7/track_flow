@@ -223,7 +223,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               ),
               SizedBox(height: Dimensions.space16),
               DropdownButtonFormField<CreativeRole>(
-                value: _creativeRole,
+                initialValue: _creativeRole,
                 decoration: InputDecoration(
                   labelText: 'Creative Role',
                   labelStyle: AppTextStyle.bodyMedium.copyWith(

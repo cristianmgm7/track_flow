@@ -15,6 +15,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/sync/domain/usecases/trigger_upstream_sync_usecase.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -82,6 +83,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     SizedBox(height: Dimensions.space12),
+                    // Manual Sync Button
+                    ListTile(
+                      leading: Icon(Icons.sync, color: AppColors.textPrimary),
+                      title: Text(
+                        'Sync Data',
+                        style: AppTextStyle.bodyLarge.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Force sync all data',
+                        style: AppTextStyle.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      trailing: Icon(
+                        Icons.arrow_forward_ios,
+                        color: AppColors.textSecondary,
+                      ),
+                      onTap: () async {
+                        try {
+                          final triggerSync =
+                              context.read<TriggerUpstreamSyncUseCase>();
+                          await triggerSync.call();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Sync triggered')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Sync failed: $e')),
+                          );
+                        }
+                      },
+                    ),
+                    SizedBox(height: Dimensions.space8),
                     // Audio Cache Demo removed
                     ListTile(
                       leading: Icon(

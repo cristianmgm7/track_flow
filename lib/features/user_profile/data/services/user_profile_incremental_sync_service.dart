@@ -87,23 +87,6 @@ class UserProfileIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    return const Right([]);
-  }
-
-  @override
-  Future<Either<Failure, List<String>>> getDeletedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    // User profiles don't get deleted
-    return const Right([]);
-  }
-
-  @override
   Future<Either<Failure, IncrementalSyncResult<UserProfileDTO>>>
   performIncrementalSync(DateTime lastSyncTime, String userId) async {
     try {

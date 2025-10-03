@@ -186,8 +186,9 @@ class TrackVersionIncrementalSyncService
               acc,
               v,
             ) {
-              if (v.lastModified != null && v.lastModified!.isAfter(acc))
+              if (v.lastModified != null && v.lastModified!.isAfter(acc)) {
                 return v.lastModified!;
+              }
               return acc;
             }).toUtc();
 

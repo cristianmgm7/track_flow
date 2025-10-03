@@ -65,22 +65,6 @@ class AudioCommentIncrementalSyncService
   }
 
   @override
-  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    return const Right([]);
-  }
-
-  @override
-  Future<Either<Failure, List<String>>> getDeletedSince(
-    DateTime lastSyncTime,
-    String userId,
-  ) async {
-    return const Right([]);
-  }
-
-  @override
   Future<Either<Failure, IncrementalSyncResult<AudioCommentDTO>>>
   performIncrementalSync(DateTime lastSyncTime, String userId) async {
     try {
