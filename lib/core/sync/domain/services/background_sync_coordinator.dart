@@ -10,7 +10,7 @@ import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 @lazySingleton
 class BackgroundSyncCoordinator {
   final NetworkStateManager _networkStateManager;
-  final SyncCoordinator _syncCoordinator;
+  final SyncOrchestrator _syncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
   final SessionService _sessionService;
 
@@ -25,10 +25,10 @@ class BackgroundSyncCoordinator {
 
   BackgroundSyncCoordinator(
     this._networkStateManager,
-    this._syncCoordinator,
+    SyncOrchestrator syncCoordinator,
     this._pendingOperationsManager,
     this._sessionService,
-  ) {
+  ) : _syncCoordinator = syncCoordinator {
     _initializeNetworkListener();
     _initializePeriodicSync();
   }

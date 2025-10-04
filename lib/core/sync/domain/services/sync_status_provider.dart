@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 import 'package:trackflow/core/sync/domain/services/sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
@@ -18,37 +19,20 @@ import 'package:trackflow/core/sync/domain/services/pending_operations_manager.d
 /// - Handle sync logic (that's SyncCoordinator/PendingOperationsManager's job)
 @injectable
 class SyncStatusProvider {
-  final SyncCoordinator _syncCoordinator;
+  final SyncOrchestrator _syncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
 
+  // Stream controller for sync state
+  final BehaviorSubject<SyncState> _syncStateController =
+      BehaviorSubject<SyncState>.seeded(SyncState.initial);
+
   SyncStatusProvider({
-    required SyncCoordinator syncCoordinator,
+    required SyncOrchestrator syncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
   }) : _syncCoordinator = syncCoordinator,
-       _pendingOperationsManager = pendingOperationsManager;
-
-  /// Get the current sync state for UI display
-  ///
-  /// This provides information about:
-  /// - Whether sync is in progress
-  /// - Sync progress percentage
-  /// - Any sync errors
-  Future<SyncState> getCurrentSyncState() async {
-    final result = await _syncCoordinator.getCurrentSyncState();
-    return result.fold(
-      (failure) => SyncState.error('Failed to get sync state'),
-      (syncState) => syncState,
-    );
-  }
-
-  /// Watch sync state changes for reactive UI updates
-  ///
-  /// BLoCs can listen to this stream to update UI indicators:
-  /// - Show/hide loading spinners
-  /// - Update progress bars
-  /// - Display sync status messages
-  Stream<SyncState> watchSyncState() {
-    return _syncCoordinator.watchSyncState();
+       _pendingOperationsManager = pendingOperationsManager {
+    // Initialize with initial state
+    _syncStateController.add(SyncState.initial);
   }
 
   /// Get count of pending operations for UI badges/indicators
@@ -61,15 +45,6 @@ class SyncStatusProvider {
     return await _pendingOperationsManager.getPendingOperationsCount();
   }
 
-  /// Check if sync is currently active
-  ///
-  /// Convenience method for BLoCs to quickly check sync status
-  /// without having to parse the full SyncState object
-  Future<bool> get isSyncing async {
-    final state = await getCurrentSyncState();
-    return state.status == SyncStatus.syncing;
-  }
-
   /// Check if there are pending operations
   ///
   /// Useful for showing offline indicators or "unsaved changes" warnings
@@ -78,28 +53,20 @@ class SyncStatusProvider {
     return count > 0;
   }
 
-  /// Get a combined status that considers both downstream sync and pending operations
+  /// Watch sync state changes for reactive UI updates
   ///
-  /// This provides a holistic view of sync status:
-  /// - If downloading: "Syncing..."
-  /// - If has pending: "X items to sync"
-  /// - If all good: "Up to date"
-  Future<String> get statusMessage async {
-    final syncState = await getCurrentSyncState();
-    final pendingCount = await getPendingOperationsCount();
+  /// Returns a stream that emits sync state changes
+  Stream<SyncState> watchSyncState() {
+    return _syncStateController.stream;
+  }
 
-    if (syncState.status == SyncStatus.syncing) {
-      return 'Syncing... ${(syncState.progress * 100).toInt()}%';
-    }
+  /// Update sync state (called by sync coordinator when sync status changes)
+  void updateSyncState(SyncState state) {
+    _syncStateController.add(state);
+  }
 
-    if (syncState.status == SyncStatus.error) {
-      return 'Sync error';
-    }
-
-    if (pendingCount > 0) {
-      return '$pendingCount item${pendingCount == 1 ? '' : 's'} to sync';
-    }
-
-    return 'Up to date';
+  /// Clean up resources
+  void dispose() {
+    _syncStateController.close();
   }
 }

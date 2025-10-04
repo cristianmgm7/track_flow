@@ -60,10 +60,6 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
     );
 
     _appInitializer = AppInitializer(appFlowBloc: context.read());
-    _triggerForegroundSync = TriggerForegroundSyncUseCase(
-      sl<BackgroundSyncCoordinator>(),
-      sl<SessionService>(),
-    );
 
     // Start initialization
     _appInitializer.initialize();

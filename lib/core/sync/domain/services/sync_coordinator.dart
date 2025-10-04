@@ -2,9 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
-import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
-import 'package:trackflow/core/error/failures.dart';
-import 'package:dartz/dartz.dart';
+import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart';
 import 'package:trackflow/features/audio_track/data/services/audio_track_incremental_sync_service.dart';
 import 'package:trackflow/features/audio_comment/data/services/audio_comment_incremental_sync_service.dart';
@@ -14,23 +12,30 @@ import 'package:trackflow/features/notifications/data/services/notification_incr
 import 'package:trackflow/features/track_version/data/services/track_version_incremental_sync_service.dart';
 import 'package:trackflow/features/waveform/data/services/waveform_incremental_sync_service.dart';
 
+/// Interface for sync orchestration operations
+abstract class SyncOrchestrator {
+  /// Pull remote data for a specific user
+  Future<void> pull(String userId, {String syncKey = 'general'});
+
+  /// Sync specific entity type by name
+  Future<void> syncEntityByType(String userId, String entityType);
+
+  /// Get sync statistics for monitoring
+  Future<Map<String, dynamic>> getSyncStatistics(String userId);
+
+  /// Clear all sync keys from SharedPreferences
+  Future<void> clearAllSyncKeys();
+}
+
 /// 🎯 CENTRAL SYNC COORDINATOR
 ///
 /// Coordina todos los syncs usando IncrementalSyncService implementations.
 /// Simple, eficiente y limpia - como Firebase pero con más control.
-@lazySingleton
-class SyncCoordinator {
+@LazySingleton(as: SyncOrchestrator)
+class SyncCoordinator implements SyncOrchestrator {
   final SharedPreferences _prefs;
-  final ProjectIncrementalSyncService _projectsService;
-  final AudioTrackIncrementalSyncService _tracksService;
-  final AudioCommentIncrementalSyncService _commentsService;
-  final UserProfileIncrementalSyncService _userProfileService;
-  final UserProfileCollaboratorIncrementalSyncService _collaboratorsService;
-  final NotificationIncrementalSyncService _notificationsService;
-  final TrackVersionIncrementalSyncService _trackVersionsService;
-  final WaveformIncrementalSyncService _waveformsService;
 
-  // Keys for SharedPreferences
+  // Keys for SharedPreferences and service registry
   static const String _projectsLastSyncKey = 'projects_last_sync';
   static const String _tracksLastSyncKey = 'tracks_last_sync';
   static const String _commentsLastSyncKey = 'comments_last_sync';
@@ -40,19 +45,20 @@ class SyncCoordinator {
   static const String _trackVersionsLastSyncKey = 'track_versions_last_sync';
   static const String _waveformsLastSyncKey = 'waveforms_last_sync';
 
-  SyncCoordinator(
-    this._prefs,
-    this._projectsService,
-    this._tracksService,
-    this._commentsService,
-    this._userProfileService,
-    this._collaboratorsService,
-    this._notificationsService,
-    this._trackVersionsService,
-    this._waveformsService,
-  );
+  // Service registry keys
+  static const String _projectsServiceKey = 'projects';
+  static const String _tracksServiceKey = 'audio_tracks';
+  static const String _commentsServiceKey = 'audio_comments';
+  static const String _userProfileServiceKey = 'user_profile';
+  static const String _collaboratorsServiceKey = 'collaborators';
+  static const String _notificationsServiceKey = 'notifications';
+  static const String _trackVersionsServiceKey = 'track_versions';
+  static const String _waveformsServiceKey = 'waveforms';
+
+  SyncCoordinator(this._prefs);
 
   /// 🚀 Pull remote data with specific sync key
+  @override
   Future<void> pull(String userId, {String syncKey = 'general'}) async {
     AppLogger.sync(
       'COORDINATOR',
@@ -62,6 +68,9 @@ class SyncCoordinator {
     switch (syncKey) {
       case 'appstartup':
         await _performStartupSync(userId);
+        break;
+      default:
+        await _performFullSync(userId);
         break;
     }
 
@@ -76,54 +85,26 @@ class SyncCoordinator {
     AppLogger.sync('COORDINATOR', 'Starting startup sync for user: $userId');
 
     // Only sync the most critical data for startup
-    await _syncEntity(
-      _userProfileService,
+    await _syncEntityByKey(
+      _userProfileServiceKey,
       _userProfileLastSyncKey,
       'user_profile',
       userId,
       isFullSync: true, // Incremental for faster startup
     );
 
-    await _syncEntity(
-      _projectsService,
+    await _syncEntityByKey(
+      _projectsServiceKey,
       _projectsLastSyncKey,
       'projects',
       userId,
       isFullSync: false, // Incremental for faster startup
     );
 
-    await _syncEntity(
-      _collaboratorsService,
+    await _syncEntityByKey(
+      _collaboratorsServiceKey,
       _collaboratorsLastSyncKey,
       'collaborators',
-      userId,
-      isFullSync: false, // Incremental for faster startup
-    );
-    await _syncEntity(
-      _tracksService,
-      _tracksLastSyncKey,
-      'audio_tracks',
-      userId,
-      isFullSync: false, // Incremental for faster startup
-    );
-    await _syncEntity(
-      _trackVersionsService,
-      _trackVersionsLastSyncKey,
-      'track_versions',
-      userId,
-      isFullSync: false, // Incremental for faster startup
-    );
-    await _syncEntity(
-      _waveformsService,
-      _waveformsLastSyncKey,
-      'waveforms',
-      userId,
-      isFullSync: false, // Incremental for faster startup
-    );
-    await _syncEntity(
-      _commentsService,
-      _commentsLastSyncKey,
-      'comments',
       userId,
       isFullSync: false, // Incremental for faster startup
     );
@@ -131,105 +112,147 @@ class SyncCoordinator {
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
   }
 
-  /// 🎯 Sync specific entity (for targeted updates)
-  Future<void> syncEntity(
-    IncrementalSyncService service,
-    String entityType,
-    String userId, {
-    bool forceFullSync = false,
-  }) async {
-    final key = _getKeyForEntity(entityType);
-    await _syncEntity(
-      service,
-      key,
-      entityType,
+  /// 🚀 Full sync - Sync all entities
+  Future<void> _performFullSync(String userId) async {
+    AppLogger.sync('COORDINATOR', 'Starting full sync for user: $userId');
+
+    // Sync all entities
+    await _syncEntityByKey(
+      _projectsServiceKey,
+      _projectsLastSyncKey,
+      'projects',
       userId,
-      isFullSync: forceFullSync,
     );
+    await _syncEntityByKey(
+      _tracksServiceKey,
+      _tracksLastSyncKey,
+      'audio_tracks',
+      userId,
+    );
+    await _syncEntityByKey(
+      _commentsServiceKey,
+      _commentsLastSyncKey,
+      'audio_comments',
+      userId,
+    );
+    await _syncEntityByKey(
+      _userProfileServiceKey,
+      _userProfileLastSyncKey,
+      'user_profile',
+      userId,
+    );
+    await _syncEntityByKey(
+      _collaboratorsServiceKey,
+      _collaboratorsLastSyncKey,
+      'collaborators',
+      userId,
+    );
+    await _syncEntityByKey(
+      _notificationsServiceKey,
+      _notificationsLastSyncKey,
+      'notifications',
+      userId,
+    );
+    await _syncEntityByKey(
+      _trackVersionsServiceKey,
+      _trackVersionsLastSyncKey,
+      'track_versions',
+      userId,
+    );
+    await _syncEntityByKey(
+      _waveformsServiceKey,
+      _waveformsLastSyncKey,
+      'waveforms',
+      userId,
+    );
+
+    AppLogger.sync('COORDINATOR', 'Full sync completed for user: $userId');
   }
 
-  /// 🎯 Sync specific entity type by name (for BackgroundSyncCoordinator)
+  /// 🎯 Sync specific entity by type name (for BackgroundSyncCoordinator)
+  @override
   Future<void> syncEntityByType(String userId, String entityType) async {
-    switch (entityType) {
-      case 'audio_comments':
-        await _syncEntity(
-          _commentsService,
-          _commentsLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      case 'waveforms':
-        await _syncEntity(
-          _waveformsService,
-          _waveformsLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      case 'track_versions':
-        await _syncEntity(
-          _trackVersionsService,
-          _trackVersionsLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      case 'audio_tracks':
-        await _syncEntity(
-          _tracksService,
-          _tracksLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      case 'projects':
-        await _syncEntity(
-          _projectsService,
-          _projectsLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      case 'user_profile':
-        await _syncEntity(
-          _userProfileService,
-          _userProfileLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      case 'collaborators':
-        await _syncEntity(
-          _collaboratorsService,
-          _collaboratorsLastSyncKey,
-          entityType,
-          userId,
-          isFullSync: false,
-        );
-        break;
-      default:
-        AppLogger.warning('Unknown entity type for sync: $entityType');
+    final serviceKey = _getServiceKeyForEntity(entityType);
+    if (serviceKey != null) {
+      final syncKey = _getSyncKeyForEntity(entityType);
+      await _syncEntityByKey(serviceKey, syncKey, entityType, userId);
+    } else {
+      AppLogger.warning('Unknown entity type: $entityType', tag: 'COORDINATOR');
     }
   }
 
-  /// 🔧 Core sync logic
-  Future<void> _syncEntity(
-    IncrementalSyncService service,
+  /// Get sync statistics for monitoring
+  @override
+  Future<Map<String, dynamic>> getSyncStatistics(String userId) async {
+    // Implementation would go here to collect sync stats from all services
+    return {
+      'userId': userId,
+      'timestamp': DateTime.now().toIso8601String(),
+      'services': [
+        _projectsServiceKey,
+        _tracksServiceKey,
+        _commentsServiceKey,
+        _userProfileServiceKey,
+        _collaboratorsServiceKey,
+        _notificationsServiceKey,
+        _trackVersionsServiceKey,
+        _waveformsServiceKey,
+      ],
+    };
+  }
+
+  /// 🔧 Get service by key from service locator
+  IncrementalSyncService<dynamic>? _getServiceByKey(String serviceKey) {
+    try {
+      switch (serviceKey) {
+        case _projectsServiceKey:
+          return sl<ProjectIncrementalSyncService>();
+        case _tracksServiceKey:
+          return sl<AudioTrackIncrementalSyncService>();
+        case _commentsServiceKey:
+          return sl<AudioCommentIncrementalSyncService>();
+        case _userProfileServiceKey:
+          return sl<UserProfileIncrementalSyncService>();
+        case _collaboratorsServiceKey:
+          return sl<UserProfileCollaboratorIncrementalSyncService>();
+        case _notificationsServiceKey:
+          return sl<NotificationIncrementalSyncService>();
+        case _trackVersionsServiceKey:
+          return sl<TrackVersionIncrementalSyncService>();
+        case _waveformsServiceKey:
+          return sl<WaveformIncrementalSyncService>();
+        default:
+          return null;
+      }
+    } catch (e) {
+      AppLogger.warning(
+        'Failed to get service for key: $serviceKey',
+        tag: 'COORDINATOR',
+      );
+      return null;
+    }
+  }
+
+  /// 🔧 Helper method to sync entity by service key
+  Future<void> _syncEntityByKey(
+    String serviceKey,
     String prefsKey,
     String entityType,
     String userId, {
     bool isFullSync = false,
   }) async {
+    final service = _getServiceByKey(serviceKey);
+    if (service == null) {
+      AppLogger.warning(
+        'No service found for key: $serviceKey',
+        tag: 'COORDINATOR',
+      );
+      return;
+    }
+
     try {
       // If no sync key exists, force full sync
-      final hasSyncKey = _prefs.getInt(prefsKey) != null;
+      final hasSyncKey = _prefs.containsKey(prefsKey);
       final shouldDoFullSync = isFullSync || !hasSyncKey;
 
       final result =
@@ -247,15 +270,17 @@ class SyncCoordinator {
             tag: 'SyncCoordinator',
           );
         },
-        (syncResult) {
-          // Update last sync time
-          _setLastSyncTime(prefsKey, syncResult.serverTimestamp);
-
-          final syncType = syncResult.wasFullSync ? 'full' : 'incremental';
+        (syncResult) async {
           AppLogger.sync(
             'COORDINATOR',
-            '$entityType $syncType sync: ${syncResult.totalChanges} changes',
+            'Sync completed for $entityType: ${syncResult.totalChanges} changes',
             syncKey: userId,
+          );
+
+          // Update last sync time
+          await _prefs.setInt(
+            prefsKey,
+            syncResult.serverTimestamp.millisecondsSinceEpoch,
           );
         },
       );
@@ -265,6 +290,54 @@ class SyncCoordinator {
         tag: 'SyncCoordinator',
         error: e,
       );
+    }
+  }
+
+  /// 🔧 Get service key for entity type
+  String? _getServiceKeyForEntity(String entityType) {
+    switch (entityType) {
+      case 'projects':
+        return _projectsServiceKey;
+      case 'audio_tracks':
+        return _tracksServiceKey;
+      case 'audio_comments':
+        return _commentsServiceKey;
+      case 'user_profile':
+        return _userProfileServiceKey;
+      case 'collaborators':
+        return _collaboratorsServiceKey;
+      case 'notifications':
+        return _notificationsServiceKey;
+      case 'track_versions':
+        return _trackVersionsServiceKey;
+      case 'waveforms':
+        return _waveformsServiceKey;
+      default:
+        return null;
+    }
+  }
+
+  /// 🔧 Get sync key for entity type
+  String _getSyncKeyForEntity(String entityType) {
+    switch (entityType) {
+      case 'projects':
+        return _projectsLastSyncKey;
+      case 'audio_tracks':
+        return _tracksLastSyncKey;
+      case 'audio_comments':
+        return _commentsLastSyncKey;
+      case 'user_profile':
+        return _userProfileLastSyncKey;
+      case 'collaborators':
+        return _collaboratorsLastSyncKey;
+      case 'notifications':
+        return _notificationsLastSyncKey;
+      case 'track_versions':
+        return _trackVersionsLastSyncKey;
+      case 'waveforms':
+        return _waveformsLastSyncKey;
+      default:
+        throw ArgumentError('Unknown entity type: $entityType');
     }
   }
 
@@ -278,99 +351,25 @@ class SyncCoordinator {
     return DateTime.fromMillisecondsSinceEpoch(timestamp);
   }
 
-  /// 💾 Save last sync time to SharedPreferences
-  void _setLastSyncTime(String key, DateTime time) {
-    _prefs.setInt(key, time.millisecondsSinceEpoch);
-  }
-
-  /// 🗝️ Get SharedPreferences key for entity type
-  String _getKeyForEntity(String entityType) {
-    switch (entityType) {
-      case 'projects':
-        return _projectsLastSyncKey;
-      case 'tracks':
-      case 'audio_tracks':
-        return _tracksLastSyncKey;
-      case 'comments':
-      case 'audio_comments':
-        return _commentsLastSyncKey;
-      case 'user_profile':
-      case 'profile':
-        return _userProfileLastSyncKey;
-      case 'collaborators':
-      case 'user_profile_collaborators':
-        return _collaboratorsLastSyncKey;
-      case 'notifications':
-        return _notificationsLastSyncKey;
-      case 'track_versions':
-      case 'versions':
-        return _trackVersionsLastSyncKey;
-      case 'waveforms':
-        return _waveformsLastSyncKey;
-      default:
-        return '${entityType}_last_sync';
-    }
-  }
-
-  /// 📊 Get sync statistics
-  Map<String, dynamic> getSyncStatistics() {
-    return {
-      'projects_last_sync':
-          _getLastSyncTime(_projectsLastSyncKey).toIso8601String(),
-      'tracks_last_sync':
-          _getLastSyncTime(_tracksLastSyncKey).toIso8601String(),
-      'comments_last_sync':
-          _getLastSyncTime(_commentsLastSyncKey).toIso8601String(),
-      'user_profile_last_sync':
-          _getLastSyncTime(_userProfileLastSyncKey).toIso8601String(),
-      'collaborators_last_sync':
-          _getLastSyncTime(_collaboratorsLastSyncKey).toIso8601String(),
-      'notifications_last_sync':
-          _getLastSyncTime(_notificationsLastSyncKey).toIso8601String(),
-      'track_versions_last_sync':
-          _getLastSyncTime(_trackVersionsLastSyncKey).toIso8601String(),
-      'waveforms_last_sync':
-          _getLastSyncTime(_waveformsLastSyncKey).toIso8601String(),
-      'strategy': 'central_coordinator_with_incremental_services',
-    };
-  }
-
-  /// Get current sync state for UI display
-  Future<Either<Failure, SyncState>> getCurrentSyncState() async {
-    try {
-      // For now, return a simple complete state
-      // TODO: Implement proper sync state tracking
-      return Right(SyncState.complete());
-    } catch (e) {
-      return Left(ServerFailure('Failed to get sync state: $e'));
-    }
-  }
-
-  /// Watch sync state changes for reactive UI updates
-  Stream<SyncState> watchSyncState() {
-    // For now, return a simple stream that emits complete state
-    // TODO: Implement proper sync state streaming
-    return Stream.value(SyncState.complete());
-  }
-
-  /// Clear all sync keys from SharedPreferences (for logout)
+  /// 🧹 Clear all sync keys from SharedPreferences
+  ///
+  /// This removes all stored sync timestamps, forcing full sync on next pull
   Future<void> clearAllSyncKeys() async {
-    AppLogger.sync(
-      'COORDINATOR',
+    AppLogger.info(
       'Clearing all sync keys from SharedPreferences',
+      tag: 'COORDINATOR',
     );
 
-    await Future.wait([
-      _prefs.remove(_projectsLastSyncKey),
-      _prefs.remove(_tracksLastSyncKey),
-      _prefs.remove(_commentsLastSyncKey),
-      _prefs.remove(_userProfileLastSyncKey),
-      _prefs.remove(_collaboratorsLastSyncKey),
-      _prefs.remove(_notificationsLastSyncKey),
-      _prefs.remove(_trackVersionsLastSyncKey),
-      _prefs.remove(_waveformsLastSyncKey),
-    ]);
+    // Remove all sync key entries
+    await _prefs.remove(_projectsLastSyncKey);
+    await _prefs.remove(_tracksLastSyncKey);
+    await _prefs.remove(_commentsLastSyncKey);
+    await _prefs.remove(_userProfileLastSyncKey);
+    await _prefs.remove(_collaboratorsLastSyncKey);
+    await _prefs.remove(_notificationsLastSyncKey);
+    await _prefs.remove(_trackVersionsLastSyncKey);
+    await _prefs.remove(_waveformsLastSyncKey);
 
-    AppLogger.sync('COORDINATOR', 'All sync keys cleared successfully');
+    AppLogger.info('All sync keys cleared successfully', tag: 'COORDINATOR');
   }
 }
