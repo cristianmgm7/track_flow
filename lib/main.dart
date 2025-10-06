@@ -8,8 +8,6 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app/screens/app_error_screen.dart';
 import 'package:trackflow/config/flavor_config.dart';
 import 'package:trackflow/config/firebase_config.dart';
-import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
-
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
@@ -82,31 +80,8 @@ void main() async {
     await configureDependencies();
     AppLogger.info('Dependencies configured successfully', tag: 'MAIN');
 
-    // Phase 3: Initialize BackgroundSyncCoordinator (must be after DI)
-    AppLogger.info(
-      'Initializing BackgroundSyncCoordinator...',
-      tag: 'MAIN',
-    );
-    try {
-      final syncCoordinator = sl<BackgroundSyncCoordinator>();
-      await syncCoordinator.initialize();
-      AppLogger.info(
-        'BackgroundSyncCoordinator initialized successfully',
-        tag: 'MAIN',
-      );
-    } catch (e) {
-      AppLogger.warning(
-        'Failed to initialize BackgroundSyncCoordinator: $e',
-        tag: 'MAIN',
-      );
-      // Continue anyway - app can work without background sync
-    }
-
-    // Phase 4: Let AppFlowBloc handle app state initialization
-    AppLogger.info(
-      'Starting app - AppFlowBloc will handle state initialization',
-      tag: 'MAIN',
-    );
+    // Phase 3: Start app (sync will be lazy-loaded when needed)
+    AppLogger.info('Starting app...', tag: 'MAIN');
 
     runApp(MyApp());
   } catch (error, stackTrace) {

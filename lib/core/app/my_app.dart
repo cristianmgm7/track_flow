@@ -61,11 +61,11 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
     // Initialize audio background (non-blocking)
     _initializeAudioBackground();
 
+    // Initialize dynamic link handler (listens for deep links)
+    _dynamicLinkHandler.initialize();
+
     // Trigger app flow check
     context.read<AppFlowBloc>().add(CheckAppFlow());
-
-    // Initialize dynamic link handler
-    _dynamicLinkHandler.initialize();
 
     AppLogger.info('App components initialized successfully', tag: 'APP_STATE');
   }
