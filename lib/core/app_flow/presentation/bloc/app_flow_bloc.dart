@@ -14,7 +14,7 @@ import 'package:trackflow/core/app_flow/domain/services/session_cleanup_service.
 @injectable
 class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
   final AppBootstrap _appBootstrap;
-  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
+  final BackgroundSyncCoordinator _syncTrigger;
   final GetAuthStateUseCase _getAuthStateUseCase;
   final SessionCleanupService _sessionCleanupService;
 
@@ -25,11 +25,11 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
   AppFlowBloc({
     required AppBootstrap appBootstrap,
-    required BackgroundSyncCoordinator backgroundSyncCoordinator,
+    required BackgroundSyncCoordinator syncTrigger,
     required GetAuthStateUseCase getAuthStateUseCase,
     required SessionCleanupService sessionCleanupService,
   }) : _appBootstrap = appBootstrap,
-       _backgroundSyncCoordinator = backgroundSyncCoordinator,
+       _syncTrigger = syncTrigger,
        _getAuthStateUseCase = getAuthStateUseCase,
        _sessionCleanupService = sessionCleanupService,
        super(AppFlowLoading()) {
@@ -110,12 +110,21 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       // Emit the state immediately for navigation
       emit(blocState);
 
-      // Trigger startup sync if user is ready (non-blocking)
+      // Trigger 3-phase sync if user is ready (non-blocking)
       if (bootstrapResult.state == AppInitialState.dashboard &&
           bootstrapResult.userSession?.currentUser != null) {
-        _backgroundSyncCoordinator.performStartupSync(
-          bootstrapResult.userSession!.currentUser!.id.value,
+        final userId = bootstrapResult.userSession!.currentUser!.id.value;
+
+        AppLogger.info(
+          'Triggering 3-phase sync for user: $userId',
+          tag: 'APP_FLOW_BLOC',
         );
+
+        // Phase 2: Critical data sync (with sync state indication)
+        unawaited(_performCriticalDataSync(userId, emit));
+
+        // Phase 3: Non-critical data sync (delayed)
+        unawaited(_performNonCriticalDataSync(userId));
       }
 
       AppLogger.info(
@@ -171,6 +180,85 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
         return AppFlowReady();
       case AppInitialState.error:
         return AppFlowError('App initialization failed');
+    }
+  }
+
+  /// Phase 2: Critical data sync (user profile, projects, collaborators)
+  ///
+  /// This runs in the background after navigation but shows sync progress in UI
+  Future<void> _performCriticalDataSync(
+    String userId,
+    Emitter<AppFlowState> emit,
+  ) async {
+    try {
+      AppLogger.info(
+        'Phase 2: Starting critical data sync',
+        tag: 'APP_FLOW_BLOC',
+      );
+
+      // Indicate sync is in progress
+      emit(AppFlowReady(isSyncing: true));
+
+      // Sync critical entities
+      await _syncTrigger.triggerEntitySync(
+        userId,
+        ['user_profile', 'projects', 'collaborators'],
+      );
+
+      AppLogger.info(
+        'Phase 2: Critical data sync completed',
+        tag: 'APP_FLOW_BLOC',
+      );
+
+      // Indicate sync completed
+      emit(AppFlowReady(syncCompleted: true));
+    } catch (e) {
+      AppLogger.error(
+        'Phase 2: Critical data sync failed: $e',
+        tag: 'APP_FLOW_BLOC',
+        error: e,
+      );
+
+      // Even if sync fails, emit ready state (user can still use app with cached data)
+      emit(AppFlowReady(syncCompleted: false));
+    }
+  }
+
+  /// Phase 3: Non-critical data sync (comments, waveforms, notifications)
+  ///
+  /// This runs after a delay to avoid overwhelming the app at startup
+  Future<void> _performNonCriticalDataSync(String userId) async {
+    try {
+      // Wait 2 seconds before syncing non-critical data
+      await Future.delayed(const Duration(seconds: 2));
+
+      AppLogger.info(
+        'Phase 3: Starting non-critical data sync',
+        tag: 'APP_FLOW_BLOC',
+      );
+
+      // Sync non-critical entities
+      await _syncTrigger.triggerEntitySync(
+        userId,
+        [
+          'audio_comments',
+          'waveforms',
+          'notifications',
+          'audio_tracks',
+          'track_versions',
+        ],
+      );
+
+      AppLogger.info(
+        'Phase 3: Non-critical data sync completed',
+        tag: 'APP_FLOW_BLOC',
+      );
+    } catch (e) {
+      AppLogger.warning(
+        'Phase 3: Non-critical data sync failed (non-blocking): $e',
+        tag: 'APP_FLOW_BLOC',
+      );
+      // Don't propagate - this is background operation
     }
   }
 

@@ -1,18 +1,24 @@
 import 'dart:async';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
 import 'package:trackflow/core/network/network_state_manager.dart';
-import 'package:trackflow/core/sync/domain/services/sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
-import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
+import 'package:trackflow/core/sync/domain/services/sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/sync_trigger.dart';
 
 /// Simple sync coordinator with essential protections
+///
+/// IMPORTANT: Call initialize() after DI is fully configured to avoid circular dependencies
+///
+/// Sync is triggered by:
+/// - App startup (via AppFlowBloc after authentication)
+/// - App foreground (via TriggerForegroundSyncUseCase when app resumes)
+/// - Network reconnection (automatically pushes pending operations)
+/// - Manual user actions (via repositories triggering upstream sync)
 @lazySingleton
-class BackgroundSyncCoordinator {
+class BackgroundSyncCoordinator implements SyncTrigger {
   final NetworkStateManager _networkStateManager;
-  final SyncOrchestrator _syncCoordinator;
+  final SyncCoordinator _syncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
-  final SessionService _sessionService;
 
   // Prevent duplicate operations
   final Set<String> _ongoingOperations = {};
@@ -20,36 +26,34 @@ class BackgroundSyncCoordinator {
   // Auto-sync when connectivity is restored
   StreamSubscription<bool>? _networkSubscription;
 
-  // Periodic sync timer for non-critical entities
-  Timer? _periodicSyncTimer;
+  // Track initialization state
+  bool _isInitialized = false;
 
   BackgroundSyncCoordinator(
     this._networkStateManager,
-    SyncOrchestrator syncCoordinator,
+    SyncCoordinator syncCoordinator,
     this._pendingOperationsManager,
-    this._sessionService,
-  ) : _syncCoordinator = syncCoordinator {
-    _initializeNetworkListener();
-    _initializePeriodicSync();
-  }
+  ) : _syncCoordinator = syncCoordinator;
 
-  /// Push pending operations to remote
-  Future<void> pushUpstream() async {
-    const operationKey = 'push_upstream';
-
-    if (_ongoingOperations.contains(operationKey)) return;
-    if (!await _networkStateManager.isConnected) return;
-
-    _ongoingOperations.add(operationKey);
-    try {
-      await _pendingOperationsManager.processPendingOperations();
-    } finally {
-      _ongoingOperations.remove(operationKey);
+  /// Initialize background sync coordinator
+  ///
+  /// MUST be called after DI is fully configured to avoid circular dependencies.
+  /// This method starts the network connectivity listener.
+  Future<void> initialize() async {
+    if (_isInitialized) {
+      return;
     }
+
+    _isInitialized = true;
+    _initializeNetworkListener();
   }
 
-  /// Perform startup sync (upstream + critical downstream data)
-  Future<void> performStartupSync(String userId) async {
+  // ========================================================================
+  // SyncTrigger Interface Implementation
+  // ========================================================================
+
+  @override
+  Future<void> triggerStartupSync(String userId) async {
     const operationKey = 'startup_sync';
 
     if (_ongoingOperations.contains(operationKey)) return;
@@ -66,8 +70,16 @@ class BackgroundSyncCoordinator {
     }
   }
 
-  /// Perform full sync (upstream + downstream)
-  Future<void> performFullSync(String userId) async {
+  @override
+  Future<void> triggerForegroundSync(String userId) async {
+    if (_ongoingOperations.isEmpty && await _networkStateManager.isConnected) {
+      // Sync non-critical entities when app resumes
+      await triggerEntitySync(userId, ['audio_comments', 'waveforms']);
+    }
+  }
+
+  @override
+  Future<void> triggerFullSync(String userId) async {
     const operationKey = 'full_sync';
 
     if (_ongoingOperations.contains(operationKey)) return;
@@ -84,8 +96,8 @@ class BackgroundSyncCoordinator {
     }
   }
 
-  /// Sync specific entities (for targeted updates)
-  Future<void> syncSpecificEntities(
+  @override
+  Future<void> triggerEntitySync(
     String userId,
     List<String> entityTypes,
   ) async {
@@ -108,17 +120,54 @@ class BackgroundSyncCoordinator {
     }
   }
 
-  /// Sync non-critical entities (comments, waveforms)
-  Future<void> syncNonCriticalEntities(String userId) async {
-    await syncSpecificEntities(userId, ['audio_comments', 'waveforms']);
+  @override
+  Future<void> pushUpstream() async {
+    const operationKey = 'push_upstream';
+
+    if (_ongoingOperations.contains(operationKey)) return;
+    if (!await _networkStateManager.isConnected) return;
+
+    _ongoingOperations.add(operationKey);
+    try {
+      await _pendingOperationsManager.processPendingOperations();
+    } finally {
+      _ongoingOperations.remove(operationKey);
+    }
   }
 
-  /// Trigger sync when app comes to foreground (for fresh data)
+  @override
+  bool get hasSyncInProgress => _ongoingOperations.isNotEmpty;
+
+  // ========================================================================
+  // Legacy Methods (for backward compatibility - to be deprecated)
+  // ========================================================================
+
+  /// @deprecated Use triggerStartupSync instead
+  Future<void> performStartupSync(String userId) async {
+    await triggerStartupSync(userId);
+  }
+
+  /// @deprecated Use triggerFullSync instead
+  Future<void> performFullSync(String userId) async {
+    await triggerFullSync(userId);
+  }
+
+  /// @deprecated Use triggerEntitySync instead
+  Future<void> syncSpecificEntities(
+    String userId,
+    List<String> entityTypes,
+  ) async {
+    await triggerEntitySync(userId, entityTypes);
+  }
+
+  /// @deprecated Use triggerEntitySync with ['audio_comments', 'waveforms'] instead
+  Future<void> syncNonCriticalEntities(String userId) async {
+    await triggerEntitySync(userId, ['audio_comments', 'waveforms']);
+  }
+
+  /// @deprecated Use triggerForegroundSync instead
   Future<void> onAppForeground(String userId) async {
-    if (_ongoingOperations.isEmpty && await _networkStateManager.isConnected) {
-      // Sync non-critical entities when app resumes
-      await syncNonCriticalEntities(userId);
-    }
+    await triggerForegroundSync(userId);
   }
 
   /// Check if any sync operation is in progress
@@ -141,32 +190,11 @@ class BackgroundSyncCoordinator {
     });
   }
 
-  /// Initialize periodic sync for non-critical entities
-  void _initializePeriodicSync() {
-    // Sync every 15 minutes for non-critical entities (comments, waveforms)
-    _periodicSyncTimer = Timer.periodic(const Duration(minutes: 15), (
-      timer,
-    ) async {
-      if (_ongoingOperations.isEmpty &&
-          await _networkStateManager.isConnected) {
-        // Get current user session
-        final sessionResult = await _sessionService.getCurrentSession();
-        if (sessionResult.isRight()) {
-          final session = sessionResult.getOrElse(
-            () => UserSession.unauthenticated(),
-          );
-          if (session.currentUser != null) {
-            await syncNonCriticalEntities(session.currentUser!.id.value);
-          }
-        }
-      }
-    });
-  }
 
   /// Clean up resources
   void dispose() {
     _networkSubscription?.cancel();
-    _periodicSyncTimer?.cancel();
     _ongoingOperations.clear();
+    _isInitialized = false;
   }
 }
