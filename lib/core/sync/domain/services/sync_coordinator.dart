@@ -31,7 +31,7 @@ abstract class SyncOrchestrator {
 ///
 /// Coordina todos los syncs usando IncrementalSyncService implementations.
 /// Simple, eficiente y limpia - como Firebase pero con más control.
-@LazySingleton(as: SyncOrchestrator)
+@lazySingleton
 class SyncCoordinator implements SyncOrchestrator {
   final SharedPreferences _prefs;
 
