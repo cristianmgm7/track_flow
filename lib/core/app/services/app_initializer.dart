@@ -14,9 +14,8 @@ class AppInitializer {
   final AppFlowBloc _appFlowBloc;
   bool _isInitialized = false;
 
-  AppInitializer({
-    required AppFlowBloc appFlowBloc,
-  }) : _appFlowBloc = appFlowBloc;
+  AppInitializer({required AppFlowBloc appFlowBloc})
+    : _appFlowBloc = appFlowBloc;
 
   /// Initialize the app
   void initialize() {
@@ -36,8 +35,7 @@ class AppInitializer {
 
       // Trigger app flow check - AppFlowBloc handles all verification
       _appFlowBloc.add(CheckAppFlow());
-
-      _isInitialized = true;
+      x _isInitialized = true;
 
       AppLogger.info(
         'App initialization completed successfully',
