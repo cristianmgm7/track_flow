@@ -13,8 +13,7 @@ import 'package:trackflow/features/user_profile/domain/repositories/user_profile
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
-import 'package:trackflow/core/media/avatar_cache_manager.dart';
-import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/core/utils/image_utils.dart';
 
 @LazySingleton(as: UserProfileRepository)
 class UserProfileRepositoryImpl implements UserProfileRepository {
@@ -66,21 +65,19 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   Future<Either<Failure, Unit>> updateUserProfile(UserProfile profile) async {
     try {
       // Normalize and cache local avatar path if needed
-      AvatarCacheManager cache = sl<AvatarCacheManager>();
       var dto = UserProfileDTO.fromDomain(profile);
       final isLocalAvatar =
           dto.avatarUrl.isNotEmpty && !dto.avatarUrl.startsWith('http');
       if (isLocalAvatar) {
         try {
-          final cachedPath = await cache.copyAvatarToCache(
-            profile.id.value,
-            dto.avatarUrl,
-          );
+          final cachedPath = await ImageUtils.saveLocalImage(dto.avatarUrl);
           // Ensure remote uses the cached path for upload
-          dto = dto.copyWith(
-            avatarLocalPath: cachedPath,
-            avatarUrl: cachedPath,
-          );
+          if (cachedPath != null) {
+            dto = dto.copyWith(
+              avatarLocalPath: cachedPath,
+              avatarUrl: cachedPath,
+            );
+          }
         } catch (e) {
           AppLogger.warning(
             'Avatar cache copy failed: $e',
