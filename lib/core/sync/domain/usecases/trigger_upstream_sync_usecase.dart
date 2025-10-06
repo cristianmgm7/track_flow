@@ -3,11 +3,11 @@ import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.
 
 @lazySingleton
 class TriggerUpstreamSyncUseCase {
-  final BackgroundSyncCoordinator _coordinator;
+  final BackgroundSyncCoordinator _syncTrigger;
 
-  TriggerUpstreamSyncUseCase(this._coordinator);
+  TriggerUpstreamSyncUseCase(this._syncTrigger);
 
   Future<void> call() async {
-    await _coordinator.pushUpstream();
+    await _syncTrigger.pushUpstream();
   }
 }

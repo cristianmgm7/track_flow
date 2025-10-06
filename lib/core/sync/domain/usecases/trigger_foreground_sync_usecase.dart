@@ -7,10 +7,10 @@ import 'package:trackflow/core/utils/app_logger.dart';
 /// Use case for triggering sync when app comes to foreground
 @lazySingleton
 class TriggerForegroundSyncUseCase {
-  final BackgroundSyncCoordinator _coordinator;
+  final BackgroundSyncCoordinator _syncTrigger;
   final SessionService _sessionService;
 
-  TriggerForegroundSyncUseCase(this._coordinator, this._sessionService);
+  TriggerForegroundSyncUseCase(this._syncTrigger, this._sessionService);
 
   Future<void> call() async {
     try {
@@ -20,7 +20,9 @@ class TriggerForegroundSyncUseCase {
           () => UserSession.unauthenticated(),
         );
         if (session.currentUser != null) {
-          await _coordinator.onAppForeground(session.currentUser!.id.value);
+          await _syncTrigger.triggerForegroundSync(
+            session.currentUser!.id.value,
+          );
         }
       }
     } catch (e) {
