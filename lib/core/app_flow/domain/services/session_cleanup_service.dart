@@ -32,7 +32,7 @@ class SessionCleanupService {
   final PendingOperationsRepository _pendingOperationsRepository;
   final WaveformRepository _waveformRepository;
   final TrackVersionRepository _trackVersionRepository;
-  final SyncOrchestrator _syncOrchestrator;
+  final SyncCoordinator _syncCoordinator;
 
   // Prevent multiple concurrent cleanup operations
   bool _isCleanupInProgress = false;
@@ -49,7 +49,7 @@ class SessionCleanupService {
     required PendingOperationsRepository pendingOperationsRepository,
     required WaveformRepository waveformRepository,
     required TrackVersionRepository trackVersionRepository,
-    required SyncOrchestrator syncOrchestrator,
+    required SyncCoordinator syncCoordinator,
   }) : _userProfileRepository = userProfileRepository,
        _projectsRepository = projectsRepository,
        _audioTrackRepository = audioTrackRepository,
@@ -61,7 +61,7 @@ class SessionCleanupService {
        _pendingOperationsRepository = pendingOperationsRepository,
        _waveformRepository = waveformRepository,
        _trackVersionRepository = trackVersionRepository,
-       _syncOrchestrator = syncOrchestrator;
+       _syncCoordinator = syncCoordinator;
 
   /// Clear all user-related data from local storage
   ///
@@ -243,7 +243,7 @@ class SessionCleanupService {
   /// Helper method to clear sync keys from SharedPreferences
   Future<Either<Failure, Unit>> _clearSyncKeys() async {
     try {
-      await _syncOrchestrator.clearAllSyncKeys();
+      await _syncCoordinator.clearAllSyncKeys();
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Failed to clear sync keys: $e'));
