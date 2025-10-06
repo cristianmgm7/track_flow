@@ -5,7 +5,7 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
+import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
@@ -53,33 +53,26 @@ class UserProfileSection extends StatelessWidget {
       return Row(
         children: [
           // User Avatar: prefer local cache path, else remote URL
-          ClipOval(
-            child:
-                (profile.avatarLocalPath != null &&
-                        profile.avatarLocalPath!.isNotEmpty)
-                    ? ImageUtils.createAdaptiveImageWidget(
-                      imagePath: profile.avatarLocalPath!,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      fallbackWidget: Icon(
-                        Icons.person,
-                        size: 30,
-                        color: AppColors.textSecondary,
-                      ),
-                    )
-                    : ImageUtils.createAdaptiveImageWidget(
-                      imagePath: profile.avatarUrl,
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      fallbackWidget: Icon(
-                        Icons.person,
-                        size: 30,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-          ),
+          (profile.avatarLocalPath != null &&
+                  profile.avatarLocalPath!.isNotEmpty)
+              ? UserAvatar(
+                imageUrl: profile.avatarLocalPath!,
+                size: 60,
+                fallback: Icon(
+                  Icons.person,
+                  size: 30,
+                  color: AppColors.textSecondary,
+                ),
+              )
+              : UserAvatar(
+                imageUrl: profile.avatarUrl,
+                size: 60,
+                fallback: Icon(
+                  Icons.person,
+                  size: 30,
+                  color: AppColors.textSecondary,
+                ),
+              ),
           SizedBox(width: Dimensions.space16),
 
           // User Info

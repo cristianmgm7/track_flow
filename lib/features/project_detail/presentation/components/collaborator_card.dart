@@ -8,7 +8,8 @@ import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'dart:ui';
-import 'package:trackflow/core/utils/image_utils.dart';
+import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CollaboratorCard extends StatelessWidget {
   final String name;
@@ -90,17 +91,7 @@ class CollaboratorCard extends StatelessWidget {
   }
 
   Widget _buildBackgroundImage() {
-    if (avatarUrl.isNotEmpty) {
-      return Hero(
-        tag: avatarUrl,
-        child: ImageUtils.createAdaptiveImageWidget(
-          imagePath: avatarUrl,
-          width: double.infinity,
-          height: double.infinity,
-          fit: BoxFit.cover,
-        ),
-      );
-    } else {
+    if (avatarUrl.isEmpty) {
       // Default avatar background
       return Container(
         decoration: BoxDecoration(
@@ -124,6 +115,78 @@ class CollaboratorCard extends StatelessWidget {
         ),
       );
     }
+
+    // Network image (Firebase Storage URL)
+    if (avatarUrl.startsWith('http')) {
+      return Hero(
+        tag: avatarUrl,
+        child: CachedNetworkImage(
+          imageUrl: avatarUrl,
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: AppColors.grey700,
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.8),
+                  AppColors.primary.withValues(alpha: 0.6),
+                ],
+              ),
+            ),
+            child: Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: AppTextStyle.displayLarge.copyWith(
+                  color: AppColors.onPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Local file path
+    return Hero(
+      tag: avatarUrl,
+      child: Image.file(
+        File(avatarUrl),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.8),
+                AppColors.primary.withValues(alpha: 0.6),
+              ],
+            ),
+          ),
+          child: Center(
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: AppTextStyle.displayLarge.copyWith(
+                color: AppColors.onPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildGlassOverlay() {
