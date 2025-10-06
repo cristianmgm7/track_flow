@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/theme/app_theme.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/router/app_router.dart';
@@ -13,7 +12,6 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/core/sync/domain/usecases/trigger_foreground_sync_usecase.dart';
-import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
+import 'package:trackflow/core/widgets/user_avatar.dart';
 
 class CollaboratorComponent extends StatelessWidget {
   final String name;
@@ -30,14 +30,10 @@ class CollaboratorComponent extends StatelessWidget {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              ClipOval(
-                child: ImageUtils.createAdaptiveImageWidget(
-                  imagePath: imageUrl,
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  fallbackWidget: const Icon(Icons.person),
-                ),
+              UserAvatar(
+                imageUrl: imageUrl,
+                size: 48,
+                fallback: const Icon(Icons.person, size: 32),
               ),
               const SizedBox(width: 16),
               Expanded(
