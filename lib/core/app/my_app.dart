@@ -11,9 +11,11 @@ import 'package:trackflow/core/app/services/audio_background_initializer.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/core/sync/domain/usecases/trigger_foreground_sync_usecase.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
+import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -21,7 +23,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
-      providers: AppBlocProviders.getAllProviders(),
+      providers: AppBlocProviders.getMainAppProviders(),
       child: const _App(),
     );
   }
@@ -37,16 +39,11 @@ class _App extends StatefulWidget {
 class _AppState extends State<_App> with WidgetsBindingObserver {
   late final GoRouter _router;
   late final DynamicLinkHandler _dynamicLinkHandler;
-  late final TriggerForegroundSyncUseCase _triggerForegroundSync;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initializeApp();
-  }
-
-  void _initializeApp() {
     AppLogger.info('Initializing app components', tag: 'APP_STATE');
 
     // Initialize router
@@ -64,6 +61,9 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
     // Initialize dynamic link handler (listens for deep links)
     _dynamicLinkHandler.initialize();
 
+    // Start watching sync state
+    context.read<SyncBloc>().add(const SyncWatchingStarted());
+
     // Trigger app flow check
     context.read<AppFlowBloc>().add(CheckAppFlow());
 
@@ -78,19 +78,9 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
         await initializer.initialize();
         AppLogger.info('Audio background initialized', tag: 'APP_STATE');
       } catch (e) {
-        AppLogger.warning(
-          'Audio background init failed: $e',
-          tag: 'APP_STATE',
-        );
+        AppLogger.warning('Audio background init failed: $e', tag: 'APP_STATE');
       }
     });
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _dynamicLinkHandler.dispose();
-    super.dispose();
   }
 
   @override
@@ -109,7 +99,7 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
     if (state == AppLifecycleState.resumed) {
       // Best-effort sync; avoid throwing inside lifecycle callback
       try {
-        _triggerForegroundSync.call();
+        context.read<SyncBloc>().add(const ForegroundSyncRequested());
       } catch (_) {}
     }
 
@@ -118,10 +108,26 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'TrackFlow',
-      theme: AppTheme.darkTheme,
-      routerConfig: _router,
+    // BlocListener reacts to AppFlowBloc state changes
+    return BlocListener<AppFlowBloc, AppFlowState>(
+      listener: (context, state) {
+        // Trigger initial sync when user is authenticated
+        if (state is AppFlowAuthenticated || state is AppFlowReady) {
+          context.read<SyncBloc>().add(const InitialSyncRequested());
+        }
+      },
+      child: MaterialApp.router(
+        title: 'TrackFlow',
+        theme: AppTheme.darkTheme,
+        routerConfig: _router,
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _dynamicLinkHandler.dispose();
+    super.dispose();
   }
 }

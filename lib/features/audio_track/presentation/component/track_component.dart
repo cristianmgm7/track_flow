@@ -6,7 +6,8 @@ import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/track/track_cover_art.dart';
 import 'package:trackflow/features/audio_cache/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/track_upload_status_badge.dart';
-import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
@@ -64,7 +65,7 @@ class _TrackComponentState extends State<TrackComponent> {
             track: track,
             statusBadge: TrackUploadStatusBadge(
               trackId: track.id,
-              onRetry: () => context.read<SyncStatusCubit>().retryUpstream(),
+              onRetry: () => context.read<SyncBloc>().add(const UpstreamSyncRequested()),
             ),
           ),
           SizedBox(width: Dimensions.space8),

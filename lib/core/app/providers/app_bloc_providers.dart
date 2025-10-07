@@ -10,7 +10,7 @@ import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
 import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_bloc.dart';
@@ -47,7 +47,7 @@ class AppBlocProviders {
       BlocProvider<AppFlowBloc>(create: (_) => sl<AppFlowBloc>()),
       BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
       BlocProvider<NavigationCubit>(create: (_) => sl<NavigationCubit>()),
-      BlocProvider<SyncStatusCubit>(create: (_) => sl<SyncStatusCubit>()),
+      BlocProvider<SyncBloc>(create: (_) => sl<SyncBloc>()),
 
       // Auth flow
       BlocProvider<OnboardingBloc>(create: (_) => sl<OnboardingBloc>()),
