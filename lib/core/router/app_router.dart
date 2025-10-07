@@ -24,6 +24,7 @@ import 'package:trackflow/features/cache_management/presentation/screens/cache_m
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/screens/notification_center_screen.dart';
 import 'package:trackflow/core/app/providers/app_bloc_providers.dart';
+import 'package:trackflow/core/app/widgets/authenticated_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -172,7 +173,9 @@ class AppRouter {
           builder:
               (context, state, child) => MultiBlocProvider(
                 providers: AppBlocProviders.getMainShellProviders(),
-                child: MainScaffold(child: child),
+                child: AuthenticatedShell(
+                  child: MainScaffold(child: child),
+                ),
               ),
           routes: [
             GoRoute(

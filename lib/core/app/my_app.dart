@@ -15,7 +15,6 @@ import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
-import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -108,19 +107,10 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // BlocListener reacts to AppFlowBloc state changes
-    return BlocListener<AppFlowBloc, AppFlowState>(
-      listener: (context, state) {
-        // Trigger initial sync when user is authenticated
-        if (state is AppFlowAuthenticated || state is AppFlowReady) {
-          context.read<SyncBloc>().add(const InitialSyncRequested());
-        }
-      },
-      child: MaterialApp.router(
-        title: 'TrackFlow',
-        theme: AppTheme.darkTheme,
-        routerConfig: _router,
-      ),
+    return MaterialApp.router(
+      title: 'TrackFlow',
+      theme: AppTheme.darkTheme,
+      routerConfig: _router,
     );
   }
 
