@@ -25,97 +25,56 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
-/// Factory for creating BLoC providers following SOLID principles
+/// Centralized BLoC provider management for the entire app
 ///
-/// This class organizes BLoC providers into logical groups and provides
-/// a clean interface for managing dependencies at different app levels.
+/// This class provides a single source of truth for all BLoC providers,
+/// organized by scope and usage. Instead of scattered provider definitions
+/// across screens and routes, everything is defined here.
+///
+/// Usage:
+/// - `getAllProviders()` - Main app providers (use in MyApp)
+/// - Scoped providers - Use in specific routes/screens as needed
 class AppBlocProviders {
-  /// Get all BLoC providers for the main app
-  static List<BlocProvider> getAllProviders() {
-    return [
-      ...getCoreProviders(),
-      ...getAuthProviders(),
-      ...getMainAppProviders(),
-      ...getAudioProviders(),
-    ];
-  }
+  // ============================================================================
+  // MAIN APP PROVIDERS - Used by MyApp root
+  // ============================================================================
 
-  /// Get core app providers (always needed for app initialization)
-  static List<BlocProvider> getCoreProviders() {
-    return [
-      BlocProvider<AppFlowBloc>(create: (context) => sl<AppFlowBloc>()),
-      BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
-      BlocProvider<NavigationCubit>(create: (context) => sl<NavigationCubit>()),
-      BlocProvider<SyncStatusCubit>(create: (context) => sl<SyncStatusCubit>()),
-    ];
-  }
-
-  /// Get authentication flow providers
-  static List<BlocProvider> getAuthProviders() {
-    return [
-      BlocProvider<OnboardingBloc>(create: (context) => sl<OnboardingBloc>()),
-      BlocProvider<UserProfileBloc>(create: (context) => sl<UserProfileBloc>()),
-      BlocProvider<MagicLinkBloc>(create: (context) => sl<MagicLinkBloc>()),
-    ];
-  }
-
-  /// Get main app providers (dashboard and project management features)
+  /// Get ALL providers for the main app root
+  /// This is the ONLY method you need to call in MyApp
   static List<BlocProvider> getMainAppProviders() {
-    return [];
-  }
-
-  /// Get audio-related providers
-  static List<BlocProvider> getAudioProviders() {
     return [
-      BlocProvider<AudioTrackBloc>(create: (context) => sl<AudioTrackBloc>()),
+      // Core infrastructure (always needed)
+      BlocProvider<AppFlowBloc>(create: (_) => sl<AppFlowBloc>()),
+      BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
+      BlocProvider<NavigationCubit>(create: (_) => sl<NavigationCubit>()),
+      BlocProvider<SyncStatusCubit>(create: (_) => sl<SyncStatusCubit>()),
+
+      // Auth flow
+      BlocProvider<OnboardingBloc>(create: (_) => sl<OnboardingBloc>()),
+      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
+      BlocProvider<MagicLinkBloc>(create: (_) => sl<MagicLinkBloc>()),
+
+      // Audio system (global)
+      BlocProvider<AudioTrackBloc>(create: (_) => sl<AudioTrackBloc>()),
       BlocProvider<AudioPlayerBloc>(
         create:
-            (context) =>
+            (_) =>
                 sl<AudioPlayerBloc>()
                   ..add(const AudioPlayerInitializeRequested()),
       ),
-      BlocProvider<WaveformBloc>(create: (context) => sl<WaveformBloc>()),
-      // Global AudioContextBloc for MiniAudioPlayer and background playback
-      BlocProvider<AudioContextBloc>(
-        create: (context) => sl<AudioContextBloc>(),
-      ),
+      BlocProvider<WaveformBloc>(create: (_) => sl<WaveformBloc>()),
+      BlocProvider<AudioContextBloc>(create: (_) => sl<AudioContextBloc>()),
     ];
   }
 
-  /// Get providers for specific app states
-  static List<BlocProvider> getAuthFlowProviders() {
-    return [...getCoreProviders(), ...getAuthProviders()];
-  }
+  // ============================================================================
+  // SCOPED PROVIDERS - Used in specific routes/screens
+  // ============================================================================
 
-  static List<BlocProvider> getMainAppFlowProviders() {
-    return [
-      ...getCoreProviders(),
-      ...getMainAppProviders(),
-      ...getAudioProviders(),
-    ];
-  }
-
-  /// Get providers for a specific feature
-  static List<BlocProvider> getFeatureProviders(String feature) {
-    switch (feature.toLowerCase()) {
-      case 'auth':
-        return getAuthProviders();
-      case 'audio':
-        return getAudioProviders();
-      case 'main':
-        return getMainAppProviders();
-      case 'core':
-        return getCoreProviders();
-      default:
-        return [];
-    }
-  }
-
-  /// Get providers for the main app shell (dashboard, projects, etc.)
+  /// Providers for main app shell (dashboard, projects list)
   static List<BlocProvider> getMainShellProviders() {
     return [
       BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
-      // AudioContextBloc moved to getAudioProviders() for global access
       BlocProvider<NotificationWatcherBloc>(
         create: (_) => sl<NotificationWatcherBloc>(),
       ),
@@ -125,30 +84,17 @@ class AppBlocProviders {
     ];
   }
 
-  /// Get providers for track detail screen
+  /// Providers for track detail screen
   static List<BlocProvider> getTrackDetailProviders() {
     return [
-      BlocProvider<TrackCacheBloc>(create: (context) => sl<TrackCacheBloc>()),
-      BlocProvider<AudioCommentBloc>(
-        create: (context) => sl<AudioCommentBloc>(),
-      ),
-      BlocProvider<TrackVersionsBloc>(
-        create: (context) => sl<TrackVersionsBloc>(),
-      ),
-      BlocProvider<TrackDetailCubit>(
-        create: (context) => sl<TrackDetailCubit>(),
-      ),
+      BlocProvider<TrackCacheBloc>(create: (_) => sl<TrackCacheBloc>()),
+      BlocProvider<AudioCommentBloc>(create: (_) => sl<AudioCommentBloc>()),
+      BlocProvider<TrackVersionsBloc>(create: (_) => sl<TrackVersionsBloc>()),
+      BlocProvider<TrackDetailCubit>(create: (_) => sl<TrackDetailCubit>()),
     ];
   }
 
-  /// Get providers for artist profile screen
-  static List<BlocProvider> getArtistProfileProviders() {
-    return [
-      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
-    ];
-  }
-
-  /// Get providers for project details screen
+  /// Providers for project detail screen
   static List<BlocProvider> getProjectDetailsProviders(Project project) {
     return [
       BlocProvider<ProjectDetailBloc>(create: (_) => sl<ProjectDetailBloc>()),
@@ -162,7 +108,7 @@ class AppBlocProviders {
     ];
   }
 
-  /// Get providers for manage collaborators screen
+  /// Providers for manage collaborators screen
   static List<BlocProvider> getManageCollaboratorsProviders(Project project) {
     return [
       BlocProvider<ManageCollaboratorsBloc>(
@@ -171,6 +117,13 @@ class AppBlocProviders {
                 sl<ManageCollaboratorsBloc>()
                   ..add(WatchCollaborators(projectId: project.id)),
       ),
+    ];
+  }
+
+  /// Providers for artist/user profile screen
+  static List<BlocProvider> getArtistProfileProviders() {
+    return [
+      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
     ];
   }
 }
