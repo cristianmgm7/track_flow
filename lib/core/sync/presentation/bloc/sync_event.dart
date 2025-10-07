@@ -31,9 +31,8 @@ class UpstreamSyncRequested extends SyncEvent {
   List<Object?> get props => [];
 }
 
-/// Start watching sync state and pending operations
-class SyncWatchingStarted extends SyncEvent {
-  const SyncWatchingStarted();
+class DownstreamSyncRequested extends SyncEvent {
+  const DownstreamSyncRequested();
 
   @override
   List<Object?> get props => [];

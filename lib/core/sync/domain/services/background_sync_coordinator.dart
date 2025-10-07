@@ -64,7 +64,7 @@ class BackgroundSyncCoordinator implements SyncTrigger {
       // 1. Push pending operations first
       await _pendingOperationsManager.processPendingOperations();
       // 2. Pull critical data for startup
-      await _syncCoordinator.pull(userId, syncKey: 'appstartup');
+      await _syncCoordinator.pullStartupData(userId);
     } finally {
       _ongoingOperations.remove(operationKey);
     }
@@ -90,7 +90,7 @@ class BackgroundSyncCoordinator implements SyncTrigger {
       // 1. Push pending operations first
       await _pendingOperationsManager.processPendingOperations();
       // 2. Pull all data
-      await _syncCoordinator.pull(userId, syncKey: 'full');
+      await _syncCoordinator.pullAllData(userId);
     } finally {
       _ongoingOperations.remove(operationKey);
     }
@@ -111,10 +111,8 @@ class BackgroundSyncCoordinator implements SyncTrigger {
       // Push pending operations first
       await _pendingOperationsManager.processPendingOperations();
 
-      // Sync only specified entities
-      for (final entityType in entityTypes) {
-        await _syncCoordinator.syncEntityByType(userId, entityType);
-      }
+      // Pull only specified entities
+      await _syncCoordinator.pullEntities(userId, entityTypes);
     } finally {
       _ongoingOperations.remove(operationKey);
     }
@@ -137,44 +135,6 @@ class BackgroundSyncCoordinator implements SyncTrigger {
 
   @override
   bool get hasSyncInProgress => _ongoingOperations.isNotEmpty;
-
-  // ========================================================================
-  // Legacy Methods (for backward compatibility - to be deprecated)
-  // ========================================================================
-
-  /// @deprecated Use triggerStartupSync instead
-  Future<void> performStartupSync(String userId) async {
-    await triggerStartupSync(userId);
-  }
-
-  /// @deprecated Use triggerFullSync instead
-  Future<void> performFullSync(String userId) async {
-    await triggerFullSync(userId);
-  }
-
-  /// @deprecated Use triggerEntitySync instead
-  Future<void> syncSpecificEntities(
-    String userId,
-    List<String> entityTypes,
-  ) async {
-    await triggerEntitySync(userId, entityTypes);
-  }
-
-  /// @deprecated Use triggerEntitySync with ['audio_comments', 'waveforms'] instead
-  Future<void> syncNonCriticalEntities(String userId) async {
-    await triggerEntitySync(userId, ['audio_comments', 'waveforms']);
-  }
-
-  /// @deprecated Use triggerForegroundSync instead
-  Future<void> onAppForeground(String userId) async {
-    await triggerForegroundSync(userId);
-  }
-
-  /// Check if any sync operation is in progress
-  bool get hasOngoingOperations => _ongoingOperations.isNotEmpty;
-
-  /// Get list of ongoing operation keys
-  List<String> get ongoingOperations => _ongoingOperations.toList();
 
   /// Initialize network connectivity listener for auto-sync
   void _initializeNetworkListener() {

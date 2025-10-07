@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/Users/cristianmurillo/development/trackflow/linux"
+    "cmake.sourceDirectory": "/Users/cristianmurillo/development/trackflow/linux",
+    "terminal.integrated.allowMnemonics": true
 }

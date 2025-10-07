@@ -3,21 +3,27 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/sync/domain/services/incremental_sync_service.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart';
-import 'package:trackflow/features/audio_track/data/services/audio_track_incremental_sync_service.dart';
-import 'package:trackflow/features/audio_comment/data/services/audio_comment_incremental_sync_service.dart';
-import 'package:trackflow/features/user_profile/data/services/user_profile_incremental_sync_service.dart';
-import 'package:trackflow/features/user_profile/data/services/user_profile_collaborator_incremental_sync_service.dart';
 import 'package:trackflow/features/notifications/data/services/notification_incremental_sync_service.dart';
-import 'package:trackflow/features/track_version/data/services/track_version_incremental_sync_service.dart';
+import 'package:trackflow/features/projects/data/models/project_dto.dart';
+import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
+import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
+import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart';
+import 'package:trackflow/features/user_profile/data/services/user_profile_collaborator_incremental_sync_service.dart';
+import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
 import 'package:trackflow/features/waveform/data/services/waveform_incremental_sync_service.dart';
 
 /// Interface for sync orchestration operations
 abstract class SyncOrchestrator {
-  /// Pull remote data for a specific user
-  Future<void> pull(String userId, {String syncKey = 'general'});
+  /// Pull only critical data for app startup (user_profile, projects, collaborators)
+  Future<void> pullStartupData(String userId);
 
-  /// Sync specific entity type by name
+  /// Pull all data (full downstream sync)
+  Future<void> pullAllData(String userId);
+
+  /// Pull specific entity types
+  Future<void> pullEntities(String userId, List<String> entityTypes);
+
+  /// Sync specific entity type by name (single entity)
   Future<void> syncEntityByType(String userId, String entityType);
 
   /// Get sync statistics for monitoring
@@ -57,26 +63,53 @@ class SyncCoordinator implements SyncOrchestrator {
 
   SyncCoordinator(this._prefs);
 
-  /// 🚀 Pull remote data with specific sync key
+  /// 🚀 Pull only critical data for app startup
   @override
-  Future<void> pull(String userId, {String syncKey = 'general'}) async {
+  Future<void> pullStartupData(String userId) async {
     AppLogger.sync(
       'COORDINATOR',
-      'Starting pull sync for user: $userId, key: $syncKey',
+      'Starting startup sync for user: $userId',
     );
 
-    switch (syncKey) {
-      case 'appstartup':
-        await _performStartupSync(userId);
-        break;
-      default:
-        await _performFullSync(userId);
-        break;
+    await _performStartupSync(userId);
+
+    AppLogger.sync(
+      'COORDINATOR',
+      'Startup sync completed for user: $userId',
+    );
+  }
+
+  /// 🚀 Pull all data (full downstream sync)
+  @override
+  Future<void> pullAllData(String userId) async {
+    AppLogger.sync(
+      'COORDINATOR',
+      'Starting full downstream sync for user: $userId',
+    );
+
+    await _performFullSync(userId);
+
+    AppLogger.sync(
+      'COORDINATOR',
+      'Full downstream sync completed for user: $userId',
+    );
+  }
+
+  /// 🚀 Pull specific entity types
+  @override
+  Future<void> pullEntities(String userId, List<String> entityTypes) async {
+    AppLogger.sync(
+      'COORDINATOR',
+      'Starting targeted sync for user: $userId, entities: $entityTypes',
+    );
+
+    for (final entityType in entityTypes) {
+      await syncEntityByType(userId, entityType);
     }
 
     AppLogger.sync(
       'COORDINATOR',
-      'Pull sync completed for user: $userId, key: $syncKey',
+      'Targeted sync completed for user: $userId',
     );
   }
 
@@ -206,19 +239,20 @@ class SyncCoordinator implements SyncOrchestrator {
     try {
       switch (serviceKey) {
         case _projectsServiceKey:
-          return sl<ProjectIncrementalSyncService>();
+          return sl<IncrementalSyncService<ProjectDTO>>();
         case _tracksServiceKey:
-          return sl<AudioTrackIncrementalSyncService>();
+          return sl<IncrementalSyncService<AudioTrackDTO>>();
         case _commentsServiceKey:
-          return sl<AudioCommentIncrementalSyncService>();
+          return sl<IncrementalSyncService<AudioCommentDTO>>();
         case _userProfileServiceKey:
-          return sl<UserProfileIncrementalSyncService>();
+          return sl<IncrementalSyncService<UserProfileDTO>>();
         case _collaboratorsServiceKey:
+          // Special case: registered as concrete class, not interface
           return sl<UserProfileCollaboratorIncrementalSyncService>();
         case _notificationsServiceKey:
           return sl<NotificationIncrementalSyncService>();
         case _trackVersionsServiceKey:
-          return sl<TrackVersionIncrementalSyncService>();
+          return sl<IncrementalSyncService<TrackVersionDTO>>();
         case _waveformsServiceKey:
           return sl<WaveformIncrementalSyncService>();
         default:
@@ -226,7 +260,7 @@ class SyncCoordinator implements SyncOrchestrator {
       }
     } catch (e) {
       AppLogger.warning(
-        'Failed to get service for key: $serviceKey',
+        'Failed to get service for key: $serviceKey - Error: $e',
         tag: 'COORDINATOR',
       );
       return null;

@@ -2,12 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
-import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
-import 'package:trackflow/core/sync/domain/services/sync_status_provider.dart';
 import 'package:trackflow/core/sync/domain/usecases/trigger_startup_sync_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/trigger_upstream_sync_usecase.dart';
 import 'package:trackflow/core/sync/domain/usecases/trigger_foreground_sync_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/trigger_downstream_sync_usecase.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_state.dart';
 
@@ -17,47 +15,27 @@ import 'package:trackflow/core/sync/presentation/bloc/sync_state.dart';
 /// - Initial sync on app startup (after authentication)
 /// - Foreground sync when app resumes
 /// - Manual upstream sync (push pending operations)
-/// - Watching sync state and pending operations count
+/// - Manual downstream sync (pull all data)
 @injectable
 class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
-  final SyncStatusProvider _statusProvider;
-  final PendingOperationsManager _pendingManager;
   final TriggerStartupSyncUseCase _triggerStartupSync;
   final TriggerUpstreamSyncUseCase _triggerUpstreamSync;
   final TriggerForegroundSyncUseCase _triggerForegroundSync;
-
-  StreamSubscription<SyncState>? _syncSub;
-  StreamSubscription? _pendingSub;
+  final TriggerDownstreamSyncUseCase _triggerDownstreamSync;
 
   SyncBloc(
-    this._statusProvider,
-    this._pendingManager,
     this._triggerStartupSync,
     this._triggerUpstreamSync,
     this._triggerForegroundSync,
+    this._triggerDownstreamSync,
   ) : super(const SyncBlocState.initial()) {
-    on<SyncWatchingStarted>(_onSyncWatchingStarted);
     on<InitialSyncRequested>(_onInitialSyncRequested);
     on<ForegroundSyncRequested>(_onForegroundSyncRequested);
     on<UpstreamSyncRequested>(_onUpstreamSyncRequested);
+    on<DownstreamSyncRequested>(_onDownstreamSyncRequested);
   }
 
-  /// Start watching sync state and pending operations
-  Future<void> _onSyncWatchingStarted(
-    SyncWatchingStarted event,
-    Emitter<SyncBlocState> emit,
-  ) async {
-    await _syncSub?.cancel();
-    await _pendingSub?.cancel();
 
-    _syncSub = _statusProvider.watchSyncState().listen((syncState) {
-      emit(state.copyWith(syncState: syncState));
-    });
-
-    _pendingSub = _pendingManager.watchPendingOperations().listen((ops) {
-      emit(state.copyWith(pendingCount: ops.length));
-    });
-  }
 
   /// Trigger initial sync on app startup
   /// This performs both upstream (push pending) and downstream (pull critical data)
@@ -85,10 +63,16 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
     await _triggerUpstreamSync();
   }
 
+  /// Trigger full downstream sync to pull all data
+  Future<void> _onDownstreamSyncRequested(
+    DownstreamSyncRequested event,
+    Emitter<SyncBlocState> emit,
+  ) async {
+    await _triggerDownstreamSync();
+  }
+
   @override
   Future<void> close() {
-    _syncSub?.cancel();
-    _pendingSub?.cancel();
     return super.close();
   }
 }

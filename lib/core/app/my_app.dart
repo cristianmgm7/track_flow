@@ -60,9 +60,6 @@ class _AppState extends State<_App> with WidgetsBindingObserver {
     // Initialize dynamic link handler (listens for deep links)
     _dynamicLinkHandler.initialize();
 
-    // Start watching sync state
-    context.read<SyncBloc>().add(const SyncWatchingStarted());
-
     // Trigger app flow check
     context.read<AppFlowBloc>().add(CheckAppFlow());
 
