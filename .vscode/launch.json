@@ -11,7 +11,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_development.dart",
-            "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
+            "deviceId": "F0762F45-54FB-4AC1-B2A5-3530145A2420",
             "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
         },
         {
@@ -20,7 +20,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_staging.dart",
-            "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
+            "deviceId": "F0762F45-54FB-4AC1-B2A5-3530145A2420",
             "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
         },
         {
@@ -29,7 +29,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_production.dart",
-            "deviceId": "3F8D9EEF-C14F-42B5-ABF8-3F4272C07B6A",
+            "deviceId": "F0762F45-54FB-4AC1-B2A5-3530145A2420",
             "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         {
@@ -38,7 +38,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_development.dart",
-            "deviceId": "9B0D41EB-34B7-426B-A378-207A2DADE44D",
+            "deviceId": "6AA19534-BF71-4F45-844A-392F8033BA9A",
             "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]
         },
         {
@@ -47,7 +47,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_staging.dart",
-            "deviceId": "9B0D41EB-34B7-426B-A378-207A2DADE44D",
+            "deviceId": "6AA19534-BF71-4F45-844A-392F8033BA9A",
             "args": ["--flavor", "staging", "--dart-define=FLAVOR=staging"]
         },
         {
@@ -56,7 +56,7 @@
             "type": "dart",
             "flutterMode": "debug",
             "program": "lib/main_production.dart",
-            "deviceId": "9B0D41EB-34B7-426B-A378-207A2DADE44D",
+            "deviceId": "6AA19534-BF71-4F45-844A-392F8033BA9A",
             "args": ["--flavor", "production", "--dart-define=FLAVOR=production"]
         },
         

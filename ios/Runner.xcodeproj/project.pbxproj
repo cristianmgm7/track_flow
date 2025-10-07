@@ -405,7 +405,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nSRC=\"${PROJECT_DIR}/Runner/${FIREBASE_CONFIG_FILE}\"\nDST=\"${PROJECT_DIR}/Runner/GoogleService-Info.plist\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\n  echo \"Copied $SRC -> $DST\"\nelse\n  echo \"error: Firebase config not found: $SRC\"\n  exit 1\nfi\n";
+			shellScript = "set -e\nSRC=\"${PROJECT_DIR}/${FIREBASE_CONFIG_DIR}/${FIREBASE_CONFIG_FILE}\"\nDST=\"${PROJECT_DIR}/Runner/GoogleService-Info.plist\"\nif [ -f \"$SRC\" ]; then\n  cp -f \"$SRC\" \"$DST\"\n  echo \"Copied $SRC -> $DST\"\nelse\n  echo \"error: Firebase config not found: $SRC\"\n  exit 1\nfi\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
