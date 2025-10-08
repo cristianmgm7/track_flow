@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
@@ -34,6 +36,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       WatchProjectDetail(projectId: widget.project.id),
     );
     context.read<PlaylistBloc>().add(WatchPlaylist(widget.project.id));
+    context.read<SyncBloc>().add(const ForegroundSyncRequested());
   }
 
   @override

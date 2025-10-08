@@ -63,9 +63,17 @@ class BackgroundSyncCoordinatorImpl implements BackgroundSyncCoordinator {
 
   @override
   Future<void> triggerForegroundSync(String userId) async {
-    if (_ongoingOperations.isEmpty && await _networkStateManager.isConnected) {
+    const operationKey = 'foreground_sync';
+
+    if (_ongoingOperations.contains(operationKey)) return;
+    if (!await _networkStateManager.isConnected) return;
+
+    _ongoingOperations.add(operationKey);
+    try {
       // Sync non-critical entities when app resumes
-      await triggerEntitySync(userId, ['audio_comments', 'waveforms']);
+      await triggerEntitySync(userId, ['audio_tracks', 'track_versions', 'audio_comments', 'waveforms']);
+    } finally {
+      _ongoingOperations.remove(operationKey);
     }
   }
 
