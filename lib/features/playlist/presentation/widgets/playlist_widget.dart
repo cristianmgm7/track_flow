@@ -3,7 +3,6 @@ import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_controls_widget.dart';
-import 'package:trackflow/features/playlist/presentation/widgets/playlist_status_widget.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_tracks_widget.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 
@@ -35,13 +34,13 @@ class _PlaylistWidgetState extends State<PlaylistWidget> {
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PlaylistControlsWidget(
-          playlist: widget.playlist,
-          tracks: widget.tracks,
-          onMenuOpened: () => setState(() => _isMenuOpen = true),
-          onMenuClosed: () => setState(() => _isMenuOpen = false),
-        ),
-        PlaylistStatusWidget(playlist: widget.playlist),
+        if (widget.tracks.isNotEmpty)
+          PlaylistControlsWidget(
+            playlist: widget.playlist,
+            tracks: widget.tracks,
+            onMenuOpened: () => setState(() => _isMenuOpen = true),
+            onMenuClosed: () => setState(() => _isMenuOpen = false),
+          ),
         const SizedBox(height: 8),
         PlaylistTracksWidget(
           playlist: widget.playlist,

@@ -51,15 +51,6 @@ class _PlaylistControlsWidgetState extends State<PlaylistControlsWidget> {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            ShuffleButton(
-              isEnabled: session.queue.shuffleEnabled,
-              onPressed: () => player.add(ToggleShuffleRequested()),
-            ),
-            const SizedBox(width: 8),
-            RepeatButton(
-              mode: session.repeatMode,
-              onPressed: () => player.add(ToggleRepeatModeRequested()),
-            ),
             const SizedBox(width: 8),
             const SizedBox(width: 8),
             // Track sort menu
