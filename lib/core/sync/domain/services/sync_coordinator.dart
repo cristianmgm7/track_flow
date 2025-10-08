@@ -71,53 +71,7 @@ class SyncCoordinator implements SyncOrchestrator {
       'Starting startup sync for user: $userId',
     );
 
-    await _performStartupSync(userId);
-
-    AppLogger.sync(
-      'COORDINATOR',
-      'Startup sync completed for user: $userId',
-    );
-  }
-
-  /// 🚀 Pull all data (full downstream sync)
-  @override
-  Future<void> pullAllData(String userId) async {
-    AppLogger.sync(
-      'COORDINATOR',
-      'Starting full downstream sync for user: $userId',
-    );
-
-    await _performFullSync(userId);
-
-    AppLogger.sync(
-      'COORDINATOR',
-      'Full downstream sync completed for user: $userId',
-    );
-  }
-
-  /// 🚀 Pull specific entity types
-  @override
-  Future<void> pullEntities(String userId, List<String> entityTypes) async {
-    AppLogger.sync(
-      'COORDINATOR',
-      'Starting targeted sync for user: $userId, entities: $entityTypes',
-    );
-
-    for (final entityType in entityTypes) {
-      await syncEntityByType(userId, entityType);
-    }
-
-    AppLogger.sync(
-      'COORDINATOR',
-      'Targeted sync completed for user: $userId',
-    );
-  }
-
-  /// 🚀 Startup sync - Only critical data for app initialization
-  Future<void> _performStartupSync(String userId) async {
-    AppLogger.sync('COORDINATOR', 'Starting startup sync for user: $userId');
-
-    // Only sync the most critical data for startup
+   // Only sync the most critical data for startup
     await _syncEntityByKey(
       _userProfileServiceKey,
       _userProfileLastSyncKey,
@@ -145,11 +99,15 @@ class SyncCoordinator implements SyncOrchestrator {
     AppLogger.sync('COORDINATOR', 'Startup sync completed for user: $userId');
   }
 
-  /// 🚀 Full sync - Sync all entities
-  Future<void> _performFullSync(String userId) async {
-    AppLogger.sync('COORDINATOR', 'Starting full sync for user: $userId');
+  /// 🚀 Pull all data (full downstream sync)
+  @override
+  Future<void> pullAllData(String userId) async {
+    AppLogger.sync(
+      'COORDINATOR',
+      'Starting full downstream sync for user: $userId',
+    );
 
-    // Sync all entities
+  // Sync all entities
     await _syncEntityByKey(
       _projectsServiceKey,
       _projectsLastSyncKey,
@@ -199,8 +157,32 @@ class SyncCoordinator implements SyncOrchestrator {
       userId,
     );
 
-    AppLogger.sync('COORDINATOR', 'Full sync completed for user: $userId');
+    AppLogger.sync(
+      'COORDINATOR',
+      'Full downstream sync completed for user: $userId',
+    );
   }
+
+  /// 🚀 Pull specific entity types
+  @override
+  Future<void> pullEntities(String userId, List<String> entityTypes) async {
+    AppLogger.sync(
+      'COORDINATOR',
+      'Starting targeted sync for user: $userId, entities: $entityTypes',
+    );
+
+    for (final entityType in entityTypes) {
+      await syncEntityByType(userId, entityType);
+    }
+
+    AppLogger.sync(
+      'COORDINATOR',
+      'Targeted sync completed for user: $userId',
+    );
+  }
+
+
+  
 
   /// 🎯 Sync specific entity by type name (for BackgroundSyncCoordinator)
   @override

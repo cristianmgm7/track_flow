@@ -43,7 +43,6 @@ class BackgroundSyncCoordinator implements SyncTrigger {
     if (_isInitialized) {
       return;
     }
-
     _isInitialized = true;
     _initializeNetworkListener();
   }

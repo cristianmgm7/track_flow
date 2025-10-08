@@ -40,7 +40,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
             'Triggering initial sync from authenticated shell',
             tag: 'AUTHENTICATED_SHELL',
           );
-          context.read<SyncBloc>().add(const InitialSyncRequested());
+          context.read<SyncBloc>().add(const StartupSyncRequested());
         }
       });
     }

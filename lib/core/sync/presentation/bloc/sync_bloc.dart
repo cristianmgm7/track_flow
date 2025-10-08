@@ -29,7 +29,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
     this._triggerForegroundSync,
     this._triggerDownstreamSync,
   ) : super(const SyncBlocState.initial()) {
-    on<InitialSyncRequested>(_onInitialSyncRequested);
+    on<StartupSyncRequested>(_onStartupSyncRequested);
     on<ForegroundSyncRequested>(_onForegroundSyncRequested);
     on<UpstreamSyncRequested>(_onUpstreamSyncRequested);
     on<DownstreamSyncRequested>(_onDownstreamSyncRequested);
@@ -39,11 +39,11 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
 
   /// Trigger initial sync on app startup
   /// This performs both upstream (push pending) and downstream (pull critical data)
-  Future<void> _onInitialSyncRequested(
-    InitialSyncRequested event,
+  Future<void> _onStartupSyncRequested(
+    StartupSyncRequested event,
     Emitter<SyncBlocState> emit,
   ) async {
-    await _triggerStartupSync();
+    await _triggerStartupSync.call();
   }
 
   /// Trigger foreground sync when app resumes
@@ -52,7 +52,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
     ForegroundSyncRequested event,
     Emitter<SyncBlocState> emit,
   ) async {
-    await _triggerForegroundSync();
+    await _triggerForegroundSync.call();
   }
 
   /// Trigger upstream sync to push pending operations
@@ -60,7 +60,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
     UpstreamSyncRequested event,
     Emitter<SyncBlocState> emit,
   ) async {
-    await _triggerUpstreamSync();
+    await _triggerUpstreamSync.call();
   }
 
   /// Trigger full downstream sync to pull all data
@@ -68,11 +68,6 @@ class SyncBloc extends Bloc<SyncEvent, SyncBlocState> {
     DownstreamSyncRequested event,
     Emitter<SyncBlocState> emit,
   ) async {
-    await _triggerDownstreamSync();
-  }
-
-  @override
-  Future<void> close() {
-    return super.close();
+    await _triggerDownstreamSync.call();
   }
 }

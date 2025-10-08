@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/app_flow/domain/entities/user_session.dart';
-import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
+import 'package:trackflow/core/sync/domain/services/sync_trigger.dart';
 import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
@@ -13,7 +13,7 @@ import 'package:trackflow/core/utils/app_logger.dart';
 /// Used for manual refresh or when user explicitly requests full sync
 @lazySingleton
 class TriggerDownstreamSyncUseCase {
-  final BackgroundSyncCoordinator _syncTrigger;
+  final SyncTrigger _syncTrigger;
   final SessionService _sessionService;
 
   TriggerDownstreamSyncUseCase(this._syncTrigger, this._sessionService);

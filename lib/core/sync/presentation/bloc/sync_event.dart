@@ -7,8 +7,8 @@ abstract class SyncEvent extends Equatable {
 
 /// Trigger initial sync when app starts (after authentication)
 /// This performs both upstream (push pending) and downstream (pull critical data)
-class InitialSyncRequested extends SyncEvent {
-  const InitialSyncRequested();
+class StartupSyncRequested extends SyncEvent {
+  const StartupSyncRequested();
 
   @override
   List<Object?> get props => [];
