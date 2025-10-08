@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -49,11 +50,49 @@ class PlayVersionUseCase {
             (failure) async =>
                 Left(TrackNotFoundFailure(version.trackId.value)),
             (audioTrack) async {
-              // 3. Determine audio source URL from version
-              final sourceUrl =
-                  version.fileLocalPath ?? version.fileRemoteUrl ?? '';
+              String? sourceUrl;
 
-              if (sourceUrl.isEmpty) {
+              // 3. Try version-aware cache first
+              final cacheResult = await _audioStorageRepository
+                  .getCachedAudioPath(audioTrack.id, versionId: versionId);
+
+              cacheResult.fold(
+                (cacheFailure) {
+                  // Cache miss - will try version sources below
+                  sourceUrl = null;
+                },
+                (cachedPath) {
+                  if (cachedPath.isNotEmpty) {
+                    sourceUrl = cachedPath;
+                  }
+                },
+              );
+
+              // 4. If no cache, try version's local file first, then remote
+              if (sourceUrl == null || sourceUrl!.isEmpty) {
+                // Try fileLocalPath if available
+                if (version.fileLocalPath != null &&
+                    version.fileLocalPath!.isNotEmpty) {
+                  final filePath = version.fileLocalPath!.startsWith('file://')
+                      ? version.fileLocalPath!.replaceFirst('file://', '')
+                      : version.fileLocalPath!;
+
+                  // Validate local file exists
+                  if (File(filePath).existsSync()) {
+                    sourceUrl = version.fileLocalPath;
+                  }
+                }
+
+                // If no valid local file, use remote URL
+                if ((sourceUrl == null || sourceUrl!.isEmpty) &&
+                    version.fileRemoteUrl != null &&
+                    version.fileRemoteUrl!.isNotEmpty) {
+                  sourceUrl = version.fileRemoteUrl;
+                }
+              }
+
+              // Validate we have a source
+              if (sourceUrl == null || sourceUrl!.isEmpty) {
                 return Left(
                   AudioSourceFailure(
                     'No audio source available for version ${versionId.value}',
@@ -61,14 +100,7 @@ class PlayVersionUseCase {
                 );
               }
 
-              // 4. Try to get cached path first, fallback to source URL
-              final cacheResult = await _audioStorageRepository
-                  .getCachedAudioPath(audioTrack.id, versionId: versionId);
-              final finalSourceUrl = cacheResult.fold(
-                (cacheFailure) =>
-                    sourceUrl, // Use version source URL if not cached
-                (cachedPath) => cachedPath, // Use cached file if available
-              );
+              final finalSourceUrl = sourceUrl!;
 
               // 5. Convert to pure audio metadata using track info
               final metadata = AudioTrackMetadata(
