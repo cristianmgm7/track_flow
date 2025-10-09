@@ -5,6 +5,13 @@ import 'package:trackflow/core/sync/data/models/sync_metadata_document.dart';
 
 part 'audio_comment_document.g.dart';
 
+/// Isar-compatible enum for comment types
+enum CommentTypeEnum {
+  text,
+  audio,
+  hybrid,
+}
+
 @collection
 class AudioCommentDocument {
   Id get isarId => fastHash(id);
@@ -27,6 +34,14 @@ class AudioCommentDocument {
   /// Sync metadata for offline-first functionality
   SyncMetadataDocument? syncMetadata;
 
+  // ⭐ NEW: Audio recording fields
+  late String? audioStorageUrl;
+  late String? localAudioPath;
+  late int? audioDurationMs;
+
+  @enumerated
+  late CommentTypeEnum commentType;
+
   AudioCommentDocument();
 
   factory AudioCommentDocument.fromDTO(
@@ -41,13 +56,29 @@ class AudioCommentDocument {
       ..content = dto.content
       ..timestamp = dto.timestamp
       ..createdAt = DateTime.parse(dto.createdAt)
-      // ⭐ NEW: Use sync metadata from DTO if available (from remote)
+      // Use sync metadata from DTO if available (from remote)
       ..syncMetadata =
           syncMeta ??
           SyncMetadataDocument.fromRemote(
             version: dto.version,
             lastModified: dto.lastModified ?? DateTime.parse(dto.createdAt),
-          );
+          )
+      // Audio fields
+      ..audioStorageUrl = dto.audioStorageUrl
+      ..localAudioPath = dto.localAudioPath
+      ..audioDurationMs = dto.audioDurationMs
+      ..commentType = _commentTypeFromString(dto.commentType);
+  }
+
+  static CommentTypeEnum _commentTypeFromString(String type) {
+    switch (type.toLowerCase()) {
+      case 'audio':
+        return CommentTypeEnum.audio;
+      case 'hybrid':
+        return CommentTypeEnum.hybrid;
+      default:
+        return CommentTypeEnum.text;
+    }
   }
 
   /// Create AudioCommentDocument from remote DTO with sync metadata
@@ -67,7 +98,12 @@ class AudioCommentDocument {
       ..syncMetadata = SyncMetadataDocument.fromRemote(
         version: version ?? 1,
         lastModified: lastModified ?? DateTime.now(),
-      );
+      )
+      // Audio fields
+      ..audioStorageUrl = dto.audioStorageUrl
+      ..localAudioPath = dto.localAudioPath
+      ..audioDurationMs = dto.audioDurationMs
+      ..commentType = _commentTypeFromString(dto.commentType);
   }
 
   /// Create AudioCommentDocument for local creation
@@ -78,6 +114,10 @@ class AudioCommentDocument {
     required String createdBy,
     required String content,
     required int timestamp,
+    String? audioStorageUrl,
+    String? localAudioPath,
+    int? audioDurationMs,
+    CommentTypeEnum commentType = CommentTypeEnum.text,
   }) {
     return AudioCommentDocument()
       ..id = id
@@ -87,7 +127,12 @@ class AudioCommentDocument {
       ..content = content
       ..timestamp = timestamp
       ..createdAt = DateTime.now()
-      ..syncMetadata = SyncMetadataDocument.initial();
+      ..syncMetadata = SyncMetadataDocument.initial()
+      // Audio fields
+      ..audioStorageUrl = audioStorageUrl
+      ..localAudioPath = localAudioPath
+      ..audioDurationMs = audioDurationMs
+      ..commentType = commentType;
   }
 
   AudioCommentDTO toDTO() {
@@ -99,9 +144,25 @@ class AudioCommentDocument {
       content: content,
       timestamp: timestamp,
       createdAt: createdAt.toIso8601String(),
-      // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
+      // Include sync metadata from document
       version: syncMetadata?.version ?? 1,
       lastModified: syncMetadata?.lastModified ?? createdAt,
+      // Audio fields
+      audioStorageUrl: audioStorageUrl,
+      localAudioPath: localAudioPath,
+      audioDurationMs: audioDurationMs,
+      commentType: _commentTypeToString(commentType),
     );
+  }
+
+  static String _commentTypeToString(CommentTypeEnum type) {
+    switch (type) {
+      case CommentTypeEnum.audio:
+        return 'audio';
+      case CommentTypeEnum.hybrid:
+        return 'hybrid';
+      case CommentTypeEnum.text:
+        return 'text';
+    }
   }
 }

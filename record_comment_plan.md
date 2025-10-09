@@ -557,7 +557,7 @@ enum RecordingState {
 
 ---
 
-### Step 1.2: Create Recording Domain Services
+### Step 1.2: Create Recording Domain Services ✅
 
 **New File:** `lib/features/audio_recording/domain/services/recording_service.dart`
 
@@ -604,7 +604,7 @@ abstract class RecordingService {
 
 ---
 
-### Step 1.3: Create Recording Use Cases
+### Step 1.3: Create Recording Use Cases ✅
 
 **Directory:** `lib/features/audio_recording/domain/usecases/`
 
@@ -685,9 +685,9 @@ class CancelRecordingUseCase {
 
 ---
 
-## Phase 2: Audio Recording Feature - Infrastructure Layer
+## Phase 2: Audio Recording Feature - Infrastructure Layer ✅
 
-### Step 2.1: Implement Platform Recording Service
+### Step 2.1: Implement Platform Recording Service ✅
 
 **New File:** `lib/features/audio_recording/infrastructure/services/platform_recording_service.dart`
 
@@ -917,9 +917,9 @@ class PlatformRecordingService implements RecordingService {
 
 ---
 
-## Phase 3: Audio Recording Feature - Presentation Layer
+## Phase 3: Audio Recording Feature - Presentation Layer ✅
 
-### Step 3.1: Create Recording BLoC
+### Step 3.1: Create Recording BLoC ✅
 
 **Directory:** `lib/features/audio_recording/presentation/bloc/`
 
@@ -1341,9 +1341,9 @@ class RecordingControls extends StatelessWidget {
 
 ---
 
-## Phase 4: Audio Comment Integration - Consuming the Recording Module
+## Phase 4: Audio Comment Integration - Consuming the Recording Module (In Progress)
 
-### Step 4.1: Extend AudioComment Domain Entity
+### Step 4.1: Extend AudioComment Domain Entity ✅
 
 **File:** [lib/features/audio_comment/domain/entities/audio_comment.dart](lib/features/audio_comment/domain/entities/audio_comment.dart)
 
@@ -1396,7 +1396,7 @@ enum CommentType {
 
 ---
 
-### Step 4.2: Update AudioComment Data Models
+### Step 4.2: Update AudioComment Data Models ✅
 
 **File:** [lib/features/audio_comment/data/models/audio_comment_dto.dart](lib/features/audio_comment/data/models/audio_comment_dto.dart)
 
@@ -2406,26 +2406,20 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Core Audio Storage Service
 
-- [ ] **Create audio storage service interface**
-  - File: `lib/core/services/audio_storage_service.dart`
-  - Define abstract methods: `uploadAudioFile`, `downloadAudioFile`, `deleteAudioFile`, `getDownloadUrl`
-  - Use `Either<Failure, T>` return types for error handling
-  - Accept `remotePath` (Firebase Storage path) and `metadata` (custom key-value pairs)
+- [x] **Create Firebase audio upload service** ✅
+  - File: `lib/core/services/firebase_audio_upload_service.dart`
+  - Implemented with upload and delete methods
+  - Uses `Either<Failure, T>` return types
 
-- [ ] **Implement audio storage service**
-  - File: `lib/core/services/audio_storage_service_impl.dart`
-  - Inject `FirebaseStorage` instance
-  - Annotate with `@LazySingleton(as: AudioStorageService)`
-  - Implement upload: use `ref.putFile()` with metadata
-  - Implement download: check cache first, then download with `ref.writeToFile()`
-  - Implement delete: use `ref.delete()`
-  - Wrap all operations with try-catch and return `Either<Failure, T>`
+- [x] **Create audio format utilities** ✅
+  - File: `lib/core/utils/audio_format_utils.dart`
+  - Centralized MIME type and extension mapping
+  - Updated existing code to use shared utilities
 
 - [ ] **Write unit tests for audio storage service**
-  - File: `test/core/services/audio_storage_service_test.dart`
+  - File: `test/core/services/firebase_audio_upload_service_test.dart`
   - Mock `FirebaseStorage` using Mockito
   - Test upload success and failure scenarios
-  - Test download with caching logic (skip if file exists)
   - Test delete operations
   - Verify correct Firebase Storage paths are used
 
@@ -2433,23 +2427,15 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Core File System Service
 
-- [ ] **Create file system service interface**
-  - File: `lib/core/services/file_system_service.dart`
-  - Define methods: `getTemporaryDirectory`, `getApplicationDocumentsDirectory`, `ensureDirectoryExists`, `deleteFile`, `fileExists`, `copyFile`, `getFileSize`, `generateTemporaryFilePath`
+- [x] **Create file system utilities** ✅
+  - File: `lib/core/utils/file_system_utils.dart`
+  - Static utility methods for common file operations
+  - Methods: `ensureDirectoryExists`, `deleteFileIfExists`, `extractExtension`, `generateUniqueFilename`, `getFileSize`, `fileExists`
 
-- [ ] **Implement file system service**
-  - File: `lib/core/services/file_system_service_impl.dart`
-  - Annotate with `@LazySingleton(as: FileSystemService)`
-  - Use `path_provider` package for directory access
-  - Implement `ensureDirectoryExists`: create directory recursively if missing
-  - Implement `copyFile`: ensure destination directory exists before copying
-  - Implement `generateTemporaryFilePath`: use timestamp + UUID for uniqueness
-
-- [ ] **Write unit tests for file system service**
-  - File: `test/core/services/file_system_service_test.dart`
-  - Mock `path_provider` methods
+- [ ] **Write unit tests for file system utils**
+  - File: `test/core/utils/file_system_utils_test.dart`
   - Test directory creation
-  - Test file operations (copy, delete, exists check)
+  - Test file operations (delete, exists check)
   - Test path generation uniqueness
 
 ---
@@ -2478,7 +2464,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Recording Domain Entities
 
-- [ ] **Create AudioRecording entity**
+- [x] **Create AudioRecording entity** ✅
   - File: `lib/features/audio_recording/domain/entities/audio_recording.dart`
   - Fields: `id`, `localPath`, `duration`, `format`, `fileSizeBytes`, `recordedAt`, `metadata`
   - Extend `Equatable` for value equality
@@ -2486,7 +2472,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
   - Provide `copyWith()` method
   - Define `AudioFormat` enum: `m4a`, `aac`, `mp3`
 
-- [ ] **Create RecordingSession entity**
+- [x] **Create RecordingSession entity** ✅
   - File: `lib/features/audio_recording/domain/entities/recording_session.dart`
   - Fields: `sessionId`, `startedAt`, `elapsed`, `state`, `outputPath`, `currentAmplitude`
   - Extend `Equatable`
@@ -2505,7 +2491,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Recording Domain Service
 
-- [ ] **Create RecordingService interface**
+- [x] **Create RecordingService interface** ✅
   - File: `lib/features/audio_recording/domain/services/recording_service.dart`
   - Define abstract methods: `hasPermission`, `requestPermission`, `startRecording`, `stopRecording`, `pauseRecording`, `resumeRecording`, `cancelRecording`
   - Define getter: `sessionStream` (returns `Stream<RecordingSession>`)
@@ -2516,21 +2502,21 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Recording Use Cases
 
-- [ ] **Create StartRecordingUseCase**
+- [x] **Create StartRecordingUseCase** ✅
   - File: `lib/features/audio_recording/domain/usecases/start_recording_usecase.dart`
   - Annotate with `@injectable`
   - Inject: `RecordingService`, `FileSystemService`
   - Logic: Check permission → request if needed → generate output path (temp directory) → call `recordingService.startRecording()`
   - Return `Either<Failure, String>` (session ID)
 
-- [ ] **Create StopRecordingUseCase**
+- [x] **Create StopRecordingUseCase** ✅
   - File: `lib/features/audio_recording/domain/usecases/stop_recording_usecase.dart`
   - Annotate with `@injectable`
   - Inject: `RecordingService`
   - Logic: Call `recordingService.stopRecording()`
   - Return `Either<Failure, AudioRecording>`
 
-- [ ] **Create CancelRecordingUseCase**
+- [x] **Create CancelRecordingUseCase** ✅
   - File: `lib/features/audio_recording/domain/usecases/cancel_recording_usecase.dart`
   - Annotate with `@injectable`
   - Inject: `RecordingService`, `FileSystemService`
@@ -2553,7 +2539,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Platform Recording Service
 
-- [ ] **Implement PlatformRecordingService**
+- [x] **Implement PlatformRecordingService** ✅
   - File: `lib/features/audio_recording/infrastructure/services/platform_recording_service.dart`
   - Annotate with `@LazySingleton(as: RecordingService)`
   - Inject: `PermissionService`, `FileSystemService`
@@ -2592,13 +2578,13 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Recording BLoC
 
-- [ ] **Create RecordingEvent**
+- [x] **Create RecordingEvent** ✅
   - File: `lib/features/audio_recording/presentation/bloc/recording_event.dart`
   - Define events: `StartRecordingRequested`, `StopRecordingRequested`, `PauseRecordingRequested`, `ResumeRecordingRequested`, `CancelRecordingRequested`, `RecordingSessionUpdated`
   - All extend `Equatable`
   - `StartRecordingRequested` has optional `customOutputPath` field
 
-- [ ] **Create RecordingState**
+- [x] **Create RecordingState** ✅
   - File: `lib/features/audio_recording/presentation/bloc/recording_state.dart`
   - Define states: `RecordingInitial`, `RecordingInProgress`, `RecordingPaused`, `RecordingCompleted`, `RecordingError`
   - All extend `Equatable`
@@ -2606,7 +2592,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
   - `RecordingCompleted` contains `AudioRecording`
   - `RecordingError` contains error message
 
-- [ ] **Create RecordingBloc**
+- [x] **Create RecordingBloc** ✅
   - File: `lib/features/audio_recording/presentation/bloc/recording_bloc.dart`
   - Annotate with `@injectable`
   - Inject: `StartRecordingUseCase`, `StopRecordingUseCase`, `CancelRecordingUseCase`, `RecordingService`
@@ -2672,7 +2658,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Domain Layer Updates
 
-- [ ] **Update AudioComment entity**
+- [x] **Update AudioComment entity** ✅
   - File: `lib/features/audio_comment/domain/entities/audio_comment.dart`
   - Add fields: `audioStorageUrl`, `localAudioPath`, `audioDuration`, `commentType`
   - Define `CommentType` enum: `text`, `audio`, `hybrid`
@@ -2694,13 +2680,13 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Data Layer Updates
 
-- [ ] **Update AudioCommentDTO**
+- [x] **Update AudioCommentDTO** ✅
   - File: `lib/features/audio_comment/data/models/audio_comment_dto.dart`
   - Add fields: `audioStorageUrl`, `localAudioPath`, `audioDurationMs`, `commentType`
   - Update `fromDomain()`, `toJson()`, `fromJson()` methods
   - Note: Do NOT serialize `localAudioPath` (local-only field)
 
-- [ ] **Update AudioCommentDocument (Isar schema)**
+- [x] **Update AudioCommentDocument (Isar schema)** ✅
   - File: `lib/features/audio_comment/data/models/audio_comment_document.dart`
   - Add fields: `audioStorageUrl`, `localAudioPath`, `audioDurationMs`, `commentType` (enumerated)
   - Define `CommentType` enum in same file with `@enumerated` annotation

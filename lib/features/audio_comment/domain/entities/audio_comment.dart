@@ -2,6 +2,13 @@ import 'package:trackflow/core/domain/entity.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
+/// Type of audio comment
+enum CommentType {
+  text,    // Text-only comment
+  audio,   // Audio-only comment
+  hybrid,  // Audio with text transcription/note
+}
+
 class AudioComment extends Entity<AudioCommentId> {
   final ProjectId projectId;
   final TrackVersionId versionId;
@@ -9,6 +16,12 @@ class AudioComment extends Entity<AudioCommentId> {
   final String content;
   final Duration timestamp;
   final DateTime createdAt;
+
+  // NEW: Audio recording fields
+  final String? audioStorageUrl;      // Firebase Storage URL (null for text comments)
+  final String? localAudioPath;       // Local cache path (null until downloaded)
+  final Duration? audioDuration;      // Recording duration (null for text comments)
+  final CommentType commentType;      // Type of comment
 
   const AudioComment({
     required AudioCommentId id,
@@ -18,6 +31,10 @@ class AudioComment extends Entity<AudioCommentId> {
     required this.content,
     required this.timestamp,
     required this.createdAt,
+    this.audioStorageUrl,
+    this.localAudioPath,
+    this.audioDuration,
+    this.commentType = CommentType.text,
   }) : super(id);
 
   factory AudioComment.create({
@@ -25,6 +42,10 @@ class AudioComment extends Entity<AudioCommentId> {
     required TrackVersionId versionId,
     required UserId createdBy,
     required String content,
+    String? audioStorageUrl,
+    String? localAudioPath,
+    Duration? audioDuration,
+    CommentType commentType = CommentType.text,
   }) {
     return AudioComment(
       id: AudioCommentId(),
@@ -34,6 +55,10 @@ class AudioComment extends Entity<AudioCommentId> {
       content: content,
       timestamp: Duration.zero,
       createdAt: DateTime.now(),
+      audioStorageUrl: audioStorageUrl,
+      localAudioPath: localAudioPath,
+      audioDuration: audioDuration,
+      commentType: commentType,
     );
   }
 
@@ -45,6 +70,10 @@ class AudioComment extends Entity<AudioCommentId> {
     String? content,
     Duration? timestamp,
     DateTime? createdAt,
+    String? audioStorageUrl,
+    String? localAudioPath,
+    Duration? audioDuration,
+    CommentType? commentType,
   }) {
     return AudioComment(
       id: id ?? this.id,
@@ -54,6 +83,10 @@ class AudioComment extends Entity<AudioCommentId> {
       content: content ?? this.content,
       timestamp: timestamp ?? this.timestamp,
       createdAt: createdAt ?? this.createdAt,
+      audioStorageUrl: audioStorageUrl ?? this.audioStorageUrl,
+      localAudioPath: localAudioPath ?? this.localAudioPath,
+      audioDuration: audioDuration ?? this.audioDuration,
+      commentType: commentType ?? this.commentType,
     );
   }
 
