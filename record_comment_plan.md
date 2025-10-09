@@ -77,78 +77,49 @@ Each consumer feature (e.g., audio_comment) will:
 
 ---
 
-## Phase 0: Core Infrastructure - Shared Services
+## Phase 0: Core Infrastructure - Refactoring & Shared Services
 
-### Step 0.1: Create Core Audio Storage Service
+> **IMPORTANT**: Analysis of existing codebase revealed significant overlap with planned services. This phase focuses on **extracting and refactoring** existing implementations rather than creating from scratch.
 
-**Purpose**: Provide Firebase Storage operations abstraction for all audio features
+### Step 0.1: Extract and Create Firebase Audio Upload Service
 
-**New File:** `lib/core/services/audio_storage_service.dart`
+**Purpose**: Create reusable Firebase Storage upload service by extracting existing proven logic
 
-```dart
-/// Abstract interface for audio file storage operations
-/// Used by multiple features: audio_comment, voice_memo, etc.
-abstract class AudioStorageService {
-  /// Upload audio file to Firebase Storage
-  /// [localPath] - Local file path to upload
-  /// [remotePath] - Firebase Storage path (e.g., 'audio_comments/proj/ver/id.m4a')
-  /// [metadata] - Custom metadata for the file
-  /// Returns download URL on success
-  Future<Either<Failure, String>> uploadAudioFile({
-    required String localPath,
-    required String remotePath,
-    Map<String, String>? metadata,
-  });
+**Context**: Upload logic already exists in `lib/features/track_version/data/datasources/track_version_remote_datasource.dart:38-97`. We need to extract it for reuse by audio comments and future features.
 
-  /// Download audio file from Firebase Storage to local cache
-  /// [storageUrl] - Firebase Storage download URL
-  /// [localPath] - Destination local file path
-  /// Returns local path on success
-  Future<Either<Failure, String>> downloadAudioFile({
-    required String storageUrl,
-    required String localPath,
-  });
-
-  /// Delete audio file from Firebase Storage
-  /// [storageUrl] - Firebase Storage download URL
-  Future<Either<Failure, Unit>> deleteAudioFile({
-    required String storageUrl,
-  });
-
-  /// Get download URL from storage path
-  Future<Either<Failure, String>> getDownloadUrl(String storagePath);
-}
-```
-
-**Implementation File:** `lib/core/services/audio_storage_service_impl.dart`
+**New File:** `lib/core/services/firebase_audio_upload_service.dart`
 
 ```dart
-@LazySingleton(as: AudioStorageService)
-class AudioStorageServiceImpl implements AudioStorageService {
+/// Shared Firebase Storage upload service for all audio features
+/// Extracted from track_version feature for reusability
+@LazySingleton()
+class FirebaseAudioUploadService {
   final FirebaseStorage _storage;
 
-  AudioStorageServiceImpl(this._storage);
+  FirebaseAudioUploadService(this._storage);
 
-  @override
+  /// Upload audio file to Firebase Storage
+  /// [audioFile] - Local file to upload
+  /// [storagePath] - Firebase Storage path (e.g., 'audio_comments/{projectId}/{versionId}/{commentId}.m4a')
+  /// [metadata] - Optional custom metadata
+  /// Returns download URL on success
   Future<Either<Failure, String>> uploadAudioFile({
-    required String localPath,
-    required String remotePath,
+    required File audioFile,
+    required String storagePath,
     Map<String, String>? metadata,
   }) async {
     try {
-      final file = File(localPath);
-      if (!await file.exists()) {
-        return Left(StorageFailure('Local audio file not found'));
-      }
+      final fileExtension = AudioFormatUtils.getFileExtension(audioFile.path);
+      final ref = _storage.ref().child(storagePath);
 
-      final ref = _storage.ref().child(remotePath);
-
-      final uploadMetadata = SettableMetadata(
-        contentType: 'audio/m4a',
-        customMetadata: metadata,
+      final uploadTask = ref.putFile(
+        audioFile,
+        SettableMetadata(
+          contentType: AudioFormatUtils.getContentType(fileExtension),
+          customMetadata: metadata,
+        ),
       );
 
-      final uploadTask = ref.putFile(file, uploadMetadata);
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
@@ -160,35 +131,8 @@ class AudioStorageServiceImpl implements AudioStorageService {
     }
   }
 
-  @override
-  Future<Either<Failure, String>> downloadAudioFile({
-    required String storageUrl,
-    required String localPath,
-  }) async {
-    try {
-      final file = File(localPath);
-
-      // Skip if already cached
-      if (await file.exists()) {
-        return Right(localPath);
-      }
-
-      // Create directory if needed
-      await file.parent.create(recursive: true);
-
-      // Download from Firebase Storage
-      final ref = _storage.refFromURL(storageUrl);
-      await ref.writeToFile(file);
-
-      return Right(localPath);
-    } on FirebaseException catch (e) {
-      return Left(StorageFailure('Download failed: ${e.message}'));
-    } catch (e) {
-      return Left(StorageFailure('Download failed: ${e.toString()}'));
-    }
-  }
-
-  @override
+  /// Delete audio file from Firebase Storage
+  /// [storageUrl] - Firebase Storage download URL
   Future<Either<Failure, Unit>> deleteAudioFile({
     required String storageUrl,
   }) async {
@@ -202,84 +146,137 @@ class AudioStorageServiceImpl implements AudioStorageService {
       return Left(StorageFailure('Delete failed: ${e.toString()}'));
     }
   }
-
-  @override
-  Future<Either<Failure, String>> getDownloadUrl(String storagePath) async {
-    try {
-      final ref = _storage.ref().child(storagePath);
-      final url = await ref.getDownloadURL();
-      return Right(url);
-    } on FirebaseException catch (e) {
-      return Left(StorageFailure('Get URL failed: ${e.message}'));
-    } catch (e) {
-      return Left(StorageFailure('Get URL failed: ${e.toString()}'));
-    }
-  }
 }
 ```
 
+**Changes Required:**
+1. Create new service file
+2. Update `track_version_remote_datasource.dart` to use new service
+3. Remove duplicate upload logic from track version datasource
+4. Add DI configuration
+
 **Verification:**
-- **Unit Test:** `test/core/services/audio_storage_service_test.dart`
-  - Mock Firebase Storage
-  - Test upload success/failure
-  - Test download with caching
+- **Unit Test:** `test/core/services/firebase_audio_upload_service_test.dart`
+  - Mock FirebaseStorage
+  - Test upload success/failure scenarios
   - Test delete operations
-  - Test URL retrieval
+  - Test error handling
+- **Integration Test:** Ensure track version upload still works
 
 ---
 
-### Step 0.2: Create Core File System Service
+### Step 0.2: Consolidate Audio Format Utilities
 
-**Purpose**: Abstract local file system operations
+**Purpose**: Create single source of truth for MIME type and file extension mapping
 
-**New File:** `lib/core/services/file_system_service.dart`
+**Context**: Duplicate logic exists in:
+- `track_version_remote_datasource.dart:180-204`
+- `cache_storage_remote_data_source.dart:150-181`
+
+**New File:** `lib/core/utils/audio_format_utils.dart`
 
 ```dart
-/// Abstract interface for local file system operations
-abstract class FileSystemService {
-  /// Get temporary directory for transient files
-  Future<Directory> getTemporaryDirectory();
+/// Centralized utilities for audio file format detection and conversion
+class AudioFormatUtils {
+  // Prevent instantiation
+  AudioFormatUtils._();
 
-  /// Get application documents directory for persistent cache
-  Future<Directory> getApplicationDocumentsDirectory();
+  /// Map file extensions to MIME types
+  static const Map<String, String> extensionToMimeType = {
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.m4a': 'audio/mp4',
+    '.aac': 'audio/aac',
+    '.ogg': 'audio/ogg',
+    '.flac': 'audio/flac',
+  };
 
-  /// Create directory if it doesn't exist
-  Future<Directory> ensureDirectoryExists(String path);
+  /// Map MIME types to file extensions (handles variations)
+  static const Map<String, String> mimeTypeToExtension = {
+    'audio/mpeg': '.mp3',
+    'audio/mp3': '.mp3',
+    'audio/mp4': '.m4a',
+    'audio/aac': '.m4a',
+    'audio/x-m4a': '.m4a',
+    'audio/m4a': '.m4a',
+    'audio/wav': '.wav',
+    'audio/x-wav': '.wav',
+    'audio/ogg': '.ogg',
+    'application/ogg': '.ogg',
+    'audio/flac': '.flac',
+  };
 
-  /// Delete file if exists
-  Future<bool> deleteFile(String path);
+  /// Get MIME content type from file extension
+  /// Returns 'audio/mpeg' as default if not found
+  static String getContentType(String fileExtension) {
+    return extensionToMimeType[fileExtension.toLowerCase()] ?? 'audio/mpeg';
+  }
 
-  /// Check if file exists
-  Future<bool> fileExists(String path);
+  /// Get file extension from MIME content type
+  /// Handles charset and other parameters
+  static String? getExtensionFromMimeType(String mimeType) {
+    final type = mimeType.split(';').first.trim().toLowerCase();
+    return mimeTypeToExtension[type];
+  }
 
-  /// Copy file from source to destination
-  Future<String> copyFile(String sourcePath, String destinationPath);
+  /// Extract file extension from file path
+  /// Returns '.mp3' as default if not found
+  static String getFileExtension(String filePath) {
+    final lastDot = filePath.lastIndexOf('.');
+    if (lastDot == -1) return '.mp3';
+    final ext = filePath.substring(lastDot).toLowerCase();
+    // Validate reasonable length to avoid query strings
+    if (ext.length > 5) return '.mp3';
+    return ext;
+  }
 
-  /// Get file size in bytes
-  Future<int> getFileSize(String path);
-
-  /// Generate unique temporary file path
-  String generateTemporaryFilePath(String extension);
+  /// Supported audio file extensions
+  static const List<String> supportedExtensions = [
+    '.mp3',
+    '.wav',
+    '.m4a',
+    '.aac',
+    '.ogg',
+    '.flac',
+  ];
 }
 ```
 
-**Implementation File:** `lib/core/services/file_system_service_impl.dart`
+**Changes Required:**
+1. Create utility class
+2. Update `track_version_remote_datasource.dart` to use `AudioFormatUtils`
+3. Update `cache_storage_remote_data_source.dart` to use `AudioFormatUtils`
+4. Remove duplicate helper methods
+
+**Verification:**
+- **Unit Test:** `test/core/utils/audio_format_utils_test.dart`
+  - Test extension to MIME type conversion
+  - Test MIME type to extension conversion
+  - Test edge cases (missing extension, unknown types)
+  - Test all supported formats
+
+---
+
+### Step 0.3: Extract File System Utilities
+
+**Purpose**: Centralize common file operations found across multiple features
+
+**Context**: Common patterns exist in:
+- `audio_storage_repository_impl.dart` (directory creation, extension extraction)
+- `upload_version_form.dart` (temporary file handling)
+- `cache_storage_local_data_source.dart` (file validation)
+
+**New File:** `lib/core/utils/file_system_utils.dart`
 
 ```dart
-@LazySingleton(as: FileSystemService)
-class FileSystemServiceImpl implements FileSystemService {
-  @override
-  Future<Directory> getTemporaryDirectory() async {
-    return await path_provider.getTemporaryDirectory();
-  }
+/// Centralized utilities for file system operations
+class FileSystemUtils {
+  // Prevent instantiation
+  FileSystemUtils._();
 
-  @override
-  Future<Directory> getApplicationDocumentsDirectory() async {
-    return await path_provider.getApplicationDocumentsDirectory();
-  }
-
-  @override
-  Future<Directory> ensureDirectoryExists(String path) async {
+  /// Create directory if it doesn't exist
+  /// Uses recursive creation for parent directories
+  static Future<Directory> ensureDirectoryExists(String path) async {
     final dir = Directory(path);
     if (!await dir.exists()) {
       await dir.create(recursive: true);
@@ -287,8 +284,9 @@ class FileSystemServiceImpl implements FileSystemService {
     return dir;
   }
 
-  @override
-  Future<bool> deleteFile(String path) async {
+  /// Delete file if it exists
+  /// Returns true if deleted, false if didn't exist or error
+  static Future<bool> deleteFileIfExists(String path) async {
     try {
       final file = File(path);
       if (await file.exists()) {
@@ -301,112 +299,119 @@ class FileSystemServiceImpl implements FileSystemService {
     }
   }
 
-  @override
-  Future<bool> fileExists(String path) async {
-    return await File(path).exists();
+  /// Extract file extension from path
+  /// Returns null if no extension found or invalid
+  static String? extractExtension(String path) {
+    final idx = path.lastIndexOf('.');
+    if (idx == -1) return null;
+    final ext = path.substring(idx).toLowerCase();
+    if (ext.length > 5) return null; // Avoid query strings
+    return ext;
   }
 
-  @override
-  Future<String> copyFile(String sourcePath, String destinationPath) async {
-    final source = File(sourcePath);
-    final destination = File(destinationPath);
-
-    // Ensure destination directory exists
-    await destination.parent.create(recursive: true);
-
-    await source.copy(destinationPath);
-    return destinationPath;
+  /// Generate unique filename for temporary recordings
+  /// Format: recording_{timestamp}_{uuid}.{extension}
+  static String generateUniqueFilename(String extension) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final uuid = const Uuid().v4().substring(0, 8);
+    return 'recording_${timestamp}_$uuid$extension';
   }
 
-  @override
-  Future<int> getFileSize(String path) async {
+  /// Get file size in bytes
+  static Future<int> getFileSize(String path) async {
     final file = File(path);
     return await file.length();
   }
 
-  @override
-  String generateTemporaryFilePath(String extension) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final uuid = const Uuid().v4().substring(0, 8);
-    return 'recording_${timestamp}_$uuid.$extension';
+  /// Check if file exists
+  static Future<bool> fileExists(String path) async {
+    return await File(path).exists();
   }
 }
 ```
 
+**Changes Required:**
+1. Create utility class
+2. Update audio cache repository to use utilities
+3. Update upload form to use utilities
+4. Remove duplicate helper methods
+
 **Verification:**
-- **Unit Test:** `test/core/services/file_system_service_test.dart`
-  - Test directory operations
-  - Test file operations
-  - Test path generation
+- **Unit Test:** `test/core/utils/file_system_utils_test.dart`
+  - Test directory creation
+  - Test file deletion
+  - Test extension extraction
+  - Test unique filename generation
 
 ---
 
-### Step 0.3: Create Core Permission Service
+### Step 0.4: Document Integration with Existing Audio Cache
 
-**Purpose**: Centralize permission handling
+**Purpose**: Clarify how recording feature integrates with existing audio cache system
 
-**New File:** `lib/core/services/permission_service.dart`
+**Context**: The existing `AudioStorageRepository` (`lib/features/audio_cache/data/repositories/audio_storage_repository_impl.dart`) already provides:
+- Local file storage with directory management
+- File validation with SHA-1 checksums
+- Cache cleanup and maintenance
+- Isar persistence for metadata
 
-```dart
-/// Abstract interface for app permissions
-abstract class PermissionService {
-  /// Check if microphone permission is granted
-  Future<bool> hasMicrophonePermission();
+**Integration Strategy:**
 
-  /// Request microphone permission
-  /// Returns true if granted, false if denied
-  Future<bool> requestMicrophonePermission();
+1. **Local Storage for Recordings:**
+   - Use existing `AudioStorageRepository.storeAudio()` for caching recorded comments
+   - Directory structure: `Documents/trackflow/audio/{projectId}/{commentId}.m4a`
+   - Leverages existing validation and checksum logic
 
-  /// Check if user permanently denied permission
-  Future<bool> isPermanentlyDenied();
+2. **Firebase Upload:**
+   - Use new `FirebaseAudioUploadService` for uploading to storage
+   - Storage path: `audio_comments/{projectId}/{versionId}/{commentId}.m4a`
+   - Consistent with existing track version pattern
 
-  /// Open app settings (for permission management)
-  Future<void> openAppSettings();
-}
+3. **Temporary Recording Files:**
+   - Use `getTemporaryDirectory()` from `path_provider` for active recordings
+   - Move to permanent cache after recording complete
+   - Use `FileSystemUtils` for file operations
+
+**No New Storage Service Needed**: The planned `AudioStorageService` is **not required** because:
+- Upload: Handled by new `FirebaseAudioUploadService`
+- Download: Handled by existing `AudioCacheRepository`
+- Local storage: Handled by existing `AudioStorageRepository`
+
+**Updated Architecture Diagram:**
+
 ```
-
-**Implementation File:** `lib/core/services/permission_service_impl.dart`
-
-```dart
-@LazySingleton(as: PermissionService)
-class PermissionServiceImpl implements PermissionService {
-  // Note: May require additional package like 'permission_handler'
-  // For now, we'll use the 'record' package's built-in permission check
-
-  final Record _recorder = Record();
-
-  @override
-  Future<bool> hasMicrophonePermission() async {
-    return await _recorder.hasPermission();
-  }
-
-  @override
-  Future<bool> requestMicrophonePermission() async {
-    // Record package doesn't have explicit request method
-    // Permission is requested on first recording attempt
-    return await _recorder.hasPermission();
-  }
-
-  @override
-  Future<bool> isPermanentlyDenied() async {
-    // Would require permission_handler package for this
-    // For now, return false
-    return false;
-  }
-
-  @override
-  Future<void> openAppSettings() async {
-    // Would require permission_handler package
-    // For now, no-op
-  }
-}
+┌──────────────────────────────────────────────────────────┐
+│              Audio Comment Feature                       │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │  Uses FirebaseAudioUploadService (SHARED)         │  │
+│  │  Uses AudioStorageRepository (EXISTING)           │  │
+│  │  Uses FileSystemUtils (NEW UTILITIES)             │  │
+│  └────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────┐
+│           Audio Recording Feature (NEW MODULE)           │
+│  - Domain: Recording entities, services, use cases       │
+│  - Infrastructure: Platform recording (record package)   │
+│  - Presentation: Recording UI components & BLoC          │
+└──────────────────────────────────────────────────────────┘
+                          │
+                          ▼
+┌──────────────────────────────────────────────────────────┐
+│                 Shared Services & Utils                  │
+│  - FirebaseAudioUploadService (NEW - extracted)         │
+│  - AudioFormatUtils (NEW - consolidated)                │
+│  - FileSystemUtils (NEW - extracted)                    │
+│  - AudioStorageRepository (EXISTING - reused)           │
+│  - AudioCacheRepository (EXISTING - reused)             │
+└──────────────────────────────────────────────────────────┘
 ```
 
 **Verification:**
-- **Unit Test:** `test/core/services/permission_service_test.dart`
-  - Mock Record package
-  - Test permission checks
-  - Test permission requests
+- Document updated integration points
+- Architecture diagram reflects actual implementation
+- No duplicate services planned
 
 ---
 
@@ -609,9 +614,8 @@ abstract class RecordingService {
 @injectable
 class StartRecordingUseCase {
   final RecordingService _recordingService;
-  final FileSystemService _fileSystemService;
 
-  StartRecordingUseCase(this._recordingService, this._fileSystemService);
+  StartRecordingUseCase(this._recordingService);
 
   Future<Either<Failure, String>> call({
     String? customOutputPath,
@@ -626,16 +630,15 @@ class StartRecordingUseCase {
     }
 
     // Generate output path if not provided
-    final outputPath = customOutputPath ??
-      await _generateOutputPath();
+    final outputPath = customOutputPath ?? await _generateOutputPath();
 
     // Start recording
     return await _recordingService.startRecording(outputPath: outputPath);
   }
 
   Future<String> _generateOutputPath() async {
-    final tempDir = await _fileSystemService.getTemporaryDirectory();
-    final fileName = _fileSystemService.generateTemporaryFilePath('m4a');
+    final tempDir = await getTemporaryDirectory();
+    final fileName = FileSystemUtils.generateUniqueFilename('.m4a');
     return '${tempDir.path}/$fileName';
   }
 }
@@ -662,24 +665,19 @@ class StopRecordingUseCase {
 @injectable
 class CancelRecordingUseCase {
   final RecordingService _recordingService;
-  final FileSystemService _fileSystemService;
 
-  CancelRecordingUseCase(this._recordingService, this._fileSystemService);
+  CancelRecordingUseCase(this._recordingService);
 
   Future<Either<Failure, Unit>> call() async {
-    final result = await _recordingService.cancelRecording();
-
-    // Clean up temporary files
-    // (Implementation will delete the temp file)
-
-    return result;
+    // RecordingService handles temp file cleanup internally
+    return await _recordingService.cancelRecording();
   }
 }
 ```
 
 **Verification:**
 - **Unit Test:** `test/features/audio_recording/domain/usecases/start_recording_usecase_test.dart`
-  - Mock RecordingService and FileSystemService
+  - Mock RecordingService
   - Test permission checks
   - Test output path generation
 - **Unit Test:** `test/features/audio_recording/domain/usecases/stop_recording_usecase_test.dart`
@@ -697,27 +695,23 @@ class CancelRecordingUseCase {
 @LazySingleton(as: RecordingService)
 class PlatformRecordingService implements RecordingService {
   final Record _recorder = Record();
-  final PermissionService _permissionService;
-  final FileSystemService _fileSystemService;
 
   final _sessionController = StreamController<RecordingSession>.broadcast();
   RecordingSession? _currentSession;
   Timer? _elapsedTimer;
   Timer? _amplitudeTimer;
 
-  PlatformRecordingService(
-    this._permissionService,
-    this._fileSystemService,
-  );
+  PlatformRecordingService();
 
   @override
   Future<bool> hasPermission() async {
-    return await _permissionService.hasMicrophonePermission();
+    return await _recorder.hasPermission();
   }
 
   @override
   Future<bool> requestPermission() async {
-    return await _permissionService.requestMicrophonePermission();
+    // Record package handles permission request automatically on first recording
+    return await _recorder.hasPermission();
   }
 
   @override
@@ -782,7 +776,7 @@ class PlatformRecordingService implements RecordingService {
       _amplitudeTimer?.cancel();
 
       // Get file size
-      final fileSize = await _fileSystemService.getFileSize(path);
+      final fileSize = await FileSystemUtils.getFileSize(path);
 
       // Create AudioRecording entity
       final recording = AudioRecording.create(
@@ -855,7 +849,7 @@ class PlatformRecordingService implements RecordingService {
 
       // Delete temporary file
       if (_currentSession != null) {
-        await _fileSystemService.deleteFile(_currentSession!.outputPath);
+        await FileSystemUtils.deleteFileIfExists(_currentSession!.outputPath);
       }
 
       _currentSession = null;
@@ -912,13 +906,14 @@ class PlatformRecordingService implements RecordingService {
 
 **Verification:**
 - **Unit Test:** `test/features/audio_recording/infrastructure/services/platform_recording_service_test.dart`
-  - Mock Record package, PermissionService, FileSystemService
+  - Mock Record package
   - Test start/stop recording flow
   - Test pause/resume flow
   - Test cancel recording
   - Test elapsed timer updates
   - Test amplitude monitoring
   - Test error scenarios
+  - Test permission handling
 
 ---
 
@@ -1493,12 +1488,12 @@ flutter packages pub run build_runner build --delete-conflicting-outputs
 ```dart
 @injectable
 class AudioCommentStorageCoordinator {
-  final AudioStorageService _audioStorageService;
-  final FileSystemService _fileSystemService;
+  final FirebaseAudioUploadService _uploadService;
+  final AudioStorageRepository _audioStorageRepository;
 
   AudioCommentStorageCoordinator(
-    this._audioStorageService,
-    this._fileSystemService,
+    this._uploadService,
+    this._audioStorageRepository,
   );
 
   /// Upload audio comment file to Firebase Storage
@@ -1508,7 +1503,8 @@ class AudioCommentStorageCoordinator {
     required TrackVersionId versionId,
     required AudioCommentId commentId,
   }) async {
-    final remotePath = _buildStoragePath(projectId, versionId, commentId);
+    final file = File(localPath);
+    final storagePath = _buildStoragePath(projectId, versionId, commentId);
 
     final metadata = {
       'projectId': projectId.value,
@@ -1517,23 +1513,10 @@ class AudioCommentStorageCoordinator {
       'type': 'audio_comment',
     };
 
-    return await _audioStorageService.uploadAudioFile(
-      localPath: localPath,
-      remotePath: remotePath,
+    return await _uploadService.uploadAudioFile(
+      audioFile: file,
+      storagePath: storagePath,
       metadata: metadata,
-    );
-  }
-
-  /// Download audio comment file to local cache
-  Future<Either<Failure, String>> downloadCommentAudio({
-    required String storageUrl,
-    required AudioCommentId commentId,
-  }) async {
-    final localPath = _buildLocalPath(commentId);
-
-    return await _audioStorageService.downloadAudioFile(
-      storageUrl: storageUrl,
-      localPath: localPath,
     );
   }
 
@@ -1541,27 +1524,33 @@ class AudioCommentStorageCoordinator {
   Future<Either<Failure, Unit>> deleteCommentAudio({
     required String storageUrl,
   }) async {
-    return await _audioStorageService.deleteAudioFile(
-      storageUrl: storageUrl,
-    );
+    return await _uploadService.deleteAudioFile(storageUrl: storageUrl);
   }
 
-  /// Copy recording from temp location to permanent cache
-  Future<Either<Failure, String>> moveRecordingToCache({
+  /// Store recording in audio cache system
+  /// Uses existing AudioStorageRepository for consistency
+  Future<Either<CacheFailure, String>> storeRecordingInCache({
     required String tempPath,
-    required AudioCommentId commentId,
+    required AudioTrackId trackId,  // Using projectId as trackId
+    required TrackVersionId versionId,  // Using commentId as versionId
   }) async {
-    try {
-      final cachePath = _buildLocalPath(commentId);
-      final finalPath = await _fileSystemService.copyFile(tempPath, cachePath);
+    final audioFile = File(tempPath);
 
-      // Delete temp file
-      await _fileSystemService.deleteFile(tempPath);
+    // Use existing audio cache storage
+    final result = await _audioStorageRepository.storeAudio(
+      trackId,
+      versionId,
+      audioFile,
+    );
 
-      return Right(finalPath);
-    } catch (e) {
-      return Left(StorageFailure('Failed to move recording: $e'));
-    }
+    return result.fold(
+      (failure) => Left(failure),
+      (cachedAudio) async {
+        // Delete temp file after successful cache
+        await FileSystemUtils.deleteFileIfExists(tempPath);
+        return Right(cachedAudio.filePath);
+      },
+    );
   }
 
   String _buildStoragePath(
@@ -1571,25 +1560,23 @@ class AudioCommentStorageCoordinator {
   ) {
     return 'audio_comments/${projectId.value}/${versionId.value}/${commentId.value}.m4a';
   }
-
-  String _buildLocalPath(AudioCommentId commentId) {
-    // Will use FileSystemService at runtime to get app documents dir
-    return 'audio_comments/${commentId.value}.m4a';
-  }
-
-  Future<String> getFullLocalPath(AudioCommentId commentId) async {
-    final appDir = await _fileSystemService.getApplicationDocumentsDirectory();
-    return '${appDir.path}/${_buildLocalPath(commentId)}';
-  }
 }
 ```
 
+**Changes from Original Plan:**
+1. Uses `FirebaseAudioUploadService` instead of `AudioStorageService`
+2. Uses existing `AudioStorageRepository` for local caching
+3. Removed download method (handled by audio cache system)
+4. Simplified caching using proven audio cache patterns
+5. Uses `FileSystemUtils` for file operations
+
 **Verification:**
 - **Unit Test:** `test/features/audio_comment/data/services/audio_comment_storage_coordinator_test.dart`
-  - Mock AudioStorageService and FileSystemService
+  - Mock FirebaseAudioUploadService and AudioStorageRepository
   - Test upload path generation
-  - Test download caching
-  - Test recording move operation
+  - Test Firebase metadata attachment
+  - Test cache storage integration
+  - Test temp file cleanup
 
 ---
 
@@ -1626,16 +1613,21 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       // 1. Save to local DB immediately
       await _localDataSource.cacheComment(dto);
 
-      // 2. If audio comment, move recording to permanent cache
+      // 2. If audio comment, store recording in permanent cache
       if (comment.commentType != CommentType.text &&
           comment.localAudioPath != null) {
 
-        final moveResult = await _storageCoordinator.moveRecordingToCache(
+        // Use projectId as trackId, commentId as versionId for cache hierarchy
+        final trackId = AudioTrackId.fromString(comment.projectId.value);
+        final versionId = TrackVersionId.fromString(comment.id.value);
+
+        final cacheResult = await _storageCoordinator.storeRecordingInCache(
           tempPath: comment.localAudioPath!,
-          commentId: comment.id,
+          trackId: trackId,
+          versionId: versionId,
         );
 
-        final cachePath = await moveResult.fold(
+        final cachePath = await cacheResult.fold(
           (failure) => throw Exception('Failed to cache recording: ${failure.message}'),
           (path) => path,
         );
