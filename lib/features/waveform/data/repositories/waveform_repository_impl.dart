@@ -33,11 +33,6 @@ class WaveformRepositoryImpl implements WaveformRepository {
     try {
       final waveform = await _localDataSource.getWaveformByVersionId(versionId);
       if (waveform == null) {
-        // Trigger downstream fetch in background for this version
-        // Offline-first: do not block UI
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'waveform_${versionId.value}',
-        );
         return Left(
           ServerFailure('Waveform not found for version: ${versionId.value}'),
         );
@@ -77,11 +72,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
       }
 
       // 4. Trigger upstream sync only (more efficient for deletions)
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_waveforms_delete_${versionId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success after successful local deletion and queuing
       return const Right(unit);
@@ -92,11 +83,6 @@ class WaveformRepositoryImpl implements WaveformRepository {
 
   @override
   Stream<AudioWaveform> watchWaveformChanges(TrackVersionId versionId) {
-    // Trigger downstream fetch when starting to watch
-    _backgroundSyncCoordinator.triggerBackgroundSync(
-      syncKey: 'waveform_${versionId.value}',
-    );
-    // The local data source now handles version filtering internally
     return _localDataSource.watchWaveformChanges(versionId);
   }
 
@@ -148,9 +134,7 @@ class WaveformRepositoryImpl implements WaveformRepository {
       }
 
       // Trigger upstream-only sync (non-blocking)
-      _backgroundSyncCoordinator.triggerUpstreamSync(
-        syncKey: 'waveform_update_${waveform.versionId.value}',
-      );
+      _backgroundSyncCoordinator.pushUpstream();
 
       return const Right(unit);
     } catch (e) {

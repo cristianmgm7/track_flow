@@ -35,7 +35,7 @@ class ProjectOperationExecutor implements OperationExecutor {
         break;
 
       case 'delete':
-        await _executeDelete(operation);
+        await _executeDelete(operation, operationData);
         break;
 
       default:
@@ -80,7 +80,8 @@ class ProjectOperationExecutor implements OperationExecutor {
 
     final result = await _remoteDataSource.createProject(projectDto);
     result.fold(
-      (failure) => throw Exception('Failed to create project: ${failure.message}'),
+      (failure) =>
+          throw Exception('Failed to create project: ${failure.message}'),
       (_) => {}, // Success case
     );
   }
@@ -90,6 +91,13 @@ class ProjectOperationExecutor implements OperationExecutor {
     SyncOperationDocument operation,
     Map<String, dynamic> operationData,
   ) async {
+    // ✅ Ensure timestamps exist for incremental queries
+    final now = DateTime.now().toUtc();
+    operationData['updatedAt'] =
+        operationData['updatedAt'] ?? now.toIso8601String();
+    operationData['lastModified'] =
+        operationData['lastModified'] ?? operationData['updatedAt'];
+
     // ✅ FIXED: Use complete data from operationData instead of creating incomplete DTO
     final projectDto = ProjectDTO(
       id: operation.entityId,
@@ -125,16 +133,53 @@ class ProjectOperationExecutor implements OperationExecutor {
 
     final result = await _remoteDataSource.updateProject(projectDto);
     result.fold(
-      (failure) => throw Exception('Failed to update project: ${failure.message}'),
+      (failure) =>
+          throw Exception('Failed to update project: ${failure.message}'),
       (_) => {}, // Success case
     );
   }
 
-  /// Execute project deletion
-  Future<void> _executeDelete(SyncOperationDocument operation) async {
-    final result = await _remoteDataSource.deleteProject(operation.entityId);
+  /// Execute project deletion (soft delete)
+  Future<void> _executeDelete(
+    SyncOperationDocument operation,
+    Map<String, dynamic> operationData,
+  ) async {
+    // Create ProjectDTO with isDeleted: true for soft delete
+    final projectDto = ProjectDTO(
+      id: operation.entityId,
+      name: operationData['name'] ?? '',
+      description: operationData['description'] ?? '',
+      ownerId: operationData['ownerId'] ?? '',
+      createdAt: DateTime.parse(
+        operationData['createdAt'] ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt:
+          operationData['updatedAt'] != null
+              ? DateTime.parse(operationData['updatedAt'])
+              : null,
+      collaborators:
+          (operationData['collaborators'] as List<dynamic>?)
+              ?.map((e) => (e as Map).cast<String, dynamic>())
+              .toList() ??
+          [],
+      collaboratorIds:
+          (operationData['collaboratorIds'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          [],
+      isDeleted: true, // Soft delete
+      version: operationData['version'] as int? ?? 1,
+      lastModified:
+          operationData['lastModified'] != null
+              ? DateTime.parse(operationData['lastModified'])
+              : null,
+    );
+
+    // Use updateProject for soft delete instead of deleteProject
+    final result = await _remoteDataSource.updateProject(projectDto);
     result.fold(
-      (failure) => throw Exception('Failed to delete project: ${failure.message}'),
+      (failure) =>
+          throw Exception('Failed to soft delete project: ${failure.message}'),
       (_) => {}, // Success case
     );
   }

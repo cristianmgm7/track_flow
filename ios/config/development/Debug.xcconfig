@@ -1,9 +1,10 @@
-#include "Generated.xcconfig"
+#include "../../Flutter/Generated.xcconfig"
 #include "../../Flutter/Debug.xcconfig"
 
 PRODUCT_BUNDLE_IDENTIFIER = com.trackflow.dev
 PRODUCT_NAME = TrackFlow Dev
 DISPLAY_NAME = TrackFlow Dev
 
-// Firebase configuration file
+// Firebase configuration
+FIREBASE_CONFIG_DIR = config/development
 FIREBASE_CONFIG_FILE = GoogleService-Info-Dev.plist

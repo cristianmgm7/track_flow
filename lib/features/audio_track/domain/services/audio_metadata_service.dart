@@ -104,5 +104,5 @@ class AudioFileValidation {
 
 /// Specific failure for audio processing errors
 class AudioProcessingFailure extends Failure {
-  const AudioProcessingFailure(String message) : super(message);
+  const AudioProcessingFailure(super.message);
 }

@@ -1,8 +1,11 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+
+// Import the generated config to extend GetIt
 import 'injection.config.dart';
 
+// Use the extended GetIt instance with injectable functionality
 final GetIt sl = GetIt.instance;
 
 @InjectableInit()

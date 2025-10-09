@@ -1,11 +1,12 @@
-#include "Generated.xcconfig"
+#include "../../Flutter/Generated.xcconfig"
 #include "../../Flutter/Release.xcconfig"
 
 PRODUCT_BUNDLE_IDENTIFIER = com.trackflow
 PRODUCT_NAME = TrackFlow
 DISPLAY_NAME = TrackFlow
 
-// Firebase configuration file
+// Firebase configuration
+FIREBASE_CONFIG_DIR = config/production
 FIREBASE_CONFIG_FILE = GoogleService-Info-Prod.plist
 CODE_SIGN_STYLE = Automatic
 CODE_SIGN_IDENTITY = Apple Distribution

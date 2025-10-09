@@ -83,7 +83,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
 
     // Watch projects using emit.onEach()
     await emit.onEach<Either<Failure, List<Project>>>(
-      watchAllProjects(),
+      watchAllProjects.call(),
       onData: (eitherProjects) {
         eitherProjects.fold(
           (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),

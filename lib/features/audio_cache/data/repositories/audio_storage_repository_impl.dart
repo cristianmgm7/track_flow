@@ -123,6 +123,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
   /// Validate and clean corrupted cache entries
   /// This should be called at app startup
+  @override
   Future<Either<CacheFailure, int>> validateAndCleanCache() async {
     try {
       final docs = await _localDataSource.watchAllCachedAudios().first;
@@ -271,6 +272,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   // New method to check if specific version exists
+  @override
   Future<Either<CacheFailure, bool>> audioVersionExists(
     AudioTrackId trackId,
     TrackVersionId versionId,
@@ -293,6 +295,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   // New method to get cached audio by version
+  @override
   Future<Either<CacheFailure, CachedAudio?>> getCachedAudioByVersion(
     AudioTrackId trackId,
     TrackVersionId versionId,
@@ -315,6 +318,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
   // New method to delete specific version
+  @override
   Future<Either<CacheFailure, Unit>> deleteAudioVersionFile(
     AudioTrackId trackId,
     TrackVersionId versionId,

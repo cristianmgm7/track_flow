@@ -49,7 +49,29 @@ class AppFlowAuthenticated extends AppFlowState {
 }
 
 /// Fully authenticated and ready
-class AppFlowReady extends AppFlowState {}
+class AppFlowReady extends AppFlowState {
+  final bool isSyncing;
+  final bool syncCompleted;
+
+  AppFlowReady({
+    this.isSyncing = false,
+    this.syncCompleted = false,
+  });
+
+  @override
+  String toString() => 'AppFlowReady(isSyncing: $isSyncing, syncCompleted: $syncCompleted)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is AppFlowReady &&
+           other.isSyncing == isSyncing &&
+           other.syncCompleted == syncCompleted;
+  }
+
+  @override
+  int get hashCode => Object.hash(isSyncing, syncCompleted);
+}
 
 /// Error state
 class AppFlowError extends AppFlowState {

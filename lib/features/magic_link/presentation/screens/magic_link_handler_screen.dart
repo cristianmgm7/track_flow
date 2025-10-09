@@ -27,7 +27,7 @@ class MagicLinkHandlerScreen extends StatelessWidget {
             );
             Future.delayed(const Duration(seconds: 2), () {
               if (context.mounted) {
-                context.go(AppRoutes.dashboard);
+                context.go(AppRoutes.projects);
               }
             });
           } else if (state is MagicLinkHandleErrorState) {

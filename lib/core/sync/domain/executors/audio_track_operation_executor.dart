@@ -38,7 +38,7 @@ class AudioTrackOperationExecutor implements OperationExecutor {
         break;
 
       case 'delete':
-        await _executeDelete(operation);
+        await _executeDelete(operation, operationData);
         break;
 
       default:
@@ -117,13 +117,34 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     }
   }
 
-  /// Execute audio track deletion
-  Future<void> _executeDelete(SyncOperationDocument operation) async {
-    final result = await _remoteDataSource.deleteAudioTrack(operation.entityId);
+  /// Execute audio track deletion (soft delete)
+  Future<void> _executeDelete(
+    SyncOperationDocument operation,
+    Map<String, dynamic> operationData,
+  ) async {
+    // Create AudioTrackDTO with isDeleted: true for soft delete
+    final audioTrackDto = AudioTrackDTO(
+      id: AudioTrackId.fromUniqueString(operation.entityId),
+      name: operationData['name'] ?? '',
+      url: operationData['url'] ?? '',
+      duration: operationData['duration'] ?? 0,
+      projectId: ProjectId.fromUniqueString(operationData['projectId'] ?? ''),
+      uploadedBy: UserId.fromUniqueString(operationData['uploadedBy'] ?? ''),
+      createdAt:
+          operationData['createdAt'] != null
+              ? DateTime.parse(operationData['createdAt'])
+              : DateTime.now(),
+      extension: operationData['extension'] ?? 'mp3',
+      isDeleted: true, // Soft delete
+      lastModified: DateTime.now().toUtc(),
+    );
+
+    // Use updateTrack for soft delete instead of deleteAudioTrack
+    final result = await _remoteDataSource.updateTrack(audioTrackDto);
     result.fold(
-      (failure) => throw Exception('Delete failed: ${failure.message}'),
+      (failure) => throw Exception('Soft delete failed: ${failure.message}'),
       (_) {
-        // Successfully deleted
+        // Successfully soft deleted
       },
     );
   }

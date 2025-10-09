@@ -18,7 +18,7 @@ class EditProjectForm extends StatefulWidget {
 
 class _EditProjectFormState extends State<EditProjectForm> {
   final _formKey = GlobalKey<FormState>();
-  bool _isSubmitting = false;
+  final bool _isSubmitting = false;
   TextEditingController? _nameController;
   late TextEditingController _descriptionController;
 

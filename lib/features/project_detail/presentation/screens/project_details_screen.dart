@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
@@ -11,9 +13,7 @@ import 'package:trackflow/features/project_detail/presentation/components/projec
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
 // removed unused audio track listener imports
-import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
-import 'package:trackflow/core/sync/presentation/cubit/sync_status_cubit.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_event.dart';
 
@@ -36,6 +36,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       WatchProjectDetail(projectId: widget.project.id),
     );
     context.read<PlaylistBloc>().add(WatchPlaylist(widget.project.id));
+    context.read<SyncBloc>().add(const ForegroundSyncRequested());
   }
 
   @override
@@ -92,10 +93,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    BlocProvider(
-                      create: (_) => sl<SyncStatusCubit>(),
-                      child: const GlobalSyncIndicator(),
-                    ),
+                    const GlobalSyncIndicator(),
                     const SizedBox(height: 8),
                     // PlaylistWidget para los tracks del proyecto
                     PlaylistWidget(

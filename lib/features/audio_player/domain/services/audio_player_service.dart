@@ -3,7 +3,6 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 
 import '../entities/playback_session.dart';
 import '../entities/audio_failure.dart';
@@ -12,6 +11,7 @@ import '../entities/audio_source.dart';
 import '../usecases/initialize_audio_player_usecase.dart';
 import '../usecases/play_version_usecase.dart';
 import '../usecases/play_playlist_usecase.dart';
+import '../usecases/resolve_track_version_usecase.dart';
 import '../usecases/pause_audio_usecase.dart';
 import '../usecases/resume_audio_usecase.dart';
 import '../usecases/stop_audio_usecase.dart';
@@ -34,7 +34,7 @@ class AudioPlayerService {
     required InitializeAudioPlayerUseCase initializeAudioPlayerUseCase,
     required PlayVersionUseCase playVersionUseCase,
     required PlayPlaylistUseCase playPlaylistUseCase,
-    required AudioTrackRepository audioTrackRepository,
+    required ResolveTrackVersionUseCase resolveTrackVersionUseCase,
     required PauseAudioUseCase pauseAudioUseCase,
     required ResumeAudioUseCase resumeAudioUseCase,
     required StopAudioUseCase stopAudioUseCase,
@@ -51,7 +51,7 @@ class AudioPlayerService {
   }) : _initializeAudioPlayerUseCase = initializeAudioPlayerUseCase,
        _playVersionUseCase = playVersionUseCase,
        _playPlaylistUseCase = playPlaylistUseCase,
-       _audioTrackRepository = audioTrackRepository,
+       _resolveTrackVersionUseCase = resolveTrackVersionUseCase,
        _pauseAudioUseCase = pauseAudioUseCase,
        _resumeAudioUseCase = resumeAudioUseCase,
        _stopAudioUseCase = stopAudioUseCase,
@@ -70,9 +70,7 @@ class AudioPlayerService {
   final InitializeAudioPlayerUseCase _initializeAudioPlayerUseCase;
   final PlayVersionUseCase _playVersionUseCase;
   final PlayPlaylistUseCase _playPlaylistUseCase;
-
-  // Repositories
-  final AudioTrackRepository _audioTrackRepository;
+  final ResolveTrackVersionUseCase _resolveTrackVersionUseCase;
   final PauseAudioUseCase _pauseAudioUseCase;
   final ResumeAudioUseCase _resumeAudioUseCase;
   final StopAudioUseCase _stopAudioUseCase;
@@ -104,36 +102,16 @@ class AudioPlayerService {
   Future<Either<AudioFailure, void>> playVersion(
     TrackVersionId versionId,
   ) async {
-    return await _playVersionUseCase(versionId);
+    return await _playVersionUseCase.call(versionId);
   }
 
-  /// Get the active version ID for a track
-  /// This is a helper method for transitioning from track-centric to version-centric
-  Future<Either<AudioFailure, TrackVersionId>> getActiveVersionForTrack(
+  /// Resolve track to its active version
+  /// Returns the TrackVersionId for the active version
+  Future<Either<AudioFailure, TrackVersionId>> resolveTrackVersion(
     AudioTrackId trackId,
   ) async {
-    try {
-      // Get track to find active version
-      final trackResult = await _audioTrackRepository.getTrackById(trackId);
-
-      return await trackResult.fold(
-        (failure) async => Left(TrackNotFoundFailure(trackId.value)),
-        (audioTrack) async {
-          if (audioTrack.activeVersionId == null) {
-            return Left(
-              AudioSourceFailure(
-                'Track ${trackId.value} has no active version',
-              ),
-            );
-          }
-          return Right(audioTrack.activeVersionId!);
-        },
-      );
-    } catch (e) {
-      return Left(
-        PlaybackFailure('Failed to get active version: ${e.toString()}'),
-      );
-    }
+    final result = await _resolveTrackVersionUseCase.call(trackId);
+    return result.map((version) => version.id);
   }
 
   /// Play playlist starting from specified track index

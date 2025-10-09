@@ -8,7 +8,6 @@ import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/app/screens/app_error_screen.dart';
 import 'package:trackflow/config/flavor_config.dart';
 import 'package:trackflow/config/firebase_config.dart';
-
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
@@ -81,11 +80,8 @@ void main() async {
     await configureDependencies();
     AppLogger.info('Dependencies configured successfully', tag: 'MAIN');
 
-    // Phase 3: Let AppFlowBloc handle app state initialization
-    AppLogger.info(
-      'Starting app - AppFlowBloc will handle state initialization',
-      tag: 'MAIN',
-    );
+    // Phase 3: Start app (sync will be lazy-loaded when needed)
+    AppLogger.info('Starting app...', tag: 'MAIN');
 
     runApp(MyApp());
   } catch (error, stackTrace) {

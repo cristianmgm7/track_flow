@@ -7,6 +7,7 @@ import 'package:trackflow/core/sync/domain/entities/sync_state.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/domain/services/sync_status_provider.dart';
 import 'package:trackflow/core/sync/domain/usecases/trigger_upstream_sync_usecase.dart';
+import 'package:trackflow/core/sync/domain/usecases/trigger_foreground_sync_usecase.dart';
 
 part 'sync_status_state.dart';
 
@@ -15,6 +16,7 @@ class SyncStatusCubit extends Cubit<SyncStatusState> {
   final SyncStatusProvider _statusProvider;
   final PendingOperationsManager _pendingManager;
   final TriggerUpstreamSyncUseCase _triggerUpstream;
+  final TriggerForegroundSyncUseCase _triggerForegroundSync;
 
   StreamSubscription<SyncState>? _syncSub;
   StreamSubscription? _pendingSub;
@@ -23,6 +25,7 @@ class SyncStatusCubit extends Cubit<SyncStatusState> {
     this._statusProvider,
     this._pendingManager,
     this._triggerUpstream,
+    this._triggerForegroundSync,
   ) : super(const SyncStatusState.initial());
 
   void start() {
@@ -38,6 +41,12 @@ class SyncStatusCubit extends Cubit<SyncStatusState> {
 
   Future<void> retryUpstream() async {
     await _triggerUpstream();
+  }
+
+  /// Trigger foreground sync when app comes to foreground
+  /// This should be called from app lifecycle events
+  Future<void> triggerForegroundSync() async {
+    await _triggerForegroundSync();
   }
 
   @override

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
+import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
@@ -19,25 +19,24 @@ class AudioCommentAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipOval(
-      child: ImageUtils.createAdaptiveImageWidget(
-        imagePath: collaborator.avatarUrl,
+    return UserAvatar(
+      imageUrl: collaborator.avatarUrl,
+      size: Dimensions.avatarMedium,
+      fallback: Container(
         width: Dimensions.avatarMedium,
         height: Dimensions.avatarMedium,
-        fit: BoxFit.cover,
-        fallbackWidget: Container(
-          width: Dimensions.avatarMedium,
-          height: Dimensions.avatarMedium,
+        decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: 0.1),
-          alignment: Alignment.center,
-          child: Text(
-            collaborator.name.isNotEmpty
-                ? collaborator.name.substring(0, 1).toUpperCase()
-                : createdBy.value.substring(0, 1).toUpperCase(),
-            style: AppTextStyle.headlineSmall.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          collaborator.name.isNotEmpty
+              ? collaborator.name.substring(0, 1).toUpperCase()
+              : createdBy.value.substring(0, 1).toUpperCase(),
+          style: AppTextStyle.headlineSmall.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

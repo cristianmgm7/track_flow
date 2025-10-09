@@ -10,7 +10,7 @@ import '../../config/environment_config.dart';
 class AppLogger {
   // Use environment-specific logging configuration
   static bool get _shouldLog => EnvironmentConfig.enableLogging;
-  
+
   // For critical errors that need reporting even in production
   static bool get _shouldReportCrashes => EnvironmentConfig.enableCrashlytics;
 
@@ -86,7 +86,7 @@ class AppLogger {
     // ALWAYS report critical errors to monitoring (even in production)
     if (_shouldReportCrashes) {
       // TODO: Implement when Firebase Crashlytics is set up
-      // FirebaseCrashlytics.instance.recordError(error, stackTrace, 
+      // FirebaseCrashlytics.instance.recordError(error, stackTrace,
       //   context: 'CRITICAL: $message', isFatal: true);
     }
   }

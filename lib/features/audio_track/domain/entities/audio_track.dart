@@ -9,6 +9,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
   final UserId uploadedBy;
   final DateTime createdAt;
   final TrackVersionId? activeVersionId; // Active version for playback
+  final bool isDeleted;
 
   const AudioTrack({
     required AudioTrackId id,
@@ -19,6 +20,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     required this.uploadedBy,
     required this.createdAt,
     this.activeVersionId,
+    this.isDeleted = false,
   }) : super(id);
 
   factory AudioTrack.create({
@@ -28,6 +30,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     required ProjectId projectId,
     required UserId uploadedBy,
     TrackVersionId? activeVersionId,
+    bool isDeleted = false,
   }) {
     return AudioTrack(
       id: AudioTrackId(),
@@ -38,6 +41,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
       uploadedBy: uploadedBy,
       createdAt: DateTime.now(),
       activeVersionId: activeVersionId,
+      isDeleted: isDeleted,
     );
   }
 
@@ -50,6 +54,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     UserId? uploadedBy,
     DateTime? createdAt,
     TrackVersionId? activeVersionId,
+    bool? isDeleted,
   }) {
     return AudioTrack(
       id: id ?? this.id,
@@ -60,6 +65,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
       uploadedBy: uploadedBy ?? this.uploadedBy,
       createdAt: createdAt ?? this.createdAt,
       activeVersionId: activeVersionId ?? this.activeVersionId,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 

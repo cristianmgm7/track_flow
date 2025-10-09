@@ -3,14 +3,11 @@ import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.
 
 @lazySingleton
 class TriggerUpstreamSyncUseCase {
-  final BackgroundSyncCoordinator _coordinator;
+  final BackgroundSyncCoordinator _syncTrigger;
 
-  TriggerUpstreamSyncUseCase(this._coordinator);
+  TriggerUpstreamSyncUseCase(this._syncTrigger);
 
-  Future<void> call({
-    String syncKey = 'manual_retry',
-    bool force = true,
-  }) async {
-    await _coordinator.triggerUpstreamSync(syncKey: syncKey, force: force);
+  Future<void> call() async {
+    await _syncTrigger.pushUpstream();
   }
 }

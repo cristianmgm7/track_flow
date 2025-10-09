@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/sync/domain/value_objects/Incremental_sync_result.dart';
 
 /// Generic interface for incremental synchronization services
 ///
@@ -33,23 +34,6 @@ abstract class IncrementalSyncService<T> {
     String userId,
   );
 
-  /// Check if there are modifications since the specified timestamp
-  ///
-  /// This is a lightweight operation that checks if any data has been
-  /// modified without actually fetching the data. Useful for determining
-  /// if a full sync is needed.
-  ///
-  /// [lastSyncTime] - Timestamp to check against
-  /// [userId] - User ID for user-specific data filtering
-  ///
-  /// Returns:
-  /// - Success: true if there are modifications, false otherwise
-  /// - Failure: Network or server errors
-  Future<Either<Failure, bool>> hasModifiedSince(
-    DateTime lastSyncTime,
-    String userId,
-  );
-
   /// Get the current server timestamp
   ///
   /// This method fetches the authoritative server timestamp to ensure
@@ -60,40 +44,6 @@ abstract class IncrementalSyncService<T> {
   /// - Success: Current server timestamp
   /// - Failure: Network or server errors
   Future<Either<Failure, DateTime>> getServerTimestamp();
-
-  /// Get metadata for entities (without full content)
-  ///
-  /// This method fetches only metadata (ID, timestamps, versions) for
-  /// entities modified since the specified time. Useful for conflict
-  /// detection and lightweight sync operations.
-  ///
-  /// [lastSyncTime] - Timestamp of the last successful sync
-  /// [userId] - User ID for user-specific data filtering
-  ///
-  /// Returns:
-  /// - Success: List of entity metadata
-  /// - Failure: Network, server, or other sync-related failures
-  Future<Either<Failure, List<EntityMetadata>>> getMetadataSince(
-    DateTime lastSyncTime,
-    String userId,
-  );
-
-  /// Get items that have been deleted since the specified timestamp
-  ///
-  /// Many systems maintain a separate deleted items collection or use
-  /// soft deletes. This method should fetch items that have been deleted
-  /// since the last sync to properly remove them from local cache.
-  ///
-  /// [lastSyncTime] - Timestamp of the last successful sync
-  /// [userId] - User ID for user-specific data filtering
-  ///
-  /// Returns:
-  /// - Success: List of IDs of deleted items
-  /// - Failure: Network or server errors
-  Future<Either<Failure, List<String>>> getDeletedSince(
-    DateTime lastSyncTime,
-    String userId,
-  );
 
   /// Perform complete incremental sync operation (Fetch + Cache)
   ///
@@ -202,45 +152,5 @@ class EntityMetadata {
   @override
   String toString() {
     return 'EntityMetadata(id: $id, lastModified: $lastModified, version: $version, entityType: $entityType)';
-  }
-}
-
-/// Result of an incremental sync operation
-///
-/// This class encapsulates the results of an incremental sync,
-/// including the synced data and metadata about the operation.
-class IncrementalSyncResult<T> {
-  /// Items that were added or updated
-  final List<T> modifiedItems;
-
-  /// IDs of items that were deleted
-  final List<String> deletedItemIds;
-
-  /// Server timestamp when sync was performed
-  final DateTime serverTimestamp;
-
-  /// Whether this was a full sync (fallback) or incremental
-  final bool wasFullSync;
-
-  /// Number of items processed
-  final int totalProcessed;
-
-  const IncrementalSyncResult({
-    required this.modifiedItems,
-    required this.deletedItemIds,
-    required this.serverTimestamp,
-    this.wasFullSync = false,
-    required this.totalProcessed,
-  });
-
-  /// Check if any changes were found
-  bool get hasChanges => modifiedItems.isNotEmpty || deletedItemIds.isNotEmpty;
-
-  /// Get total number of changes
-  int get totalChanges => modifiedItems.length + deletedItemIds.length;
-
-  @override
-  String toString() {
-    return 'IncrementalSyncResult(modified: ${modifiedItems.length}, deleted: ${deletedItemIds.length}, total: $totalProcessed, fullSync: $wasFullSync)';
   }
 }

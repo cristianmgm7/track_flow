@@ -8,6 +8,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_e
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trackflow/core/utils/image_utils.dart';
+import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'dart:io';
@@ -70,7 +71,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
 
       if (pickedFile != null) {
         // Copy the image to a permanent location
-        final permanentPath = await ImageUtils.copyImageToPermanentLocation(
+        final permanentPath = await ImageUtils.saveLocalImage(
           pickedFile.path,
         );
 
@@ -168,32 +169,25 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
                         shape: BoxShape.circle,
                         border: Border.all(color: AppColors.primary, width: 2),
                       ),
-                      child: ClipOval(
-                        child:
-                            (chosenLocal != null && chosenLocal.isNotEmpty)
-                                ? ImageUtils.createAdaptiveImageWidget(
-                                  imagePath: chosenLocal,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  fallbackWidget: Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                )
-                                : ImageUtils.createAdaptiveImageWidget(
-                                  imagePath: remoteUrl ?? _avatarUrl,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  fallbackWidget: Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                      ),
+                      child: (chosenLocal != null && chosenLocal.isNotEmpty)
+                          ? UserAvatar(
+                            imageUrl: chosenLocal,
+                            size: 80,
+                            fallback: Icon(
+                              Icons.person,
+                              size: 40,
+                              color: AppColors.textSecondary,
+                            ),
+                          )
+                          : UserAvatar(
+                            imageUrl: remoteUrl ?? _avatarUrl,
+                            size: 80,
+                            fallback: Icon(
+                              Icons.person,
+                              size: 40,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                     ),
                   );
                 },
@@ -223,7 +217,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
               ),
               SizedBox(height: Dimensions.space16),
               DropdownButtonFormField<CreativeRole>(
-                value: _creativeRole,
+                initialValue: _creativeRole,
                 decoration: InputDecoration(
                   labelText: 'Creative Role',
                   labelStyle: AppTextStyle.bodyMedium.copyWith(

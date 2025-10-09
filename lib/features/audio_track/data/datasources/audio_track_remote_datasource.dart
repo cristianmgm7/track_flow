@@ -11,6 +11,8 @@ abstract class AudioTrackRemoteDataSource {
 
   Future<Either<Failure, Unit>> deleteAudioTrack(String trackId);
 
+  Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO trackData);
+
   Future<List<AudioTrackDTO>> getTracksByProjectIds(List<String> projectIds);
 
   Future<void> editTrackName(String trackId, String projectId, String newName);
@@ -18,6 +20,12 @@ abstract class AudioTrackRemoteDataSource {
   Future<Either<Failure, Unit>> updateActiveVersion(
     String trackId,
     String versionId,
+  );
+
+  /// Get audio tracks modified since a specific timestamp for specific project IDs
+  Future<Either<Failure, List<AudioTrackDTO>>> getAudioTracksModifiedSince(
+    DateTime since,
+    List<String> projectIds,
   );
 }
 
@@ -35,10 +43,14 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       // AudioTrack only stores metadata, no file upload
       // Files are now handled by TrackVersionRemoteDataSource
 
+      final data = Map<String, dynamic>.from(trackData.toJson());
+      // Ensure server authoritative timestamp
+      data['lastModified'] = FieldValue.serverTimestamp();
+
       await _firestore
           .collection(AudioTrackDTO.collection)
           .doc(trackData.id.value)
-          .set(trackData.toJson());
+          .set(data);
 
       return Right(trackData);
     } catch (e) {
@@ -49,15 +61,35 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   @override
   Future<Either<Failure, Unit>> deleteAudioTrack(String trackId) async {
     try {
-      // AudioTrack only stores metadata, file deletion is handled by TrackVersion
-      await _firestore
-          .collection(AudioTrackDTO.collection)
-          .doc(trackId)
-          .delete();
+      // Soft delete: mark as deleted with server timestamp
+      await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
+        {'isDeleted': true, 'lastModified': FieldValue.serverTimestamp()},
+      );
 
       return const Right(unit);
     } catch (e) {
-      return Left(ServerFailure('Error deleting audio track metadata: $e'));
+      return Left(
+        ServerFailure('Error soft deleting audio track metadata: $e'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO trackData) async {
+    try {
+      // Update track with complete data including sync metadata
+      final data = Map<String, dynamic>.from(trackData.toJson());
+      // Ensure server authoritative timestamp regardless of client value
+      data['lastModified'] = FieldValue.serverTimestamp();
+
+      await _firestore
+          .collection(AudioTrackDTO.collection)
+          .doc(trackData.id.value)
+          .update(data);
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Error updating audio track: $e'));
     }
   }
 
@@ -86,6 +118,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
             await _firestore
                 .collection(AudioTrackDTO.collection)
                 .where('projectId', whereIn: sublist)
+                .where('isDeleted', isEqualTo: false)
                 .get();
 
         final tracks =
@@ -115,6 +148,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     try {
       await _firestore.collection('audio_tracks').doc(trackId).update({
         'name': newName,
+        'lastModified': FieldValue.serverTimestamp(),
       });
     } catch (e) {
       throw Exception('Error updating track name: $e');
@@ -127,17 +161,63 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     String versionId,
   ) async {
     try {
-      await _firestore
-          .collection(AudioTrackDTO.collection)
-          .doc(trackId)
-          .update({
-            'activeVersionId': versionId,
-            'lastModified': DateTime.now().toIso8601String(),
-          });
+      await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
+        {
+          'activeVersionId': versionId,
+          'lastModified': FieldValue.serverTimestamp(),
+        },
+      );
 
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Error updating active version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<AudioTrackDTO>>> getAudioTracksModifiedSince(
+    DateTime since,
+    List<String> projectIds,
+  ) async {
+    try {
+      if (projectIds.isEmpty) {
+        return const Right([]);
+      }
+
+      final List<AudioTrackDTO> allTracks = [];
+      // Use a small buffer to avoid missing server-timestamped writes near the cursor boundary
+      final DateTime safeSince = since.subtract(const Duration(minutes: 5));
+      // Firestore 'whereIn' clause is limited to 10 elements.
+      // We process the projectIds in chunks of 10 to be safe.
+      for (var i = 0; i < projectIds.length; i += 10) {
+        final sublist = projectIds.sublist(
+          i,
+          i + 10 > projectIds.length ? projectIds.length : i + 10,
+        );
+
+        // Single query using a buffered cursor; both updates and soft-deletes
+        // are captured via lastModified
+        final snapshot =
+            await _firestore
+                .collection(AudioTrackDTO.collection)
+                .where('projectId', whereIn: sublist)
+                .where('lastModified', isGreaterThan: safeSince)
+                .orderBy('lastModified')
+                .get();
+
+        final tracks =
+            snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return AudioTrackDTO.fromJson(data);
+            }).toList();
+
+        allTracks.addAll(tracks);
+      }
+
+      return Right(allTracks);
+    } catch (e) {
+      return Left(ServerFailure('Error getting modified audio tracks: $e'));
     }
   }
 }

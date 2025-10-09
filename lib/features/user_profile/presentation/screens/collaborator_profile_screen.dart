@@ -1,10 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -94,16 +94,21 @@ class _HeaderBackground extends StatelessWidget {
             Positioned.fill(
               child: Hero(
                 tag: profile.avatarUrl,
-                child: ImageUtils.createAdaptiveImageWidget(
-                  imagePath:
-                      (profile.avatarLocalPath != null &&
-                              profile.avatarLocalPath!.isNotEmpty)
-                          ? profile.avatarLocalPath!
-                          : profile.avatarUrl,
+                child: Container(
                   width: double.infinity,
                   height: double.infinity,
-                  fit: BoxFit.cover,
-                  fallbackWidget: Container(color: AppColors.grey700),
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: (profile.avatarLocalPath != null &&
+                              profile.avatarLocalPath!.isNotEmpty)
+                          ? FileImage(
+                              File(profile.avatarLocalPath!),
+                            ) as ImageProvider
+                          : NetworkImage(profile.avatarUrl),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  child: Container(color: AppColors.grey700.withValues(alpha: 0)),
                 ),
               ),
             )

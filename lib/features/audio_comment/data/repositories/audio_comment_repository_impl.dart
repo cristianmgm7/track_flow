@@ -50,22 +50,12 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
 
       // 2. If found locally, return it and trigger background refresh
       if (localComment != null) {
-        // Trigger background sync for fresh data (non-blocking)
-        unawaited(
-          _backgroundSyncCoordinator.triggerBackgroundSync(
-            syncKey: 'audio_comment_${commentId.value}',
-          ),
-        );
+        // No sync in get methods - just return local data
 
         return Right(localComment);
       }
 
-      // 3. Not found locally - trigger background fetch and return not found
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_comment_${commentId.value}',
-        ),
-      );
+      // 3. Not found locally - return not found (no sync in get methods)
 
       return Left(DatabaseFailure('Audio comment not found in local cache'));
     } catch (e) {
@@ -112,13 +102,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     TrackVersionId versionId,
   ) {
     try {
-      // Trigger background sync when method is called (version-scoped)
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_comments_version_${versionId.value}',
-        ),
-      );
-
+      // NO sync in watch methods - just return local data stream
       return _localDataSource.watchCommentsByVersion(versionId.value).map((
         localResult,
       ) {
@@ -171,16 +155,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         );
       }
 
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_comments_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_comments_version_${comment.versionId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success only after successful queue
       return const Right(unit);
@@ -212,16 +187,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         );
       }
 
-      unawaited(
-        _backgroundSyncCoordinator.triggerUpstreamSync(
-          syncKey: 'audio_comments_upstream',
-        ),
-      );
-      unawaited(
-        _backgroundSyncCoordinator.triggerBackgroundSync(
-          syncKey: 'audio_comments_version_${commentId.value}',
-        ),
-      );
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       // 5. Return success only after successful queue
       return const Right(unit);

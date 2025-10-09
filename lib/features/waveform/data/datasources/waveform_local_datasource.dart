@@ -31,6 +31,7 @@ class WaveformLocalDataSourceImpl implements WaveformLocalDataSource {
     return document?.toEntity();
   }
 
+  @override
   Future<void> saveWaveform(AudioWaveform waveform) async {
     final document = AudioWaveformDocument.fromEntity(waveform);
 

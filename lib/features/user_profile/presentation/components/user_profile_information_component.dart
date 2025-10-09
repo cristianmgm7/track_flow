@@ -5,7 +5,7 @@ import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_b
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
-import 'package:trackflow/core/utils/image_utils.dart';
+import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
@@ -74,8 +74,6 @@ class _ProfileInformationState extends State<ProfileInformation> {
                     children: [
                       // Profile Avatar: prefer local cache, else remote URL
                       Container(
-                        width: 60,
-                        height: 60,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -83,37 +81,30 @@ class _ProfileInformationState extends State<ProfileInformation> {
                             width: 2,
                           ),
                         ),
-                        child: ClipOval(
-                          child:
-                              (profile.avatarLocalPath != null &&
-                                      profile.avatarLocalPath!.isNotEmpty)
-                                  ? ImageUtils.createAdaptiveImageWidget(
-                                    imagePath: profile.avatarLocalPath!,
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                    fallbackWidget: Icon(
-                                      Icons.person,
-                                      size: 30,
-                                      color: AppColors.textSecondary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                                  )
-                                  : ImageUtils.createAdaptiveImageWidget(
-                                    imagePath: profile.avatarUrl,
-                                    width: 60,
-                                    height: 60,
-                                    fit: BoxFit.cover,
-                                    fallbackWidget: Icon(
-                                      Icons.person,
-                                      size: 30,
-                                      color: AppColors.textSecondary.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                        ),
+                        child: (profile.avatarLocalPath != null &&
+                                profile.avatarLocalPath!.isNotEmpty)
+                            ? UserAvatar(
+                              imageUrl: profile.avatarLocalPath!,
+                              size: 60,
+                              fallback: Icon(
+                                Icons.person,
+                                size: 30,
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            )
+                            : UserAvatar(
+                              imageUrl: profile.avatarUrl,
+                              size: 60,
+                              fallback: Icon(
+                                Icons.person,
+                                size: 30,
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
                       ),
                       SizedBox(width: Dimensions.space12),
                       Expanded(

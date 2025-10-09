@@ -15,6 +15,7 @@ class TrackVersionDTO {
   final String status; // processing | ready | failed
   final DateTime createdAt;
   final String createdBy;
+  final bool isDeleted;
   final int? version; // For sync metadata
   final DateTime? lastModified; // For sync metadata
 
@@ -30,6 +31,7 @@ class TrackVersionDTO {
     required this.status,
     required this.createdAt,
     required this.createdBy,
+    this.isDeleted = false,
     this.version,
     this.lastModified,
   });
@@ -50,12 +52,14 @@ class TrackVersionDTO {
               ? (json['createdAt'] as Timestamp).toDate()
               : DateTime.parse(json['createdAt'] as String),
       createdBy: json['createdBy'] as String,
+      isDeleted: json['isDeleted'] as bool? ?? false,
       version: json['version'] as int?,
-      lastModified: json['lastModified'] != null
-          ? (json['lastModified'] is Timestamp
-              ? (json['lastModified'] as Timestamp).toDate()
-              : DateTime.parse(json['lastModified'] as String))
-          : null,
+      lastModified:
+          json['lastModified'] != null
+              ? (json['lastModified'] is Timestamp
+                  ? (json['lastModified'] as Timestamp).toDate()
+                  : DateTime.parse(json['lastModified'] as String))
+              : null,
     );
   }
 
@@ -72,6 +76,7 @@ class TrackVersionDTO {
       'status': status,
       'createdAt': createdAt.toIso8601String(),
       'createdBy': createdBy,
+      'isDeleted': isDeleted,
       'version': version,
       'lastModified': lastModified?.toIso8601String(),
     };

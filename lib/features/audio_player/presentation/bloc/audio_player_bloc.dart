@@ -257,10 +257,10 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     if (currentId == null || currentId != event.trackId) {
       emit(AudioPlayerBuffering(currentSession));
 
-      // For PlayAndSeek, we need to get the active version of the track
+      // For PlayAndSeek, we need to resolve the track to its active version
       try {
         final versionResult = await _audioPlayerService
-            .getActiveVersionForTrack(event.trackId);
+            .resolveTrackVersion(event.trackId);
         versionResult.fold(
           (failure) {
             emit(AudioPlayerError(failure, currentSession));
