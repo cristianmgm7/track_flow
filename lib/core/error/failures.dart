@@ -50,6 +50,11 @@ class PermissionFailure extends Failure {
   const PermissionFailure([super.message = 'Permission denied']);
 }
 
+/// Represents audio recording failures
+class RecordingFailure extends Failure {
+  const RecordingFailure(super.message);
+}
+
 class InvalidEmailFailure extends Failure {
   const InvalidEmailFailure() : super('Invalid email format');
 }
