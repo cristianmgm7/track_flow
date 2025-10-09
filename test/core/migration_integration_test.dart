@@ -1,15 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:trackflow/core/app_flow/domain/services/app_bootstrap.dart';
 import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
-import 'package:trackflow/core/sync/data/services/background_sync_coordinator_impl.dart';
 
 void main() {
   group('Simplified Architecture Tests', () {
     test('should have correct service architecture', () {
       // Verify that the new simplified services exist and follow SOLID principles
       expect(SessionService, isA<Type>());
-      expect(BackgroundSyncCoordinator, isA<Type>());
-      expect(AppBootstrap, isA<Type>());
     });
 
     test('should respect Single Responsibility Principle', () {

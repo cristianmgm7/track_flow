@@ -102,7 +102,7 @@ void main() {
         ).thenAnswer((_) async => const Right(unit));
 
         when(
-          mockProjectsRepository.deleteProject(testProject.id),
+          mockProjectsRepository.deleteProject(testProject),
         ).thenAnswer((_) async => const Right(unit));
 
         // Act
@@ -115,7 +115,7 @@ void main() {
         verify(mockDeleteAudioTrack.call(any)).called(2);
 
         // Verify project was deleted
-        verify(mockProjectsRepository.deleteProject(testProject.id)).called(1);
+        verify(mockProjectsRepository.deleteProject(testProject)).called(1);
       });
 
       test('should successfully delete project with no tracks', () async {
@@ -129,7 +129,7 @@ void main() {
         ).thenAnswer((_) => Stream.value(const Right([])));
 
         when(
-          mockProjectsRepository.deleteProject(testProject.id),
+          mockProjectsRepository.deleteProject(testProject),
         ).thenAnswer((_) async => const Right(unit));
 
         // Act
@@ -142,7 +142,7 @@ void main() {
         verifyNever(mockDeleteAudioTrack.call(any));
 
         // Verify project was deleted
-        verify(mockProjectsRepository.deleteProject(testProject.id)).called(1);
+        verify(mockProjectsRepository.deleteProject(testProject)).called(1);
       });
     });
 
@@ -164,7 +164,7 @@ void main() {
         // Verify no deletion operations were attempted
         verifyNever(mockProjectTrackService.watchTracksByProject(any));
         verifyNever(mockDeleteAudioTrack.call(any));
-        verifyNever(mockProjectsRepository.deleteProject(any));
+        verifyNever(mockProjectsRepository.deleteProject(any as Project));
       });
 
       test('should fail when user lacks delete permission', () async {
@@ -225,7 +225,7 @@ void main() {
           });
 
           when(
-            mockProjectsRepository.deleteProject(testProject.id),
+            mockProjectsRepository.deleteProject(testProject),
           ).thenAnswer((_) async => const Right(unit));
 
           // Act
@@ -239,7 +239,7 @@ void main() {
 
           // Verify project was still deleted despite track deletion failure
           verify(
-            mockProjectsRepository.deleteProject(testProject.id),
+            mockProjectsRepository.deleteProject(testProject),
           ).called(1);
         },
       );
@@ -259,7 +259,7 @@ void main() {
           );
 
           when(
-            mockProjectsRepository.deleteProject(testProject.id),
+            mockProjectsRepository.deleteProject(testProject),
           ).thenAnswer((_) async => const Right(unit));
 
           // Act
@@ -273,7 +273,7 @@ void main() {
 
           // Verify project was still deleted
           verify(
-            mockProjectsRepository.deleteProject(testProject.id),
+            mockProjectsRepository.deleteProject(testProject),
           ).called(1);
         },
       );
@@ -291,7 +291,7 @@ void main() {
         ).thenAnswer((_) => Stream.value(const Right([])));
 
         when(
-          mockProjectsRepository.deleteProject(testProject.id),
+          mockProjectsRepository.deleteProject(testProject),
         ).thenAnswer((_) async => Left(DatabaseFailure('Database error')));
 
         // Act
