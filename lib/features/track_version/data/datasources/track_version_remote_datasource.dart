@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/services/firebase_audio_upload_service.dart';
+import 'package:trackflow/core/utils/audio_format_utils.dart';
 
 abstract class TrackVersionRemoteDataSource {
   Future<Either<Failure, TrackVersionDTO>> uploadTrackVersion(
@@ -31,9 +32,12 @@ abstract class TrackVersionRemoteDataSource {
 @LazySingleton(as: TrackVersionRemoteDataSource)
 class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
+  final FirebaseAudioUploadService _uploadService;
 
-  TrackVersionRemoteDataSourceImpl(this._firestore, this._storage);
+  TrackVersionRemoteDataSourceImpl(
+    this._firestore,
+    this._uploadService,
+  );
 
   @override
   Future<Either<Failure, TrackVersionDTO>> uploadTrackVersion(
@@ -42,28 +46,26 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   ) async {
     try {
       // 1. Generate unique filename with proper extension
-      final fileExtension = _getFileExtension(audioFile.path);
+      final fileExtension = AudioFormatUtils.getFileExtension(audioFile.path);
       final fileName = '${versionData.id}$fileExtension';
-      final storageRef = _storage.ref().child(
-        'track_versions/${versionData.trackId}/$fileName',
+      final storagePath = 'track_versions/${versionData.trackId}/$fileName';
+
+      // 2. Upload file to Firebase Storage with metadata using shared service
+      final uploadResult = await _uploadService.uploadAudioFile(
+        audioFile: audioFile,
+        storagePath: storagePath,
+        metadata: {
+          'trackId': versionData.trackId,
+          'versionNumber': versionData.versionNumber.toString(),
+          'createdBy': versionData.createdBy,
+        },
       );
 
-      // 2. Upload file to Firebase Storage with metadata
-      final uploadTask = storageRef.putFile(
-        audioFile,
-        SettableMetadata(
-          contentType: _getContentType(fileExtension),
-          customMetadata: {
-            'trackId': versionData.trackId,
-            'versionNumber': versionData.versionNumber.toString(),
-            'createdBy': versionData.createdBy,
-          },
-        ),
+      // Handle upload failure
+      final downloadUrl = uploadResult.fold(
+        (failure) => throw Exception(failure.message),
+        (url) => url,
       );
-
-      // Wait for upload completion
-      final uploadSnapshot = await uploadTask;
-      final downloadUrl = await uploadSnapshot.ref.getDownloadURL();
 
       // 3. Update DTO with download URL and mark as ready
       final updatedVersionDTO = TrackVersionDTO(
@@ -176,32 +178,6 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
     }
   }
 
-  /// Get file extension from file path
-  String _getFileExtension(String filePath) {
-    final lastDot = filePath.lastIndexOf('.');
-    if (lastDot == -1) return '.mp3'; // Default to mp3
-    return filePath.substring(lastDot);
-  }
-
-  /// Get MIME content type based on file extension
-  String _getContentType(String fileExtension) {
-    switch (fileExtension.toLowerCase()) {
-      case '.mp3':
-        return 'audio/mpeg';
-      case '.wav':
-        return 'audio/wav';
-      case '.m4a':
-        return 'audio/mp4';
-      case '.aac':
-        return 'audio/aac';
-      case '.ogg':
-        return 'audio/ogg';
-      case '.flac':
-        return 'audio/flac';
-      default:
-        return 'audio/mpeg'; // Default to mp3
-    }
-  }
 
   @override
   Future<Either<Failure, List<TrackVersionDTO>>> getTrackVersionsModifiedSince(

@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../../domain/entities/download_progress.dart';
 import '../../domain/failures/cache_failure.dart';
+import 'package:trackflow/core/utils/audio_format_utils.dart';
 
 abstract class CacheStorageRemoteDataSource {
   /// Download audio file from remote storage with progress tracking
@@ -82,9 +83,8 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         // Determine extension from Content-Type header or URL path
         final contentType = response.headers['content-type'] ?? '';
         final detectedExt =
-            _extensionFromContentType(contentType) ??
-            _extensionFromUrl(uri.path) ??
-            '.mp3';
+            AudioFormatUtils.getExtensionFromMimeType(contentType) ??
+            AudioFormatUtils.getFileExtension(uri.path);
 
         // Adjust local file path to use detected extension
         final targetFile = File(
@@ -145,39 +145,6 @@ class CacheStorageRemoteDataSourceImpl implements CacheStorageRemoteDataSource {
         ),
       );
     }
-  }
-
-  String? _extensionFromContentType(String contentType) {
-    final type = contentType.split(';').first.trim().toLowerCase();
-    switch (type) {
-      case 'audio/mpeg':
-      case 'audio/mp3':
-        return '.mp3';
-      case 'audio/mp4':
-      case 'audio/aac':
-      case 'audio/x-m4a':
-      case 'audio/m4a':
-        return '.m4a';
-      case 'audio/wav':
-      case 'audio/x-wav':
-        return '.wav';
-      case 'audio/ogg':
-      case 'application/ogg':
-        return '.ogg';
-      case 'audio/flac':
-        return '.flac';
-      default:
-        return null;
-    }
-  }
-
-  String? _extensionFromUrl(String path) {
-    final idx = path.lastIndexOf('.');
-    if (idx == -1) return null;
-    final ext = path.substring(idx).toLowerCase();
-    // Basic sanity check
-    if (ext.length > 5) return null; // avoid query strings, etc.
-    return ext;
   }
 
   // No class-level resources to dispose
