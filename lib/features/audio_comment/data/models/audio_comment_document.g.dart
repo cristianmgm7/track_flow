@@ -18,44 +18,65 @@ const AudioCommentDocumentSchema = CollectionSchema(
   name: r'AudioCommentDocument',
   id: 4348746918957731457,
   properties: {
-    r'content': PropertySchema(
+    r'audioDurationMs': PropertySchema(
       id: 0,
+      name: r'audioDurationMs',
+      type: IsarType.long,
+    ),
+    r'audioStorageUrl': PropertySchema(
+      id: 1,
+      name: r'audioStorageUrl',
+      type: IsarType.string,
+    ),
+    r'commentType': PropertySchema(
+      id: 2,
+      name: r'commentType',
+      type: IsarType.byte,
+      enumMap: _AudioCommentDocumentcommentTypeEnumValueMap,
+    ),
+    r'content': PropertySchema(
+      id: 3,
       name: r'content',
       type: IsarType.string,
     ),
     r'createdAt': PropertySchema(
-      id: 1,
+      id: 4,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'createdBy': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'createdBy',
       type: IsarType.string,
     ),
     r'id': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'id',
       type: IsarType.string,
     ),
+    r'localAudioPath': PropertySchema(
+      id: 7,
+      name: r'localAudioPath',
+      type: IsarType.string,
+    ),
     r'projectId': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'projectId',
       type: IsarType.string,
     ),
     r'syncMetadata': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'syncMetadata',
       type: IsarType.object,
       target: r'SyncMetadataDocument',
     ),
     r'timestamp': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'timestamp',
       type: IsarType.long,
     ),
     r'trackId': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'trackId',
       type: IsarType.string,
     )
@@ -120,9 +141,21 @@ int _audioCommentDocumentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.audioStorageUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.content.length * 3;
   bytesCount += 3 + object.createdBy.length * 3;
   bytesCount += 3 + object.id.length * 3;
+  {
+    final value = object.localAudioPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.projectId.length * 3;
   {
     final value = object.syncMetadata;
@@ -142,19 +175,23 @@ void _audioCommentDocumentSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.content);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.createdBy);
-  writer.writeString(offsets[3], object.id);
-  writer.writeString(offsets[4], object.projectId);
+  writer.writeLong(offsets[0], object.audioDurationMs);
+  writer.writeString(offsets[1], object.audioStorageUrl);
+  writer.writeByte(offsets[2], object.commentType.index);
+  writer.writeString(offsets[3], object.content);
+  writer.writeDateTime(offsets[4], object.createdAt);
+  writer.writeString(offsets[5], object.createdBy);
+  writer.writeString(offsets[6], object.id);
+  writer.writeString(offsets[7], object.localAudioPath);
+  writer.writeString(offsets[8], object.projectId);
   writer.writeObject<SyncMetadataDocument>(
-    offsets[5],
+    offsets[9],
     allOffsets,
     SyncMetadataDocumentSchema.serialize,
     object.syncMetadata,
   );
-  writer.writeLong(offsets[6], object.timestamp);
-  writer.writeString(offsets[7], object.trackId);
+  writer.writeLong(offsets[10], object.timestamp);
+  writer.writeString(offsets[11], object.trackId);
 }
 
 AudioCommentDocument _audioCommentDocumentDeserialize(
@@ -164,18 +201,24 @@ AudioCommentDocument _audioCommentDocumentDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AudioCommentDocument();
-  object.content = reader.readString(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
-  object.createdBy = reader.readString(offsets[2]);
-  object.id = reader.readString(offsets[3]);
-  object.projectId = reader.readString(offsets[4]);
+  object.audioDurationMs = reader.readLongOrNull(offsets[0]);
+  object.audioStorageUrl = reader.readStringOrNull(offsets[1]);
+  object.commentType = _AudioCommentDocumentcommentTypeValueEnumMap[
+          reader.readByteOrNull(offsets[2])] ??
+      CommentTypeEnum.text;
+  object.content = reader.readString(offsets[3]);
+  object.createdAt = reader.readDateTime(offsets[4]);
+  object.createdBy = reader.readString(offsets[5]);
+  object.id = reader.readString(offsets[6]);
+  object.localAudioPath = reader.readStringOrNull(offsets[7]);
+  object.projectId = reader.readString(offsets[8]);
   object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
-    offsets[5],
+    offsets[9],
     SyncMetadataDocumentSchema.deserialize,
     allOffsets,
   );
-  object.timestamp = reader.readLong(offsets[6]);
-  object.trackId = reader.readString(offsets[7]);
+  object.timestamp = reader.readLong(offsets[10]);
+  object.trackId = reader.readString(offsets[11]);
   return object;
 }
 
@@ -187,29 +230,50 @@ P _audioCommentDocumentDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (_AudioCommentDocumentcommentTypeValueEnumMap[
+              reader.readByteOrNull(offset)] ??
+          CommentTypeEnum.text) as P;
     case 3:
       return (reader.readString(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 5:
+      return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readObjectOrNull<SyncMetadataDocument>(
         offset,
         SyncMetadataDocumentSchema.deserialize,
         allOffsets,
       )) as P;
-    case 6:
+    case 10:
       return (reader.readLong(offset)) as P;
-    case 7:
+    case 11:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
 }
+
+const _AudioCommentDocumentcommentTypeEnumValueMap = {
+  'text': 0,
+  'audio': 1,
+  'hybrid': 2,
+};
+const _AudioCommentDocumentcommentTypeValueEnumMap = {
+  0: CommentTypeEnum.text,
+  1: CommentTypeEnum.audio,
+  2: CommentTypeEnum.hybrid,
+};
 
 Id _audioCommentDocumentGetId(AudioCommentDocument object) {
   return object.isarId;
@@ -496,6 +560,292 @@ extension AudioCommentDocumentQueryWhere
 
 extension AudioCommentDocumentQueryFilter on QueryBuilder<AudioCommentDocument,
     AudioCommentDocument, QFilterCondition> {
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioDurationMsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'audioDurationMs',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioDurationMsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'audioDurationMs',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioDurationMsEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioDurationMs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioDurationMsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'audioDurationMs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioDurationMsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'audioDurationMs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioDurationMsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'audioDurationMs',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'audioStorageUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'audioStorageUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioStorageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'audioStorageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'audioStorageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'audioStorageUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'audioStorageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'audioStorageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+          QAfterFilterCondition>
+      audioStorageUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'audioStorageUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+          QAfterFilterCondition>
+      audioStorageUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'audioStorageUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioStorageUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> audioStorageUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'audioStorageUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> commentTypeEqualTo(CommentTypeEnum value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'commentType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> commentTypeGreaterThan(
+    CommentTypeEnum value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'commentType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> commentTypeLessThan(
+    CommentTypeEnum value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'commentType',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> commentTypeBetween(
+    CommentTypeEnum lower,
+    CommentTypeEnum upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'commentType',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<AudioCommentDocument, AudioCommentDocument,
       QAfterFilterCondition> contentEqualTo(
     String value, {
@@ -1023,6 +1373,162 @@ extension AudioCommentDocumentQueryFilter on QueryBuilder<AudioCommentDocument,
   }
 
   QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'localAudioPath',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'localAudioPath',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localAudioPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'localAudioPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'localAudioPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'localAudioPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'localAudioPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'localAudioPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+          QAfterFilterCondition>
+      localAudioPathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'localAudioPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+          QAfterFilterCondition>
+      localAudioPathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'localAudioPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'localAudioPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
+      QAfterFilterCondition> localAudioPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'localAudioPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument,
       QAfterFilterCondition> projectIdEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -1389,6 +1895,48 @@ extension AudioCommentDocumentQueryLinks on QueryBuilder<AudioCommentDocument,
 extension AudioCommentDocumentQuerySortBy
     on QueryBuilder<AudioCommentDocument, AudioCommentDocument, QSortBy> {
   QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByAudioDurationMs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioDurationMs', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByAudioDurationMsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioDurationMs', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByAudioStorageUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioStorageUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByAudioStorageUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioStorageUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByCommentType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'commentType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByCommentTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'commentType', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
       sortByContent() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'content', Sort.asc);
@@ -1445,6 +1993,20 @@ extension AudioCommentDocumentQuerySortBy
   }
 
   QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByLocalAudioPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localAudioPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      sortByLocalAudioPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localAudioPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
       sortByProjectId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'projectId', Sort.asc);
@@ -1489,6 +2051,48 @@ extension AudioCommentDocumentQuerySortBy
 
 extension AudioCommentDocumentQuerySortThenBy
     on QueryBuilder<AudioCommentDocument, AudioCommentDocument, QSortThenBy> {
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByAudioDurationMs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioDurationMs', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByAudioDurationMsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioDurationMs', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByAudioStorageUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioStorageUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByAudioStorageUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioStorageUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByCommentType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'commentType', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByCommentTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'commentType', Sort.desc);
+    });
+  }
+
   QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
       thenByContent() {
     return QueryBuilder.apply(this, (query) {
@@ -1560,6 +2164,20 @@ extension AudioCommentDocumentQuerySortThenBy
   }
 
   QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByLocalAudioPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localAudioPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
+      thenByLocalAudioPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'localAudioPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QAfterSortBy>
       thenByProjectId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'projectId', Sort.asc);
@@ -1605,6 +2223,28 @@ extension AudioCommentDocumentQuerySortThenBy
 extension AudioCommentDocumentQueryWhereDistinct
     on QueryBuilder<AudioCommentDocument, AudioCommentDocument, QDistinct> {
   QueryBuilder<AudioCommentDocument, AudioCommentDocument, QDistinct>
+      distinctByAudioDurationMs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'audioDurationMs');
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QDistinct>
+      distinctByAudioStorageUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'audioStorageUrl',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QDistinct>
+      distinctByCommentType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'commentType');
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QDistinct>
       distinctByContent({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'content', caseSensitive: caseSensitive);
@@ -1629,6 +2269,14 @@ extension AudioCommentDocumentQueryWhereDistinct
       distinctById({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'id', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, AudioCommentDocument, QDistinct>
+      distinctByLocalAudioPath({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'localAudioPath',
+          caseSensitive: caseSensitive);
     });
   }
 
@@ -1662,6 +2310,27 @@ extension AudioCommentDocumentQueryProperty on QueryBuilder<
     });
   }
 
+  QueryBuilder<AudioCommentDocument, int?, QQueryOperations>
+      audioDurationMsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'audioDurationMs');
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, String?, QQueryOperations>
+      audioStorageUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'audioStorageUrl');
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, CommentTypeEnum, QQueryOperations>
+      commentTypeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'commentType');
+    });
+  }
+
   QueryBuilder<AudioCommentDocument, String, QQueryOperations>
       contentProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1686,6 +2355,13 @@ extension AudioCommentDocumentQueryProperty on QueryBuilder<
   QueryBuilder<AudioCommentDocument, String, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AudioCommentDocument, String?, QQueryOperations>
+      localAudioPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'localAudioPath');
     });
   }
 

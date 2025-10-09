@@ -9,6 +9,7 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
+import 'package:trackflow/features/audio_comment/data/services/audio_comment_storage_coordinator.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
@@ -21,6 +22,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
   final TrackVersionRepository _trackVersionRepository;
+  final AudioCommentStorageCoordinator _storageCoordinator;
 
   AudioCommentRepositoryImpl({
     required AudioCommentRemoteDataSource remoteDataSource,
@@ -29,11 +31,13 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
     required TrackVersionRepository trackVersionRepository,
+    required AudioCommentStorageCoordinator storageCoordinator,
   }) : _localDataSource = localDataSource,
        _remoteDataSource = remoteDataSource,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
        _pendingOperationsManager = pendingOperationsManager,
-       _trackVersionRepository = trackVersionRepository;
+       _trackVersionRepository = trackVersionRepository,
+       _storageCoordinator = storageCoordinator;
 
   @override
   Future<Either<Failure, AudioComment>> getCommentById(
@@ -130,7 +134,41 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       // 1. ALWAYS save locally first (ignore minor cache errors)
       await _localDataSource.cacheComment(dto);
 
-      // 2. Try to queue for background sync
+      // 2. If audio comment, store recording in permanent cache
+      String? cachedAudioPath;
+      if (comment.commentType != CommentType.text &&
+          comment.localAudioPath != null) {
+
+        // Use projectId as trackId, commentId as versionId for cache hierarchy
+        final trackId = AudioTrackId.fromUniqueString(comment.projectId.value);
+        final versionId = TrackVersionId.fromUniqueString(comment.id.value);
+
+        final cacheResult = await _storageCoordinator.storeRecordingInCache(
+          tempPath: comment.localAudioPath!,
+          trackId: trackId,
+          versionId: versionId,
+        );
+
+        cachedAudioPath = await cacheResult.fold(
+          (failure) {
+            AppLogger.error(
+              'Failed to cache audio recording: ${failure.message}',
+              tag: 'AudioCommentRepositoryImpl',
+            );
+            // Don't fail the whole operation, just log the error
+            return null;
+          },
+          (path) => path,
+        );
+
+        // Update DTO with cache path if successful
+        if (cachedAudioPath != null) {
+          final updatedDto = dto.copyWith(localAudioPath: cachedAudioPath);
+          await _localDataSource.cacheComment(updatedDto);
+        }
+      }
+
+      // 3. Try to queue for background sync
       final queueResult = await _pendingOperationsManager.addCreateOperation(
         entityType: 'audio_comment',
         entityId: comment.id.value,
@@ -141,11 +179,15 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
           'content': comment.content,
           'timestamp': comment.timestamp.inMilliseconds,
           'createdAt': comment.createdAt.toIso8601String(),
+          // Audio fields for sync
+          'localAudioPath': cachedAudioPath,
+          'audioDurationMs': comment.audioDuration?.inMilliseconds,
+          'commentType': comment.commentType.toString().split('.').last,
         },
         priority: SyncPriority.high,
       );
 
-      // 3. Handle queue failure
+      // 4. Handle queue failure
       if (queueResult.isLeft()) {
         final failure = queueResult.fold((l) => l, (r) => null);
         return Left(

@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
+import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_comment/domain/services/project_comment_service.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 
@@ -12,11 +13,19 @@ class AddAudioCommentParams {
   final String content;
   final Duration timestamp;
 
+  // Audio recording fields
+  final String? localAudioPath;
+  final Duration? audioDuration;
+  final CommentType commentType;
+
   AddAudioCommentParams({
     required this.projectId,
     required this.versionId,
     required this.content,
     required this.timestamp,
+    this.localAudioPath,
+    this.audioDuration,
+    this.commentType = CommentType.text,
   });
 }
 
@@ -47,6 +56,9 @@ class AddAudioCommentUseCase {
         versionId: params.versionId,
         content: params.content,
         timestamp: params.timestamp,
+        localAudioPath: params.localAudioPath,
+        audioDuration: params.audioDuration,
+        commentType: params.commentType,
       );
     });
   }

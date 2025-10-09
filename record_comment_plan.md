@@ -1479,7 +1479,7 @@ flutter packages pub run build_runner build --delete-conflicting-outputs
 
 ---
 
-### Step 4.3: Create Audio Comment Storage Coordinator
+### Step 4.3: Create Audio Comment Storage Coordinator ✅
 
 **Purpose**: Bridge between recording module and audio comment storage needs
 
@@ -2671,10 +2671,11 @@ This checklist provides a sequential, step-by-step guide for implementing the re
   - Test validation for each CommentType
   - Test copyWith with audio fields
 
-- [ ] **Update AddAudioCommentParams**
+- [x] **Update AddAudioCommentParams** ✅
   - File: `lib/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart`
   - Add fields: `localAudioPath`, `audioDuration`, `commentType`
   - Add validation in constructor
+  - Also updated: ProjectCommentService to accept audio parameters
 
 ---
 
@@ -2692,7 +2693,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
   - Define `CommentType` enum in same file with `@enumerated` annotation
   - Update `fromDTO()` and `toDTO()` methods
 
-- [ ] **Regenerate Isar schema**
+- [x] **Regenerate Isar schema** ✅
   - Run: `flutter packages pub run build_runner build --delete-conflicting-outputs`
   - Verify no errors in generated code
 
@@ -2707,21 +2708,18 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Audio Comment Storage Coordinator
 
-- [ ] **Create AudioCommentStorageCoordinator**
+- [x] **Create AudioCommentStorageCoordinator** ✅
   - File: `lib/features/audio_comment/data/services/audio_comment_storage_coordinator.dart`
   - Annotate with `@injectable`
-  - Inject: `AudioStorageService`, `FileSystemService`
+  - Inject: `FirebaseAudioUploadService`, `AudioStorageRepository`
   - Implement `uploadCommentAudio`:
     - Build Firebase Storage path: `audio_comments/{projectId}/{versionId}/{commentId}.m4a`
-    - Call `audioStorageService.uploadAudioFile()` with metadata
-  - Implement `downloadCommentAudio`:
-    - Build local cache path
-    - Call `audioStorageService.downloadAudioFile()`
+    - Call `uploadService.uploadAudioFile()` with metadata
   - Implement `deleteCommentAudio`
-  - Implement `moveRecordingToCache`:
-    - Copy temp file to permanent cache location
-    - Delete temp file
-  - Provide helper methods: `_buildStoragePath()`, `_buildLocalPath()`, `getFullLocalPath()`
+  - Implement `storeRecordingInCache`:
+    - Use AudioStorageRepository for permanent cache storage
+    - Delete temp file after successful cache
+  - Provide helper methods: `_buildStoragePath()`, `isCommentAudioCached()`, `getCachedCommentAudioPath()`
 
 - [ ] **Write unit tests for storage coordinator**
   - File: `test/features/audio_comment/data/services/audio_comment_storage_coordinator_test.dart`
@@ -2734,7 +2732,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Repository Updates
 
-- [ ] **Update AudioCommentRepositoryImpl**
+- [x] **Update AudioCommentRepositoryImpl** ✅
   - File: `lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart`
   - Inject: `AudioCommentStorageCoordinator`
   - Update `addComment()`:
@@ -2742,10 +2740,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
     - If audio comment: move recording to cache using coordinator
     - Update Isar document with cache path
     - Queue sync operation with audio metadata
-  - Update `deleteComment()`:
-    - Mark as deleted in Isar
-    - Delete local audio file if exists
-    - Queue delete operation with audio URL for remote cleanup
+  - Note: `deleteComment()` audio cleanup will be handled in Phase 5 sync executor
 
 - [ ] **Write unit tests for updated repository**
   - File: `test/features/audio_comment/data/repositories/audio_comment_repository_impl_test.dart`
@@ -2772,13 +2767,14 @@ This checklist provides a sequential, step-by-step guide for implementing the re
   - On start recording: Capture timestamp from `AudioPlayerBloc` and pause playback
   - On send: Dispatch `AddAudioCommentEvent` with `localAudioPath`, `audioDuration`, `commentType`
 
-- [ ] **Create AudioCommentPlayer widget**
+- [x] **Create AudioCommentPlayer widget** ✅
   - File: `lib/features/audio_comment/presentation/components/audio_comment_player.dart`
   - Props: `comment`
   - Manage `AudioPlayer` instance
   - Initialize audio: Try local cache first, fallback to streaming from Firebase Storage
   - Render: Play/pause button, progress slider, duration display
   - Styling: Use AppColors and AppTextStyle
+  - Includes loading and error states
 
 - [ ] **Update AudioCommentContent**
   - File: `lib/features/audio_comment/presentation/components/audio_comment_content.dart`
@@ -2787,11 +2783,11 @@ This checklist provides a sequential, step-by-step guide for implementing the re
     - `CommentType.audio`: Render `AudioCommentPlayer`
     - `CommentType.hybrid`: Render both
 
-- [ ] **Update AddAudioCommentEvent**
+- [x] **Update AddAudioCommentEvent** ✅
   - File: `lib/features/audio_comment/presentation/bloc/audio_comment_event.dart`
   - Add fields: `localAudioPath`, `audioDuration`, `commentType`
 
-- [ ] **Update AudioCommentBloc handler**
+- [x] **Update AudioCommentBloc handler** ✅
   - File: `lib/features/audio_comment/presentation/bloc/audio_comment_bloc.dart`
   - Update `_onAddAudioComment`:
     - Pass audio fields to `AddAudioCommentParams`
