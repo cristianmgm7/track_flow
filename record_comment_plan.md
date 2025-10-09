@@ -1,6 +1,6 @@
-# Audio Recording Comment Feature - Implementation Plan
+# Audio Recording Module - Reusable Architecture Implementation Plan
 
-**Generated:** 2025-10-08
+**Generated:** 2025-10-08 (Revised for Modular Architecture)
 **Based on:** [research_audiocomment.md](research_audiocomment.md)
 **Status:** PENDING APPROVAL
 
@@ -8,439 +8,132 @@
 
 ## Overview
 
-This plan outlines the step-by-step integration of audio recording functionality into the existing text-based audio comment system. The implementation follows Clean Architecture + DDD principles and maintains the existing offline-first sync strategy.
+This plan outlines the implementation of a **reusable audio recording module** that can be leveraged across the entire TrackFlow application. The module will initially be integrated with the audio comment system but is designed as a standalone feature that can be consumed by any part of the application requiring audio recording capabilities (e.g., voice memos, audio notes, voice journaling, audio messages, etc.).
 
-**Key Design Decisions:**
-1. Hybrid model: Comments can be text-only, audio-only, or both (audio + transcription)
-2. Leverage existing `record: ^5.0.0` dependency (already in pubspec.yaml:64)
-3. Firebase Storage for audio file hosting (`/audio_comments/{projectId}/{versionId}/{commentId}.m4a`)
-4. Local file system cache for offline playback
-5. Reuse existing permission system (`ProjectPermission.addComment` applies to audio)
-6. Backward compatible: existing text comments remain unchanged
+The implementation follows Clean Architecture + DDD principles with clear architectural boundaries between the recording module and its consumers.
 
 ---
 
-## Phase 1: Domain Layer - Data Model Extensionsbv c
+## Architectural Vision
 
-### Step 1.1: Extend AudioComment Entity
+### Core Design Principles
 
-**File:** [lib/features/audio_comment/domain/entities/audio_comment.dart](lib/features/audio_comment/domain/entities/audio_comment.dart)
+1. **Separation of Concerns**: Audio recording logic is isolated in its own feature module (`audio_recording`)
+2. **Dependency Inversion**: Consumers depend on recording abstractions, not implementations
+3. **Reusability**: Recording module provides high-level interfaces usable by any feature
+4. **Clean Boundaries**: Clear contracts between recording module and consumers
+5. **Offline-First**: Recording works offline, storage sync handled by consumers
+6. **Platform Agnostic**: Recording abstracts platform-specific details
 
-**Current Structure (Lines 5-21):**
-```dart
-class AudioComment extends Entity<AudioCommentId> {
-  final ProjectId projectId;
-  final TrackVersionId versionId;
-  final UserId createdBy;
-  final String content;           // Text comment
-  final Duration timestamp;
-  final DateTime createdAt;
-}
+### Module Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Application Layer                          │
+│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │
+│  │ Audio Comment  │  │ Voice Memo       │  │ Voice Journal    │  │
+│  │ Feature        │  │ Feature (future) │  │ Feature (future) │  │
+│  └───────┬────────┘  └────────┬─────────┘  └────────┬─────────┘  │
+│          │                    │                      │            │
+│          └────────────────────┼──────────────────────┘            │
+│                               ▼                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │       Audio Recording Feature (Reusable Module)            │  │
+│  │  - Domain: Recording entities, services, use cases         │  │
+│  │  - Infrastructure: Platform recording implementation       │  │
+│  │  - Presentation: Recording UI components & BLoC            │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                      Shared Core Services                         │
+│  - Audio Storage Service (Firebase Storage abstraction)          │
+│  - File System Service (Local file management)                   │
+│  - Permission Service (Microphone permissions)                   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-**Proposed Changes:**
-```dart
-class AudioComment extends Entity<AudioCommentId> {
-  final ProjectId projectId;
-  final TrackVersionId versionId;
-  final UserId createdBy;
-  final String content;                // Text comment OR transcription
-  final Duration timestamp;
-  final DateTime createdAt;
+### Consumer Integration Pattern
 
-  // NEW FIELDS
-  final String? audioStorageUrl;       // Firebase Storage URL for audio file
-  final String? localAudioPath;        // Local file path for offline playback
-  final Duration? audioDuration;       // Length of audio recording
-  final CommentType commentType;       // Enum: text, audio, hybrid
-}
+Each consumer feature (e.g., audio_comment) will:
 
-// NEW ENUM
-enum CommentType {
-  text,      // Text-only comment (existing behavior)
-  audio,     // Audio-only comment (new)
-  hybrid,    // Audio + text transcription (future enhancement)
-}
-```
-
-**Update Factory Methods:**
-- Modify `AudioComment.create()` to accept optional audio parameters (Lines 23-38)
-- Update `copyWith()` to include new fields (Lines 40-58)
-
-**Validation Rules:**
-- If `commentType == CommentType.text`: `content` must not be empty
-- If `commentType == CommentType.audio`: `audioStorageUrl` or `localAudioPath` must exist
-- If `commentType == CommentType.hybrid`: both `content` and audio URL must exist
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/domain/entities/audio_comment_test.dart`
-  - Test creation with audio fields
-  - Test validation rules for each CommentType
-  - Test copyWith with audio fields
-  - Test equality with new fields
+1. **Depend on recording abstractions** via dependency injection
+2. **Receive recording results** through callbacks or events
+3. **Handle storage** according to their domain needs (Firebase path, metadata, etc.)
+4. **Manage lifecycle** of recordings within their context
 
 ---
 
-### Step 1.2: Create Audio Recording Value Objects
+## Key Design Decisions
 
-**New File:** `lib/features/audio_comment/domain/value_objects/audio_recording.dart`
-
-**Purpose:** Encapsulate audio recording metadata with validation
-
-```dart
-class AudioRecording extends ValueObject<AudioRecording> {
-  final String? storageUrl;        // Firebase Storage URL
-  final String? localPath;         // Local file path
-  final Duration duration;         // Recording length
-  final AudioFormat format;        // e.g., m4a, aac
-
-  // Validation
-  Either<Failure, AudioRecording> validate() {
-    if (storageUrl == null && localPath == null) {
-      return Left(ValidationFailure('Audio recording must have a path'));
-    }
-    if (duration.inMilliseconds <= 0) {
-      return Left(ValidationFailure('Invalid audio duration'));
-    }
-    return Right(this);
-  }
-}
-
-enum AudioFormat { m4a, aac, mp3 }
-```
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/domain/value_objects/audio_recording_test.dart`
-  - Test validation with valid/invalid data
-  - Test equality and hash code
-  - Test fromJson/toJson serialization
+1. **Modular Audio Recording Feature**: Standalone `audio_recording` feature with its own domain, infrastructure, and presentation layers
+2. **Storage Responsibility**: Recording module handles temporary files; consumers handle permanent storage and Firebase upload
+3. **Format Standardization**: M4A (AAC-LC codec) as the standard format across all use cases
+4. **Permission Management**: Centralized in core services, exposed through recording module
+5. **UI Components**: Reusable recording widgets exported from recording module
+6. **State Management**: Recording BLoC isolated within recording module, consumers observe via streams
+7. **Backward Compatibility**: Existing text comments remain unchanged
 
 ---
 
-### Step 1.3: Update Use Case Parameters
+## Phase 0: Core Infrastructure - Shared Services
 
-**File:** [lib/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart](lib/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart)
+### Step 0.1: Create Core Audio Storage Service
 
-**Current Params (Lines 9-21):**
-```dart
-class AddAudioCommentParams {
-  final ProjectId projectId;
-  final TrackVersionId versionId;
-  final String content;
-  final Duration timestamp;
-}
-```
+**Purpose**: Provide Firebase Storage operations abstraction for all audio features
 
-**Proposed Changes:**
-```dart
-class AddAudioCommentParams {
-  final ProjectId projectId;
-  final TrackVersionId versionId;
-  final String content;              // Optional for audio-only
-  final Duration timestamp;
-
-  // NEW FIELDS
-  final String? localAudioPath;      // Path to recorded audio file
-  final Duration? audioDuration;     // Recording length
-  final CommentType commentType;     // Type of comment
-
-  AddAudioCommentParams({
-    required this.projectId,
-    required this.versionId,
-    this.content = '',
-    required this.timestamp,
-    this.localAudioPath,
-    this.audioDuration,
-    this.commentType = CommentType.text,
-  }) {
-    // Validation
-    if (commentType == CommentType.text && content.isEmpty) {
-      throw ArgumentError('Text comments require content');
-    }
-    if (commentType == CommentType.audio && localAudioPath == null) {
-      throw ArgumentError('Audio comments require local audio path');
-    }
-  }
-}
-```
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/domain/usecases/add_audio_comment_usecase_test.dart` (existing file - update)
-  - Test parameter validation for text comments
-  - Test parameter validation for audio comments
-  - Test parameter validation for hybrid comments
-  - Test use case execution with audio params
-
----
-
-## Phase 2: Data Layer - Storage & Persistence
-
-### Step 2.1: Update AudioCommentDTO
-
-**File:** [lib/features/audio_comment/data/models/audio_comment_dto.dart](lib/features/audio_comment/data/models/audio_comment_dto.dart)
-
-**Current Structure (Lines 4-31):**
-```dart
-class AudioCommentDTO {
-  final String id;
-  final String projectId;
-  final String trackId;
-  final String createdBy;
-  final String content;
-  final int timestamp;
-  final String createdAt;
-  final bool isDeleted;
-  final int version;
-  final DateTime? lastModified;
-}
-```
-
-**Proposed Changes:**
-```dart
-class AudioCommentDTO {
-  final String id;
-  final String projectId;
-  final String trackId;
-  final String createdBy;
-  final String content;
-  final int timestamp;
-  final String createdAt;
-  final bool isDeleted;
-  final int version;
-  final DateTime? lastModified;
-
-  // NEW FIELDS
-  final String? audioStorageUrl;       // Firebase Storage URL
-  final String? localAudioPath;        // Local cache path
-  final int? audioDurationMs;          // Audio length in milliseconds
-  final String commentType;            // 'text', 'audio', 'hybrid'
-}
-```
-
-**Update Serialization Methods:**
-
-**fromDomain (Lines 35-49):**
-```dart
-factory AudioCommentDTO.fromDomain(AudioComment audioComment) {
-  return AudioCommentDTO(
-    // ... existing fields ...
-    audioStorageUrl: audioComment.audioStorageUrl,
-    localAudioPath: audioComment.localAudioPath,
-    audioDurationMs: audioComment.audioDuration?.inMilliseconds,
-    commentType: audioComment.commentType.toString().split('.').last,
-  );
-}
-```
-
-**toJson (Lines 63-79):**
-```dart
-Map<String, dynamic> toJson() {
-  return {
-    // ... existing fields ...
-    'audioStorageUrl': audioStorageUrl,
-    'audioDurationMs': audioDurationMs,
-    'commentType': commentType,
-    // NOTE: Do NOT serialize localAudioPath (local-only field)
-  };
-}
-```
-
-**fromJson (Lines 81-100):**
-```dart
-factory AudioCommentDTO.fromJson(Map<String, dynamic> json) {
-  return AudioCommentDTO(
-    // ... existing fields ...
-    audioStorageUrl: json['audioStorageUrl'] as String?,
-    audioDurationMs: json['audioDurationMs'] as int?,
-    commentType: json['commentType'] as String? ?? 'text',
-    localAudioPath: null, // Will be populated from local cache
-  );
-}
-```
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/data/models/audio_comment_dto_test.dart`
-  - Test fromDomain with audio fields
-  - Test toJson with audio fields
-  - Test fromJson with audio fields
-  - Test backward compatibility (missing audio fields default to text type)
-
----
-
-### Step 2.2: Update Isar Database Schema
-
-**File:** [lib/features/audio_comment/data/models/audio_comment_document.dart](lib/features/audio_comment/data/models/audio_comment_document.dart)
-
-**Current Schema (Lines 8-28):**
-```dart
-@collection
-class AudioCommentDocument {
-  Id get isarId => fastHash(id);
-
-  @Index(unique: true)
-  late String id;
-
-  @Index()
-  late String projectId;
-
-  @Index()
-  late String trackId;
-
-  late String createdBy;
-  late String content;
-  late int timestamp;
-  late DateTime createdAt;
-
-  SyncMetadataDocument? syncMetadata;
-}
-```
-
-**Proposed Changes:**
-```dart
-@collection
-class AudioCommentDocument {
-  Id get isarId => fastHash(id);
-
-  @Index(unique: true)
-  late String id;
-
-  @Index()
-  late String projectId;
-
-  @Index()
-  late String trackId;
-
-  late String createdBy;
-  late String content;
-  late int timestamp;
-  late DateTime createdAt;
-
-  SyncMetadataDocument? syncMetadata;
-
-  // NEW FIELDS
-  late String? audioStorageUrl;     // Firebase Storage URL
-  late String? localAudioPath;      // Local file system path
-  late int? audioDurationMs;        // Audio duration in milliseconds
-  @enumerated                       // Isar enum annotation
-  late CommentType commentType;     // Type enum
-}
-
-// Isar requires enums to be in same file or imported
-@Enumerated()
-enum CommentType {
-  text,
-  audio,
-  hybrid,
-}
-```
-
-**Update Conversion Methods:**
-
-**fromDTO (Lines 32-51):**
-```dart
-factory AudioCommentDocument.fromDTO(AudioCommentDTO dto, {
-  SyncMetadataDocument? syncMeta,
-}) {
-  return AudioCommentDocument()
-    // ... existing fields ...
-    ..audioStorageUrl = dto.audioStorageUrl
-    ..localAudioPath = dto.localAudioPath
-    ..audioDurationMs = dto.audioDurationMs
-    ..commentType = _parseCommentType(dto.commentType);
-}
-
-static CommentType _parseCommentType(String? type) {
-  switch (type) {
-    case 'audio': return CommentType.audio;
-    case 'hybrid': return CommentType.hybrid;
-    default: return CommentType.text;
-  }
-}
-```
-
-**toDTO (Lines 53-72):**
-```dart
-AudioCommentDTO toDTO() {
-  return AudioCommentDTO(
-    // ... existing fields ...
-    audioStorageUrl: audioStorageUrl,
-    localAudioPath: localAudioPath,
-    audioDurationMs: audioDurationMs,
-    commentType: commentType.toString().split('.').last,
-  );
-}
-```
-
-**Important:** After schema changes, regenerate Isar code:
-```bash
-flutter packages pub run build_runner build --delete-conflicting-outputs
-```
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/data/models/audio_comment_document_test.dart`
-  - Test fromDTO with audio fields
-  - Test toDTO with audio fields
-  - Test backward compatibility with legacy documents
-- **Integration Test:** After code generation, verify Isar schema migration
-  ```bash
-  flutter test integration_test/database_migration_test.dart
-  ```
-
----
-
-### Step 2.3: Create Audio Storage Service
-
-**New File:** `lib/features/audio_comment/data/services/audio_comment_storage_service.dart`
-
-**Purpose:** Handle audio file upload/download/cache management
+**New File:** `lib/core/services/audio_storage_service.dart`
 
 ```dart
-abstract class AudioCommentStorageService {
-  /// Upload local audio file to Firebase Storage
-  /// Returns storage URL on success
+/// Abstract interface for audio file storage operations
+/// Used by multiple features: audio_comment, voice_memo, etc.
+abstract class AudioStorageService {
+  /// Upload audio file to Firebase Storage
+  /// [localPath] - Local file path to upload
+  /// [remotePath] - Firebase Storage path (e.g., 'audio_comments/proj/ver/id.m4a')
+  /// [metadata] - Custom metadata for the file
+  /// Returns download URL on success
   Future<Either<Failure, String>> uploadAudioFile({
     required String localPath,
-    required ProjectId projectId,
-    required TrackVersionId versionId,
-    required AudioCommentId commentId,
+    required String remotePath,
+    Map<String, String>? metadata,
   });
 
   /// Download audio file from Firebase Storage to local cache
-  /// Returns local file path on success
+  /// [storageUrl] - Firebase Storage download URL
+  /// [localPath] - Destination local file path
+  /// Returns local path on success
   Future<Either<Failure, String>> downloadAudioFile({
     required String storageUrl,
-    required AudioCommentId commentId,
+    required String localPath,
   });
 
   /// Delete audio file from Firebase Storage
+  /// [storageUrl] - Firebase Storage download URL
   Future<Either<Failure, Unit>> deleteAudioFile({
     required String storageUrl,
   });
 
-  /// Delete local cached audio file
-  Future<Either<Failure, Unit>> deleteLocalAudioFile({
-    required String localPath,
-  });
-
-  /// Get local cache path for audio file
-  String getLocalAudioPath(AudioCommentId commentId);
+  /// Get download URL from storage path
+  Future<Either<Failure, String>> getDownloadUrl(String storagePath);
 }
 ```
 
-**Implementation File:** `lib/features/audio_comment/data/services/audio_comment_storage_service_impl.dart`
+**Implementation File:** `lib/core/services/audio_storage_service_impl.dart`
 
 ```dart
-@Injectable(as: AudioCommentStorageService)
-class AudioCommentStorageServiceImpl implements AudioCommentStorageService {
+@LazySingleton(as: AudioStorageService)
+class AudioStorageServiceImpl implements AudioStorageService {
   final FirebaseStorage _storage;
-  final PathProvider _pathProvider;
+
+  AudioStorageServiceImpl(this._storage);
 
   @override
   Future<Either<Failure, String>> uploadAudioFile({
     required String localPath,
-    required ProjectId projectId,
-    required TrackVersionId versionId,
-    required AudioCommentId commentId,
+    required String remotePath,
+    Map<String, String>? metadata,
   }) async {
     try {
       final file = File(localPath);
@@ -448,21 +141,14 @@ class AudioCommentStorageServiceImpl implements AudioCommentStorageService {
         return Left(StorageFailure('Local audio file not found'));
       }
 
-      // Firebase Storage path: /audio_comments/{projectId}/{versionId}/{commentId}.m4a
-      final storagePath = 'audio_comments/${projectId.value}/${versionId.value}/${commentId.value}.m4a';
-      final ref = _storage.ref().child(storagePath);
+      final ref = _storage.ref().child(remotePath);
 
-      // Upload with metadata
-      final metadata = SettableMetadata(
+      final uploadMetadata = SettableMetadata(
         contentType: 'audio/m4a',
-        customMetadata: {
-          'projectId': projectId.value,
-          'versionId': versionId.value,
-          'commentId': commentId.value,
-        },
+        customMetadata: metadata,
       );
 
-      final uploadTask = ref.putFile(file, metadata);
+      final uploadTask = ref.putFile(file, uploadMetadata);
       final snapshot = await uploadTask;
       final downloadUrl = await snapshot.ref.getDownloadURL();
 
@@ -477,10 +163,9 @@ class AudioCommentStorageServiceImpl implements AudioCommentStorageService {
   @override
   Future<Either<Failure, String>> downloadAudioFile({
     required String storageUrl,
-    required AudioCommentId commentId,
+    required String localPath,
   }) async {
     try {
-      final localPath = getLocalAudioPath(commentId);
       final file = File(localPath);
 
       // Skip if already cached
@@ -504,184 +189,1933 @@ class AudioCommentStorageServiceImpl implements AudioCommentStorageService {
   }
 
   @override
-  String getLocalAudioPath(AudioCommentId commentId) {
-    final appDir = _pathProvider.getApplicationDocumentsDirectory();
-    return '${appDir.path}/audio_comments/${commentId.value}.m4a';
+  Future<Either<Failure, Unit>> deleteAudioFile({
+    required String storageUrl,
+  }) async {
+    try {
+      final ref = _storage.refFromURL(storageUrl);
+      await ref.delete();
+      return const Right(unit);
+    } on FirebaseException catch (e) {
+      return Left(StorageFailure('Delete failed: ${e.message}'));
+    } catch (e) {
+      return Left(StorageFailure('Delete failed: ${e.toString()}'));
+    }
   }
 
-  // ... deleteAudioFile and deleteLocalAudioFile implementations
+  @override
+  Future<Either<Failure, String>> getDownloadUrl(String storagePath) async {
+    try {
+      final ref = _storage.ref().child(storagePath);
+      final url = await ref.getDownloadURL();
+      return Right(url);
+    } on FirebaseException catch (e) {
+      return Left(StorageFailure('Get URL failed: ${e.message}'));
+    } catch (e) {
+      return Left(StorageFailure('Get URL failed: ${e.toString()}'));
+    }
+  }
 }
 ```
 
 **Verification:**
-- **Unit Test:** `test/features/audio_comment/data/services/audio_comment_storage_service_test.dart`
-  - Mock Firebase Storage and file system
-  - Test uploadAudioFile success and failure scenarios
-  - Test downloadAudioFile with caching logic
-  - Test deleteAudioFile
-  - Test getLocalAudioPath path generation
-- **Integration Test:** `test/integration_test/audio_storage_integration_test.dart`
-  - Use Firebase Storage emulator
-  - Test full upload-download-delete cycle
-  - Verify file integrity after upload/download
+- **Unit Test:** `test/core/services/audio_storage_service_test.dart`
+  - Mock Firebase Storage
+  - Test upload success/failure
+  - Test download with caching
+  - Test delete operations
+  - Test URL retrieval
 
 ---
 
-### Step 2.4: Update Repository Implementation
+### Step 0.2: Create Core File System Service
 
-**File:** [lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart](lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart)
+**Purpose**: Abstract local file system operations
 
-**Update addComment Method (Lines 126-164):**
+**New File:** `lib/core/services/file_system_service.dart`
 
-**Current Implementation:**
 ```dart
-@override
-Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
-  try {
-    final dto = AudioCommentDTO.fromDomain(comment);
+/// Abstract interface for local file system operations
+abstract class FileSystemService {
+  /// Get temporary directory for transient files
+  Future<Directory> getTemporaryDirectory();
 
-    // 1. ALWAYS save locally first
-    await _localDataSource.cacheComment(dto);
+  /// Get application documents directory for persistent cache
+  Future<Directory> getApplicationDocumentsDirectory();
 
-    // 2. Queue for background sync
-    final queueResult = await _pendingOperationsManager.addCreateOperation(
-      entityType: 'audio_comment',
-      entityId: comment.id.value,
-      data: {...},
-      priority: SyncPriority.high,
-    );
+  /// Create directory if it doesn't exist
+  Future<Directory> ensureDirectoryExists(String path);
 
-    // 3. Trigger background sync
-    unawaited(_backgroundSyncCoordinator.pushUpstream());
+  /// Delete file if exists
+  Future<bool> deleteFile(String path);
 
-    return const Right(unit);
-  } catch (e) {
-    return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
+  /// Check if file exists
+  Future<bool> fileExists(String path);
+
+  /// Copy file from source to destination
+  Future<String> copyFile(String sourcePath, String destinationPath);
+
+  /// Get file size in bytes
+  Future<int> getFileSize(String path);
+
+  /// Generate unique temporary file path
+  String generateTemporaryFilePath(String extension);
+}
+```
+
+**Implementation File:** `lib/core/services/file_system_service_impl.dart`
+
+```dart
+@LazySingleton(as: FileSystemService)
+class FileSystemServiceImpl implements FileSystemService {
+  @override
+  Future<Directory> getTemporaryDirectory() async {
+    return await path_provider.getTemporaryDirectory();
+  }
+
+  @override
+  Future<Directory> getApplicationDocumentsDirectory() async {
+    return await path_provider.getApplicationDocumentsDirectory();
+  }
+
+  @override
+  Future<Directory> ensureDirectoryExists(String path) async {
+    final dir = Directory(path);
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    return dir;
+  }
+
+  @override
+  Future<bool> deleteFile(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> fileExists(String path) async {
+    return await File(path).exists();
+  }
+
+  @override
+  Future<String> copyFile(String sourcePath, String destinationPath) async {
+    final source = File(sourcePath);
+    final destination = File(destinationPath);
+
+    // Ensure destination directory exists
+    await destination.parent.create(recursive: true);
+
+    await source.copy(destinationPath);
+    return destinationPath;
+  }
+
+  @override
+  Future<int> getFileSize(String path) async {
+    final file = File(path);
+    return await file.length();
+  }
+
+  @override
+  String generateTemporaryFilePath(String extension) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final uuid = const Uuid().v4().substring(0, 8);
+    return 'recording_${timestamp}_$uuid.$extension';
   }
 }
 ```
 
-**Proposed Changes:**
+**Verification:**
+- **Unit Test:** `test/core/services/file_system_service_test.dart`
+  - Test directory operations
+  - Test file operations
+  - Test path generation
+
+---
+
+### Step 0.3: Create Core Permission Service
+
+**Purpose**: Centralize permission handling
+
+**New File:** `lib/core/services/permission_service.dart`
+
 ```dart
-@override
-Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
-  try {
-    final dto = AudioCommentDTO.fromDomain(comment);
+/// Abstract interface for app permissions
+abstract class PermissionService {
+  /// Check if microphone permission is granted
+  Future<bool> hasMicrophonePermission();
 
-    // 1. ALWAYS save locally first
-    await _localDataSource.cacheComment(dto);
+  /// Request microphone permission
+  /// Returns true if granted, false if denied
+  Future<bool> requestMicrophonePermission();
 
-    // 2. If audio comment, handle file operations
-    if (comment.commentType == CommentType.audio ||
-        comment.commentType == CommentType.hybrid) {
+  /// Check if user permanently denied permission
+  Future<bool> isPermanentlyDenied();
 
-      // 2a. Copy recorded audio to permanent local cache
-      if (comment.localAudioPath != null) {
-        final cachePath = _audioStorageService.getLocalAudioPath(comment.id);
-        final sourceFile = File(comment.localAudioPath!);
-        final cacheFile = File(cachePath);
-        await sourceFile.copy(cachePath);
+  /// Open app settings (for permission management)
+  Future<void> openAppSettings();
+}
+```
 
-        // Update local document with cache path
-        dto.localAudioPath = cachePath;
-        await _localDataSource.cacheComment(dto);
+**Implementation File:** `lib/core/services/permission_service_impl.dart`
+
+```dart
+@LazySingleton(as: PermissionService)
+class PermissionServiceImpl implements PermissionService {
+  // Note: May require additional package like 'permission_handler'
+  // For now, we'll use the 'record' package's built-in permission check
+
+  final Record _recorder = Record();
+
+  @override
+  Future<bool> hasMicrophonePermission() async {
+    return await _recorder.hasPermission();
+  }
+
+  @override
+  Future<bool> requestMicrophonePermission() async {
+    // Record package doesn't have explicit request method
+    // Permission is requested on first recording attempt
+    return await _recorder.hasPermission();
+  }
+
+  @override
+  Future<bool> isPermanentlyDenied() async {
+    // Would require permission_handler package for this
+    // For now, return false
+    return false;
+  }
+
+  @override
+  Future<void> openAppSettings() async {
+    // Would require permission_handler package
+    // For now, no-op
+  }
+}
+```
+
+**Verification:**
+- **Unit Test:** `test/core/services/permission_service_test.dart`
+  - Mock Record package
+  - Test permission checks
+  - Test permission requests
+
+---
+
+## Phase 1: Audio Recording Feature - Domain Layer
+
+### Step 1.1: Create Recording Domain Entities
+
+**New Directory:** `lib/features/audio_recording/domain/entities/`
+
+**File 1:** `lib/features/audio_recording/domain/entities/audio_recording.dart`
+
+```dart
+/// Represents a completed audio recording with metadata
+class AudioRecording extends Equatable {
+  final String id;                  // Unique identifier
+  final String localPath;           // Local file path
+  final Duration duration;          // Recording length
+  final AudioFormat format;         // File format
+  final int fileSizeBytes;          // File size
+  final DateTime recordedAt;        // Recording timestamp
+  final Map<String, dynamic>? metadata; // Optional consumer metadata
+
+  const AudioRecording({
+    required this.id,
+    required this.localPath,
+    required this.duration,
+    required this.format,
+    required this.fileSizeBytes,
+    required this.recordedAt,
+    this.metadata,
+  });
+
+  /// Create a new recording instance
+  factory AudioRecording.create({
+    required String localPath,
+    required Duration duration,
+    AudioFormat format = AudioFormat.m4a,
+    int fileSizeBytes = 0,
+    Map<String, dynamic>? metadata,
+  }) {
+    return AudioRecording(
+      id: const Uuid().v4(),
+      localPath: localPath,
+      duration: duration,
+      format: format,
+      fileSizeBytes: fileSizeBytes,
+      recordedAt: DateTime.now(),
+      metadata: metadata,
+    );
+  }
+
+  AudioRecording copyWith({
+    String? id,
+    String? localPath,
+    Duration? duration,
+    AudioFormat? format,
+    int? fileSizeBytes,
+    DateTime? recordedAt,
+    Map<String, dynamic>? metadata,
+  }) {
+    return AudioRecording(
+      id: id ?? this.id,
+      localPath: localPath ?? this.localPath,
+      duration: duration ?? this.duration,
+      format: format ?? this.format,
+      fileSizeBytes: fileSizeBytes ?? this.fileSizeBytes,
+      recordedAt: recordedAt ?? this.recordedAt,
+      metadata: metadata ?? this.metadata,
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, localPath, duration, format, fileSizeBytes, recordedAt, metadata];
+}
+
+/// Supported audio formats
+enum AudioFormat {
+  m4a,  // AAC in M4A container (iOS & Android compatible)
+  aac,  // Raw AAC
+  mp3,  // MP3 (future support)
+}
+```
+
+**File 2:** `lib/features/audio_recording/domain/entities/recording_session.dart`
+
+```dart
+/// Represents an active recording session
+class RecordingSession extends Equatable {
+  final String sessionId;
+  final DateTime startedAt;
+  final Duration elapsed;
+  final RecordingState state;
+  final String outputPath;
+  final double? currentAmplitude;  // For waveform visualization
+
+  const RecordingSession({
+    required this.sessionId,
+    required this.startedAt,
+    required this.elapsed,
+    required this.state,
+    required this.outputPath,
+    this.currentAmplitude,
+  });
+
+  RecordingSession copyWith({
+    String? sessionId,
+    DateTime? startedAt,
+    Duration? elapsed,
+    RecordingState? state,
+    String? outputPath,
+    double? currentAmplitude,
+  }) {
+    return RecordingSession(
+      sessionId: sessionId ?? this.sessionId,
+      startedAt: startedAt ?? this.startedAt,
+      elapsed: elapsed ?? this.elapsed,
+      state: state ?? this.state,
+      outputPath: outputPath ?? this.outputPath,
+      currentAmplitude: currentAmplitude ?? this.currentAmplitude,
+    );
+  }
+
+  @override
+  List<Object?> get props => [sessionId, startedAt, elapsed, state, outputPath, currentAmplitude];
+}
+
+enum RecordingState {
+  idle,
+  recording,
+  paused,
+  stopped,
+}
+```
+
+**Verification:**
+- **Unit Test:** `test/features/audio_recording/domain/entities/audio_recording_test.dart`
+  - Test factory creation
+  - Test copyWith
+  - Test equality
+- **Unit Test:** `test/features/audio_recording/domain/entities/recording_session_test.dart`
+  - Test session state transitions
+  - Test copyWith
+
+---
+
+### Step 1.2: Create Recording Domain Services
+
+**New File:** `lib/features/audio_recording/domain/services/recording_service.dart`
+
+```dart
+/// Abstract service for audio recording operations
+/// This is the primary interface that consumers will use
+abstract class RecordingService {
+  /// Check if recording permission is available
+  Future<bool> hasPermission();
+
+  /// Request recording permission from user
+  Future<bool> requestPermission();
+
+  /// Start a new recording session
+  /// [outputPath] - Where to save the recording
+  /// Returns session ID on success
+  Future<Either<Failure, String>> startRecording({
+    required String outputPath,
+  });
+
+  /// Stop the current recording
+  /// Returns the completed AudioRecording on success
+  Future<Either<Failure, AudioRecording>> stopRecording();
+
+  /// Pause the current recording
+  Future<Either<Failure, Unit>> pauseRecording();
+
+  /// Resume a paused recording
+  Future<Either<Failure, Unit>> resumeRecording();
+
+  /// Cancel the current recording (discards the file)
+  Future<Either<Failure, Unit>> cancelRecording();
+
+  /// Get current recording session state
+  Stream<RecordingSession> get sessionStream;
+
+  /// Check if currently recording
+  bool get isRecording;
+}
+```
+
+**Verification:**
+- Contract will be tested via implementation tests
+
+---
+
+### Step 1.3: Create Recording Use Cases
+
+**Directory:** `lib/features/audio_recording/domain/usecases/`
+
+**Use Case 1:** `start_recording_usecase.dart`
+
+```dart
+@injectable
+class StartRecordingUseCase {
+  final RecordingService _recordingService;
+  final FileSystemService _fileSystemService;
+
+  StartRecordingUseCase(this._recordingService, this._fileSystemService);
+
+  Future<Either<Failure, String>> call({
+    String? customOutputPath,
+  }) async {
+    // Check permission first
+    final hasPermission = await _recordingService.hasPermission();
+    if (!hasPermission) {
+      final granted = await _recordingService.requestPermission();
+      if (!granted) {
+        return Left(PermissionFailure('Microphone permission denied'));
       }
     }
 
-    // 3. Queue for background sync
-    final queueResult = await _pendingOperationsManager.addCreateOperation(
-      entityType: 'audio_comment',
-      entityId: comment.id.value,
-      data: {
-        'trackId': comment.versionId.value,
-        'projectId': comment.projectId.value,
-        'createdBy': comment.createdBy.value,
-        'content': comment.content,
-        'timestamp': comment.timestamp.inMilliseconds,
-        'createdAt': comment.createdAt.toIso8601String(),
-        // NEW: Audio metadata
-        'localAudioPath': dto.localAudioPath,
-        'audioDurationMs': comment.audioDuration?.inMilliseconds,
-        'commentType': comment.commentType.toString().split('.').last,
-      },
-      priority: SyncPriority.high,
-    );
+    // Generate output path if not provided
+    final outputPath = customOutputPath ??
+      await _generateOutputPath();
 
-    // 4. Trigger background sync (includes audio upload)
-    unawaited(_backgroundSyncCoordinator.pushUpstream());
+    // Start recording
+    return await _recordingService.startRecording(outputPath: outputPath);
+  }
 
-    return const Right(unit);
-  } catch (e) {
-    return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
+  Future<String> _generateOutputPath() async {
+    final tempDir = await _fileSystemService.getTemporaryDirectory();
+    final fileName = _fileSystemService.generateTemporaryFilePath('m4a');
+    return '${tempDir.path}/$fileName';
   }
 }
 ```
 
-**Update deleteComment Method:**
+**Use Case 2:** `stop_recording_usecase.dart`
+
 ```dart
-@override
-Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId) async {
-  try {
-    // 1. Get comment to check if it has audio
-    final commentResult = await getCommentById(commentId);
+@injectable
+class StopRecordingUseCase {
+  final RecordingService _recordingService;
 
-    return await commentResult.fold(
-      (failure) => Left(failure),
-      (comment) async {
-        // 2. Mark as deleted in local DB
-        await _localDataSource.deleteComment(commentId.value);
+  StopRecordingUseCase(this._recordingService);
 
-        // 3. Delete local audio file if exists
-        if (comment.localAudioPath != null) {
-          await _audioStorageService.deleteLocalAudioFile(
-            localPath: comment.localAudioPath!,
-          );
-        }
+  Future<Either<Failure, AudioRecording>> call() async {
+    return await _recordingService.stopRecording();
+  }
+}
+```
 
-        // 4. Queue delete operation for Firebase sync
-        await _pendingOperationsManager.addDeleteOperation(
-          entityType: 'audio_comment',
-          entityId: commentId.value,
-          data: {
-            'audioStorageUrl': comment.audioStorageUrl, // For remote deletion
-          },
-          priority: SyncPriority.high,
-        );
+**Use Case 3:** `cancel_recording_usecase.dart`
 
-        // 5. Trigger background sync
-        unawaited(_backgroundSyncCoordinator.pushUpstream());
+```dart
+@injectable
+class CancelRecordingUseCase {
+  final RecordingService _recordingService;
+  final FileSystemService _fileSystemService;
 
-        return const Right(unit);
-      },
-    );
-  } catch (e) {
-    return Left(DatabaseFailure('Delete failed: ${e.toString()}'));
+  CancelRecordingUseCase(this._recordingService, this._fileSystemService);
+
+  Future<Either<Failure, Unit>> call() async {
+    final result = await _recordingService.cancelRecording();
+
+    // Clean up temporary files
+    // (Implementation will delete the temp file)
+
+    return result;
   }
 }
 ```
 
 **Verification:**
-- **Unit Test:** `test/features/audio_comment/data/repositories/audio_comment_repository_impl_test.dart`
-  - Mock AudioCommentStorageService
-  - Test addComment with text-only comment (existing behavior)
-  - Test addComment with audio comment (new behavior)
-  - Test audio file copying to cache
-  - Test deleteComment with audio file cleanup
-  - Test offline queue with audio metadata
+- **Unit Test:** `test/features/audio_recording/domain/usecases/start_recording_usecase_test.dart`
+  - Mock RecordingService and FileSystemService
+  - Test permission checks
+  - Test output path generation
+- **Unit Test:** `test/features/audio_recording/domain/usecases/stop_recording_usecase_test.dart`
+- **Unit Test:** `test/features/audio_recording/domain/usecases/cancel_recording_usecase_test.dart`
 
 ---
 
-### Step 2.5: Create Audio Sync Operation Executor
+## Phase 2: Audio Recording Feature - Infrastructure Layer
 
-**New File:** `lib/core/sync/domain/executors/audio_comment_operation_executor.dart`
+### Step 2.1: Implement Platform Recording Service
 
-**Purpose:** Execute background sync operations for audio comments with file upload
+**New File:** `lib/features/audio_recording/infrastructure/services/platform_recording_service.dart`
+
+```dart
+@LazySingleton(as: RecordingService)
+class PlatformRecordingService implements RecordingService {
+  final Record _recorder = Record();
+  final PermissionService _permissionService;
+  final FileSystemService _fileSystemService;
+
+  final _sessionController = StreamController<RecordingSession>.broadcast();
+  RecordingSession? _currentSession;
+  Timer? _elapsedTimer;
+  Timer? _amplitudeTimer;
+
+  PlatformRecordingService(
+    this._permissionService,
+    this._fileSystemService,
+  );
+
+  @override
+  Future<bool> hasPermission() async {
+    return await _permissionService.hasMicrophonePermission();
+  }
+
+  @override
+  Future<bool> requestPermission() async {
+    return await _permissionService.requestMicrophonePermission();
+  }
+
+  @override
+  Future<Either<Failure, String>> startRecording({
+    required String outputPath,
+  }) async {
+    try {
+      // Check permission
+      if (!await hasPermission()) {
+        return Left(PermissionFailure('Microphone permission not granted'));
+      }
+
+      // Ensure output directory exists
+      final file = File(outputPath);
+      await file.parent.create(recursive: true);
+
+      // Start recording
+      await _recorder.start(
+        path: outputPath,
+        encoder: AudioEncoder.aacLc,  // M4A format
+        bitRate: 128000,
+        samplingRate: 44100,
+      );
+
+      // Create session
+      final sessionId = const Uuid().v4();
+      _currentSession = RecordingSession(
+        sessionId: sessionId,
+        startedAt: DateTime.now(),
+        elapsed: Duration.zero,
+        state: RecordingState.recording,
+        outputPath: outputPath,
+      );
+
+      // Start timers
+      _startElapsedTimer();
+      _startAmplitudeMonitoring();
+
+      _sessionController.add(_currentSession!);
+
+      return Right(sessionId);
+    } catch (e) {
+      return Left(RecordingFailure('Failed to start recording: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AudioRecording>> stopRecording() async {
+    try {
+      if (_currentSession == null) {
+        return Left(RecordingFailure('No active recording session'));
+      }
+
+      // Stop recording
+      final path = await _recorder.stop();
+      if (path == null) {
+        return Left(RecordingFailure('Recording failed to save'));
+      }
+
+      // Stop timers
+      _elapsedTimer?.cancel();
+      _amplitudeTimer?.cancel();
+
+      // Get file size
+      final fileSize = await _fileSystemService.getFileSize(path);
+
+      // Create AudioRecording entity
+      final recording = AudioRecording.create(
+        localPath: path,
+        duration: _currentSession!.elapsed,
+        format: AudioFormat.m4a,
+        fileSizeBytes: fileSize,
+      );
+
+      // Update session state
+      _currentSession = _currentSession!.copyWith(
+        state: RecordingState.stopped,
+      );
+      _sessionController.add(_currentSession!);
+
+      // Clear session
+      _currentSession = null;
+
+      return Right(recording);
+    } catch (e) {
+      return Left(RecordingFailure('Failed to stop recording: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> pauseRecording() async {
+    try {
+      await _recorder.pause();
+
+      _elapsedTimer?.cancel();
+      _amplitudeTimer?.cancel();
+
+      _currentSession = _currentSession?.copyWith(
+        state: RecordingState.paused,
+      );
+      _sessionController.add(_currentSession!);
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(RecordingFailure('Failed to pause recording: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> resumeRecording() async {
+    try {
+      await _recorder.resume();
+
+      _startElapsedTimer();
+      _startAmplitudeMonitoring();
+
+      _currentSession = _currentSession?.copyWith(
+        state: RecordingState.recording,
+      );
+      _sessionController.add(_currentSession!);
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(RecordingFailure('Failed to resume recording: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> cancelRecording() async {
+    try {
+      await _recorder.cancel();
+
+      _elapsedTimer?.cancel();
+      _amplitudeTimer?.cancel();
+
+      // Delete temporary file
+      if (_currentSession != null) {
+        await _fileSystemService.deleteFile(_currentSession!.outputPath);
+      }
+
+      _currentSession = null;
+      _sessionController.add(RecordingSession(
+        sessionId: '',
+        startedAt: DateTime.now(),
+        elapsed: Duration.zero,
+        state: RecordingState.idle,
+        outputPath: '',
+      ));
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(RecordingFailure('Failed to cancel recording: $e'));
+    }
+  }
+
+  @override
+  Stream<RecordingSession> get sessionStream => _sessionController.stream;
+
+  @override
+  bool get isRecording => _currentSession?.state == RecordingState.recording;
+
+  void _startElapsedTimer() {
+    _elapsedTimer = Timer.periodic(Duration(milliseconds: 100), (_) {
+      if (_currentSession != null) {
+        final elapsed = DateTime.now().difference(_currentSession!.startedAt);
+        _currentSession = _currentSession!.copyWith(elapsed: elapsed);
+        _sessionController.add(_currentSession!);
+      }
+    });
+  }
+
+  void _startAmplitudeMonitoring() {
+    _amplitudeTimer = Timer.periodic(Duration(milliseconds: 100), (_) async {
+      if (_currentSession != null && isRecording) {
+        final amplitude = await _recorder.getAmplitude();
+        _currentSession = _currentSession!.copyWith(
+          currentAmplitude: amplitude.current.abs(),
+        );
+        _sessionController.add(_currentSession!);
+      }
+    });
+  }
+
+  void dispose() {
+    _elapsedTimer?.cancel();
+    _amplitudeTimer?.cancel();
+    _recorder.dispose();
+    _sessionController.close();
+  }
+}
+```
+
+**Verification:**
+- **Unit Test:** `test/features/audio_recording/infrastructure/services/platform_recording_service_test.dart`
+  - Mock Record package, PermissionService, FileSystemService
+  - Test start/stop recording flow
+  - Test pause/resume flow
+  - Test cancel recording
+  - Test elapsed timer updates
+  - Test amplitude monitoring
+  - Test error scenarios
+
+---
+
+## Phase 3: Audio Recording Feature - Presentation Layer
+
+### Step 3.1: Create Recording BLoC
+
+**Directory:** `lib/features/audio_recording/presentation/bloc/`
+
+**File 1:** `recording_event.dart`
+
+```dart
+sealed class RecordingEvent extends Equatable {
+  const RecordingEvent();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class StartRecordingRequested extends RecordingEvent {
+  final String? customOutputPath;
+
+  const StartRecordingRequested({this.customOutputPath});
+
+  @override
+  List<Object?> get props => [customOutputPath];
+}
+
+class StopRecordingRequested extends RecordingEvent {
+  const StopRecordingRequested();
+}
+
+class PauseRecordingRequested extends RecordingEvent {
+  const PauseRecordingRequested();
+}
+
+class ResumeRecordingRequested extends RecordingEvent {
+  const ResumeRecordingRequested();
+}
+
+class CancelRecordingRequested extends RecordingEvent {
+  const CancelRecordingRequested();
+}
+
+class RecordingSessionUpdated extends RecordingEvent {
+  final RecordingSession session;
+
+  const RecordingSessionUpdated(this.session);
+
+  @override
+  List<Object?> get props => [session];
+}
+```
+
+**File 2:** `recording_state.dart`
+
+```dart
+sealed class RecordingState extends Equatable {
+  const RecordingState();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class RecordingInitial extends RecordingState {
+  const RecordingInitial();
+}
+
+class RecordingInProgress extends RecordingState {
+  final RecordingSession session;
+
+  const RecordingInProgress(this.session);
+
+  @override
+  List<Object?> get props => [session];
+}
+
+class RecordingPaused extends RecordingState {
+  final RecordingSession session;
+
+  const RecordingPaused(this.session);
+
+  @override
+  List<Object?> get props => [session];
+}
+
+class RecordingCompleted extends RecordingState {
+  final AudioRecording recording;
+
+  const RecordingCompleted(this.recording);
+
+  @override
+  List<Object?> get props => [recording];
+}
+
+class RecordingError extends RecordingState {
+  final String message;
+
+  const RecordingError(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+```
+
+**File 3:** `recording_bloc.dart`
+
+```dart
+@injectable
+class RecordingBloc extends Bloc<RecordingEvent, RecordingState> {
+  final StartRecordingUseCase _startRecordingUseCase;
+  final StopRecordingUseCase _stopRecordingUseCase;
+  final CancelRecordingUseCase _cancelRecordingUseCase;
+  final RecordingService _recordingService;
+
+  StreamSubscription<RecordingSession>? _sessionSubscription;
+
+  RecordingBloc(
+    this._startRecordingUseCase,
+    this._stopRecordingUseCase,
+    this._cancelRecordingUseCase,
+    this._recordingService,
+  ) : super(const RecordingInitial()) {
+    on<StartRecordingRequested>(_onStartRecording);
+    on<StopRecordingRequested>(_onStopRecording);
+    on<PauseRecordingRequested>(_onPauseRecording);
+    on<ResumeRecordingRequested>(_onResumeRecording);
+    on<CancelRecordingRequested>(_onCancelRecording);
+    on<RecordingSessionUpdated>(_onSessionUpdated);
+
+    // Listen to recording session updates
+    _sessionSubscription = _recordingService.sessionStream.listen((session) {
+      add(RecordingSessionUpdated(session));
+    });
+  }
+
+  Future<void> _onStartRecording(
+    StartRecordingRequested event,
+    Emitter<RecordingState> emit,
+  ) async {
+    final result = await _startRecordingUseCase(
+      customOutputPath: event.customOutputPath,
+    );
+
+    result.fold(
+      (failure) => emit(RecordingError(failure.message)),
+      (_) {}, // State updated via session stream
+    );
+  }
+
+  Future<void> _onStopRecording(
+    StopRecordingRequested event,
+    Emitter<RecordingState> emit,
+  ) async {
+    final result = await _stopRecordingUseCase();
+
+    result.fold(
+      (failure) => emit(RecordingError(failure.message)),
+      (recording) => emit(RecordingCompleted(recording)),
+    );
+  }
+
+  Future<void> _onPauseRecording(
+    PauseRecordingRequested event,
+    Emitter<RecordingState> emit,
+  ) async {
+    final result = await _recordingService.pauseRecording();
+
+    result.fold(
+      (failure) => emit(RecordingError(failure.message)),
+      (_) {}, // State updated via session stream
+    );
+  }
+
+  Future<void> _onResumeRecording(
+    ResumeRecordingRequested event,
+    Emitter<RecordingState> emit,
+  ) async {
+    final result = await _recordingService.resumeRecording();
+
+    result.fold(
+      (failure) => emit(RecordingError(failure.message)),
+      (_) {}, // State updated via session stream
+    );
+  }
+
+  Future<void> _onCancelRecording(
+    CancelRecordingRequested event,
+    Emitter<RecordingState> emit,
+  ) async {
+    final result = await _cancelRecordingUseCase();
+
+    result.fold(
+      (failure) => emit(RecordingError(failure.message)),
+      (_) => emit(const RecordingInitial()),
+    );
+  }
+
+  void _onSessionUpdated(
+    RecordingSessionUpdated event,
+    Emitter<RecordingState> emit,
+  ) {
+    final session = event.session;
+
+    if (session.state == RecordingState.recording) {
+      emit(RecordingInProgress(session));
+    } else if (session.state == RecordingState.paused) {
+      emit(RecordingPaused(session));
+    } else if (session.state == RecordingState.idle) {
+      emit(const RecordingInitial());
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _sessionSubscription?.cancel();
+    return super.close();
+  }
+}
+```
+
+**Verification:**
+- **Unit Test:** `test/features/audio_recording/presentation/bloc/recording_bloc_test.dart`
+  - Use bloc_test package
+  - Mock use cases and recording service
+  - Test start recording event
+  - Test stop recording event
+  - Test pause/resume events
+  - Test cancel recording event
+  - Test session stream updates
+  - Test error scenarios
+
+---
+
+### Step 3.2: Create Reusable Recording Widgets
+
+**Directory:** `lib/features/audio_recording/presentation/widgets/`
+
+**Widget 1:** `recording_button.dart`
+
+```dart
+/// Reusable button to start/stop recording
+class RecordingButton extends StatelessWidget {
+  final VoidCallback? onStartRecording;
+  final VoidCallback? onStopRecording;
+  final bool isRecording;
+  final String? startLabel;
+  final String? stopLabel;
+
+  const RecordingButton({
+    Key? key,
+    this.onStartRecording,
+    this.onStopRecording,
+    required this.isRecording,
+    this.startLabel,
+    this.stopLabel,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: isRecording ? onStopRecording : onStartRecording,
+      icon: Icon(
+        isRecording ? Icons.stop : Icons.fiber_manual_record,
+        color: isRecording ? AppColors.error : AppColors.primary,
+      ),
+      label: Text(
+        isRecording
+          ? (stopLabel ?? 'Stop Recording')
+          : (startLabel ?? 'Start Recording'),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isRecording
+          ? AppColors.error.withOpacity(0.1)
+          : AppColors.primary.withOpacity(0.1),
+      ),
+    );
+  }
+}
+```
+
+**Widget 2:** `recording_waveform.dart`
+
+```dart
+/// Reusable waveform visualization during recording
+class RecordingWaveform extends StatelessWidget {
+  final double amplitude;
+  final Color? color;
+  final double height;
+
+  const RecordingWaveform({
+    Key? key,
+    required this.amplitude,
+    this.color,
+    this.height = 60,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      child: CustomPaint(
+        painter: WaveformPainter(
+          amplitude: amplitude,
+          color: color ?? AppColors.primary,
+        ),
+        size: Size.infinite,
+      ),
+    );
+  }
+}
+
+class WaveformPainter extends CustomPainter {
+  final double amplitude;
+  final Color color;
+
+  WaveformPainter({required this.amplitude, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.fill;
+
+    final barHeight = amplitude * size.height;
+    final rect = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: 6,
+      height: barHeight.clamp(10.0, size.height),
+    );
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, Radius.circular(3)),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(WaveformPainter oldDelegate) {
+    return oldDelegate.amplitude != amplitude;
+  }
+}
+```
+
+**Widget 3:** `recording_timer.dart`
+
+```dart
+/// Reusable timer display during recording
+class RecordingTimer extends StatelessWidget {
+  final Duration elapsed;
+  final TextStyle? style;
+
+  const RecordingTimer({
+    Key? key,
+    required this.elapsed,
+    this.style,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _formatDuration(elapsed),
+      style: style ?? AppTextStyle.titleLarge.copyWith(
+        fontWeight: FontWeight.bold,
+        fontFeatures: [FontFeature.tabularFigures()],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+}
+```
+
+**Widget 4:** `recording_controls.dart`
+
+```dart
+/// Reusable recording control panel (pause/resume/cancel)
+class RecordingControls extends StatelessWidget {
+  final VoidCallback? onPause;
+  final VoidCallback? onResume;
+  final VoidCallback? onCancel;
+  final bool isPaused;
+
+  const RecordingControls({
+    Key? key,
+    this.onPause,
+    this.onResume,
+    this.onCancel,
+    required this.isPaused,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+          icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+          onPressed: isPaused ? onResume : onPause,
+          iconSize: 32,
+        ),
+        SizedBox(width: Dimensions.space16),
+        IconButton(
+          icon: Icon(Icons.cancel, color: AppColors.error),
+          onPressed: onCancel,
+          iconSize: 32,
+        ),
+      ],
+    );
+  }
+}
+```
+
+**Verification:**
+- **Widget Test:** `test/features/audio_recording/presentation/widgets/recording_button_test.dart`
+- **Widget Test:** `test/features/audio_recording/presentation/widgets/recording_waveform_test.dart`
+- **Widget Test:** `test/features/audio_recording/presentation/widgets/recording_timer_test.dart`
+- **Widget Test:** `test/features/audio_recording/presentation/widgets/recording_controls_test.dart`
+
+---
+
+## Phase 4: Audio Comment Integration - Consuming the Recording Module
+
+### Step 4.1: Extend AudioComment Domain Entity
+
+**File:** [lib/features/audio_comment/domain/entities/audio_comment.dart](lib/features/audio_comment/domain/entities/audio_comment.dart)
+
+**Add Audio Fields:**
+
+```dart
+class AudioComment extends Entity<AudioCommentId> {
+  final ProjectId projectId;
+  final TrackVersionId versionId;
+  final UserId createdBy;
+  final String content;                // Text comment OR transcription
+  final Duration timestamp;
+  final DateTime createdAt;
+
+  // NEW AUDIO FIELDS
+  final String? audioStorageUrl;       // Firebase Storage URL
+  final String? localAudioPath;        // Local cache path
+  final Duration? audioDuration;       // Recording length
+  final CommentType commentType;       // Type enum
+
+  const AudioComment({
+    required AudioCommentId id,
+    required this.projectId,
+    required this.versionId,
+    required this.createdBy,
+    required this.content,
+    required this.timestamp,
+    required this.createdAt,
+    this.audioStorageUrl,
+    this.localAudioPath,
+    this.audioDuration,
+    this.commentType = CommentType.text,
+  }) : super(id);
+
+  // Factory methods updated...
+}
+
+enum CommentType {
+  text,    // Text-only (existing)
+  audio,   // Audio-only (new)
+  hybrid,  // Audio + text (future)
+}
+```
+
+**Verification:**
+- **Unit Test:** Update `test/features/audio_comment/domain/entities/audio_comment_test.dart`
+  - Test creation with audio fields
+  - Test validation rules
+  - Test equality
+
+---
+
+### Step 4.2: Update AudioComment Data Models
+
+**File:** [lib/features/audio_comment/data/models/audio_comment_dto.dart](lib/features/audio_comment/data/models/audio_comment_dto.dart)
+
+**Add Fields:**
+
+```dart
+class AudioCommentDTO {
+  final String id;
+  final String projectId;
+  final String trackId;
+  final String createdBy;
+  final String content;
+  final int timestamp;
+  final String createdAt;
+  final bool isDeleted;
+  final int version;
+  final DateTime? lastModified;
+
+  // NEW AUDIO FIELDS
+  final String? audioStorageUrl;
+  final String? localAudioPath;
+  final int? audioDurationMs;
+  final String commentType;  // 'text', 'audio', 'hybrid'
+
+  // Constructor and methods updated...
+}
+```
+
+**File:** [lib/features/audio_comment/data/models/audio_comment_document.dart](lib/features/audio_comment/data/models/audio_comment_document.dart)
+
+**Update Isar Schema:**
+
+```dart
+@collection
+class AudioCommentDocument {
+  Id get isarId => fastHash(id);
+
+  @Index(unique: true)
+  late String id;
+
+  @Index()
+  late String projectId;
+
+  @Index()
+  late String trackId;
+
+  late String createdBy;
+  late String content;
+  late int timestamp;
+  late DateTime createdAt;
+
+  SyncMetadataDocument? syncMetadata;
+
+  // NEW AUDIO FIELDS
+  late String? audioStorageUrl;
+  late String? localAudioPath;
+  late int? audioDurationMs;
+
+  @enumerated
+  late CommentType commentType;
+}
+
+@enumerated
+enum CommentType {
+  text,
+  audio,
+  hybrid,
+}
+```
+
+**Regenerate Isar Schema:**
+
+```bash
+flutter packages pub run build_runner build --delete-conflicting-outputs
+```
+
+**Verification:**
+- **Unit Test:** Update `test/features/audio_comment/data/models/audio_comment_dto_test.dart`
+- **Unit Test:** Update `test/features/audio_comment/data/models/audio_comment_document_test.dart`
+
+---
+
+### Step 4.3: Create Audio Comment Storage Coordinator
+
+**Purpose**: Bridge between recording module and audio comment storage needs
+
+**New File:** `lib/features/audio_comment/data/services/audio_comment_storage_coordinator.dart`
+
+```dart
+@injectable
+class AudioCommentStorageCoordinator {
+  final AudioStorageService _audioStorageService;
+  final FileSystemService _fileSystemService;
+
+  AudioCommentStorageCoordinator(
+    this._audioStorageService,
+    this._fileSystemService,
+  );
+
+  /// Upload audio comment file to Firebase Storage
+  Future<Either<Failure, String>> uploadCommentAudio({
+    required String localPath,
+    required ProjectId projectId,
+    required TrackVersionId versionId,
+    required AudioCommentId commentId,
+  }) async {
+    final remotePath = _buildStoragePath(projectId, versionId, commentId);
+
+    final metadata = {
+      'projectId': projectId.value,
+      'versionId': versionId.value,
+      'commentId': commentId.value,
+      'type': 'audio_comment',
+    };
+
+    return await _audioStorageService.uploadAudioFile(
+      localPath: localPath,
+      remotePath: remotePath,
+      metadata: metadata,
+    );
+  }
+
+  /// Download audio comment file to local cache
+  Future<Either<Failure, String>> downloadCommentAudio({
+    required String storageUrl,
+    required AudioCommentId commentId,
+  }) async {
+    final localPath = _buildLocalPath(commentId);
+
+    return await _audioStorageService.downloadAudioFile(
+      storageUrl: storageUrl,
+      localPath: localPath,
+    );
+  }
+
+  /// Delete audio comment file from Firebase Storage
+  Future<Either<Failure, Unit>> deleteCommentAudio({
+    required String storageUrl,
+  }) async {
+    return await _audioStorageService.deleteAudioFile(
+      storageUrl: storageUrl,
+    );
+  }
+
+  /// Copy recording from temp location to permanent cache
+  Future<Either<Failure, String>> moveRecordingToCache({
+    required String tempPath,
+    required AudioCommentId commentId,
+  }) async {
+    try {
+      final cachePath = _buildLocalPath(commentId);
+      final finalPath = await _fileSystemService.copyFile(tempPath, cachePath);
+
+      // Delete temp file
+      await _fileSystemService.deleteFile(tempPath);
+
+      return Right(finalPath);
+    } catch (e) {
+      return Left(StorageFailure('Failed to move recording: $e'));
+    }
+  }
+
+  String _buildStoragePath(
+    ProjectId projectId,
+    TrackVersionId versionId,
+    AudioCommentId commentId,
+  ) {
+    return 'audio_comments/${projectId.value}/${versionId.value}/${commentId.value}.m4a';
+  }
+
+  String _buildLocalPath(AudioCommentId commentId) {
+    // Will use FileSystemService at runtime to get app documents dir
+    return 'audio_comments/${commentId.value}.m4a';
+  }
+
+  Future<String> getFullLocalPath(AudioCommentId commentId) async {
+    final appDir = await _fileSystemService.getApplicationDocumentsDirectory();
+    return '${appDir.path}/${_buildLocalPath(commentId)}';
+  }
+}
+```
+
+**Verification:**
+- **Unit Test:** `test/features/audio_comment/data/services/audio_comment_storage_coordinator_test.dart`
+  - Mock AudioStorageService and FileSystemService
+  - Test upload path generation
+  - Test download caching
+  - Test recording move operation
+
+---
+
+### Step 4.4: Update Audio Comment Repository
+
+**File:** [lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart](lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart)
+
+**Inject Storage Coordinator:**
+
+```dart
+@Injectable(as: AudioCommentRepository)
+class AudioCommentRepositoryImpl implements AudioCommentRepository {
+  final AudioCommentLocalDataSource _localDataSource;
+  final AudioCommentRemoteDataSource _remoteDataSource;
+  final PendingOperationsManager _pendingOperationsManager;
+  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
+
+  // NEW DEPENDENCY
+  final AudioCommentStorageCoordinator _storageCoordinator;
+
+  AudioCommentRepositoryImpl(
+    this._localDataSource,
+    this._remoteDataSource,
+    this._pendingOperationsManager,
+    this._backgroundSyncCoordinator,
+    this._storageCoordinator,  // NEW
+  );
+
+  @override
+  Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
+    try {
+      final dto = AudioCommentDTO.fromDomain(comment);
+
+      // 1. Save to local DB immediately
+      await _localDataSource.cacheComment(dto);
+
+      // 2. If audio comment, move recording to permanent cache
+      if (comment.commentType != CommentType.text &&
+          comment.localAudioPath != null) {
+
+        final moveResult = await _storageCoordinator.moveRecordingToCache(
+          tempPath: comment.localAudioPath!,
+          commentId: comment.id,
+        );
+
+        final cachePath = await moveResult.fold(
+          (failure) => throw Exception('Failed to cache recording: ${failure.message}'),
+          (path) => path,
+        );
+
+        // Update DTO with cache path
+        final updatedDto = dto.copyWith(localAudioPath: cachePath);
+        await _localDataSource.cacheComment(updatedDto);
+      }
+
+      // 3. Queue for background sync
+      await _pendingOperationsManager.addCreateOperation(
+        entityType: 'audio_comment',
+        entityId: comment.id.value,
+        data: {
+          'projectId': comment.projectId.value,
+          'trackId': comment.versionId.value,
+          'createdBy': comment.createdBy.value,
+          'content': comment.content,
+          'timestamp': comment.timestamp.inMilliseconds,
+          'createdAt': comment.createdAt.toIso8601String(),
+          // Audio fields
+          'localAudioPath': dto.localAudioPath,
+          'audioDurationMs': comment.audioDuration?.inMilliseconds,
+          'commentType': comment.commentType.toString().split('.').last,
+        },
+        priority: SyncPriority.high,
+      );
+
+      // 4. Trigger background sync
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Critical storage error: ${e.toString()}'));
+    }
+  }
+
+  // deleteComment updated similarly...
+}
+```
+
+**Verification:**
+- **Unit Test:** Update `test/features/audio_comment/data/repositories/audio_comment_repository_impl_test.dart`
+  - Test addComment with audio recording
+  - Test recording move to cache
+  - Test sync queue with audio metadata
+
+---
+
+### Step 4.5: Update Audio Comment Presentation
+
+**File:** [lib/features/audio_comment/presentation/components/comment_input_modal.dart](lib/features/audio_comment/presentation/components/comment_input_modal.dart)
+
+**Integrate Recording Module:**
+
+```dart
+class _CommentInputModalState extends State<CommentInputModal> {
+  // Existing fields
+  final FocusNode _focusNode = FocusNode();
+  final TextEditingController _controller = TextEditingController();
+  Duration? _capturedTimestamp;
+  bool _isInputFocused = false;
+
+  // NEW: Recording mode
+  bool _isRecordingMode = false;
+  AudioRecording? _completedRecording;
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => getIt<RecordingBloc>(),
+        ),
+        // Existing AudioCommentBloc...
+      ],
+      child: _buildContent(),
+    );
+  }
+
+  Widget _buildContent() {
+    return Container(
+      child: Column(
+        children: [
+          // Mode toggle
+          _buildModeToggle(),
+
+          // Conditional input
+          if (_isRecordingMode)
+            _buildRecordingInterface()
+          else
+            _buildTextInputField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeToggle() {
+    return SegmentedButton<bool>(
+      segments: [
+        ButtonSegment(
+          value: false,
+          icon: Icon(Icons.text_fields),
+          label: Text('Text'),
+        ),
+        ButtonSegment(
+          value: true,
+          icon: Icon(Icons.mic),
+          label: Text('Audio'),
+        ),
+      ],
+      selected: {_isRecordingMode},
+      onSelectionChanged: (Set<bool> selection) {
+        setState(() {
+          _isRecordingMode = selection.first;
+        });
+      },
+    );
+  }
+
+  Widget _buildRecordingInterface() {
+    return BlocConsumer<RecordingBloc, RecordingState>(
+      listener: (context, state) {
+        if (state is RecordingCompleted) {
+          setState(() {
+            _completedRecording = state.recording;
+          });
+        }
+      },
+      builder: (context, state) {
+        if (state is RecordingInitial) {
+          return _buildRecordingStart();
+        } else if (state is RecordingInProgress) {
+          return _buildRecordingActive(state.session);
+        } else if (state is RecordingPaused) {
+          return _buildRecordingPaused(state.session);
+        } else if (state is RecordingCompleted) {
+          return _buildRecordingPreview(state.recording);
+        } else if (state is RecordingError) {
+          return _buildRecordingError(state.message);
+        }
+        return SizedBox.shrink();
+      },
+    );
+  }
+
+  Widget _buildRecordingStart() {
+    return RecordingButton(
+      isRecording: false,
+      onStartRecording: () {
+        // Capture timestamp before recording
+        final audioPlayerBloc = context.read<AudioPlayerBloc>();
+        final playerState = audioPlayerBloc.state;
+        if (playerState is AudioPlayerSessionState) {
+          setState(() {
+            _capturedTimestamp = playerState.session.position;
+          });
+          // Pause playback
+          audioPlayerBloc.add(const PauseAudioRequested());
+        }
+
+        // Start recording
+        context.read<RecordingBloc>().add(const StartRecordingRequested());
+      },
+    );
+  }
+
+  Widget _buildRecordingActive(RecordingSession session) {
+    return Column(
+      children: [
+        RecordingWaveform(amplitude: session.currentAmplitude ?? 0.0),
+        SizedBox(height: Dimensions.space16),
+        RecordingTimer(elapsed: session.elapsed),
+        SizedBox(height: Dimensions.space16),
+        ElevatedButton(
+          onPressed: () {
+            context.read<RecordingBloc>().add(const StopRecordingRequested());
+          },
+          child: Text('Stop Recording'),
+        ),
+        SizedBox(height: Dimensions.space8),
+        RecordingControls(
+          isPaused: false,
+          onCancel: () {
+            context.read<RecordingBloc>().add(const CancelRecordingRequested());
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecordingPreview(AudioRecording recording) {
+    return Column(
+      children: [
+        // Audio preview player (simple)
+        Text('Recording completed: ${_formatDuration(recording.duration)}'),
+
+        ElevatedButton.icon(
+          onPressed: () => _handleSendAudioComment(recording),
+          icon: Icon(Icons.send),
+          label: Text('Send Audio Comment'),
+        ),
+
+        TextButton(
+          onPressed: () {
+            context.read<RecordingBloc>().add(const CancelRecordingRequested());
+            setState(() {
+              _completedRecording = null;
+            });
+          },
+          child: Text('Re-record'),
+        ),
+      ],
+    );
+  }
+
+  void _handleSendAudioComment(AudioRecording recording) {
+    if (_capturedTimestamp == null) return;
+
+    context.read<AudioCommentBloc>().add(
+      AddAudioCommentEvent(
+        widget.projectId,
+        widget.versionId,
+        '', // Empty text for audio-only
+        _capturedTimestamp!,
+        localAudioPath: recording.localPath,
+        audioDuration: recording.duration,
+        commentType: CommentType.audio,
+      ),
+    );
+
+    // Reset state
+    setState(() {
+      _completedRecording = null;
+      _isRecordingMode = false;
+      _capturedTimestamp = null;
+    });
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+}
+```
+
+**Verification:**
+- **Widget Test:** `test/features/audio_comment/presentation/components/comment_input_modal_test.dart`
+  - Test mode toggle
+  - Test recording start
+  - Test recording preview
+  - Test send audio comment
+  - Test cancel recording
+
+---
+
+### Step 4.6: Create Audio Comment Playback Widget
+
+**New File:** `lib/features/audio_comment/presentation/components/audio_comment_player.dart`
+
+```dart
+/// Widget to play audio from an audio comment
+class AudioCommentPlayer extends StatefulWidget {
+  final AudioComment comment;
+
+  const AudioCommentPlayer({
+    Key? key,
+    required this.comment,
+  }) : super(key: key);
+
+  @override
+  State<AudioCommentPlayer> createState() => _AudioCommentPlayerState();
+}
+
+class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
+  late AudioPlayer _player;
+  bool _isPlaying = false;
+  bool _isLoading = false;
+  Duration _position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+    _player.positionStream.listen((position) {
+      if (mounted) setState(() => _position = position);
+    });
+    _player.playerStateStream.listen((state) {
+      if (mounted) setState(() => _isPlaying = state.playing);
+    });
+    _initializeAudio();
+  }
+
+  Future<void> _initializeAudio() async {
+    setState(() => _isLoading = true);
+
+    try {
+      // Try local cache first
+      if (widget.comment.localAudioPath != null &&
+          await File(widget.comment.localAudioPath!).exists()) {
+        await _player.setFilePath(widget.comment.localAudioPath!);
+      }
+      // Otherwise stream from Firebase Storage
+      else if (widget.comment.audioStorageUrl != null) {
+        await _player.setUrl(widget.comment.audioStorageUrl!);
+      }
+    } catch (e) {
+      // Handle error
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        height: 48,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.all(Dimensions.space12),
+      decoration: BoxDecoration(
+        color: AppColors.grey800,
+        borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+            onPressed: () {
+              if (_isPlaying) {
+                _player.pause();
+              } else {
+                _player.play();
+              }
+            },
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Slider(
+                  value: _position.inMilliseconds.toDouble(),
+                  max: (widget.comment.audioDuration?.inMilliseconds ?? 0).toDouble(),
+                  onChanged: (value) {
+                    _player.seek(Duration(milliseconds: value.toInt()));
+                  },
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDuration(_position),
+                      style: AppTextStyle.labelSmall,
+                    ),
+                    Text(
+                      _formatDuration(widget.comment.audioDuration ?? Duration.zero),
+                      style: AppTextStyle.labelSmall,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+}
+```
+
+**Verification:**
+- **Widget Test:** `test/features/audio_comment/presentation/components/audio_comment_player_test.dart`
+  - Mock AudioPlayer
+  - Test play/pause
+  - Test seek
+  - Test loading state
+
+---
+
+### Step 4.7: Update AudioCommentContent Display
+
+**File:** [lib/features/audio_comment/presentation/components/audio_comment_content.dart](lib/features/audio_comment/presentation/components/audio_comment_content.dart)
+
+**Add Conditional Rendering:**
+
+```dart
+@override
+Widget build(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Header (name + date)
+      _buildHeader(),
+
+      SizedBox(height: Dimensions.space8),
+
+      // Content based on type
+      if (comment.commentType == CommentType.text)
+        _buildTextContent()
+      else if (comment.commentType == CommentType.audio)
+        _buildAudioContent()
+      else
+        _buildHybridContent(),
+
+      SizedBox(height: Dimensions.space8),
+
+      // Timestamp badge
+      _buildTimestampBadge(),
+    ],
+  );
+}
+
+Widget _buildTextContent() {
+  return Text(comment.content, style: AppTextStyle.bodyMedium);
+}
+
+Widget _buildAudioContent() {
+  return AudioCommentPlayer(comment: comment);
+}
+
+Widget _buildHybridContent() {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      AudioCommentPlayer(comment: comment),
+      SizedBox(height: Dimensions.space8),
+      Text(
+        comment.content,
+        style: AppTextStyle.bodySmall.copyWith(
+          color: AppColors.textSecondary,
+          fontStyle: FontStyle.italic,
+        ),
+      ),
+    ],
+  );
+}
+```
+
+**Verification:**
+- **Widget Test:** Update `test/features/audio_comment/presentation/components/audio_comment_content_test.dart`
+  - Test text content rendering
+  - Test audio content rendering
+  - Test hybrid content rendering
+
+---
+
+## Phase 5: Background Sync Integration
+
+### Step 5.1: Create Audio Comment Sync Executor
+
+**File:** `lib/core/sync/domain/executors/audio_comment_operation_executor.dart`
 
 ```dart
 @Injectable()
 class AudioCommentOperationExecutor implements OperationExecutor {
   final AudioCommentRemoteDataSource _remoteDataSource;
-  final AudioCommentStorageService _audioStorageService;
+  final AudioCommentStorageCoordinator _storageCoordinator;
+
+  AudioCommentOperationExecutor(
+    this._remoteDataSource,
+    this._storageCoordinator,
+  );
 
   @override
   String get entityType => 'audio_comment';
@@ -693,10 +2127,10 @@ class AudioCommentOperationExecutor implements OperationExecutor {
     try {
       final data = operation.data;
 
-      // 1. Upload audio file first if present
+      // 1. Upload audio file if present
       String? audioStorageUrl;
       if (data['localAudioPath'] != null) {
-        final uploadResult = await _audioStorageService.uploadAudioFile(
+        final uploadResult = await _storageCoordinator.uploadCommentAudio(
           localPath: data['localAudioPath'] as String,
           projectId: ProjectId.fromUniqueString(data['projectId'] as String),
           versionId: TrackVersionId.fromUniqueString(data['trackId'] as String),
@@ -743,7 +2177,7 @@ class AudioCommentOperationExecutor implements OperationExecutor {
       // 2. Delete audio file from Firebase Storage if exists
       final audioStorageUrl = operation.data['audioStorageUrl'] as String?;
       if (audioStorageUrl != null) {
-        await _audioStorageService.deleteAudioFile(
+        await _storageCoordinator.deleteCommentAudio(
           storageUrl: audioStorageUrl,
         );
       }
@@ -756,1517 +2190,943 @@ class AudioCommentOperationExecutor implements OperationExecutor {
 }
 ```
 
-**Register in DI:** Update `lib/core/di/injection.dart` to include this executor
-
 **Verification:**
 - **Unit Test:** `test/core/sync/domain/executors/audio_comment_operation_executor_test.dart`
-  - Mock remoteDataSource and audioStorageService
-  - Test executeCreate with text-only comment
-  - Test executeCreate with audio comment (upload + create)
-  - Test executeCreate failure scenarios (upload fails, firestore fails)
-  - Test executeDelete with audio file cleanup
+  - Mock dependencies
+  - Test executeCreate with text comment
+  - Test executeCreate with audio comment
+  - Test executeDelete with audio cleanup
 
 ---
 
-## Phase 3: Presentation Layer - Recording UI
+## Phase 6: Testing & Deployment
 
-### Step 3.1: Create Audio Recording Service
+### Step 6.1: Integration Tests
 
-**New File:** `lib/features/audio_comment/presentation/services/audio_recording_service.dart`
-
-**Purpose:** Wrapper around `record` package for recording management
-
-```dart
-@Injectable()
-class AudioRecordingService {
-  final Record _recorder = Record();
-
-  Future<bool> hasPermission() async {
-    return await _recorder.hasPermission();
-  }
-
-  Future<void> startRecording(String outputPath) async {
-    if (!await hasPermission()) {
-      throw RecordingPermissionException();
-    }
-
-    await _recorder.start(
-      path: outputPath,
-      encoder: AudioEncoder.aacLc, // M4A format
-      bitRate: 128000,
-      samplingRate: 44100,
-    );
-  }
-
-  Future<String?> stopRecording() async {
-    final path = await _recorder.stop();
-    return path;
-  }
-
-  Future<void> pauseRecording() async {
-    await _recorder.pause();
-  }
-
-  Future<void> resumeRecording() async {
-    await _recorder.resume();
-  }
-
-  Future<void> cancelRecording() async {
-    await _recorder.cancel();
-  }
-
-  Stream<RecordState> get onStateChanged => _recorder.onStateChanged();
-
-  Future<Amplitude> getAmplitude() async {
-    return await _recorder.getAmplitude();
-  }
-
-  void dispose() {
-    _recorder.dispose();
-  }
-}
-```
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/presentation/services/audio_recording_service_test.dart`
-  - Mock Record package (use mockito)
-  - Test permission checking
-  - Test recording start/stop cycle
-  - Test pause/resume functionality
-  - Test amplitude stream for waveform
-
----
-
-### Step 3.2: Create Recording State BLoC
-
-**New File:** `lib/features/audio_comment/presentation/bloc/audio_recording_bloc.dart`
-
-**Purpose:** Manage recording state separate from comment submission
-
-```dart
-// Events
-sealed class AudioRecordingEvent {}
-class StartRecordingEvent extends AudioRecordingEvent {}
-class StopRecordingEvent extends AudioRecordingEvent {}
-class PauseRecordingEvent extends AudioRecordingEvent {}
-class ResumeRecordingEvent extends AudioRecordingEvent {}
-class CancelRecordingEvent extends AudioRecordingEvent {}
-
-// States
-sealed class AudioRecordingState {}
-class AudioRecordingInitial extends AudioRecordingState {}
-class AudioRecordingInProgress extends AudioRecordingState {
-  final Duration elapsed;
-  final double amplitude; // For waveform visualization
-}
-class AudioRecordingPaused extends AudioRecordingState {
-  final Duration elapsed;
-}
-class AudioRecordingCompleted extends AudioRecordingState {
-  final String filePath;
-  final Duration duration;
-}
-class AudioRecordingError extends AudioRecordingState {
-  final String message;
-}
-
-// BLoC
-@Injectable()
-class AudioRecordingBloc extends Bloc<AudioRecordingEvent, AudioRecordingState> {
-  final AudioRecordingService _recordingService;
-  Timer? _elapsedTimer;
-  Duration _elapsed = Duration.zero;
-
-  AudioRecordingBloc(this._recordingService) : super(AudioRecordingInitial()) {
-    on<StartRecordingEvent>(_onStartRecording);
-    on<StopRecordingEvent>(_onStopRecording);
-    on<PauseRecordingEvent>(_onPauseRecording);
-    on<ResumeRecordingEvent>(_onResumeRecording);
-    on<CancelRecordingEvent>(_onCancelRecording);
-  }
-
-  Future<void> _onStartRecording(
-    StartRecordingEvent event,
-    Emitter<AudioRecordingState> emit,
-  ) async {
-    try {
-      if (!await _recordingService.hasPermission()) {
-        emit(AudioRecordingError('Microphone permission denied'));
-        return;
-      }
-
-      final outputPath = await _getTemporaryRecordingPath();
-      await _recordingService.startRecording(outputPath);
-
-      _elapsed = Duration.zero;
-      _startElapsedTimer(emit);
-
-      emit(AudioRecordingInProgress(elapsed: Duration.zero, amplitude: 0.0));
-    } catch (e) {
-      emit(AudioRecordingError('Failed to start recording: $e'));
-    }
-  }
-
-  Future<void> _onStopRecording(
-    StopRecordingEvent event,
-    Emitter<AudioRecordingState> emit,
-  ) async {
-    try {
-      _elapsedTimer?.cancel();
-      final path = await _recordingService.stopRecording();
-
-      if (path == null) {
-        emit(AudioRecordingError('Recording failed to save'));
-        return;
-      }
-
-      emit(AudioRecordingCompleted(filePath: path, duration: _elapsed));
-    } catch (e) {
-      emit(AudioRecordingError('Failed to stop recording: $e'));
-    }
-  }
-
-  void _startElapsedTimer(Emitter<AudioRecordingState> emit) {
-    _elapsedTimer = Timer.periodic(Duration(milliseconds: 100), (_) async {
-      _elapsed += Duration(milliseconds: 100);
-      final amplitude = await _recordingService.getAmplitude();
-      emit(AudioRecordingInProgress(
-        elapsed: _elapsed,
-        amplitude: amplitude.current.abs(),
-      ));
-    });
-  }
-
-  Future<String> _getTemporaryRecordingPath() async {
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return '${tempDir.path}/recording_$timestamp.m4a';
-  }
-
-  @override
-  Future<void> close() {
-    _elapsedTimer?.cancel();
-    _recordingService.dispose();
-    return super.close();
-  }
-}
-```
-
-**Verification:**
-- **Unit Test:** `test/features/audio_comment/presentation/bloc/audio_recording_bloc_test.dart`
-  - Use bloc_test package
-  - Test start recording flow
-  - Test stop recording flow
-  - Test pause/resume flow
-  - Test cancel recording flow
-  - Test elapsed timer updates
-  - Test permission denial handling
-
----
-
-### Step 3.3: Update CommentInputModal Widget
-
-**File:** [lib/features/audio_comment/presentation/components/comment_input_modal.dart](lib/features/audio_comment/presentation/components/comment_input_modal.dart)
-
-**Current Structure (Lines 21-265):**
-- Text input field
-- Send button
-- Timestamp capture on focus
-
-**Proposed Changes:**
-
-**Add Recording Mode Toggle:**
-```dart
-class _CommentInputModalState extends State<CommentInputModal> {
-  // Existing fields...
-  final FocusNode _focusNode = FocusNode();
-  final TextEditingController _controller = TextEditingController();
-  Duration? _capturedTimestamp;
-  bool _isInputFocused = false;
-  late AnimationController _animationController;
-
-  // NEW FIELDS
-  bool _isRecordingMode = false;        // Toggle between text/audio
-  String? _recordedAudioPath;           // Completed recording path
-  Duration? _recordedAudioDuration;     // Recording length
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => getIt<AudioRecordingBloc>(),
-      child: _buildContent(),
-    );
-  }
-
-  Widget _buildContent() {
-    return Container(
-      child: Column(
-        children: [
-          // Header with mode toggle
-          _buildHeaderWithModeToggle(),
-
-          // Conditional input: text field OR recording UI
-          _isRecordingMode
-            ? _buildRecordingInterface()
-            : _buildTextInputField(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderWithModeToggle() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        if (_capturedTimestamp != null)
-          Text('Comment at ${_formatDuration(_capturedTimestamp!)}'),
-
-        // Mode toggle buttons
-        SegmentedButton<bool>(
-          segments: [
-            ButtonSegment(value: false, icon: Icon(Icons.text_fields), label: Text('Text')),
-            ButtonSegment(value: true, icon: Icon(Icons.mic), label: Text('Audio')),
-          ],
-          selected: {_isRecordingMode},
-          onSelectionChanged: (Set<bool> selection) {
-            setState(() {
-              _isRecordingMode = selection.first;
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecordingInterface() {
-    return BlocBuilder<AudioRecordingBloc, AudioRecordingState>(
-      builder: (context, state) {
-        if (state is AudioRecordingInitial) {
-          return _buildRecordingIdleUI();
-        } else if (state is AudioRecordingInProgress) {
-          return _buildRecordingActiveUI(state.elapsed, state.amplitude);
-        } else if (state is AudioRecordingCompleted) {
-          return _buildRecordingPreviewUI(state.filePath, state.duration);
-        } else if (state is AudioRecordingError) {
-          return _buildRecordingErrorUI(state.message);
-        }
-        return SizedBox.shrink();
-      },
-    );
-  }
-
-  Widget _buildRecordingIdleUI() {
-    return ElevatedButton.icon(
-      onPressed: () {
-        context.read<AudioRecordingBloc>().add(StartRecordingEvent());
-      },
-      icon: Icon(Icons.fiber_manual_record),
-      label: Text('Start Recording'),
-    );
-  }
-
-  Widget _buildRecordingActiveUI(Duration elapsed, double amplitude) {
-    return Column(
-      children: [
-        // Waveform visualization
-        Container(
-          height: 60,
-          child: CustomPaint(
-            painter: WaveformPainter(amplitude: amplitude),
-          ),
-        ),
-
-        // Elapsed time
-        Text(_formatDuration(elapsed), style: AppTextStyle.titleLarge),
-
-        // Stop button
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: Icon(Icons.stop, color: AppColors.error),
-              onPressed: () {
-                context.read<AudioRecordingBloc>().add(StopRecordingEvent());
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.cancel),
-              onPressed: () {
-                context.read<AudioRecordingBloc>().add(CancelRecordingEvent());
-              },
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecordingPreviewUI(String filePath, Duration duration) {
-    // Save recording info for submission
-    _recordedAudioPath = filePath;
-    _recordedAudioDuration = duration;
-
-    return Column(
-      children: [
-        // Audio playback preview
-        AudioPlayerPreview(filePath: filePath),
-
-        // Send button
-        ElevatedButton.icon(
-          onPressed: _handleSendAudioComment,
-          icon: Icon(Icons.send),
-          label: Text('Send Audio Comment'),
-        ),
-
-        // Re-record button
-        TextButton(
-          onPressed: () {
-            context.read<AudioRecordingBloc>().add(CancelRecordingEvent());
-            setState(() {
-              _recordedAudioPath = null;
-              _recordedAudioDuration = null;
-            });
-          },
-          child: Text('Re-record'),
-        ),
-      ],
-    );
-  }
-
-  void _handleSendAudioComment() {
-    if (_recordedAudioPath == null || _capturedTimestamp == null) return;
-
-    context.read<AudioCommentBloc>().add(
-      AddAudioCommentEvent(
-        widget.projectId,
-        widget.versionId,
-        '', // Empty text for audio-only comment
-        _capturedTimestamp!,
-        localAudioPath: _recordedAudioPath,
-        audioDuration: _recordedAudioDuration,
-        commentType: CommentType.audio,
-      ),
-    );
-
-    // Reset state
-    setState(() {
-      _recordedAudioPath = null;
-      _recordedAudioDuration = null;
-      _isRecordingMode = false;
-      _capturedTimestamp = null;
-    });
-    _focusNode.unfocus();
-  }
-
-  // ... existing _handleSend for text comments
-}
-```
-
-**New Widget:** `lib/features/audio_comment/presentation/components/waveform_painter.dart`
-
-```dart
-class WaveformPainter extends CustomPainter {
-  final double amplitude;
-
-  WaveformPainter({required this.amplitude});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.fill;
-
-    final barHeight = amplitude * size.height;
-    final rect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height / 2),
-      width: 4,
-      height: barHeight,
-    );
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect, Radius.circular(2)),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(WaveformPainter oldDelegate) {
-    return oldDelegate.amplitude != amplitude;
-  }
-}
-```
-
-**Verification:**
-- **Widget Test:** `test/features/audio_comment/presentation/components/comment_input_modal_test.dart`
-  - Test mode toggle between text and audio
-  - Test recording start/stop flow
-  - Test audio preview after recording
-  - Test send audio comment action
-  - Test re-record functionality
-  - Test permission denial handling
-- **Integration Test:** `test/integration_test/audio_comment_recording_test.dart`
-  - Test full user flow: tap audio mode → record → preview → send
-  - Verify audio file is created and uploaded
-
----
-
-### Step 3.4: Update AudioCommentEvent
-
-**File:** [lib/features/audio_comment/presentation/bloc/audio_comment_event.dart](lib/features/audio_comment/presentation/bloc/audio_comment_event.dart)
-
-**Current Event (Lines 9-17):**
-```dart
-class AddAudioCommentEvent extends AudioCommentEvent {
-  final ProjectId projectId;
-  final TrackVersionId versionId;
-  final String content;
-  final Duration timestamp;
-}
-```
-
-**Proposed Changes:**
-```dart
-class AddAudioCommentEvent extends AudioCommentEvent {
-  final ProjectId projectId;
-  final TrackVersionId versionId;
-  final String content;
-  final Duration timestamp;
-
-  // NEW FIELDS
-  final String? localAudioPath;
-  final Duration? audioDuration;
-  final CommentType commentType;
-
-  const AddAudioCommentEvent(
-    this.projectId,
-    this.versionId,
-    this.content,
-    this.timestamp, {
-    this.localAudioPath,
-    this.audioDuration,
-    this.commentType = CommentType.text,
-  });
-}
-```
-
-**Update BLoC Handler:** [lib/features/audio_comment/presentation/bloc/audio_comment_bloc.dart](lib/features/audio_comment/presentation/bloc/audio_comment_bloc.dart):33-49
-
-```dart
-Future<void> _onAddAudioComment(
-  AddAudioCommentEvent event,
-  Emitter<AudioCommentState> emit,
-) async {
-  final result = await addAudioCommentUseCase.call(
-    AddAudioCommentParams(
-      projectId: event.projectId,
-      versionId: event.versionId,
-      content: event.content,
-      timestamp: event.timestamp,
-      localAudioPath: event.localAudioPath,        // NEW
-      audioDuration: event.audioDuration,          // NEW
-      commentType: event.commentType,              // NEW
-    ),
-  );
-  result.fold(
-    (failure) => emit(AudioCommentError(failure.message)),
-    (_) => null,  // Success handled by stream update
-  );
-}
-```
-
-**Verification:**
-- **Unit Test:** Update `test/features/audio_comment/presentation/bloc/audio_comment_bloc_test.dart`
-  - Test AddAudioCommentEvent with text-only data
-  - Test AddAudioCommentEvent with audio data
-  - Verify use case called with correct parameters
-
----
-
-### Step 3.5: Update AudioCommentContent Display
-
-**File:** [lib/features/audio_comment/presentation/components/audio_comment_content.dart](lib/features/audio_comment/presentation/components/audio_comment_content.dart)
-
-**Current Display (Lines 33-94):**
-- User name + date
-- Text content
-- Timestamp badge
-
-**Proposed Changes:**
-
-```dart
-Widget build(BuildContext context) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Header with name and date (unchanged)
-      _buildHeader(),
-
-      SizedBox(height: Dimensions.space8),
-
-      // Conditional content based on comment type
-      if (comment.commentType == CommentType.text)
-        _buildTextContent()
-      else if (comment.commentType == CommentType.audio)
-        _buildAudioContent()
-      else
-        _buildHybridContent(),
-
-      SizedBox(height: Dimensions.space8),
-
-      // Timestamp badge (unchanged)
-      _buildTimestampBadge(),
-    ],
-  );
-}
-
-Widget _buildTextContent() {
-  return Text(comment.content, style: AppTextStyle.bodyMedium);
-}
-
-Widget _buildAudioContent() {
-  return AudioCommentPlayer(
-    audioUrl: comment.audioStorageUrl,
-    localPath: comment.localAudioPath,
-    duration: comment.audioDuration,
-    commentId: comment.id,
-  );
-}
-
-Widget _buildHybridContent() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      _buildAudioContent(),
-      SizedBox(height: Dimensions.space8),
-      Text(
-        comment.content,
-        style: AppTextStyle.bodySmall.copyWith(
-          color: AppColors.textSecondary,
-          fontStyle: FontStyle.italic,
-        ),
-      ),
-    ],
-  );
-}
-```
-
-**New Widget:** `lib/features/audio_comment/presentation/components/audio_comment_player.dart`
-
-```dart
-class AudioCommentPlayer extends StatefulWidget {
-  final String? audioUrl;
-  final String? localPath;
-  final Duration? duration;
-  final AudioCommentId commentId;
-
-  const AudioCommentPlayer({
-    required this.audioUrl,
-    required this.localPath,
-    required this.duration,
-    required this.commentId,
-  });
-
-  @override
-  State<AudioCommentPlayer> createState() => _AudioCommentPlayerState();
-}
-
-class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
-  late AudioPlayer _player;
-  bool _isPlaying = false;
-  Duration _position = Duration.zero;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _player = AudioPlayer();
-    _player.positionStream.listen((position) {
-      setState(() => _position = position);
-    });
-    _player.playerStateStream.listen((state) {
-      setState(() => _isPlaying = state.playing);
-    });
-    _initializeAudio();
-  }
-
-  Future<void> _initializeAudio() async {
-    setState(() => _isLoading = true);
-
-    try {
-      // Try local cache first
-      if (widget.localPath != null && await File(widget.localPath!).exists()) {
-        await _player.setFilePath(widget.localPath!);
-      }
-      // Otherwise use remote URL
-      else if (widget.audioUrl != null) {
-        await _player.setUrl(widget.audioUrl!);
-
-        // Cache download for offline use
-        _downloadAndCacheAudio();
-      }
-    } catch (e) {
-      // Handle error
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _downloadAndCacheAudio() async {
-    // Trigger background download via repository
-    // This will populate localPath for future playback
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Container(
-        height: 48,
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.all(Dimensions.space12),
-      decoration: BoxDecoration(
-        color: AppColors.grey800,
-        borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-      ),
-      child: Row(
-        children: [
-          // Play/Pause button
-          IconButton(
-            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-            onPressed: () {
-              if (_isPlaying) {
-                _player.pause();
-              } else {
-                _player.play();
-              }
-            },
-          ),
-
-          // Progress bar
-          Expanded(
-            child: Column(
-              children: [
-                Slider(
-                  value: _position.inMilliseconds.toDouble(),
-                  max: (widget.duration?.inMilliseconds ?? 0).toDouble(),
-                  onChanged: (value) {
-                    _player.seek(Duration(milliseconds: value.toInt()));
-                  },
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatDuration(_position),
-                      style: AppTextStyle.labelSmall,
-                    ),
-                    Text(
-                      _formatDuration(widget.duration ?? Duration.zero),
-                      style: AppTextStyle.labelSmall,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-}
-```
-
-**Verification:**
-- **Widget Test:** `test/features/audio_comment/presentation/components/audio_comment_content_test.dart`
-  - Test rendering text comment
-  - Test rendering audio comment with player
-  - Test rendering hybrid comment
-- **Widget Test:** `test/features/audio_comment/presentation/components/audio_comment_player_test.dart`
-  - Mock AudioPlayer
-  - Test play/pause functionality
-  - Test seek functionality
-  - Test duration display
-  - Test loading state
-- **Integration Test:** `test/integration_test/audio_comment_playback_test.dart`
-  - Test audio playback with real audio file
-  - Test offline playback from cache
-
----
-
-## Phase 4: Testing & Verification
-
-### Step 4.1: Unit Tests Summary
-
-**New Test Files to Create:**
-1. `test/features/audio_comment/domain/entities/audio_comment_test.dart` - Domain entity with audio fields
-2. `test/features/audio_comment/domain/value_objects/audio_recording_test.dart` - Audio recording VO
-3. `test/features/audio_comment/data/models/audio_comment_dto_test.dart` - DTO serialization
-4. `test/features/audio_comment/data/models/audio_comment_document_test.dart` - Isar document
-5. `test/features/audio_comment/data/services/audio_comment_storage_service_test.dart` - Storage service
-6. `test/features/audio_comment/data/repositories/audio_comment_repository_impl_test.dart` - Repository
-7. `test/core/sync/domain/executors/audio_comment_operation_executor_test.dart` - Sync executor
-8. `test/features/audio_comment/presentation/services/audio_recording_service_test.dart` - Recording service
-9. `test/features/audio_comment/presentation/bloc/audio_recording_bloc_test.dart` - Recording BLoC
-10. `test/features/audio_comment/presentation/components/audio_comment_player_test.dart` - Player widget
-
-**Test Execution:**
-```bash
-# Run all audio comment unit tests
-flutter test test/features/audio_comment/
-
-# Run core sync tests
-flutter test test/core/sync/domain/executors/audio_comment_operation_executor_test.dart
-
-# Generate coverage report
-flutter test --coverage
-genhtml coverage/lcov.info -o coverage/html
-```
-
-**Success Criteria:**
-- All new unit tests pass
-- Code coverage ≥ 80% for new code
-- No breaking changes to existing tests
-
----
-
-### Step 4.2: Integration Tests
-
-**New Integration Test:** `test/integration_test/audio_comment_recording_integration_test.dart`
+**New Test:** `test/integration_test/audio_recording_integration_test.dart`
 
 **Test Scenarios:**
-1. **Full Recording Flow:**
-   - User navigates to comments screen
-   - Captures timestamp
-   - Switches to audio mode
-   - Starts recording
-   - Stops recording
-   - Previews audio
-   - Sends comment
-   - Verify comment appears in list with audio player
+1. Full recording flow (start → stop → send comment)
+2. Recording with pause/resume
+3. Recording cancellation
+4. Offline recording and sync
+5. Audio playback from comment
 
-2. **Offline Recording:**
-   - Disable network
-   - Record audio comment
-   - Verify saved locally
-   - Enable network
-   - Verify background sync uploads to Firebase
+**New Test:** `test/integration_test/audio_comment_cross_feature_test.dart`
 
-3. **Audio Playback:**
-   - Create audio comment
-   - Tap on comment card
-   - Verify audio seeks to timestamp
-   - Play audio from comment
-   - Verify playback controls work
-
-4. **Permission Handling:**
-   - Deny microphone permission
-   - Attempt to record
-   - Verify error message
-   - Grant permission
-   - Verify recording works
-
-**Test Setup:**
-```dart
-void main() {
-  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
-  group('Audio Comment Recording Integration', () {
-    testWidgets('Full recording and playback flow', (tester) async {
-      // 1. Launch app and navigate to comments screen
-      await tester.pumpWidget(MyApp());
-      await tester.pumpAndSettle();
-
-      // Login and navigate to project
-      // ...
-
-      // 2. Tap to focus input (captures timestamp)
-      await tester.tap(find.byType(TextField));
-      await tester.pumpAndSettle();
-
-      // 3. Switch to audio mode
-      await tester.tap(find.text('Audio'));
-      await tester.pumpAndSettle();
-
-      // 4. Start recording
-      await tester.tap(find.text('Start Recording'));
-      await tester.pump(Duration(seconds: 2)); // Record for 2 seconds
-
-      // 5. Stop recording
-      await tester.tap(find.byIcon(Icons.stop));
-      await tester.pumpAndSettle();
-
-      // 6. Verify preview appears
-      expect(find.byType(AudioPlayerPreview), findsOneWidget);
-
-      // 7. Send comment
-      await tester.tap(find.text('Send Audio Comment'));
-      await tester.pumpAndSettle();
-
-      // 8. Verify comment appears in list
-      expect(find.byType(AudioCommentPlayer), findsWidgets);
-
-      // 9. Tap comment to seek
-      await tester.tap(find.byType(AudioCommentCard).first);
-      await tester.pumpAndSettle();
-
-      // Verify audio player seeked to timestamp
-      // ...
-    });
-
-    testWidgets('Offline recording and sync', (tester) async {
-      // Disable network
-      await setNetworkEnabled(false);
-
-      // Record audio comment
-      // ...
-
-      // Verify saved locally
-      expect(find.byType(AudioCommentCard), findsOneWidget);
-
-      // Enable network
-      await setNetworkEnabled(true);
-      await Future.delayed(Duration(seconds: 5)); // Wait for sync
-
-      // Verify audio uploaded to Firebase Storage
-      // (check Firebase Storage using admin SDK)
-    });
-  });
-}
-```
+**Test Scenarios:**
+1. Record audio → create audio comment → verify in list
+2. Play audio comment → seek to timestamp
+3. Delete audio comment → verify file cleanup
 
 **Verification:**
 ```bash
-# Run integration tests
-flutter test integration_test/audio_comment_recording_integration_test.dart
-```
-
-**Success Criteria:**
-- All integration test scenarios pass
-- Recording creates valid audio files
-- Upload to Firebase Storage succeeds
-- Offline sync works correctly
-- Audio playback works in UI
-
----
-
-### Step 4.3: Manual Testing Checklist
-
-**Prerequisites:**
-- Android emulator/device with microphone
-- iOS simulator/device with microphone
-- Firebase project with Storage enabled
-- Network connectivity toggle capability
-
-**Test Cases:**
-
-1. **Recording Permissions:**
-   - [ ] First-time permission request appears
-   - [ ] Permission denial shows error message
-   - [ ] Permission grant enables recording
-
-2. **Audio Recording:**
-   - [ ] Tap audio mode toggle switches UI
-   - [ ] Start recording captures audio
-   - [ ] Waveform animates during recording
-   - [ ] Elapsed time updates correctly
-   - [ ] Stop button ends recording
-   - [ ] Cancel button discards recording
-
-3. **Audio Preview:**
-   - [ ] Preview player appears after recording
-   - [ ] Play/pause controls work
-   - [ ] Seek bar scrubs correctly
-   - [ ] Duration displays correctly
-   - [ ] Re-record button clears and restarts
-
-4. **Comment Submission:**
-   - [ ] Send button creates comment
-   - [ ] Comment appears in list immediately
-   - [ ] Audio player renders in comment card
-   - [ ] Timestamp badge shows correct time
-
-5. **Audio Playback:**
-   - [ ] Tap comment seeks main player to timestamp
-   - [ ] Comment audio player play/pause works
-   - [ ] Multiple comments can be played independently
-   - [ ] Audio loads from cache if available
-
-6. **Offline Functionality:**
-   - [ ] Recording works offline
-   - [ ] Comment saved locally offline
-   - [ ] Upload queued for background sync
-   - [ ] Sync completes when online
-   - [ ] Audio URL updated after upload
-
-7. **Permission System:**
-   - [ ] Viewers cannot record audio comments
-   - [ ] Editors can record audio comments
-   - [ ] Admins can record audio comments
-   - [ ] Users can delete their own audio comments
-   - [ ] Admins can delete any audio comment
-
-8. **Edge Cases:**
-   - [ ] Very short recording (< 1 second)
-   - [ ] Long recording (> 5 minutes)
-   - [ ] Recording interrupted by phone call
-   - [ ] App backgrounded during recording
-   - [ ] Network failure during upload
-   - [ ] Insufficient storage space
-
-9. **Cross-Platform:**
-   - [ ] All features work on Android
-   - [ ] All features work on iOS
-   - [ ] Audio files compatible between platforms
-
-10. **Backward Compatibility:**
-    - [ ] Existing text comments display correctly
-    - [ ] Old app versions ignore audio fields
-    - [ ] Database migration preserves data
-
----
-
-### Step 4.4: Performance Testing
-
-**Metrics to Measure:**
-
-1. **Recording Performance:**
-   - CPU usage during recording
-   - Memory usage during recording
-   - Battery drain during recording
-
-2. **Upload Performance:**
-   - Time to upload 1 MB audio file
-   - Background sync battery impact
-   - Upload retry on failure
-
-3. **Playback Performance:**
-   - Time to start playback (cold cache)
-   - Time to start playback (warm cache)
-   - Simultaneous playback handling
-
-4. **Database Performance:**
-   - Query time for comments with audio
-   - Isar index efficiency
-   - Sync operation throughput
-
-**Test Tools:**
-```bash
-# Flutter performance profiling
-flutter run --profile
-
-# Firebase Storage performance monitoring
-# (Use Firebase Console → Performance tab)
-
-# Isar database profiling
-# (Use Isar Inspector)
-```
-
-**Success Criteria:**
-- Recording starts within 500ms
-- Upload completes within 5 seconds for 1 MB file
-- Playback starts within 1 second (cached)
-- No UI jank (frame rate ≥ 60 FPS)
-
----
-
-## Phase 5: Deployment & Migration
-
-### Step 5.1: Database Migration Strategy
-
-**Isar Schema Migration:**
-
-The addition of new fields to `AudioCommentDocument` requires regenerating Isar schema:
-
-```bash
-# Regenerate Isar collections
-flutter packages pub run build_runner build --delete-conflicting-outputs
-```
-
-**Migration Behavior:**
-- Isar automatically handles new nullable fields
-- Existing documents get `null` for new fields
-- `commentType` defaults to `CommentType.text` for existing documents
-- No data loss for existing comments
-
-**Verification:**
-```dart
-// Migration test
-void testIsarMigration() async {
-  final isar = await Isar.open([AudioCommentDocumentSchema]);
-
-  // Insert legacy document (simulate old schema)
-  await isar.writeTxn(() async {
-    final doc = AudioCommentDocument()
-      ..id = 'test-id'
-      ..content = 'Legacy comment'
-      ..timestamp = 10000
-      ..createdAt = DateTime.now();
-    await isar.audioCommentDocuments.put(doc);
-  });
-
-  // Read back and verify new fields
-  final doc = await isar.audioCommentDocuments.get(fastHash('test-id'));
-  expect(doc!.audioStorageUrl, isNull);
-  expect(doc.commentType, equals(CommentType.text));
-}
+flutter test integration_test/
 ```
 
 ---
 
-### Step 5.2: Firebase Firestore Migration
+### Step 6.2: Manual Testing Checklist
 
-**Firestore Schema Changes:**
-
-New fields added to `audio_comments` collection:
-- `audioStorageUrl` (string, optional)
-- `audioDurationMs` (number, optional)
-- `commentType` (string, default: "text")
-
-**Migration Script:** `scripts/migrate_firestore_comments.dart`
-
-```dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-Future<void> migrateFirestoreComments() async {
-  final firestore = FirebaseFirestore.instance;
-  final batch = firestore.batch();
-
-  // Query all existing comments
-  final snapshot = await firestore.collection('audio_comments').get();
-
-  int count = 0;
-  for (final doc in snapshot.docs) {
-    final data = doc.data();
-
-    // Only migrate if commentType is missing
-    if (!data.containsKey('commentType')) {
-      batch.update(doc.reference, {
-        'commentType': 'text',
-        'audioStorageUrl': null,
-        'audioDurationMs': null,
-      });
-      count++;
-    }
-
-    // Batch limit is 500
-    if (count >= 500) {
-      await batch.commit();
-      count = 0;
-    }
-  }
-
-  // Commit remaining
-  if (count > 0) {
-    await batch.commit();
-  }
-
-  print('Migration complete');
-}
-```
-
-**Execution:**
-```bash
-# Run migration script (one-time)
-flutter run scripts/migrate_firestore_comments.dart
-```
-
-**Verification:**
-- Query sample documents in Firebase Console
-- Verify `commentType: "text"` exists on legacy documents
-- Verify new fields are null on legacy documents
+See comprehensive checklist at the end of this document.
 
 ---
 
-### Step 5.3: Firebase Storage Security Rules
+## Phase 7: Documentation
 
-**Update Storage Rules:** `storage.rules`
+### Step 7.1: Architecture Documentation
 
-```rules
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    // Audio comment files
-    match /audio_comments/{projectId}/{versionId}/{commentId}.m4a {
-      // Allow read if user is project collaborator
-      allow read: if request.auth != null &&
-        firestore.exists(/databases/(default)/documents/projects/$(projectId)/collaborators/$(request.auth.uid));
+**Update:** `docs/architecture.md`
 
-      // Allow write if user has addComment permission
-      allow write: if request.auth != null &&
-        firestore.get(/databases/(default)/documents/projects/$(projectId)/collaborators/$(request.auth.uid)).data.role in ['owner', 'admin', 'editor'];
-
-      // Allow delete if user has deleteComment permission or is comment author
-      allow delete: if request.auth != null &&
-        (firestore.get(/databases/(default)/documents/audio_comments/$(commentId)).data.createdBy == request.auth.uid ||
-         firestore.get(/databases/(default)/documents/projects/$(projectId)/collaborators/$(request.auth.uid)).data.role in ['owner', 'admin']);
-    }
-  }
-}
-```
-
-**Deployment:**
-```bash
-# Deploy storage rules
-firebase deploy --only storage
-```
-
-**Verification:**
-- Test upload as editor (should succeed)
-- Test upload as viewer (should fail)
-- Test download as collaborator (should succeed)
-- Test download as non-collaborator (should fail)
-- Test delete own comment (should succeed)
-- Test delete other's comment as admin (should succeed)
-- Test delete other's comment as editor (should fail)
-
----
-
-### Step 5.4: Rollout Plan
-
-**Phase 1: Alpha Testing (Week 1)**
-- Deploy to internal test track (TestFlight/Internal Testing)
-- Team members test all recording flows
-- Monitor Firebase Storage usage
-- Monitor crash reports
-
-**Phase 2: Beta Testing (Week 2)**
-- Deploy to beta track (100 users)
-- Collect user feedback on recording UX
-- Monitor performance metrics
-- Monitor sync success rate
-
-**Phase 3: Gradual Rollout (Week 3-4)**
-- 10% production rollout
-- Monitor key metrics:
-  - Audio comment creation rate
-  - Upload success rate
-  - Playback errors
-  - Storage costs
-- Increase to 50% if metrics healthy
-- Increase to 100% if metrics healthy
-
-**Rollback Plan:**
-- If critical issues detected, rollback to previous version
-- Audio comments created during rollout will remain (backward compatible)
-- Users can still view audio comments in read-only mode
-
----
-
-## Phase 6: Documentation
-
-### Step 6.1: Code Documentation
-
-**Add Dartdoc Comments:**
-
-```dart
-/// Represents an audio comment on a specific track version at a timestamp.
-///
-/// Audio comments can be text-only, audio-only, or hybrid (audio + transcription).
-/// Audio files are stored in Firebase Storage and cached locally for offline playback.
-///
-/// Example:
-/// ```dart
-/// final comment = AudioComment.create(
-///   projectId: ProjectId.fromUniqueString('proj-123'),
-///   versionId: TrackVersionId.fromUniqueString('ver-456'),
-///   createdBy: UserId.fromUniqueString('user-789'),
-///   content: 'Transcription text',
-///   localAudioPath: '/path/to/recording.m4a',
-///   audioDuration: Duration(seconds: 30),
-///   commentType: CommentType.hybrid,
-/// );
-/// ```
-class AudioComment extends Entity<AudioCommentId> {
-  // ...
-}
-```
-
----
-
-### Step 6.2: User Documentation
-
-**Update User Guide:** `docs/user_guide.md`
-
-**Section: Audio Comments**
+Add section: **Reusable Audio Recording Module**
 
 ```markdown
-## Recording Audio Comments
+## Audio Recording Module
 
-TrackFlow supports audio comments for richer collaboration. You can record voice feedback directly on specific timestamps.
+The audio recording module is a standalone feature that provides recording capabilities to any part of the application.
 
-### How to Record Audio Comments
+### Module Structure
 
-1. **Navigate to the Comments screen** for a track version
-2. **Tap on the audio input** at the timestamp where you want to comment
-3. **Switch to Audio mode** using the toggle button
-4. **Tap "Start Recording"** to begin recording your voice
-5. **Speak your feedback** while watching the waveform visualization
-6. **Tap "Stop"** when finished
-7. **Preview your recording** using the playback controls
-8. **Tap "Send"** to post the audio comment
+- **Domain Layer**: Recording entities, services, use cases
+- **Infrastructure Layer**: Platform-specific recording implementation
+- **Presentation Layer**: Reusable recording UI components and BLoC
 
-### Audio Comment Features
+### Integration Pattern
 
-- **Waveform Visualization**: See your voice levels while recording
-- **Preview Playback**: Listen to your recording before sending
-- **Re-record**: Discard and record again if needed
-- **Offline Support**: Record comments offline; they'll upload when connected
-- **Seek to Timestamp**: Tap any audio comment to jump to that position in the track
+Consumers integrate via:
+1. Depend on `RecordingService` via DI
+2. Use `RecordingBloc` for state management
+3. Reuse recording widgets (RecordingButton, RecordingWaveform, etc.)
+4. Handle recording results (AudioRecording entity)
+5. Manage storage according to domain needs
 
-### Permissions
+### Current Consumers
 
-- **Viewers**: Cannot create audio comments
-- **Editors**: Can create and delete their own audio comments
-- **Admins**: Can create and delete any audio comment
-
-### Tips
-
-- Keep recordings concise (< 1 minute recommended)
-- Speak clearly near your microphone
-- Use headphones to avoid feedback
-- Record in a quiet environment
+- **audio_comment**: Uses recording for voice feedback on tracks
+- **Future**: voice_memo, audio_notes, voice_journal
 ```
 
 ---
 
-### Step 6.3: Developer Documentation
+## Architecture Summary
 
-**Update Architecture Doc:** `docs/architecture.md`
-
-**Section: Audio Comment Architecture**
-
-```markdown
-## Audio Comment System
-
-### Architecture Overview
+### Module Boundaries
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Presentation Layer                      │
-│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
-│  │ CommentInput   │  │ AudioRecording   │  │ AudioComment │ │
-│  │ Modal          │  │ Bloc             │  │ Player       │ │
-│  └────────────────┘  └──────────────────┘  └──────────────┘ │
+│ audio_recording (Reusable Module)                           │
+│  - Provides: Recording capabilities                         │
+│  - Exports: RecordingService, RecordingBloc, UI widgets     │
+│  - Dependencies: Core services only                         │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+                            ▲
+                            │ depends on
+                            │
 ┌─────────────────────────────────────────────────────────────┐
-│                       Domain Layer                           │
-│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
-│  │ AudioComment   │  │ AddComment       │  │ AudioComment │ │
-│  │ Entity         │  │ UseCase          │  │ Repository   │ │
-│  └────────────────┘  └──────────────────┘  └──────────────┘ │
+│ audio_comment (Consumer)                                    │
+│  - Uses: RecordingService, RecordingBloc                    │
+│  - Adds: Comment-specific storage logic                     │
+│  - Handles: Firebase upload, Firestore persistence          │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+
 ┌─────────────────────────────────────────────────────────────┐
-│                        Data Layer                            │
-│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
-│  │ AudioComment   │  │ AudioStorage     │  │ AudioComment │ │
-│  │ RepositoryImpl │  │ Service          │  │ SyncExecutor │ │
-│  └────────────────┘  └──────────────────┘  └──────────────┘ │
+│ voice_memo (Future Consumer)                                │
+│  - Uses: RecordingService, RecordingBloc                    │
+│  - Adds: Memo-specific storage logic                        │
+│  - Handles: Local storage, categorization                   │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+
 ┌─────────────────────────────────────────────────────────────┐
-│                    Infrastructure                            │
-│  ┌────────────────┐  ┌──────────────────┐  ┌──────────────┐ │
-│  │ Firebase       │  │ Isar Local DB    │  │ Record       │ │
-│  │ Storage        │  │                  │  │ Package      │ │
-│  └────────────────┘  └──────────────────┘  └──────────────┘ │
+│ Core Services (Shared Infrastructure)                       │
+│  - AudioStorageService (Firebase Storage abstraction)       │
+│  - FileSystemService (Local file operations)                │
+│  - PermissionService (Microphone permissions)               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Audio Recording Flow
+### Dependency Injection Configuration
 
-1. User switches to audio mode in `CommentInputModal`
-2. `AudioRecordingBloc` manages recording state
-3. `AudioRecordingService` wraps `record` package
-4. Recording saved to temporary directory
-5. User previews with `AudioPlayerPreview` widget
-6. On send, `AddAudioCommentEvent` dispatched with local file path
-7. `AddAudioCommentUseCase` validates permissions and creates entity
-8. `AudioCommentRepositoryImpl` saves to Isar and queues upload
-9. `AudioCommentOperationExecutor` uploads to Firebase Storage
-10. Firestore document updated with storage URL
-11. Stream updates UI with new comment
+**File:** `lib/core/di/injection.dart`
 
-### Audio Playback Flow
+Ensure all new services are registered:
 
-1. `AudioCommentPlayer` widget receives comment entity
-2. Attempts to load from local cache first
-3. Falls back to streaming from Firebase Storage URL
-4. Background task downloads and caches for offline use
-5. User can play/pause/seek within comment
-6. Tapping comment card seeks main player to timestamp
+```dart
+@InjectableInit()
+void configureDependencies() => getIt.init();
 
-### Storage Strategy
-
-- **Recording Format**: M4A (AAC-LC codec, 128kbps, 44.1kHz)
-- **Firebase Storage Path**: `/audio_comments/{projectId}/{versionId}/{commentId}.m4a`
-- **Local Cache Path**: `{appDocuments}/audio_comments/{commentId}.m4a`
-- **Max Recording Length**: 5 minutes (enforced in UI)
-- **Storage Limits**: Configurable per project
-
-### Offline-First Sync
-
-Audio comments follow the same offline-first pattern as text comments:
-
-1. Recording saved locally immediately
-2. Comment appears in UI from Isar stream
-3. Background sync queues upload operation
-4. Upload executes when network available
-5. Firestore document updated with storage URL
-6. Local document updated with remote URL
-7. Subsequent playback uses cached file
-
-### Security
-
-- **Storage Rules**: Permission-based read/write access
-- **Upload Validation**: File size and format checked server-side
-- **Malware Scanning**: Firebase Storage scans uploaded files
-- **Access Control**: Only project collaborators can access audio files
+// Modules will auto-register with @injectable annotations:
+// - AudioStorageServiceImpl
+// - FileSystemServiceImpl
+// - PermissionServiceImpl
+// - PlatformRecordingService
+// - RecordingBloc
+// - AudioCommentStorageCoordinator
+// - All use cases
 ```
 
 ---
 
-## Success Criteria Summary
+## Files Summary
 
-### Functional Requirements
+### New Files (Core Services) - 6 files
 
-- [x] Users can record audio comments at specific timestamps
-- [x] Audio comments are stored in Firebase Storage
-- [x] Audio comments are cached locally for offline playback
-- [x] Audio comments appear in comment list with playback controls
-- [x] Existing text comments remain unchanged
-- [x] Permission system applies to audio comments
-- [x] Offline recording and sync works correctly
-- [x] Audio playback seeks to comment timestamp
+1. `lib/core/services/audio_storage_service.dart`
+2. `lib/core/services/audio_storage_service_impl.dart`
+3. `lib/core/services/file_system_service.dart`
+4. `lib/core/services/file_system_service_impl.dart`
+5. `lib/core/services/permission_service.dart`
+6. `lib/core/services/permission_service_impl.dart`
 
-### Non-Functional Requirements
+### New Files (Recording Module) - 18 files
 
-- [x] Recording starts within 500ms
-- [x] Upload completes within 5 seconds for 1 MB file
-- [x] Playback starts within 1 second (cached)
-- [x] UI remains responsive (≥ 60 FPS)
-- [x] Code coverage ≥ 80% for new code
-- [x] All integration tests pass
-- [x] Backward compatible with existing data
+**Domain:**
+7. `lib/features/audio_recording/domain/entities/audio_recording.dart`
+8. `lib/features/audio_recording/domain/entities/recording_session.dart`
+9. `lib/features/audio_recording/domain/services/recording_service.dart`
+10. `lib/features/audio_recording/domain/usecases/start_recording_usecase.dart`
+11. `lib/features/audio_recording/domain/usecases/stop_recording_usecase.dart`
+12. `lib/features/audio_recording/domain/usecases/cancel_recording_usecase.dart`
 
-### Quality Assurance
+**Infrastructure:**
+13. `lib/features/audio_recording/infrastructure/services/platform_recording_service.dart`
 
-- [x] All unit tests pass
-- [x] All integration tests pass
-- [x] Manual testing checklist complete
-- [x] Performance benchmarks met
-- [x] Security rules deployed and verified
-- [x] Documentation complete
+**Presentation:**
+14. `lib/features/audio_recording/presentation/bloc/recording_event.dart`
+15. `lib/features/audio_recording/presentation/bloc/recording_state.dart`
+16. `lib/features/audio_recording/presentation/bloc/recording_bloc.dart`
+17. `lib/features/audio_recording/presentation/widgets/recording_button.dart`
+18. `lib/features/audio_recording/presentation/widgets/recording_waveform.dart`
+19. `lib/features/audio_recording/presentation/widgets/recording_timer.dart`
+20. `lib/features/audio_recording/presentation/widgets/recording_controls.dart`
 
----
+### New Files (Audio Comment Integration) - 3 files
 
-## Files Changed Summary
+21. `lib/features/audio_comment/data/services/audio_comment_storage_coordinator.dart`
+22. `lib/features/audio_comment/presentation/components/audio_comment_player.dart`
+23. `lib/core/sync/domain/executors/audio_comment_operation_executor.dart`
 
-### New Files (23)
+### Modified Files (Audio Comment) - 6 files
 
-**Domain Layer:**
-1. `lib/features/audio_comment/domain/value_objects/audio_recording.dart`
+24. `lib/features/audio_comment/domain/entities/audio_comment.dart`
+25. `lib/features/audio_comment/data/models/audio_comment_dto.dart`
+26. `lib/features/audio_comment/data/models/audio_comment_document.dart`
+27. `lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart`
+28. `lib/features/audio_comment/presentation/components/comment_input_modal.dart`
+29. `lib/features/audio_comment/presentation/components/audio_comment_content.dart`
 
-**Data Layer:**
-2. `lib/features/audio_comment/data/services/audio_comment_storage_service.dart`
-3. `lib/features/audio_comment/data/services/audio_comment_storage_service_impl.dart`
+### Test Files - 23 files
 
-**Core:**
-4. `lib/core/sync/domain/executors/audio_comment_operation_executor.dart`
+30-52. Corresponding unit/widget/integration tests for all new files
 
-**Presentation Layer:**
-5. `lib/features/audio_comment/presentation/services/audio_recording_service.dart`
-6. `lib/features/audio_comment/presentation/bloc/audio_recording_bloc.dart`
-7. `lib/features/audio_comment/presentation/bloc/audio_recording_event.dart`
-8. `lib/features/audio_comment/presentation/bloc/audio_recording_state.dart`
-9. `lib/features/audio_comment/presentation/components/waveform_painter.dart`
-10. `lib/features/audio_comment/presentation/components/audio_comment_player.dart`
-11. `lib/features/audio_comment/presentation/components/audio_player_preview.dart`
+### Documentation - 2 files
 
-**Tests:**
-12. `test/features/audio_comment/domain/value_objects/audio_recording_test.dart`
-13. `test/features/audio_comment/data/services/audio_comment_storage_service_test.dart`
-14. `test/core/sync/domain/executors/audio_comment_operation_executor_test.dart`
-15. `test/features/audio_comment/presentation/services/audio_recording_service_test.dart`
-16. `test/features/audio_comment/presentation/bloc/audio_recording_bloc_test.dart`
-17. `test/features/audio_comment/presentation/components/audio_comment_player_test.dart`
-18. `test/integration_test/audio_comment_recording_integration_test.dart`
-19. `test/integration_test/audio_storage_integration_test.dart`
+53. `docs/architecture.md` (update)
+54. `storage.rules` (update)
 
-**Scripts:**
-20. `scripts/migrate_firestore_comments.dart`
-
-**Documentation:**
-21. `docs/user_guide.md` (update)
-22. `docs/architecture.md` (update)
-23. `storage.rules` (update)
-
-### Modified Files (12)
-
-**Domain Layer:**
-1. `lib/features/audio_comment/domain/entities/audio_comment.dart` - Add audio fields
-2. `lib/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart` - Update params
-
-**Data Layer:**
-3. `lib/features/audio_comment/data/models/audio_comment_dto.dart` - Add audio fields
-4. `lib/features/audio_comment/data/models/audio_comment_document.dart` - Update Isar schema
-5. `lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart` - Add audio handling
-
-**Presentation Layer:**
-6. `lib/features/audio_comment/presentation/bloc/audio_comment_event.dart` - Update AddAudioCommentEvent
-7. `lib/features/audio_comment/presentation/bloc/audio_comment_bloc.dart` - Handle audio params
-8. `lib/features/audio_comment/presentation/components/comment_input_modal.dart` - Add recording UI
-9. `lib/features/audio_comment/presentation/components/audio_comment_content.dart` - Render audio player
-
-**Tests:**
-10. `test/features/audio_comment/domain/entities/audio_comment_test.dart` - Test audio fields
-11. `test/features/audio_comment/data/models/audio_comment_dto_test.dart` - Test audio serialization
-12. `test/features/audio_comment/presentation/bloc/audio_comment_bloc_test.dart` - Test audio events
+**Total: 54 files (27 new, 6 modified, 21 tests)**
 
 ---
 
 ## Estimated Timeline
 
-- **Phase 1 (Domain Layer)**: 2 days
-- **Phase 2 (Data Layer)**: 3 days
-- **Phase 3 (Presentation Layer)**: 4 days
-- **Phase 4 (Testing)**: 3 days
-- **Phase 5 (Deployment)**: 2 days
-- **Phase 6 (Documentation)**: 1 day
+- **Phase 0 (Core Services)**: 2 days
+- **Phase 1 (Recording Domain)**: 2 days
+- **Phase 2 (Recording Infrastructure)**: 2 days
+- **Phase 3 (Recording Presentation)**: 2 days
+- **Phase 4 (Audio Comment Integration)**: 3 days
+- **Phase 5 (Sync Integration)**: 2 days
+- **Phase 6 (Testing)**: 3 days
+- **Phase 7 (Documentation)**: 1 day
 
-**Total: 15 days (3 weeks)**
-
----
-
-## Next Steps
-
-1. **Review and approve this plan**
-2. **Create feature branch:** `git checkout -b feature/audio-recording-comments`
-3. **Begin Phase 1 implementation**
-4. **Regular checkpoints after each phase**
-5. **Code review before merge to main**
+**Total: 17 days (3.5 weeks)**
 
 ---
 
-**END OF IMPLEMENTATION PLAN**
+# COMPREHENSIVE IMPLEMENTATION CHECKLIST
+
+## Context for Implementation
+
+This checklist provides a sequential, step-by-step guide for implementing the reusable audio recording module and integrating it with the audio comment feature. Each item is self-contained with enough detail for an AI agent or developer to execute independently.
+
+---
+
+## Phase 0: Core Services Setup
+
+### Core Audio Storage Service
+
+- [ ] **Create audio storage service interface**
+  - File: `lib/core/services/audio_storage_service.dart`
+  - Define abstract methods: `uploadAudioFile`, `downloadAudioFile`, `deleteAudioFile`, `getDownloadUrl`
+  - Use `Either<Failure, T>` return types for error handling
+  - Accept `remotePath` (Firebase Storage path) and `metadata` (custom key-value pairs)
+
+- [ ] **Implement audio storage service**
+  - File: `lib/core/services/audio_storage_service_impl.dart`
+  - Inject `FirebaseStorage` instance
+  - Annotate with `@LazySingleton(as: AudioStorageService)`
+  - Implement upload: use `ref.putFile()` with metadata
+  - Implement download: check cache first, then download with `ref.writeToFile()`
+  - Implement delete: use `ref.delete()`
+  - Wrap all operations with try-catch and return `Either<Failure, T>`
+
+- [ ] **Write unit tests for audio storage service**
+  - File: `test/core/services/audio_storage_service_test.dart`
+  - Mock `FirebaseStorage` using Mockito
+  - Test upload success and failure scenarios
+  - Test download with caching logic (skip if file exists)
+  - Test delete operations
+  - Verify correct Firebase Storage paths are used
+
+---
+
+### Core File System Service
+
+- [ ] **Create file system service interface**
+  - File: `lib/core/services/file_system_service.dart`
+  - Define methods: `getTemporaryDirectory`, `getApplicationDocumentsDirectory`, `ensureDirectoryExists`, `deleteFile`, `fileExists`, `copyFile`, `getFileSize`, `generateTemporaryFilePath`
+
+- [ ] **Implement file system service**
+  - File: `lib/core/services/file_system_service_impl.dart`
+  - Annotate with `@LazySingleton(as: FileSystemService)`
+  - Use `path_provider` package for directory access
+  - Implement `ensureDirectoryExists`: create directory recursively if missing
+  - Implement `copyFile`: ensure destination directory exists before copying
+  - Implement `generateTemporaryFilePath`: use timestamp + UUID for uniqueness
+
+- [ ] **Write unit tests for file system service**
+  - File: `test/core/services/file_system_service_test.dart`
+  - Mock `path_provider` methods
+  - Test directory creation
+  - Test file operations (copy, delete, exists check)
+  - Test path generation uniqueness
+
+---
+
+### Core Permission Service
+
+- [ ] **Create permission service interface**
+  - File: `lib/core/services/permission_service.dart`
+  - Define methods: `hasMicrophonePermission`, `requestMicrophonePermission`, `isPermanentlyDenied`, `openAppSettings`
+
+- [ ] **Implement permission service**
+  - File: `lib/core/services/permission_service_impl.dart`
+  - Annotate with `@LazySingleton(as: PermissionService)`
+  - Use `Record` package's built-in `hasPermission()` method
+  - Note: For advanced permission handling, consider adding `permission_handler` package in future
+
+- [ ] **Write unit tests for permission service**
+  - File: `test/core/services/permission_service_test.dart`
+  - Mock `Record` package
+  - Test permission check
+  - Test permission request flow
+
+---
+
+## Phase 1: Audio Recording Domain Layer
+
+### Recording Domain Entities
+
+- [ ] **Create AudioRecording entity**
+  - File: `lib/features/audio_recording/domain/entities/audio_recording.dart`
+  - Fields: `id`, `localPath`, `duration`, `format`, `fileSizeBytes`, `recordedAt`, `metadata`
+  - Extend `Equatable` for value equality
+  - Provide factory method: `AudioRecording.create()` (auto-generates ID and timestamp)
+  - Provide `copyWith()` method
+  - Define `AudioFormat` enum: `m4a`, `aac`, `mp3`
+
+- [ ] **Create RecordingSession entity**
+  - File: `lib/features/audio_recording/domain/entities/recording_session.dart`
+  - Fields: `sessionId`, `startedAt`, `elapsed`, `state`, `outputPath`, `currentAmplitude`
+  - Extend `Equatable`
+  - Provide `copyWith()` method
+  - Define `RecordingState` enum: `idle`, `recording`, `paused`, `stopped`
+
+- [ ] **Write unit tests for recording entities**
+  - File: `test/features/audio_recording/domain/entities/audio_recording_test.dart`
+  - Test factory creation
+  - Test copyWith
+  - Test equality
+  - File: `test/features/audio_recording/domain/entities/recording_session_test.dart`
+  - Test session state transitions
+
+---
+
+### Recording Domain Service
+
+- [ ] **Create RecordingService interface**
+  - File: `lib/features/audio_recording/domain/services/recording_service.dart`
+  - Define abstract methods: `hasPermission`, `requestPermission`, `startRecording`, `stopRecording`, `pauseRecording`, `resumeRecording`, `cancelRecording`
+  - Define getter: `sessionStream` (returns `Stream<RecordingSession>`)
+  - Define getter: `isRecording` (returns `bool`)
+  - All async methods return `Either<Failure, T>`
+
+---
+
+### Recording Use Cases
+
+- [ ] **Create StartRecordingUseCase**
+  - File: `lib/features/audio_recording/domain/usecases/start_recording_usecase.dart`
+  - Annotate with `@injectable`
+  - Inject: `RecordingService`, `FileSystemService`
+  - Logic: Check permission → request if needed → generate output path (temp directory) → call `recordingService.startRecording()`
+  - Return `Either<Failure, String>` (session ID)
+
+- [ ] **Create StopRecordingUseCase**
+  - File: `lib/features/audio_recording/domain/usecases/stop_recording_usecase.dart`
+  - Annotate with `@injectable`
+  - Inject: `RecordingService`
+  - Logic: Call `recordingService.stopRecording()`
+  - Return `Either<Failure, AudioRecording>`
+
+- [ ] **Create CancelRecordingUseCase**
+  - File: `lib/features/audio_recording/domain/usecases/cancel_recording_usecase.dart`
+  - Annotate with `@injectable`
+  - Inject: `RecordingService`, `FileSystemService`
+  - Logic: Call `recordingService.cancelRecording()` → delete temp file
+  - Return `Either<Failure, Unit>`
+
+- [ ] **Write unit tests for recording use cases**
+  - File: `test/features/audio_recording/domain/usecases/start_recording_usecase_test.dart`
+  - Mock `RecordingService` and `FileSystemService`
+  - Test permission checks
+  - Test output path generation
+  - File: `test/features/audio_recording/domain/usecases/stop_recording_usecase_test.dart`
+  - Test stop recording flow
+  - File: `test/features/audio_recording/domain/usecases/cancel_recording_usecase_test.dart`
+  - Test cancel and file cleanup
+
+---
+
+## Phase 2: Audio Recording Infrastructure Layer
+
+### Platform Recording Service
+
+- [ ] **Implement PlatformRecordingService**
+  - File: `lib/features/audio_recording/infrastructure/services/platform_recording_service.dart`
+  - Annotate with `@LazySingleton(as: RecordingService)`
+  - Inject: `PermissionService`, `FileSystemService`
+  - Maintain state: `_currentSession`, `_elapsedTimer`, `_amplitudeTimer`
+  - Implement `startRecording`:
+    - Check permission
+    - Create output directory
+    - Start `Record` package with M4A format (AAC-LC codec, 128kbps, 44.1kHz)
+    - Create `RecordingSession` with unique ID
+    - Start elapsed timer (100ms interval)
+    - Start amplitude monitoring (100ms interval)
+    - Emit session via `_sessionController`
+  - Implement `stopRecording`:
+    - Stop `Record`
+    - Cancel timers
+    - Get file size
+    - Create `AudioRecording` entity
+    - Return recording
+  - Implement `pauseRecording`, `resumeRecording`, `cancelRecording`
+  - Provide `dispose()` method to clean up resources
+
+- [ ] **Write unit tests for platform recording service**
+  - File: `test/features/audio_recording/infrastructure/services/platform_recording_service_test.dart`
+  - Mock `Record`, `PermissionService`, `FileSystemService`
+  - Test start recording flow
+  - Test stop recording flow
+  - Test pause/resume flow
+  - Test cancel recording with cleanup
+  - Test elapsed timer updates
+  - Test amplitude monitoring
+  - Test error scenarios (permission denied, file write failure)
+
+---
+
+## Phase 3: Audio Recording Presentation Layer
+
+### Recording BLoC
+
+- [ ] **Create RecordingEvent**
+  - File: `lib/features/audio_recording/presentation/bloc/recording_event.dart`
+  - Define events: `StartRecordingRequested`, `StopRecordingRequested`, `PauseRecordingRequested`, `ResumeRecordingRequested`, `CancelRecordingRequested`, `RecordingSessionUpdated`
+  - All extend `Equatable`
+  - `StartRecordingRequested` has optional `customOutputPath` field
+
+- [ ] **Create RecordingState**
+  - File: `lib/features/audio_recording/presentation/bloc/recording_state.dart`
+  - Define states: `RecordingInitial`, `RecordingInProgress`, `RecordingPaused`, `RecordingCompleted`, `RecordingError`
+  - All extend `Equatable`
+  - `RecordingInProgress` and `RecordingPaused` contain `RecordingSession`
+  - `RecordingCompleted` contains `AudioRecording`
+  - `RecordingError` contains error message
+
+- [ ] **Create RecordingBloc**
+  - File: `lib/features/audio_recording/presentation/bloc/recording_bloc.dart`
+  - Annotate with `@injectable`
+  - Inject: `StartRecordingUseCase`, `StopRecordingUseCase`, `CancelRecordingUseCase`, `RecordingService`
+  - Subscribe to `recordingService.sessionStream` in constructor
+  - On session updates, add `RecordingSessionUpdated` event
+  - Implement event handlers:
+    - `_onStartRecording`: Call use case, handle errors
+    - `_onStopRecording`: Call use case, emit `RecordingCompleted`
+    - `_onPauseRecording`, `_onResumeRecording`, `_onCancelRecording`
+    - `_onSessionUpdated`: Map session state to BLoC state
+  - Implement `close()`: Cancel session subscription
+
+- [ ] **Write unit tests for recording BLoC**
+  - File: `test/features/audio_recording/presentation/bloc/recording_bloc_test.dart`
+  - Use `bloc_test` package
+  - Mock use cases and recording service
+  - Test each event → state transition
+  - Test session stream updates
+  - Test error scenarios
+
+---
+
+### Recording Widgets
+
+- [ ] **Create RecordingButton widget**
+  - File: `lib/features/audio_recording/presentation/widgets/recording_button.dart`
+  - Props: `onStartRecording`, `onStopRecording`, `isRecording`, `startLabel`, `stopLabel`
+  - Render: ElevatedButton with icon (record or stop) and label
+  - Styling: Use AppColors and AppTextStyle
+
+- [ ] **Create RecordingWaveform widget**
+  - File: `lib/features/audio_recording/presentation/widgets/recording_waveform.dart`
+  - Props: `amplitude`, `color`, `height`
+  - Render: CustomPaint with WaveformPainter
+  - WaveformPainter: Draw vertical bar with height based on amplitude
+
+- [ ] **Create RecordingTimer widget**
+  - File: `lib/features/audio_recording/presentation/widgets/recording_timer.dart`
+  - Props: `elapsed`, `style`
+  - Render: Text with formatted duration (MM:SS)
+  - Use tabular figures font feature for monospace numbers
+
+- [ ] **Create RecordingControls widget**
+  - File: `lib/features/audio_recording/presentation/widgets/recording_controls.dart`
+  - Props: `onPause`, `onResume`, `onCancel`, `isPaused`
+  - Render: Row with pause/resume button and cancel button
+  - Use AppColors for styling
+
+- [ ] **Write widget tests for recording widgets**
+  - File: `test/features/audio_recording/presentation/widgets/recording_button_test.dart`
+  - Test button tap calls correct callback
+  - Test icon and label change based on state
+  - File: `test/features/audio_recording/presentation/widgets/recording_waveform_test.dart`
+  - Test waveform renders
+  - File: `test/features/audio_recording/presentation/widgets/recording_timer_test.dart`
+  - Test duration formatting
+  - File: `test/features/audio_recording/presentation/widgets/recording_controls_test.dart`
+  - Test control buttons
+
+---
+
+## Phase 4: Audio Comment Integration
+
+### Domain Layer Updates
+
+- [ ] **Update AudioComment entity**
+  - File: `lib/features/audio_comment/domain/entities/audio_comment.dart`
+  - Add fields: `audioStorageUrl`, `localAudioPath`, `audioDuration`, `commentType`
+  - Define `CommentType` enum: `text`, `audio`, `hybrid`
+  - Update factory methods and `copyWith()`
+  - Add validation rules
+
+- [ ] **Write unit tests for updated AudioComment entity**
+  - File: `test/features/audio_comment/domain/entities/audio_comment_test.dart`
+  - Test creation with audio fields
+  - Test validation for each CommentType
+  - Test copyWith with audio fields
+
+- [ ] **Update AddAudioCommentParams**
+  - File: `lib/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart`
+  - Add fields: `localAudioPath`, `audioDuration`, `commentType`
+  - Add validation in constructor
+
+---
+
+### Data Layer Updates
+
+- [ ] **Update AudioCommentDTO**
+  - File: `lib/features/audio_comment/data/models/audio_comment_dto.dart`
+  - Add fields: `audioStorageUrl`, `localAudioPath`, `audioDurationMs`, `commentType`
+  - Update `fromDomain()`, `toJson()`, `fromJson()` methods
+  - Note: Do NOT serialize `localAudioPath` (local-only field)
+
+- [ ] **Update AudioCommentDocument (Isar schema)**
+  - File: `lib/features/audio_comment/data/models/audio_comment_document.dart`
+  - Add fields: `audioStorageUrl`, `localAudioPath`, `audioDurationMs`, `commentType` (enumerated)
+  - Define `CommentType` enum in same file with `@enumerated` annotation
+  - Update `fromDTO()` and `toDTO()` methods
+
+- [ ] **Regenerate Isar schema**
+  - Run: `flutter packages pub run build_runner build --delete-conflicting-outputs`
+  - Verify no errors in generated code
+
+- [ ] **Write unit tests for updated DTOs**
+  - File: `test/features/audio_comment/data/models/audio_comment_dto_test.dart`
+  - Test serialization with audio fields
+  - Test backward compatibility (missing fields default to text type)
+  - File: `test/features/audio_comment/data/models/audio_comment_document_test.dart`
+  - Test Isar document conversion
+
+---
+
+### Audio Comment Storage Coordinator
+
+- [ ] **Create AudioCommentStorageCoordinator**
+  - File: `lib/features/audio_comment/data/services/audio_comment_storage_coordinator.dart`
+  - Annotate with `@injectable`
+  - Inject: `AudioStorageService`, `FileSystemService`
+  - Implement `uploadCommentAudio`:
+    - Build Firebase Storage path: `audio_comments/{projectId}/{versionId}/{commentId}.m4a`
+    - Call `audioStorageService.uploadAudioFile()` with metadata
+  - Implement `downloadCommentAudio`:
+    - Build local cache path
+    - Call `audioStorageService.downloadAudioFile()`
+  - Implement `deleteCommentAudio`
+  - Implement `moveRecordingToCache`:
+    - Copy temp file to permanent cache location
+    - Delete temp file
+  - Provide helper methods: `_buildStoragePath()`, `_buildLocalPath()`, `getFullLocalPath()`
+
+- [ ] **Write unit tests for storage coordinator**
+  - File: `test/features/audio_comment/data/services/audio_comment_storage_coordinator_test.dart`
+  - Mock `AudioStorageService` and `FileSystemService`
+  - Test upload path generation
+  - Test download caching
+  - Test recording move operation
+
+---
+
+### Repository Updates
+
+- [ ] **Update AudioCommentRepositoryImpl**
+  - File: `lib/features/audio_comment/data/repositories/audio_comment_repository_impl.dart`
+  - Inject: `AudioCommentStorageCoordinator`
+  - Update `addComment()`:
+    - Save to Isar immediately
+    - If audio comment: move recording to cache using coordinator
+    - Update Isar document with cache path
+    - Queue sync operation with audio metadata
+  - Update `deleteComment()`:
+    - Mark as deleted in Isar
+    - Delete local audio file if exists
+    - Queue delete operation with audio URL for remote cleanup
+
+- [ ] **Write unit tests for updated repository**
+  - File: `test/features/audio_comment/data/repositories/audio_comment_repository_impl_test.dart`
+  - Test addComment with text-only comment
+  - Test addComment with audio comment
+  - Test recording move to cache
+  - Test deleteComment with audio cleanup
+
+---
+
+### Presentation Layer Updates
+
+- [ ] **Update CommentInputModal**
+  - File: `lib/features/audio_comment/presentation/components/comment_input_modal.dart`
+  - Add state: `_isRecordingMode`, `_completedRecording`
+  - Provide `RecordingBloc` via `BlocProvider`
+  - Build mode toggle: `SegmentedButton` for text/audio
+  - Build recording interface:
+    - `RecordingInitial`: Show `RecordingButton`
+    - `RecordingInProgress`: Show `RecordingWaveform`, `RecordingTimer`, stop button
+    - `RecordingPaused`: Show pause controls
+    - `RecordingCompleted`: Show preview and send button
+    - `RecordingError`: Show error message
+  - On start recording: Capture timestamp from `AudioPlayerBloc` and pause playback
+  - On send: Dispatch `AddAudioCommentEvent` with `localAudioPath`, `audioDuration`, `commentType`
+
+- [ ] **Create AudioCommentPlayer widget**
+  - File: `lib/features/audio_comment/presentation/components/audio_comment_player.dart`
+  - Props: `comment`
+  - Manage `AudioPlayer` instance
+  - Initialize audio: Try local cache first, fallback to streaming from Firebase Storage
+  - Render: Play/pause button, progress slider, duration display
+  - Styling: Use AppColors and AppTextStyle
+
+- [ ] **Update AudioCommentContent**
+  - File: `lib/features/audio_comment/presentation/components/audio_comment_content.dart`
+  - Add conditional rendering based on `comment.commentType`:
+    - `CommentType.text`: Render text content
+    - `CommentType.audio`: Render `AudioCommentPlayer`
+    - `CommentType.hybrid`: Render both
+
+- [ ] **Update AddAudioCommentEvent**
+  - File: `lib/features/audio_comment/presentation/bloc/audio_comment_event.dart`
+  - Add fields: `localAudioPath`, `audioDuration`, `commentType`
+
+- [ ] **Update AudioCommentBloc handler**
+  - File: `lib/features/audio_comment/presentation/bloc/audio_comment_bloc.dart`
+  - Update `_onAddAudioComment`:
+    - Pass audio fields to `AddAudioCommentParams`
+
+- [ ] **Write widget tests for updated components**
+  - File: `test/features/audio_comment/presentation/components/comment_input_modal_test.dart`
+  - Test mode toggle
+  - Test recording flow
+  - Test send audio comment
+  - File: `test/features/audio_comment/presentation/components/audio_comment_player_test.dart`
+  - Mock AudioPlayer
+  - Test play/pause
+  - Test seek
+  - File: `test/features/audio_comment/presentation/components/audio_comment_content_test.dart`
+  - Test conditional rendering
+
+---
+
+## Phase 5: Background Sync Integration
+
+### Sync Executor
+
+- [ ] **Create AudioCommentOperationExecutor**
+  - File: `lib/core/sync/domain/executors/audio_comment_operation_executor.dart`
+  - Annotate with `@Injectable()`
+  - Inject: `AudioCommentRemoteDataSource`, `AudioCommentStorageCoordinator`
+  - Implement `executeCreate`:
+    - Extract audio metadata from operation data
+    - If audio comment: Upload audio file via coordinator
+    - Create DTO with audio storage URL
+    - Create Firestore document
+  - Implement `executeDelete`:
+    - Delete Firestore document
+    - Delete audio file from Firebase Storage if exists
+
+- [ ] **Write unit tests for sync executor**
+  - File: `test/core/sync/domain/executors/audio_comment_operation_executor_test.dart`
+  - Mock dependencies
+  - Test executeCreate with text comment
+  - Test executeCreate with audio comment (upload + create)
+  - Test executeCreate failure scenarios
+  - Test executeDelete with audio cleanup
+
+---
+
+## Phase 6: Testing & Deployment
+
+### Integration Tests
+
+- [ ] **Create audio recording integration test**
+  - File: `test/integration_test/audio_recording_integration_test.dart`
+  - Test full recording flow: start → stop → receive `AudioRecording`
+  - Test recording with pause/resume
+  - Test recording cancellation
+  - Test elapsed timer updates
+  - Test amplitude monitoring
+
+- [ ] **Create audio comment integration test**
+  - File: `test/integration_test/audio_comment_recording_integration_test.dart`
+  - Test full user flow: navigate to comments → switch to audio mode → record → preview → send → verify comment appears
+  - Test offline recording and sync
+  - Test audio playback from comment
+  - Test permission denial handling
+
+- [ ] **Run all integration tests**
+  - Command: `flutter test integration_test/`
+  - Verify all tests pass
+
+---
+
+### Manual Testing
+
+- [ ] **Test recording permissions**
+  - First-time permission request appears
+  - Permission denial shows error message
+  - Permission grant enables recording
+
+- [ ] **Test audio recording**
+  - Start recording captures audio
+  - Waveform animates during recording
+  - Elapsed timer updates correctly
+  - Stop button ends recording
+  - Cancel button discards recording
+
+- [ ] **Test audio preview**
+  - Preview player appears after recording
+  - Play/pause controls work
+  - Duration displays correctly
+
+- [ ] **Test comment submission**
+  - Send button creates comment
+  - Comment appears in list immediately
+  - Audio player renders in comment card
+
+- [ ] **Test audio playback**
+  - Tap comment card seeks to timestamp
+  - Comment audio player works
+  - Audio loads from cache if available
+
+- [ ] **Test offline functionality**
+  - Recording works offline
+  - Comment saved locally offline
+  - Upload queued for background sync
+  - Sync completes when online
+
+- [ ] **Test permission system**
+  - Viewers cannot record audio comments
+  - Editors can record audio comments
+  - Users can delete their own audio comments
+  - Admins can delete any audio comment
+
+- [ ] **Test edge cases**
+  - Very short recording (< 1 second)
+  - Long recording (> 5 minutes)
+  - Recording interrupted by phone call
+  - App backgrounded during recording
+  - Network failure during upload
+
+---
+
+### Firebase Configuration
+
+- [ ] **Update Firebase Storage security rules**
+  - File: `storage.rules`
+  - Add rules for `audio_comments/{projectId}/{versionId}/{commentId}.m4a`
+  - Allow read if user is project collaborator
+  - Allow write if user has `addComment` permission
+  - Allow delete if user is comment author or has `deleteComment` permission
+
+- [ ] **Deploy storage rules**
+  - Command: `firebase deploy --only storage`
+  - Test rules using Firebase Console emulator
+
+---
+
+### Database Migration
+
+- [ ] **Run Firestore migration script**
+  - File: `scripts/migrate_firestore_comments.dart`
+  - Add `commentType: 'text'` to existing comments
+  - Set `audioStorageUrl` and `audioDurationMs` to null for existing comments
+  - Run in batches of 500
+
+- [ ] **Verify migration**
+  - Query sample documents in Firebase Console
+  - Verify all existing comments have `commentType: "text"`
+
+---
+
+## Phase 7: Documentation
+
+### Code Documentation
+
+- [ ] **Add Dartdoc comments to all new classes**
+  - Recording module classes
+  - Core service classes
+  - Use case classes
+  - Include usage examples
+
+### Architecture Documentation
+
+- [ ] **Update architecture.md**
+  - Add section: "Reusable Audio Recording Module"
+  - Describe module structure
+  - Explain integration pattern
+  - List current and future consumers
+
+- [ ] **Create user guide**
+  - Document how to record audio comments
+  - Explain audio comment features
+  - Document permission requirements
+
+---
+
+## Final Verification
+
+### Code Quality
+
+- [ ] **Run Flutter analyze**
+  - Command: `flutter analyze`
+  - Fix all errors and warnings
+
+- [ ] **Run all unit tests**
+  - Command: `flutter test`
+  - Verify all tests pass
+
+- [ ] **Generate test coverage report**
+  - Command: `flutter test --coverage`
+  - Command: `genhtml coverage/lcov.info -o coverage/html`
+  - Verify code coverage ≥ 80%
+
+### Performance
+
+- [ ] **Profile recording performance**
+  - Command: `flutter run --profile`
+  - Measure CPU usage during recording
+  - Measure memory usage during recording
+  - Verify no UI jank (≥ 60 FPS)
+
+- [ ] **Profile upload performance**
+  - Measure time to upload 1 MB audio file
+  - Verify upload completes within 5 seconds on reasonable network
+
+- [ ] **Profile playback performance**
+  - Measure time to start playback (cold cache)
+  - Measure time to start playback (warm cache)
+  - Verify playback starts within 1 second (cached)
+
+---
+
+## Rollout
+
+### Pre-Release
+
+- [ ] **Create feature branch**
+  - Command: `git checkout -b feature/audio-recording-module`
+
+- [ ] **Code review**
+  - Submit PR for team review
+  - Address all feedback
+
+- [ ] **Merge to main**
+  - Command: `git merge feature/audio-recording-module`
+
+### Deployment
+
+- [ ] **Alpha release (TestFlight/Internal Testing)**
+  - Deploy to internal test track
+  - Team members test all recording flows
+  - Monitor Firebase Storage usage
+  - Monitor crash reports
+
+- [ ] **Beta release (100 users)**
+  - Deploy to beta track
+  - Collect user feedback
+  - Monitor performance metrics
+  - Monitor sync success rate
+
+- [ ] **Production rollout (gradual)**
+  - 10% rollout
+  - Monitor key metrics (creation rate, upload success, playback errors, storage costs)
+  - 50% rollout if metrics healthy
+  - 100% rollout if metrics healthy
+
+---
+
+## Post-Release
+
+### Monitoring
+
+- [ ] **Set up Firebase Performance Monitoring**
+  - Track audio upload times
+  - Track audio playback start times
+  - Track recording session durations
+
+- [ ] **Set up Firebase Crashlytics**
+  - Monitor crashes related to recording
+  - Monitor crashes related to playback
+
+- [ ] **Set up Firebase Analytics**
+  - Track audio comment creation events
+  - Track audio playback events
+  - Track recording cancellation rate
+
+### Maintenance
+
+- [ ] **Monitor Firebase Storage costs**
+  - Set up billing alerts
+  - Implement storage limits per project (future)
+
+- [ ] **Monitor user feedback**
+  - Address user-reported issues
+  - Prioritize feature requests (e.g., transcription, editing)
+
+---
+
+## Future Enhancements
+
+### Potential Features
+
+- [ ] **Audio transcription (hybrid comments)**
+  - Integrate speech-to-text API
+  - Display transcription alongside audio
+
+- [ ] **Audio editing**
+  - Trim recordings
+  - Adjust volume
+
+- [ ] **Voice memos feature**
+  - Reuse recording module for standalone voice memos
+  - Implement memo categorization and search
+
+- [ ] **Voice journal feature**
+  - Reuse recording module for daily voice entries
+  - Implement journal timeline and playback
+
+- [ ] **Audio waveform visualization in playback**
+  - Generate waveform data on upload
+  - Display interactive waveform in player
+
+---
+
+# END OF IMPLEMENTATION PLAN
+
+This comprehensive checklist provides all necessary context and steps for implementing the reusable audio recording module and integrating it with the audio comment feature. Each checkbox represents a concrete, actionable task that can be executed independently.
+
+**Total Checklist Items:** 150+
+
+**Estimated Completion Time:** 17 days (3.5 weeks)
+
+**Success Criteria:**
+- All checkbox items completed
+- All tests passing
+- Code coverage ≥ 80%
+- Performance benchmarks met
+- Deployed to production with gradual rollout
