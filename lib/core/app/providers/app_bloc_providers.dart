@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/features/audio_recording/presentation/bloc/recording_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
@@ -64,6 +65,7 @@ class AppBlocProviders {
       ),
       BlocProvider<WaveformBloc>(create: (_) => sl<WaveformBloc>()),
       BlocProvider<AudioContextBloc>(create: (_) => sl<AudioContextBloc>()),
+      BlocProvider<RecordingBloc>(create: (_) => sl<RecordingBloc>()),
     ];
   }
 

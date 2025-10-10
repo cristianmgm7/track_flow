@@ -2617,25 +2617,25 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Recording Widgets
 
-- [ ] **Create RecordingButton widget**
+- [x] **Create RecordingButton widget** ✅
   - File: `lib/features/audio_recording/presentation/widgets/recording_button.dart`
   - Props: `onStartRecording`, `onStopRecording`, `isRecording`, `startLabel`, `stopLabel`
   - Render: ElevatedButton with icon (record or stop) and label
   - Styling: Use AppColors and AppTextStyle
 
-- [ ] **Create RecordingWaveform widget**
+- [x] **Create RecordingWaveform widget** ✅
   - File: `lib/features/audio_recording/presentation/widgets/recording_waveform.dart`
   - Props: `amplitude`, `color`, `height`
   - Render: CustomPaint with WaveformPainter
   - WaveformPainter: Draw vertical bar with height based on amplitude
 
-- [ ] **Create RecordingTimer widget**
+- [x] **Create RecordingTimer widget** ✅
   - File: `lib/features/audio_recording/presentation/widgets/recording_timer.dart`
   - Props: `elapsed`, `style`
   - Render: Text with formatted duration (MM:SS)
   - Use tabular figures font feature for monospace numbers
 
-- [ ] **Create RecordingControls widget**
+- [x] **Create RecordingControls widget** ✅
   - File: `lib/features/audio_recording/presentation/widgets/recording_controls.dart`
   - Props: `onPause`, `onResume`, `onCancel`, `isPaused`
   - Render: Row with pause/resume button and cancel button
@@ -2753,13 +2753,13 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Presentation Layer Updates
 
-- [ ] **Update CommentInputModal**
+- [x] **Update CommentInputModal** ✅
   - File: `lib/features/audio_comment/presentation/components/comment_input_modal.dart`
-  - Add state: `_isRecordingMode`, `_completedRecording`
+  - Add state: `_inputMode` (CommentInputMode enum), `_completedRecording`
   - Provide `RecordingBloc` via `BlocProvider`
   - Build mode toggle: `SegmentedButton` for text/audio
   - Build recording interface:
-    - `RecordingInitial`: Show `RecordingButton`
+    - `RecordingInitial`: Show microphone button
     - `RecordingInProgress`: Show `RecordingWaveform`, `RecordingTimer`, stop button
     - `RecordingPaused`: Show pause controls
     - `RecordingCompleted`: Show preview and send button
@@ -2776,7 +2776,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
   - Styling: Use AppColors and AppTextStyle
   - Includes loading and error states
 
-- [ ] **Update AudioCommentContent**
+- [x] **Update AudioCommentContent** ✅
   - File: `lib/features/audio_comment/presentation/components/audio_comment_content.dart`
   - Add conditional rendering based on `comment.commentType`:
     - `CommentType.text`: Render text content
@@ -2810,7 +2810,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Sync Executor
 
-- [ ] **Create AudioCommentOperationExecutor**
+- [x] **Update AudioCommentOperationExecutor** ✅
   - File: `lib/core/sync/domain/executors/audio_comment_operation_executor.dart`
   - Annotate with `@Injectable()`
   - Inject: `AudioCommentRemoteDataSource`, `AudioCommentStorageCoordinator`
