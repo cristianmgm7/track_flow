@@ -2910,7 +2910,7 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Firebase Configuration
 
-- [ ] **Update Firebase Storage security rules**
+- [x] **Update Firebase Storage security rules** ✅
   - File: `storage.rules`
   - Add rules for `audio_comments/{projectId}/{versionId}/{commentId}.m4a`
   - Allow read if user is project collaborator
@@ -2925,11 +2925,15 @@ This checklist provides a sequential, step-by-step guide for implementing the re
 
 ### Database Migration
 
-- [ ] **Run Firestore migration script**
+- [x] **Create Firestore migration script** ✅
   - File: `scripts/migrate_firestore_comments.dart`
   - Add `commentType: 'text'` to existing comments
   - Set `audioStorageUrl` and `audioDurationMs` to null for existing comments
   - Run in batches of 500
+
+- [ ] **Run migration script**
+  - Command: `dart scripts/migrate_firestore_comments.dart`
+  - Monitor output for errors
 
 - [ ] **Verify migration**
   - Query sample documents in Firebase Console

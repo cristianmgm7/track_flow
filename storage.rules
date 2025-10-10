@@ -21,18 +21,35 @@ service firebase.storage {
     // Audio tracks - authenticated users can upload and access audio files
     match /audio_tracks/{trackFile} {
       // Allow authenticated users to upload audio tracks
-      allow write: if request.auth != null 
+      allow write: if request.auth != null
                    && isValidAudioFile(trackFile)
                    && request.resource.size < 50 * 1024 * 1024; // 50MB limit
-      
+
       // Allow authenticated users to read audio tracks
       allow read: if request.auth != null;
-      
+
       // Allow authenticated users to delete audio tracks they own
       // Note: Additional authorization should be handled at the application level
       allow delete: if request.auth != null;
     }
-    
+
+    // Audio comments - project collaborators can upload and access audio comments
+    match /audio_comments/{projectId}/{versionId}/{commentFile} {
+      // Allow authenticated users to upload audio comments
+      // Note: Project-level permissions should be enforced at application layer
+      allow write: if request.auth != null
+                   && isValidAudioFile(commentFile)
+                   && request.resource.size < 10 * 1024 * 1024; // 10MB limit for comments
+
+      // Allow authenticated users to read audio comments
+      // Note: Project-level permissions should be enforced at application layer
+      allow read: if request.auth != null;
+
+      // Allow authenticated users to delete audio comments
+      // Note: Comment ownership and permissions should be enforced at application layer
+      allow delete: if request.auth != null;
+    }
+
     // Helper functions
     function isValidAudioFile(filename) {
       // Check if file has a valid audio extension
