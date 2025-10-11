@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+ import 'dart:math' as math;
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:record/record.dart';
@@ -207,8 +208,26 @@ class PlatformRecordingService implements RecordingService {
     _amplitudeTimer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
       if (_currentSession != null && isRecording) {
         final amplitude = await _recorder.getAmplitude();
+        // Normalize amplitude to 0..1 for UI rendering.
+        double normalized = 0.0;
+        final double current = amplitude.current;
+        final double max = amplitude.max;
+
+        // If values look like decibels (<= 0), convert dB to linear.
+        if (current <= 0.0 && max <= 0.0) {
+          // Clamp dB range to [-60, 0] to avoid denormals; -60dB ~ near silence
+          final double clampedDb = current.clamp(-60.0, 0.0);
+          normalized = math.pow(10.0, clampedDb / 20.0).toDouble();
+        } else if (max > 0.0) {
+          // Fallback: use ratio of current to max
+          normalized = (current / max).clamp(0.0, 1.0);
+        }
+
+        // Simple noise gate to reduce flicker on near-silence
+        if (normalized < 0.02) normalized = 0.0;
+
         _currentSession = _currentSession!.copyWith(
-          currentAmplitude: amplitude.current.abs(),
+          currentAmplitude: normalized,
         );
         _sessionController.add(_currentSession!);
       }
