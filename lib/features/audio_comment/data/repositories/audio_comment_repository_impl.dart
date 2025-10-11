@@ -69,6 +69,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     }
   }
 
+  // Need to get all versions of the track and delete comments per version
   @override
   Future<Either<Failure, Unit>> deleteByTrackId(AudioTrackId trackId) async {
     try {
@@ -85,6 +86,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         } catch (_) {}
         try {
           await _localDataSource.deleteByVersion(v.id.value);
+          
         } catch (_) {}
       }
       return const Right(unit);
@@ -136,7 +138,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
 
       // 2. If audio comment, store recording in permanent cache
       String? cachedAudioPath;
-      if (comment.commentType != CommentType.text &&
+      if (comment.commentType != CommentType.text && comment.commentType != CommentType.hybrid &&
           comment.localAudioPath != null) {
 
         // Use projectId as trackId, commentId as versionId for cache hierarchy

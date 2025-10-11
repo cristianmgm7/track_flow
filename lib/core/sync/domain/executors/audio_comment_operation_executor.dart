@@ -62,7 +62,7 @@ class AudioCommentOperationExecutor implements OperationExecutor {
     if (operationData['localAudioPath'] != null) {
       final uploadResult = await _storageCoordinator.uploadCommentAudio(
         localPath: operationData['localAudioPath'] as String,
-        projectId: ProjectId.fromUniqueString(operationData['projectId'] as String),
+        trackId: AudioTrackId.fromUniqueString(operationData['trackId'] as String),
         versionId: TrackVersionId.fromUniqueString(operationData['trackId'] as String),
         commentId: AudioCommentId.fromUniqueString(operation.entityId),
       );

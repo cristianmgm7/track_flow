@@ -12,11 +12,11 @@ import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dar
 /// Bridges recording module outputs with comment storage requirements
 @injectable
 class AudioCommentStorageCoordinator {
-  final AudioFileRepository _uploadService; // firebase audio 'cloud' service
-  final AudioStorageRepository _audioStorageRepository; // audio cache system
+  final AudioFileRepository _audioFileCloudRepository; // firebase audio 'cloud' service
+  final AudioStorageRepository _audioStorageRepository; // audio cache system isar db and file system
 
   AudioCommentStorageCoordinator(
-    this._uploadService,
+    this._audioFileCloudRepository,
     this._audioStorageRepository,
   );
 
@@ -26,7 +26,7 @@ class AudioCommentStorageCoordinator {
   /// Path format: audio_comments/{projectId}/{versionId}/{commentId}.m4a
   Future<Either<Failure, String>> uploadCommentAudio({
     required String localPath,
-    required ProjectId projectId,
+    required AudioTrackId trackId,
     required TrackVersionId versionId,
     required AudioCommentId commentId,
   }) async {
@@ -37,16 +37,16 @@ class AudioCommentStorageCoordinator {
       return Left(StorageFailure('Audio file not found at: $localPath'));
     }
 
-    final storagePath = _buildStoragePath(projectId, versionId, commentId);
+    final storagePath = _buildStoragePath(trackId, versionId, commentId);
 
     final metadata = {
-      'projectId': projectId.value,
+      'trackId': trackId.value,
       'versionId': versionId.value,
       'commentId': commentId.value,
       'type': 'audio_comment',
     };
 
-    return await _uploadService.uploadAudioFile(
+    return await _audioFileCloudRepository.uploadAudioFile(
       audioFile: file,
       storagePath: storagePath,
       metadata: metadata,
@@ -57,7 +57,7 @@ class AudioCommentStorageCoordinator {
   Future<Either<Failure, Unit>> deleteCommentAudio({
     required String storageUrl,
   }) async {
-    return await _uploadService.deleteAudioFile(storageUrl: storageUrl);
+    return await _audioFileCloudRepository.deleteAudioFile(storageUrl: storageUrl);
   }
 
   /// Store recording in audio cache system
@@ -101,11 +101,11 @@ class AudioCommentStorageCoordinator {
 
   /// Build Firebase Storage path for audio comment
   String _buildStoragePath(
-    ProjectId projectId,
+    AudioTrackId trackId,
     TrackVersionId versionId,
     AudioCommentId commentId,
   ) {
-    return 'audio_comments/${projectId.value}/${versionId.value}/${commentId.value}.m4a';
+    return 'audio_comments/${trackId.value}/${versionId.value}/${commentId.value}.m4a';
   }
 
   /// Check if audio comment exists in local cache
@@ -172,7 +172,7 @@ class AudioCommentStorageCoordinator {
     final tempDir = Directory.systemTemp;
     final tempPath = '${tempDir.path}/temp_comment_${commentId.value}.m4a';
 
-    final downloadResult = await _uploadService.downloadAudioFile(
+    final downloadResult = await _audioFileCloudRepository.downloadAudioFile(
       storageUrl: storageUrl,
       localPath: tempPath,
       trackId: projectId.value, // Use projectId as trackId for comments
