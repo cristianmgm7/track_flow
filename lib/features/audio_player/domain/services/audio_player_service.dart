@@ -93,6 +93,9 @@ class AudioPlayerService {
   /// Get session stream for state updates
   Stream<PlaybackSession> get sessionStream => _playbackService.sessionStream;
 
+  /// Get the underlying playback service for direct access
+  AudioPlaybackService get playbackService => _playbackService;
+
   /// Initialize the audio player
   Future<void> initialize() async {
     await _initializeAudioPlayerUseCase();

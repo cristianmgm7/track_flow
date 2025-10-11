@@ -151,11 +151,11 @@ import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart'
     as _i78;
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart'
-    as _i91;
+    as _i89;
 import 'package:trackflow/features/audio_comment/data/repositories/audio_comment_repository_impl.dart'
     as _i231;
 import 'package:trackflow/features/audio_comment/data/services/audio_comment_incremental_sync_service.dart'
-    as _i92;
+    as _i90;
 import 'package:trackflow/features/audio_comment/data/services/audio_comment_storage_coordinator.dart'
     as _i176;
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart'
@@ -241,11 +241,11 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_loca
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart'
     as _i80;
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
-    as _i89;
+    as _i94;
 import 'package:trackflow/features/audio_track/data/repositories/audio_track_repository_impl.dart'
     as _i180;
 import 'package:trackflow/features/audio_track/data/services/audio_track_incremental_sync_service.dart'
-    as _i90;
+    as _i95;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart'
     as _i179;
 import 'package:trackflow/features/audio_track/domain/services/audio_metadata_service.dart'
@@ -405,11 +405,11 @@ import 'package:trackflow/features/projects/data/datasources/project_local_data_
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart'
     as _i48;
 import 'package:trackflow/features/projects/data/models/project_dto.dart'
-    as _i93;
+    as _i96;
 import 'package:trackflow/features/projects/data/repositories/projects_repository_impl.dart'
     as _i150;
 import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart'
-    as _i94;
+    as _i97;
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i149;
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart'
@@ -461,7 +461,7 @@ import 'package:trackflow/features/user_profile/data/datasources/user_profile_lo
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart'
     as _i70;
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart'
-    as _i95;
+    as _i92;
 import 'package:trackflow/features/user_profile/data/repositories/user_profile_cache_repository_impl.dart'
     as _i113;
 import 'package:trackflow/features/user_profile/data/repositories/user_profile_repository_impl.dart'
@@ -469,7 +469,7 @@ import 'package:trackflow/features/user_profile/data/repositories/user_profile_r
 import 'package:trackflow/features/user_profile/data/services/user_profile_collaborator_incremental_sync_service.dart'
     as _i114;
 import 'package:trackflow/features/user_profile/data/services/user_profile_incremental_sync_service.dart'
-    as _i96;
+    as _i93;
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart'
     as _i162;
 import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart'
@@ -495,7 +495,7 @@ import 'package:trackflow/features/waveform/data/repositories/waveform_repositor
 import 'package:trackflow/features/waveform/data/services/just_waveform_generator_service.dart'
     as _i73;
 import 'package:trackflow/features/waveform/data/services/waveform_incremental_sync_service.dart'
-    as _i97;
+    as _i91;
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart'
     as _i171;
 import 'package:trackflow/features/waveform/domain/services/waveform_generator_service.dart'
@@ -702,33 +702,33 @@ extension GetItInjectableX on _i1.GetIt {
           gh<_i20.GoogleSignIn>(),
           gh<_i17.FirebaseAuth>(),
         ));
-    gh.lazySingleton<_i21.IncrementalSyncService<_i89.AudioTrackDTO>>(
-        () => _i90.AudioTrackIncrementalSyncService(
-              gh<_i80.AudioTrackRemoteDataSource>(),
-              gh<_i79.AudioTrackLocalDataSource>(),
-              gh<_i49.ProjectsLocalDataSource>(),
-            ));
-    gh.lazySingleton<_i21.IncrementalSyncService<_i91.AudioCommentDTO>>(
-        () => _i92.AudioCommentIncrementalSyncService(
+    gh.lazySingleton<_i21.IncrementalSyncService<_i89.AudioCommentDTO>>(
+        () => _i90.AudioCommentIncrementalSyncService(
               gh<_i78.AudioCommentRemoteDataSource>(),
               gh<_i77.AudioCommentLocalDataSource>(),
               gh<_i68.TrackVersionLocalDataSource>(),
             ));
-    gh.lazySingleton<_i21.IncrementalSyncService<_i93.ProjectDTO>>(
-        () => _i94.ProjectIncrementalSyncService(
-              gh<_i48.ProjectRemoteDataSource>(),
-              gh<_i49.ProjectsLocalDataSource>(),
-            ));
-    gh.lazySingleton<_i21.IncrementalSyncService<_i95.UserProfileDTO>>(
-        () => _i96.UserProfileIncrementalSyncService(
-              gh<_i70.UserProfileRemoteDataSource>(),
-              gh<_i69.UserProfileLocalDataSource>(),
-            ));
     gh.lazySingleton<_i21.IncrementalSyncService<dynamic>>(
-        () => _i97.WaveformIncrementalSyncService(
+        () => _i91.WaveformIncrementalSyncService(
               gh<_i68.TrackVersionLocalDataSource>(),
               gh<_i74.WaveformLocalDataSource>(),
               gh<_i75.WaveformRemoteDataSource>(),
+            ));
+    gh.lazySingleton<_i21.IncrementalSyncService<_i92.UserProfileDTO>>(
+        () => _i93.UserProfileIncrementalSyncService(
+              gh<_i70.UserProfileRemoteDataSource>(),
+              gh<_i69.UserProfileLocalDataSource>(),
+            ));
+    gh.lazySingleton<_i21.IncrementalSyncService<_i94.AudioTrackDTO>>(
+        () => _i95.AudioTrackIncrementalSyncService(
+              gh<_i80.AudioTrackRemoteDataSource>(),
+              gh<_i79.AudioTrackLocalDataSource>(),
+              gh<_i49.ProjectsLocalDataSource>(),
+            ));
+    gh.lazySingleton<_i21.IncrementalSyncService<_i96.ProjectDTO>>(
+        () => _i97.ProjectIncrementalSyncService(
+              gh<_i48.ProjectRemoteDataSource>(),
+              gh<_i49.ProjectsLocalDataSource>(),
             ));
     gh.lazySingleton<_i98.InvitationLocalDataSource>(
         () => _i98.IsarInvitationLocalDataSource(gh<_i27.Isar>()));

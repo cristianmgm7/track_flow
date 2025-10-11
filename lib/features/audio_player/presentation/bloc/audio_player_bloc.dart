@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
@@ -6,7 +7,10 @@ import 'package:injectable/injectable.dart';
 import '../../domain/entities/playback_session.dart';
 import '../../domain/entities/playback_state.dart';
 import '../../domain/entities/audio_failure.dart';
+import '../../domain/entities/audio_source.dart';
+import '../../domain/entities/audio_track_metadata.dart';
 import '../../domain/services/audio_player_service.dart';
+import '../../../../core/entities/unique_id.dart';
 
 import 'audio_player_event.dart';
 import 'audio_player_state.dart';
@@ -34,6 +38,7 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     on<SkipToPreviousRequested>(_onSkipToPreviousRequested);
     on<SeekToPositionRequested>(_onSeekToPositionRequested);
     on<PlayAndSeekRequested>(_onPlayAndSeekRequested);
+    on<PlayAudioCommentRequested>(_onPlayAudioCommentRequested);
     on<ToggleShuffleRequested>(_onToggleShuffleRequested);
     on<ToggleRepeatModeRequested>(_onToggleRepeatModeRequested);
     on<SetRepeatModeRequested>(_onSetRepeatModeRequested);
@@ -293,6 +298,52 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
       emit(
         AudioPlayerError(
           AudioPlayerFailure('Failed to seek: ${e.toString()}'),
+          currentSession,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onPlayAudioCommentRequested(
+    PlayAudioCommentRequested event,
+    Emitter<AudioPlayerState> emit,
+  ) async {
+    // First, stop any currently playing track to free up the audio player
+    await _audioPlayerService.playbackService.stop();
+
+    // Create metadata for the comment
+    final metadata = AudioTrackMetadata(
+      id: AudioTrackId.fromUniqueString(event.commentId), // Use comment ID as track ID
+      title: 'Audio Comment',
+      artist: 'Comment',
+      duration: Duration.zero, // Will be updated when loaded
+    );
+
+    // Try local file first, then remote URL
+    String? sourceUrl;
+    if (event.localPath != null && await File(event.localPath!).exists()) {
+      sourceUrl = event.localPath!;
+    } else if (event.remoteUrl != null) {
+      sourceUrl = event.remoteUrl!;
+    } else {
+      emit(
+        AudioPlayerError(
+          AudioPlayerFailure('No audio source available for comment'),
+          currentSession,
+        ),
+      );
+      return;
+    }
+
+    // Create audio source and play
+    final audioSource = AudioSource(url: sourceUrl, metadata: metadata);
+
+    try {
+      await _audioPlayerService.playbackService.play(audioSource);
+    } catch (e) {
+      emit(
+        AudioPlayerError(
+          AudioPlayerFailure('Failed to play comment audio: ${e.toString()}'),
           currentSession,
         ),
       );
