@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/audio/domain/audio_file_repository.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/core/services/firebase_audio_upload_service.dart';
 import 'package:trackflow/core/utils/audio_format_utils.dart';
 
 abstract class TrackVersionRemoteDataSource {
@@ -32,7 +32,7 @@ abstract class TrackVersionRemoteDataSource {
 @LazySingleton(as: TrackVersionRemoteDataSource)
 class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   final FirebaseFirestore _firestore;
-  final FirebaseAudioUploadService _uploadService;
+  final AudioFileRepository _uploadService;
 
   TrackVersionRemoteDataSourceImpl(
     this._firestore,
@@ -58,6 +58,10 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
           'trackId': versionData.trackId,
           'versionNumber': versionData.versionNumber.toString(),
           'createdBy': versionData.createdBy,
+        },
+        onProgress: (progress) {
+          // TODO: Emit progress to BLoC if needed
+          AppLogger.debug('Upload progress: ${progress.formattedProgress}');
         },
       );
 

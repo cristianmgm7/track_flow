@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/audio/domain/audio_file_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/services/firebase_audio_upload_service.dart';
 import 'package:trackflow/core/utils/file_system_utils.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dart' as cache_failures;
@@ -12,8 +12,8 @@ import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dar
 /// Bridges recording module outputs with comment storage requirements
 @injectable
 class AudioCommentStorageCoordinator {
-  final FirebaseAudioUploadService _uploadService;
-  final AudioStorageRepository _audioStorageRepository;
+  final AudioFileRepository _uploadService; // firebase audio 'cloud' service
+  final AudioStorageRepository _audioStorageRepository; // audio cache system
 
   AudioCommentStorageCoordinator(
     this._uploadService,
@@ -175,6 +175,12 @@ class AudioCommentStorageCoordinator {
     final downloadResult = await _uploadService.downloadAudioFile(
       storageUrl: storageUrl,
       localPath: tempPath,
+      trackId: projectId.value, // Use projectId as trackId for comments
+      versionId: versionId.value,
+      onProgress: (progress) {
+        // TODO: Emit progress to BLoC if needed
+        print('Download progress: ${progress.formattedProgress}');
+      },
     );
 
     return await downloadResult.fold(

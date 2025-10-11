@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:http/http.dart' as http;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -51,6 +51,9 @@ abstract class AppModule {
 
   @lazySingleton
   Connectivity get connectivity => Connectivity();
+
+  @lazySingleton
+  http.Client get httpClient => http.Client();
 
   // Storage
   @preResolve
