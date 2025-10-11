@@ -67,7 +67,7 @@ class AudioTrackOperationExecutor implements OperationExecutor {
       extension: operationData['extension'] ?? 'mp3',
     );
 
-    final result = await _remoteDataSource.uploadAudioTrack(audioTrackDto);
+    final result = await _remoteDataSource.createAudioTrack(audioTrackDto);
     result.fold(
       (failure) => throw Exception('Upload failed: ${failure.message}'),
       (uploadedDto) async {

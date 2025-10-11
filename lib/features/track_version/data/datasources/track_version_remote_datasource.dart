@@ -9,7 +9,7 @@ import 'package:trackflow/core/services/firebase_audio_upload_service.dart';
 import 'package:trackflow/core/utils/audio_format_utils.dart';
 
 abstract class TrackVersionRemoteDataSource {
-  Future<Either<Failure, TrackVersionDTO>> uploadTrackVersion(
+  Future<Either<Failure, TrackVersionDTO>> createTrackVersion(
     TrackVersionDTO versionData,
     File audioFile,
   );
@@ -40,7 +40,7 @@ class TrackVersionRemoteDataSourceImpl implements TrackVersionRemoteDataSource {
   );
 
   @override
-  Future<Either<Failure, TrackVersionDTO>> uploadTrackVersion(
+  Future<Either<Failure, TrackVersionDTO>> createTrackVersion(
     TrackVersionDTO versionData,
     File audioFile,
   ) async {

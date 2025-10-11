@@ -5,7 +5,7 @@ import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 
 abstract class AudioTrackRemoteDataSource {
-  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(
+  Future<Either<Failure, AudioTrackDTO>> createAudioTrack(
     AudioTrackDTO trackData,
   );
 
@@ -36,7 +36,7 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
   AudioTrackRemoteDataSourceImpl(this._firestore);
 
   @override
-  Future<Either<Failure, AudioTrackDTO>> uploadAudioTrack(
+  Future<Either<Failure, AudioTrackDTO>> createAudioTrack(
     AudioTrackDTO trackData,
   ) async {
     try {

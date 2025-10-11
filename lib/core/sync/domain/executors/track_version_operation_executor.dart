@@ -92,7 +92,7 @@ class TrackVersionOperationExecutor implements OperationExecutor {
       }
 
       // Upload to remote (Firebase Storage + Firestore)
-      final uploadResult = await _remoteDataSource.uploadTrackVersion(
+      final uploadResult = await _remoteDataSource.createTrackVersion(
         versionDTO,
         audioFile,
       );
