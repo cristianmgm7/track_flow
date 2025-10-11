@@ -88,9 +88,32 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       );
 
       return storeResult.fold((failure) => Left(failure), (unifiedDoc) async {
-        // Convert back to CachedAudio for return
-        final cachedAudio = await unifiedDoc.toCachedAudio();
-        return Right(cachedAudio);
+        // Resolve absolute path from relative using DirectoryService
+        final absolutePathResult = await _directoryService.getAbsolutePath(
+          unifiedDoc.relativePath,
+          DirectoryType.audioCache,
+        );
+
+        return absolutePathResult.fold(
+          (failure) => Left(
+            StorageCacheFailure(
+              message: failure.message,
+              type: StorageFailureType.diskError,
+            ),
+          ),
+          (absolutePath) => Right(
+            CachedAudio(
+              trackId: unifiedDoc.trackId,
+              versionId: unifiedDoc.versionId,
+              filePath: absolutePath,
+              fileSizeBytes: unifiedDoc.fileSizeBytes,
+              cachedAt: unifiedDoc.cachedAt,
+              checksum: unifiedDoc.checksum,
+              quality: unifiedDoc.quality,
+              status: unifiedDoc.status,
+            ),
+          ),
+        );
       });
     } catch (e) {
       return Left(
@@ -111,13 +134,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   }
 
 
-  /// Convert absolute path to relative path for persistence
-  String _getRelativePath(String absolutePath) {
-    return _directoryService.getRelativePath(
-      absolutePath,
-      DirectoryType.audioCache,
-    );
-  }
+  // Removed unused helper; relative path conversion occurs at store time directly
 
   /// Validate and clean corrupted cache entries
   /// This should be called at app startup
@@ -129,11 +146,19 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
       for (final doc in docs) {
         try {
-          // Check if file exists at expected location
-          final exists = await doc.validateFileExists();
+          // Resolve absolute path and check existence
+          final absPathResult = await _directoryService.getAbsolutePath(
+            doc.relativePath,
+            DirectoryType.audioCache,
+          );
+
+          final exists = await absPathResult.fold(
+            (_) async => false,
+            (absPath) async => await File(absPath).exists(),
+          );
 
           if (!exists) {
-            // File doesn't exist, remove specific version entry
+            // Remove specific version entry from DB
             await _localDataSource.deleteAudioFile(
               doc.trackId,
               versionId: doc.versionId,
@@ -176,7 +201,22 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       return result.fold((failure) {
         // Fallback to file system search for legacy compatibility
         return _getCachedAudioPathFromFileSystem(trackId, versionId);
-      }, (path) => Right(path));
+      }, (relativePath) async {
+        // Resolve relative path to absolute via DirectoryService
+        final absPathResult = await _directoryService.getAbsolutePath(
+          relativePath,
+          DirectoryType.audioCache,
+        );
+        return absPathResult.fold(
+          (f) => Left(
+            StorageCacheFailure(
+              message: f.message,
+              type: StorageFailureType.diskError,
+            ),
+          ),
+          (absolutePath) => Right(absolutePath),
+        );
+      });
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -277,7 +317,19 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
   @override
   Future<Either<CacheFailure, bool>> audioExists(AudioTrackId trackId) async {
-    return await _localDataSource.audioExists(trackId.value);
+    // Check DB first then verify file exists in FS
+    final dbExists = await _localDataSource.audioExists(trackId.value);
+    return dbExists.fold(
+      (failure) => Left(failure),
+      (present) async {
+        if (!present) return const Right(false);
+        final pathResult = await getCachedAudioPath(trackId);
+        return pathResult.fold(
+          (failure) => Left(failure),
+          (absolutePath) async => Right(await File(absolutePath).exists()),
+        );
+      },
+    );
   }
 
   // New method to check if specific version exists
@@ -299,7 +351,33 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     final result = await _localDataSource.getCachedAudio(trackId.value);
     return result.fold(
       (failure) => Left(failure),
-      (doc) async => Right(doc != null ? await doc.toCachedAudio() : null),
+      (doc) async {
+        if (doc == null) return const Right(null);
+        final absPathResult = await _directoryService.getAbsolutePath(
+          doc.relativePath,
+          DirectoryType.audioCache,
+        );
+        return absPathResult.fold(
+          (f) => Left(
+            StorageCacheFailure(
+              message: f.message,
+              type: StorageFailureType.diskError,
+            ),
+          ),
+          (absolutePath) => Right(
+            CachedAudio(
+              trackId: doc.trackId,
+              versionId: doc.versionId,
+              filePath: absolutePath,
+              fileSizeBytes: doc.fileSizeBytes,
+              cachedAt: doc.cachedAt,
+              checksum: doc.checksum,
+              quality: doc.quality,
+              status: doc.status,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -315,7 +393,33 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     );
     return result.fold(
       (failure) => Left(failure),
-      (doc) async => Right(doc != null ? await doc.toCachedAudio() : null),
+      (doc) async {
+        if (doc == null) return const Right(null);
+        final absPathResult = await _directoryService.getAbsolutePath(
+          doc.relativePath,
+          DirectoryType.audioCache,
+        );
+        return absPathResult.fold(
+          (f) => Left(
+            StorageCacheFailure(
+              message: f.message,
+              type: StorageFailureType.diskError,
+            ),
+          ),
+          (absolutePath) => Right(
+            CachedAudio(
+              trackId: doc.trackId,
+              versionId: doc.versionId,
+              filePath: absolutePath,
+              fileSizeBytes: doc.fileSizeBytes,
+              cachedAt: doc.cachedAt,
+              checksum: doc.checksum,
+              quality: doc.quality,
+              status: doc.status,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -323,7 +427,32 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   Future<Either<CacheFailure, Unit>> deleteAudioFile(
     AudioTrackId trackId,
   ) async {
-    return await _localDataSource.deleteAudioFile(trackId.value);
+    try {
+      // Remove files from FS under track directory
+      final trackDirResult = await _directoryService.getSubdirectory(
+        DirectoryType.audioCache,
+        trackId.value,
+      );
+
+      await trackDirResult.fold(
+        (_) async {},
+        (trackDir) async {
+          if (await trackDir.exists()) {
+            await trackDir.delete(recursive: true);
+          }
+        },
+      );
+
+      // Remove DB entries
+      return await _localDataSource.deleteAudioFile(trackId.value);
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to delete audio file: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
   }
 
   // New method to delete specific version
@@ -332,10 +461,36 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     AudioTrackId trackId,
     TrackVersionId versionId,
   ) async {
-    return await _localDataSource.deleteAudioFile(
-      trackId.value,
-      versionId: versionId.value,
-    );
+    try {
+      // Try to resolve file path and delete from FS
+      final pathResult = await getCachedAudioPath(
+        trackId,
+        versionId: versionId,
+      );
+
+      await pathResult.fold(
+        (_) async {},
+        (absolutePath) async {
+          final file = File(absolutePath);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        },
+      );
+
+      // Remove DB entry
+      return await _localDataSource.deleteAudioFile(
+        trackId.value,
+        versionId: versionId.value,
+      );
+    } catch (e) {
+      return Left(
+        StorageCacheFailure(
+          message: 'Failed to delete audio version file: $e',
+          type: StorageFailureType.diskError,
+        ),
+      );
+    }
   }
 
   // Removed batch operations to simplify repository
@@ -356,8 +511,27 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     return _localDataSource.watchAllCachedAudios().asyncMap((docs) async {
       final cachedAudios = <CachedAudio>[];
       for (final doc in docs) {
-        final cachedAudio = await doc.toCachedAudio();
-        cachedAudios.add(cachedAudio);
+        final absPathResult = await _directoryService.getAbsolutePath(
+          doc.relativePath,
+          DirectoryType.audioCache,
+        );
+        await absPathResult.fold(
+          (_) async {},
+          (absolutePath) async {
+            cachedAudios.add(
+              CachedAudio(
+                trackId: doc.trackId,
+                versionId: doc.versionId,
+                filePath: absolutePath,
+                fileSizeBytes: doc.fileSizeBytes,
+                cachedAt: doc.cachedAt,
+                checksum: doc.checksum,
+                quality: doc.quality,
+                status: doc.status,
+              ),
+            );
+          },
+        );
       }
       return cachedAudios;
     });
@@ -410,10 +584,33 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     AudioTrackId trackId, {
     TrackVersionId? versionId,
   }) {
-    return _localDataSource.watchTrackCacheStatus(
-      trackId.value,
-      versionId: versionId?.value,
-    );
+    // Map DB presence to actual FS existence for the first matching doc
+    return _localDataSource
+        .watchTrackCacheStatus(
+          trackId.value,
+          versionId: versionId?.value,
+        )
+        .asyncMap((present) async {
+          if (!present) return false;
+          final docResult = await _localDataSource.getCachedAudio(
+            trackId.value,
+            versionId: versionId?.value,
+          );
+          return await docResult.fold(
+            (_) async => false,
+            (doc) async {
+              if (doc == null) return false;
+              final absPathResult = await _directoryService.getAbsolutePath(
+                doc.relativePath,
+                DirectoryType.audioCache,
+              );
+              return await absPathResult.fold(
+                (_) async => false,
+                (absolutePath) async => await File(absolutePath).exists(),
+              );
+            },
+          );
+        });
   }
 
   // No longer needed; extension is handled at download time

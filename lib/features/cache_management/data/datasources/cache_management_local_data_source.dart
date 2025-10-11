@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
 
 import '../../../audio_cache/domain/entities/cached_audio.dart';
 import '../../../audio_cache/domain/failures/cache_failure.dart';
@@ -33,18 +34,40 @@ abstract class CacheManagementLocalDataSource {
 class CacheManagementLocalDataSourceImpl
     implements CacheManagementLocalDataSource {
   final storage.CacheStorageLocalDataSource _delegate;
+  final DirectoryService _directoryService;
 
   CacheManagementLocalDataSourceImpl({
     required storage.CacheStorageLocalDataSource local,
-  }) : _delegate = local;
+    required DirectoryService directoryService,
+  })  : _delegate = local,
+        _directoryService = directoryService;
 
   @override
   Stream<List<CachedAudio>> watchCachedAudios() {
     return _delegate.watchAllCachedAudios().asyncMap((docs) async {
       final cachedAudios = <CachedAudio>[];
       for (final doc in docs) {
-        final cachedAudio = await doc.toCachedAudio();
-        cachedAudios.add(cachedAudio);
+        final absPathResult = await _directoryService.getAbsolutePath(
+          doc.relativePath,
+          DirectoryType.audioCache,
+        );
+        await absPathResult.fold(
+          (_) async {},
+          (absolutePath) async {
+            cachedAudios.add(
+              CachedAudio(
+                trackId: doc.trackId,
+                versionId: doc.versionId,
+                filePath: absolutePath,
+                fileSizeBytes: doc.fileSizeBytes,
+                cachedAt: doc.cachedAt,
+                checksum: doc.checksum,
+                quality: doc.quality,
+                status: doc.status,
+              ),
+            );
+          },
+        );
       }
       return cachedAudios;
     });
@@ -56,8 +79,27 @@ class CacheManagementLocalDataSourceImpl
       final docs = await _delegate.watchAllCachedAudios().first;
       final cachedAudios = <CachedAudio>[];
       for (final doc in docs) {
-        final cachedAudio = await doc.toCachedAudio();
-        cachedAudios.add(cachedAudio);
+        final absPathResult = await _directoryService.getAbsolutePath(
+          doc.relativePath,
+          DirectoryType.audioCache,
+        );
+        await absPathResult.fold(
+          (_) async {},
+          (absolutePath) async {
+            cachedAudios.add(
+              CachedAudio(
+                trackId: doc.trackId,
+                versionId: doc.versionId,
+                filePath: absolutePath,
+                fileSizeBytes: doc.fileSizeBytes,
+                cachedAt: doc.cachedAt,
+                checksum: doc.checksum,
+                quality: doc.quality,
+                status: doc.status,
+              ),
+            );
+          },
+        );
       }
       return Right(cachedAudios);
     } catch (e) {
@@ -77,7 +119,31 @@ class CacheManagementLocalDataSourceImpl
     final result = await _delegate.getCachedAudio(trackId);
     return result.fold(
       (failure) => Left(failure),
-      (doc) async => Right(doc != null ? await doc.toCachedAudio() : null),
+      (doc) async {
+        if (doc == null) return const Right(null);
+        final absPathResult = await _directoryService.getAbsolutePath(
+          doc.relativePath,
+          DirectoryType.audioCache,
+        );
+        return absPathResult.fold(
+          (f) => Left(StorageCacheFailure(
+            message: f.message,
+            type: StorageFailureType.diskError,
+          )),
+          (absolutePath) => Right(
+            CachedAudio(
+              trackId: doc.trackId,
+              versionId: doc.versionId,
+              filePath: absolutePath,
+              fileSizeBytes: doc.fileSizeBytes,
+              cachedAt: doc.cachedAt,
+              checksum: doc.checksum,
+              quality: doc.quality,
+              status: doc.status,
+            ),
+          ),
+        );
+      },
     );
   }
 
