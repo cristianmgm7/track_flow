@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/audio/domain/audio_file_repository.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/utils/audio_format_utils.dart';
 import 'package:trackflow/features/audio_cache/data/datasources/cache_storage_local_data_source.dart';
 import 'package:trackflow/features/audio_cache/data/models/cached_audio_document_unified.dart';
@@ -256,9 +257,18 @@ class UnifiedAudioService implements AudioFileRepository {
         versionId: versionId,
       );
 
-      return result.fold(
-        (failure) => Right(null), // Not cached is not an error
-        (path) => Right(path),
+      return await result.fold(
+        (failure) async => Right(null), // Not cached is not an error
+        (relativePath) async {
+          final absPathResult = await _directoryService.getAbsolutePath(
+            relativePath,
+            DirectoryType.audioCache,
+          );
+          return absPathResult.fold(
+            (_) => Right(null),
+            (absolutePath) => Right(absolutePath),
+          );
+        },
       );
     } catch (e) {
       return Right(null); // Treat errors as not cached
@@ -271,14 +281,30 @@ class UnifiedAudioService implements AudioFileRepository {
     String? versionId,
   }) async {
     try {
-      final result = await _localDataSource.audioExists(
+      // First check DB presence
+      final dbResult = await _localDataSource.audioExists(
         trackId,
         versionId: versionId,
       );
 
-      return result.fold(
-        (failure) => Right(false), // Treat cache failures as not cached
-        (exists) => Right(exists),
+      return await dbResult.fold(
+        (failure) async => Right(false), // Treat cache failures as not cached
+        (present) async {
+          if (!present) return Right(false);
+          // Resolve absolute path and confirm file exists
+          final cachedPathResult = await getCachedAudioPath(
+            trackId: trackId,
+            versionId: versionId,
+          );
+          return cachedPathResult.fold(
+            (_) async => Right(false),
+            (absolutePath) async {
+              if (absolutePath == null) return Right(false);
+              final file = File(absolutePath);
+              return Right(await file.exists());
+            },
+          );
+        },
       );
     } catch (e) {
       return Right(false); // Treat errors as not cached
@@ -316,7 +342,6 @@ class UnifiedAudioService implements AudioFileRepository {
 
       // Get file info
       final fileSize = await file.length();
-      final extension = AudioFormatUtils.getFileExtension(localPath);
 
       // Get relative path
       final relativePath = _directoryService.getRelativePath(
@@ -342,7 +367,7 @@ class UnifiedAudioService implements AudioFileRepository {
       await _localDataSource.storeUnifiedCachedAudio(document);
     } catch (e) {
       // Log but don't fail the download
-      print('Failed to cache metadata: $e');
+      AppLogger.debug('Failed to cache metadata: $e');
     }
   }
 }
