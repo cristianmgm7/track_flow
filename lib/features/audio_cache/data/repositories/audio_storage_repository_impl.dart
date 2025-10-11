@@ -198,8 +198,13 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
         trackId.value,
       );
 
-      return trackDirResult.fold(
-        (failure) => Left(failure),
+      return await trackDirResult.fold(
+        (failure) async => Left(
+          StorageCacheFailure(
+            message: failure.message,
+            type: StorageFailureType.diskError,
+          ),
+        ),
         (trackDir) async {
           if (!await trackDir.exists()) {
             return Left(
@@ -210,54 +215,55 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
             );
           }
 
-      // Try different extensions
-      final extensions = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'];
+          // Try different extensions
+          final extensions = ['.mp3', '.wav', '.m4a', '.aac', '.ogg', '.flac'];
 
-      if (versionId != null) {
-        // Look for specific version file
-        for (final ext in extensions) {
-          final filePath = '${trackDir.path}/${versionId.value}$ext';
-          final file = File(filePath);
-          if (await file.exists()) {
-            return Right(filePath);
-          }
-        }
-      } else {
-        // Look for any cached file in track directory (legacy compatibility)
-        try {
-          final files = await trackDir.list().toList();
-          for (final file in files) {
-            if (file is File) {
-              final fileName = file.path.split('/').last;
-              // Check if it's an audio file
-              for (final ext in extensions) {
-                if (fileName.endsWith(ext)) {
-                  return Right(file.path);
-                }
+          if (versionId != null) {
+            // Look for specific version file
+            for (final ext in extensions) {
+              final filePath = '${trackDir.path}/${versionId.value}$ext';
+              final file = File(filePath);
+              if (await file.exists()) {
+                return Right(filePath);
               }
             }
+          } else {
+            // Look for any cached file in track directory (legacy compatibility)
+            try {
+              final files = await trackDir.list().toList();
+              for (final file in files) {
+                if (file is File) {
+                  final fileName = file.path.split('/').last;
+                  // Check if it's an audio file
+                  for (final ext in extensions) {
+                    if (fileName.endsWith(ext)) {
+                      return Right(file.path);
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              // Directory might not exist or have permission issues
+              return Left(
+                StorageCacheFailure(
+                  message: 'Failed to access cache directory: $e',
+                  type: StorageFailureType.diskError,
+                ),
+              );
+            }
           }
-        } catch (e) {
-          // Directory might not exist or have permission issues
-          return Left(
-            StorageCacheFailure(
-              message: 'Failed to access cache directory: $e',
-              type: StorageFailureType.diskError,
-            ),
-          );
-        }
-      }
 
-      // File not found
-      final versionMsg =
-          versionId != null
+          // File not found
+          final versionMsg = versionId != null
               ? 'version ${versionId.value}'
               : 'track ${trackId.value}';
-      return Left(
-        StorageCacheFailure(
-          message: 'Cached audio file not found for $versionMsg',
-          type: StorageFailureType.fileNotFound,
-        ),
+          return Left(
+            StorageCacheFailure(
+              message: 'Cached audio file not found for $versionMsg',
+              type: StorageFailureType.fileNotFound,
+            ),
+          );
+        },
       );
     } catch (e) {
       return Left(

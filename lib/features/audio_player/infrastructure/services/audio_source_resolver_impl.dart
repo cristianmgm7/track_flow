@@ -3,7 +3,8 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../../core/error/failures.dart';
 import '../../../audio_cache/domain/repositories/audio_storage_repository.dart';
-import '../../../audio_cache/domain/repositories/audio_download_repository.dart';
+import '../../../../../core/audio/domain/audio_file_repository.dart';
+import '../../../../../core/infrastructure/domain/directory_service.dart';
 import '../../domain/services/audio_source_resolver.dart';
 import '../../../../../core/entities/unique_id.dart';
 
@@ -14,11 +15,13 @@ import '../../../../../core/entities/unique_id.dart';
 class AudioSourceResolverImpl implements AudioSourceResolver {
   const AudioSourceResolverImpl(
     this._audioStorageRepository,
-    this._audioDownloadRepository,
+    this._audioFileRepository,
+    this._directoryService,
   );
 
   final AudioStorageRepository _audioStorageRepository;
-  final AudioDownloadRepository _audioDownloadRepository;
+  final AudioFileRepository _audioFileRepository;
+  final DirectoryService _directoryService;
 
   @override
   Future<Either<Failure, String>> resolveAudioSource(
@@ -92,9 +95,20 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
     try {
       final effectiveTrackId = trackId ?? _extractTrackIdFromUrl(url);
 
-      // Use audio download repository for background caching
-      final audioTrackId = AudioTrackId.fromUniqueString(effectiveTrackId);
-      await _audioDownloadRepository.downloadAudio(audioTrackId, url);
+      // Use audio file repository for background caching
+      final tempDirResult = await _directoryService.getDirectory(DirectoryType.audioCache);
+      final localPath = tempDirResult.fold(
+        (failure) => null,
+        (dir) => '${dir.path}/${effectiveTrackId}_${url.hashCode.abs()}.mp3',
+      );
+
+      if (localPath != null) {
+        await _audioFileRepository.downloadAudioFile(
+          storageUrl: url,
+          localPath: localPath,
+          trackId: effectiveTrackId,
+        );
+      }
     } catch (e) {
       // Handle caching errors silently to not interrupt playback
     }
@@ -108,11 +122,21 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
     try {
       final trackId = _extractTrackIdFromUrl(url);
 
-      // Use audio download repository for preloading
-      final audioTrackId = AudioTrackId.fromUniqueString(trackId);
-      final result = await _audioDownloadRepository.downloadAudio(
-        audioTrackId,
-        url,
+      // Use audio file repository for preloading
+      final tempDirResult = await _directoryService.getDirectory(DirectoryType.audioCache);
+      final localPath = tempDirResult.fold(
+        (failure) => null,
+        (dir) => '${dir.path}/${trackId}_${url.hashCode.abs()}.mp3',
+      );
+
+      if (localPath == null) {
+        return Left(CacheFailure('Failed to get cache directory'));
+      }
+
+      final result = await _audioFileRepository.downloadAudioFile(
+        storageUrl: url,
+        localPath: localPath,
+        trackId: trackId,
       );
 
       return result.fold(
