@@ -19,7 +19,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   final AudioCommentLocalDataSource _localDataSource;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
-  final TrackVersionRepository _trackVersionRepository;
+  final TrackVersionRepository _trackVersionRepository; // need to get all versions of the track and delete comments per version
   final AudioStorageRepository _audioStorageRepository;
 
   AudioCommentRepositoryImpl({
