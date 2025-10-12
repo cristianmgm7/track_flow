@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/audio/domain/audio_file_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/audio_comment/data/services/audio_comment_storage_coordinator.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 
 /// Use case to get or download audio comment for playback
 ///
@@ -12,9 +14,13 @@ import 'package:trackflow/features/audio_comment/data/services/audio_comment_sto
 /// 3. Return local file path for playback
 @injectable
 class GetCachedAudioCommentUseCase {
-  final AudioCommentStorageCoordinator _storageCoordinator;
+  final AudioStorageRepository _audioStorageRepository;
+  final AudioFileRepository _audioFileRepository;
 
-  GetCachedAudioCommentUseCase(this._storageCoordinator);
+  GetCachedAudioCommentUseCase(
+    this._audioStorageRepository,
+    this._audioFileRepository,
+  );
 
   /// Get local path for audio comment (download if necessary)
   ///
@@ -33,9 +39,9 @@ class GetCachedAudioCommentUseCase {
     final versionId = TrackVersionId.fromUniqueString(commentId.value);
 
     // Check if already cached
-    final cacheCheck = await _storageCoordinator.isCommentAudioCached(
-      trackId: trackId,
-      versionId: versionId,
+    final cacheCheck = await _audioStorageRepository.audioVersionExists(
+      trackId,
+      versionId,
     );
 
     final alreadyCached = cacheCheck.fold(
@@ -45,8 +51,8 @@ class GetCachedAudioCommentUseCase {
 
     if (alreadyCached) {
       // Return cached path
-      return await _storageCoordinator.getCachedCommentAudioPath(
-        trackId: trackId,
+      return await _audioStorageRepository.getCachedAudioPath(
+        trackId,
         versionId: versionId,
       ).then(
         (either) => either.fold(
@@ -57,10 +63,44 @@ class GetCachedAudioCommentUseCase {
     }
 
     // Download and cache
-    return await _storageCoordinator.downloadAndCacheCommentAudio(
+    // 1. Download to temporary location first
+    final tempDir = Directory.systemTemp;
+    final tempPath = '${tempDir.path}/temp_comment_${commentId.value}.m4a';
+
+    final downloadResult = await _audioFileRepository.downloadAudioFile(
       storageUrl: storageUrl,
-      projectId: projectId,
-      commentId: commentId,
+      localPath: tempPath,
+      trackId: projectId.value,
+      versionId: versionId.value,
+      onProgress: (progress) {
+        // Progress updates could be emitted to a stream if needed
+      },
+    );
+
+    return await downloadResult.fold(
+      (failure) async => Left(failure),
+      (downloadedPath) async {
+        // 2. Move to permanent cache
+        final tempFile = File(downloadedPath);
+        final cacheResult = await _audioStorageRepository.storeAudio(
+          trackId,
+          versionId,
+          tempFile,
+        );
+
+        return cacheResult.fold(
+          (failure) => Left(StorageFailure(failure.message)),
+          (cachedAudio) async {
+            // Clean up temp file
+            try {
+              await tempFile.delete();
+            } catch (_) {
+              // Ignore cleanup errors
+            }
+            return Right(cachedAudio.filePath);
+          },
+        );
+      },
     );
   }
 }

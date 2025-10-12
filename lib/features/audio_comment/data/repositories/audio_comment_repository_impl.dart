@@ -1,16 +1,15 @@
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/core/network/network_state_manager.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_local_datasource.dart';
-import 'package:trackflow/features/audio_comment/data/services/audio_comment_storage_coordinator.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
@@ -18,26 +17,22 @@ import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.d
 @LazySingleton(as: AudioCommentRepository)
 class AudioCommentRepositoryImpl implements AudioCommentRepository {
   final AudioCommentLocalDataSource _localDataSource;
-  final AudioCommentRemoteDataSource _remoteDataSource;
   final BackgroundSyncCoordinator _backgroundSyncCoordinator;
   final PendingOperationsManager _pendingOperationsManager;
   final TrackVersionRepository _trackVersionRepository;
-  final AudioCommentStorageCoordinator _storageCoordinator;
+  final AudioStorageRepository _audioStorageRepository;
 
   AudioCommentRepositoryImpl({
-    required AudioCommentRemoteDataSource remoteDataSource,
     required AudioCommentLocalDataSource localDataSource,
-    required NetworkStateManager networkStateManager,
     required BackgroundSyncCoordinator backgroundSyncCoordinator,
     required PendingOperationsManager pendingOperationsManager,
     required TrackVersionRepository trackVersionRepository,
-    required AudioCommentStorageCoordinator storageCoordinator,
+    required AudioStorageRepository audioStorageRepository,
   }) : _localDataSource = localDataSource,
-       _remoteDataSource = remoteDataSource,
        _backgroundSyncCoordinator = backgroundSyncCoordinator,
        _pendingOperationsManager = pendingOperationsManager,
        _trackVersionRepository = trackVersionRepository,
-       _storageCoordinator = storageCoordinator;
+       _audioStorageRepository = audioStorageRepository;
 
   @override
   Future<Either<Failure, AudioComment>> getCommentById(
@@ -79,16 +74,36 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
       if (versionsEither.isLeft()) return versionsEither.map((_) => unit);
       final versions = versionsEither.getOrElse(() => []);
 
-      // Delete comments per version (remote + local)
+      // Delete comments per version (local + queue for sync)
       for (final v in versions) {
-        try {
-          await _remoteDataSource.deleteByVersionId(v.id.value);
-        } catch (_) {}
+        // 1. Delete locally first
         try {
           await _localDataSource.deleteByVersion(v.id.value);
-          
-        } catch (_) {}
+        } catch (e) {
+          AppLogger.warning(
+            'Failed to delete local comments for version ${v.id.value}: $e',
+            tag: 'AudioCommentRepositoryImpl',
+          );
+        }
+
+        // 2. Queue bulk delete operation for sync
+        try {
+          await _pendingOperationsManager.addDeleteOperation(
+            entityType: 'audio_comment_by_version',
+            entityId: v.id.value,
+            priority: SyncPriority.high,
+          );
+        } catch (e) {
+          AppLogger.warning(
+            'Failed to queue delete operation for version ${v.id.value}: $e',
+            tag: 'AudioCommentRepositoryImpl',
+          );
+        }
       }
+
+      // Trigger background sync
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
+
       return const Right(unit);
     } catch (e) {
       return Left(DatabaseFailure('Failed to delete comments by track: $e'));
@@ -145,10 +160,12 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
         final trackId = AudioTrackId.fromUniqueString(comment.projectId.value);
         final versionId = TrackVersionId.fromUniqueString(comment.id.value);
 
-        final cacheResult = await _storageCoordinator.storeRecordingInCache(
-          tempPath: comment.localAudioPath!,
-          trackId: trackId,
-          versionId: versionId,
+        // Store audio directly using AudioStorageRepository
+        final audioFile = File(comment.localAudioPath!);
+        final cacheResult = await _audioStorageRepository.storeAudio(
+          trackId,
+          versionId,
+          audioFile,
         );
 
         cachedAudioPath = await cacheResult.fold(
@@ -160,7 +177,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
             // Don't fail the whole operation, just log the error
             return null;
           },
-          (path) => path,
+          (cachedAudio) => cachedAudio.filePath,
         );
 
         // Update DTO with cache path if successful
@@ -255,19 +272,33 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
     TrackVersionId versionId,
   ) async {
     try {
-      // Delete remote comments first
-      try {
-        await _remoteDataSource.deleteByVersionId(versionId.value);
-      } catch (_) {
-        // Ignore remote deletion errors - continue with local deletion
-      }
-
-      // Delete local comments
+      // 1. Delete local comments first
       try {
         await _localDataSource.deleteByVersion(versionId.value);
       } catch (e) {
-        return Left(DatabaseFailure('Failed to delete local comments: $e'));
+        AppLogger.warning(
+          'Failed to delete local comments for version ${versionId.value}: $e',
+          tag: 'AudioCommentRepositoryImpl',
+        );
       }
+
+      // 2. Queue bulk delete operation for sync
+      final queueResult = await _pendingOperationsManager.addDeleteOperation(
+        entityType: 'audio_comment_by_version',
+        entityId: versionId.value,
+        priority: SyncPriority.high,
+      );
+
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        AppLogger.warning(
+          'Failed to queue delete operation: ${failure?.message}',
+          tag: 'AudioCommentRepositoryImpl',
+        );
+      }
+
+      // 3. Trigger background sync
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
 
       return const Right(unit);
     } catch (e) {

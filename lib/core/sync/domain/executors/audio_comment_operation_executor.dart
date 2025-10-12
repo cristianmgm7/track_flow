@@ -1,11 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/audio/domain/audio_file_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor.dart';
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart';
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart';
-import 'package:trackflow/features/audio_comment/data/services/audio_comment_storage_coordinator.dart';
 
 /// Handles sync operations for AudioComment entities
 ///
@@ -15,11 +16,11 @@ import 'package:trackflow/features/audio_comment/data/services/audio_comment_sto
 @injectable
 class AudioCommentOperationExecutor implements OperationExecutor {
   final AudioCommentRemoteDataSource _remoteDataSource;
-  final AudioCommentStorageCoordinator _storageCoordinator;
+  final AudioFileRepository _audioFileRepository;
 
   AudioCommentOperationExecutor(
     this._remoteDataSource,
-    this._storageCoordinator,
+    this._audioFileRepository,
   );
 
   @override
@@ -31,6 +32,12 @@ class AudioCommentOperationExecutor implements OperationExecutor {
         operation.operationData != null
             ? jsonDecode(operation.operationData!) as Map<String, dynamic>
             : <String, dynamic>{};
+
+    // Handle special entity type for bulk deletions
+    if (operation.entityType == 'audio_comment_by_version') {
+      await _executeDeleteByVersion(operation);
+      return;
+    }
 
     switch (operation.operationType) {
       case 'create':
@@ -60,11 +67,26 @@ class AudioCommentOperationExecutor implements OperationExecutor {
     // 1. Upload audio file if present
     String? audioStorageUrl;
     if (operationData['localAudioPath'] != null) {
-      final uploadResult = await _storageCoordinator.uploadCommentAudio(
-        localPath: operationData['localAudioPath'] as String,
-        trackId: AudioTrackId.fromUniqueString(operationData['trackId'] as String),
-        versionId: TrackVersionId.fromUniqueString(operationData['trackId'] as String),
-        commentId: AudioCommentId.fromUniqueString(operation.entityId),
+      final localPath = operationData['localAudioPath'] as String;
+      final audioFile = File(localPath);
+
+      // Build storage path: audio_comments/{trackId}/{versionId}/{commentId}.m4a
+      final trackId = AudioTrackId.fromUniqueString(operationData['trackId'] as String);
+      final versionId = TrackVersionId.fromUniqueString(operationData['trackId'] as String);
+      final commentId = AudioCommentId.fromUniqueString(operation.entityId);
+      final storagePath = 'audio_comments/${trackId.value}/${versionId.value}/${commentId.value}.m4a';
+
+      final metadata = {
+        'trackId': trackId.value,
+        'versionId': versionId.value,
+        'commentId': commentId.value,
+        'type': 'audio_comment',
+      };
+
+      final uploadResult = await _audioFileRepository.uploadAudioFile(
+        audioFile: audioFile,
+        storagePath: storagePath,
+        metadata: metadata,
       );
 
       audioStorageUrl = await uploadResult.fold(
@@ -143,9 +165,38 @@ class AudioCommentOperationExecutor implements OperationExecutor {
     // 2. Delete audio file from Firebase Storage if exists
     final audioStorageUrl = operationData['audioStorageUrl'] as String?;
     if (audioStorageUrl != null) {
-      await _storageCoordinator.deleteCommentAudio(
+      final deleteResult = await _audioFileRepository.deleteAudioFile(
         storageUrl: audioStorageUrl,
       );
+
+      deleteResult.fold(
+        (failure) {
+          // Log but don't fail - Firestore document is already deleted
+          // Audio file cleanup can be handled by storage rules or manual cleanup
+        },
+        (_) {
+          // Successfully deleted audio file
+        },
+      );
     }
+  }
+
+  /// Execute bulk deletion of all audio comments for a version
+  /// This is used when deleting a track version or track entirely
+  Future<void> _executeDeleteByVersion(SyncOperationDocument operation) async {
+    // operation.entityId contains the versionId
+    final versionId = operation.entityId;
+
+    // Delete all comments for this version from Firestore
+    final result = await _remoteDataSource.deleteByVersionId(versionId);
+    result.fold(
+      (failure) =>
+          throw Exception('Bulk comment deletion failed: ${failure.message}'),
+      (_) {
+        // Successfully deleted all comments for version
+        // Note: Audio files will be cleaned up by Firebase Storage lifecycle rules
+        // or can be handled by a cloud function
+      },
+    );
   }
 }

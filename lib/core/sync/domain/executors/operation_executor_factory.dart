@@ -31,6 +31,7 @@ class OperationExecutorFactory {
       case 'track_version':
         return sl<TrackVersionOperationExecutor>();
       case 'audio_comment':
+      case 'audio_comment_by_version': // Bulk delete operation uses same executor
         return sl<AudioCommentOperationExecutor>();
       case 'user_profile':
         return sl<UserProfileOperationExecutor>();
@@ -51,6 +52,7 @@ class OperationExecutorFactory {
     'audio_track',
     'track_version',
     'audio_comment',
+    'audio_comment_by_version',
     'user_profile',
     'playlist',
     'audio_waveform',
