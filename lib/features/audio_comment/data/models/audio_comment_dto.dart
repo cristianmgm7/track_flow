@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
@@ -118,6 +119,18 @@ class AudioCommentDTO {
   factory AudioCommentDTO.fromJson(Map<String, dynamic> json) {
     final versionId =
         (json['versionId'] as String?) ?? (json['trackId'] as String);
+
+    // Parse lastModified - handle both Timestamp and String types
+    DateTime? lastModified;
+    if (json['lastModified'] != null) {
+      final lastModifiedValue = json['lastModified'];
+      if (lastModifiedValue is Timestamp) {
+        lastModified = lastModifiedValue.toDate();
+      } else if (lastModifiedValue is String) {
+        lastModified = DateTime.tryParse(lastModifiedValue);
+      }
+    }
+
     return AudioCommentDTO(
       id: json['id'] as String,
       projectId: json['projectId'] as String,
@@ -129,10 +142,7 @@ class AudioCommentDTO {
       // Parse sync metadata from JSON
       isDeleted: json['isDeleted'] as bool? ?? false,
       version: json['version'] as int? ?? 1,
-      lastModified:
-          json['lastModified'] != null
-              ? DateTime.tryParse(json['lastModified'] as String)
-              : null,
+      lastModified: lastModified,
       // Audio fields (with backward compatibility)
       audioStorageUrl: json['audioStorageUrl'] as String?,
       audioDurationMs: json['audioDurationMs'] as int?,

@@ -14,13 +14,13 @@ import 'package:trackflow/features/audio_cache/domain/entities/cached_audio.dart
 import 'package:trackflow/features/audio_cache/domain/entities/download_progress.dart';
 
 @LazySingleton(as: AudioFileRepository)
-class UnifiedAudioService implements AudioFileRepository {
+class AudioFileRepositoryImpl implements AudioFileRepository {
   final FirebaseStorage _storage;
   final http.Client _httpClient;
   final DirectoryService _directoryService;
   final CacheStorageLocalDataSource _localDataSource;
 
-  UnifiedAudioService(
+  AudioFileRepositoryImpl(
     this._storage,
     this._directoryService,
     this._localDataSource, {
