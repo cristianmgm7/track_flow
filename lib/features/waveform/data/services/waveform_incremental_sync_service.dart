@@ -10,7 +10,7 @@ import 'package:trackflow/features/waveform/data/datasources/waveform_local_data
 import 'package:trackflow/features/waveform/data/datasources/waveform_remote_datasource.dart';
 import 'package:trackflow/features/track_version/data/models/track_version_dto.dart';
 
-@LazySingleton(as: IncrementalSyncService<dynamic>)
+@LazySingleton()
 class WaveformIncrementalSyncService
     implements IncrementalSyncService<dynamic> {
   final TrackVersionLocalDataSource _versionLocalDataSource;
