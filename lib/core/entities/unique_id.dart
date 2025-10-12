@@ -108,3 +108,14 @@ class TrackVersionId extends ValueObject<String> {
 
   const TrackVersionId._(super.value);
 }
+
+class VoiceMemoId extends ValueObject<String> {
+  factory VoiceMemoId() => VoiceMemoId._(const Uuid().v4());
+
+  factory VoiceMemoId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return VoiceMemoId._(input);
+  }
+
+  const VoiceMemoId._(super.value);
+}
