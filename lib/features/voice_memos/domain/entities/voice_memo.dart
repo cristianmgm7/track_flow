@@ -1,5 +1,6 @@
+import 'package:trackflow/core/entities/unique_id.dart';
+
 import '../../../../core/domain/entity.dart';
-import '../../../../core/entities/unique_id.dart';
 
 /// Voice memo entity representing a recorded audio memo
 class VoiceMemo extends Entity<VoiceMemoId> {

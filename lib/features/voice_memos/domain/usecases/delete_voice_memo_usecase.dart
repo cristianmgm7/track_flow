@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/entities/unique_id.dart';
 import '../repositories/voice_memo_repository.dart';
+import '../../../../core/entities/unique_id.dart';
 
 /// Delete a voice memo and its audio file
 @lazySingleton

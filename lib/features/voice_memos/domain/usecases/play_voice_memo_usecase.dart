@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import '../../../../core/error/failures.dart';
 import '../../../../core/entities/unique_id.dart';
+import '../../../../core/error/failures.dart';
 import '../../../audio_player/domain/entities/audio_source.dart';
 import '../../../audio_player/domain/entities/audio_track_metadata.dart';
 import '../../../audio_player/domain/services/audio_player_service.dart';
