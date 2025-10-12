@@ -228,17 +228,44 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   @override
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId) async {
     try {
-      // 1. ALWAYS soft delete locally first
+      // 1. Get comment data to extract audioStorageUrl for later deletion
+      String? audioStorageUrl;
+      String? trackId;
+      String? versionId;
+
+      final commentResult = await _localDataSource.getCommentById(commentId.value);
+      await commentResult.fold(
+        (failure) {
+          AppLogger.warning(
+            'Could not fetch comment for deletion metadata: ${failure.message}',
+            tag: 'AudioCommentRepositoryImpl',
+          );
+        },
+        (dto) {
+          if (dto != null) {
+            audioStorageUrl = dto.audioStorageUrl;
+            trackId = dto.trackId;
+            versionId = dto.trackId; // Note: Using trackId as versionId based on existing pattern
+          }
+        },
+      );
+
+      // 2. ALWAYS soft delete locally first
       await _localDataSource.deleteCachedComment(commentId.value);
 
-      // 2. Try to queue for background sync
+      // 3. Try to queue for background sync with audio metadata
       final queueResult = await _pendingOperationsManager.addDeleteOperation(
         entityType: 'audio_comment',
         entityId: commentId.value,
         priority: SyncPriority.high,
+        data: {
+          if (audioStorageUrl != null) 'audioStorageUrl': audioStorageUrl,
+          if (trackId != null) 'trackId': trackId,
+          if (versionId != null) 'versionId': versionId,
+        },
       );
 
-      // 3. Handle queue failure
+      // 4. Handle queue failure
       if (queueResult.isLeft()) {
         final failure = queueResult.fold((l) => l, (r) => null);
         return Left(

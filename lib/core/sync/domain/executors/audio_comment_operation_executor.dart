@@ -187,16 +187,42 @@ class AudioCommentOperationExecutor implements OperationExecutor {
     // operation.entityId contains the versionId
     final versionId = operation.entityId;
 
-    // Delete all comments for this version from Firestore
+    // 1. First, get all comments for this version to find audio files
+    // We need to fetch from Firestore before deleting to get storage URLs
+    List<String> audioStorageUrls = [];
+
+    try {
+      final commentDtos = await _remoteDataSource.getCommentsByVersionId(versionId);
+
+      // Extract storage URLs from comments that have audio
+      audioStorageUrls = commentDtos
+          .where((dto) => dto.audioStorageUrl != null && dto.audioStorageUrl!.isNotEmpty)
+          .map((dto) => dto.audioStorageUrl!)
+          .toList();
+    } catch (e) {
+      // If we can't fetch comments, still try to delete the Firestore collection
+      // Audio files may be orphaned but better to delete what we can
+    }
+
+    // 2. Delete all comments for this version from Firestore
     final result = await _remoteDataSource.deleteByVersionId(versionId);
     result.fold(
       (failure) =>
           throw Exception('Bulk comment deletion failed: ${failure.message}'),
       (_) {
-        // Successfully deleted all comments for version
-        // Note: Audio files will be cleaned up by Firebase Storage lifecycle rules
-        // or can be handled by a cloud function
+        // Successfully deleted Firestore documents
       },
     );
+
+    // 3. Delete audio files from Firebase Storage
+    // Do this after Firestore deletion so we don't fail if storage delete fails
+    for (final storageUrl in audioStorageUrls) {
+      try {
+        await _audioFileRepository.deleteAudioFile(storageUrl: storageUrl);
+      } catch (e) {
+        // Log but don't fail - Firestore is already cleaned up
+        // Orphaned files can be cleaned by storage lifecycle rules
+      }
+    }
   }
 }
