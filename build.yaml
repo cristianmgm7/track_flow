@@ -16,6 +16,7 @@ targets:
           - "lib/features/invitations/data/models/invitation_document.dart"
           - "lib/core/notifications/data/models/notification_document.dart"
           - "lib/features/waveform/data/models/audio_waveform_document.dart"
+          - "lib/features/voice_memos/data/models/voice_memo_document.dart"
       injectable_generator|injectable_builder:
         generate_for:
           - "lib/**.dart"

@@ -81,11 +81,12 @@ class AppRouter {
         // Handle ready state - allow access to main app routes
         if (flowState is AppFlowReady) {
           // When app is ready, redirect to dashboard if not on a valid route
-          // Valid routes are: dashboard, projects, settings, notifications, user profile, collaborator profile, and any project details
+          // Valid routes are: dashboard, projects, settings, notifications, voice memos, user profile, collaborator profile, and any project details
           if (currentLocation == AppRoutes.dashboard ||
               currentLocation == AppRoutes.projects ||
               currentLocation == AppRoutes.settings ||
               currentLocation == AppRoutes.notifications ||
+              currentLocation == AppRoutes.voiceMemos ||
               currentLocation == AppRoutes.userProfile ||
               currentLocation == AppRoutes.manageCollaborators ||
               currentLocation == AppRoutes.trackDetail ||

@@ -29,4 +29,8 @@ class AppRoutes {
   static const String artistProfile = '/artistprofile/:id';
 
   static const String cacheManagement = '/settings/cache-management';
+
+  // Voice memo routes
+  static const String voiceMemos = '/voice-memos';
+  static const String voiceMemoRecording = '/voice-memos/recording';
 }

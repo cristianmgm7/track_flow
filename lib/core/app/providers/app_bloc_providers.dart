@@ -128,4 +128,5 @@ class AppBlocProviders {
       BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
     ];
   }
+
 }

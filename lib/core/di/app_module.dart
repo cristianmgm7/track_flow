@@ -22,6 +22,7 @@ import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/features/invitations/data/models/invitation_document.dart';
 import 'package:trackflow/core/notifications/data/models/notification_document.dart';
 import 'package:trackflow/features/waveform/data/models/audio_waveform_document.dart';
+import 'package:trackflow/features/voice_memos/data/models/voice_memo_document.dart';
 
 // NEW SERVICES - SOLID Architecture
 // These imports are used by the generated injection.config.dart
@@ -77,6 +78,7 @@ abstract class AppModule {
       NotificationDocumentSchema, // Required for notification system
       AudioWaveformDocumentSchema, // New waveform document
       TrackVersionDocumentSchema, // New track version document
+      VoiceMemoDocumentSchema, // Voice memos feature
     ];
 
     return await Isar.open(schemas, directory: dir.path);
