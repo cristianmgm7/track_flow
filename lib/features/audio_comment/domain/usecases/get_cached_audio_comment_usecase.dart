@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/audio/domain/audio_file_repository.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
 
 /// Use case to get or download audio comment for playback
@@ -54,6 +55,7 @@ class GetCachedAudioCommentUseCase {
       return await _audioStorageRepository.getCachedAudioPath(
         trackId,
         versionId: versionId,
+        directoryType: DirectoryType.audioComments,
       ).then(
         (either) => either.fold(
           (failure) => Left(StorageFailure(failure.message)),
@@ -86,6 +88,7 @@ class GetCachedAudioCommentUseCase {
           trackId,
           versionId,
           tempFile,
+          directoryType: DirectoryType.audioComments,
         );
 
         return cacheResult.fold(

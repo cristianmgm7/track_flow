@@ -28,6 +28,14 @@ class DirectoryServiceImpl implements DirectoryService {
           final appDir = await getApplicationDocumentsDirectory();
           basePath = '${appDir.path}/trackflow/audio';
           break;
+        case DirectoryType.audioTracks:
+          final appDir = await getApplicationDocumentsDirectory();
+          basePath = '${appDir.path}/trackflow/audio/tracks';
+          break;
+        case DirectoryType.audioComments:
+          final appDir = await getApplicationDocumentsDirectory();
+          basePath = '${appDir.path}/trackflow/audio/comments';
+          break;
         case DirectoryType.localAvatars:
           final appDir = await getApplicationDocumentsDirectory();
           basePath = '${appDir.path}/local_avatars';

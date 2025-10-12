@@ -11,6 +11,8 @@ import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/app_flow/data/session_storage.dart' as _i4;
 import 'package:trackflow/core/entities/unique_id.dart' as _i9;
 import 'package:trackflow/core/error/failures.dart' as _i7;
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart'
+    as _i20;
 import 'package:trackflow/features/audio_cache/domain/entities/cached_audio.dart'
     as _i19;
 import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dart'
@@ -18,9 +20,9 @@ import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dar
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart'
     as _i17;
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart'
-    as _i21;
+    as _i22;
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart'
-    as _i20;
+    as _i21;
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
     as _i11;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart'
@@ -779,8 +781,9 @@ class MockAudioStorageRepository extends _i1.Mock
   _i5.Future<_i2.Either<_i18.CacheFailure, _i19.CachedAudio>> storeAudio(
     _i9.AudioTrackId? trackId,
     _i9.TrackVersionId? versionId,
-    _i14.File? audioFile,
-  ) =>
+    _i14.File? audioFile, {
+    _i20.DirectoryType? directoryType = _i20.DirectoryType.audioCache,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
           #storeAudio,
@@ -789,6 +792,7 @@ class MockAudioStorageRepository extends _i1.Mock
             versionId,
             audioFile,
           ],
+          {#directoryType: directoryType},
         ),
         returnValue:
             _i5.Future<_i2.Either<_i18.CacheFailure, _i19.CachedAudio>>.value(
@@ -801,6 +805,7 @@ class MockAudioStorageRepository extends _i1.Mock
               versionId,
               audioFile,
             ],
+            {#directoryType: directoryType},
           ),
         )),
       ) as _i5.Future<_i2.Either<_i18.CacheFailure, _i19.CachedAudio>>);
@@ -809,12 +814,16 @@ class MockAudioStorageRepository extends _i1.Mock
   _i5.Future<_i2.Either<_i18.CacheFailure, String>> getCachedAudioPath(
     _i9.AudioTrackId? trackId, {
     _i9.TrackVersionId? versionId,
+    _i20.DirectoryType? directoryType = _i20.DirectoryType.audioCache,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
           #getCachedAudioPath,
           [trackId],
-          {#versionId: versionId},
+          {
+            #versionId: versionId,
+            #directoryType: directoryType,
+          },
         ),
         returnValue: _i5.Future<_i2.Either<_i18.CacheFailure, String>>.value(
             _FakeEither_0<_i18.CacheFailure, String>(
@@ -822,7 +831,10 @@ class MockAudioStorageRepository extends _i1.Mock
           Invocation.method(
             #getCachedAudioPath,
             [trackId],
-            {#versionId: versionId},
+            {
+              #versionId: versionId,
+              #directoryType: directoryType,
+            },
           ),
         )),
       ) as _i5.Future<_i2.Either<_i18.CacheFailure, String>>);
@@ -1051,13 +1063,13 @@ class MockAudioStorageRepository extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockAudioCommentRepository extends _i1.Mock
-    implements _i20.AudioCommentRepository {
+    implements _i21.AudioCommentRepository {
   MockAudioCommentRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<_i2.Either<_i7.Failure, _i21.AudioComment>> getCommentById(
+  _i5.Future<_i2.Either<_i7.Failure, _i22.AudioComment>> getCommentById(
           _i9.AudioCommentId? commentId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -1065,19 +1077,19 @@ class MockAudioCommentRepository extends _i1.Mock
           [commentId],
         ),
         returnValue:
-            _i5.Future<_i2.Either<_i7.Failure, _i21.AudioComment>>.value(
-                _FakeEither_0<_i7.Failure, _i21.AudioComment>(
+            _i5.Future<_i2.Either<_i7.Failure, _i22.AudioComment>>.value(
+                _FakeEither_0<_i7.Failure, _i22.AudioComment>(
           this,
           Invocation.method(
             #getCommentById,
             [commentId],
           ),
         )),
-      ) as _i5.Future<_i2.Either<_i7.Failure, _i21.AudioComment>>);
+      ) as _i5.Future<_i2.Either<_i7.Failure, _i22.AudioComment>>);
 
   @override
   _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>> addComment(
-          _i21.AudioComment? comment) =>
+          _i22.AudioComment? comment) =>
       (super.noSuchMethod(
         Invocation.method(
           #addComment,
@@ -1094,18 +1106,18 @@ class MockAudioCommentRepository extends _i1.Mock
       ) as _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>>);
 
   @override
-  _i5.Stream<_i2.Either<_i7.Failure, List<_i21.AudioComment>>>
+  _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>
       watchCommentsByTrack(_i9.AudioTrackId? trackId) => (super.noSuchMethod(
             Invocation.method(
               #watchCommentsByTrack,
               [trackId],
             ),
             returnValue: _i5.Stream<
-                _i2.Either<_i7.Failure, List<_i21.AudioComment>>>.empty(),
-          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i21.AudioComment>>>);
+                _i2.Either<_i7.Failure, List<_i22.AudioComment>>>.empty(),
+          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>);
 
   @override
-  _i5.Stream<_i2.Either<_i7.Failure, List<_i21.AudioComment>>>
+  _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>
       watchCommentsByVersion(_i9.TrackVersionId? versionId) =>
           (super.noSuchMethod(
             Invocation.method(
@@ -1113,8 +1125,8 @@ class MockAudioCommentRepository extends _i1.Mock
               [versionId],
             ),
             returnValue: _i5.Stream<
-                _i2.Either<_i7.Failure, List<_i21.AudioComment>>>.empty(),
-          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i21.AudioComment>>>);
+                _i2.Either<_i7.Failure, List<_i22.AudioComment>>>.empty(),
+          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>);
 
   @override
   _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>> deleteComment(

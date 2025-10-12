@@ -163,6 +163,6 @@ class CacheManagementLocalDataSourceImpl
 
   @override
   Future<Either<CacheFailure, Unit>> deleteAudioFile(String trackId) {
-    return _delegate.deleteAudioFile(trackId);
+    return _delegate.deleteAudioVersion(trackId);
   }
 }

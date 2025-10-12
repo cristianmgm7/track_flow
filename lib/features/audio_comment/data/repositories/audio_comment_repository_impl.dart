@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
 import 'package:trackflow/core/sync/domain/services/pending_operations_manager.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
@@ -166,6 +167,7 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
           trackId,
           versionId,
           audioFile,
+          directoryType: DirectoryType.audioComments,
         );
 
         cachedAudioPath = await cacheResult.fold(

@@ -10,6 +10,8 @@ import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trackflow/core/entities/unique_id.dart' as _i7;
 import 'package:trackflow/core/error/failures.dart' as _i5;
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart'
+    as _i16;
 import 'package:trackflow/features/audio_cache/domain/entities/cached_audio.dart'
     as _i15;
 import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dart'
@@ -525,8 +527,9 @@ class MockAudioStorageRepository extends _i1.Mock
   _i4.Future<_i2.Either<_i14.CacheFailure, _i15.CachedAudio>> storeAudio(
     _i7.AudioTrackId? trackId,
     _i7.TrackVersionId? versionId,
-    _i8.File? audioFile,
-  ) =>
+    _i8.File? audioFile, {
+    _i16.DirectoryType? directoryType = _i16.DirectoryType.audioCache,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
           #storeAudio,
@@ -535,6 +538,7 @@ class MockAudioStorageRepository extends _i1.Mock
             versionId,
             audioFile,
           ],
+          {#directoryType: directoryType},
         ),
         returnValue:
             _i4.Future<_i2.Either<_i14.CacheFailure, _i15.CachedAudio>>.value(
@@ -547,6 +551,7 @@ class MockAudioStorageRepository extends _i1.Mock
               versionId,
               audioFile,
             ],
+            {#directoryType: directoryType},
           ),
         )),
       ) as _i4.Future<_i2.Either<_i14.CacheFailure, _i15.CachedAudio>>);
@@ -555,12 +560,16 @@ class MockAudioStorageRepository extends _i1.Mock
   _i4.Future<_i2.Either<_i14.CacheFailure, String>> getCachedAudioPath(
     _i7.AudioTrackId? trackId, {
     _i7.TrackVersionId? versionId,
+    _i16.DirectoryType? directoryType = _i16.DirectoryType.audioCache,
   }) =>
       (super.noSuchMethod(
         Invocation.method(
           #getCachedAudioPath,
           [trackId],
-          {#versionId: versionId},
+          {
+            #versionId: versionId,
+            #directoryType: directoryType,
+          },
         ),
         returnValue: _i4.Future<_i2.Either<_i14.CacheFailure, String>>.value(
             _FakeEither_0<_i14.CacheFailure, String>(
@@ -568,7 +577,10 @@ class MockAudioStorageRepository extends _i1.Mock
           Invocation.method(
             #getCachedAudioPath,
             [trackId],
-            {#versionId: versionId},
+            {
+              #versionId: versionId,
+              #directoryType: directoryType,
+            },
           ),
         )),
       ) as _i4.Future<_i2.Either<_i14.CacheFailure, String>>);

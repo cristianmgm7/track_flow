@@ -109,6 +109,7 @@ class CacheTrackUseCase {
             AudioTrackId.fromUniqueString(trackId),
             TrackVersionId.fromUniqueString(versionId),
             File(filePath),
+            directoryType: DirectoryType.audioTracks,
           );
           return storeResult.fold(
             (failure) => Left(failure),

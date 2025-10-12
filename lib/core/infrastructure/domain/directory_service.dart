@@ -4,8 +4,15 @@ import 'package:trackflow/core/error/failures.dart';
 
 /// Directory types supported by the application
 enum DirectoryType {
-  /// Persistent audio cache: /Documents/trackflow/audio
+  /// Persistent audio cache (base): /Documents/trackflow/audio
+  /// @deprecated Use audioTracks or audioComments for new implementations
   audioCache,
+
+  /// Track audio files: /Documents/trackflow/audio/tracks
+  audioTracks,
+
+  /// Audio comment files: /Documents/trackflow/audio/comments
+  audioComments,
 
   /// Local avatars: /Documents/local_avatars
   localAvatars,

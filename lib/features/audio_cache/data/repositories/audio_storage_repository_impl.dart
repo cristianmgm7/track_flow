@@ -26,12 +26,13 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
     AudioTrackId trackId,
     TrackVersionId versionId,
-    File audioFile,
-  ) async {
+    File audioFile, {
+    DirectoryType directoryType = DirectoryType.audioCache,
+  }) async {
     try {
       // Get cache directory using directory service
       final cacheDirResult = await _directoryService.getSubdirectory(
-        DirectoryType.audioCache,
+        directoryType,
         trackId.value,
       );
 
@@ -159,7 +160,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
           if (!exists) {
             // Remove specific version entry from DB
-            await _localDataSource.deleteAudioFile(
+            await _localDataSource.deleteAudioVersion(
               doc.trackId,
               versionId: doc.versionId,
             );
@@ -167,7 +168,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
           }
         } catch (e) {
           // Error validating file, remove specific version entry
-          await _localDataSource.deleteAudioFile(
+          await _localDataSource.deleteAudioVersion(
             doc.trackId,
             versionId: doc.versionId,
           );
@@ -190,6 +191,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   Future<Either<CacheFailure, String>> getCachedAudioPath(
     AudioTrackId trackId, {
     TrackVersionId? versionId,
+    DirectoryType directoryType = DirectoryType.audioCache,
   }) async {
     try {
       // Try to get from database first
@@ -200,12 +202,12 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
 
       return result.fold((failure) {
         // Fallback to file system search for legacy compatibility
-        return _getCachedAudioPathFromFileSystem(trackId, versionId);
+        return _getCachedAudioPathFromFileSystem(trackId, versionId, directoryType);
       }, (relativePath) async {
         // Resolve relative path to absolute via DirectoryService
         final absPathResult = await _directoryService.getAbsolutePath(
           relativePath,
-          DirectoryType.audioCache,
+          directoryType,
         );
         return absPathResult.fold(
           (f) => Left(
@@ -230,11 +232,12 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
   Future<Either<CacheFailure, String>> _getCachedAudioPathFromFileSystem(
     AudioTrackId trackId,
     TrackVersionId? versionId,
+    DirectoryType directoryType,
   ) async {
     try {
       // Generate expected file path based on new structure
       final trackDirResult = await _directoryService.getSubdirectory(
-        DirectoryType.audioCache,
+        directoryType,
         trackId.value,
       );
 
@@ -430,7 +433,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
     try {
       // Remove files from FS under track directory
       final trackDirResult = await _directoryService.getSubdirectory(
-        DirectoryType.audioCache,
+        DirectoryType.audioTracks,
         trackId.value,
       );
 
@@ -444,7 +447,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       );
 
       // Remove DB entries
-      return await _localDataSource.deleteAudioFile(trackId.value);
+      return await _localDataSource.deleteAudioVersion(trackId.value);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -479,7 +482,7 @@ class AudioStorageRepositoryImpl implements AudioStorageRepository {
       );
 
       // Remove DB entry
-      return await _localDataSource.deleteAudioFile(
+      return await _localDataSource.deleteAudioVersion(
         trackId.value,
         versionId: versionId.value,
       );

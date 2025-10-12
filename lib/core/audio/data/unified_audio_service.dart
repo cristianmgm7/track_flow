@@ -317,7 +317,7 @@ class UnifiedAudioService implements AudioFileRepository {
     String? versionId,
   }) async {
     try {
-      await _localDataSource.deleteAudioFile(trackId, versionId: versionId);
+      await _localDataSource.deleteAudioVersion(trackId, versionId: versionId);
       return const Right(unit);
     } catch (e) {
       return Left(StorageFailure('Failed to clear cache: $e'));

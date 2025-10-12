@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/app_flow/data/session_storage.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
@@ -88,6 +89,7 @@ class AddTrackVersionUseCase {
         params.trackId,
         version.id, // Use the actual versionId from the created version
         params.file,
+        directoryType: DirectoryType.audioTracks,
       );
 
       if (cacheEither.isLeft()) {

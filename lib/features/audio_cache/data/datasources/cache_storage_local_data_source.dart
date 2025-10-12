@@ -27,7 +27,7 @@ abstract class CacheStorageLocalDataSource {
     String? versionId,
   });
 
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+  Future<Either<CacheFailure, Unit>> deleteAudioVersion(
     String trackId, {
     String? versionId,
   });
@@ -174,7 +174,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+  Future<Either<CacheFailure, Unit>> deleteAudioVersion(
     String trackId, {
     String? versionId,
   }) async {
