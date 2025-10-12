@@ -64,4 +64,19 @@ class WatchAudioCommentsBundleEvent extends AudioCommentEvent {
   List<Object?> get props => [projectId, trackId, versionId];
 }
 
+class PrepareAudioCommentPlaybackEvent extends AudioCommentEvent {
+  final AudioCommentId commentId;
+  final ProjectId projectId;
+  final String? remoteUrl;
+
+  PrepareAudioCommentPlaybackEvent({
+    required this.commentId,
+    required this.projectId,
+    this.remoteUrl,
+  });
+
+  @override
+  List<Object?> get props => [commentId, projectId, remoteUrl];
+}
+
 // Internal update event removed; now handled with emit.onEach stream handler

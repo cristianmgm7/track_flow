@@ -64,3 +64,18 @@ class AudioCommentsLoaded extends AudioCommentState {
   @override
   List<Object?> get props => [comments, collaborators, isSyncing, syncProgress ?? 0.0];
 }
+
+class AudioCommentPlaybackReady extends AudioCommentState {
+  final String localPath;
+  final String? remoteUrl;
+  final String commentId;
+
+  const AudioCommentPlaybackReady({
+    required this.localPath,
+    this.remoteUrl,
+    required this.commentId,
+  });
+
+  @override
+  List<Object?> get props => [localPath, remoteUrl, commentId];
+}

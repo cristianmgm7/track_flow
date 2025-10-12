@@ -1,10 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
+import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
@@ -38,42 +42,42 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
   }
 
   Future<void> _initializeAudio() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final remoteUrl = widget.comment.audioStorageUrl;
 
-    try {
-      // Try local cache first
-      String? localPath = widget.comment.localAudioPath != null &&
+    if (remoteUrl != null) {
+      // Dispatch event to AudioCommentBloc to prepare playback
+      final projectId = ProjectId.fromUniqueString(widget.comment.projectId.value);
+
+      if (!mounted) return;
+
+      context.read<AudioCommentBloc>().add(
+        PrepareAudioCommentPlaybackEvent(
+          commentId: widget.comment.id,
+          projectId: projectId,
+          remoteUrl: remoteUrl,
+        ),
+      );
+    } else {
+      // Check if we have a local path already
+      final localPath = widget.comment.localAudioPath != null &&
           await File(widget.comment.localAudioPath!).exists()
           ? widget.comment.localAudioPath!
           : null;
 
-      // Remote URL for fallback
-      String? remoteUrl = widget.comment.audioStorageUrl;
+      if (localPath != null) {
+        if (!mounted) return;
 
-      if (localPath == null && remoteUrl == null) {
-        throw Exception('No audio source available');
-      }
-
-      // Use the AudioPlayerBloc to play the comment
-      context.read<AudioPlayerBloc>().add(
-        PlayAudioCommentRequested(
-          localPath: localPath,
-          remoteUrl: remoteUrl,
-          commentId: widget.comment.id.value,
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
+        context.read<AudioPlayerBloc>().add(
+          PlayAudioCommentRequested(
+            localPath: localPath,
+            remoteUrl: null,
+            commentId: widget.comment.id.value,
+          ),
+        );
+      } else {
         setState(() {
-          _errorMessage = 'Failed to load audio: ${e.toString()}';
+          _errorMessage = 'No audio source available';
         });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -103,16 +107,43 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-      builder: (context, state) {
-        // Update local state based on AudioPlayerBloc state
-        if (state is AudioPlayerSessionState) {
-          _isPlaying = state.session.state == PlaybackState.playing;
-          _position = state.session.position;
-          _duration = state.session.currentTrack?.duration ?? Duration.zero;
-        } else if (state is AudioPlayerError) {
-          _errorMessage = state.failure.message;
+    return BlocListener<AudioCommentBloc, AudioCommentState>(
+      listener: (context, commentState) {
+        // Listen for playback ready state from AudioCommentBloc
+        if (commentState is AudioCommentPlaybackReady) {
+          // Trigger AudioPlayerBloc to play the audio
+          context.read<AudioPlayerBloc>().add(
+            PlayAudioCommentRequested(
+              localPath: commentState.localPath,
+              remoteUrl: commentState.remoteUrl,
+              commentId: commentState.commentId,
+            ),
+          );
+        } else if (commentState is AudioCommentLoading) {
+          setState(() => _isLoading = true);
+        } else if (commentState is AudioCommentError) {
+          setState(() {
+            _errorMessage = commentState.message;
+            _isLoading = false;
+          });
         }
+      },
+      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+        builder: (context, state) {
+          // Update local state based on AudioPlayerBloc state
+          if (state is AudioPlayerSessionState) {
+            _isPlaying = state.session.state == PlaybackState.playing;
+            _position = state.session.position;
+            _duration = state.session.currentTrack?.duration ?? Duration.zero;
+            if (_isLoading) {
+              setState(() => _isLoading = false);
+            }
+          } else if (state is AudioPlayerError) {
+            _errorMessage = state.failure.message;
+            if (_isLoading) {
+              setState(() => _isLoading = false);
+            }
+          }
 
         if (_isLoading) {
           return Container(
@@ -231,7 +262,8 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 
