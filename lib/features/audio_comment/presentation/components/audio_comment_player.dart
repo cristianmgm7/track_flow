@@ -7,8 +7,8 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/domain/entities/playback_state.dart';
+import 'package:trackflow/features/audio_comment/presentation/cubit/comment_audio_cubit.dart';
+import 'package:trackflow/features/audio_comment/infrastructure/services/comment_audio_playback_service_impl.dart';
 
 /// Widget to play audio from an audio comment
 /// Supports both local cache and remote streaming
@@ -25,47 +25,31 @@ class AudioCommentPlayer extends StatefulWidget {
 }
 
 class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
-  // This widget derives UI from AudioPlayerBloc state; no local playback state needed
+  late final CommentAudioCubit _commentCubit;
 
   @override
   void initState() {
     super.initState();
-    _initializeAudio();
+    _commentCubit = CommentAudioCubit(CommentAudioPlaybackServiceImpl());
   }
 
-  Future<void> _initializeAudio() async {
-    // Prefer local cached path if available; otherwise use remote URL
+  void _onPlayPause(CommentAudioState cState) {
+    if (cState is CommentAudioPlaying) {
+      _commentCubit.pause();
+      return;
+    }
+
+    // Not playing: start playback for this comment (prefer local path)
     final String? localPath = widget.comment.localAudioPath != null &&
-        await File(widget.comment.localAudioPath!).exists()
+            File(widget.comment.localAudioPath!).existsSync()
         ? widget.comment.localAudioPath!
         : null;
     final String? remoteUrl = widget.comment.audioStorageUrl;
 
-    if (localPath != null || remoteUrl != null) {
-      if (!mounted) return;
-      context.read<AudioPlayerBloc>().add(
-        PlayAudioCommentRequested(
-          localPath: localPath,
-          remoteUrl: remoteUrl,
-          commentId: widget.comment.id.value,
-        ),
-      );
-    } else {
-      // No source available; rely on UI to show fallback message
-    }
-  }
-
-  void _togglePlayPause() {
-    final audioPlayerBloc = context.read<AudioPlayerBloc>();
-    final currentState = audioPlayerBloc.state;
-    final isPlaying = currentState is AudioPlayerSessionState &&
-        currentState.session.state == PlaybackState.playing;
-    audioPlayerBloc.add(isPlaying ? const PauseAudioRequested() : const ResumeAudioRequested());
-  }
-
-  void _onSeek(double value) {
-    context.read<AudioPlayerBloc>().add(
-      SeekToPositionRequested(Duration(milliseconds: value.toInt())),
+    _commentCubit.play(
+      localPath: localPath,
+      remoteUrl: remoteUrl,
+      commentId: widget.comment.id.value,
     );
   }
 
@@ -78,142 +62,157 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-      builder: (context, state) {
-        // Loading indicator while audio service buffers/loads
-        if (state is AudioPlayerBuffering) {
-          return Container(
-            height: 56,
-            padding: EdgeInsets.all(Dimensions.space12),
-            decoration: BoxDecoration(
-              color: AppColors.grey800,
-              borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-            ),
-            child: const Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          );
-        }
-
-        // Error display from audio player
-        if (state is AudioPlayerError) {
-          return Container(
-            padding: EdgeInsets.all(Dimensions.space12),
-            decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.error_outline, color: AppColors.error, size: 20),
-                SizedBox(width: Dimensions.space8),
-                Expanded(
-                  child: Text(
-                    state.failure.message,
-                    style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
+    return BlocProvider.value(
+      value: _commentCubit,
+      child: BlocListener<CommentAudioCubit, CommentAudioState>(
+        listener: (context, cState) {
+          if (cState is CommentAudioPlaying) {
+            // Pause main waveform/track playback when a comment starts
+            context.read<AudioPlayerBloc>().add(const PauseAudioRequested());
+          }
+        },
+        child: BlocBuilder<CommentAudioCubit, CommentAudioState>(
+          builder: (context, cState) {
+            // Loading indicator while comment audio buffers/loads
+            if (cState is CommentAudioBuffering) {
+              return Container(
+                height: 56,
+                padding: EdgeInsets.all(Dimensions.space12),
+                decoration: BoxDecoration(
+                  color: AppColors.grey800,
+                  borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+                ),
+                child: const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
-              ],
-            ),
-          );
-        }
+              );
+            }
 
-        // Derive session info if available
-        Duration position = Duration.zero;
-        Duration duration = widget.comment.audioDuration ?? Duration.zero;
-        bool isPlaying = false;
-        if (state is AudioPlayerSessionState) {
-          position = state.session.position;
-          duration = state.session.currentTrack?.duration ?? duration;
-          isPlaying = state.session.state == PlaybackState.playing;
-        }
-
-        final displayDuration = duration;
-
-        return Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: Dimensions.space12,
-            vertical: Dimensions.space8,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.grey800,
-            borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-          ),
-          child: Row(
-            children: [
-              // Play/Pause Button
-              IconButton(
-                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-                onPressed: _togglePlayPause,
-                color: AppColors.primary,
-                iconSize: 28,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              ),
-              SizedBox(width: Dimensions.space8),
-
-              // Progress and Time
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+            // Error display for comment playback
+            if (cState is CommentAudioError) {
+              return Container(
+                padding: EdgeInsets.all(Dimensions.space12),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+                ),
+                child: Row(
                   children: [
-                    // Progress Slider
-                    SliderTheme(
-                      data: SliderThemeData(
-                        trackHeight: 3,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                      ),
-                      child: Slider(
-                        value: position.inMilliseconds.toDouble().clamp(
-                          0.0,
-                          displayDuration.inMilliseconds.toDouble(),
-                        ),
-                        max: displayDuration.inMilliseconds.toDouble(),
-                        onChanged: _onSeek,
-                        activeColor: AppColors.primary,
-                        inactiveColor: AppColors.grey700,
-                      ),
-                    ),
-
-                    // Time Display
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: Dimensions.space4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            _formatDuration(position),
-                            style: AppTextStyle.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                          Text(
-                            _formatDuration(displayDuration),
-                            style: AppTextStyle.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+                    Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                    SizedBox(width: Dimensions.space8),
+                    Expanded(
+                      child: Text(
+                        cState.message,
+                        style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
                       ),
                     ),
                   ],
                 ),
+              );
+            }
+
+            // Derive session info if available
+            Duration position = Duration.zero;
+            Duration duration = widget.comment.audioDuration ?? Duration.zero;
+            bool isPlaying = false;
+            if (cState is CommentAudioPlaying) {
+              position = cState.session.position;
+              duration = cState.session.currentTrack?.duration ?? duration;
+              isPlaying = true;
+            } else if (cState is CommentAudioPaused) {
+              position = cState.session.position;
+              duration = cState.session.currentTrack?.duration ?? duration;
+              isPlaying = false;
+            }
+
+            final displayDuration = duration;
+
+            return Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: Dimensions.space12,
+                vertical: Dimensions.space8,
               ),
-            ],
-          ),
-        );
-      },
+              decoration: BoxDecoration(
+                color: AppColors.grey800,
+                borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+              ),
+              child: Row(
+                children: [
+                  // Play/Pause Button
+                  IconButton(
+                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    onPressed: () => _onPlayPause(cState),
+                    color: AppColors.primary,
+                    iconSize: 28,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  ),
+                  SizedBox(width: Dimensions.space8),
+
+                  // Progress and Time
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Progress Slider
+                        SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 3,
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                          ),
+                          child: Slider(
+                            value: position.inMilliseconds.toDouble().clamp(
+                              0.0,
+                              displayDuration.inMilliseconds.toDouble(),
+                            ),
+                            max: displayDuration.inMilliseconds.toDouble(),
+                            onChanged: (v) => _commentCubit.seek(Duration(milliseconds: v.toInt())),
+                            activeColor: AppColors.primary,
+                            inactiveColor: AppColors.grey700,
+                          ),
+                        ),
+
+                        // Time Display
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: Dimensions.space4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _formatDuration(position),
+                                style: AppTextStyle.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              Text(
+                                _formatDuration(displayDuration),
+                                style: AppTextStyle.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 
   @override
   void dispose() {
-    // No need to dispose anything - AudioPlayerBloc manages the audio player lifecycle
+    _commentCubit.close();
     super.dispose();
   }
 }

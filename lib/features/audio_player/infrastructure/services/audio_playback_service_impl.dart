@@ -419,6 +419,20 @@ class AudioPlaybackServiceImpl implements AudioPlaybackService {
     final trackId = metadata.id.value;
     final title = metadata.title;
 
+    // For comment audio, skip loading background track context (no track cache)
+    if (title == 'Audio Comment') {
+      return bg.MediaItem(
+        id: trackId,
+        title: title,
+        artist: 'Comment',
+        duration: metadata.duration,
+        album: 'Comments',
+        artUri: metadata.coverUrl != null && metadata.coverUrl!.isNotEmpty
+            ? Uri.parse(metadata.coverUrl!)
+            : null,
+      );
+    }
+
     // Get enhanced context information from background service
     final backgroundInfo = await TrackContextBackgroundService.instance
         .getTrackInfoForBackground(trackId, title);

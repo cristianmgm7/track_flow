@@ -308,7 +308,16 @@ class AudioPlayerBloc extends Bloc<AudioPlayerEvent, AudioPlayerState> {
     PlayAudioCommentRequested event,
     Emitter<AudioPlayerState> emit,
   ) async {
-    // First, stop any currently playing track to free up the audio player
+    // If the same comment is already the current track and playing/buffering, ignore duplicate
+    final currentId = currentSession.currentTrack?.id.value;
+    if (currentId == event.commentId &&
+        (currentSession.state == PlaybackState.playing ||
+         currentSession.state == PlaybackState.loading ||
+         currentSession.state == PlaybackState.paused)) {
+      return;
+    }
+
+    // Stop any currently playing audio to free up the audio player
     await _audioPlayerService.playbackService.stop();
 
     // Create metadata for the comment
