@@ -239,11 +239,11 @@ import 'package:trackflow/features/audio_track/data/datasources/audio_track_loca
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart'
     as _i84;
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart'
-    as _i99;
+    as _i97;
 import 'package:trackflow/features/audio_track/data/repositories/audio_track_repository_impl.dart'
     as _i190;
 import 'package:trackflow/features/audio_track/data/services/audio_track_incremental_sync_service.dart'
-    as _i100;
+    as _i98;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart'
     as _i189;
 import 'package:trackflow/features/audio_track/domain/services/audio_metadata_service.dart'
@@ -459,7 +459,7 @@ import 'package:trackflow/features/user_profile/data/datasources/user_profile_lo
 import 'package:trackflow/features/user_profile/data/datasources/user_profile_remote_datasource.dart'
     as _i70;
 import 'package:trackflow/features/user_profile/data/models/user_profile_dto.dart'
-    as _i97;
+    as _i99;
 import 'package:trackflow/features/user_profile/data/repositories/user_profile_cache_repository_impl.dart'
     as _i119;
 import 'package:trackflow/features/user_profile/data/repositories/user_profile_repository_impl.dart'
@@ -467,7 +467,7 @@ import 'package:trackflow/features/user_profile/data/repositories/user_profile_r
 import 'package:trackflow/features/user_profile/data/services/user_profile_collaborator_incremental_sync_service.dart'
     as _i120;
 import 'package:trackflow/features/user_profile/data/services/user_profile_incremental_sync_service.dart'
-    as _i98;
+    as _i100;
 import 'package:trackflow/features/user_profile/domain/repositories/user_profile_repository.dart'
     as _i170;
 import 'package:trackflow/features/user_profile/domain/repositories/user_profiles_cache_repository.dart'
@@ -734,16 +734,16 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i81.AudioCommentLocalDataSource>(),
               gh<_i68.TrackVersionLocalDataSource>(),
             ));
-    gh.lazySingleton<_i21.IncrementalSyncService<_i97.UserProfileDTO>>(
-        () => _i98.UserProfileIncrementalSyncService(
-              gh<_i70.UserProfileRemoteDataSource>(),
-              gh<_i69.UserProfileLocalDataSource>(),
-            ));
-    gh.lazySingleton<_i21.IncrementalSyncService<_i99.AudioTrackDTO>>(
-        () => _i100.AudioTrackIncrementalSyncService(
+    gh.lazySingleton<_i21.IncrementalSyncService<_i97.AudioTrackDTO>>(
+        () => _i98.AudioTrackIncrementalSyncService(
               gh<_i84.AudioTrackRemoteDataSource>(),
               gh<_i83.AudioTrackLocalDataSource>(),
               gh<_i49.ProjectsLocalDataSource>(),
+            ));
+    gh.lazySingleton<_i21.IncrementalSyncService<_i99.UserProfileDTO>>(
+        () => _i100.UserProfileIncrementalSyncService(
+              gh<_i70.UserProfileRemoteDataSource>(),
+              gh<_i69.UserProfileLocalDataSource>(),
             ));
     gh.lazySingleton<_i21.IncrementalSyncService<_i101.ProjectDTO>>(
         () => _i102.ProjectIncrementalSyncService(

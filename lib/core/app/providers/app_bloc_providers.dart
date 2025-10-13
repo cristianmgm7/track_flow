@@ -25,6 +25,8 @@ import 'package:trackflow/features/project_detail/presentation/bloc/project_deta
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/voice_memos/presentation/bloc/voice_memo_bloc.dart';
+import 'package:trackflow/features/voice_memos/presentation/bloc/voice_memo_event.dart';
 
 /// Centralized BLoC provider management for the entire app
 ///
@@ -66,6 +68,14 @@ class AppBlocProviders {
       BlocProvider<WaveformBloc>(create: (_) => sl<WaveformBloc>()),
       BlocProvider<AudioContextBloc>(create: (_) => sl<AudioContextBloc>()),
       BlocProvider<RecordingBloc>(create: (_) => sl<RecordingBloc>()),
+
+      // Voice memos (global)
+      BlocProvider<VoiceMemoBloc>(
+        create:
+            (_) =>
+                sl<VoiceMemoBloc>()
+                  ..add(const WatchVoiceMemosRequested()),
+      ),
     ];
   }
 

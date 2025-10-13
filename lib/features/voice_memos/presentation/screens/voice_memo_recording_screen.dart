@@ -158,10 +158,10 @@ class _VoiceMemoRecordingScreenState extends State<VoiceMemoRecordingScreen> {
                 iconSize: 48,
                 icon: Icon(Icons.check, color: AppColors.success),
                 onPressed: () {
+                  // Dispatch stop event - BlocListener will handle navigation after RecordingCompleted
                   context.read<RecordingBloc>().add(
                     const StopRecordingRequested(),
                   );
-                  context.pop();
                 },
               ),
             ],

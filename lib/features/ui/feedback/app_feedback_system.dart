@@ -74,6 +74,7 @@ class AppFeedbackSystem {
   }) {
     ScaffoldMessenger.of(context).showMaterialBanner(
       AppBanner(
+        context: context,
         title: title,
         message: message,
         type: type,
@@ -293,6 +294,7 @@ class AppSnackBar extends SnackBar {
 class AppBanner extends MaterialBanner {
   AppBanner({
     super.key,
+    required BuildContext context,
     required String title,
     required String message,
     required FeedbackType type,
@@ -331,20 +333,29 @@ class AppBanner extends MaterialBanner {
            ],
          ),
          backgroundColor: _getBackgroundColor(type),
-         actions:
-             actionLabel != null && onAction != null
-                 ? [
-                   TextButton(
-                     onPressed: onAction,
-                     child: Text(
-                       actionLabel,
-                       style: AppTextStyle.labelMedium.copyWith(
-                         color: Colors.white,
-                       ),
-                     ),
-                   ),
-                 ]
-                 : [],
+         actions: [
+           if (actionLabel != null && onAction != null)
+             TextButton(
+               onPressed: onAction,
+               child: Text(
+                 actionLabel,
+                 style: AppTextStyle.labelMedium.copyWith(
+                   color: Colors.white,
+                 ),
+               ),
+             ),
+           TextButton(
+             onPressed: () {
+               ScaffoldMessenger.of(context).hideCurrentMaterialBanner();
+             },
+             child: Text(
+               'Dismiss',
+               style: AppTextStyle.labelMedium.copyWith(
+                 color: Colors.white,
+               ),
+             ),
+           ),
+         ],
          leadingPadding: EdgeInsets.zero,
        );
 

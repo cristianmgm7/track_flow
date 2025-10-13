@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/di/injection.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
@@ -11,7 +10,6 @@ import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/navigation/app_bar.dart';
 import '../../domain/entities/voice_memo.dart';
 import '../bloc/voice_memo_bloc.dart';
-import '../bloc/voice_memo_event.dart';
 import '../bloc/voice_memo_state.dart';
 import '../widgets/voice_memo_card.dart';
 
@@ -20,25 +18,22 @@ class VoiceMemosScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<VoiceMemoBloc>()
-        ..add(const WatchVoiceMemosRequested()),
-      child: const VoiceMemosScreenContent(),
-    );
-  }
-}
-
-class VoiceMemosScreenContent extends StatelessWidget {
-  const VoiceMemosScreenContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
     return BlocListener<VoiceMemoBloc, VoiceMemoState>(
       listener: (context, state) {
         if (state is VoiceMemoError) {
-          AppFeedbackSystem.showBanner(context, title: 'Error', message: state.message);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
         } else if (state is VoiceMemoActionSuccess) {
-          AppFeedbackSystem.showBanner(context, title: 'Success', message: state.message);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.success,
+            ),
+          );
         }
       },
       child: AppScaffold(
