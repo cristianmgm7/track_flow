@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/di/injection.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
@@ -10,11 +11,25 @@ import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/navigation/app_bar.dart';
 import '../../domain/entities/voice_memo.dart';
 import '../bloc/voice_memo_bloc.dart';
+import '../bloc/voice_memo_event.dart';
 import '../bloc/voice_memo_state.dart';
 import '../widgets/voice_memo_card.dart';
 
+class VoiceMemosScreen extends StatelessWidget {
+  const VoiceMemosScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => sl<VoiceMemoBloc>()
+        ..add(const WatchVoiceMemosRequested()),
+      child: const VoiceMemosScreenContent(),
+    );
+  }
+}
+
 class VoiceMemosScreenContent extends StatelessWidget {
-  const VoiceMemosScreenContent();
+  const VoiceMemosScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +44,7 @@ class VoiceMemosScreenContent extends StatelessWidget {
       child: AppScaffold(
         appBar: AppAppBar(
           title: 'Voice Memos',
-          leading: AppIconButton(
-            icon: Icons.arrow_back_ios_rounded,
-            onPressed: () => GoRouter.of(context).pop(),
-          ),
+          automaticallyImplyLeading: false,
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => context.push(AppRoutes.voiceMemoRecording),

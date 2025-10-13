@@ -4,7 +4,7 @@ import 'package:trackflow/core/common/interfaces/resetable.dart';
 import 'package:trackflow/core/app_flow/domain/services/bloc_state_cleanup_service.dart';
 import 'package:trackflow/core/di/injection.dart';
 
-enum AppTab { projects, notifications, settings }
+enum AppTab { projects, voiceMemos, notifications, settings }
 
 @injectable
 class NavigationCubit extends Cubit<AppTab> implements Resetable {

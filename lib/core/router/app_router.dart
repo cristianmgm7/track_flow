@@ -25,6 +25,8 @@ import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/screens/notification_center_screen.dart';
 import 'package:trackflow/core/app/providers/app_bloc_providers.dart';
 import 'package:trackflow/core/app/widgets/authenticated_shell.dart';
+import 'package:trackflow/features/voice_memos/presentation/screens/voice_memos_screen.dart';
+import 'package:trackflow/features/voice_memos/presentation/screens/voice_memo_recording_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -156,6 +158,10 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: AppRoutes.voiceMemoRecording,
+          builder: (context, state) => const VoiceMemoRecordingScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
@@ -196,6 +202,12 @@ class AppRouter {
               pageBuilder:
                   (context, state) =>
                       const NoTransitionPage(child: NotificationCenterScreen()),
+            ),
+            GoRoute(
+              path: AppRoutes.voiceMemos,
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: VoiceMemosScreen()),
             ),
             GoRoute(
               path: AppRoutes.projectDetails,

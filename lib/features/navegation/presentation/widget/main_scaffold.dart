@@ -88,6 +88,9 @@ class _MainScaffoldState extends State<MainScaffold> {
                 case AppTab.projects:
                   context.go(AppRoutes.projects);
                   break;
+                case AppTab.voiceMemos:
+                  context.go(AppRoutes.voiceMemos);
+                  break;
                 case AppTab.notifications:
                   context.go(AppRoutes.notifications);
                   break;
@@ -101,6 +104,11 @@ class _MainScaffoldState extends State<MainScaffold> {
                 icon: Icons.folder_outlined,
                 activeIcon: Icons.folder,
                 label: 'Projects',
+              ),
+              AppBottomNavigationItem(
+                icon: Icons.mic_outlined,
+                activeIcon: Icons.mic,
+                label: 'Voice Memos',
               ),
               AppBottomNavigationItem(
                 icon: Icons.notifications_outlined,
