@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_style.dart';
@@ -10,6 +9,7 @@ import '../../domain/entities/voice_memo.dart';
 import '../bloc/voice_memo_bloc.dart';
 import '../bloc/voice_memo_event.dart';
 import 'playback_controls.dart';
+import 'voice_memo_header.dart';
 import 'voice_memo_rename_dialog.dart';
 
 class VoiceMemoCard extends StatelessWidget {
@@ -44,7 +44,11 @@ class VoiceMemoCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context),
+            VoiceMemoHeader(
+              memo: memo,
+              onRename: () => _showRenameDialog(context),
+              onShowMenu: () => _showMenu(context),
+            ),
             SizedBox(height: Dimensions.space12),
             PlaybackControls(memo: memo),
           ],
@@ -53,43 +57,6 @@ class VoiceMemoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    final dateFormat = DateFormat('MMM dd, yyyy • hh:mm a');
-
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
-                onLongPress: () => _showRenameDialog(context),
-                child: Text(
-                  memo.title,
-                  style: AppTextStyle.titleMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              SizedBox(height: Dimensions.space4),
-              Text(
-                dateFormat.format(memo.recordedAt),
-                style: AppTextStyle.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
-          onPressed: () => _showMenu(context),
-        ),
-      ],
-    );
-  }
 
 
 
