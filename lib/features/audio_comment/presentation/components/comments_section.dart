@@ -26,21 +26,27 @@ class CommentsSection extends StatefulWidget {
 }
 
 class _CommentsSectionState extends State<CommentsSection> {
+  // Track the last version we subscribed to
+  TrackVersionId? _currentlyWatchingVersionId;
+
+  void _watchComments() {
+    // Only dispatch if we're not already watching this version
+    if (_currentlyWatchingVersionId != widget.versionId) {
+      _currentlyWatchingVersionId = widget.versionId;
+      context.read<AudioCommentBloc>().add(
+        WatchAudioCommentsBundleEvent(
+          widget.projectId,
+          widget.trackId,
+          widget.versionId,
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to ensure the widget is fully built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(
-            widget.projectId,
-            widget.trackId,
-            widget.versionId,
-          ),
-        );
-      }
-    });
+    _watchComments();
   }
 
   @override
@@ -49,17 +55,8 @@ class _CommentsSectionState extends State<CommentsSection> {
     if (oldWidget.versionId != widget.versionId ||
         oldWidget.projectId != widget.projectId ||
         oldWidget.trackId != widget.trackId) {
-      // Re-subscribe for the new track
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(
-            widget.projectId,
-            widget.trackId,
-            widget.versionId,
-          ),
-        );
-      });
+      // Re-subscribe for the new version
+      _watchComments();
     }
   }
 
@@ -67,7 +64,8 @@ class _CommentsSectionState extends State<CommentsSection> {
   Widget build(BuildContext context) {
     return BlocBuilder<AudioCommentBloc, AudioCommentState>(
       builder: (context, state) {
-        if (state is AudioCommentLoading) {
+        // Handle initial state - show loading indicator
+        if (state is AudioCommentInitial || state is AudioCommentLoading) {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is AudioCommentError) {
@@ -98,14 +96,8 @@ class _CommentsSectionState extends State<CommentsSection> {
             ),
           );
         }
-        return Center(
-          child: Text(
-            'Unable to load comments.',
-            style: AppTextStyle.bodyMedium.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        );
+        // Fallback for unknown states
+        return const Center(child: CircularProgressIndicator());
       },
     );
   }
