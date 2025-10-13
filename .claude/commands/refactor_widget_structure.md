@@ -29,6 +29,8 @@ When evaluating a widget file:
 
 ## Refactor Rules
 
+**CRITICAL: All functionality and extracted widgets must remain exactly the same, avoiding any code breaks. The UI output, behavior, and performance characteristics must be identical before and after the refactor.**
+
 When performing a refactor:
 - Create a new `StatelessWidget` or `StatefulWidget` depending on whether it manages internal state.
 - **Move the dedicated widget into a separate file** (e.g., `expanded_track_info.dart`, `volume_control.dart`).
