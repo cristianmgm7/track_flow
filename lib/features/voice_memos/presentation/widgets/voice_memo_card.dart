@@ -4,14 +4,12 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_style.dart';
-import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
-import '../../../audio_player/presentation/bloc/audio_player_event.dart';
-import '../../../audio_player/presentation/bloc/audio_player_state.dart';
 import '../../../ui/cards/base_card.dart';
 import '../../../ui/menus/app_popup_menu.dart';
 import '../../domain/entities/voice_memo.dart';
 import '../bloc/voice_memo_bloc.dart';
 import '../bloc/voice_memo_event.dart';
+import 'playback_controls.dart';
 import 'voice_memo_rename_dialog.dart';
 
 class VoiceMemoCard extends StatelessWidget {
@@ -48,7 +46,7 @@ class VoiceMemoCard extends StatelessWidget {
           children: [
             _buildHeader(context),
             SizedBox(height: Dimensions.space12),
-            _buildPlaybackControls(context),
+            PlaybackControls(memo: memo),
           ],
         ),
       ),
@@ -93,74 +91,7 @@ class VoiceMemoCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaybackControls(BuildContext context) {
-    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-      builder: (context, state) {
-        final isCurrentMemo = state is AudioPlayerSessionState &&
-            state.session.currentTrack?.id.value == memo.id.value;
 
-        final isPlaying = isCurrentMemo &&
-            state is AudioPlayerPlaying;
-
-        final position = isCurrentMemo && state is AudioPlayerSessionState
-            ? state.session.position
-            : Duration.zero;
-
-        final progress = memo.duration.inMilliseconds > 0
-            ? position.inMilliseconds / memo.duration.inMilliseconds
-            : 0.0;
-
-        return Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                isPlaying ? Icons.pause : Icons.play_arrow,
-                color: AppColors.primary,
-              ),
-              onPressed: () => _togglePlayback(context, isPlaying),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  LinearProgressIndicator(
-                    value: progress.clamp(0.0, 1.0),
-                    backgroundColor: AppColors.surface,
-                    valueColor: AlwaysStoppedAnimation(AppColors.primary),
-                  ),
-                  SizedBox(height: Dimensions.space4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(position),
-                        style: AppTextStyle.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      Text(
-                        _formatDuration(memo.duration),
-                        style: AppTextStyle.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _togglePlayback(BuildContext context, bool isPlaying) {
-    if (isPlaying) {
-      context.read<AudioPlayerBloc>().add(const PauseAudioRequested());
-    } else {
-      context.read<VoiceMemoBloc>().add(PlayVoiceMemoRequested(memo));
-    }
-  }
 
   void _showRenameDialog(BuildContext context) {
     showDialog(
@@ -232,9 +163,4 @@ class VoiceMemoCard extends StatelessWidget {
     ) ?? false;
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
 }
