@@ -61,15 +61,15 @@ class _PulsingCircleAnimatorState extends State<PulsingCircleAnimator>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primary.withOpacity(0.8),
-                  AppColors.primary.withOpacity(0.4),
-                  AppColors.primary.withOpacity(0.1),
+                  AppColors.primary.withValues(alpha: 0.8),
+                  AppColors.primary.withValues(alpha: 0.4),
+                  AppColors.primary.withValues(alpha: 0.1),
                 ],
                 stops: const [0.3, 0.6, 1.0],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),

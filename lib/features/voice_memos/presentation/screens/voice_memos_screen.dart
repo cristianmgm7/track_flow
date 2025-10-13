@@ -42,6 +42,7 @@ class VoiceMemosScreen extends StatelessWidget {
           automaticallyImplyLeading: false,
         ),
         floatingActionButton: FloatingActionButton(
+          shape: const CircleBorder(),
           onPressed: () => context.push(AppRoutes.voiceMemoRecording),
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.mic, color: AppColors.onPrimary),
