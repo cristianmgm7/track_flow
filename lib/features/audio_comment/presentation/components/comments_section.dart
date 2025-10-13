@@ -5,9 +5,7 @@ import '../../../../core/entities/unique_id.dart';
 import '../bloc/audio_comment_bloc.dart';
 import '../bloc/audio_comment_state.dart';
 import '../bloc/audio_comment_event.dart';
-import 'audio_comment_card.dart';
-import '../../domain/entities/audio_comment.dart';
-import '../../../user_profile/domain/entities/user_profile.dart';
+import 'comments_list_view.dart';
 
 /// Comments section component that handles displaying the list of comments
 /// with proper state management and error handling
@@ -83,10 +81,11 @@ class _CommentsSectionState extends State<CommentsSection> {
           );
         }
         if (state is AudioCommentsLoaded) {
-          return _buildCommentsListView(
-            context,
-            state.comments,
-            state.collaborators,
+          return CommentsListView(
+            comments: state.comments,
+            collaborators: state.collaborators,
+            projectId: widget.projectId,
+            versionId: widget.versionId,
           );
         }
         if (state is AudioCommentOperationSuccess) {
@@ -111,45 +110,4 @@ class _CommentsSectionState extends State<CommentsSection> {
     );
   }
 
-  Widget _buildCommentsListView(
-    BuildContext context,
-    List<AudioComment> comments,
-    List<UserProfile> collaborators,
-  ) {
-    if (comments.isEmpty) {
-      return Center(
-        child: Text(
-          'No comments yet.',
-          style: AppTextStyle.bodyLarge.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      reverse: false,
-      itemCount: comments.length,
-      itemBuilder: (context, index) {
-        final comment = comments[index];
-        final collaborator = collaborators.firstWhere(
-          (u) => u.id == comment.createdBy,
-          orElse:
-              () => UserProfile(
-                id: comment.createdBy,
-                name: '',
-                email: '',
-                avatarUrl: '',
-                createdAt: DateTime.now(),
-              ),
-        );
-        return AudioCommentComponent(
-          comment: comment,
-          collaborator: collaborator,
-          projectId: widget.projectId,
-          versionId: widget.versionId,
-        );
-      },
-    );
-  }
 }

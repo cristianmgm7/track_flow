@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_header.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_player.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/audio_comment_timestamp_badge.dart';
+import 'package:trackflow/features/audio_comment/presentation/components/comment_hybrid_content.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 
 /// Dedicated widget for displaying audio comment content including
@@ -36,22 +36,6 @@ class AudioCommentContent extends StatelessWidget {
     return AudioCommentPlayer(comment: comment);
   }
 
-  Widget _buildHybridContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AudioCommentPlayer(comment: comment),
-        SizedBox(height: Dimensions.space8),
-        Text(
-          comment.content,
-          style: AppTextStyle.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +62,7 @@ class AudioCommentContent extends StatelessWidget {
         else if (comment.commentType == CommentType.audio)
           _buildAudioContent()
         else
-          _buildHybridContent(),
+          CommentHybridContent(comment: comment),
 
         SizedBox(height: Dimensions.space8),
 

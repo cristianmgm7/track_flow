@@ -109,7 +109,4 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
     // Minimal empty state when waveform isn't ready
     return SizedBox(height: widget.height);
   }
-
-
-  // Note: No internal drag state; gestures are handled in WaveformGestures
 }

@@ -57,7 +57,7 @@ class WaveformPainter extends CustomPainter {
     if (currentPosition != null && duration != null) {
       final basePaint =
           Paint()
-            ..color = waveColor.withOpacity(0.35)
+            ..color = waveColor.withValues(alpha: 0.35)
             ..strokeWidth = 1.0;
 
       canvas.drawLine(

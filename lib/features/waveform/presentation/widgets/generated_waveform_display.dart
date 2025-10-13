@@ -49,7 +49,7 @@ class GeneratedWaveformDisplay extends StatelessWidget {
                   state.isScrubbing && state.previewPosition != null
                       ? state.previewPosition!
                       : state.currentPosition,
-              progressColor: AppColors.primary.withOpacity(0.6),
+              progressColor: AppColors.primary.withValues(alpha: 0.6),
             ),
           ),
           // Overlay with playhead and preview head
