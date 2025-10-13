@@ -65,7 +65,7 @@
             "name": "🚀 Dev (Tu iPhone)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release",
+            "flutterMode": "debug",
             "program": "lib/main_development.dart",
             "deviceId": "00008030-00010C31110A802E",
             "args": ["--flavor", "develop", "--dart-define=FLAVOR=development"]

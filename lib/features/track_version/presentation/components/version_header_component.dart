@@ -5,7 +5,7 @@ import '../../../../core/entities/unique_id.dart';
 import '../../../ui/modals/app_bottom_sheet.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_state.dart';
-import '../cubit/track_detail_cubit.dart';
+import '../cubit/version_selector_cubit.dart';
 import '../widgets/track_detail_actions_sheet.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
@@ -37,15 +37,15 @@ class VersionHeaderComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocBuilder<TrackDetailCubit, TrackDetailState>(
-      builder: (context, cubitState) {
+    return BlocBuilder<VersionSelectorCubit, VersionSelectorState>(
+      builder: (context, selectorState) {
         return BlocBuilder<TrackVersionsBloc, TrackVersionsState>(
           builder: (context, blocState) {
             if (blocState is! TrackVersionsLoaded) {
               return const SizedBox.shrink();
             }
             final activeId =
-                cubitState.activeVersionId ?? blocState.activeVersionId;
+                selectorState.selectedVersionId ?? blocState.activeVersionId;
             if (blocState.versions.isEmpty) {
               return const SizedBox.shrink();
             }

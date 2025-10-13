@@ -99,7 +99,7 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
       final tempDirResult = await _directoryService.getDirectory(DirectoryType.audioCache);
       final localPath = tempDirResult.fold(
         (failure) => null,
-        (dir) => '${dir.path}/${effectiveTrackId}_${url.hashCode.abs()}.mp3',
+        (dir) => '${dir.path}/${effectiveTrackId}_${url.hashCode.abs()}${_getFileExtensionFromUrl(url)}',
       );
 
       if (localPath != null) {
@@ -126,7 +126,7 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
       final tempDirResult = await _directoryService.getDirectory(DirectoryType.audioCache);
       final localPath = tempDirResult.fold(
         (failure) => null,
-        (dir) => '${dir.path}/${trackId}_${url.hashCode.abs()}.mp3',
+        (dir) => '${dir.path}/${trackId}_${url.hashCode.abs()}${_getFileExtensionFromUrl(url)}',
       );
 
       if (localPath == null) {
@@ -158,6 +158,26 @@ class AudioSourceResolverImpl implements AudioSourceResolver {
       // Fallback: use hash of URL if parsing fails
       return url.hashCode.toString();
     }
+  }
+
+  /// Extract file extension from URL for proper caching
+  String _getFileExtensionFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      final path = uri.path;
+      final lastDot = path.lastIndexOf('.');
+      if (lastDot != -1 && lastDot < path.length - 1) {
+        final extension = path.substring(lastDot);
+        // Ensure extension is reasonable length and contains valid characters
+        if (extension.length <= 5 && extension.contains(RegExp(r'^[a-zA-Z0-9.]+$'))) {
+          return extension;
+        }
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+    // Default to .mp3 for backward compatibility
+    return '.mp3';
   }
 }
 
