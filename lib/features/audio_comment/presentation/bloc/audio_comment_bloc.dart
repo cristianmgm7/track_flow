@@ -31,7 +31,6 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     );
     on<AddAudioCommentEvent>(_onAddAudioComment);
     on<DeleteAudioCommentEvent>(_onDeleteAudioComment);
-    on<PrepareAudioCommentPlaybackEvent>(_onPreparePlayback);
   }
 
   Future<void> _onAddAudioComment(
@@ -71,38 +70,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
     );
   }
 
-  Future<void> _onPreparePlayback(
-    PrepareAudioCommentPlaybackEvent event,
-    Emitter<AudioCommentState> emit,
-  ) async {
-    emit(const AudioCommentLoading());
-
-    // Use GetCachedAudioCommentUseCase to download and cache if needed
-    if (event.remoteUrl != null) {
-      final result = await getCachedAudioCommentUseCase(
-        projectId: event.projectId,
-        commentId: event.commentId,
-        storageUrl: event.remoteUrl!,
-      );
-
-      result.fold(
-        (failure) {
-          // If download/cache fails, emit error but with remote URL as fallback
-          emit(AudioCommentError('Failed to cache audio: ${failure.message}'));
-        },
-        (cachedPath) {
-          // Successfully got cached path (either was cached or just downloaded)
-          emit(AudioCommentPlaybackReady(
-            localPath: cachedPath,
-            remoteUrl: event.remoteUrl,
-            commentId: event.commentId.value,
-          ));
-        },
-      );
-    } else {
-      emit(const AudioCommentError('No audio source available'));
-    }
-  }
+  // Playback responsibilities moved to dedicated CommentAudioCubit
 
   Future<void> _onWatchBundle(
     WatchAudioCommentsBundleEvent event,

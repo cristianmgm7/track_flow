@@ -1,14 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
-import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
-import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_event.dart';
-import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_state.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
@@ -29,11 +25,7 @@ class AudioCommentPlayer extends StatefulWidget {
 }
 
 class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
-  bool _isPlaying = false;
-  bool _isLoading = false;
-  Duration _position = Duration.zero;
-  Duration _duration = Duration.zero;
-  String? _errorMessage;
+  // This widget derives UI from AudioPlayerBloc state; no local playback state needed
 
   @override
   void initState() {
@@ -42,54 +34,33 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
   }
 
   Future<void> _initializeAudio() async {
-    final remoteUrl = widget.comment.audioStorageUrl;
+    // Prefer local cached path if available; otherwise use remote URL
+    final String? localPath = widget.comment.localAudioPath != null &&
+        await File(widget.comment.localAudioPath!).exists()
+        ? widget.comment.localAudioPath!
+        : null;
+    final String? remoteUrl = widget.comment.audioStorageUrl;
 
-    if (remoteUrl != null) {
-      // Dispatch event to AudioCommentBloc to prepare playback
-      final projectId = ProjectId.fromUniqueString(widget.comment.projectId.value);
-
+    if (localPath != null || remoteUrl != null) {
       if (!mounted) return;
-
-      context.read<AudioCommentBloc>().add(
-        PrepareAudioCommentPlaybackEvent(
-          commentId: widget.comment.id,
-          projectId: projectId,
+      context.read<AudioPlayerBloc>().add(
+        PlayAudioCommentRequested(
+          localPath: localPath,
           remoteUrl: remoteUrl,
+          commentId: widget.comment.id.value,
         ),
       );
     } else {
-      // Check if we have a local path already
-      final localPath = widget.comment.localAudioPath != null &&
-          await File(widget.comment.localAudioPath!).exists()
-          ? widget.comment.localAudioPath!
-          : null;
-
-      if (localPath != null) {
-        if (!mounted) return;
-
-        context.read<AudioPlayerBloc>().add(
-          PlayAudioCommentRequested(
-            localPath: localPath,
-            remoteUrl: null,
-            commentId: widget.comment.id.value,
-          ),
-        );
-      } else {
-        setState(() {
-          _errorMessage = 'No audio source available';
-        });
-      }
+      // No source available; rely on UI to show fallback message
     }
   }
 
   void _togglePlayPause() {
     final audioPlayerBloc = context.read<AudioPlayerBloc>();
-
-    if (_isPlaying) {
-      audioPlayerBloc.add(const PauseAudioRequested());
-    } else {
-      audioPlayerBloc.add(const ResumeAudioRequested());
-    }
+    final currentState = audioPlayerBloc.state;
+    final isPlaying = currentState is AudioPlayerSessionState &&
+        currentState.session.state == PlaybackState.playing;
+    audioPlayerBloc.add(isPlaying ? const PauseAudioRequested() : const ResumeAudioRequested());
   }
 
   void _onSeek(double value) {
@@ -107,45 +78,10 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AudioCommentBloc, AudioCommentState>(
-      listener: (context, commentState) {
-        // Listen for playback ready state from AudioCommentBloc
-        if (commentState is AudioCommentPlaybackReady) {
-          // Trigger AudioPlayerBloc to play the audio
-          context.read<AudioPlayerBloc>().add(
-            PlayAudioCommentRequested(
-              localPath: commentState.localPath,
-              remoteUrl: commentState.remoteUrl,
-              commentId: commentState.commentId,
-            ),
-          );
-        } else if (commentState is AudioCommentLoading) {
-          setState(() => _isLoading = true);
-        } else if (commentState is AudioCommentError) {
-          setState(() {
-            _errorMessage = commentState.message;
-            _isLoading = false;
-          });
-        }
-      },
-      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-        builder: (context, state) {
-          // Update local state based on AudioPlayerBloc state
-          if (state is AudioPlayerSessionState) {
-            _isPlaying = state.session.state == PlaybackState.playing;
-            _position = state.session.position;
-            _duration = state.session.currentTrack?.duration ?? Duration.zero;
-            if (_isLoading) {
-              setState(() => _isLoading = false);
-            }
-          } else if (state is AudioPlayerError) {
-            _errorMessage = state.failure.message;
-            if (_isLoading) {
-              setState(() => _isLoading = false);
-            }
-          }
-
-        if (_isLoading) {
+    return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+      builder: (context, state) {
+        // Loading indicator while audio service buffers/loads
+        if (state is AudioPlayerBuffering) {
           return Container(
             height: 56,
             padding: EdgeInsets.all(Dimensions.space12),
@@ -163,7 +99,8 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
           );
         }
 
-        if (_errorMessage != null) {
+        // Error display from audio player
+        if (state is AudioPlayerError) {
           return Container(
             padding: EdgeInsets.all(Dimensions.space12),
             decoration: BoxDecoration(
@@ -176,7 +113,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
                 SizedBox(width: Dimensions.space8),
                 Expanded(
                   child: Text(
-                    _errorMessage!,
+                    state.failure.message,
                     style: AppTextStyle.labelSmall.copyWith(color: AppColors.error),
                   ),
                 ),
@@ -185,9 +122,17 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
           );
         }
 
-        final displayDuration = _duration > Duration.zero
-            ? _duration
-            : widget.comment.audioDuration ?? Duration.zero;
+        // Derive session info if available
+        Duration position = Duration.zero;
+        Duration duration = widget.comment.audioDuration ?? Duration.zero;
+        bool isPlaying = false;
+        if (state is AudioPlayerSessionState) {
+          position = state.session.position;
+          duration = state.session.currentTrack?.duration ?? duration;
+          isPlaying = state.session.state == PlaybackState.playing;
+        }
+
+        final displayDuration = duration;
 
         return Container(
           padding: EdgeInsets.symmetric(
@@ -202,7 +147,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
             children: [
               // Play/Pause Button
               IconButton(
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
                 onPressed: _togglePlayPause,
                 color: AppColors.primary,
                 iconSize: 28,
@@ -224,7 +169,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
                         overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
                       ),
                       child: Slider(
-                        value: _position.inMilliseconds.toDouble().clamp(
+                        value: position.inMilliseconds.toDouble().clamp(
                           0.0,
                           displayDuration.inMilliseconds.toDouble(),
                         ),
@@ -242,7 +187,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            _formatDuration(_position),
+                            _formatDuration(position),
                             style: AppTextStyle.labelSmall.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -262,8 +207,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
             ],
           ),
         );
-        },
-      ),
+      },
     );
   }
 

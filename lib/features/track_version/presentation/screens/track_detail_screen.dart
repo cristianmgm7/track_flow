@@ -11,7 +11,7 @@ import '../../../../core/entities/unique_id.dart';
 import '../../../audio_track/domain/entities/audio_track.dart';
 import '../../../audio_comment/presentation/components/comments_section.dart';
 import '../../../audio_comment/presentation/components/comment_input_modal.dart';
-import '../../../waveform/presentation/widgets/audio_comment_player.dart';
+import '../../../waveform/presentation/widgets/track_detail_player.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_event.dart';
 import '../cubit/version_selector_cubit.dart';
@@ -99,7 +99,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
                 VersionsSectionComponent(trackId: widget.track.id),
                 VersionHeaderComponent(trackId: widget.track.id),
                 // Audio Player
-                AudioCommentPlayer(
+                TrackDetailPlayer(
                   key: ValueKey('player_${selectedVersionId.value}'),
                   track: widget.track,
                   versionId: selectedVersionId,

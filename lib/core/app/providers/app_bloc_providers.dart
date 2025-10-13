@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/cubit/comment_audio_cubit.dart';
 import 'package:trackflow/features/audio_recording/presentation/bloc/recording_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
@@ -103,6 +104,7 @@ class AppBlocProviders {
       BlocProvider<AudioCommentBloc>(create: (_) => sl<AudioCommentBloc>()),
       BlocProvider<TrackVersionsBloc>(create: (_) => sl<TrackVersionsBloc>()),
       BlocProvider<VersionSelectorCubit>(create: (_) => sl<VersionSelectorCubit>()),
+      BlocProvider<CommentAudioCubit>(create: (_) => sl<CommentAudioCubit>()),
     ];
   }
 

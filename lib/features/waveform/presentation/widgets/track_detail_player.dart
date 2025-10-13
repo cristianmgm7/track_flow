@@ -5,11 +5,11 @@ import 'package:trackflow/features/waveform/presentation/widgets/enhanced_wavefo
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/audio_comment_controls.dart';
 
-class AudioCommentPlayer extends StatelessWidget {
+class TrackDetailPlayer extends StatelessWidget {
   final AudioTrack track;
   final TrackVersionId? versionId;
 
-  const AudioCommentPlayer({super.key, required this.track, this.versionId});
+  const TrackDetailPlayer({super.key, required this.track, this.versionId});
 
   @override
   Widget build(BuildContext context) {
@@ -54,3 +54,5 @@ class AudioCommentPlayer extends StatelessWidget {
 }
 
 // Controls moved to AudioCommentControls for clarity and reuse
+
+
