@@ -89,6 +89,7 @@ class AppRouter {
               currentLocation == AppRoutes.settings ||
               currentLocation == AppRoutes.notifications ||
               currentLocation == AppRoutes.voiceMemos ||
+              currentLocation == AppRoutes.voiceMemoRecording ||
               currentLocation == AppRoutes.userProfile ||
               currentLocation == AppRoutes.manageCollaborators ||
               currentLocation == AppRoutes.trackDetail ||

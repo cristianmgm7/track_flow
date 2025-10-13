@@ -161,6 +161,7 @@ class _VoiceMemoRecordingScreenState extends State<VoiceMemoRecordingScreen> {
                   context.read<RecordingBloc>().add(
                     const StopRecordingRequested(),
                   );
+                  context.pop();
                 },
               ),
             ],
