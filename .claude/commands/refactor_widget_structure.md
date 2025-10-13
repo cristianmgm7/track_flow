@@ -31,9 +31,10 @@ When evaluating a widget file:
 
 When performing a refactor:
 - Create a new `StatelessWidget` or `StatefulWidget` depending on whether it manages internal state.
-- Move the helper’s widget code into this new widget.
+- **Move the dedicated widget into a separate file** (e.g., `expanded_track_info.dart`, `volume_control.dart`).
+- Move the helper's widget code into this new widget.
 - Pass down only the minimum required parameters from the parent.
-- Replace the old helper method call in the parent’s `build()` with an instance of the new widget.
+- Replace the old helper method call in the parent's `build()` with an instance of the new widget.
 - Preserve all styling, layout, and logic.
 - Remove the old helper method once replaced.
 
