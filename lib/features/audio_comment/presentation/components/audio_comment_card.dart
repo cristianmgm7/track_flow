@@ -18,6 +18,7 @@ class AudioCommentComponent extends StatelessWidget {
   final UserProfile collaborator;
   final ProjectId projectId;
   final TrackVersionId versionId;
+  final bool isMine;
 
   const AudioCommentComponent({
     super.key,
@@ -25,6 +26,7 @@ class AudioCommentComponent extends StatelessWidget {
     required this.collaborator,
     required this.projectId,
     required this.versionId,
+    this.isMine = false,
   });
 
   @override
@@ -39,29 +41,48 @@ class AudioCommentComponent extends StatelessWidget {
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            // Avatar outside the bubble (like chat apps)
-            AudioCommentAvatar(
-              collaborator: collaborator,
-              createdBy: comment.createdBy,
-            ),
-
-            SizedBox(width: Dimensions.space12),
-
-            // Bubble card with content
-            Expanded(
-              child: BaseCard(
-                enableTapAnimation: false,
-                enableHover: false,
-                margin: EdgeInsets.zero,
-                backgroundColor: AppColors.grey700,
-                child: AudioCommentContent(
-                  comment: comment,
-                  collaborator: collaborator,
-                ),
-              ),
-            ),
-          ],
+          mainAxisAlignment: isMine ? MainAxisAlignment.end : MainAxisAlignment.start,
+          children: isMine
+              ? [
+                  // Bubble first, avatar on the right
+                  Expanded(
+                    child: BaseCard(
+                      enableTapAnimation: false,
+                      enableHover: false,
+                      margin: EdgeInsets.zero,
+                      backgroundColor: AppColors.grey700,
+                      child: AudioCommentContent(
+                        comment: comment,
+                        collaborator: collaborator,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: Dimensions.space12),
+                  AudioCommentAvatar(
+                    collaborator: collaborator,
+                    createdBy: comment.createdBy,
+                  ),
+                ]
+              : [
+                  // Avatar left, bubble right
+                  AudioCommentAvatar(
+                    collaborator: collaborator,
+                    createdBy: comment.createdBy,
+                  ),
+                  SizedBox(width: Dimensions.space12),
+                  Expanded(
+                    child: BaseCard(
+                      enableTapAnimation: false,
+                      enableHover: false,
+                      margin: EdgeInsets.zero,
+                      backgroundColor: AppColors.grey700,
+                      child: AudioCommentContent(
+                        comment: comment,
+                        collaborator: collaborator,
+                      ),
+                    ),
+                  ),
+                ],
         ),
       ),
     );

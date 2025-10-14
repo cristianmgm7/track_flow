@@ -7,6 +7,7 @@ import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
@@ -55,7 +56,9 @@ class AppBlocProviders {
 
       // Auth flow
       BlocProvider<OnboardingBloc>(create: (_) => sl<OnboardingBloc>()),
-      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
+      BlocProvider<UserProfileBloc>(
+        create: (_) => sl<UserProfileBloc>()..add(WatchUserProfile()),
+      ),
       BlocProvider<MagicLinkBloc>(create: (_) => sl<MagicLinkBloc>()),
 
       // Audio system (global)
