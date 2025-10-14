@@ -35,8 +35,8 @@ class GeneratedWaveformDisplay extends StatelessWidget {
             size: Size.fromHeight(height),
             painter: static_wave.WaveformPainter(
               amplitudes: waveform.data.normalizedAmplitudes,
-              waveColor: Colors.grey[400]!,
-              progressColor: Colors.grey[400]!,
+              waveColor: AppColors.onPrimary,
+              progressColor: AppColors.onPrimary,
             ),
           ),
           // Progress bars (left of playhead or preview while scrubbing)
@@ -59,7 +59,7 @@ class GeneratedWaveformDisplay extends StatelessWidget {
             previewPosition: state.previewPosition,
             isScrubbing: state.isScrubbing,
             progressColor: AppColors.primary,
-            baselineColor: Colors.white,
+            baselineColor: AppColors.onPrimary,
           ),
           // Gesture layer
           WaveformGestures(

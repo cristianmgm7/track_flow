@@ -1,6 +1,7 @@
 import 'package:trackflow/core/entities/unique_id.dart';
 
 import '../../../../core/domain/entity.dart';
+import '../../../../features/waveform/domain/value_objects/waveform_data.dart';
 
 /// Voice memo entity representing a recorded audio memo
 class VoiceMemo extends Entity<VoiceMemoId> {
@@ -17,6 +18,9 @@ class VoiceMemo extends Entity<VoiceMemoId> {
   /// The user who created this voice memo. Null for legacy/app local only contexts.
   final UserId? createdBy;
 
+  /// Waveform amplitude data for visualization
+  final WaveformData? waveformData;
+
   const VoiceMemo({
     required VoiceMemoId id,
     required this.title,
@@ -26,6 +30,7 @@ class VoiceMemo extends Entity<VoiceMemoId> {
     required this.recordedAt,
     this.convertedToTrackId,
     this.createdBy,
+    this.waveformData,
   }) : super(id);
 
   /// Factory method for creating new voice memos
@@ -34,6 +39,7 @@ class VoiceMemo extends Entity<VoiceMemoId> {
     String? fileRemoteUrl,
     required Duration duration,
     UserId? createdBy,
+    WaveformData? waveformData,
   }) {
     final now = DateTime.now();
     return VoiceMemo(
@@ -45,6 +51,7 @@ class VoiceMemo extends Entity<VoiceMemoId> {
       recordedAt: now,
       convertedToTrackId: null,
       createdBy: createdBy,
+      waveformData: waveformData,
     );
   }
 
@@ -66,6 +73,7 @@ class VoiceMemo extends Entity<VoiceMemoId> {
     DateTime? recordedAt,
     String? convertedToTrackId,
     UserId? createdBy,
+    WaveformData? waveformData,
   }) {
     return VoiceMemo(
       id: id ?? this.id,
@@ -76,6 +84,7 @@ class VoiceMemo extends Entity<VoiceMemoId> {
       recordedAt: recordedAt ?? this.recordedAt,
       convertedToTrackId: convertedToTrackId ?? this.convertedToTrackId,
       createdBy: createdBy ?? this.createdBy,
+      waveformData: waveformData ?? this.waveformData,
     );
   }
 }

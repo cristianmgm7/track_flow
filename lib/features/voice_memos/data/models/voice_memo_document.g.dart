@@ -56,6 +56,21 @@ const VoiceMemoDocumentSchema = CollectionSchema(
       id: 7,
       name: r'title',
       type: IsarType.string,
+    ),
+    r'waveformAmplitudesJson': PropertySchema(
+      id: 8,
+      name: r'waveformAmplitudesJson',
+      type: IsarType.string,
+    ),
+    r'waveformSampleRate': PropertySchema(
+      id: 9,
+      name: r'waveformSampleRate',
+      type: IsarType.long,
+    ),
+    r'waveformTargetSampleCount': PropertySchema(
+      id: 10,
+      name: r'waveformTargetSampleCount',
+      type: IsarType.long,
     )
   },
   estimateSize: _voiceMemoDocumentEstimateSize,
@@ -126,6 +141,12 @@ int _voiceMemoDocumentEstimateSize(
   }
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.title.length * 3;
+  {
+    final value = object.waveformAmplitudesJson;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -143,6 +164,9 @@ void _voiceMemoDocumentSerialize(
   writer.writeString(offsets[5], object.id);
   writer.writeDateTime(offsets[6], object.recordedAt);
   writer.writeString(offsets[7], object.title);
+  writer.writeString(offsets[8], object.waveformAmplitudesJson);
+  writer.writeLong(offsets[9], object.waveformSampleRate);
+  writer.writeLong(offsets[10], object.waveformTargetSampleCount);
 }
 
 VoiceMemoDocument _voiceMemoDocumentDeserialize(
@@ -160,6 +184,9 @@ VoiceMemoDocument _voiceMemoDocumentDeserialize(
   object.id = reader.readString(offsets[5]);
   object.recordedAt = reader.readDateTime(offsets[6]);
   object.title = reader.readString(offsets[7]);
+  object.waveformAmplitudesJson = reader.readStringOrNull(offsets[8]);
+  object.waveformSampleRate = reader.readLongOrNull(offsets[9]);
+  object.waveformTargetSampleCount = reader.readLongOrNull(offsets[10]);
   return object;
 }
 
@@ -186,6 +213,12 @@ P _voiceMemoDocumentDeserializeProp<P>(
       return (reader.readDateTime(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readLongOrNull(offset)) as P;
+    case 10:
+      return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -1524,6 +1557,310 @@ extension VoiceMemoDocumentQueryFilter
       ));
     });
   }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'waveformAmplitudesJson',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'waveformAmplitudesJson',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'waveformAmplitudesJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'waveformAmplitudesJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'waveformAmplitudesJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'waveformAmplitudesJson',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'waveformAmplitudesJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'waveformAmplitudesJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'waveformAmplitudesJson',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'waveformAmplitudesJson',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'waveformAmplitudesJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformAmplitudesJsonIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'waveformAmplitudesJson',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformSampleRateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'waveformSampleRate',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformSampleRateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'waveformSampleRate',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformSampleRateEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'waveformSampleRate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformSampleRateGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'waveformSampleRate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformSampleRateLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'waveformSampleRate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformSampleRateBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'waveformSampleRate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformTargetSampleCountIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'waveformTargetSampleCount',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformTargetSampleCountIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'waveformTargetSampleCount',
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformTargetSampleCountEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'waveformTargetSampleCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformTargetSampleCountGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'waveformTargetSampleCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformTargetSampleCountLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'waveformTargetSampleCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterFilterCondition>
+      waveformTargetSampleCountBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'waveformTargetSampleCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension VoiceMemoDocumentQueryObject
@@ -1642,6 +1979,48 @@ extension VoiceMemoDocumentQuerySortBy
       sortByTitleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'title', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      sortByWaveformAmplitudesJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformAmplitudesJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      sortByWaveformAmplitudesJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformAmplitudesJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      sortByWaveformSampleRate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformSampleRate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      sortByWaveformSampleRateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformSampleRate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      sortByWaveformTargetSampleCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformTargetSampleCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      sortByWaveformTargetSampleCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformTargetSampleCount', Sort.desc);
     });
   }
 }
@@ -1772,6 +2151,48 @@ extension VoiceMemoDocumentQuerySortThenBy
       return query.addSortBy(r'title', Sort.desc);
     });
   }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      thenByWaveformAmplitudesJson() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformAmplitudesJson', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      thenByWaveformAmplitudesJsonDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformAmplitudesJson', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      thenByWaveformSampleRate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformSampleRate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      thenByWaveformSampleRateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformSampleRate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      thenByWaveformTargetSampleCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformTargetSampleCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QAfterSortBy>
+      thenByWaveformTargetSampleCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'waveformTargetSampleCount', Sort.desc);
+    });
+  }
 }
 
 extension VoiceMemoDocumentQueryWhereDistinct
@@ -1834,6 +2255,28 @@ extension VoiceMemoDocumentQueryWhereDistinct
       return query.addDistinctBy(r'title', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QDistinct>
+      distinctByWaveformAmplitudesJson({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'waveformAmplitudesJson',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QDistinct>
+      distinctByWaveformSampleRate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'waveformSampleRate');
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, VoiceMemoDocument, QDistinct>
+      distinctByWaveformTargetSampleCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'waveformTargetSampleCount');
+    });
+  }
 }
 
 extension VoiceMemoDocumentQueryProperty
@@ -1894,6 +2337,27 @@ extension VoiceMemoDocumentQueryProperty
   QueryBuilder<VoiceMemoDocument, String, QQueryOperations> titleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'title');
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, String?, QQueryOperations>
+      waveformAmplitudesJsonProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'waveformAmplitudesJson');
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, int?, QQueryOperations>
+      waveformSampleRateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'waveformSampleRate');
+    });
+  }
+
+  QueryBuilder<VoiceMemoDocument, int?, QQueryOperations>
+      waveformTargetSampleCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'waveformTargetSampleCount');
     });
   }
 }

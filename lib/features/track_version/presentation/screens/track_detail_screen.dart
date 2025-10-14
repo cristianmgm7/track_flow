@@ -95,10 +95,10 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
             onTap: () => FocusScope.of(context).unfocus(),
             child: Column(
               children: [
-                // Versions Section
+                // Versions Section List
                 VersionsSectionComponent(trackId: widget.track.id),
                 VersionHeaderComponent(trackId: widget.track.id),
-                // Audio Player
+                // Audio Player with Version Selector with waveform
                 TrackDetailPlayer(
                   key: ValueKey('player_${selectedVersionId.value}'),
                   track: widget.track,

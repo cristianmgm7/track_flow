@@ -261,14 +261,14 @@ class VoiceMemoDocument {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Domain model compiles: `flutter analyze`
-- [ ] Isar code generation succeeds: `flutter packages pub run build_runner build --delete-conflicting-outputs`
-- [ ] No breaking changes in existing voice memo tests: `flutter test test/features/voice_memos/`
+- [x] Domain model compiles: `flutter analyze`
+- [x] Isar code generation succeeds: `flutter packages pub run build_runner build --delete-conflicting-outputs`
+- [x] No breaking changes in existing voice memo tests: `flutter test test/features/voice_memos/`
 
 #### Manual Verification:
-- [ ] New fields added to `VoiceMemo` entity
-- [ ] `VoiceMemoDocument` includes waveform storage fields
-- [ ] `fromDomain()` and `toDomain()` handle null waveform data correctly
+- [x] New fields added to `VoiceMemo` entity
+- [x] `VoiceMemoDocument` includes waveform storage fields
+- [x] `fromDomain()` and `toDomain()` handle null waveform data correctly
 
 ---
 
@@ -350,8 +350,8 @@ class CreateVoiceMemoUseCase {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Use case compiles without errors: `flutter analyze`
-- [ ] Dependency injection resolves correctly: `flutter packages pub run build_runner build --delete-conflicting-outputs`
+- [x] Use case compiles without errors: `flutter analyze`
+- [x] Dependency injection resolves correctly: `flutter packages pub run build_runner build --delete-conflicting-outputs`
 - [ ] Unit test passes for memo creation with waveform: Create test in `test/features/voice_memos/domain/usecases/create_voice_memo_usecase_test.dart`
 
 #### Manual Verification:
@@ -499,9 +499,9 @@ class VoiceMemoWaveformDisplay extends StatelessWidget {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Widget compiles: `flutter analyze`
-- [ ] No linter warnings
-- [ ] Widget can be imported in test environment
+- [x] Widget compiles: `flutter analyze`
+- [x] No linter warnings
+- [x] Widget can be imported in test environment
 
 #### Manual Verification:
 - [ ] Widget renders waveform bars correctly
@@ -806,8 +806,8 @@ class VoiceMemoCard extends StatelessWidget {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Card compiles without errors: `flutter analyze`
-- [ ] No missing imports or undefined references
+- [x] Card compiles without errors: `flutter analyze`
+- [x] No missing imports or undefined references
 - [ ] App builds successfully: `flutter build apk --debug` (or iOS equivalent)
 
 #### Manual Verification:

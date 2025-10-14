@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:isar/isar.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import '../../../../features/waveform/domain/value_objects/waveform_data.dart';
 import '../../domain/entities/voice_memo.dart';
 
 part 'voice_memo_document.g.dart';
@@ -27,6 +29,11 @@ class VoiceMemoDocument {
   /// The user who created this voice memo. Null for legacy/app local only contexts.
   String? createdBy;
 
+  /// Waveform data fields
+  String? waveformAmplitudesJson; // JSON-encoded List<double>
+  int? waveformSampleRate;
+  int? waveformTargetSampleCount;
+
   VoiceMemoDocument();
 
   /// Create from domain entity
@@ -39,11 +46,32 @@ class VoiceMemoDocument {
       ..durationMs = memo.duration.inMilliseconds
       ..recordedAt = memo.recordedAt
       ..convertedToTrackId = memo.convertedToTrackId
-      ..createdBy = memo.createdBy?.value;
+      ..createdBy = memo.createdBy?.value
+      // Encode waveform data
+      ..waveformAmplitudesJson = memo.waveformData != null
+          ? jsonEncode(memo.waveformData!.amplitudes)
+          : null
+      ..waveformSampleRate = memo.waveformData?.sampleRate
+      ..waveformTargetSampleCount = memo.waveformData?.targetSampleCount;
   }
 
   /// Convert to domain entity
   VoiceMemo toDomain() {
+    // Decode waveform data
+    WaveformData? waveformData;
+    if (waveformAmplitudesJson != null &&
+        waveformSampleRate != null &&
+        waveformTargetSampleCount != null) {
+      final amplitudes = (jsonDecode(waveformAmplitudesJson!) as List)
+          .cast<double>();
+      waveformData = WaveformData(
+        amplitudes: amplitudes,
+        sampleRate: waveformSampleRate!,
+        duration: Duration(milliseconds: durationMs),
+        targetSampleCount: waveformTargetSampleCount!,
+      );
+    }
+
     return VoiceMemo(
       id: VoiceMemoId.fromUniqueString(id),
       title: title,
@@ -53,6 +81,7 @@ class VoiceMemoDocument {
       recordedAt: recordedAt,
       convertedToTrackId: convertedToTrackId,
       createdBy: createdBy != null ? UserId.fromUniqueString(createdBy!) : null,
+      waveformData: waveformData,
     );
   }
 }

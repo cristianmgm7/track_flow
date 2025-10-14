@@ -55,11 +55,8 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
             return _buildFallbackWaveform();
           case WaveformStatus.ready:
             if (state.waveform != null) {
-              return GeneratedWaveformDisplay(
-                waveform: state.waveform!,
-                state: state,
-                height: widget.height,
-              );
+              return _buildGeneratedWaveform(context, state);
+                
             } else {
               return _buildFallbackWaveform();
             }
@@ -67,6 +64,14 @@ class _EnhancedWaveformDisplayState extends State<EnhancedWaveformDisplay> {
             return _buildInitialState();
         }
       },
+    );
+  }
+  
+  Widget _buildGeneratedWaveform(BuildContext context, WaveformState state) {
+    return GeneratedWaveformDisplay(
+      waveform: state.waveform!,
+      state: state,
+      height: widget.height,
     );
   }
 
