@@ -11,6 +11,7 @@ import 'package:trackflow/features/manage_collaborators/presentation/widgets/sen
 import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
 
 class ManageCollaboratorsScreen extends StatefulWidget {
   final Project project;
@@ -40,12 +41,13 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
       minChildSize: 0.4,
       initialChildSize: 0.4,
       maxChildSize: 0.4,
-      reprovideBlocs: [context.read<ManageCollaboratorsBloc>()],
+      reprovideBlocs: [context.read<ManageCollaboratorsBloc>(), context.read<UserProfileBloc>()],
       actions: CollaboratorActions.forCollaborator(
         context: context,
         project: currentProject,
         collaborator: collaborator,
         manageCollaboratorsBloc: context.read<ManageCollaboratorsBloc>(),
+        userProfileBloc: context.read<UserProfileBloc>(),
       ),
     );
   }
