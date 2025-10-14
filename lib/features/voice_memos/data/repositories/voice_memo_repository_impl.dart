@@ -1,9 +1,8 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../core/utils/file_system_utils.dart';
+import '../../../../core/infrastructure/domain/directory_service.dart';
 import '../../domain/entities/voice_memo.dart';
 import '../../domain/repositories/voice_memo_repository.dart';
 import '../../../../core/entities/unique_id.dart';
@@ -13,8 +12,12 @@ import '../models/voice_memo_document.dart';
 @LazySingleton(as: VoiceMemoRepository)
 class VoiceMemoRepositoryImpl implements VoiceMemoRepository {
   final VoiceMemoLocalDataSource _localDataSource;
+  final DirectoryService _directoryService;
 
-  VoiceMemoRepositoryImpl(this._localDataSource);
+  VoiceMemoRepositoryImpl(
+    this._localDataSource,
+    this._directoryService,
+  );
 
   @override
   Stream<Either<Failure, List<VoiceMemo>>> watchAllMemos() {
@@ -73,21 +76,23 @@ class VoiceMemoRepositoryImpl implements VoiceMemoRepository {
 
   /// Move file from temp to permanent voice memos directory
   Future<String> _moveToPermStorage(String tempPath) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final voiceMemosDir = Directory('${appDir.path}/trackflow/audio/voice_memos');
+    // Get voice memos directory using DirectoryService
+    final dirResult = await _directoryService.getDirectory(DirectoryType.voiceMemos);
 
-    // Ensure directory exists
-    await FileSystemUtils.ensureDirectoryExists(voiceMemosDir.path);
+    return dirResult.fold(
+      (failure) => throw Exception('Failed to get voice memos directory: ${failure.message}'),
+      (voiceMemosDir) async {
+        // Generate filename from original temp path
+        final filename = tempPath.split('/').last;
+        final permanentPath = '${voiceMemosDir.path}/$filename';
 
-    // Generate filename from original temp path
-    final filename = tempPath.split('/').last;
-    final permanentPath = '${voiceMemosDir.path}/$filename';
+        // Move file
+        final tempFile = File(tempPath);
+        await tempFile.copy(permanentPath);
+        await tempFile.delete();
 
-    // Move file
-    final tempFile = File(tempPath);
-    await tempFile.copy(permanentPath);
-    await tempFile.delete();
-
-    return permanentPath;
+        return permanentPath;
+      },
+    );
   }
 }

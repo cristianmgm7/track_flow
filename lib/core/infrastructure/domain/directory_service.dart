@@ -14,6 +14,9 @@ enum DirectoryType {
   /// Audio comment files: /Documents/trackflow/audio/comments
   audioComments,
 
+  /// Voice memo files: /Documents/trackflow/audio/voice_memos
+  voiceMemos,
+
   /// Local avatars: /Documents/local_avatars
   localAvatars,
 
