@@ -73,25 +73,6 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
         },
         child: BlocBuilder<CommentAudioCubit, CommentAudioState>(
           builder: (context, cState) {
-            // Loading indicator while comment audio buffers/loads
-            if (cState is CommentAudioBuffering) {
-              return Container(
-                height: 56,
-                padding: EdgeInsets.all(Dimensions.space12),
-                decoration: BoxDecoration(
-                  color: AppColors.grey800,
-                  borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                ),
-                child: const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              );
-            }
-
             // Error display for comment playback
             if (cState is CommentAudioError) {
               return Container(
@@ -117,19 +98,33 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
 
             // Derive session info if available
             Duration position = Duration.zero;
-            Duration duration = widget.comment.audioDuration ?? Duration.zero;
+            Duration duration = Duration.zero;
             bool isPlaying = false;
+            bool isBuffering = cState is CommentAudioBuffering;
+
+            // Get duration from comment first, then from session if available
+            duration = widget.comment.audioDuration ?? Duration.zero;
+
             if (cState is CommentAudioPlaying) {
               position = cState.session.position;
-              duration = cState.session.currentTrack?.duration ?? duration;
+              // Use session track duration if available and valid
+              if (cState.session.currentTrack?.duration != null &&
+                  cState.session.currentTrack!.duration > Duration.zero) {
+                duration = cState.session.currentTrack!.duration;
+              }
               isPlaying = true;
             } else if (cState is CommentAudioPaused) {
               position = cState.session.position;
-              duration = cState.session.currentTrack?.duration ?? duration;
+              // Use session track duration if available and valid
+              if (cState.session.currentTrack?.duration != null &&
+                  cState.session.currentTrack!.duration > Duration.zero) {
+                duration = cState.session.currentTrack!.duration;
+              }
               isPlaying = false;
             }
 
-            final displayDuration = duration;
+            // Ensure we have a valid duration for the progress bar
+            final displayDuration = duration > Duration.zero ? duration : Duration.zero;
 
             return Container(
               padding: EdgeInsets.symmetric(
@@ -144,8 +139,17 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
                 children: [
                   // Play/Pause Button
                   IconButton(
-                    icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-                    onPressed: () => _onPlayPause(cState),
+                    icon: isBuffering
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            ),
+                          )
+                        : Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    onPressed: isBuffering ? null : () => _onPlayPause(cState),
                     color: AppColors.primary,
                     iconSize: 28,
                     padding: EdgeInsets.zero,
@@ -158,24 +162,26 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Progress Slider
-                        SliderTheme(
-                          data: SliderThemeData(
-                            trackHeight: 3,
-                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                            overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-                          ),
-                          child: Slider(
-                            value: position.inMilliseconds.toDouble().clamp(
-                              0.0,
-                              displayDuration.inMilliseconds.toDouble(),
+                        // Progress Slider - only show if we have a valid duration
+                        if (displayDuration > Duration.zero) ...[
+                          SliderTheme(
+                            data: SliderThemeData(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
                             ),
-                            max: displayDuration.inMilliseconds.toDouble(),
-                            onChanged: (v) => _commentCubit.seek(Duration(milliseconds: v.toInt())),
-                            activeColor: AppColors.primary,
-                            inactiveColor: AppColors.grey700,
+                            child: Slider(
+                              value: position.inMilliseconds.toDouble().clamp(
+                                0.0,
+                                displayDuration.inMilliseconds.toDouble(),
+                              ),
+                              max: displayDuration.inMilliseconds.toDouble(),
+                              onChanged: isBuffering ? null : (v) => _commentCubit.seek(Duration(milliseconds: v.toInt())),
+                              activeColor: AppColors.primary,
+                              inactiveColor: AppColors.grey700,
+                            ),
                           ),
-                        ),
+                        ],
 
                         // Time Display
                         Padding(
@@ -190,7 +196,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
                                 ),
                               ),
                               Text(
-                                _formatDuration(displayDuration),
+                                displayDuration > Duration.zero ? _formatDuration(displayDuration) : '--:--',
                                 style: AppTextStyle.labelSmall.copyWith(
                                   color: AppColors.textSecondary,
                                 ),

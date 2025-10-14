@@ -61,7 +61,7 @@ class AudioCommentComponent extends StatelessWidget {
               child: AudioCommentContent(
                 comment: comment,
                 collaborator: collaborator,
-              ),
+              ), 
             ),
           ],
         ),
