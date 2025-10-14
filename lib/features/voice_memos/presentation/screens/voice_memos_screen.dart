@@ -26,13 +26,6 @@ class VoiceMemosScreen extends StatelessWidget {
               backgroundColor: AppColors.error,
             ),
           );
-        } else if (state is VoiceMemoActionSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: AppColors.success,
-            ),
-          );
         }
       },
       child: AppScaffold(

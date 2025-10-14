@@ -62,7 +62,7 @@ class VoiceMemoBloc extends Bloc<VoiceMemoEvent, VoiceMemoState> {
 
     result.fold(
       (failure) => emit(VoiceMemoError(failure.message)),
-      (memo) => emit(const VoiceMemoActionSuccess('Voice memo saved')),
+      (_) => null, // Watch stream will update automatically
     );
   }
 
@@ -87,7 +87,7 @@ class VoiceMemoBloc extends Bloc<VoiceMemoEvent, VoiceMemoState> {
 
     result.fold(
       (failure) => emit(VoiceMemoError(failure.message)),
-      (_) => emit(const VoiceMemoActionSuccess('Memo renamed')),
+      (_) => null, // Watch stream will update automatically
     );
   }
 
@@ -99,7 +99,7 @@ class VoiceMemoBloc extends Bloc<VoiceMemoEvent, VoiceMemoState> {
 
     result.fold(
       (failure) => emit(VoiceMemoError(failure.message)),
-      (_) => emit(const VoiceMemoActionSuccess('Memo deleted')),
+      (_) => null, // Watch stream will update automatically
     );
   }
 }
