@@ -7,11 +7,11 @@ import '../../../ui/menus/app_popup_menu.dart';
 import '../../domain/entities/voice_memo.dart';
 import '../bloc/voice_memo_bloc.dart';
 import '../bloc/voice_memo_event.dart';
-import 'playback_controls.dart';
-import 'voice_memo_delete_background.dart';
-import 'voice_memo_delete_confirmation_dialog.dart';
-import 'voice_memo_header.dart';
-import 'voice_memo_rename_dialog.dart';
+import '../widgets/playback_controls.dart';
+import '../widgets/voice_memo_delete_background.dart';
+import '../widgets/voice_memo_delete_confirmation_dialog.dart';
+import '../widgets/voice_memo_header.dart';
+import '../widgets/voice_memo_rename_dialog.dart';
 
 class VoiceMemoCard extends StatelessWidget {
   final VoiceMemo memo;
