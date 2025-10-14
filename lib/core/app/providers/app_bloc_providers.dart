@@ -104,6 +104,7 @@ class AppBlocProviders {
   static List<BlocProvider> getTrackDetailProviders() {
     return [
       BlocProvider<TrackCacheBloc>(create: (_) => sl<TrackCacheBloc>()),
+      BlocProvider<ProjectDetailBloc>(create: (_) => sl<ProjectDetailBloc>()),
       BlocProvider<AudioCommentBloc>(create: (_) => sl<AudioCommentBloc>()),
       BlocProvider<TrackVersionsBloc>(create: (_) => sl<TrackVersionsBloc>()),
       BlocProvider<VersionSelectorCubit>(create: (_) => sl<VersionSelectorCubit>()),

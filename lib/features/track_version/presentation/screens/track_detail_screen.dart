@@ -7,7 +7,7 @@ import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/modals/app_form_sheet.dart';
-import '../../../../core/entities/unique_id.dart';
+// duplicate import removed
 import '../../../audio_track/domain/entities/audio_track.dart';
 import '../../../audio_comment/presentation/components/comments_section.dart';
 import '../../../audio_comment/presentation/components/comment_input_modal.dart';
@@ -17,6 +17,15 @@ import '../blocs/track_versions/track_versions_event.dart';
 import '../cubit/version_selector_cubit.dart';
 import '../components/versions_section_component.dart';
 import '../widgets/upload_version_form.dart';
+import '../../../project_detail/presentation/bloc/project_detail_bloc.dart';
+import '../../../project_detail/presentation/bloc/project_detail_event.dart';
+import '../../../project_detail/presentation/bloc/project_detail_state.dart';
+import '../../../user_profile/presentation/bloc/user_profile_bloc.dart';
+import '../../../user_profile/presentation/bloc/user_profile_states.dart';
+import '../../../projects/domain/entities/project_collaborator.dart';
+import '../../../projects/domain/value_objects/project_role.dart';
+import '../../../projects/domain/value_objects/project_permission.dart';
+import '../../../../core/entities/unique_id.dart';
 
 class TrackDetailScreen extends StatefulWidget {
   final ProjectId projectId;
@@ -54,6 +63,9 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
     context.read<AudioPlayerBloc>().add(
       PlayVersionRequested(widget.versionId),
     );
+
+    // Watch project detail to drive permissions
+    context.read<ProjectDetailBloc>().add(WatchProjectDetail(projectId: widget.projectId));
   }
 
   void _showUploadVersionForm() {
@@ -123,12 +135,42 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
               ],
             ),
           ),
-          persistentFooterWidget: SafeArea(
-            top: false,
-            child: CommentInputModal(
-              projectId: widget.projectId,
-              versionId: selectedVersionId,
-            ),
+          persistentFooterWidget: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+            builder: (context, pdState) {
+              final project = pdState.project;
+              if (project == null) {
+                return const SizedBox.shrink();
+              }
+
+              // Derive current user id from UserProfileBloc
+              final userState = context.watch<UserProfileBloc>().state;
+              final String? currentUserId =
+                  userState is UserProfileLoaded ? userState.profile.id.value : null;
+
+              bool canAddComment = false;
+              if (currentUserId != null) {
+                final me = project.collaborators.firstWhere(
+                  (c) => c.userId.value == currentUserId,
+                  orElse: () => ProjectCollaborator.create(
+                    userId: UserId.fromUniqueString(currentUserId),
+                    role: ProjectRole.viewer,
+                  ),
+                );
+                canAddComment = me.hasPermission(ProjectPermission.addComment);
+              }
+
+              if (!canAddComment) {
+                return const SizedBox.shrink();
+              }
+
+              return SafeArea(
+                top: false,
+                child: CommentInputModal(
+                  projectId: widget.projectId,
+                  versionId: selectedVersionId,
+                ),
+              );
+            },
           ),
         );
       },
