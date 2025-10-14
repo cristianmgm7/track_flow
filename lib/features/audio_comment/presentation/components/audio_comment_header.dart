@@ -17,12 +17,13 @@ class AudioCommentHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
           child: Text(
             displayName,
-            style: AppTextStyle.titleMedium.copyWith(
+            style: AppTextStyle.headlineSmall.copyWith(
               fontWeight: FontWeight.bold,
             ),
             maxLines: 1,

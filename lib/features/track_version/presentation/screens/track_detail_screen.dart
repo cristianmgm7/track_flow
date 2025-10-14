@@ -94,6 +94,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
             child: Column(
+              
               children: [
                 // Versions Section List
                 VersionsSectionComponent(trackId: widget.track.id),

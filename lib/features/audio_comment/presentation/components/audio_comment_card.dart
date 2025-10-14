@@ -4,8 +4,6 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -34,34 +32,34 @@ class AudioCommentComponent extends StatelessWidget {
     return GestureDetector(
       onLongPressStart:
           (details) => _showCommentMenu(context, details.globalPosition),
-      child: BaseCard(
-        onTap: () {
-          context.read<AudioPlayerBloc>().add(
-            SeekToPositionRequested(comment.timestamp),
-          );
-        },
-        margin: EdgeInsets.symmetric(
-          horizontal: Dimensions.space12,
-          vertical: Dimensions.space8,
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: Dimensions.space0,
+          vertical: Dimensions.space4,
         ),
-        backgroundColor: AppColors.grey700,
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // User avatar
+            // Avatar outside the bubble (like chat apps)
             AudioCommentAvatar(
               collaborator: collaborator,
               createdBy: comment.createdBy,
             ),
 
-            SizedBox(width: Dimensions.space16),
+            SizedBox(width: Dimensions.space12),
 
-            // Comment content
+            // Bubble card with content
             Expanded(
-              child: AudioCommentContent(
-                comment: comment,
-                collaborator: collaborator,
-              ), 
+              child: BaseCard(
+                enableTapAnimation: false,
+                enableHover: false,
+                margin: EdgeInsets.zero,
+                backgroundColor: AppColors.grey700,
+                child: AudioCommentContent(
+                  comment: comment,
+                  collaborator: collaborator,
+                ),
+              ),
             ),
           ],
         ),
