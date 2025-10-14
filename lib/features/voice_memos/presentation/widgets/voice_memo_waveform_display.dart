@@ -62,6 +62,7 @@ class VoiceMemoWaveformDisplay extends StatelessWidget {
                   size: Size.fromHeight(height),
                   painter: static_wave.WaveformPainter(
                     amplitudes: amplitudes,
+                    duration: memo.duration,
                     waveColor: Colors.grey[400]!,
                     progressColor: Colors.grey[400]!,
                   ),

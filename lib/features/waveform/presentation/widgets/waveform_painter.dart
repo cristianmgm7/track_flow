@@ -42,7 +42,7 @@ class WaveformPainter extends CustomPainter {
       final paint =
           Paint()
             ..color = (progressColor != null && x <= progressX) ? progressColor! : waveColor
-            ..strokeWidth = 2.0
+            ..strokeWidth = 1.5
             ..strokeCap = StrokeCap.round;
 
       // Draw amplitude bar from baseline upwards only

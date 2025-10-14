@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart';
 import 'package:trackflow/features/waveform/presentation/bloc/waveform_bloc.dart';
-import 'package:trackflow/features/waveform/presentation/widgets/waveform_painter.dart'
-    as static_wave;
+import 'package:trackflow/features/waveform/presentation/widgets/waveform_painter.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/waveform_progress_painter.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/waveform_overlay.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/waveform_gestures.dart';
@@ -33,8 +32,9 @@ class GeneratedWaveformDisplay extends StatelessWidget {
           // Static waveform bars
           CustomPaint(
             size: Size.fromHeight(height),
-            painter: static_wave.WaveformPainter(
+            painter: WaveformPainter(
               amplitudes: waveform.data.normalizedAmplitudes,
+              duration: duration,
               waveColor: AppColors.onPrimary,
               progressColor: AppColors.onPrimary,
             ),
