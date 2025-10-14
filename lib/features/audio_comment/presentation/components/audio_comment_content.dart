@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
@@ -66,9 +69,15 @@ class AudioCommentContent extends StatelessWidget {
 
         SizedBox(height: Dimensions.space8),
 
-        // Timestamp badge
+        // Timestamp badge (tappable to seek)
         AudioCommentTimestampBadge(
           formattedTimestamp: 'at ${_formatDuration(comment.timestamp)}',
+          onTap: () {
+            context.read<AudioPlayerBloc>().add(
+              SeekToPositionRequested(comment.timestamp),
+            );
+            context.read<AudioPlayerBloc>().add(const ResumeAudioRequested());
+          },
         ),
       ],
     );
