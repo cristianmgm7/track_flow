@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/ui/project/project_cover_art.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/project_detail_actions_sheet.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 
 /// A sliver header for the project detail screen, showing the cover art as background
 class ProjectDetailSliverHeader extends StatelessWidget {
@@ -25,6 +30,23 @@ class ProjectDetailSliverHeader extends StatelessWidget {
       actions: ProjectDetailActions.forProject(context, project),
       initialChildSize: 0.5, // open larger by default to avoid manual drag
     );
+  }
+
+  bool _userHasEditPermission(String? currentUserId) {
+    if (currentUserId == null) return false;
+    
+    final userId = UserId.fromUniqueString(currentUserId);
+    
+    // Find the current user in the collaborators list
+    final userCollaborator = project.collaborators.where(
+      (collaborator) => collaborator.userId == userId,
+    ).firstOrNull;
+    
+    // If user is not a collaborator, they don't have permission
+    if (userCollaborator == null) return false;
+    
+    // Check if user has edit permission
+    return userCollaborator.hasPermission(ProjectPermission.editProject);
   }
 
   @override
@@ -109,30 +131,40 @@ class ProjectDetailSliverHeader extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: Colors.white70,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Created: ${project.createdAt.toString().split(' ')[0]}',
-                            style: AppTextStyle.bodySmall.copyWith(
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.more_horiz_outlined,
-                              color: Colors.white,
-                            ),
-                            onPressed:
-                                () => _openProjectDetailActionsSheet(context),
-                          ),
-                        ],
+                      BlocBuilder<UserProfileBloc, UserProfileState>(
+                        builder: (context, profileState) {
+                          final currentUserId = profileState is UserProfileLoaded
+                              ? profileState.profile.id.value
+                              : null;
+                          final hasEditPermission = _userHasEditPermission(currentUserId);
+                          
+                          return Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 16,
+                                color: Colors.white70,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Created: ${project.createdAt.toString().split(' ')[0]}',
+                                style: AppTextStyle.bodySmall.copyWith(
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (hasEditPermission)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.more_horiz_outlined,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed:
+                                      () => _openProjectDetailActionsSheet(context),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
