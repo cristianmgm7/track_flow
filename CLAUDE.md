@@ -111,6 +111,14 @@ features/[feature_name]/
 - Domain-driven permission validation in entities
 - Active domain patterns for business rule enforcement
 
+### Download System
+- Permission-based download with `ProjectPermission.downloadTrack`
+- Reuses cache storage - creates temporary copy with friendly filename
+- Filename format: `{trackName}_v{versionNumber}.{ext}`
+- Share sheet export for cross-platform support
+- Dual entry points: Track actions (active version) and Version actions (specific version)
+- Editor and Admin roles can download; Viewer cannot
+
 ## Important Files & Directories
 
 ### Configuration

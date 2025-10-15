@@ -110,7 +110,10 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
               children: [
                 // Versions Section List
                 VersionsSectionComponent(trackId: widget.track.id),
-                VersionHeaderComponent(trackId: widget.track.id),
+                VersionHeaderComponent(
+                  trackId: widget.track.id,
+                  track: widget.track,
+                ),
                 // Audio Player with Version Selector with waveform
                 TrackDetailPlayer(
                   key: ValueKey('player_${selectedVersionId.value}'),

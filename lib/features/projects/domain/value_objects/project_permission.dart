@@ -10,6 +10,7 @@ enum ProjectPermission {
   addTrack,
   editTrack,
   deleteTrack,
+  downloadTrack,
   // premisions for comments
   addComment,
   editComment,

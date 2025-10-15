@@ -12,24 +12,40 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_cache/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 
 /// Header component for displaying active version information and actions
 class VersionHeaderComponent extends StatelessWidget {
   final AudioTrackId trackId;
+  final AudioTrack track;
 
-  const VersionHeaderComponent({super.key, required this.trackId});
+  const VersionHeaderComponent({
+    super.key,
+    required this.trackId,
+    required this.track,
+  });
 
   void _openTrackDetailActionsSheet(
     BuildContext context,
     TrackVersionId activeVersionId,
   ) {
+    // Get project from ProjectDetailBloc if available
+    final project = context.read<ProjectDetailBloc>().state.project;
+    
     showAppActionSheet(
       showCloseButton: true,
       showHandle: true,
       useRootNavigator: false,
       title: 'Version Actions',
       context: context,
-      actions: TrackDetailActions.forVersion(context, trackId, activeVersionId),
+      actions: TrackDetailActions.forVersion(
+        context,
+        trackId,
+        activeVersionId,
+        track,
+        project,
+      ),
       initialChildSize: 0.5,
     );
   }
