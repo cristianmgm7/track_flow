@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
-import '../../../audio_player/presentation/bloc/audio_player_state.dart';
-import '../../domain/entities/voice_memo.dart';
+import '../../../../../core/theme/app_dimensions.dart';
+import '../../../../audio_player/presentation/bloc/audio_player_bloc.dart';
+import '../../../../audio_player/presentation/bloc/audio_player_state.dart';
+import '../../../domain/entities/voice_memo.dart';
 import 'voice_memo_progress_bar.dart';
 
 class VoiceMemoPlaybackControls extends StatelessWidget {

@@ -11,7 +11,7 @@ import '../../../ui/navigation/app_bar.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../bloc/voice_memo_bloc.dart';
 import '../bloc/voice_memo_event.dart';
-import 'widgets/recording_ui.dart';
+import 'recording_ui.dart';
 
 class VoiceMemoRecordingScreen extends StatefulWidget {
   const VoiceMemoRecordingScreen({super.key});

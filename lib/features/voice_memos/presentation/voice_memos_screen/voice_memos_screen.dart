@@ -10,7 +10,7 @@ import '../../../ui/navigation/app_bar.dart';
 import '../../domain/entities/voice_memo.dart';
 import '../bloc/voice_memo_bloc.dart';
 import '../bloc/voice_memo_state.dart';
-import '../components/voice_memo_card.dart';
+import 'components/voice_memo_card.dart';
 
 class VoiceMemosScreen extends StatelessWidget {
   const VoiceMemosScreen({super.key});

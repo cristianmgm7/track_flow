@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../ui/menus/app_popup_menu.dart';
-import '../../domain/entities/voice_memo.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../ui/menus/app_popup_menu.dart';
+import '../../../domain/entities/voice_memo.dart';
 
 class VoiceMemoCardHeader extends StatelessWidget {
   final VoiceMemo memo;
@@ -88,7 +88,7 @@ class VoiceMemoCardHeader extends StatelessWidget {
 
         // Menu Button
         IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
+          icon: const Icon(Icons.more_horiz, color: Colors.white),
           onPressed: () => _showMenu(context),
         ),
       ],

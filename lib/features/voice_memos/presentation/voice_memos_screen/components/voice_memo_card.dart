@@ -1,19 +1,19 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
-import '../../../audio_player/presentation/bloc/audio_player_event.dart';
-import '../../domain/entities/voice_memo.dart';
-import '../bloc/voice_memo_bloc.dart';
-import '../bloc/voice_memo_event.dart';
-import '../widgets/voice_memo_delete_background.dart';
-import '../widgets/voice_memo_delete_confirmation_dialog.dart';
-import '../widgets/voice_memo_rename_dialog.dart';
-import '../widgets/voice_memo_waveform_display.dart';
-import '../widgets/voice_memo_card_header.dart';
-import '../widgets/voice_memo_playback_controls.dart';
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_dimensions.dart';
+import '../../../../audio_player/presentation/bloc/audio_player_bloc.dart';
+import '../../../../audio_player/presentation/bloc/audio_player_event.dart';
+import '../../../domain/entities/voice_memo.dart';
+import '../../bloc/voice_memo_bloc.dart';
+import '../../bloc/voice_memo_event.dart';
+import '../../widgets/voice_memo_delete_background.dart';
+import '../../widgets/voice_memo_delete_confirmation_dialog.dart';
+import '../../widgets/voice_memo_rename_dialog.dart';
+import 'voice_memo_waveform_display.dart';
+import 'voice_memo_card_header.dart';
+import 'voice_memo_playback_controls.dart';
 
 class VoiceMemoCard extends StatelessWidget {
   final VoiceMemo memo;
@@ -44,8 +44,8 @@ class VoiceMemoCard extends StatelessWidget {
       },
       child: Container(
         margin: EdgeInsets.symmetric(
-          horizontal: Dimensions.space16,
-          vertical: Dimensions.space8,
+          horizontal: Dimensions.space2,
+          vertical: Dimensions.space2,
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -56,10 +56,10 @@ class VoiceMemoCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(Dimensions.radiusLarge),
+          borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
         ),
         child: Padding(
-          padding: EdgeInsets.all(Dimensions.space16),
+          padding: EdgeInsets.all(Dimensions.space12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -72,7 +72,7 @@ class VoiceMemoCard extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: Dimensions.space16),
+              SizedBox(height: Dimensions.space8),
 
               // Waveform Display
               VoiceMemoWaveformDisplay(
@@ -82,7 +82,7 @@ class VoiceMemoCard extends StatelessWidget {
                 fileExists: _fileExists,
               ),
 
-              SizedBox(height: Dimensions.space12),
+              // SizedBox(height: Dimensions.space12),
 
               // Playback Controls Row
               VoiceMemoPlaybackControls(
