@@ -85,7 +85,7 @@ class IsarVoiceMemoLocalDataSource implements VoiceMemoLocalDataSource {
         await _isar.voiceMemoDocuments.delete(fastHash(id));
       });
 
-      // Delete audio file
+      // Delete audio file (path may be absolute or relative; failure is ignored)
       await FileSystemUtils.deleteFileIfExists(memo.fileLocalPath);
 
       return const Right(unit);
@@ -105,7 +105,7 @@ class IsarVoiceMemoLocalDataSource implements VoiceMemoLocalDataSource {
         await _isar.voiceMemoDocuments.clear();
       });
 
-      // Delete all audio files
+      // Delete all audio files (paths may be absolute or relative)
       for (final memo in memos) {
         await FileSystemUtils.deleteFileIfExists(memo.fileLocalPath);
       }

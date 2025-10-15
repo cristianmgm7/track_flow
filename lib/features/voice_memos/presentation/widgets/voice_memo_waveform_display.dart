@@ -13,16 +13,50 @@ class VoiceMemoWaveformDisplay extends StatelessWidget {
   final VoiceMemo memo;
   final double height;
   final Function(Duration)? onSeek;
+  final bool fileExists;
 
   const VoiceMemoWaveformDisplay({
     super.key,
     required this.memo,
     this.height = 80,
     this.onSeek,
+    this.fileExists = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    // If file is missing, show error indicator
+    if (!fileExists) {
+      return Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.red[300],
+                size: 16,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Audio file not found',
+                style: TextStyle(
+                  color: Colors.red[300],
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // If no waveform data, show empty placeholder
     if (memo.waveformData == null) {
       return SizedBox(
