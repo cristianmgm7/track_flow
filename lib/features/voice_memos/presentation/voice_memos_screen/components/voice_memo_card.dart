@@ -8,8 +8,6 @@ import '../../../../audio_player/presentation/bloc/audio_player_event.dart';
 import '../../../domain/entities/voice_memo.dart';
 import '../../bloc/voice_memo_bloc.dart';
 import '../../bloc/voice_memo_event.dart';
-import '../../widgets/voice_memo_delete_background.dart';
-import '../../widgets/voice_memo_delete_confirmation_dialog.dart';
 import '../../widgets/voice_memo_rename_dialog.dart';
 import 'voice_memo_waveform_display.dart';
 import 'voice_memo_card_header.dart';
@@ -30,68 +28,54 @@ class VoiceMemoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dismissible(
-      key: Key(memo.id.value),
-      direction: DismissDirection.endToStart,
-      background: const VoiceMemoDeleteBackground(),
-      confirmDismiss: (direction) async {
-        return await _showDeleteConfirmation(context);
-      },
-      onDismissed: (direction) {
-        context.read<VoiceMemoBloc>().add(
-          DeleteVoiceMemoRequested(memo.id),
-        );
-      },
-      child: Container(
-        margin: EdgeInsets.symmetric(
-          horizontal: Dimensions.space2,
-          vertical: Dimensions.space2,
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: Dimensions.space2,
+        vertical: Dimensions.space2,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withValues(alpha: 0.8),
+            AppColors.primary.withValues(alpha: 0.6),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary.withValues(alpha: 0.8),
-              AppColors.primary.withValues(alpha: 0.6),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(Dimensions.space12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Title and Menu
-              VoiceMemoCardHeader(
-                memo: memo,
-                onRenamePressed: () => _showRenameDialog(context),
-                onDeletePressed: () => context.read<VoiceMemoBloc>().add(
-                  DeleteVoiceMemoRequested(memo.id),
-                ),
+        borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(Dimensions.space12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Title and Menu
+            VoiceMemoCardHeader(
+              memo: memo,
+              onRenamePressed: () => _showRenameDialog(context),
+              onDeletePressed: () => context.read<VoiceMemoBloc>().add(
+                DeleteVoiceMemoRequested(memo.id),
               ),
+            ),
 
-              SizedBox(height: Dimensions.space8),
+            SizedBox(height: Dimensions.space8),
 
-              // Waveform Display
-              VoiceMemoWaveformDisplay(
-                memo: memo,
-                height: 100,
-                onSeek: (position) => _handleSeek(context, position),
-                fileExists: _fileExists,
-              ),
+            // Waveform Display
+            VoiceMemoWaveformDisplay(
+              memo: memo,
+              height: 100,
+              fileExists: _fileExists,
+            ),
 
-              // SizedBox(height: Dimensions.space12),
+            // SizedBox(height: Dimensions.space12),
 
-              // Playback Controls Row
-              VoiceMemoPlaybackControls(
-                memo: memo,
-                onPlayPressed: () => context.read<VoiceMemoBloc>().add(PlayVoiceMemoRequested(memo)),
-                onPausePressed: () => context.read<AudioPlayerBloc>().add(const PauseAudioRequested()),
-              ),
-            ],
-          ),
+            // Playback Controls Row
+            VoiceMemoPlaybackControls(
+              memo: memo,
+              onPlayPressed: () => context.read<VoiceMemoBloc>().add(PlayVoiceMemoRequested(memo)),
+              onPausePressed: () => context.read<AudioPlayerBloc>().add(const PauseAudioRequested()),
+            ),
+          ],
         ),
       ),
     );
@@ -101,9 +85,7 @@ class VoiceMemoCard extends StatelessWidget {
 
 
 
-  void _handleSeek(BuildContext context, Duration position) {
-    context.read<AudioPlayerBloc>().add(SeekToPositionRequested(position));
-  }
+  
 
 
   void _showRenameDialog(BuildContext context) {
@@ -121,10 +103,5 @@ class VoiceMemoCard extends StatelessWidget {
   }
 
 
-  Future<bool> _showDeleteConfirmation(BuildContext context) async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (_) => const VoiceMemoDeleteConfirmationDialog(),
-    ) ?? false;
-  }
+  
 }

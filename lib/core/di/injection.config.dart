@@ -151,11 +151,11 @@ import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_
 import 'package:trackflow/features/audio_comment/data/datasources/audio_comment_remote_datasource.dart'
     as _i84;
 import 'package:trackflow/features/audio_comment/data/models/audio_comment_dto.dart'
-    as _i102;
+    as _i100;
 import 'package:trackflow/features/audio_comment/data/repositories/audio_comment_repository_impl.dart'
     as _i189;
 import 'package:trackflow/features/audio_comment/data/services/audio_comment_incremental_sync_service.dart'
-    as _i103;
+    as _i101;
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart'
     as _i188;
 import 'package:trackflow/features/audio_comment/domain/services/comment_audio_playback_service.dart'
@@ -409,11 +409,11 @@ import 'package:trackflow/features/projects/data/datasources/project_local_data_
 import 'package:trackflow/features/projects/data/datasources/project_remote_data_source.dart'
     as _i50;
 import 'package:trackflow/features/projects/data/models/project_dto.dart'
-    as _i100;
+    as _i102;
 import 'package:trackflow/features/projects/data/repositories/projects_repository_impl.dart'
     as _i161;
 import 'package:trackflow/features/projects/data/services/project_incremental_sync_service.dart'
-    as _i101;
+    as _i103;
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i160;
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart'
@@ -750,16 +750,16 @@ extension GetItInjectableX on _i1.GetIt {
               gh<_i85.AudioTrackLocalDataSource>(),
               gh<_i51.ProjectsLocalDataSource>(),
             ));
-    gh.lazySingleton<_i23.IncrementalSyncService<_i100.ProjectDTO>>(
-        () => _i101.ProjectIncrementalSyncService(
-              gh<_i50.ProjectRemoteDataSource>(),
-              gh<_i51.ProjectsLocalDataSource>(),
-            ));
-    gh.lazySingleton<_i23.IncrementalSyncService<_i102.AudioCommentDTO>>(
-        () => _i103.AudioCommentIncrementalSyncService(
+    gh.lazySingleton<_i23.IncrementalSyncService<_i100.AudioCommentDTO>>(
+        () => _i101.AudioCommentIncrementalSyncService(
               gh<_i84.AudioCommentRemoteDataSource>(),
               gh<_i83.AudioCommentLocalDataSource>(),
               gh<_i69.TrackVersionLocalDataSource>(),
+            ));
+    gh.lazySingleton<_i23.IncrementalSyncService<_i102.ProjectDTO>>(
+        () => _i103.ProjectIncrementalSyncService(
+              gh<_i50.ProjectRemoteDataSource>(),
+              gh<_i51.ProjectsLocalDataSource>(),
             ));
     gh.lazySingleton<_i23.IncrementalSyncService<_i104.UserProfileDTO>>(
         () => _i105.UserProfileIncrementalSyncService(
