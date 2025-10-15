@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage_repository.dart';
+import 'package:trackflow/features/audio_cache/domain/failures/cache_failure.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/download_track_usecase.dart';
@@ -13,8 +13,6 @@ import 'package:trackflow/features/projects/domain/entities/project_collaborator
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_name.dart';
-import 'package:trackflow/features/projects/domain/value_objects/project_description.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart';
 import 'package:trackflow/core/app_flow/domain/services/session_service.dart';
@@ -266,7 +264,10 @@ void main() {
         trackId,
         versionId: versionId,
       )).thenAnswer((_) async => const Left(
-        CacheFailure('File not cached'),
+        StorageCacheFailure(
+          message: 'File not cached',
+          type: StorageFailureType.fileNotFound,
+        ), 
       ));
 
       // Act
