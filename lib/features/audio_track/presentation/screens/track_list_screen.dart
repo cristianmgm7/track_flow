@@ -10,8 +10,8 @@ import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/list/app_list_header_bar.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
+import 'package:trackflow/features/ui/track/track_cover_art.dart';
 
 class TrackListScreen extends StatelessWidget {
   const TrackListScreen({super.key});
@@ -19,10 +19,21 @@ class TrackListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      appBar: const AppAppBar(
+      appBar: AppAppBar(
         title: 'All Tracks',
         centerTitle: true,
         showShadow: true,
+        leading: AppIconButton(
+          icon: Icons.arrow_back_ios_rounded,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.dashboard);
+            }
+          },
+          tooltip: 'Back',
+        ),
       ),
       body: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
@@ -116,18 +127,7 @@ class TrackListScreen extends StatelessWidget {
         child: Row(
           children: [
             // Cover art
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.grey700,
-                borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
-              ),
-              child: const Icon(
-                Icons.music_note,
-                color: AppColors.grey400,
-              ),
-            ),
+            TrackCoverArt(track: track, size: Dimensions.avatarMedium),
             SizedBox(width: Dimensions.space12),
             // Track info
             Expanded(

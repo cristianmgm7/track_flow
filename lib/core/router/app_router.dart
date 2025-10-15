@@ -10,7 +10,7 @@ import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart'
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
 import 'package:trackflow/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:trackflow/features/dashboard/presentation/screens/track_list_screen.dart';
+import 'package:trackflow/features/audio_track/presentation/screens/track_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
@@ -96,6 +96,7 @@ class AppRouter {
               currentLocation == AppRoutes.manageCollaborators ||
               currentLocation == AppRoutes.trackDetail ||
               currentLocation == AppRoutes.cacheManagement ||
+              currentLocation == AppRoutes.trackList ||
               currentLocation.startsWith('/artistprofile/') ||
               currentLocation.startsWith('/projects/')) {
             return null; // Allow navigation

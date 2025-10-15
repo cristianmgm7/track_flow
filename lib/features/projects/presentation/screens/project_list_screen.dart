@@ -56,6 +56,17 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         title: 'My Projects',
         centerTitle: true,
         showShadow: true,
+        leading: AppIconButton(
+          icon: Icons.arrow_back_ios_rounded,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.dashboard);
+            }
+          },
+          tooltip: 'Back',
+        ),
         actions: [
           AppIconButton(
             icon: Icons.add_rounded,
