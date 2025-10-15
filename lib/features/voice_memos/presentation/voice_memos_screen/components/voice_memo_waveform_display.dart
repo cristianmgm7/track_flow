@@ -133,7 +133,7 @@ class _VoiceMemoWaveformDisplayState extends State<VoiceMemoWaveformDisplay> {
                   previewPosition: _previewPosition,
                   isScrubbing: _isScrubbing,
                   progressColor: AppColors.primary,
-                  baselineColor: Colors.white,
+                  baselineColor:  Colors.white,
                 ),
               ],
             ),

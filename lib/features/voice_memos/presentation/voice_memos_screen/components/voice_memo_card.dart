@@ -29,14 +29,10 @@ class VoiceMemoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: Dimensions.space2,
-        vertical: Dimensions.space2,
-      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withValues(alpha: 0.8),
+            AppColors.primary.withValues(alpha:1),
             AppColors.primary.withValues(alpha: 0.6),
           ],
           begin: Alignment.topLeft,
@@ -47,7 +43,7 @@ class VoiceMemoCard extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(Dimensions.space12),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header: Title and Menu
             VoiceMemoCardHeader(
@@ -63,7 +59,7 @@ class VoiceMemoCard extends StatelessWidget {
             // Waveform Display
             VoiceMemoWaveformDisplay(
               memo: memo,
-              height: 100,
+              height: 50,
               fileExists: _fileExists,
             ),
 
