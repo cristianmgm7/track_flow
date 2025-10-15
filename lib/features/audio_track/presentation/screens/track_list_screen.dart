@@ -67,7 +67,7 @@ class TrackListScreen extends StatelessWidget {
                 ),
                 Expanded(
                   child: ListView.separated(
-                    padding: EdgeInsets.all(Dimensions.space16),
+                    padding: EdgeInsets.all(Dimensions.space0),
                     itemCount: tracks.length,
                     separatorBuilder: (context, index) => SizedBox(
                       height: Dimensions.space12,

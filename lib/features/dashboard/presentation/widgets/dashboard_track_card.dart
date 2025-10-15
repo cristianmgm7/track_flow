@@ -4,7 +4,6 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 import 'package:trackflow/features/track_version/presentation/models/track_detail_screen_args.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/track/track_cover_art.dart';
@@ -40,7 +39,7 @@ class DashboardTrackCard extends StatelessWidget {
       child: Row(
         children: [
           // Cover art on the left
-          TrackCoverArt(track: track, size: Dimensions.avatarMedium),
+          TrackCoverArt(track: track, size: Dimensions.avatarLarge),
           SizedBox(width: Dimensions.space12),
           // Content stacked vertically on the right
           Expanded(
@@ -58,17 +57,7 @@ class DashboardTrackCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: Dimensions.space2),
-                Expanded(
-                  child: Text(
-                    _formatDuration(track.duration),
-                    style: AppTextStyle.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+                
               ],
             ),
           ),
@@ -77,10 +66,5 @@ class DashboardTrackCard extends StatelessWidget {
     );
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
 }
 

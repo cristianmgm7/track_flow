@@ -59,23 +59,20 @@ class DashboardTracksSection extends StatelessWidget {
   }
 
   Widget _buildTracksGrid(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: Dimensions.space16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 2,
-          mainAxisSpacing: 2,
-          childAspectRatio: 3,
-        ),
-        itemCount: tracks.length,
-        itemBuilder: (context, index) {
-          final track = tracks[index];
-          return DashboardTrackCard(track: track);
-        },
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 0,
+        mainAxisSpacing: 0,
+        childAspectRatio: 3,
       ),
+      itemCount: tracks.length,
+      itemBuilder: (context, index) {
+        final track = tracks[index];
+        return DashboardTrackCard(track: track);
+      },
     );
   }
 }

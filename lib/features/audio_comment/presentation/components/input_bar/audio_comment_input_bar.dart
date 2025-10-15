@@ -12,10 +12,10 @@ import 'package:trackflow/features/audio_recording/presentation/bloc/recording_s
 import 'package:trackflow/features/audio_recording/presentation/widgets/recording_timer.dart';
 import 'package:trackflow/features/audio_comment/presentation/components/recording/recording_live_waveform.dart';
 
-/// WhatsApp-style input bar:
+/// Simple tap-to-record input bar:
 /// - Text input with dynamic mic/send action
-/// - Hold-to-record gesture (press to start, release to send, slide left to cancel)
-/// - Swipe-up to lock hands-free
+/// - Tap mic to start recording
+/// - Shows recording controls (timer, waveform, delete/send buttons)
 class AudioCommentInputBar extends StatefulWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -39,9 +39,6 @@ class AudioCommentInputBar extends StatefulWidget {
 }
 
 class _AudioCommentInputBarState extends State<AudioCommentInputBar> {
-  bool _isLocked = false;
-  bool _isDraggingToCancel = false;
-  Offset? _dragStart;
 
   @override
   Widget build(BuildContext context) {
@@ -53,8 +50,8 @@ class _AudioCommentInputBarState extends State<AudioCommentInputBar> {
         final bool isRecording = recordingState is RecordingInProgress ||
             recordingState is RecordingPaused;
 
-        if (isRecording || _isLocked) {
-          return _buildLockedRecordingBar(context, recordingState);
+        if (isRecording) {
+          return _buildRecordingBar(context, recordingState);
         }
 
         return Row(
@@ -120,50 +117,22 @@ class _AudioCommentInputBarState extends State<AudioCommentInputBar> {
       );
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onLongPressStart: (details) {
-        _dragStart = details.globalPosition;
-        _beginRecording(context);
-      },
-      onLongPressMoveUpdate: (details) {
-        if (_dragStart == null) return;
-        final delta = details.globalPosition - _dragStart!;
-        // Slide left to cancel
-        if (delta.dx < -60) {
-          setState(() => _isDraggingToCancel = true);
-        } else {
-          setState(() => _isDraggingToCancel = false);
-        }
-        // Swipe up to lock
-        if (delta.dy < -80) {
-          setState(() => _isLocked = true);
-        }
-      },
-      onLongPressEnd: (details) {
-        if (_isLocked) return; // Still recording locked
-        if (_isDraggingToCancel) {
-          _cancelRecording(context);
-        } else {
-          _stopAndSendRecording(context);
-        }
-        _resetGestures();
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary,
-          shape: BoxShape.circle,
-        ),
-        padding: EdgeInsets.all(Dimensions.space8),
-        child: Icon(
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(
           Icons.mic,
           color: theme.colorScheme.onPrimary,
         ),
+        onPressed: () => _beginRecording(context),
       ),
     );
   }
 
-  Widget _buildLockedRecordingBar(BuildContext context, RecordingState state) {
+  Widget _buildRecordingBar(BuildContext context, RecordingState state) {
     final theme = Theme.of(context);
     final elapsed = (state is RecordingInProgress || state is RecordingPaused)
         ? (state as dynamic).session.elapsed as Duration
@@ -193,18 +162,12 @@ class _AudioCommentInputBarState extends State<AudioCommentInputBar> {
           // Delete
           IconButton(
             icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              _cancelRecording(context);
-              _resetGestures();
-            },
+            onPressed: () => _cancelRecording(context),
           ),
           // Send
           IconButton(
             icon: const Icon(Icons.send_rounded),
-            onPressed: () {
-              _stopAndSendRecording(context);
-              _resetGestures();
-            },
+            onPressed: () => _stopAndSendRecording(context),
           ),
         ],
       ),
@@ -212,6 +175,7 @@ class _AudioCommentInputBarState extends State<AudioCommentInputBar> {
   }
 
   void _beginRecording(BuildContext context) {
+    if (!mounted) return;
     // Capture timestamp and pause playback
     final audioPlayerBloc = context.read<AudioPlayerBloc>();
     final state = audioPlayerBloc.state;
@@ -223,28 +187,23 @@ class _AudioCommentInputBarState extends State<AudioCommentInputBar> {
   }
 
   void _stopAndSendRecording(BuildContext context) {
+    if (!mounted) return;
     context.read<RecordingBloc>().add(const StopRecordingRequested());
     widget.onSendAudio();
     _resumePlayback(context);
   }
 
   void _cancelRecording(BuildContext context) {
+    if (!mounted) return;
     context.read<RecordingBloc>().add(const CancelRecordingRequested());
     widget.onCancelAudio();
     _resumePlayback(context);
   }
 
   void _resumePlayback(BuildContext context) {
+    if (!mounted) return;
     final audioPlayerBloc = context.read<AudioPlayerBloc>();
     audioPlayerBloc.add(const ResumeAudioRequested());
-  }
-
-  void _resetGestures() {
-    setState(() {
-      _isLocked = false;
-      _isDraggingToCancel = false;
-      _dragStart = null;
-    });
   }
 }
 

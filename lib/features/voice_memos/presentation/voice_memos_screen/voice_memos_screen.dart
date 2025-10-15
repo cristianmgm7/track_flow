@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
@@ -35,7 +37,11 @@ class VoiceMemosScreen extends StatelessWidget {
         ),
         floatingActionButton: FloatingActionButton(
           shape: const CircleBorder(),
-          onPressed: () => context.push(AppRoutes.voiceMemoRecording),
+          onPressed: () {
+            // Pause audio before navigation to avoid context issues
+            context.read<AudioPlayerBloc>().add(const PauseAudioRequested());
+            context.push(AppRoutes.voiceMemoRecording);
+          },
           backgroundColor: AppColors.primary,
           child: const Icon(Icons.mic, color: AppColors.onPrimary),
         ),
