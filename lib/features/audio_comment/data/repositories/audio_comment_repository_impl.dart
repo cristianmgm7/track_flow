@@ -145,6 +145,32 @@ class AudioCommentRepositoryImpl implements AudioCommentRepository {
   }
 
   @override
+  Stream<Either<Failure, List<AudioComment>>> watchRecentComments({
+    required UserId userId,
+    required int limit,
+  }) {
+    try {
+      return _localDataSource
+          .watchRecentComments(userId: userId.value, limit: limit)
+          .map<Either<Failure, List<AudioComment>>>((dtos) {
+        return Right<Failure, List<AudioComment>>(
+          dtos.map((dto) => dto.toDomain()).toList(),
+        );
+      }).handleError((error) {
+        return Left<Failure, List<AudioComment>>(
+          DatabaseFailure('Failed to watch recent comments: $error'),
+        );
+      });
+    } catch (e) {
+      return Stream.value(
+        Left<Failure, List<AudioComment>>(
+          DatabaseFailure('Failed to watch recent comments: $e'),
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> addComment(AudioComment comment) async {
     try {
       final dto = AudioCommentDTO.fromDomain(comment);

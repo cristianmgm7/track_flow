@@ -94,6 +94,29 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
   }
 
   @override
+  Stream<Either<Failure, List<AudioTrack>>> watchAllAccessibleTracks(
+    UserId userId,
+  ) {
+    try {
+      // No sync - just return local stream (pattern from projects_repository_impl.dart:186)
+      return localDataSource.watchAllAccessibleTracks(userId.value)
+          .map<Either<Failure, List<AudioTrack>>>((dtos) {
+        return Right(dtos.map((dto) => dto.toDomain()).toList());
+      }).handleError((error) {
+        return Left<Failure, List<AudioTrack>>(
+          DatabaseFailure('Failed to watch accessible tracks: $error'),
+        );
+      });
+    } catch (e) {
+      return Stream.value(
+        Left<Failure, List<AudioTrack>>(
+          DatabaseFailure('Failed to watch accessible tracks: $e'),
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Either<Failure, AudioTrack>> createTrack(AudioTrack track) async {
     try {
       final dto = AudioTrackDTO.fromDomain(track, extension: 'mp3');

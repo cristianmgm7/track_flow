@@ -9,6 +9,8 @@ import 'package:trackflow/features/track_version/presentation/screens/track_deta
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
+import 'package:trackflow/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:trackflow/features/dashboard/presentation/screens/track_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
@@ -190,13 +192,19 @@ class AppRouter {
               path: AppRoutes.dashboard,
               pageBuilder:
                   (context, state) =>
-                      const NoTransitionPage(child: ProjectListScreen()),
+                      const NoTransitionPage(child: DashboardScreen()),
             ),
             GoRoute(
               path: AppRoutes.projects,
               pageBuilder:
                   (context, state) =>
                       const NoTransitionPage(child: ProjectListScreen()),
+            ),
+            GoRoute(
+              path: AppRoutes.trackList,
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: TrackListScreen()),
             ),
             GoRoute(
               path: AppRoutes.notifications,

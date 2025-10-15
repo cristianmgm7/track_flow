@@ -13,6 +13,12 @@ abstract class AudioTrackRepository {
     ProjectId projectId,
   );
 
+  /// Watch all tracks that the user has access to (across all accessible projects).
+  /// Returns tracks from projects where the user is owner or collaborator.
+  Stream<Either<Failure, List<AudioTrack>>> watchAllAccessibleTracks(
+    UserId userId,
+  );
+
   /// Create a new track with metadata only (no file upload)
   Future<Either<Failure, AudioTrack>> createTrack(AudioTrack track);
 

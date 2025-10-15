@@ -29,6 +29,7 @@ import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/voice_memos/presentation/bloc/voice_memo_bloc.dart';
 import 'package:trackflow/features/voice_memos/presentation/bloc/voice_memo_event.dart';
+import 'package:trackflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 
 /// Centralized BLoC provider management for the entire app
 ///
@@ -90,6 +91,7 @@ class AppBlocProviders {
   /// Providers for main app shell (dashboard, projects list)
   static List<BlocProvider> getMainShellProviders() {
     return [
+      BlocProvider<DashboardBloc>(create: (_) => sl<DashboardBloc>()),
       BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
       BlocProvider<NotificationWatcherBloc>(
         create: (_) => sl<NotificationWatcherBloc>(),

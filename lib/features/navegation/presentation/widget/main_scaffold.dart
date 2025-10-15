@@ -85,8 +85,8 @@ class _MainScaffoldState extends State<MainScaffold> {
               final tab = AppTab.values[index];
               context.read<NavigationCubit>().setTab(tab);
               switch (tab) {
-                case AppTab.projects:
-                  context.go(AppRoutes.projects);
+                case AppTab.dashboard:
+                  context.go(AppRoutes.dashboard);
                   break;
                 case AppTab.voiceMemos:
                   context.go(AppRoutes.voiceMemos);
@@ -101,9 +101,9 @@ class _MainScaffoldState extends State<MainScaffold> {
             },
             items: const [
               AppBottomNavigationItem(
-                icon: Icons.folder_outlined,
-                activeIcon: Icons.folder,
-                label: 'Projects',
+                icon: Icons.dashboard_outlined,
+                activeIcon: Icons.dashboard,
+                label: 'Dashboard',
               ),
               AppBottomNavigationItem(
                 icon: Icons.mic_outlined,
