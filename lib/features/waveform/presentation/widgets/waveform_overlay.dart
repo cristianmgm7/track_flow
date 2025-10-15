@@ -84,7 +84,7 @@ class _OverlayPainter extends CustomPainter {
     // Baseline
     final basePaint =
         Paint()
-          ..color = baselineColor.withOpacity(0.35)
+          ..color = baselineColor.withValues(alpha: 0.35)
           ..strokeWidth = 1.0;
     canvas.drawLine(
       Offset(0, baselineY + 0.5),
@@ -95,7 +95,7 @@ class _OverlayPainter extends CustomPainter {
     // Current playhead (dim if also previewing)
     final positionLine =
         Paint()
-          ..color = showPreview ? Colors.white.withOpacity(0.55) : Colors.white
+          ..color = showPreview ? Colors.white.withValues(alpha: 0.55) : Colors.white
           ..strokeWidth = 3.0;
     canvas.drawLine(
       Offset(progressX, paddingTop),
@@ -110,7 +110,7 @@ class _OverlayPainter extends CustomPainter {
           ..strokeWidth = 3.0;
     final knobInner =
         Paint()
-          ..color = showPreview ? progressColor.withOpacity(0.7) : progressColor
+          ..color = showPreview ? progressColor.withValues(alpha: 0.7) : progressColor
           ..style = PaintingStyle.fill;
     final knobCenter = Offset(progressX, baselineY + 0.5);
     canvas.drawCircle(knobCenter, 8, knobOuter);

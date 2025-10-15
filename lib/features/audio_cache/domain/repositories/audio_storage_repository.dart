@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'dart:io';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
 import '../entities/cached_audio.dart';
 import '../failures/cache_failure.dart';
 
@@ -16,13 +17,15 @@ abstract class AudioStorageRepository {
   /// [trackId] - Unique identifier for the track
   /// [versionId] - Unique identifier for the track version
   /// [audioFile] - The audio file to store
+  /// [directoryType] - Type of directory to store in (audioTracks or audioComments)
   ///
   /// Returns cached audio info or failure
   Future<Either<CacheFailure, CachedAudio>> storeAudio(
     AudioTrackId trackId,
     TrackVersionId versionId,
-    File audioFile,
-  );
+    File audioFile, {
+    DirectoryType directoryType = DirectoryType.audioCache,
+  });
 
   /// Get cached audio file path if exists
   ///
@@ -30,6 +33,7 @@ abstract class AudioStorageRepository {
   Future<Either<CacheFailure, String>> getCachedAudioPath(
     AudioTrackId trackId, {
     TrackVersionId? versionId,
+    DirectoryType directoryType = DirectoryType.audioCache,
   });
 
   /// Check if audio file exists and is valid

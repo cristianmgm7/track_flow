@@ -5,9 +5,7 @@ import '../../../../core/entities/unique_id.dart';
 import '../bloc/audio_comment_bloc.dart';
 import '../bloc/audio_comment_state.dart';
 import '../bloc/audio_comment_event.dart';
-import 'audio_comment_card.dart';
-import '../../domain/entities/audio_comment.dart';
-import '../../../user_profile/domain/entities/user_profile.dart';
+import 'comments_list_view.dart';
 
 /// Comments section component that handles displaying the list of comments
 /// with proper state management and error handling
@@ -28,21 +26,27 @@ class CommentsSection extends StatefulWidget {
 }
 
 class _CommentsSectionState extends State<CommentsSection> {
+  // Track the last version we subscribed to
+  TrackVersionId? _currentlyWatchingVersionId;
+
+  void _watchComments() {
+    // Only dispatch if we're not already watching this version
+    if (_currentlyWatchingVersionId != widget.versionId) {
+      _currentlyWatchingVersionId = widget.versionId;
+      context.read<AudioCommentBloc>().add(
+        WatchAudioCommentsBundleEvent(
+          widget.projectId,
+          widget.trackId,
+          widget.versionId,
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to ensure the widget is fully built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(
-            widget.projectId,
-            widget.trackId,
-            widget.versionId,
-          ),
-        );
-      }
-    });
+    _watchComments();
   }
 
   @override
@@ -51,17 +55,8 @@ class _CommentsSectionState extends State<CommentsSection> {
     if (oldWidget.versionId != widget.versionId ||
         oldWidget.projectId != widget.projectId ||
         oldWidget.trackId != widget.trackId) {
-      // Re-subscribe for the new track
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        context.read<AudioCommentBloc>().add(
-          WatchAudioCommentsBundleEvent(
-            widget.projectId,
-            widget.trackId,
-            widget.versionId,
-          ),
-        );
-      });
+      // Re-subscribe for the new version
+      _watchComments();
     }
   }
 
@@ -69,7 +64,8 @@ class _CommentsSectionState extends State<CommentsSection> {
   Widget build(BuildContext context) {
     return BlocBuilder<AudioCommentBloc, AudioCommentState>(
       builder: (context, state) {
-        if (state is AudioCommentLoading) {
+        // Handle initial state - show loading indicator
+        if (state is AudioCommentInitial || state is AudioCommentLoading) {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is AudioCommentError) {
@@ -83,10 +79,11 @@ class _CommentsSectionState extends State<CommentsSection> {
           );
         }
         if (state is AudioCommentsLoaded) {
-          return _buildCommentsListView(
-            context,
-            state.comments,
-            state.collaborators,
+          return CommentsListView(
+            comments: state.comments,
+            collaborators: state.collaborators,
+            projectId: widget.projectId,
+            versionId: widget.versionId,
           );
         }
         if (state is AudioCommentOperationSuccess) {
@@ -99,57 +96,10 @@ class _CommentsSectionState extends State<CommentsSection> {
             ),
           );
         }
-        return Center(
-          child: Text(
-            'Unable to load comments.',
-            style: AppTextStyle.bodyMedium.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        );
+        // Fallback for unknown states
+        return const Center(child: CircularProgressIndicator());
       },
     );
   }
 
-  Widget _buildCommentsListView(
-    BuildContext context,
-    List<AudioComment> comments,
-    List<UserProfile> collaborators,
-  ) {
-    if (comments.isEmpty) {
-      return Center(
-        child: Text(
-          'No comments yet.',
-          style: AppTextStyle.bodyLarge.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      reverse: false,
-      itemCount: comments.length,
-      itemBuilder: (context, index) {
-        final comment = comments[index];
-        final collaborator = collaborators.firstWhere(
-          (u) => u.id == comment.createdBy,
-          orElse:
-              () => UserProfile(
-                id: comment.createdBy,
-                name: '',
-                email: '',
-                avatarUrl: '',
-                createdAt: DateTime.now(),
-              ),
-        );
-        return AudioCommentComponent(
-          comment: comment,
-          collaborator: collaborator,
-          projectId: widget.projectId,
-          versionId: widget.versionId,
-        );
-      },
-    );
-  }
 }

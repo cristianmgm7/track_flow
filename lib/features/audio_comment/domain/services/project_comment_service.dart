@@ -26,6 +26,9 @@ class ProjectCommentService {
     required UserId requester,
     required String content,
     required Duration timestamp,
+    String? localAudioPath,
+    Duration? audioDuration,
+    CommentType commentType = CommentType.text,
   }) async {
     final collaborator = project.collaborators.firstWhere(
       (c) => c.userId == requester,
@@ -41,6 +44,9 @@ class ProjectCommentService {
       versionId: versionId,
       createdBy: requester,
       content: content,
+      localAudioPath: localAudioPath,
+      audioDuration: audioDuration,
+      commentType: commentType,
     ).copyWith(timestamp: timestamp);
 
     return await commentRepository.addComment(comment);

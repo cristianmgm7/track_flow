@@ -14,6 +14,8 @@ import 'package:trackflow/features/projects/presentation/components/project_comp
 import 'package:trackflow/features/ui/list/app_list_header_bar.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
+import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 
 class ProjectListScreen extends StatefulWidget {
   const ProjectListScreen({super.key});
@@ -27,6 +29,8 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
   @override
   void initState() {
     super.initState();
+
+   context.read<SyncBloc>().add(const StartupSyncRequested());
     context.read<ProjectsBloc>().add(StartWatchingProjects());
   }
 
@@ -52,6 +56,17 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
         title: 'My Projects',
         centerTitle: true,
         showShadow: true,
+        leading: AppIconButton(
+          icon: Icons.arrow_back_ios_rounded,
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.dashboard);
+            }
+          },
+          tooltip: 'Back',
+        ),
         actions: [
           AppIconButton(
             icon: Icons.add_rounded,

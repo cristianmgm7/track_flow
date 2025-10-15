@@ -39,6 +39,12 @@ abstract class AudioCommentLocalDataSource {
     String versionId,
   );
 
+  /// Watch recent comments from accessible projects, ordered by createdAt desc
+  Stream<List<AudioCommentDTO>> watchRecentComments({
+    required String userId,
+    required int limit,
+  });
+
   /// Clears all cached comments from Isar.
   /// Used in: SyncAudioCommentsUseCase (before syncing fresh data from remote)
   Future<Either<Failure, Unit>> clearCache();
@@ -206,5 +212,46 @@ class IsarAudioCommentLocalDataSource implements AudioCommentLocalDataSource {
     } catch (e) {
       return Left(CacheFailure('Failed to delete comments by version: $e'));
     }
+  }
+
+  @override
+  Stream<List<AudioCommentDTO>> watchRecentComments({
+    required String userId,
+    required int limit,
+  }) {
+    return _isar.audioCommentDocuments
+        .where()
+        .sortByCreatedAtDesc()
+        .watch(fireImmediately: true)
+        .asyncMap((comments) async {
+          // Filter comments to only those from accessible projects
+          final accessibleComments = <AudioCommentDocument>[];
+
+          for (final comment in comments) {
+            // Get the project for this comment
+            final project = await _isar.projectDocuments
+                .filter()
+                .idEqualTo(comment.projectId)
+                .isDeletedEqualTo(false)
+                .findFirst();
+
+            if (project != null) {
+              // Check if user has access (is owner or collaborator)
+              final hasAccess = project.ownerId == userId ||
+                  project.collaboratorIds.contains(userId);
+
+              if (hasAccess) {
+                accessibleComments.add(comment);
+
+                // Early exit when we have enough comments
+                if (accessibleComments.length >= limit) {
+                  break;
+                }
+              }
+            }
+          }
+
+          return accessibleComments.map((doc) => doc.toDTO()).toList();
+        });
   }
 }

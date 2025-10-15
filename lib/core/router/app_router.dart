@@ -9,6 +9,8 @@ import 'package:trackflow/features/track_version/presentation/screens/track_deta
 import 'package:trackflow/features/auth/presentation/screens/splash_screen.dart';
 import 'package:trackflow/features/auth/presentation/screens/new_auth_screen.dart';
 import 'package:trackflow/features/projects/presentation/screens/project_list_screen.dart';
+import 'package:trackflow/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:trackflow/features/audio_track/presentation/screens/track_list_screen.dart';
 import 'package:trackflow/features/magic_link/presentation/screens/magic_link_handler_screen.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/screens/manage_collaborators_screen.dart';
 import 'package:trackflow/features/navegation/presentation/widget/main_scaffold.dart';
@@ -25,6 +27,8 @@ import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/screens/notification_center_screen.dart';
 import 'package:trackflow/core/app/providers/app_bloc_providers.dart';
 import 'package:trackflow/core/app/widgets/authenticated_shell.dart';
+import 'package:trackflow/features/voice_memos/presentation/voice_memos_screen/voice_memos_screen.dart';
+import 'package:trackflow/features/voice_memos/presentation/recording_screen/voice_memo_recording_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -81,15 +85,18 @@ class AppRouter {
         // Handle ready state - allow access to main app routes
         if (flowState is AppFlowReady) {
           // When app is ready, redirect to dashboard if not on a valid route
-          // Valid routes are: dashboard, projects, settings, notifications, user profile, collaborator profile, and any project details
+          // Valid routes are: dashboard, projects, settings, notifications, voice memos, user profile, collaborator profile, and any project details
           if (currentLocation == AppRoutes.dashboard ||
               currentLocation == AppRoutes.projects ||
               currentLocation == AppRoutes.settings ||
               currentLocation == AppRoutes.notifications ||
+              currentLocation == AppRoutes.voiceMemos ||
+              currentLocation == AppRoutes.voiceMemoRecording ||
               currentLocation == AppRoutes.userProfile ||
               currentLocation == AppRoutes.manageCollaborators ||
               currentLocation == AppRoutes.trackDetail ||
               currentLocation == AppRoutes.cacheManagement ||
+              currentLocation == AppRoutes.trackList ||
               currentLocation.startsWith('/artistprofile/') ||
               currentLocation.startsWith('/projects/')) {
             return null; // Allow navigation
@@ -155,6 +162,10 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: AppRoutes.voiceMemoRecording,
+          builder: (context, state) => const VoiceMemoRecordingScreen(),
+        ),
+        GoRoute(
           path: AppRoutes.artistProfile,
           builder: (context, state) {
             final userId = state.pathParameters['id']!;
@@ -182,7 +193,7 @@ class AppRouter {
               path: AppRoutes.dashboard,
               pageBuilder:
                   (context, state) =>
-                      const NoTransitionPage(child: ProjectListScreen()),
+                      const NoTransitionPage(child: DashboardScreen()),
             ),
             GoRoute(
               path: AppRoutes.projects,
@@ -191,10 +202,22 @@ class AppRouter {
                       const NoTransitionPage(child: ProjectListScreen()),
             ),
             GoRoute(
+              path: AppRoutes.trackList,
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: TrackListScreen()),
+            ),
+            GoRoute(
               path: AppRoutes.notifications,
               pageBuilder:
                   (context, state) =>
                       const NoTransitionPage(child: NotificationCenterScreen()),
+            ),
+            GoRoute(
+              path: AppRoutes.voiceMemos,
+              pageBuilder:
+                  (context, state) =>
+                      const NoTransitionPage(child: VoiceMemosScreen()),
             ),
             GoRoute(
               path: AppRoutes.projectDetails,

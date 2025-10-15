@@ -60,3 +60,17 @@ class WatchTrackCacheStatusRequested extends TrackCacheEvent {
   @override
   List<Object?> get props => [trackId, versionId];
 }
+
+/// Request to download track with friendly filename
+class DownloadTrackRequested extends TrackCacheEvent {
+  final String trackId;
+  final String? versionId; // null = active version
+
+  const DownloadTrackRequested({
+    required this.trackId,
+    this.versionId,
+  });
+
+  @override
+  List<Object?> get props => [trackId, versionId];
+}

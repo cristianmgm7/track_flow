@@ -70,6 +70,7 @@ class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
           ProjectPermission.addTrack,
           ProjectPermission.editTrack,
           ProjectPermission.deleteTrack,
+          ProjectPermission.downloadTrack,
           ProjectPermission.addComment,
           ProjectPermission.editComment,
           ProjectPermission.deleteComment,
@@ -84,6 +85,7 @@ class ProjectCollaborator extends Entity<ProjectCollaboratorId> {
         return [
           ProjectPermission.addTrack,
           ProjectPermission.editTrack,
+          ProjectPermission.downloadTrack,
           ProjectPermission.addComment,
           ProjectPermission.editComment,
           ProjectPermission.addTask,

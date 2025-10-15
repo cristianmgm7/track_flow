@@ -5,31 +5,47 @@ import '../../../../core/entities/unique_id.dart';
 import '../../../ui/modals/app_bottom_sheet.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_state.dart';
-import '../cubit/track_detail_cubit.dart';
+import '../cubit/version_selector_cubit.dart';
 import '../widgets/track_detail_actions_sheet.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_cache/presentation/widgets/smart_track_cache_icon.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 
 /// Header component for displaying active version information and actions
 class VersionHeaderComponent extends StatelessWidget {
   final AudioTrackId trackId;
+  final AudioTrack track;
 
-  const VersionHeaderComponent({super.key, required this.trackId});
+  const VersionHeaderComponent({
+    super.key,
+    required this.trackId,
+    required this.track,
+  });
 
   void _openTrackDetailActionsSheet(
     BuildContext context,
     TrackVersionId activeVersionId,
   ) {
+    // Get project from ProjectDetailBloc if available
+    final project = context.read<ProjectDetailBloc>().state.project;
+    
     showAppActionSheet(
       showCloseButton: true,
       showHandle: true,
       useRootNavigator: false,
       title: 'Version Actions',
       context: context,
-      actions: TrackDetailActions.forVersion(context, trackId, activeVersionId),
+      actions: TrackDetailActions.forVersion(
+        context,
+        trackId,
+        activeVersionId,
+        track,
+        project,
+      ),
       initialChildSize: 0.5,
     );
   }
@@ -37,15 +53,15 @@ class VersionHeaderComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocBuilder<TrackDetailCubit, TrackDetailState>(
-      builder: (context, cubitState) {
+    return BlocBuilder<VersionSelectorCubit, VersionSelectorState>(
+      builder: (context, selectorState) {
         return BlocBuilder<TrackVersionsBloc, TrackVersionsState>(
           builder: (context, blocState) {
             if (blocState is! TrackVersionsLoaded) {
               return const SizedBox.shrink();
             }
             final activeId =
-                cubitState.activeVersionId ?? blocState.activeVersionId;
+                selectorState.selectedVersionId ?? blocState.activeVersionId;
             if (blocState.versions.isEmpty) {
               return const SizedBox.shrink();
             }

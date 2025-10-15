@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/cached_audio.dart';
 import '../../domain/entities/cache_metadata.dart';
 
@@ -102,38 +100,8 @@ class CachedAudioDocumentUnified {
       ..originalUrl = metadata.originalUrl;
   }
 
-  Future<CachedAudio> toCachedAudio() async {
-    // Reconstruir la ruta absoluta desde la relativa
-    final absolutePath = await getAbsolutePath();
-
-    return CachedAudio(
-      trackId: trackId,
-      versionId: versionId,
-      filePath: absolutePath, // Ruta absoluta reconstruida
-      fileSizeBytes: fileSizeBytes,
-      cachedAt: cachedAt,
-      checksum: checksum,
-      quality: quality,
-      status: status,
-    );
-  }
-
-  /// Convert relative path to absolute path
-  Future<String> getAbsolutePath() async {
-    final cacheDir = await _getCacheDirectory();
-    return '${cacheDir.path}/$relativePath';
-  }
-
-  /// Validate if the cached file still exists
-  Future<bool> validateFileExists() async {
-    try {
-      final absolutePath = await getAbsolutePath();
-      final file = File(absolutePath);
-      return await file.exists();
-    } catch (e) {
-      return false;
-    }
-  }
+  // Absolute path resolution is handled by DirectoryService at repository layer
+  // This model intentionally stores only relative paths to avoid infrastructure coupling
 
   CacheMetadata toCacheMetadata() {
     return CacheMetadata(
@@ -194,18 +162,6 @@ class CachedAudioDocumentUnified {
     status = CacheStatus.corrupted;
     return this;
   }
-}
-
-/// Get the cache directory for relative path resolution
-Future<Directory> _getCacheDirectory() async {
-  final appDir = await getApplicationDocumentsDirectory();
-  final cacheDir = Directory('${appDir.path}/trackflow/audio');
-
-  if (!await cacheDir.exists()) {
-    await cacheDir.create(recursive: true);
-  }
-
-  return cacheDir;
 }
 
 /// Convert absolute path to relative path

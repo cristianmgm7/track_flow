@@ -4,6 +4,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comment_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_bundle_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart';
+import 'package:trackflow/features/audio_comment/domain/usecases/get_cached_audio_comment_usecase.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
 
@@ -15,12 +16,14 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
   final AddAudioCommentUseCase addAudioCommentUseCase;
   final WatchAudioCommentsBundleUseCase watchAudioCommentsBundleUseCase;
   final DeleteAudioCommentUseCase deleteAudioCommentUseCase;
+  final GetCachedAudioCommentUseCase getCachedAudioCommentUseCase;
   // No manual subscription; managed by emit.onEach with restartable transformer
 
   AudioCommentBloc({
     required this.addAudioCommentUseCase,
     required this.deleteAudioCommentUseCase,
     required this.watchAudioCommentsBundleUseCase,
+    required this.getCachedAudioCommentUseCase,
   }) : super(const AudioCommentInitial()) {
     on<WatchAudioCommentsBundleEvent>(
       _onWatchBundle,
@@ -40,6 +43,9 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
         versionId: event.versionId,
         content: event.content,
         timestamp: event.timestamp,
+        localAudioPath: event.localAudioPath,
+        audioDuration: event.audioDuration,
+        commentType: event.commentType,
       ),
     );
     result.fold(
@@ -63,6 +69,8 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
       (_) => null,
     );
   }
+
+  // Playback responsibilities moved to dedicated CommentAudioCubit
 
   Future<void> _onWatchBundle(
     WatchAudioCommentsBundleEvent event,

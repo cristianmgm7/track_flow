@@ -4,7 +4,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/entities/unique_id.dart';
 import '../../../audio_player/presentation/bloc/audio_player_bloc.dart';
 import '../../../audio_player/presentation/bloc/audio_player_event.dart';
-import '../cubit/track_detail_cubit.dart';
+import '../cubit/version_selector_cubit.dart';
 import '../widgets/versions_list.dart';
 
 class VersionsSectionComponent extends StatelessWidget {
@@ -24,12 +24,12 @@ class VersionsSectionComponent extends StatelessWidget {
               child: VersionsList(
                 trackId: trackId,
                 onVersionSelected: (versionId) {
-                  // Play the new version directly (seamless transition)
+                  // Play the new version directly
                   context.read<AudioPlayerBloc>().add(
                     PlayVersionRequested(versionId),
                   );
-                  // Update UI-only selection via cubit (do not persist here)
-                  context.read<TrackDetailCubit>().setActiveVersion(versionId);
+                  // Update UI-only selection via cubit
+                  context.read<VersionSelectorCubit>().selectVersion(versionId);
                 },
               ),
             ),

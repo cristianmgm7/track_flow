@@ -64,3 +64,5 @@ class AudioCommentsLoaded extends AudioCommentState {
   @override
   List<Object?> get props => [comments, collaborators, isSyncing, syncProgress ?? 0.0];
 }
+
+// Playback states moved to dedicated CommentAudioCubit

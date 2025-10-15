@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 
 abstract class AudioCommentEvent extends Equatable {
   @override
@@ -12,15 +13,31 @@ class AddAudioCommentEvent extends AudioCommentEvent {
   final String content;
   final Duration timestamp;
 
+  // Audio recording fields
+  final String? localAudioPath;
+  final Duration? audioDuration;
+  final CommentType commentType;
+
   AddAudioCommentEvent(
     this.projectId,
     this.versionId,
     this.content,
-    this.timestamp,
-  );
+    this.timestamp, {
+    this.localAudioPath,
+    this.audioDuration,
+    this.commentType = CommentType.text,
+  });
 
   @override
-  List<Object?> get props => [projectId, versionId, content, timestamp];
+  List<Object?> get props => [
+    projectId,
+    versionId,
+    content,
+    timestamp,
+    localAudioPath,
+    audioDuration,
+    commentType,
+  ];
 }
 
 class DeleteAudioCommentEvent extends AudioCommentEvent {

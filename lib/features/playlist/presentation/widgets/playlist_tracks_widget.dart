@@ -22,6 +22,11 @@ import 'package:trackflow/features/audio_context/presentation/bloc/audio_context
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
 import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
 import 'package:trackflow/core/di/injection.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
 
 class PlaylistTracksWidget extends StatefulWidget {
   final Playlist playlist;
@@ -59,6 +64,22 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
         builder: (context, state) {
           final items = state.items;
           final tracksForPlayer = state.tracks;
+          // Permissions: determine if user can upload tracks in current project
+          final project = context.watch<ProjectDetailBloc>().state.project;
+          final userState = context.watch<UserProfileBloc>().state;
+          final String? currentUserId =
+              userState is UserProfileLoaded ? userState.profile.id.value : null;
+          bool canUploadTrack = false;
+          if (project != null && currentUserId != null) {
+            final me = project.collaborators.firstWhere(
+              (c) => c.userId.value == currentUserId,
+              orElse: () => ProjectCollaborator.create(
+                userId: UserId.fromUniqueString(currentUserId),
+                role: ProjectRole.viewer,
+              ),
+            );
+            canUploadTrack = me.hasPermission(ProjectPermission.addTrack);
+          }
           return AppTrackList(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -98,7 +119,7 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
                   child: row,
                 );
               }),
-              if (widget.projectId != null)
+              if (widget.projectId != null && canUploadTrack)
                 UploadTrackButton(
                   projectId: ProjectId.fromUniqueString(widget.projectId!),
                   onTap:

@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:isar/isar.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../models/cached_audio_document_unified.dart';
 import '../../domain/failures/cache_failure.dart';
@@ -29,14 +27,12 @@ abstract class CacheStorageLocalDataSource {
     String? versionId,
   });
 
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+  Future<Either<CacheFailure, Unit>> deleteAudioVersion(
     String trackId, {
     String? versionId,
   });
 
   CacheKey generateCacheKey(String trackId, String audioUrl);
-
-  Future<Either<CacheFailure, String>> getFilePathFromCacheKey(CacheKey key);
 
   Future<Either<CacheFailure, CachedAudioDocumentUnified>>
   storeUnifiedCachedAudio(CachedAudioDocumentUnified unifiedDoc);
@@ -137,9 +133,8 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
         );
       }
 
-      // Return ABSOLUTE path reconstructed from relative
-      final absolutePath = await unifiedDoc.getAbsolutePath();
-      return Right(absolutePath);
+      // Return RELATIVE path only; repository resolves to absolute
+      return Right(unifiedDoc.relativePath);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -166,14 +161,8 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
               ? await query.versionIdEqualTo(versionId).findFirst()
               : await query.findFirst();
 
-      if (unifiedDoc == null) {
-        return const Right(false);
-      }
-
-      final absolutePath = await unifiedDoc.getAbsolutePath();
-      final file = File(absolutePath);
-      final exists = await file.exists();
-      return Right(exists);
+      // Only check DB presence here; FS checks are handled by repository
+      return Right(unifiedDoc != null);
     } catch (e) {
       return Left(
         StorageCacheFailure(
@@ -185,7 +174,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
   }
 
   @override
-  Future<Either<CacheFailure, Unit>> deleteAudioFile(
+  Future<Either<CacheFailure, Unit>> deleteAudioVersion(
     String trackId, {
     String? versionId,
   }) async {
@@ -203,32 +192,19 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
           await _isar.writeTxn(() async {
             await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
           });
-
-          // Delete the specific version file (ABSOLUTE path)
-          final absolutePath = await unifiedDoc.getAbsolutePath();
-          final file = File(absolutePath);
-          if (await file.exists()) {
-            await file.delete();
-          }
         }
       } else {
-        // Delete entire track cache folder recursively: Documents/trackflow/audio/{trackId}/
-        final unifiedDoc =
-            await _isar.cachedAudioDocumentUnifieds
-                .filter()
-                .trackIdEqualTo(trackId)
-                .findFirst();
-
-        if (unifiedDoc != null) {
+        // Delete all docs for trackId from DB; repository handles FS removal
+        final docs = await _isar.cachedAudioDocumentUnifieds
+            .filter()
+            .trackIdEqualTo(trackId)
+            .findAll();
+        if (docs.isNotEmpty) {
           await _isar.writeTxn(() async {
-            await _isar.cachedAudioDocumentUnifieds.delete(unifiedDoc.isarId);
+            for (final d in docs) {
+              await _isar.cachedAudioDocumentUnifieds.delete(d.isarId);
+            }
           });
-        }
-
-        final cacheRoot = await _getCacheDirectory();
-        final trackDir = Directory('${cacheRoot.path}/$trackId');
-        if (await trackDir.exists()) {
-          await trackDir.delete(recursive: true);
         }
       }
 
@@ -257,29 +233,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
     return CacheKey.composite(trackId, urlHash);
   }
 
-  @override
-  Future<Either<CacheFailure, String>> getFilePathFromCacheKey(
-    CacheKey key,
-  ) async {
-    try {
-      final cacheRoot = await _getCacheDirectory();
-      final trackId = key.trackId ?? 'unknown_track';
-      final trackDir = Directory('${cacheRoot.path}/$trackId');
-      if (!await trackDir.exists()) {
-        await trackDir.create(recursive: true);
-      }
-      final baseName = key.checksum ?? 'audio';
-      final filename = '$baseName.mp3';
-      return Right('${trackDir.path}/$filename');
-    } catch (e) {
-      return Left(
-        StorageCacheFailure(
-          message: 'Failed to get file path from cache key: $e',
-          type: StorageFailureType.diskError,
-        ),
-      );
-    }
-  }
+  // getFilePathFromCacheKey removed: path construction is handled by DirectoryService in repository
 
   @override
   Future<Either<CacheFailure, CachedAudioDocumentUnified>>
@@ -313,27 +267,7 @@ class CacheStorageLocalDataSourceImpl implements CacheStorageLocalDataSource {
             ? query.versionIdEqualTo(versionId).watch(fireImmediately: true)
             : query.watch(fireImmediately: true);
 
-    return stream.asyncMap((docs) async {
-      if (docs.isEmpty) return false;
-      final doc = docs.first;
-      try {
-        final absolutePath = await doc.getAbsolutePath();
-        return await File(absolutePath).exists();
-      } catch (_) {
-        return false;
-      }
-    });
-  }
-
-  Future<Directory> _getCacheDirectory() async {
-    final appDir = await getApplicationDocumentsDirectory();
-    // Store persistent audio files under Documents/trackflow/audio
-    final cacheDir = Directory('${appDir.path}/trackflow/audio');
-
-    if (!await cacheDir.exists()) {
-      await cacheDir.create(recursive: true);
-    }
-
-    return cacheDir;
+    // Reflect DB presence only; FS verification handled by repository/UI if needed
+    return stream.map((docs) => docs.isNotEmpty);
   }
 }

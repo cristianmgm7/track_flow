@@ -7,17 +7,25 @@ import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/modals/app_form_sheet.dart';
-import '../../../../core/entities/unique_id.dart';
+// duplicate import removed
 import '../../../audio_track/domain/entities/audio_track.dart';
 import '../../../audio_comment/presentation/components/comments_section.dart';
 import '../../../audio_comment/presentation/components/comment_input_modal.dart';
-import '../../../waveform/presentation/widgets/audio_comment_player.dart';
+import '../../../waveform/presentation/widgets/track_detail_player.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
 import '../blocs/track_versions/track_versions_event.dart';
-import '../blocs/track_versions/track_versions_state.dart';
-import '../cubit/track_detail_cubit.dart';
+import '../cubit/version_selector_cubit.dart';
 import '../components/versions_section_component.dart';
 import '../widgets/upload_version_form.dart';
+import '../../../project_detail/presentation/bloc/project_detail_bloc.dart';
+import '../../../project_detail/presentation/bloc/project_detail_event.dart';
+import '../../../project_detail/presentation/bloc/project_detail_state.dart';
+import '../../../user_profile/presentation/bloc/user_profile_bloc.dart';
+import '../../../user_profile/presentation/bloc/user_profile_states.dart';
+import '../../../projects/domain/entities/project_collaborator.dart';
+import '../../../projects/domain/value_objects/project_role.dart';
+import '../../../projects/domain/value_objects/project_permission.dart';
+import '../../../../core/entities/unique_id.dart';
 
 class TrackDetailScreen extends StatefulWidget {
   final ProjectId projectId;
@@ -39,16 +47,25 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Load versions for this track
+
+    // Initialize version selector cubit immediately with incoming versionId
+    context.read<VersionSelectorCubit>().initialize(widget.versionId);
+
+    // Load versions for this track (pass incoming versionId as initial active)
     context.read<TrackVersionsBloc>().add(
       WatchTrackVersionsRequested(
         widget.track.id,
-        widget.track.activeVersionId,
+        widget.versionId,
       ),
     );
+
+    // Play the requested version
     context.read<AudioPlayerBloc>().add(
-      PlayVersionRequested(widget.track.activeVersionId!),
+      PlayVersionRequested(widget.versionId),
     );
+
+    // Watch project detail to drive permissions
+    context.read<ProjectDetailBloc>().add(WatchProjectDetail(projectId: widget.projectId));
   }
 
   void _showUploadVersionForm() {
@@ -68,107 +85,98 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AppScaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppAppBar(
-        title: widget.track.name,
-        actions: [
-          AppIconButton(
-            icon: Icons.add,
-            onPressed: _showUploadVersionForm,
-            tooltip: 'Upload new version',
-          ),
-        ],
-      ),
-      resizeToAvoidBottomInset: true,
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Column(
-          children: [
-            // Versions Section
-            VersionsSectionComponent(trackId: widget.track.id),
-            VersionHeaderComponent(trackId: widget.track.id),
-            // Audio Player
-            Builder(
-              builder: (context) {
-                final selectedFromCubit = context
-                    .select<TrackDetailCubit, TrackVersionId?>(
-                      (cubit) => cubit.state.activeVersionId,
-                    );
-                final selectedFromBloc = context
-                    .select<TrackVersionsBloc, TrackVersionId?>((bloc) {
-                      final s = bloc.state;
-                      return s is TrackVersionsLoaded
-                          ? s.activeVersionId
-                          : null;
-                    });
-                final effectiveVersionId =
-                    selectedFromCubit ?? selectedFromBloc ?? widget.versionId;
-                return AudioCommentPlayer(
-                  track: widget.track,
-                  versionId: effectiveVersionId,
-                );
-              },
-            ),
+    return BlocBuilder<VersionSelectorCubit, VersionSelectorState>(
+      builder: (context, selectorState) {
+        final selectedVersionId = selectorState.selectedVersionId ?? widget.versionId;
 
-            // Comments Section
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: Dimensions.screenMarginSmall,
+        return AppScaffold(
+          backgroundColor: theme.colorScheme.surface,
+          appBar: AppAppBar(
+            title: widget.track.name,
+            actions: [
+              AppIconButton(
+                icon: Icons.add,
+                onPressed: _showUploadVersionForm,
+                tooltip: 'Upload new version',
+              ),
+            ],
+          ),
+          resizeToAvoidBottomInset: true,
+          body: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusScope.of(context).unfocus(),
+            child: Column(
+              
+              children: [
+                // Versions Section List
+                VersionsSectionComponent(trackId: widget.track.id),
+                VersionHeaderComponent(
+                  trackId: widget.track.id,
+                  track: widget.track,
                 ),
-                child: Builder(
-                  builder: (context) {
-                    final selectedFromCubit = context
-                        .select<TrackDetailCubit, TrackVersionId?>(
-                          (cubit) => cubit.state.activeVersionId,
-                        );
-                    final selectedFromBloc = context
-                        .select<TrackVersionsBloc, TrackVersionId?>((bloc) {
-                          final s = bloc.state;
-                          return s is TrackVersionsLoaded
-                              ? s.activeVersionId
-                              : null;
-                        });
-                    final effectiveVersionId =
-                        selectedFromCubit ??
-                        selectedFromBloc ??
-                        widget.versionId;
-                    return CommentsSection(
+                // Audio Player with Version Selector with waveform
+                TrackDetailPlayer(
+                  key: ValueKey('player_${selectedVersionId.value}'),
+                  track: widget.track,
+                  versionId: selectedVersionId,
+                ),
+
+                // Comments Section
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: Dimensions.screenMarginSmall,
+                    ),
+                    child: CommentsSection(
+                      key: ValueKey('comments_${selectedVersionId.value}'),
                       projectId: widget.projectId,
                       trackId: widget.track.id,
-                      versionId: effectiveVersionId,
-                    );
-                  },
+                      versionId: selectedVersionId,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-      persistentFooterWidget: SafeArea(
-        top: false,
-        child: Builder(
-          builder: (context) {
-            final selectedFromCubit = context
-                .select<TrackDetailCubit, TrackVersionId?>(
-                  (cubit) => cubit.state.activeVersionId,
+          ),
+          persistentFooterWidget: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+            builder: (context, pdState) {
+              final project = pdState.project;
+              if (project == null) {
+                return const SizedBox.shrink();
+              }
+
+              // Derive current user id from UserProfileBloc
+              final userState = context.watch<UserProfileBloc>().state;
+              final String? currentUserId =
+                  userState is UserProfileLoaded ? userState.profile.id.value : null;
+
+              bool canAddComment = false;
+              if (currentUserId != null) {
+                final me = project.collaborators.firstWhere(
+                  (c) => c.userId.value == currentUserId,
+                  orElse: () => ProjectCollaborator.create(
+                    userId: UserId.fromUniqueString(currentUserId),
+                    role: ProjectRole.viewer,
+                  ),
                 );
-            final selectedFromBloc = context
-                .select<TrackVersionsBloc, TrackVersionId?>((bloc) {
-                  final s = bloc.state;
-                  return s is TrackVersionsLoaded ? s.activeVersionId : null;
-                });
-            final effectiveVersionId =
-                selectedFromCubit ?? selectedFromBloc ?? widget.versionId;
-            return CommentInputModal(
-              projectId: widget.projectId,
-              versionId: effectiveVersionId,
-            );
-          },
-        ),
-      ),
+                canAddComment = me.hasPermission(ProjectPermission.addComment);
+              }
+
+              if (!canAddComment) {
+                return const SizedBox.shrink();
+              }
+
+              return SafeArea(
+                top: false,
+                child: CommentInputModal(
+                  projectId: widget.projectId,
+                  versionId: selectedVersionId,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

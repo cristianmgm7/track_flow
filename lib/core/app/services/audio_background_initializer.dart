@@ -1,6 +1,5 @@
 import 'package:injectable/injectable.dart';
 import 'package:audio_session/audio_session.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 
 /// Initializes audio background capabilities and audio session
 ///
@@ -11,12 +10,13 @@ class AudioBackgroundInitializer {
   const AudioBackgroundInitializer();
 
   Future<void> initialize() async {
-    // Initialize background audio/notification integration
-    await JustAudioBackground.init(
-      androidNotificationChannelId: 'com.trackflow.playback',
-      androidNotificationChannelName: 'Playback',
-      androidNotificationOngoing: true,
-    );
+    // Temporarily disable just_audio_background to allow multiple players (track + comments)
+    // Background notifications will be reintroduced via audio_service for the main track
+    // await JustAudioBackground.init(
+    //   androidNotificationChannelId: 'com.trackflow.playback',
+    //   androidNotificationChannelName: 'Playback',
+    //   androidNotificationOngoing: true,
+    // );
 
     // Note: AudioService initialization with custom handler
     // This would be initialized when needed, not at app startup

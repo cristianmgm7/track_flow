@@ -1,0 +1,133 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
+import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
+import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_style.dart';
+import '../../../ui/navigation/app_scaffold.dart';
+import '../../../ui/navigation/app_bar.dart';
+import '../../domain/entities/voice_memo.dart';
+import '../bloc/voice_memo_bloc.dart';
+import '../bloc/voice_memo_state.dart';
+import 'components/voice_memo_card.dart';
+
+class VoiceMemosScreen extends StatelessWidget {
+  const VoiceMemosScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<VoiceMemoBloc, VoiceMemoState>(
+      listener: (context, state) {
+        if (state is VoiceMemoError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: AppScaffold(
+        appBar: AppAppBar(
+          title: 'Voice Memos',
+          automaticallyImplyLeading: false,
+        ),
+        floatingActionButton: FloatingActionButton(
+          shape: const CircleBorder(),
+          onPressed: () {
+            // Pause audio before navigation to avoid context issues
+            context.read<AudioPlayerBloc>().add(const PauseAudioRequested());
+            context.push(AppRoutes.voiceMemoRecording);
+          },
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.mic, color: AppColors.onPrimary),
+        ),
+        body: BlocBuilder<VoiceMemoBloc, VoiceMemoState>(
+          builder: (context, state) {
+            if (state is VoiceMemoLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (state is VoiceMemoError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.error,
+                    ),
+                    SizedBox(height: Dimensions.space16),
+                    Text(
+                      'Failed to load voice memos',
+                      style: AppTextStyle.bodyLarge,
+                    ),
+                    SizedBox(height: Dimensions.space8),
+                    Text(
+                      state.message,
+                      style: AppTextStyle.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state is VoiceMemosLoaded) {
+              if (state.memos.isEmpty) {
+                return _buildEmptyState(context);
+              }
+              return _buildMemosList(context, state.memos);
+            }
+
+            return _buildEmptyState(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.mic_none,
+            size: 80,
+            color: AppColors.textSecondary,
+          ),
+          SizedBox(height: Dimensions.space24),
+          Text(
+            'No voice memos yet',
+            style: AppTextStyle.headlineSmall,
+          ),
+          SizedBox(height: Dimensions.space8),
+          Text(
+            'Tap the microphone button to\nrecord your first memo',
+            textAlign: TextAlign.center,
+            style: AppTextStyle.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemosList(BuildContext context, List<VoiceMemo> memos) {
+    return ListView.separated(
+      padding: EdgeInsets.all(Dimensions.space16),
+      itemCount: memos.length,
+      separatorBuilder: (_, __) => SizedBox(height: Dimensions.space12),
+      itemBuilder: (context, index) {
+        return VoiceMemoCard(memo: memos[index]);
+      },
+    );
+  }
+}

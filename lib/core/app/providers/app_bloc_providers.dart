@@ -1,10 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
+import 'package:trackflow/features/audio_comment/presentation/cubit/comment_audio_cubit.dart';
+import 'package:trackflow/features/audio_recording/presentation/bloc/recording_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
@@ -19,11 +22,14 @@ import 'package:trackflow/features/invitations/presentation/blocs/watcher/projec
 import 'package:trackflow/features/audio_comment/presentation/bloc/audio_comment_bloc.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
-import 'package:trackflow/features/track_version/presentation/cubit/track_detail_cubit.dart';
+import 'package:trackflow/features/track_version/presentation/cubit/version_selector_cubit.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_event.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/voice_memos/presentation/bloc/voice_memo_bloc.dart';
+import 'package:trackflow/features/voice_memos/presentation/bloc/voice_memo_event.dart';
+import 'package:trackflow/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 
 /// Centralized BLoC provider management for the entire app
 ///
@@ -51,7 +57,9 @@ class AppBlocProviders {
 
       // Auth flow
       BlocProvider<OnboardingBloc>(create: (_) => sl<OnboardingBloc>()),
-      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
+      BlocProvider<UserProfileBloc>(
+        create: (_) => sl<UserProfileBloc>()..add(WatchUserProfile()),
+      ),
       BlocProvider<MagicLinkBloc>(create: (_) => sl<MagicLinkBloc>()),
 
       // Audio system (global)
@@ -64,6 +72,15 @@ class AppBlocProviders {
       ),
       BlocProvider<WaveformBloc>(create: (_) => sl<WaveformBloc>()),
       BlocProvider<AudioContextBloc>(create: (_) => sl<AudioContextBloc>()),
+      BlocProvider<RecordingBloc>(create: (_) => sl<RecordingBloc>()),
+
+      // Voice memos (global)
+      BlocProvider<VoiceMemoBloc>(
+        create:
+            (_) =>
+                sl<VoiceMemoBloc>()
+                  ..add(const WatchVoiceMemosRequested()),
+      ),
     ];
   }
 
@@ -74,6 +91,7 @@ class AppBlocProviders {
   /// Providers for main app shell (dashboard, projects list)
   static List<BlocProvider> getMainShellProviders() {
     return [
+      BlocProvider<DashboardBloc>(create: (_) => sl<DashboardBloc>()),
       BlocProvider<ProjectsBloc>(create: (_) => sl<ProjectsBloc>()),
       BlocProvider<NotificationWatcherBloc>(
         create: (_) => sl<NotificationWatcherBloc>(),
@@ -88,9 +106,11 @@ class AppBlocProviders {
   static List<BlocProvider> getTrackDetailProviders() {
     return [
       BlocProvider<TrackCacheBloc>(create: (_) => sl<TrackCacheBloc>()),
+      BlocProvider<ProjectDetailBloc>(create: (_) => sl<ProjectDetailBloc>()),
       BlocProvider<AudioCommentBloc>(create: (_) => sl<AudioCommentBloc>()),
       BlocProvider<TrackVersionsBloc>(create: (_) => sl<TrackVersionsBloc>()),
-      BlocProvider<TrackDetailCubit>(create: (_) => sl<TrackDetailCubit>()),
+      BlocProvider<VersionSelectorCubit>(create: (_) => sl<VersionSelectorCubit>()),
+      BlocProvider<CommentAudioCubit>(create: (_) => sl<CommentAudioCubit>()),
     ];
   }
 
@@ -126,4 +146,5 @@ class AppBlocProviders {
       BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
     ];
   }
+
 }

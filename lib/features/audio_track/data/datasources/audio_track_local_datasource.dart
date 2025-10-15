@@ -18,6 +18,10 @@ abstract class AudioTrackLocalDataSource {
   Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
     String projectId,
   );
+
+  /// Watch all tracks from projects where userId is owner or collaborator
+  Stream<List<AudioTrackDTO>> watchAllAccessibleTracks(String userId);
+
   Future<Either<Failure, Unit>> clearCache();
   Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName);
   Future<Either<Failure, Unit>> updateTrackUrl(String trackId, String newUrl);
@@ -194,5 +198,37 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
     } catch (e) {
       return Left(CacheFailure('Failed to set active version: $e'));
     }
+  }
+
+  @override
+  Stream<List<AudioTrackDTO>> watchAllAccessibleTracks(String userId) {
+    return _isar.audioTrackDocuments
+        .where()
+        .watch(fireImmediately: true)
+        .asyncMap((tracks) async {
+          // Filter tracks to only include those from accessible projects
+          final accessibleTracks = <AudioTrackDocument>[];
+
+          for (final track in tracks) {
+            // Get the project for this track
+            final project = await _isar.projectDocuments
+                .filter()
+                .idEqualTo(track.projectId)
+                .isDeletedEqualTo(false)
+                .findFirst();
+
+            if (project != null) {
+              // Check if user has access (is owner or collaborator)
+              final hasAccess = project.ownerId == userId ||
+                  project.collaboratorIds.contains(userId);
+
+              if (hasAccess) {
+                accessibleTracks.add(track);
+              }
+            }
+          }
+
+          return accessibleTracks.map((doc) => doc.toDTO()).toList();
+        });
   }
 }

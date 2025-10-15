@@ -15,13 +15,35 @@ import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_sta
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:async';
+import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
 
 class TrackActions {
   static List<AppBottomSheetAction> forTrack(
     BuildContext context,
     ProjectId projectId,
     AudioTrack track,
-  ) => [
+    Project? project,
+  ) {
+    // Check if user has download permission
+    final userState = context.read<UserProfileBloc>().state;
+    final String? currentUserId =
+        userState is UserProfileLoaded ? userState.profile.id.value : null;
+    bool canDownload = false;
+    if (currentUserId != null && project != null) {
+      try {
+        final me = project.collaborators.firstWhere(
+          (c) => c.userId.value == currentUserId,
+        );
+        canDownload = me.hasPermission(ProjectPermission.downloadTrack);
+      } catch (_) {
+        canDownload = false;
+      }
+    }
+
+    return [
     AppBottomSheetAction(
       icon: Icons.comment,
       title: 'Comment',
@@ -74,73 +96,64 @@ class TrackActions {
         );
       },
     ),
-    AppBottomSheetAction(
-      icon: Icons.download,
-      title: 'Download',
-      subtitle: 'Save this track to your device',
-      onTap: () async {
-        final bloc = context.read<TrackCacheBloc>();
-        final messenger = ScaffoldMessenger.of(context);
+    if (canDownload)
+      AppBottomSheetAction(
+        icon: Icons.download,
+        title: 'Download',
+        subtitle: 'Save this track to your device',
+        onTap: () async {
+          final bloc = context.read<TrackCacheBloc>();
+          final messenger = ScaffoldMessenger.of(context);
+          final navigator = Navigator.of(context);
 
-        // 1) Try to get a cached path immediately
-        final completer = Completer<String?>();
-        late final StreamSubscription sub;
-        sub = bloc.stream.listen((state) {
-          if (state is TrackCachePathLoaded &&
-              state.trackId == track.id.value) {
-            completer.complete(state.filePath);
-            sub.cancel();
-          } else if (state is TrackCacheOperationFailure &&
-              state.trackId == track.id.value) {
-            completer.complete(null);
-            sub.cancel();
-          }
-        });
-        bloc.add(GetCachedTrackPathRequested(track.id.value));
+          // Close bottom sheet first
+          navigator.pop();
 
-        final filePath = await completer.future.timeout(
-          const Duration(seconds: 2),
-          onTimeout: () => null,
-        );
+          // Request download (will check permissions and generate friendly filename)
+          bloc.add(DownloadTrackRequested(
+            trackId: track.id.value,
+            versionId: null, // null = active version
+          ));
 
-        if (filePath != null && filePath.isNotEmpty) {
-          // 2) Share the cached file so user can choose destination
-          await Share.shareXFiles([
-            XFile(filePath),
-          ], text: 'Export ${track.name}');
-        } else {
-          // 3) Not cached yet → start caching and inform user to retry export when ready
-          final activeVersionId = track.activeVersionId;
-          if (activeVersionId != null) {
-            bloc.add(
-              CacheTrackRequested(
-                trackId: track.id.value,
-                audioUrl: track.url,
-                versionId: activeVersionId.value,
-              ),
-            );
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Downloading ${track.name}... Tap Download again to save when ready',
+          // Listen for download result
+          final subscription = bloc.stream.listen((state) {
+            if (state is TrackDownloadReady && state.trackId == track.id.value) {
+              // Download ready - open share sheet
+              Share.shareXFiles([
+                XFile(state.filePath),
+              ], text: 'Download ${track.name}');
+            } else if (state is TrackDownloadFailure && state.trackId == track.id.value) {
+              // Download failed
+              final message = state.isPermissionError
+                  ? 'You do not have permission to download this track'
+                  : state.error;
+
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(message),
+                  backgroundColor: state.isPermissionError ? Colors.red : Colors.orange,
+                  duration: const Duration(seconds: 3),
                 ),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          } else {
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Cannot download ${track.name}: No active version available',
+              );
+            } else if (state is TrackCacheOperationInProgress &&
+                       state.trackId == track.id.value) {
+              // Show preparing message
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('Preparing ${track.name} for download...'),
+                  backgroundColor: Colors.blue,
+                  duration: const Duration(seconds: 2),
                 ),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        }
-      },
-    ),
-  ];
+              );
+            }
+          });
+
+          // Auto-cancel subscription after 10 seconds
+          Future.delayed(const Duration(seconds: 10), () {
+            subscription.cancel();
+          });
+        },
+      ),
+    ];
+  }
 }

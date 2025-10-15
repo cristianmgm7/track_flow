@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
-import 'package:trackflow/features/track_version/presentation/cubit/track_detail_cubit.dart';
+import 'package:trackflow/features/track_version/presentation/cubit/version_selector_cubit.dart';
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 
@@ -19,8 +19,8 @@ class VersionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<TrackDetailCubit, TrackDetailState>(
-      builder: (context, detailState) {
+    return BlocBuilder<VersionSelectorCubit, VersionSelectorState>(
+      builder: (context, selectorState) {
         return BlocBuilder<TrackVersionsBloc, TrackVersionsState>(
           builder: (context, state) {
             if (state is TrackVersionsInitial ||
@@ -57,7 +57,7 @@ class VersionsList extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final v = loaded.versions[index];
                   final selectedId =
-                      detailState.activeVersionId ?? loaded.activeVersionId;
+                      selectorState.selectedVersionId ?? loaded.activeVersionId;
                   final isSelected = selectedId == v.id;
                   final isGloballyActive = loaded.activeVersionId == v.id;
                   return ChoiceChip(
@@ -90,7 +90,7 @@ class VersionsList extends StatelessWidget {
                     ),
                     selected: isSelected,
                     onSelected: (_) {
-                      context.read<TrackDetailCubit>().setActiveVersion(v.id);
+                      context.read<VersionSelectorCubit>().selectVersion(v.id);
                       onVersionSelected?.call(v.id);
                     },
                   );

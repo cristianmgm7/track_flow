@@ -112,6 +112,31 @@ class PlayAndSeekRequested extends AudioPlayerEvent {
       'PlayAndSeekRequested(trackId: $trackId, position: $position)';
 }
 
+/// Play audio comment (local file or remote URL)
+class PlayAudioCommentRequested extends AudioPlayerEvent {
+  const PlayAudioCommentRequested({
+    required this.localPath,
+    required this.remoteUrl,
+    required this.commentId,
+  });
+
+  /// Local file path (preferred if available)
+  final String? localPath;
+
+  /// Remote URL for streaming (fallback if local not available)
+  final String? remoteUrl;
+
+  /// Unique identifier for the comment being played
+  final String commentId;
+
+  @override
+  List<Object?> get props => [localPath, remoteUrl, commentId];
+
+  @override
+  String toString() =>
+      'PlayAudioCommentRequested(localPath: $localPath, remoteUrl: $remoteUrl, commentId: $commentId)';
+}
+
 /// Toggle shuffle mode on/off
 class ToggleShuffleRequested extends AudioPlayerEvent {
   const ToggleShuffleRequested();

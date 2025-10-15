@@ -4,11 +4,11 @@ import 'package:trackflow/core/common/interfaces/resetable.dart';
 import 'package:trackflow/core/app_flow/domain/services/bloc_state_cleanup_service.dart';
 import 'package:trackflow/core/di/injection.dart';
 
-enum AppTab { projects, notifications, settings }
+enum AppTab { dashboard, voiceMemos, notifications, settings }
 
 @injectable
 class NavigationCubit extends Cubit<AppTab> implements Resetable {
-  NavigationCubit() : super(AppTab.projects) {
+  NavigationCubit() : super(AppTab.dashboard) {
     // Register for automatic state cleanup
     final cleanupService = sl<BlocStateCleanupService>();
     cleanupService.registerResetable(this);
@@ -22,7 +22,7 @@ class NavigationCubit extends Cubit<AppTab> implements Resetable {
   }
 
   @override
-  void reset() => emit(AppTab.projects);
+  void reset() => emit(AppTab.dashboard);
 
   @override
   Future<void> close() {

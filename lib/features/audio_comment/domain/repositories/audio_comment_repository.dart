@@ -19,6 +19,14 @@ abstract class AudioCommentRepository {
     TrackVersionId versionId,
   );
 
+  /// Watch recent comments across all accessible projects.
+  /// Returns comments ordered by createdAt descending (most recent first).
+  /// Limited to `limit` items for dashboard preview.
+  Stream<Either<Failure, List<AudioComment>>> watchRecentComments({
+    required UserId userId,
+    required int limit,
+  });
+
   Future<Either<Failure, Unit>> deleteComment(AudioCommentId commentId);
 
   /// Delete all comments from local cache

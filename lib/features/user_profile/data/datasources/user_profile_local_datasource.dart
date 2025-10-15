@@ -33,13 +33,30 @@ class IsarUserProfileLocalDataSource implements UserProfileLocalDataSource {
   @override
   Future<void> cacheUserProfile(UserProfileDTO profile) async {
     await _isar.writeTxn(() async {
-      final existing = await _isar.userProfileDocuments.get(
+      // Resolve potential unique index conflicts (email) before upsert
+      final existingById = await _isar.userProfileDocuments.get(
         fastHash(profile.id),
       );
+
+      final existingByEmail = await _isar.userProfileDocuments
+          .where()
+          .emailEqualTo(profile.email)
+          .findFirst();
+
+      // Preserve any existing local avatar path preference
+      final preservedLocalPath = profile.avatarLocalPath ??
+          existingById?.avatarLocalPath ??
+          existingByEmail?.avatarLocalPath;
+
+      // If there's a different record with the same email, delete it to avoid unique index violation
+      if (existingByEmail != null && existingByEmail.id != profile.id) {
+        await _isar.userProfileDocuments.delete(
+          fastHash(existingByEmail.id),
+        );
+      }
+
       final profileDoc = UserProfileDocument.fromDTO(profile);
-      // Preserve local avatar path unless an explicit new one is provided
-      profileDoc.avatarLocalPath =
-          profile.avatarLocalPath ?? existing?.avatarLocalPath;
+      profileDoc.avatarLocalPath = preservedLocalPath;
       await _isar.userProfileDocuments.put(profileDoc);
     });
   }

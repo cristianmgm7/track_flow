@@ -98,6 +98,7 @@ class PendingOperationsManager {
   Future<Either<Failure, Unit>> addDeleteOperation({
     required String entityType,
     required String entityId,
+    Map<String, dynamic>? data,
     SyncPriority priority = SyncPriority.medium,
   }) async {
     return await addOperation(
@@ -105,6 +106,7 @@ class PendingOperationsManager {
       entityId: entityId,
       operationType: 'delete',
       priority: priority,
+      data: data,
     );
   }
   // ============================================================================

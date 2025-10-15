@@ -8,6 +8,7 @@ class AppRoutes {
 
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';
+  static const String trackList = '/tracks';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
 
@@ -29,4 +30,8 @@ class AppRoutes {
   static const String artistProfile = '/artistprofile/:id';
 
   static const String cacheManagement = '/settings/cache-management';
+
+  // Voice memo routes
+  static const String voiceMemos = '/voice-memos';
+  static const String voiceMemoRecording = '/voice-memos/recording';
 }

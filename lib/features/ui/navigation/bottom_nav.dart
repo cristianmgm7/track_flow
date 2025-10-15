@@ -241,10 +241,11 @@ class _AppBottomNavigationItemWidgetState
             onTapUp: _onTapUp,
             onTapCancel: _onTapCancel,
             onTap: widget.onTap,
+            behavior: HitTestBehavior.opaque,
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: Dimensions.space12,
-                vertical: Dimensions.space6,
+                vertical: Dimensions.space8,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
