@@ -403,6 +403,19 @@ class MockAudioTrackRepository extends _i1.Mock
       ) as _i4.Stream<_i2.Either<_i11.Failure, List<_i12.AudioTrack>>>);
 
   @override
+  _i4.Stream<
+      _i2.Either<_i11.Failure, List<_i12.AudioTrack>>> watchAllAccessibleTracks(
+          _i7.UserId? userId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #watchAllAccessibleTracks,
+          [userId],
+        ),
+        returnValue:
+            _i4.Stream<_i2.Either<_i11.Failure, List<_i12.AudioTrack>>>.empty(),
+      ) as _i4.Stream<_i2.Either<_i11.Failure, List<_i12.AudioTrack>>>);
+
+  @override
   _i4.Future<_i2.Either<_i11.Failure, _i12.AudioTrack>> createTrack(
           _i12.AudioTrack? track) =>
       (super.noSuchMethod(

@@ -1129,6 +1129,25 @@ class MockAudioCommentRepository extends _i1.Mock
           ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>);
 
   @override
+  _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>
+      watchRecentComments({
+    required _i9.UserId? userId,
+    required int? limit,
+  }) =>
+          (super.noSuchMethod(
+            Invocation.method(
+              #watchRecentComments,
+              [],
+              {
+                #userId: userId,
+                #limit: limit,
+              },
+            ),
+            returnValue: _i5.Stream<
+                _i2.Either<_i7.Failure, List<_i22.AudioComment>>>.empty(),
+          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i22.AudioComment>>>);
+
+  @override
   _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>> deleteComment(
           _i9.AudioCommentId? commentId) =>
       (super.noSuchMethod(
