@@ -151,11 +151,5 @@ class AppBlocProviders {
     ];
   }
 
-  /// Providers for viewing other users (collaborator profiles, artist profiles)
-  static List<BlocProvider> getUserProfilesProviders() {
-    return [
-      BlocProvider<UserProfilesBloc>(create: (_) => sl<UserProfilesBloc>()),
-    ];
-  }
 
 }

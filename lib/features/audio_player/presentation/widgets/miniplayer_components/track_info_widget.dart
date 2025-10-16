@@ -91,7 +91,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                                                 .textTheme
                                                 .bodySmall
                                                 ?.color
-                                                ?.withOpacity(0.7),
+                                                ?.withValues(alpha: 0.7),
                                           ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -106,7 +106,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                                                 .textTheme
                                                 .bodySmall
                                                 ?.color
-                                                ?.withOpacity(0.5),
+                                                ?.withValues(alpha: 0.5),
                                           ),
                                     ),
                                   ],
@@ -116,7 +116,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                                     durationText,
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.textTheme.bodySmall?.color
-                                          ?.withOpacity(0.7),
+                                          ?.withValues(alpha: 0.7),
                                     ),
                                   ),
                               ],
@@ -130,7 +130,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                           'Loading artist...',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.textTheme.bodySmall?.color
-                                ?.withOpacity(0.5),
+                                ?.withValues(alpha: 0.5),
                           ),
                         ),
                       );
@@ -140,7 +140,7 @@ class _TrackInfoWidgetState extends State<TrackInfoWidget> {
                         child: Text(
                           'Tap to retry',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.error.withOpacity(0.7),
+                            color: theme.colorScheme.error.withValues(alpha: 0.7),
                           ),
                         ),
                       );

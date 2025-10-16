@@ -67,7 +67,7 @@ class DashboardCommentItem extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(Dimensions.space8),
       decoration: BoxDecoration(
-        color: isAudio ? AppColors.primary.withOpacity(0.1) : AppColors.grey700,
+        color: isAudio ? AppColors.primary.withValues(alpha: 0.1) : AppColors.grey700,
         borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
       ),
       child: Icon(

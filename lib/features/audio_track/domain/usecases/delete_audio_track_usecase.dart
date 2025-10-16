@@ -72,8 +72,9 @@ class DeleteAudioTrack {
         await audioCommentRepository.deleteByTrackId(params.trackId);
       } catch (e) {
         // No es crítico si falla; continuar con la eliminación del resto
-        print(
-          'Warning: Failed to delete comments for track ${params.trackId}: $e',
+      AppLogger.warning(
+        'Failed to delete comments for track ${params.trackId}: $e',
+        tag: 'DELETE_AUDIO_TRACK_USECASE',
         );
       }
       for (final version in versions) {
@@ -82,13 +83,14 @@ class DeleteAudioTrack {
           final deleteVersionResult = await trackVersionRepository
               .deleteVersion(version.id);
           if (deleteVersionResult.isLeft()) {
-            print(
-              'Warning: Failed to delete version ${version.id}: ${deleteVersionResult.fold((l) => l.message, (r) => 'Unknown error')}',
+            AppLogger.warning(
+              'Failed to delete version ${version.id}: ${deleteVersionResult.fold((l) => l.message, (r) => 'Unknown error')}',
+              tag: 'DELETE_AUDIO_TRACK_USECASE',
             );
           }
         } catch (e) {
           // Log error pero continuar con otras versiones
-          print('Warning: Failed to delete version ${version.id}: $e');
+          AppLogger.warning('Failed to delete version ${version.id}: $e', tag: 'DELETE_AUDIO_TRACK_USECASE');
         }
 
         // 3.2. Eliminar waveforms locales para esta versión
@@ -100,8 +102,9 @@ class DeleteAudioTrack {
           );
         } catch (e) {
           // Log error pero continuar - no es crítico
-          print(
-            'Warning: Failed to delete waveforms for version ${version.id}: $e',
+          AppLogger.warning(
+            'Failed to delete waveforms for version ${version.id}: $e',
+            tag: 'DELETE_AUDIO_TRACK_USECASE',
           );
         }
         // 3.3. (Comentarios por versión) Opcional si se requiere limpieza fina
@@ -113,7 +116,8 @@ class DeleteAudioTrack {
       } catch (e) {
         // Log error pero continuar - no es crítico
         AppLogger.warning(
-          'Warning: Failed to delete cached audio for track ${params.trackId}: $e',
+          'Failed to delete cached audio for track ${params.trackId}: $e',
+          tag: 'DELETE_AUDIO_TRACK_USECASE',
         );
       }
 

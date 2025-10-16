@@ -1,3 +1,5 @@
+import 'package:trackflow/core/utils/app_logger.dart';
+
 import '../../domain/entities/track_context.dart';
 import '../../domain/usecases/load_track_context_usecase.dart';
 import '../../../../core/entities/unique_id.dart';
@@ -41,7 +43,7 @@ class TrackContextBackgroundService {
 
       return result.fold(
         (failure) {
-          print('⚠️ Failed to load context for background: $failure');
+          AppLogger.warning('Failed to load context for background: $failure', tag: 'TRACK_CONTEXT_BACKGROUND_SERVICE');
           return null;
         },
         (context) {
@@ -51,7 +53,7 @@ class TrackContextBackgroundService {
         },
       );
     } catch (e) {
-      print('⚠️ Error loading context for background: $e');
+      AppLogger.warning('Error loading context for background: $e', tag: 'TRACK_CONTEXT_BACKGROUND_SERVICE');
       return null;
     }
   }

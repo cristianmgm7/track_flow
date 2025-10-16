@@ -115,7 +115,7 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
 
   // Restartable transformer using RxDart's switchMap semantics
   EventTransformer<WatchAudioCommentsBundleEvent>
-  _restartable<WatchAudioCommentsBundleEvent>() {
+   _restartable<WatchAudioCommentsBundleEvent>() {
     return (events, mapper) => events.switchMap(mapper);
   }
 }

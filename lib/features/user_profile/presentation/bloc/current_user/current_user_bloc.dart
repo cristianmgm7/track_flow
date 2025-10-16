@@ -210,8 +210,13 @@ class CurrentUserBloc extends Bloc<CurrentUserEvent, CurrentUserState>
       return;
     }
 
-    final isComplete = await _checkProfileCompletenessUseCase.isProfileComplete(
+    final result = await _checkProfileCompletenessUseCase.isProfileComplete(
       event.userId!,
+    );
+
+    final isComplete = result.fold(
+      (failure) => false, // Treat failure as incomplete
+      (complete) => complete,
     );
 
     if (isComplete) {

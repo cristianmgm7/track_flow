@@ -3,17 +3,14 @@ import '../../../../core/entities/value_object.dart';
 
 /// Voice memo unique identifier
 class VoiceMemoId extends ValueObject<String> {
-  VoiceMemoId._(super.value);
+  factory VoiceMemoId() => VoiceMemoId._(const Uuid().v4());
       
-  /// Generate new UUID
-  factory VoiceMemoId() {
-    return VoiceMemoId._(const Uuid().v4());
+  factory VoiceMemoId.fromUniqueString(String input) {
+    assert(input.isNotEmpty);
+    return VoiceMemoId._(input);
   }
 
-  /// Create from existing string
-  factory VoiceMemoId.fromUniqueString(String uniqueId) {
-    return VoiceMemoId._(uniqueId);
-  }
+  const VoiceMemoId._(super.value);
 
   @override
   List<Object?> get props => [value];

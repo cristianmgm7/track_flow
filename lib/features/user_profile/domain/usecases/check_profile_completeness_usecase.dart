@@ -24,13 +24,13 @@ class CheckProfileCompletenessUseCase {
 
   CheckProfileCompletenessUseCase(this._repository);
 
-  Future<bool> isProfileComplete(String userId) async {
+  Future<Either<Failure, bool>> isProfileComplete(String userId) async {
     final result = await _repository.getUserProfile(
       UserId.fromUniqueString(userId),
     );
     return result.fold(
-      (failure) => false,
-      (profile) => profile != null && _isProfileComplete(profile),
+      (failure) => Right(false), // Treat failure as incomplete profile
+      (profile) => Right(profile != null && _isProfileComplete(profile)),
     );
   }
 

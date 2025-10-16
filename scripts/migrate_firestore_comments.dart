@@ -129,7 +129,7 @@ Future<void> main() async {
     }
 
     // Print summary
-    debugPrint('\n' + '=' * 60);
+    debugPrint('\n${'=' * 60}');
     debugPrint('MIGRATION SUMMARY');
     debugPrint('=' * 60);
     debugPrint('Total comments found:    $totalComments');
