@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_section_header.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_comment_item.dart';
@@ -43,9 +44,10 @@ class DashboardCommentsSection extends StatelessWidget {
             ),
             SizedBox(height: Dimensions.space12),
             Text(
-              'No comments yet',
+              'No comments yet. Leave a comment on a track to get started!',
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: AppColors.warning,
                   ),
             ),
           ],

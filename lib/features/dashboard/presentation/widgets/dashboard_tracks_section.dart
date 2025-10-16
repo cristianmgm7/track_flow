@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_section_header.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_track_card.dart';
@@ -21,9 +22,7 @@ class DashboardTracksSection extends StatelessWidget {
       children: [
         DashboardSectionHeader(
           title: 'Tracks',
-          onSeeAll: tracks.isEmpty
-              ? null
-              : () => context.go(AppRoutes.trackList), // New route
+          onSeeAll:  () => context.go(AppRoutes.trackList), // New route
         ),
         SizedBox(height: Dimensions.space12),
         if (tracks.isEmpty)
@@ -47,9 +46,10 @@ class DashboardTracksSection extends StatelessWidget {
             ),
             SizedBox(height: Dimensions.space12),
             Text(
-              'No tracks yet',
+              textAlign: TextAlign.center,
+              'No tracks yet. Create a project to get started!',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: AppColors.warning,
                   ),
             ),
           ],
