@@ -9,7 +9,8 @@ APP_DISPLAY_NAME = TrackFlow Staging
 // Flutter build mode
 FLUTTER_BUILD_MODE = release
 
-// Firebase configuration file
+// Firebase configuration
+FIREBASE_CONFIG_DIR = config/staging
 FIREBASE_CONFIG_FILE = GoogleService-Info-Staging.plist
 // App Icon Configuration
 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Staging
