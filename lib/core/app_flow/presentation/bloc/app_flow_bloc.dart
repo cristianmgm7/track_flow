@@ -31,11 +31,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
     // Listen to auth state changes
     _authStateSubscription = _getAuthStateUseCase().listen((user) {
-      AppLogger.info(
-        'Auth state changed - user: ${user?.email ?? 'null'}',
-        tag: 'APP_FLOW_BLOC',
-      );
-
       // Clear state on logout
       if (user == null && !_isSessionCleanupInProgress) {
         _scheduleDelayedCleanup();
@@ -53,10 +48,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     Emitter<AppFlowState> emit,
   ) async {
     if (_isCheckingFlow) {
-      AppLogger.info(
-        'App flow check already in progress, skipping...',
-        tag: 'APP_FLOW_BLOC',
-      );
       return;
     }
 
@@ -64,8 +55,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
     try {
       emit(AppFlowLoading());
-
-      AppLogger.info('Starting app flow check', tag: 'APP_FLOW_BLOC');
 
       // Get current session directly
       final sessionResult = await _sessionService.getCurrentSession();
@@ -79,11 +68,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
           return AppFlowUnauthenticated();
         },
         (session) {
-          AppLogger.info(
-            'Session state: ${session.state}',
-            tag: 'APP_FLOW_BLOC',
-          );
-
           switch (session.state) {
             case SessionState.unauthenticated:
               return AppFlowUnauthenticated();
@@ -101,11 +85,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
       );
 
       emit(appFlowState);
-
-      AppLogger.info(
-        'App flow check completed: $appFlowState',
-        tag: 'APP_FLOW_BLOC',
-      );
     } catch (e) {
       AppLogger.error('App flow check failed: $e', tag: 'APP_FLOW_BLOC');
       emit(AppFlowError('Unexpected error during app flow check: $e'));
@@ -129,11 +108,6 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
   /// Clear all user-related state when logging out
   void _clearAllUserState() {
-    AppLogger.info(
-      'Starting user state cleanup',
-      tag: 'APP_FLOW_BLOC',
-    );
-
     try {
       _sessionCleanupService.clearAllUserData().then((result) {
         result.fold(
@@ -144,10 +118,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
             );
           },
           (_) {
-            AppLogger.info(
-              'Session cleanup completed successfully',
-              tag: 'APP_FLOW_BLOC',
-            );
+            // Cleanup successful - no logging needed in production
           },
         );
       }).whenComplete(() {

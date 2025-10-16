@@ -75,34 +75,17 @@ class SessionCleanupService {
   Future<Either<Failure, Unit>> clearAllUserData() async {
     // Prevent concurrent cleanup operations
     if (_isCleanupInProgress) {
-      AppLogger.info(
-        'Session cleanup already in progress, skipping duplicate request',
-        tag: 'SESSION_CLEANUP',
-      );
       return const Right(unit);
     }
 
     try {
       _isCleanupInProgress = true;
 
-      AppLogger.info(
-        'Starting comprehensive session cleanup',
-        tag: 'SESSION_CLEANUP',
-      );
-
       // Step 1: Clear SessionStorage FIRST to prevent race conditions
-      AppLogger.info(
-        'Clearing SessionStorage (userId and all session data)',
-        tag: 'SESSION_CLEANUP',
-      );
       await _sessionStorage.clearAll();
 
       // Step 2: Clear UserProfile cache SYNCHRONOUSLY before BLoC reset
       // This prevents widgets from finding cached profiles during rebuild
-      AppLogger.info(
-        'Clearing UserProfile cache synchronously to prevent race conditions',
-        tag: 'SESSION_CLEANUP',
-      );
       final profileClearResult =
           await _userProfileRepository.clearProfileCache();
       profileClearResult.fold(
@@ -110,10 +93,9 @@ class SessionCleanupService {
           'UserProfile cache clear failed: ${failure.message}, but continuing cleanup',
           tag: 'SESSION_CLEANUP',
         ),
-        (_) => AppLogger.info(
-          'UserProfile cache cleared successfully',
-          tag: 'SESSION_CLEANUP',
-        ),
+        (_) {
+          // Cache cleared successfully - no logging needed in production
+        },
       );
 
       // Step 3: Reset BLoC states AFTER critical caches are cleared
@@ -176,11 +158,6 @@ class SessionCleanupService {
         // This ensures we don't leave the app in a broken state
       }
 
-      AppLogger.info(
-        'Session cleanup completed successfully',
-        tag: 'SESSION_CLEANUP',
-      );
-
       return const Right(unit);
     } catch (e) {
       AppLogger.error(
@@ -198,11 +175,6 @@ class SessionCleanupService {
   /// Clear specific user data (for partial cleanup scenarios)
   Future<Either<Failure, Unit>> clearUserSpecificData(String userId) async {
     try {
-      AppLogger.info(
-        'Starting user-specific data cleanup for user: $userId',
-        tag: 'SESSION_CLEANUP',
-      );
-
       // For now, we'll use the comprehensive cleanup
       // In the future, this could be enhanced to clear only data for a specific user
       return await clearAllUserData();

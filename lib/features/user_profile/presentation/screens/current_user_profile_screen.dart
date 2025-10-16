@@ -3,11 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/components/user_profile_information_component.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/core/di/injection.dart';
 
 /// Screen that displays the current user's profile
 /// 
@@ -52,11 +50,16 @@ class _CurrentUserProfileScreenState extends State<CurrentUserProfileScreen> {
         }
         
         if (state is CurrentUserLoaded) {
-          // Once we have the profile, we can use the HeroUserProfileScreen
-          // Provide UserProfilesBloc for the display screen
-          return BlocProvider<UserProfilesBloc>(
-            create: (_) => sl<UserProfilesBloc>(),
-            child: HeroUserProfileScreen(userId: state.profile.id),
+          // Display the current user's profile using ProfileInformation component
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              title: const Text('My Profile'),
+              centerTitle: true,
+            ),
+            body: const SingleChildScrollView(
+              child: ProfileInformation(),
+            ),
           );
         }
         

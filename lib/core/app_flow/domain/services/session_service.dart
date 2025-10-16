@@ -34,147 +34,58 @@ class SessionService {
   /// It does NOT handle any sync operations.
   Future<Either<Failure, UserSession>> getCurrentSession() async {
     try {
-      AppLogger.info('Starting getCurrentSession()', tag: 'SESSION_SERVICE');
-
-      // Step 1: Check authentication status with synchronization
-      AppLogger.info(
-        'Step 1: Checking authentication status with sync...',
-        tag: 'SESSION_SERVICE',
-      );
+      // Step 1: Check authentication status
       final authResult = await _checkAuthUseCase();
-
-      final isAuthenticated = await authResult.fold(
-        (failure) async {
-          AppLogger.warning(
-            'Authentication check failed: ${failure.message}',
-            tag: 'SESSION_SERVICE',
-          );
-          return false;
-        },
-        (isAuth) async {
-          AppLogger.info(
-            'Authentication check result: $isAuth',
-            tag: 'SESSION_SERVICE',
-          );
-          return isAuth;
-        },
-      );
+      final isAuthenticated = authResult.fold((failure) => false, (isAuth) => isAuth);
 
       if (!isAuthenticated) {
-        AppLogger.info(
-          'User not authenticated, returning unauthenticated session',
-          tag: 'SESSION_SERVICE',
-        );
         return const Right(UserSession.unauthenticated());
       }
 
-      // Step 2: Get current user with synchronization
-      AppLogger.info(
-        'Step 2: Getting current user with sync...',
-        tag: 'SESSION_SERVICE',
-      );
+      // Step 2: Get current user (simplified - no sync coupling)
       final userResult = await _getCurrentUserUseCase();
-
-      final user = await userResult.fold(
-        (failure) async {
+      final user = userResult.fold(
+        (failure) {
           AppLogger.warning(
             'Get current user failed: ${failure.message}',
             tag: 'SESSION_SERVICE',
           );
           return null;
         },
-        (user) async {
-          AppLogger.info(
-            'Current user retrieved: ${user?.email} (ID: ${user?.id})',
-            tag: 'SESSION_SERVICE',
-          );
-          return user;
-        },
+        (user) => user,
       );
 
       if (user == null) {
-        AppLogger.warning(
-          'No user found despite being authenticated, returning unauthenticated',
-          tag: 'SESSION_SERVICE',
-        );
         return const Right(UserSession.unauthenticated());
       }
 
-      // Steps 3 & 4: Check onboarding and profile in parallel
-      AppLogger.info(
-        'Step 3 & 4: Checking onboarding and profile completeness in parallel...',
-        tag: 'SESSION_SERVICE',
-      );
-
-      final parallelResults = await Future.wait([
+      // Step 3: Check setup requirements in parallel
+      final results = await Future.wait([
         _onboardingUseCase.checkOnboardingCompleted(user.id.value),
-        _profileUseCase.getDetailedCompleteness(user.id.value),
+        _profileUseCase.isProfileComplete(user.id.value),
       ]);
 
-      final onboardingResult = parallelResults[0] as Either<Failure, bool>;
-      final profileResult =
-          parallelResults[1] as Either<Failure, ProfileCompletenessInfo>;
-
-      // Process onboarding result
-      final onboardingCompleted = await onboardingResult.fold(
-        (failure) async {
-          AppLogger.warning(
-            'Onboarding check failed: ${failure.message}',
-            tag: 'SESSION_SERVICE',
-          );
-          return false;
-        },
-        (completed) async {
-          AppLogger.info(
-            'Onboarding completed: $completed',
-            tag: 'SESSION_SERVICE',
-          );
-          return completed;
-        },
+      final onboardingComplete = (results[0] as Either<Failure, bool>).fold(
+        (failure) => false,
+        (completed) => completed,
+      );
+      final profileComplete = (results[1] as Either<Failure, bool>).fold(
+        (failure) => false,
+        (complete) => complete,
       );
 
-      // Process profile result
-      return await profileResult.fold(
-        (failure) async {
-          AppLogger.error(
-            'Profile completeness check failed: ${failure.message}',
-            tag: 'SESSION_SERVICE',
-            error: failure,
-          );
-          return Left(failure);
-        },
-        (completenessInfo) async {
-          AppLogger.info(
-            'Profile completeness: ${completenessInfo.isComplete}',
-            tag: 'SESSION_SERVICE',
-          );
+      // Step 4: Return session state
+      if (!onboardingComplete || !profileComplete) {
+        return Right(
+          UserSession.authenticated(
+            user: user,
+            onboardingComplete: onboardingComplete,
+            profileComplete: profileComplete,
+          ),
+        );
+      }
 
-          if (!onboardingCompleted || !completenessInfo.isComplete) {
-            // User needs to complete setup
-            AppLogger.info(
-              'User needs setup - onboarding: ${!onboardingCompleted}, profile: ${completenessInfo.isComplete}',
-              tag: 'SESSION_SERVICE',
-            );
-
-            return Right(
-              UserSession.authenticated(
-                user: user,
-                onboardingComplete:
-                    onboardingCompleted, // FIXED: true means onboarding is completed
-                profileComplete: completenessInfo.isComplete,
-              ),
-            );
-          }
-
-          // User is fully set up
-          AppLogger.info(
-            'User is fully ready - returning ready session',
-            tag: 'SESSION_SERVICE',
-          );
-
-          return Right(UserSession.ready(user: user));
-        },
-      );
+      return Right(UserSession.ready(user: user));
     } catch (e) {
       AppLogger.error(
         'Session initialization failed: $e',
@@ -188,7 +99,6 @@ class SessionService {
 
   /// Check if user is authenticated
   Future<Either<Failure, bool>> isAuthenticated() async {
-    AppLogger.info('Checking if user is authenticated', tag: 'SESSION_SERVICE');
     final result = await _checkAuthUseCase();
     return result.fold(
       (failure) {
@@ -198,19 +108,12 @@ class SessionService {
         );
         return Left(failure);
       },
-      (isAuth) {
-        AppLogger.info(
-          'Authentication result: $isAuth',
-          tag: 'SESSION_SERVICE',
-        );
-        return Right(isAuth);
-      },
+      (isAuth) => Right(isAuth),
     );
   }
 
   /// Get current user ID
   Future<Either<Failure, String?>> getCurrentUserId() async {
-    AppLogger.info('Getting current user ID', tag: 'SESSION_SERVICE');
     final userResult = await _getCurrentUserUseCase();
     return userResult.fold(
       (failure) {
@@ -220,17 +123,12 @@ class SessionService {
         );
         return Left(failure);
       },
-      (user) {
-        final userId = user?.id.value;
-        AppLogger.info('Current user ID: $userId', tag: 'SESSION_SERVICE');
-        return Right(userId);
-      },
+      (user) => Right(user?.id.value),
     );
   }
 
   /// Clear session data (for testing or logout)
   Future<Either<Failure, Unit>> clearSession() async {
-    AppLogger.info('Clearing session data', tag: 'SESSION_SERVICE');
     // This would clear any cached session data
     // For now, just return success
     return const Right(unit);

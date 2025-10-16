@@ -12,7 +12,6 @@ import 'package:trackflow/core/utils/app_logger.dart';
 
 @injectable
 class UserProfilesBloc extends Bloc<UserProfilesEvent, UserProfilesState> {
-  final WatchUserProfileUseCase _watchUserProfileUseCase;
   final WatchUserProfilesUseCase _watchUserProfilesUseCase;
 
   StreamSubscription? _profileSubscription;
@@ -20,64 +19,14 @@ class UserProfilesBloc extends Bloc<UserProfilesEvent, UserProfilesState> {
   UserProfilesBloc({
     required WatchUserProfileUseCase watchUserProfileUseCase,
     required WatchUserProfilesUseCase watchUserProfilesUseCase,
-  })  : _watchUserProfileUseCase = watchUserProfileUseCase,
+  })  : 
         _watchUserProfilesUseCase = watchUserProfilesUseCase,
         super(UserProfilesInitial()) {
-    on<WatchUserProfile>(_onWatchUserProfile);
     on<WatchMultipleUserProfiles>(_onWatchMultipleUserProfiles);
-    on<LoadUserProfile>(_onLoadUserProfile);
     on<ClearUserProfiles>(_onClearUserProfiles);
   }
 
-  Future<void> _onWatchUserProfile(
-    WatchUserProfile event,
-    Emitter<UserProfilesState> emit,
-  ) async {
-    emit(UserProfilesLoading());
-
-    try {
-      // Use callAny() - no session validation, for viewing collaborators
-      final stream = _watchUserProfileUseCase.callAny(event.userId);
-
-      await emit.onEach<Either<Failure, UserProfile?>>(
-        stream,
-        onData: (eitherProfile) {
-          eitherProfile.fold(
-            (failure) {
-              AppLogger.error(
-                'Failed to watch user profile ${event.userId}: ${failure.message}',
-                tag: 'USER_PROFILES_BLOC',
-                error: failure,
-              );
-              emit(UserProfilesError(failure.message));
-            },
-            (profile) {
-              if (profile != null) {
-                emit(UserProfileLoaded(profile: profile));
-              } else {
-                emit(UserProfilesError('Profile not found'));
-              }
-            },
-          );
-        },
-        onError: (error, stackTrace) {
-          AppLogger.error(
-            'Error watching user profile: $error',
-            tag: 'USER_PROFILES_BLOC',
-            error: error,
-          );
-          emit(UserProfilesError('Failed to watch profile'));
-        },
-      );
-    } catch (e) {
-      AppLogger.error(
-        'Exception watching user profile: $e',
-        tag: 'USER_PROFILES_BLOC',
-        error: e,
-      );
-      emit(UserProfilesError('Failed to watch profile'));
-    }
-  }
+ 
 
   Future<void> _onWatchMultipleUserProfiles(
     WatchMultipleUserProfiles event,
@@ -134,40 +83,7 @@ class UserProfilesBloc extends Bloc<UserProfilesEvent, UserProfilesState> {
     }
   }
 
-  Future<void> _onLoadUserProfile(
-    LoadUserProfile event,
-    Emitter<UserProfilesState> emit,
-  ) async {
-    emit(UserProfilesLoading());
-
-    try {
-      // One-time fetch - take first emission and cancel
-      final stream = _watchUserProfileUseCase.callAny(event.userId);
-
-      await for (final eitherProfile in stream) {
-        eitherProfile.fold(
-          (failure) {
-            emit(UserProfilesError(failure.message));
-          },
-          (profile) {
-            if (profile != null) {
-              emit(UserProfileLoaded(profile: profile));
-            } else {
-              emit(UserProfilesError('Profile not found'));
-            }
-          },
-        );
-        break; // Only take first emission
-      }
-    } catch (e) {
-      AppLogger.error(
-        'Exception loading user profile: $e',
-        tag: 'USER_PROFILES_BLOC',
-        error: e,
-      );
-      emit(UserProfilesError('Failed to load profile'));
-    }
-  }
+  
 
   Future<void> _onClearUserProfiles(
     ClearUserProfiles event,
