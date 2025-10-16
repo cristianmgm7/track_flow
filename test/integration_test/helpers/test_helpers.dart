@@ -5,7 +5,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_state.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/core/di/injection.dart';
 
 /// Test helper class for managing user states and navigation flows
@@ -87,11 +87,11 @@ class TestUserFlow {
   }
 
   static void verifyProfileState(
-    UserProfileState expectedState,
-    UserProfileState actualState,
+    CurrentUserState expectedState,
+    CurrentUserState actualState,
   ) {
     expect(actualState.runtimeType, expectedState.runtimeType);
-    if (expectedState is ProfileComplete && actualState is ProfileComplete) {
+    if (expectedState is CurrentUserLoaded && actualState is CurrentUserLoaded) {
       expect(actualState.profile.id, expectedState.profile.id);
     }
   }
@@ -118,14 +118,14 @@ class TestData {
     TestScenarios.newUserScenario: {
       'authState': AuthInitial(),
       'onboardingState': OnboardingIncomplete(),
-      'profileState': UserProfileInitial(),
+      'profileState': CurrentUserInitial(),
       'expectedRoute': '/auth',
       'description': 'New user should be redirected to auth screen',
     },
     TestScenarios.returningUserScenario: {
       'authState': AuthAuthenticated(TestUserFlow.mockUser),
       'onboardingState': OnboardingCompleted(),
-      'profileState': ProfileComplete(
+      'profileState': CurrentUserLoaded(
         profile: TestUserFlow.mockCompleteProfile,
       ),
       'expectedRoute': '/dashboard',
@@ -134,8 +134,7 @@ class TestData {
     TestScenarios.incompleteProfileScenario: {
       'authState': AuthAuthenticated(TestUserFlow.mockUser),
       'onboardingState': OnboardingCompleted(),
-      'profileState': ProfileIncomplete(
-        profile: TestUserFlow.mockIncompleteProfile,
+      'profileState': CurrentUserProfileIncomplete(
         reason: 'Missing required fields',
       ),
       'expectedRoute': '/profile/create',
@@ -145,7 +144,7 @@ class TestData {
     TestScenarios.incompleteOnboardingScenario: {
       'authState': AuthAuthenticated(TestUserFlow.mockUser),
       'onboardingState': OnboardingIncomplete(),
-      'profileState': UserProfileInitial(),
+      'profileState': CurrentUserInitial(),
       'expectedRoute': '/onboarding',
       'description':
           'User with incomplete onboarding should be redirected to onboarding',

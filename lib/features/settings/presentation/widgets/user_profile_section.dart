@@ -6,9 +6,9 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/widgets/user_avatar.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 
@@ -17,7 +17,7 @@ class UserProfileSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserProfileBloc, UserProfileState>(
+    return BlocBuilder<CurrentUserBloc, CurrentUserState>(
       builder: (context, state) {
         return Card(
           color: AppColors.surface,
@@ -46,8 +46,8 @@ class UserProfileSection extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, UserProfileState state) {
-    if (state is UserProfileLoaded) {
+  Widget _buildProfileHeader(BuildContext context, CurrentUserState state) {
+    if (state is CurrentUserLoaded) {
       final profile = state.profile;
 
       return Row(
@@ -111,24 +111,24 @@ class UserProfileSection extends StatelessWidget {
     IconData? actionIcon;
     VoidCallback? onActionTap;
 
-    if (state is UserProfileLoading) {
+    if (state is CurrentUserLoading) {
       displayText = 'Loading profile...';
       subtitleText = 'Please wait';
       textColor = AppColors.textPrimary;
-    } else if (state is UserProfileError) {
+    } else if (state is CurrentUserError) {
       displayText = 'Unable to load profile';
       subtitleText = 'Tap retry to try again';
       textColor = AppColors.error;
       actionIcon = Icons.refresh;
       onActionTap = () {
         // Retry loading the profile
-        context.read<UserProfileBloc>().add(WatchUserProfile());
+        context.read<CurrentUserBloc>().add(WatchCurrentUserProfile());
       };
-    } else if (state is UserProfileInitial) {
+    } else if (state is CurrentUserInitial) {
       displayText = 'Loading profile...';
       subtitleText = 'Initializing';
       textColor = AppColors.textSecondary;
-    } else if (state is UserProfileSaved) {
+    } else if (state is CurrentUserSaved) {
       displayText = 'Profile updated';
       subtitleText = 'Changes saved successfully';
       textColor = AppColors.success;

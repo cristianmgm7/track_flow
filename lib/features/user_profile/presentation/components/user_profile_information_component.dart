@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
 import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
@@ -21,7 +21,7 @@ class _ProfileInformationState extends State<ProfileInformation> {
   @override
   void initState() {
     super.initState();
-    context.read<UserProfileBloc>().add(WatchUserProfile(userId: null));
+    context.read<CurrentUserBloc>().add(WatchCurrentUserProfile());
   }
 
   void _onEditProfile(BuildContext context, UserProfile profile) {
@@ -53,14 +53,14 @@ class _ProfileInformationState extends State<ProfileInformation> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserProfileBloc, UserProfileState>(
+    return BlocBuilder<CurrentUserBloc, CurrentUserState>(
       builder: (context, state) {
-        if (state is UserProfileLoading) {
+        if (state is CurrentUserLoading) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.primary),
           );
         }
-        if (state is UserProfileLoaded) {
+        if (state is CurrentUserLoaded) {
           final profile = state.profile;
 
           return Card(
@@ -173,7 +173,7 @@ class _ProfileInformationState extends State<ProfileInformation> {
             ),
           );
         }
-        if (state is UserProfileError) {
+        if (state is CurrentUserError) {
           return Center(
             child: Text(
               "An error occurred.",

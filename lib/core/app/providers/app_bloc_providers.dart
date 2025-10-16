@@ -6,8 +6,9 @@ import 'package:trackflow/features/audio_recording/presentation/bloc/recording_b
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
 import 'package:trackflow/features/navegation/presentation/cubit/navigation_cubit.dart';
 import 'package:trackflow/features/magic_link/presentation/blocs/magic_link_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
@@ -57,9 +58,12 @@ class AppBlocProviders {
 
       // Auth flow
       BlocProvider<OnboardingBloc>(create: (_) => sl<OnboardingBloc>()),
-      BlocProvider<UserProfileBloc>(
-        create: (_) => sl<UserProfileBloc>()..add(WatchUserProfile()),
+      
+      // Current user profile management
+      BlocProvider<CurrentUserBloc>(
+        create: (_) => sl<CurrentUserBloc>()..add(WatchCurrentUserProfile()),
       ),
+      
       BlocProvider<MagicLinkBloc>(create: (_) => sl<MagicLinkBloc>()),
 
       // Audio system (global)
@@ -143,7 +147,14 @@ class AppBlocProviders {
   /// Providers for artist/user profile screen
   static List<BlocProvider> getArtistProfileProviders() {
     return [
-      BlocProvider<UserProfileBloc>(create: (_) => sl<UserProfileBloc>()),
+      BlocProvider<UserProfilesBloc>(create: (_) => sl<UserProfilesBloc>()),
+    ];
+  }
+
+  /// Providers for viewing other users (collaborator profiles, artist profiles)
+  static List<BlocProvider> getUserProfilesProviders() {
+    return [
+      BlocProvider<UserProfilesBloc>(create: (_) => sl<UserProfilesBloc>()),
     ];
   }
 

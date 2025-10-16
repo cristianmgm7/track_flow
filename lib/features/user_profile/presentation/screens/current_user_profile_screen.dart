@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/hero_user_profile_screen.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/core/di/injection.dart';
 
 /// Screen that displays the current user's profile
 /// 
 /// This wrapper component automatically handles loading the current user's
-/// profile without requiring a userId parameter. It uses the UserProfileBloc
+/// profile without requiring a userId parameter. It uses the CurrentUserBloc
 /// to load the current user's data from session storage.
 class CurrentUserProfileScreen extends StatefulWidget {
   const CurrentUserProfileScreen({super.key});
@@ -32,15 +34,15 @@ class _CurrentUserProfileScreenState extends State<CurrentUserProfileScreen> {
       tag: 'CURRENT_USER_PROFILE_SCREEN',
     );
 
-    // Trigger loading of current user profile (no userId = current user)
-    context.read<UserProfileBloc>().add(WatchUserProfile());
+    // Trigger loading of current user profile
+    context.read<CurrentUserBloc>().add(WatchCurrentUserProfile());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserProfileBloc, UserProfileState>(
+    return BlocBuilder<CurrentUserBloc, CurrentUserState>(
       builder: (context, state) {
-        if (state is UserProfileLoading) {
+        if (state is CurrentUserLoading) {
           return const Scaffold(
             backgroundColor: AppColors.background,
             body: Center(
@@ -49,12 +51,16 @@ class _CurrentUserProfileScreenState extends State<CurrentUserProfileScreen> {
           );
         }
         
-        if (state is UserProfileLoaded) {
+        if (state is CurrentUserLoaded) {
           // Once we have the profile, we can use the HeroUserProfileScreen
-          return HeroUserProfileScreen(userId: state.profile.id);
+          // Provide UserProfilesBloc for the display screen
+          return BlocProvider<UserProfilesBloc>(
+            create: (_) => sl<UserProfilesBloc>(),
+            child: HeroUserProfileScreen(userId: state.profile.id),
+          );
         }
         
-        if (state is UserProfileError) {
+        if (state is CurrentUserError) {
           return Scaffold(
             backgroundColor: AppColors.background,
             body: Center(
@@ -96,7 +102,7 @@ class _CurrentUserProfileScreenState extends State<CurrentUserProfileScreen> {
         }
         
         // Initial state - trigger loading
-        if (state is UserProfileInitial) {
+        if (state is CurrentUserInitial) {
           // This should not happen due to initState, but handle it
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _loadCurrentUserProfile();

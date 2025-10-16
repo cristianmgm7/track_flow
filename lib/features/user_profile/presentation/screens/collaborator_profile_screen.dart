@@ -8,9 +8,9 @@ import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_state.dart';
 
 class CollaboratorProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -26,8 +26,8 @@ class _CollaboratorProfileScreenState extends State<CollaboratorProfileScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<UserProfileBloc>().add(
-      WatchAnyUserProfile(widget.userId.value),
+    context.read<UserProfilesBloc>().add(
+      WatchUserProfile(userId: widget.userId.value),
     );
   }
 
@@ -36,9 +36,9 @@ class _CollaboratorProfileScreenState extends State<CollaboratorProfileScreen> {
     return AppScaffold(
       appBar: AppAppBar(title: 'Profile'),
       backgroundColor: AppColors.background,
-      body: BlocBuilder<UserProfileBloc, UserProfileState>(
+      body: BlocBuilder<UserProfilesBloc, UserProfilesState>(
         builder: (context, state) {
-          if (state is UserProfileLoading || state is UserProfileInitial) {
+          if (state is UserProfilesLoading || state is UserProfilesInitial) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );

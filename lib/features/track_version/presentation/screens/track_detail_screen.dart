@@ -20,8 +20,8 @@ import '../widgets/upload_version_form.dart';
 import '../../../project_detail/presentation/bloc/project_detail_bloc.dart';
 import '../../../project_detail/presentation/bloc/project_detail_event.dart';
 import '../../../project_detail/presentation/bloc/project_detail_state.dart';
-import '../../../user_profile/presentation/bloc/user_profile_bloc.dart';
-import '../../../user_profile/presentation/bloc/user_profile_states.dart';
+import '../../../user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import '../../../user_profile/presentation/bloc/current_user/current_user_state.dart';
 import '../../../projects/domain/entities/project_collaborator.dart';
 import '../../../projects/domain/value_objects/project_role.dart';
 import '../../../projects/domain/value_objects/project_permission.dart';
@@ -145,10 +145,10 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
                 return const SizedBox.shrink();
               }
 
-              // Derive current user id from UserProfileBloc
-              final userState = context.watch<UserProfileBloc>().state;
+              // Derive current user id from CurrentUserBloc
+              final userState = context.watch<CurrentUserBloc>().state;
               final String? currentUserId =
-                  userState is UserProfileLoaded ? userState.profile.id.value : null;
+                  userState is CurrentUserLoaded ? userState.profile.id.value : null;
 
               bool canAddComment = false;
               if (currentUserId != null) {

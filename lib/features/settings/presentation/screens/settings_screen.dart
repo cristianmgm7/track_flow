@@ -11,9 +11,9 @@ import 'package:trackflow/features/settings/presentation/widgets/user_profile_se
 import 'package:trackflow/features/settings/presentation/widgets/sign_out.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/sync/domain/usecases/trigger_upstream_sync_usecase.dart';
 
@@ -30,17 +30,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
 
     // Initialize user profile if not already loaded
-    final userProfileBloc = context.read<UserProfileBloc>();
-    final currentState = userProfileBloc.state;
+    final currentUserBloc = context.read<CurrentUserBloc>();
+    final currentState = currentUserBloc.state;
 
     // Only trigger profile loading if we're in initial state or error state
-    if (currentState is UserProfileInitial ||
-        currentState is UserProfileError) {
+    if (currentState is CurrentUserInitial ||
+        currentState is CurrentUserError) {
       AppLogger.info(
         'SettingsScreen: Initializing user profile loading',
         tag: 'SETTINGS_SCREEN',
       );
-      userProfileBloc.add(WatchUserProfile());
+      currentUserBloc.add(WatchCurrentUserProfile());
     } else {
       AppLogger.info(
         'SettingsScreen: User profile already loaded or loading',

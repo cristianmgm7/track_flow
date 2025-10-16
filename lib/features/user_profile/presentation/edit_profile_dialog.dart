@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/ui/dialogs/app_dialog.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:trackflow/core/utils/image_utils.dart';
 import 'package:trackflow/core/widgets/user_avatar.dart';
@@ -125,7 +125,7 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
         creativeRole: _creativeRole,
         createdAt: DateTime.now(),
       );
-      context.read<UserProfileBloc>().add(SaveUserProfile(updatedProfile));
+      context.read<CurrentUserBloc>().add(UpdateCurrentUserProfile(updatedProfile));
       setState(() => _isSubmitting = false);
       Navigator.of(context).pop();
     }
@@ -142,21 +142,14 @@ class _EditProfileDialogState extends State<EditProfileDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              BlocBuilder<UserProfileBloc, UserProfileState>(
+              BlocBuilder<CurrentUserBloc, CurrentUserState>(
                 builder: (context, state) {
                   String? localPath;
                   String? remoteUrl;
-                  if (state is UserProfileLoaded) {
+                  if (state is CurrentUserLoaded) {
                     localPath = state.profile.avatarLocalPath;
                     remoteUrl = state.profile.avatarUrl;
-                  } else if (state is ProfileComplete) {
-                    localPath = state.profile.avatarLocalPath;
-                    remoteUrl = state.profile.avatarUrl;
-                  } else if (state is ProfileIncomplete &&
-                      state.profile != null) {
-                    localPath = state.profile!.avatarLocalPath;
-                    remoteUrl = state.profile!.avatarUrl;
-                  } else if (state is ProfileCreationDataLoaded) {
+                  } else if (state is CurrentUserCreationDataLoaded) {
                     remoteUrl = state.photoUrl;
                   }
 

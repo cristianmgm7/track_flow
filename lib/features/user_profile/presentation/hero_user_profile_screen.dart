@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 // import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_state.dart';
 import 'package:trackflow/features/user_profile/presentation/edit_profile_dialog.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
@@ -36,7 +36,7 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
       tag: 'HERO_USER_PROFILE_SCREEN',
     );
 
-    context.read<UserProfileBloc>().add(
+    context.read<UserProfilesBloc>().add(
       WatchUserProfile(userId: widget.userId.value),
     );
   }
@@ -57,9 +57,9 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
             // The UI will handle this through the UserProfileError state
           }
         },
-        child: BlocBuilder<UserProfileBloc, UserProfileState>(
+        child: BlocBuilder<UserProfilesBloc, UserProfilesState>(
           builder: (context, state) {
-            if (state is UserProfileLoading) {
+            if (state is UserProfilesLoading) {
               return const Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
               );
@@ -136,7 +136,7 @@ class _HeroUserProfileScreenState extends State<HeroUserProfileScreen> {
                 ),
               );
             }
-            if (state is UserProfileError) {
+            if (state is UserProfilesError) {
               return _buildErrorState();
             }
             return const SizedBox.shrink();

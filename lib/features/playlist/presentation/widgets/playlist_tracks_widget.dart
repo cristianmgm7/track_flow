@@ -22,8 +22,8 @@ import 'package:trackflow/features/audio_context/presentation/bloc/audio_context
 import 'package:trackflow/features/audio_context/presentation/bloc/audio_context_event.dart';
 import 'package:trackflow/features/audio_track/presentation/cubit/track_upload_status_cubit.dart';
 import 'package:trackflow/core/di/injection.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_role.dart';
@@ -66,9 +66,9 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
           final tracksForPlayer = state.tracks;
           // Permissions: determine if user can upload tracks in current project
           final project = context.watch<ProjectDetailBloc>().state.project;
-          final userState = context.watch<UserProfileBloc>().state;
+          final userState = context.watch<CurrentUserBloc>().state;
           final String? currentUserId =
-              userState is UserProfileLoaded ? userState.profile.id.value : null;
+              userState is CurrentUserLoaded ? userState.profile.id.value : null;
           bool canUploadTrack = false;
           if (project != null && currentUserId != null) {
             final me = project.collaborators.firstWhere(

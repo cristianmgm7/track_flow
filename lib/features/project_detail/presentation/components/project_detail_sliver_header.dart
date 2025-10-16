@@ -6,8 +6,8 @@ import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/project_detail_actions_sheet.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 
@@ -131,9 +131,9 @@ class ProjectDetailSliverHeader extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       const SizedBox(height: 16),
-                      BlocBuilder<UserProfileBloc, UserProfileState>(
+                      BlocBuilder<CurrentUserBloc, CurrentUserState>(
                         builder: (context, profileState) {
-                          final currentUserId = profileState is UserProfileLoaded
+                          final currentUserId = profileState is CurrentUserLoaded
                               ? profileState.profile.id.value
                               : null;
                           final hasEditPermission = _userHasEditPermission(currentUserId);

@@ -9,9 +9,9 @@ import 'package:trackflow/features/audio_player/presentation/widgets/miniplayer_
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/bottom_nav.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_state.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
@@ -45,14 +45,14 @@ class _MainScaffoldState extends State<MainScaffold> {
             tag: 'MAIN_SCAFFOLD',
           );
 
-          // Limpiar UserProfileBloc
-          context.read<UserProfileBloc>().add(ClearUserProfile());
+          // Limpiar CurrentUserBloc
+          context.read<CurrentUserBloc>().add(ClearCurrentUserProfile());
         }
       },
-      child: BlocListener<UserProfileBloc, UserProfileState>(
+      child: BlocListener<CurrentUserBloc, CurrentUserState>(
         listener: (context, state) {
           // Handle profile state changes if needed
-          if (state is UserProfileSaved) {
+          if (state is CurrentUserSaved) {
             // Profile was successfully created/updated
             // The router will handle navigation based on profile completeness
           }

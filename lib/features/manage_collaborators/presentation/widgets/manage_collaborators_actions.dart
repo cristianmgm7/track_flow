@@ -8,8 +8,8 @@ import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/widgets/radio_to_update_collaborator_role.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
 
@@ -19,11 +19,11 @@ class CollaboratorActions {
     required BuildContext context,
     required UserProfile collaborator,
     required ManageCollaboratorsBloc manageCollaboratorsBloc,
-    required UserProfileBloc userProfileBloc,
+    required CurrentUserBloc currentUserBloc,
   }) {
-    final state = userProfileBloc.state;
+    final state = currentUserBloc.state;
     final String? currentUserId =
-        state is UserProfileLoaded ? state.profile.id.value : null;
+        state is CurrentUserLoaded ? state.profile.id.value : null;
 
     ProjectCollaborator? currentUserCollaborator;
     if (currentUserId != null) {

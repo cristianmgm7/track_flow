@@ -17,8 +17,8 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:async';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 
 class TrackActions {
   static List<AppBottomSheetAction> forTrack(
@@ -28,9 +28,9 @@ class TrackActions {
     Project? project,
   ) {
     // Check if user has download permission
-    final userState = context.read<UserProfileBloc>().state;
+    final userState = context.read<CurrentUserBloc>().state;
     final String? currentUserId =
-        userState is UserProfileLoaded ? userState.profile.id.value : null;
+        userState is CurrentUserLoaded ? userState.profile.id.value : null;
     bool canDownload = false;
     if (currentUserId != null && project != null) {
       try {

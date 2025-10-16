@@ -11,8 +11,8 @@ import 'package:trackflow/features/projects/domain/value_objects/project_role.da
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/core/di/injection.dart';
 import 'package:trackflow/features/invitations/presentation/blocs/actor/project_invitation_actor_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/projects/domain/value_objects/project_permission.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/features/projects/domain/entities/project_collaborator.dart';
@@ -110,9 +110,9 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                     // Invite collaborator button at the end (permission-gated)
                     Builder(
                       builder: (context) {
-                        final userState = context.watch<UserProfileBloc>().state;
+                        final userState = context.watch<CurrentUserBloc>().state;
                         final String? currentUserId =
-                            userState is UserProfileLoaded ? userState.profile.id.value : null;
+                            userState is CurrentUserLoaded ? userState.profile.id.value : null;
                         bool canInvite = false;
                         if (state.project != null && currentUserId != null) {
                           final me = state.project!.collaborators.firstWhere(

@@ -4,9 +4,9 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_bloc.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_event.dart';
-import 'package:trackflow/features/user_profile/presentation/bloc/user_profile_states.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/user_profile/presentation/components/profile_welcome_message.dart';
 import 'package:trackflow/features/user_profile/presentation/components/profile_creation_form.dart';
 import 'package:trackflow/features/user_profile/presentation/components/profile_info_card.dart';
@@ -45,7 +45,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   }
 
   void _requestProfileCreationData() {
-    context.read<UserProfileBloc>().add(GetProfileCreationData());
+    context.read<CurrentUserBloc>().add(GetCurrentUserProfileCreationData());
   }
 
   void _handleProfileSubmit(UserProfile profile) {
@@ -67,7 +67,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       tag: 'PROFILE_CREATION',
     );
 
-    context.read<UserProfileBloc>().add(CreateUserProfile(completeProfile));
+    context.read<CurrentUserBloc>().add(CreateCurrentUserProfile(completeProfile));
   }
 
   void _showError(String message) {
@@ -92,7 +92,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<UserProfileBloc, UserProfileState>(
+    return BlocListener<CurrentUserBloc, CurrentUserState>(
       listener: (context, state) {
         _handleBlocState(state);
       },
@@ -141,8 +141,8 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     );
   }
 
-  void _handleBlocState(UserProfileState state) {
-    if (state is ProfileCreationDataLoaded) {
+  void _handleBlocState(CurrentUserState state) {
+    if (state is CurrentUserCreationDataLoaded) {
       setState(() {
         _userId = state.userId;
         _userEmail = state.email;
@@ -154,35 +154,20 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         'Profile creation: Profile creation data loaded - userId: $_userId, email: $_userEmail, isGoogleUser: $_isGoogleUser',
         tag: 'PROFILE_CREATION',
       );
-    } else if (state is UserDataLoaded) {
-      setState(() {
-        _userId = state.userId;
-        _userEmail = state.email;
-      });
-      AppLogger.info(
-        'Profile creation: User data loaded - userId: $_userId, email: $_userEmail',
-        tag: 'PROFILE_CREATION',
-      );
-    } else if (state is UserDataError) {
-      AppLogger.error(
-        'Profile creation: Failed to load user data: ${state.message}',
-        tag: 'PROFILE_CREATION',
-      );
-      _showError('Failed to load user session: ${state.message}');
-    } else if (state is UserProfileSaved) {
+    } else if (state is CurrentUserSaved) {
       setState(() => _isLoading = false);
       _showSuccess('Profile created successfully!');
       _handleAppFlowCheck();
-    } else if (state is UserProfileError) {
+    } else if (state is CurrentUserError) {
       setState(() => _isLoading = false);
-      AppLogger.error('Profile creation failed', tag: 'PROFILE_CREATION');
+      AppLogger.error('Profile creation failed: ${state.message}', tag: 'PROFILE_CREATION');
       _showError('Failed to create profile. Please try again.');
-    } else if (state is UserProfileLoading) {
+    } else if (state is CurrentUserLoading) {
       AppLogger.info(
         'Profile creation in progress...',
         tag: 'PROFILE_CREATION',
       );
-    } else if (state is UserProfileLoaded) {
+    } else if (state is CurrentUserLoaded) {
       AppLogger.info(
         'Profile loaded after creation: ${state.profile.name}',
         tag: 'PROFILE_CREATION',

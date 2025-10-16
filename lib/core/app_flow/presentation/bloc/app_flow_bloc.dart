@@ -114,7 +114,7 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
     }
   }
 
-  /// Schedule delayed cleanup to ensure all BLoCs are registered
+  /// Trigger cleanup immediately
   void _scheduleDelayedCleanup() {
     if (_isSessionCleanupInProgress) {
       return;
@@ -122,14 +122,9 @@ class AppFlowBloc extends Bloc<AppFlowEvent, AppFlowState> {
 
     _isSessionCleanupInProgress = true;
 
-    AppLogger.info(
-      'Scheduling delayed cleanup',
-      tag: 'APP_FLOW_BLOC',
-    );
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _clearAllUserState();
-    });
+    // BLoCs are registered immediately via ResetableBlocMixin constructor
+    // No need for delay
+    _clearAllUserState();
   }
 
   /// Clear all user-related state when logging out

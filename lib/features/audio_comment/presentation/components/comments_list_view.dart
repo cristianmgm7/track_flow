@@ -5,8 +5,8 @@ import '../../../../core/entities/unique_id.dart';
 import 'audio_comment_card.dart';
 import '../../domain/entities/audio_comment.dart';
 import '../../../user_profile/domain/entities/user_profile.dart';
-import '../../../user_profile/presentation/bloc/user_profile_bloc.dart';
-import '../../../user_profile/presentation/bloc/user_profile_states.dart';
+import '../../../user_profile/presentation/bloc/current_user/current_user_bloc.dart';
+import '../../../user_profile/presentation/bloc/current_user/current_user_state.dart';
 
 /// Widget that displays a list of audio comments with proper error handling
 /// for missing collaborators
@@ -37,11 +37,11 @@ class CommentsListView extends StatelessWidget {
       );
     }
 
-    return BlocBuilder<UserProfileBloc, UserProfileState>(
+    return BlocBuilder<CurrentUserBloc, CurrentUserState>(
       buildWhen: (previous, current) => previous.runtimeType != current.runtimeType,
       builder: (context, userState) {
         final String? currentUserId =
-            userState is UserProfileLoaded ? userState.profile.id.value : null;
+            userState is CurrentUserLoaded ? userState.profile.id.value : null;
         return ListView.builder(
           reverse: false,
           itemCount: comments.length,
