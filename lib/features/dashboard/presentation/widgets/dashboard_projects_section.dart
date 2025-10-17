@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/projects/presentation/components/project_component.dart';
 import 'package:trackflow/features/projects/presentation/widgets/create_project_form.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_section_header.dart';
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/ui/project/project_card.dart';
 
 class DashboardProjectsSection extends StatelessWidget {
   final List<Project> projects;
@@ -38,7 +38,7 @@ class DashboardProjectsSection extends StatelessWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     return Padding( 
-      padding: EdgeInsets.all(Dimensions.space24),
+      padding: EdgeInsets.all(Dimensions.space12),
       child: Center(
         child: Column(
           children: [
@@ -92,6 +92,10 @@ class DashboardProjectsSection extends StatelessWidget {
 
   Widget _buildProjectsGrid(BuildContext context) {
     return GridView.builder(
+      padding: EdgeInsets.symmetric(
+        horizontal: Dimensions.space0,
+        vertical: Dimensions.space0,
+      ),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -103,13 +107,10 @@ class DashboardProjectsSection extends StatelessWidget {
       itemCount: projects.length,
       itemBuilder: (context, index) {
         final project = projects[index];
-        return ProjectCard(
-          project: project,
-          onTap: () => context.push(
-            AppRoutes.projectDetails.replaceAll(':id', project.id.value),
-            extra: project,
-          ),
-        );
+        return ProjectCardPorpose.dashboard(context, project.name.value.fold((l) => '', (r) => r), project.description.value.fold((l) => '', (r) => r), project.createdAt, () => context.push(
+          AppRoutes.projectDetails.replaceAll(':id', project.id.value),
+          extra: project,
+        ));
       },
     );
   }

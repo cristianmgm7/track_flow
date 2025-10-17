@@ -25,6 +25,7 @@ class AppFormField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final FocusNode? focusNode;
+  final TextCapitalization? textCapitalization;
 
   const AppFormField({
     super.key,
@@ -47,6 +48,7 @@ class AppFormField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.focusNode,
+    this.textCapitalization,
   });
 
   @override
@@ -76,6 +78,7 @@ class AppFormField extends StatelessWidget {
           textInputAction: textInputAction,
           focusNode: focusNode,
           style: AppTextStyle.bodyMedium,
+          textCapitalization: textCapitalization ?? TextCapitalization.sentences,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTextStyle.bodyMedium.copyWith(

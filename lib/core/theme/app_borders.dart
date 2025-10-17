@@ -3,6 +3,7 @@ import 'app_colors.dart';
 
 class AppBorders {
   // Border radius values
+  static const double radiusTiny = 4.0;
   static const double radiusSmall = 8.0;
   static const double radiusMedium = 12.0;
   static const double radiusLarge = 16.0;
@@ -12,6 +13,10 @@ class AppBorders {
 
   // Border radius objects
   static const BorderRadius none = BorderRadius.zero;
+  static const BorderRadius tiny = BorderRadius.all(
+    Radius.circular(radiusTiny),
+  );
+
 
   static const BorderRadius small = BorderRadius.all(
     Radius.circular(radiusSmall),

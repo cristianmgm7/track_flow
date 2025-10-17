@@ -5,6 +5,7 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
+import 'package:trackflow/features/ui/project/project_cover_art.dart';
 
 class AppProjectCard extends StatelessWidget {
   final String title;
@@ -15,6 +16,19 @@ class AppProjectCard extends StatelessWidget {
   final Widget? leading;
   final List<Widget>? actions;
 
+  // cardr styling
+  final double? height;
+  final double? width;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final BorderRadius? borderRadius;
+  final Color? backgroundColor;
+  final List<BoxShadow>? boxShadow;
+  final bool enableHover;
+  final bool enableTapAnimation;
+
+  final bool isDashboard;
+
   const AppProjectCard({
     super.key,
     required this.title,
@@ -24,32 +38,34 @@ class AppProjectCard extends StatelessWidget {
     this.trailing,
     this.leading,
     this.actions,
+    this.height,
+    this.width,
+    this.padding,
+    this.margin,
+    this.borderRadius,
+    this.backgroundColor,
+    this.boxShadow,
+    this.enableHover = true,
+    this.enableTapAnimation = true,
+    this.isDashboard = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return BaseCard(
       onTap: onTap,
-      margin: EdgeInsets.zero,
-      borderRadius: BorderRadius.zero,
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.space16,
-        vertical: Dimensions.space8,
-      ),
+      height: height,
+      margin: margin,
+      borderRadius: borderRadius,
+      padding: padding,
+      backgroundColor: backgroundColor,
+      boxShadow: boxShadow,
+      enableHover: enableHover,
+      enableTapAnimation: enableTapAnimation,
       child: Row(
-        children: [
-          // Cover art on the left
-          if (leading != null) ...[
-            leading!,
-            SizedBox(width: Dimensions.space12),
-          ],
+        children: [leading != null ? leading! : SizedBox.shrink(), SizedBox(width: Dimensions.space8),
           // Content stacked vertically on the right
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
+          Text(
                   title,
                   style: AppTextStyle.titleMedium.copyWith(
                     fontSize: 16,
@@ -58,21 +74,6 @@ class AppProjectCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: Dimensions.space2),
-                Text(
-                  description?.isNotEmpty == true
-                      ? description!
-                      : 'Project • ${_getFormattedDuration(createdAt)} ago',
-                  style: AppTextStyle.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
           // Trailing actions/icons on the far right
           if (trailing != null) ...[
             SizedBox(width: Dimensions.space8),
@@ -87,18 +88,7 @@ class AppProjectCard extends StatelessWidget {
     );
   }
 
-  String _getFormattedDuration(DateTime createdAt) {
-    final duration = DateTime.now().difference(createdAt);
-    if (duration.inDays > 0) {
-      return '${duration.inDays}d';
-    } else if (duration.inHours > 0) {
-      return '${duration.inHours}h';
-    } else if (duration.inMinutes > 0) {
-      return '${duration.inMinutes}m';
-    } else {
-      return 'just now';
-    }
-  }
+  
 }
 
 class AppProjectList extends StatelessWidget {
@@ -378,6 +368,55 @@ class AppProjectSuccessState extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+
+class ProjectCardPorpose {
+
+  static AppProjectCard dashboard (BuildContext context, String title, String description, DateTime createdAt, VoidCallback onTap) {
+    return AppProjectCard(
+      title: title,
+      description: description,
+      createdAt: createdAt,
+      onTap: onTap,
+      backgroundColor: AppColors.grey700,
+      height: Dimensions.avatarLarge,
+      margin: EdgeInsets.symmetric(
+        horizontal: Dimensions.space8,
+        vertical: Dimensions.space8,
+      ),
+      borderRadius: AppBorders.tiny,
+      padding: EdgeInsets.symmetric(
+        horizontal: Dimensions.space0,
+        vertical: Dimensions.space0,
+      ),
+      leading: ProjectCoverArtSizes.large(
+        projectName: title,
+        projectDescription: description,
+      ),
+    );
+  }
+
+  static AppProjectCard list (BuildContext context, String title, String description, DateTime createdAt, VoidCallback onTap) {
+    return AppProjectCard(
+      title: title,
+      description: description,
+      createdAt: createdAt,
+      onTap: onTap,
+      backgroundColor: AppColors.surface,
+      height: Dimensions.avatarLarge,
+      margin: EdgeInsets.symmetric(
+        horizontal: Dimensions.space8,
+        vertical: Dimensions.space8,
+      ),
+      borderRadius: AppBorders.tiny,
+      padding: EdgeInsets.symmetric(
+        horizontal: Dimensions.space0,
+        vertical: Dimensions.space0,
       ),
     );
   }

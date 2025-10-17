@@ -41,7 +41,7 @@ class VoiceMemoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
       ),
       child: Padding(
-        padding: EdgeInsets.all(Dimensions.space12),
+        padding: EdgeInsets.symmetric(horizontal: Dimensions.space12, vertical: Dimensions.space0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -64,6 +64,7 @@ class VoiceMemoCard extends StatelessWidget {
             ),
 
             // SizedBox(height: Dimensions.space12),
+            SizedBox(height: Dimensions.space4),
 
             // Playback Controls Row
             VoiceMemoPlaybackControls(

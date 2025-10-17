@@ -18,7 +18,7 @@ class ProjectCoverArt extends StatelessWidget {
     super.key,
     required this.projectName,
     this.projectDescription,
-    this.size = 56,
+    this.size = Dimensions.avatarMedium,
     this.imageUrl,
     this.showShadow = false,
     this.borderRadius,
@@ -161,9 +161,9 @@ class ProjectCoverArtSizes {
       projectName: projectName,
       projectDescription: projectDescription,
       imageUrl: imageUrl,
-      size: Dimensions.avatarLarge, // 48
+      size: Dimensions.avatarSmall, // 32
       showShadow: showShadow,
-      borderRadius: AppBorders.small,
+      borderRadius: AppBorders.tiny,
     );
   }
 
@@ -177,9 +177,9 @@ class ProjectCoverArtSizes {
       projectName: projectName,
       projectDescription: projectDescription,
       imageUrl: imageUrl,
-      size: 56, // Spotify-style size
+      size: Dimensions.avatarMedium, // 48
       showShadow: showShadow,
-      borderRadius: AppBorders.small,
+      borderRadius: AppBorders.tiny,
     );
   }
 
@@ -193,9 +193,9 @@ class ProjectCoverArtSizes {
       projectName: projectName,
       projectDescription: projectDescription,
       imageUrl: imageUrl,
-      size: Dimensions.avatarXLarge, // 64
+      size: Dimensions.avatarLarge, // 64
       showShadow: showShadow,
-      borderRadius: AppBorders.medium,
+      borderRadius: AppBorders.tiny,
     );
   }
 }

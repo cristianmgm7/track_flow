@@ -22,7 +22,7 @@ class ProjectCard extends StatelessWidget {
       description: projectDescription,
       createdAt: project.createdAt,
       onTap: onTap,
-      leading: ProjectCoverArtSizes.small(
+      leading: ProjectCoverArtSizes.large(
         projectName: projectName,
         projectDescription: projectDescription,
         // In the future, we can add: imageUrl: project.coverArtUrl,

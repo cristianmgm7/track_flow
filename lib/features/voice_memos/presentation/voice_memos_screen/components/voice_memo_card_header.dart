@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_text_style.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../ui/menus/app_popup_menu.dart';
 import '../../../domain/entities/voice_memo.dart';
@@ -16,13 +17,6 @@ class VoiceMemoCardHeader extends StatelessWidget {
     required this.onDeletePressed,
   });
 
-  bool get _fileExists {
-    try {
-      return File(memo.fileLocalPath).existsSync();
-    } catch (e) {
-      return false;
-    }
-  }
 
   void _showMenu(BuildContext context) {
     showAppMenu<String>(
@@ -59,35 +53,15 @@ class VoiceMemoCardHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Title with error indicator if file is missing
-        Expanded(
-          child: Row(
-            children: [
-              if (!_fileExists) ...[
-                Icon(
-                  Icons.warning_amber,
-                  color: Colors.orange[300],
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Text(
-                  memo.title,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: _fileExists ? 1.0 : 0.6),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
+        Text(
+          memo.title,
+          style: AppTextStyle.titleSmall,
+          overflow: TextOverflow.ellipsis,
         ),
 
         // Menu Button
         IconButton(
+          padding: EdgeInsets.all(Dimensions.space0),
           icon: const Icon(Icons.more_horiz, color: Colors.white),
           onPressed: () => _showMenu(context),
         ),
