@@ -4,7 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i5;
-import 'dart:io' as _i10;
+import 'dart:io' as _i14;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
@@ -24,19 +24,19 @@ import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.d
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart'
     as _i21;
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
-    as _i12;
+    as _i11;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart'
     as _i3;
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart'
-    as _i11;
+    as _i10;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i8;
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
     as _i6;
 import 'package:trackflow/features/track_version/domain/entities/track_version.dart'
-    as _i14;
-import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart'
     as _i13;
+import 'package:trackflow/features/track_version/domain/repositories/track_version_repository.dart'
+    as _i12;
 import 'package:trackflow/features/waveform/domain/entities/audio_waveform.dart'
     as _i16;
 import 'package:trackflow/features/waveform/domain/repositories/waveform_repository.dart'
@@ -315,39 +315,13 @@ class MockProjectsRepository extends _i1.Mock
         ),
         returnValue: _i5.Stream<_i2.Either<_i7.Failure, _i8.Project?>>.empty(),
       ) as _i5.Stream<_i2.Either<_i7.Failure, _i8.Project?>>);
-
-  @override
-  _i5.Future<_i2.Either<_i7.Failure, String>> uploadCoverArt(
-    _i9.ProjectId? projectId,
-    _i10.File? imageFile,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #uploadCoverArt,
-          [
-            projectId,
-            imageFile,
-          ],
-        ),
-        returnValue: _i5.Future<_i2.Either<_i7.Failure, String>>.value(
-            _FakeEither_0<_i7.Failure, String>(
-          this,
-          Invocation.method(
-            #uploadCoverArt,
-            [
-              projectId,
-              imageFile,
-            ],
-          ),
-        )),
-      ) as _i5.Future<_i2.Either<_i7.Failure, String>>);
 }
 
 /// A class which mocks [ProjectTrackService].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockProjectTrackService extends _i1.Mock
-    implements _i11.ProjectTrackService {
+    implements _i10.ProjectTrackService {
   MockProjectTrackService() {
     _i1.throwOnMissingStub(this);
   }
@@ -363,7 +337,7 @@ class MockProjectTrackService extends _i1.Mock
 
   @override
   _i5.Stream<
-      _i2.Either<_i7.Failure, List<_i12.AudioTrack>>> watchTracksByProject(
+      _i2.Either<_i7.Failure, List<_i11.AudioTrack>>> watchTracksByProject(
           _i9.ProjectId? projectId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -371,11 +345,11 @@ class MockProjectTrackService extends _i1.Mock
           [projectId],
         ),
         returnValue:
-            _i5.Stream<_i2.Either<_i7.Failure, List<_i12.AudioTrack>>>.empty(),
-      ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i12.AudioTrack>>>);
+            _i5.Stream<_i2.Either<_i7.Failure, List<_i11.AudioTrack>>>.empty(),
+      ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i11.AudioTrack>>>);
 
   @override
-  _i5.Future<_i2.Either<_i7.Failure, _i12.AudioTrack>> addTrackToProject({
+  _i5.Future<_i2.Either<_i7.Failure, _i11.AudioTrack>> addTrackToProject({
     required _i8.Project? project,
     required _i9.UserId? requester,
     required String? name,
@@ -396,8 +370,8 @@ class MockProjectTrackService extends _i1.Mock
             #activeVersionId: activeVersionId,
           },
         ),
-        returnValue: _i5.Future<_i2.Either<_i7.Failure, _i12.AudioTrack>>.value(
-            _FakeEither_0<_i7.Failure, _i12.AudioTrack>(
+        returnValue: _i5.Future<_i2.Either<_i7.Failure, _i11.AudioTrack>>.value(
+            _FakeEither_0<_i7.Failure, _i11.AudioTrack>(
           this,
           Invocation.method(
             #addTrackToProject,
@@ -412,7 +386,7 @@ class MockProjectTrackService extends _i1.Mock
             },
           ),
         )),
-      ) as _i5.Future<_i2.Either<_i7.Failure, _i12.AudioTrack>>);
+      ) as _i5.Future<_i2.Either<_i7.Failure, _i11.AudioTrack>>);
 
   @override
   _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>> deleteTrack({
@@ -481,15 +455,15 @@ class MockProjectTrackService extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockTrackVersionRepository extends _i1.Mock
-    implements _i13.TrackVersionRepository {
+    implements _i12.TrackVersionRepository {
   MockTrackVersionRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>> addVersion({
+  _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>> addVersion({
     required _i9.AudioTrackId? trackId,
-    required _i10.File? file,
+    required _i14.File? file,
     String? label,
     Duration? duration,
     required _i9.UserId? createdBy,
@@ -507,8 +481,8 @@ class MockTrackVersionRepository extends _i1.Mock
           },
         ),
         returnValue:
-            _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>>.value(
-                _FakeEither_0<_i7.Failure, _i14.TrackVersion>(
+            _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>>.value(
+                _FakeEither_0<_i7.Failure, _i13.TrackVersion>(
           this,
           Invocation.method(
             #addVersion,
@@ -522,39 +496,39 @@ class MockTrackVersionRepository extends _i1.Mock
             },
           ),
         )),
-      ) as _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>>);
+      ) as _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>>);
 
   @override
-  _i5.Stream<_i2.Either<_i7.Failure, List<_i14.TrackVersion>>>
+  _i5.Stream<_i2.Either<_i7.Failure, List<_i13.TrackVersion>>>
       watchVersionsByTrack(_i9.AudioTrackId? trackId) => (super.noSuchMethod(
             Invocation.method(
               #watchVersionsByTrack,
               [trackId],
             ),
             returnValue: _i5.Stream<
-                _i2.Either<_i7.Failure, List<_i14.TrackVersion>>>.empty(),
-          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i14.TrackVersion>>>);
+                _i2.Either<_i7.Failure, List<_i13.TrackVersion>>>.empty(),
+          ) as _i5.Stream<_i2.Either<_i7.Failure, List<_i13.TrackVersion>>>);
 
   @override
-  _i5.Future<_i2.Either<_i7.Failure, List<_i14.TrackVersion>>>
+  _i5.Future<_i2.Either<_i7.Failure, List<_i13.TrackVersion>>>
       getVersionsByTrack(_i9.AudioTrackId? trackId) => (super.noSuchMethod(
             Invocation.method(
               #getVersionsByTrack,
               [trackId],
             ),
             returnValue: _i5
-                .Future<_i2.Either<_i7.Failure, List<_i14.TrackVersion>>>.value(
-                _FakeEither_0<_i7.Failure, List<_i14.TrackVersion>>(
+                .Future<_i2.Either<_i7.Failure, List<_i13.TrackVersion>>>.value(
+                _FakeEither_0<_i7.Failure, List<_i13.TrackVersion>>(
               this,
               Invocation.method(
                 #getVersionsByTrack,
                 [trackId],
               ),
             )),
-          ) as _i5.Future<_i2.Either<_i7.Failure, List<_i14.TrackVersion>>>);
+          ) as _i5.Future<_i2.Either<_i7.Failure, List<_i13.TrackVersion>>>);
 
   @override
-  _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>> getById(
+  _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>> getById(
           _i9.TrackVersionId? id) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -562,18 +536,18 @@ class MockTrackVersionRepository extends _i1.Mock
           [id],
         ),
         returnValue:
-            _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>>.value(
-                _FakeEither_0<_i7.Failure, _i14.TrackVersion>(
+            _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>>.value(
+                _FakeEither_0<_i7.Failure, _i13.TrackVersion>(
           this,
           Invocation.method(
             #getById,
             [id],
           ),
         )),
-      ) as _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>>);
+      ) as _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>>);
 
   @override
-  _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>> getActiveVersion(
+  _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>> getActiveVersion(
           _i9.AudioTrackId? trackId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -581,15 +555,15 @@ class MockTrackVersionRepository extends _i1.Mock
           [trackId],
         ),
         returnValue:
-            _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>>.value(
-                _FakeEither_0<_i7.Failure, _i14.TrackVersion>(
+            _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>>.value(
+                _FakeEither_0<_i7.Failure, _i13.TrackVersion>(
           this,
           Invocation.method(
             #getActiveVersion,
             [trackId],
           ),
         )),
-      ) as _i5.Future<_i2.Either<_i7.Failure, _i14.TrackVersion>>);
+      ) as _i5.Future<_i2.Either<_i7.Failure, _i13.TrackVersion>>);
 
   @override
   _i5.Future<_i2.Either<_i7.Failure, _i2.Unit>> setActiveVersion({
@@ -807,7 +781,7 @@ class MockAudioStorageRepository extends _i1.Mock
   _i5.Future<_i2.Either<_i18.CacheFailure, _i19.CachedAudio>> storeAudio(
     _i9.AudioTrackId? trackId,
     _i9.TrackVersionId? versionId,
-    _i10.File? audioFile, {
+    _i14.File? audioFile, {
     _i20.DirectoryType? directoryType = _i20.DirectoryType.audioCache,
   }) =>
       (super.noSuchMethod(

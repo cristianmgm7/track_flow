@@ -520,6 +520,24 @@ class MockAudioTrackRepository extends _i1.Mock
       ) as _i4.Future<_i2.Either<_i11.Failure, _i2.Unit>>);
 
   @override
+  _i4.Future<_i2.Either<_i11.Failure, _i2.Unit>> updateTrack(
+          _i12.AudioTrack? track) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateTrack,
+          [track],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i11.Failure, _i2.Unit>>.value(
+            _FakeEither_0<_i11.Failure, _i2.Unit>(
+          this,
+          Invocation.method(
+            #updateTrack,
+            [track],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i11.Failure, _i2.Unit>>);
+
+  @override
   _i4.Future<_i2.Either<_i11.Failure, _i2.Unit>> deleteAllTracks() =>
       (super.noSuchMethod(
         Invocation.method(
@@ -866,32 +884,6 @@ class MockProjectsRepository extends _i1.Mock
         returnValue:
             _i4.Stream<_i2.Either<_i11.Failure, _i16.Project?>>.empty(),
       ) as _i4.Stream<_i2.Either<_i11.Failure, _i16.Project?>>);
-
-  @override
-  _i4.Future<_i2.Either<_i11.Failure, String>> uploadCoverArt(
-    _i7.ProjectId? projectId,
-    _i8.File? imageFile,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #uploadCoverArt,
-          [
-            projectId,
-            imageFile,
-          ],
-        ),
-        returnValue: _i4.Future<_i2.Either<_i11.Failure, String>>.value(
-            _FakeEither_0<_i11.Failure, String>(
-          this,
-          Invocation.method(
-            #uploadCoverArt,
-            [
-              projectId,
-              imageFile,
-            ],
-          ),
-        )),
-      ) as _i4.Future<_i2.Either<_i11.Failure, String>>);
 }
 
 /// A class which mocks [SessionService].

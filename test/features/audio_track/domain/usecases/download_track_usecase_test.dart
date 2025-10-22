@@ -66,7 +66,7 @@ void main() {
       final track = AudioTrack(
         id: trackId,
         name: 'My Test Track',
-        url: 'https://example.com/track.mp3',
+        coverUrl: 'https://example.com/track.mp3',
         duration: const Duration(minutes: 3),
         projectId: projectId,
         uploadedBy: userId,
@@ -127,7 +127,7 @@ void main() {
       final track = AudioTrack(
         id: trackId,
         name: 'Test Track',
-        url: 'https://example.com/track.mp3',
+        coverUrl: 'https://example.com/track.mp3',
         duration: const Duration(minutes: 3),
         projectId: projectId,
         uploadedBy: userId,
@@ -171,7 +171,7 @@ void main() {
       final track = AudioTrack(
         id: trackId,
         name: 'Track: Name/With\\Special*Chars',
-        url: 'https://example.com/track.mp3',
+        coverUrl: 'https://example.com/track.mp3',
         duration: const Duration(minutes: 3),
         projectId: projectId,
         uploadedBy: userId,
@@ -233,7 +233,7 @@ void main() {
       final track = AudioTrack(
         id: trackId,
         name: 'Test Track',
-        url: 'https://example.com/track.mp3',
+        coverUrl: 'https://example.com/track.mp3',
         duration: const Duration(minutes: 3),
         projectId: projectId,
         uploadedBy: userId,
