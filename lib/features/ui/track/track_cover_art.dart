@@ -5,6 +5,7 @@ import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/domain/entities/audio_track_metadata.dart';
+import 'dart:io';
 import 'dart:math' as math;
 
 class TrackCoverArt extends StatelessWidget {
@@ -27,14 +28,34 @@ class TrackCoverArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? url = imageUrl ?? metadata?.coverUrl;
-    if (url != null && url.isNotEmpty) {
-      return _buildImageCover(url);
+    // Priority 1: Explicit imageUrl parameter (local or remote)
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      if (!imageUrl!.startsWith('http')) {
+        return _buildLocalImageCover();
+      }
+      return _buildImageCover();
     }
+
+    // Priority 2: Track's coverLocalPath
+    if (track != null && track!.coverLocalPath != null && track!.coverLocalPath!.isNotEmpty) {
+      return _buildTrackLocalImageCover();
+    }
+
+    // Priority 3: Track's coverUrl
+    if (track != null && track!.coverUrl.isNotEmpty) {
+      return _buildTrackImageCover();
+    }
+
+    // Priority 4: Metadata coverUrl (fallback to project cover art)
+    if (metadata?.coverUrl != null && metadata!.coverUrl!.isNotEmpty) {
+      return _buildMetadataImageCover();
+    }
+
+    // Priority 5: Generated placeholder
     return _buildGeneratedCover(context);
   }
 
-  Widget _buildImageCover(String url) {
+  Widget _buildImageCover() {
     return Container(
       width: size,
       height: size,
@@ -45,11 +66,103 @@ class TrackCoverArt extends StatelessWidget {
       child: ClipRRect(
         borderRadius: borderRadius ?? AppBorders.medium,
         child: Image.network(
-          url,
+          imageUrl!,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return _buildGeneratedCover(context);
           },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return _buildLoadingCover(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocalImageCover() {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        boxShadow: showShadow ? AppShadows.card : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        child: Image.file(
+          File(imageUrl!),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrackLocalImageCover() {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        boxShadow: showShadow ? AppShadows.card : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        child: Image.file(
+          File(track!.coverLocalPath!),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrackImageCover() {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        boxShadow: showShadow ? AppShadows.card : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        child: Image.network(
+          track!.coverUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return _buildLoadingCover(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataImageCover() {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        boxShadow: showShadow ? AppShadows.card : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        child: Image.network(
+          metadata!.coverUrl!,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return _buildLoadingCover(context);

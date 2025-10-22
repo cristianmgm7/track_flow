@@ -4,6 +4,22 @@
 
 This plan refactors the existing project cover art implementation to follow clean architecture principles and implements comprehensive track cover art support. The refactor addresses architectural inconsistencies, adds offline-first support with local caching, and creates a centralized image storage service following the pattern established by `AudioFileRepository`.
 
+### Key Architectural Decision: Use Case Orchestration
+
+**The repository layer will NOT orchestrate business logic.** Instead, dedicated use cases (`UploadProjectCoverArtUseCase` and `UploadTrackCoverArtUseCase`) will coordinate the cover art upload workflow.
+
+**Responsibilities:**
+- **Use Cases**: Orchestrate business logic (local caching → Firebase upload → entity updates)
+- **Repositories**: Simple data persistence only (`updateProject()`, `updateTrack()`)
+- **ImageStorageRepository**: File upload/download abstraction (replaces direct Firebase Storage access)
+
+**Benefits:**
+- Clean separation of concerns
+- Repositories remain focused on data access
+- Use cases can be tested independently
+- Business logic is explicit and traceable
+- No complex dependencies in repository layer
+
 ## Current State Analysis
 
 ### Existing Project Cover Art Implementation
@@ -653,92 +669,133 @@ Update `toDTO()` at line 92:
       coverLocalPath: coverLocalPath,
 ```
 
-#### 4. Refactor uploadCoverArt in Repository
-**File**: `lib/features/projects/data/repositories/projects_repository_impl.dart`
-**Changes**: Replace current implementation (lines 232-263) with new pattern
+#### 4. Remove uploadCoverArt Method from ProjectsRepository
+**File**: `lib/features/projects/domain/repositories/projects_repository.dart`
+**Changes**: Remove the `uploadCoverArt()` method signature (line 24)
 
-First, add `ImageStorageRepository` injection in constructor (line 20):
 ```dart
-  final ProjectsLocalDataSource _localDataSource;
-  final BackgroundSyncCoordinator _backgroundSyncCoordinator;
-  final PendingOperationsManager _pendingOperationsManager;
-  final ImageStorageRepository _imageStorageRepository; // Add this
-
-  ProjectsRepositoryImpl({
-    required ProjectsLocalDataSource localDataSource,
-    required BackgroundSyncCoordinator backgroundSyncCoordinator,
-    required PendingOperationsManager pendingOperationsManager,
-    required ImageStorageRepository imageStorageRepository, // Add this
-  }) : _localDataSource = localDataSource,
-       _backgroundSyncCoordinator = backgroundSyncCoordinator,
-       _pendingOperationsManager = pendingOperationsManager,
-       _imageStorageRepository = imageStorageRepository; // Add this
+// DELETE THIS METHOD - business logic will move to use case
+// Future<Either<Failure, String>> uploadCoverArt(
+//   ProjectId projectId,
+//   File imageFile,
+// );
 ```
+
+**File**: `lib/features/projects/data/repositories/projects_repository_impl.dart`
+**Changes**: Remove the entire `uploadCoverArt()` method implementation (lines 232-263)
 
 Remove Firebase Storage import at line 4:
 ```dart
 // DELETE: import 'package:firebase_storage/firebase_storage.dart';
 ```
 
-Replace `uploadCoverArt()` method (lines 232-263):
+Delete the entire `uploadCoverArt()` method (lines 231-263) - this logic will move to the use case.
+
+#### 5. Refactor UploadCoverArtUseCase to Orchestrate Business Logic
+**File**: `lib/features/projects/domain/usecases/upload_cover_art_usecase.dart`
+**Changes**: Complete refactor to handle all orchestration
+
+Replace entire file content:
 ```dart
+import 'dart:io';
+import 'package:dartz/dartz.dart';
+import 'package:injectable/injectable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
+import 'package:trackflow/core/storage/domain/image_storage_repository.dart';
+import 'package:trackflow/core/usecases/usecase.dart';
+import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart';
+
+class UploadCoverArtParams {
+  final ProjectId projectId;
+  final File imageFile;
+
+  UploadCoverArtParams({
+    required this.projectId,
+    required this.imageFile,
+  });
+}
+
+@lazySingleton
+class UploadCoverArtUseCase implements UseCase<String, UploadCoverArtParams> {
+  final ProjectsRepository _projectsRepository;
+  final ImageStorageRepository _imageStorageRepository;
+  final DirectoryService _directoryService;
+
+  UploadCoverArtUseCase(
+    this._projectsRepository,
+    this._imageStorageRepository,
+    this._directoryService,
+  );
+
   @override
-  Future<Either<Failure, String>> uploadCoverArt(
-    ProjectId projectId,
-    File imageFile,
-  ) async {
+  Future<Either<Failure, String>> call(UploadCoverArtParams params) async {
     try {
       // 1. Get current project
-      final projectResult = await getProjectById(projectId);
-      if (projectResult.isLeft()) {
-        return projectResult.fold((failure) => Left(failure), (_) => throw StateError('Unreachable'));
-      }
+      final projectResult = await _projectsRepository.getProjectById(params.projectId);
 
-      final project = projectResult.fold((_) => throw StateError('Unreachable'), (p) => p);
+      return await projectResult.fold(
+        (failure) async => Left(failure),
+        (project) async {
+          // 2. Generate local file path
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final localPathResult = await _directoryService.getFilePath(
+            DirectoryType.projectCovers,
+            '${params.projectId.value}_cover_$timestamp.webp',
+          );
 
-      // 2. Cache image locally FIRST (offline-first)
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final localPathResult = await _directoryService.getFilePath(
-        DirectoryType.projectCovers,
-        '${projectId.value}_cover_$timestamp.webp',
-      );
+          return await localPathResult.fold(
+            (failure) async => Left(failure),
+            (localPath) async {
+              // 3. Copy to local cache FIRST (offline-first)
+              await params.imageFile.copy(localPath);
 
-      if (localPathResult.isLeft()) {
-        return localPathResult.fold((failure) => Left(failure), (_) => throw StateError('Unreachable'));
-      }
+              // 4. Update project with local path immediately
+              final projectWithLocalPath = project.copyWith(
+                coverLocalPath: localPath,
+              );
+              final localUpdateResult = await _projectsRepository.updateProject(
+                projectWithLocalPath,
+              );
 
-      final localPath = localPathResult.fold((_) => throw StateError('Unreachable'), (path) => path);
+              if (localUpdateResult.isLeft()) {
+                return localUpdateResult.fold(
+                  (failure) => Left(failure),
+                  (_) => throw StateError('Unreachable'),
+                );
+              }
 
-      // Copy to local cache
-      final localFile = File(localPath);
-      await imageFile.copy(localPath);
+              // 5. Upload to Firebase Storage
+              final storagePath = 'cover_art_projects/${params.projectId.value}/cover_$timestamp.webp';
+              final uploadResult = await _imageStorageRepository.uploadImage(
+                imageFile: params.imageFile,
+                storagePath: storagePath,
+                metadata: {
+                  'projectId': params.projectId.value,
+                  'uploadedAt': DateTime.now().toIso8601String(),
+                },
+                quality: 85,
+              );
 
-      // 3. Update project with local path immediately (offline support)
-      final projectWithLocalPath = project.copyWith(coverLocalPath: localPath);
-      await updateProject(projectWithLocalPath);
+              return await uploadResult.fold(
+                (failure) async => Left(failure),
+                (downloadUrl) async {
+                  // 6. Update project with remote URL
+                  final updatedProject = projectWithLocalPath.copyWith(
+                    coverUrl: downloadUrl,
+                  );
+                  final remoteUpdateResult = await _projectsRepository.updateProject(
+                    updatedProject,
+                  );
 
-      // 4. Upload to Firebase Storage (use new repository)
-      final storagePath = 'cover_art_projects/${projectId.value}/cover_$timestamp.webp';
-      final uploadResult = await _imageStorageRepository.uploadImage(
-        imageFile: imageFile,
-        storagePath: storagePath,
-        metadata: {
-          'projectId': projectId.value,
-          'uploadedAt': DateTime.now().toIso8601String(),
-        },
-        quality: 85,
-      );
-
-      return uploadResult.fold(
-        (failure) => Left(failure),
-        (downloadUrl) async {
-          // 5. Update project with remote URL
-          final updatedProject = projectWithLocalPath.copyWith(coverUrl: downloadUrl);
-          final updateResult = await updateProject(updatedProject);
-
-          return updateResult.fold(
-            (failure) => Left(failure),
-            (_) => Right(downloadUrl),
+                  return remoteUpdateResult.fold(
+                    (failure) => Left(failure),
+                    (_) => Right(downloadUrl),
+                  );
+                },
+              );
+            },
           );
         },
       );
@@ -746,22 +803,10 @@ Replace `uploadCoverArt()` method (lines 232-263):
       return Left(ServerFailure('Failed to upload cover art: $e'));
     }
   }
+}
 ```
 
-Add `DirectoryService` injection in constructor:
-```dart
-  final DirectoryService _directoryService; // Add to fields
-
-  ProjectsRepositoryImpl({
-    // ... existing parameters
-    required DirectoryService directoryService, // Add this
-    required ImageStorageRepository imageStorageRepository,
-  }) : // ... existing assignments
-       _directoryService = directoryService,
-       _imageStorageRepository = imageStorageRepository;
-```
-
-#### 5. Update ProjectCoverArt Widget to Support Local Paths
+#### 6. Update ProjectCoverArt Widget to Support Local Paths
 **File**: `lib/features/ui/project/project_cover_art.dart`
 **Changes**: Modify `build()` method to check local path first (line 28)
 
@@ -812,7 +857,7 @@ Add import at top:
 import 'dart:io';
 ```
 
-#### 6. Run Code Generation
+#### 7. Run Code Generation
 **Command**: `flutter packages pub run build_runner build --delete-conflicting-outputs`
 **Reason**: Regenerate Isar schema for new `coverLocalPath` field
 
@@ -995,165 +1040,9 @@ Rename `updateTrackUrl()` to `updateTrackCoverUrl()`:
   }
 ```
 
-#### 5. Create AudioTrack Remote DataSource Method
-**File**: `lib/features/audio_track/data/datasources/audio_track_remote_datasource.dart`
-**Changes**: Add method to update cover URL in Firestore
-
-Add after `editTrackName()` method (around line 135):
-```dart
-  /// Update track cover URL in Firestore
-  Future<Either<Failure, Unit>> updateTrackCoverUrl(
-    String trackId,
-    String coverUrl,
-  ) async {
-    try {
-      await _firestore.collection('audio_tracks').doc(trackId).update({
-        'url': coverUrl, // Use 'url' field for backwards compatibility
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      return const Right(unit);
-    } catch (e) {
-      return Left(ServerFailure('Failed to update track cover URL: $e'));
-    }
-  }
-```
-
-#### 6. Add uploadCoverArt Method to AudioTrackRepository Interface
-**File**: `lib/features/audio_track/domain/repositories/audio_track_repository.dart`
-**Changes**: Add method signature after line 27
-
-```dart
-  /// Upload cover art for track
-  /// Returns download URL on success
-  Future<Either<Failure, String>> uploadCoverArt(
-    AudioTrackId trackId,
-    File imageFile,
-  );
-```
-
-#### 7. Implement uploadCoverArt in AudioTrackRepository
-**File**: `lib/features/audio_track/data/repositories/audio_track_repository_impl.dart`
-**Changes**: Add method implementation
-
-First, add dependencies in constructor:
-```dart
-  final ImageStorageRepository _imageStorageRepository;
-  final DirectoryService _directoryService;
-
-  AudioTrackRepositoryImpl({
-    // ... existing parameters
-    required ImageStorageRepository imageStorageRepository,
-    required DirectoryService directoryService,
-  }) : // ... existing assignments
-       _imageStorageRepository = imageStorageRepository,
-       _directoryService = directoryService;
-```
-
-Add method after `editTrackName()` (around line 210):
-```dart
-  @override
-  Future<Either<Failure, String>> uploadCoverArt(
-    AudioTrackId trackId,
-    File imageFile,
-  ) async {
-    try {
-      // 1. Get current track
-      final trackResult = await _localDataSource.getTrackById(trackId.value);
-      if (trackResult.isLeft()) {
-        return trackResult.fold((failure) => Left(failure), (_) => throw StateError('Unreachable'));
-      }
-
-      final trackDoc = trackResult.fold((_) => throw StateError('Unreachable'), (doc) => doc);
-      if (trackDoc == null) {
-        return Left(DatabaseFailure('Track not found'));
-      }
-
-      // 2. Cache image locally FIRST (offline-first)
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final localPathResult = await _directoryService.getFilePath(
-        DirectoryType.trackCovers,
-        '${trackId.value}_cover_$timestamp.webp',
-      );
-
-      if (localPathResult.isLeft()) {
-        return localPathResult.fold((failure) => Left(failure), (_) => throw StateError('Unreachable'));
-      }
-
-      final localPath = localPathResult.fold((_) => throw StateError('Unreachable'), (path) => path);
-
-      // Copy to local cache
-      await imageFile.copy(localPath);
-
-      // 3. Update track with local path immediately (offline support)
-      await _localDataSource.updateTrackCoverUrl(
-        trackId.value,
-        trackDoc.coverUrl, // Keep existing remote URL
-        localPath,         // Set local path
-      );
-
-      // 4. Upload to Firebase Storage
-      final storagePath = 'cover_art_tracks/${trackId.value}/cover_$timestamp.webp';
-      final uploadResult = await _imageStorageRepository.uploadImage(
-        imageFile: imageFile,
-        storagePath: storagePath,
-        metadata: {
-          'trackId': trackId.value,
-          'uploadedAt': DateTime.now().toIso8601String(),
-        },
-        quality: 85,
-      );
-
-      return uploadResult.fold(
-        (failure) => Left(failure),
-        (downloadUrl) async {
-          // 5. Update track with remote URL locally
-          await _localDataSource.updateTrackCoverUrl(
-            trackId.value,
-            downloadUrl,
-            localPath,
-          );
-
-          // 6. Queue remote update via sync system
-          final updateData = {
-            'url': downloadUrl,
-            'updatedAt': DateTime.now().toUtc().toIso8601String(),
-          };
-
-          final queueResult = await _pendingOperationsManager.addUpdateOperation(
-            entityType: 'audio_track',
-            entityId: trackId.value,
-            data: updateData,
-            priority: SyncPriority.medium,
-          );
-
-          if (queueResult.isLeft()) {
-            AppLogger.warning('Failed to queue cover art sync, but local update succeeded');
-          } else {
-            unawaited(_backgroundSyncCoordinator.pushUpstream());
-          }
-
-          return Right(downloadUrl);
-        },
-      );
-    } catch (e) {
-      return Left(ServerFailure('Failed to upload track cover art: $e'));
-    }
-  }
-```
-
-Add imports at top:
-```dart
-import 'dart:async';
-import 'dart:io';
-import 'package:trackflow/core/storage/domain/image_storage_repository.dart';
-import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
-import 'package:trackflow/core/utils/app_logger.dart';
-```
-
-#### 8. Create UploadTrackCoverArtUseCase
+#### 5. Create UploadTrackCoverArtUseCase with Business Logic Orchestration
 **File**: `lib/features/audio_track/domain/usecases/upload_track_cover_art_usecase.dart`
-**Changes**: New file
+**Changes**: New file - Use case coordinates all cover art upload logic
 
 ```dart
 import 'dart:io';
@@ -1161,7 +1050,10 @@ import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
+import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
+import 'package:trackflow/core/storage/domain/image_storage_repository.dart';
 import 'package:trackflow/core/usecases/usecase.dart';
+import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart';
 
 class UploadTrackCoverArtParams {
@@ -1176,21 +1068,95 @@ class UploadTrackCoverArtParams {
 
 @lazySingleton
 class UploadTrackCoverArtUseCase implements UseCase<String, UploadTrackCoverArtParams> {
-  final AudioTrackRepository _repository;
+  final AudioTrackRepository _audioTrackRepository;
+  final ImageStorageRepository _imageStorageRepository;
+  final DirectoryService _directoryService;
 
-  UploadTrackCoverArtUseCase(this._repository);
+  UploadTrackCoverArtUseCase(
+    this._audioTrackRepository,
+    this._imageStorageRepository,
+    this._directoryService,
+  );
 
   @override
   Future<Either<Failure, String>> call(UploadTrackCoverArtParams params) async {
-    return await _repository.uploadCoverArt(
-      params.trackId,
-      params.imageFile,
-    );
+    try {
+      // 1. Get current track by ID
+      // Note: Repository getTrackById returns AudioTrackDocument, need to get entity
+      // For simplicity, we'll work with the entity through a different approach
+      // In practice, you'd have a getTrackEntityById method
+
+      // 2. Generate local file path
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final localPathResult = await _directoryService.getFilePath(
+        DirectoryType.trackCovers,
+        '${params.trackId.value}_cover_$timestamp.webp',
+      );
+
+      return await localPathResult.fold(
+        (failure) async => Left(failure),
+        (localPath) async {
+          // 3. Copy to local cache FIRST (offline-first)
+          await params.imageFile.copy(localPath);
+
+          // 4. Upload to Firebase Storage
+          final storagePath = 'cover_art_tracks/${params.trackId.value}/cover_$timestamp.webp';
+          final uploadResult = await _imageStorageRepository.uploadImage(
+            imageFile: params.imageFile,
+            storagePath: storagePath,
+            metadata: {
+              'trackId': params.trackId.value,
+              'uploadedAt': DateTime.now().toIso8601String(),
+            },
+            quality: 85,
+          );
+
+          return await uploadResult.fold(
+            (failure) async => Left(failure),
+            (downloadUrl) async {
+              // 5. Create updated track with both URLs
+              // We need to get the current track first
+              final getTrackResult = await _audioTrackRepository.getTrackById(params.trackId);
+
+              return await getTrackResult.fold(
+                (failure) async => Left(failure),
+                (currentTrack) async {
+                  if (currentTrack == null) {
+                    return Left(DatabaseFailure('Track not found'));
+                  }
+
+                  // 6. Update track with both local and remote URLs
+                  final updatedTrack = currentTrack.copyWith(
+                    coverUrl: downloadUrl,
+                    coverLocalPath: localPath,
+                  );
+
+                  final updateResult = await _audioTrackRepository.updateTrack(updatedTrack);
+
+                  return updateResult.fold(
+                    (failure) => Left(failure),
+                    (_) => Right(downloadUrl),
+                  );
+                },
+              );
+            },
+          );
+        },
+      );
+    } catch (e) {
+      return Left(ServerFailure('Failed to upload track cover art: $e'));
+    }
   }
 }
 ```
 
-#### 9. Create UI Upload Form Widget
+**Note**: This assumes `AudioTrackRepository` has:
+- `getTrackById(AudioTrackId trackId)` that returns `Either<Failure, AudioTrack?>`
+- `updateTrack(AudioTrack track)` that persists the updated entity
+
+If these methods don't exist or have different signatures, adjust accordingly.
+
+#### 6. Create UI Upload Form Widget
 **File**: `lib/features/audio_track/presentation/widgets/upload_track_cover_art_form.dart`
 **Changes**: New file (based on project upload form pattern)
 
@@ -1343,7 +1309,7 @@ class _UploadTrackCoverArtFormState extends State<UploadTrackCoverArtForm> {
 }
 ```
 
-#### 10. Add BLoC Event for Track Cover Art Upload
+#### 7. Add BLoC Event for Track Cover Art Upload
 **File**: `lib/features/audio_track/presentation/bloc/audio_track_event.dart`
 **Changes**: Add new event class
 
@@ -1367,7 +1333,7 @@ Add import at top:
 import 'dart:io';
 ```
 
-#### 11. Add BLoC Event Handler
+#### 8. Add BLoC Event Handler
 **File**: `lib/features/audio_track/presentation/bloc/audio_track_bloc.dart`
 **Changes**: Add use case injection and event handler
 
@@ -1414,7 +1380,7 @@ Add import:
 import 'package:trackflow/features/audio_track/domain/usecases/upload_track_cover_art_usecase.dart';
 ```
 
-#### 12. Add BLoC State for Upload Success
+#### 9. Add BLoC State for Upload Success
 **File**: `lib/features/audio_track/presentation/bloc/audio_track_state.dart`
 **Changes**: Add new state class
 
@@ -1429,7 +1395,7 @@ class AudioTrackCoverArtUploaded extends AudioTrackState {
 }
 ```
 
-#### 13. Update TrackCoverArt Widget to Support Local Paths
+#### 10. Update TrackCoverArt Widget to Support Local Paths
 **File**: `lib/features/ui/track/track_cover_art.dart`
 **Changes**: Add local file support in `build()` method (line 28)
 
@@ -1558,7 +1524,7 @@ Add import:
 import 'dart:io';
 ```
 
-#### 14. Add Upload Action to Track Actions Sheet
+#### 11. Add Upload Action to Track Actions Sheet
 **File**: `lib/features/audio_track/presentation/widgets/track_actions_sheet.dart` (or similar)
 **Changes**: Add "Upload Cover Art" action
 
@@ -1579,7 +1545,7 @@ ListTile(
 ),
 ```
 
-#### 15. Run Code Generation
+#### 12. Run Code Generation
 **Command**: `flutter packages pub run build_runner build --delete-conflicting-outputs`
 **Reason**: Regenerate Isar schema and dependency injection for new fields and use case
 
@@ -1605,276 +1571,7 @@ ListTile(
 
 ---
 
-## Phase 4: Offline Support and Caching Migration
-
-### Overview
-Implement backfill logic to download and cache existing remote cover art URLs for offline support. Run on app launch or background sync.
-
-### Changes Required
-
-#### 1. Create CoverArtCacheService
-**File**: `lib/core/storage/services/cover_art_cache_service.dart`
-**Changes**: New file - Handle backfilling existing cover art
-
-```dart
-import 'dart:io';
-import 'package:injectable/injectable.dart';
-import 'package:trackflow/core/infrastructure/domain/directory_service.dart';
-import 'package:trackflow/core/storage/domain/image_storage_repository.dart';
-import 'package:trackflow/core/utils/app_logger.dart';
-import 'package:trackflow/features/projects/data/datasources/project_local_data_source.dart';
-import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
-
-@lazySingleton
-class CoverArtCacheService {
-  final ImageStorageRepository _imageStorage;
-  final DirectoryService _directoryService;
-  final ProjectsLocalDataSource _projectsLocalDataSource;
-  final AudioTrackLocalDataSource _audioTrackLocalDataSource;
-
-  CoverArtCacheService(
-    this._imageStorage,
-    this._directoryService,
-    this._projectsLocalDataSource,
-    this._audioTrackLocalDataSource,
-  );
-
-  /// Backfill missing local cover art for all projects
-  Future<void> backfillProjectCoverArt() async {
-    try {
-      AppLogger.info('Starting project cover art backfill', tag: 'COVER_ART_CACHE');
-
-      final projectsResult = await _projectsLocalDataSource.getAllProjects();
-
-      await projectsResult.fold(
-        (failure) async {
-          AppLogger.warning('Failed to load projects for backfill: ${failure.message}');
-        },
-        (projects) async {
-          int cached = 0;
-          int skipped = 0;
-
-          for (final projectDto in projects) {
-            // Skip if already has local path or no remote URL
-            if (projectDto.coverLocalPath != null && projectDto.coverLocalPath!.isNotEmpty) {
-              skipped++;
-              continue;
-            }
-
-            if (projectDto.coverUrl == null || projectDto.coverUrl!.isEmpty) {
-              skipped++;
-              continue;
-            }
-
-            // Download and cache
-            final timestamp = DateTime.now().millisecondsSinceEpoch;
-            final localPathResult = await _directoryService.getFilePath(
-              DirectoryType.projectCovers,
-              '${projectDto.id}_cover_$timestamp.webp',
-            );
-
-            await localPathResult.fold(
-              (failure) async {
-                AppLogger.warning('Failed to get local path for project ${projectDto.id}');
-              },
-              (localPath) async {
-                final downloadResult = await _imageStorage.downloadImage(
-                  storageUrl: projectDto.coverUrl!,
-                  localPath: localPath,
-                  entityId: projectDto.id,
-                  entityType: 'project',
-                );
-
-                await downloadResult.fold(
-                  (failure) async {
-                    AppLogger.warning('Failed to download cover art for project ${projectDto.id}: ${failure.message}');
-                  },
-                  (cachedPath) async {
-                    // Update project with local path
-                    final updatedDto = projectDto.copyWith(coverLocalPath: cachedPath);
-                    await _projectsLocalDataSource.cacheProject(updatedDto);
-                    cached++;
-                    AppLogger.debug('Cached cover art for project ${projectDto.id}');
-                  },
-                );
-              },
-            );
-          }
-
-          AppLogger.info(
-            'Project cover art backfill complete: $cached cached, $skipped skipped',
-            tag: 'COVER_ART_CACHE',
-          );
-        },
-      );
-    } catch (e) {
-      AppLogger.error('Project cover art backfill failed: $e', tag: 'COVER_ART_CACHE', error: e);
-    }
-  }
-
-  /// Backfill missing local cover art for all tracks
-  Future<void> backfillTrackCoverArt() async {
-    try {
-      AppLogger.info('Starting track cover art backfill', tag: 'COVER_ART_CACHE');
-
-      final tracksResult = await _audioTrackLocalDataSource.getAllTracks();
-
-      await tracksResult.fold(
-        (failure) async {
-          AppLogger.warning('Failed to load tracks for backfill: ${failure.message}');
-        },
-        (tracks) async {
-          int cached = 0;
-          int skipped = 0;
-
-          for (final track in tracks) {
-            // Skip if already has local path or no remote URL
-            if (track.coverLocalPath != null && track.coverLocalPath!.isNotEmpty) {
-              skipped++;
-              continue;
-            }
-
-            if (track.coverUrl.isEmpty) {
-              skipped++;
-              continue;
-            }
-
-            // Download and cache
-            final timestamp = DateTime.now().millisecondsSinceEpoch;
-            final localPathResult = await _directoryService.getFilePath(
-              DirectoryType.trackCovers,
-              '${track.id}_cover_$timestamp.webp',
-            );
-
-            await localPathResult.fold(
-              (failure) async {
-                AppLogger.warning('Failed to get local path for track ${track.id}');
-              },
-              (localPath) async {
-                final downloadResult = await _imageStorage.downloadImage(
-                  storageUrl: track.coverUrl,
-                  localPath: localPath,
-                  entityId: track.id,
-                  entityType: 'track',
-                );
-
-                await downloadResult.fold(
-                  (failure) async {
-                    AppLogger.warning('Failed to download cover art for track ${track.id}: ${failure.message}');
-                  },
-                  (cachedPath) async {
-                    // Update track with local path
-                    await _audioTrackLocalDataSource.updateTrackCoverUrl(
-                      track.id,
-                      track.coverUrl,
-                      cachedPath,
-                    );
-                    cached++;
-                    AppLogger.debug('Cached cover art for track ${track.id}');
-                  },
-                );
-              },
-            );
-          }
-
-          AppLogger.info(
-            'Track cover art backfill complete: $cached cached, $skipped skipped',
-            tag: 'COVER_ART_CACHE',
-          );
-        },
-      );
-    } catch (e) {
-      AppLogger.error('Track cover art backfill failed: $e', tag: 'COVER_ART_CACHE', error: e);
-    }
-  }
-
-  /// Run complete backfill for all cover art
-  Future<void> backfillAllCoverArt() async {
-    await Future.wait([
-      backfillProjectCoverArt(),
-      backfillTrackCoverArt(),
-    ]);
-  }
-}
-```
-
-#### 2. Add Backfill to App Initialization
-**File**: `lib/main.dart` or app initialization location
-**Changes**: Trigger backfill after successful app launch
-
-Find the app initialization logic (likely in `main()` or after authentication):
-
-```dart
-// After user authentication succeeds
-final coverArtCache = getIt<CoverArtCacheService>();
-
-// Run backfill in background (don't await)
-unawaited(coverArtCache.backfillAllCoverArt());
-```
-
-Add import:
-```dart
-import 'dart:async';
-import 'package:trackflow/core/storage/services/cover_art_cache_service.dart';
-```
-
-#### 3. Add getAllProjects Method to ProjectsLocalDataSource
-**File**: `lib/features/projects/data/datasources/project_local_data_source.dart`
-**Changes**: Add method to retrieve all projects (if doesn't exist)
-
-```dart
-  /// Get all projects from local cache
-  Future<Either<Failure, List<ProjectDTO>>> getAllProjects() async {
-    try {
-      final isar = await _isarService.db;
-      final documents = await isar.projectDocuments.where().findAll();
-
-      final dtos = documents.map((doc) => doc.toDTO()).toList();
-      return Right(dtos);
-    } catch (e) {
-      return Left(DatabaseFailure('Failed to load all projects: $e'));
-    }
-  }
-```
-
-#### 4. Add getAllTracks Method to AudioTrackLocalDataSource
-**File**: `lib/features/audio_track/data/datasources/audio_track_local_datasource.dart`
-**Changes**: Add method to retrieve all tracks (if doesn't exist)
-
-```dart
-  /// Get all tracks from local cache
-  Future<Either<Failure, List<AudioTrackDocument>>> getAllTracks() async {
-    try {
-      final isar = await _isarService.db;
-      final documents = await isar.audioTrackDocuments.where().findAll();
-
-      return Right(documents);
-    } catch (e) {
-      return Left(DatabaseFailure('Failed to load all tracks: $e'));
-    }
-  }
-```
-
-### Success Criteria
-
-#### Automated Verification:
-- [ ] App compiles and runs successfully
-- [ ] No analyzer warnings: `flutter analyze`
-- [ ] Backfill service is registered in dependency injection
-
-#### Manual Verification:
-- [ ] Launch app with existing projects/tracks that have remote cover URLs
-- [ ] Wait 10-30 seconds for backfill to complete
-- [ ] Check logs for "cover art backfill complete" messages
-- [ ] Enable airplane mode
-- [ ] Cover art still displays for previously cached items
-- [ ] Check local storage directories to confirm WebP files were downloaded
-
-**Implementation Note**: Backfill runs asynchronously in the background and does not block app usage. Errors during backfill are logged but do not affect the user experience.
-
----
-
-## Phase 5: Testing and Migration
+## Phase 4: Testing and Migration
 
 ### Overview
 Comprehensive testing of cover art functionality, migration verification, and edge case handling.

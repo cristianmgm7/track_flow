@@ -5,6 +5,7 @@ import 'package:trackflow/core/theme/app_gradients.dart';
 import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'dart:io';
 import 'dart:math' as math;
 
 class ProjectCoverArt extends StatelessWidget {
@@ -27,7 +28,12 @@ class ProjectCoverArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // If we have a real image URL, show it
+    // Check local path first (offline support)
+    if (imageUrl != null && imageUrl!.isNotEmpty && !imageUrl!.startsWith('http')) {
+      return _buildLocalImageCover();
+    }
+
+    // Then check remote URL
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       return _buildImageCover();
     }
@@ -53,6 +59,27 @@ class ProjectCoverArt extends StatelessWidget {
           fit: BoxFit.cover,
           placeholder: (context, url) => _buildLoadingCover(),
           errorWidget: (context, url, error) => _buildGeneratedCover(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocalImageCover() {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        boxShadow: showShadow ? AppShadows.card : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius ?? AppBorders.medium,
+        child: Image.file(
+          File(imageUrl!),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(),
         ),
       ),
     );
