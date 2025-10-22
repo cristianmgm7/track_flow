@@ -56,7 +56,7 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     final audioTrackDto = AudioTrackDTO(
       id: AudioTrackId.fromUniqueString(operation.entityId),
       name: operationData['name'] ?? '',
-      url: operationData['filePath'] ?? '', // Local file path for upload
+      coverUrl: operationData['filePath'] ?? '', // Local file path for upload
       duration: operationData['duration'] ?? 0,
       projectId: ProjectId.fromUniqueString(operationData['projectId'] ?? ''),
       uploadedBy: UserId.fromUniqueString(operationData['uploadedBy'] ?? ''),
@@ -71,10 +71,11 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     result.fold(
       (failure) => throw Exception('Upload failed: ${failure.message}'),
       (uploadedDto) async {
-        // Update local cached track URL to remote download URL
-        await _localDataSource.updateTrackUrl(
+        // Update local cached track cover URL to remote download URL
+        await _localDataSource.updateTrackCoverUrl(
           uploadedDto.id.value,
-          uploadedDto.url,
+          uploadedDto.coverUrl,
+          null,
         );
       },
     );
@@ -126,7 +127,7 @@ class AudioTrackOperationExecutor implements OperationExecutor {
     final audioTrackDto = AudioTrackDTO(
       id: AudioTrackId.fromUniqueString(operation.entityId),
       name: operationData['name'] ?? '',
-      url: operationData['url'] ?? '',
+      coverUrl: operationData['coverUrl'] ?? '',
       duration: operationData['duration'] ?? 0,
       projectId: ProjectId.fromUniqueString(operationData['projectId'] ?? ''),
       uploadedBy: UserId.fromUniqueString(operationData['uploadedBy'] ?? ''),
