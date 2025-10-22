@@ -20,6 +20,12 @@ enum DirectoryType {
   /// Local avatars: /Documents/local_avatars
   localAvatars,
 
+  /// Project cover art: /Documents/trackflow/cover_art/projects
+  projectCovers,
+
+  /// Track cover art: /Documents/trackflow/cover_art/tracks
+  trackCovers,
+
   /// Temporary files: /SystemTemp
   temporary,
 

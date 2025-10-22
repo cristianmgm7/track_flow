@@ -74,6 +74,7 @@ dependencies:
   just_waveform: ^0.0.7
   flutter_media_metadata: ^1.0.0
   cached_network_image: ^3.4.1
+  flutter_image_compress: ^2.3.0
 
 dev_dependencies:
   flutter_test:

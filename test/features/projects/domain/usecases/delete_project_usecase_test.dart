@@ -68,7 +68,7 @@ void main() {
         AudioTrack(
           id: AudioTrackId.fromUniqueString('track-1'),
           name: 'Track 1',
-          url: 'https://example.com/track1.mp3',
+          coverUrl: 'https://example.com/track1.mp3',
           duration: const Duration(minutes: 3),
           projectId: testProject.id,
           uploadedBy: testUserId,
@@ -77,7 +77,7 @@ void main() {
         AudioTrack(
           id: AudioTrackId.fromUniqueString('track-2'),
           name: 'Track 2',
-          url: 'https://example.com/track2.mp3',
+          coverUrl: 'https://example.com/track2.mp3',
           duration: const Duration(minutes: 4),
           projectId: testProject.id,
           uploadedBy: testUserId,
