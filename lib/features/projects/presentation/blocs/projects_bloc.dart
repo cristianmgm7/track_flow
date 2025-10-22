@@ -132,7 +132,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await uploadCoverArt(event.projectId, event.imageFile);
+    final result = await uploadCoverArt(
+      UploadCoverArtParams(
+        projectId: event.projectId,
+        imageFile: event.imageFile,
+      ),
+    );
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
       (coverUrl) =>
