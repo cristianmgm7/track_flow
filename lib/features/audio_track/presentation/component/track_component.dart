@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/track/track_cover_art.dart';
@@ -22,6 +23,7 @@ class TrackComponent extends StatefulWidget {
   final VoidCallback? onPlay;
   final VoidCallback? onComment;
   final ProjectId projectId;
+  final VoidCallback? onTap;
 
   const TrackComponent({
     super.key,
@@ -29,6 +31,7 @@ class TrackComponent extends StatefulWidget {
     this.onPlay,
     this.onComment,
     required this.projectId,
+    this.onTap,
   });
 
   @override
@@ -39,9 +42,8 @@ class _TrackComponentState extends State<TrackComponent> {
   @override
   Widget build(BuildContext context) {
     final track = widget.vm.track;
-
     return BaseCard(
-      onTap: () {
+      onTap: widget.onTap ?? () {
         if (widget.onPlay != null) {
           widget.onPlay!();
         } else {
@@ -50,11 +52,12 @@ class _TrackComponentState extends State<TrackComponent> {
           );
         }
       },
+      backgroundColor: AppColors.background,
       margin: EdgeInsets.zero,
       borderRadius: BorderRadius.zero,
       padding: EdgeInsets.symmetric(
         horizontal: Dimensions.space16,
-        vertical: Dimensions.space8,
+        vertical: Dimensions.space0,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,

@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
+import 'package:trackflow/features/ui/project/project_cover_art.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_bloc.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_event.dart';
 import 'package:trackflow/features/project_detail/presentation/bloc/project_detail_state.dart';
 import 'package:trackflow/features/project_detail/presentation/components/project_detail_collaborators_component.dart';
-import 'package:trackflow/features/project_detail/presentation/components/project_detail_sliver_header.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/playlist/presentation/widgets/playlist_widget.dart';
-// removed unused audio track listener imports
 import 'package:trackflow/core/sync/presentation/widgets/global_sync_indicator.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_bloc.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_event.dart';
@@ -53,63 +54,96 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      topSafeArea: false,
-      body: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
-        builder: (context, state) {
-          if (state.isLoadingProject && state.project == null) {
-            return const Center(
+    return BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+      builder: (context, state) {
+        if (state.isLoadingProject && state.project == null) {
+          return AppScaffold(
+            topSafeArea: false,
+            body: const Center(
               child: AppLoading(message: 'Loading project...'),
-            );
-          }
+            ),
+          );
+        }
 
-          if (state.projectError != null && state.project == null) {
-            return AppProjectErrorState(
+        if (state.projectError != null && state.project == null) {
+          return AppScaffold(
+            topSafeArea: false,
+            body: AppProjectErrorState(
               message: 'Error loading project:  ${state.projectError}',
               onRetry:
                   () => context.read<ProjectDetailBloc>().add(
                     WatchProjectDetail(projectId: widget.project.id),
                   ),
-            );
-          }
+            ),
+          );
+        }
 
-          final project = state.project;
-          if (project == null) {
-            return const AppProjectEmptyState(
+        final project = state.project;
+        if (project == null) {
+          return AppScaffold(
+            topSafeArea: false,
+            body: const AppProjectEmptyState(
               message: 'No project found',
               subtitle: 'The project you are looking for does not exist.',
-            );
-          }
+            ),
+          );
+        }
 
-          // getting the tracks to build the playlist
-          final tracks = state.tracks;
-          final playlist = project.toPlaylist(tracks);
+        // getting the tracks to build the playlist
+        final tracks = state.tracks;
+        final playlist = project.toPlaylist(tracks);
 
-          return CustomScrollView(
-            slivers: [
-              ProjectDetailSliverHeader(project: project),
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    const GlobalSyncIndicator(),
-                    const SizedBox(height: 8),
-                    // PlaylistWidget para los tracks del proyecto
-                    PlaylistWidget(
-                      playlist: playlist,
-                      tracks: tracks,
-                      projectId: project.id.value,
-                    ),
-                    // Collaborators Section
-                    ProjectDetailCollaboratorsComponent(state: state),
-                  ],
+        return Scaffold(
+          body: Stack(
+            children: [
+              // 1. BACKGROUND IMAGE (COVER)
+              Positioned.fill(
+                child: ProjectCoverArt(
+                  projectName: project.name.value.getOrElse(() => 'Project'),
+                  projectDescription: project.description.value.getOrElse(() => ''),
+                  imageUrl: project.coverUrl,
+                  size: MediaQuery.of(context).size.width,
+                  borderRadius: BorderRadius.zero,
+                  showShadow: false,
                 ),
               ),
+              // 3. SCROLLABLE FOREGROUND CONTENT
+              CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverAppBar(
+                    expandedHeight: 300,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    pinned: true,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(
+                        project.name.value.getOrElse(() => 'Project'),
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      background: ProjectCoverArt(
+                        projectName: project.name.value.getOrElse(() => 'Project'),
+                        projectDescription: project.description.value.getOrElse(() => ''),
+                        imageUrl: project.coverUrl,
+                        size: MediaQuery.of(context).size.width,
+                        borderRadius: BorderRadius.zero,
+                        showShadow: false,
+                      ),
+                    ),
+                  ),
+
+                  // 4. MAIN CONTENT SECTION
+                  
+                 
+                ],
+              ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

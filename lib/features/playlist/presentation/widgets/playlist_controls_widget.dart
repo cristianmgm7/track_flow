@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:trackflow/features/playlist/domain/entities/playlist.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_state.dart';
-import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/playlist/presentation/utils/playlist_utils.dart';
-import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
 import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart';
@@ -36,16 +33,6 @@ class _PlaylistControlsWidgetState extends State<PlaylistControlsWidget> {
   Widget build(BuildContext context) {
     return BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
       builder: (context, playerState) {
-        final player = context.read<AudioPlayerBloc>();
-        final session = player.currentSession;
-        final isPlayingFromThisPlaylist =
-            playerState is AudioPlayerSessionState &&
-            session.queue.isNotEmpty &&
-            PlaylistUtils.isPlayingFromPlaylist(
-              session.queue.sources.map((s) => s.metadata.id.value).toList(),
-              widget.playlist,
-            );
-
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -99,23 +86,7 @@ class _PlaylistControlsWidgetState extends State<PlaylistControlsWidget> {
               },
             ),
             const SizedBox(width: 8),
-            AudioPlayPauseButton(
-              isPlaying:
-                  isPlayingFromThisPlaylist &&
-                  playerState is AudioPlayerPlaying,
-              isBuffering:
-                  isPlayingFromThisPlaylist &&
-                  playerState is AudioPlayerBuffering,
-              size: 48,
-              onPressed: () {
-                if (isPlayingFromThisPlaylist &&
-                    playerState is AudioPlayerPlaying) {
-                  player.add(PauseAudioRequested());
-                } else {
-                  player.add(PlayPlaylistRequested(tracks: widget.tracks));
-                }
-              },
-            ),
+            
           ],
         );
       },

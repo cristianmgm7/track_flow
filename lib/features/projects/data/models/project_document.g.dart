@@ -28,44 +28,49 @@ const ProjectDocumentSchema = CollectionSchema(
       type: IsarType.objectList,
       target: r'CollaboratorDocument',
     ),
-    r'createdAt': PropertySchema(
+    r'coverUrl': PropertySchema(
       id: 2,
+      name: r'coverUrl',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'description': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'description',
       type: IsarType.string,
     ),
     r'id': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'id',
       type: IsarType.string,
     ),
     r'isDeleted': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'name': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'name',
       type: IsarType.string,
     ),
     r'ownerId': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'ownerId',
       type: IsarType.string,
     ),
     r'syncMetadata': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'syncMetadata',
       type: IsarType.object,
       target: r'SyncMetadataDocument',
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -136,6 +141,12 @@ int _projectDocumentEstimateSize(
           CollaboratorDocumentSchema.estimateSize(value, offsets, allOffsets);
     }
   }
+  {
+    final value = object.coverUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.description.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
@@ -159,19 +170,20 @@ void _projectDocumentSerialize(
     CollaboratorDocumentSchema.serialize,
     object.collaborators,
   );
-  writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeString(offsets[3], object.description);
-  writer.writeString(offsets[4], object.id);
-  writer.writeBool(offsets[5], object.isDeleted);
-  writer.writeString(offsets[6], object.name);
-  writer.writeString(offsets[7], object.ownerId);
+  writer.writeString(offsets[2], object.coverUrl);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeString(offsets[4], object.description);
+  writer.writeString(offsets[5], object.id);
+  writer.writeBool(offsets[6], object.isDeleted);
+  writer.writeString(offsets[7], object.name);
+  writer.writeString(offsets[8], object.ownerId);
   writer.writeObject<SyncMetadataDocument>(
-    offsets[8],
+    offsets[9],
     allOffsets,
     SyncMetadataDocumentSchema.serialize,
     object.syncMetadata,
   );
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeDateTime(offsets[10], object.updatedAt);
 }
 
 ProjectDocument _projectDocumentDeserialize(
@@ -189,19 +201,20 @@ ProjectDocument _projectDocumentDeserialize(
         CollaboratorDocument(),
       ) ??
       [];
-  object.createdAt = reader.readDateTime(offsets[2]);
-  object.description = reader.readString(offsets[3]);
-  object.id = reader.readString(offsets[4]);
-  object.isDeleted = reader.readBool(offsets[5]);
-  object.name = reader.readString(offsets[6]);
-  object.ownerId = reader.readString(offsets[7]);
+  object.coverUrl = reader.readStringOrNull(offsets[2]);
+  object.createdAt = reader.readDateTime(offsets[3]);
+  object.description = reader.readString(offsets[4]);
+  object.id = reader.readString(offsets[5]);
+  object.isDeleted = reader.readBool(offsets[6]);
+  object.name = reader.readString(offsets[7]);
+  object.ownerId = reader.readString(offsets[8]);
   object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
-        offsets[8],
+        offsets[9],
         SyncMetadataDocumentSchema.deserialize,
         allOffsets,
       ) ??
       SyncMetadataDocument();
-  object.updatedAt = reader.readDateTimeOrNull(offsets[9]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[10]);
   return object;
 }
 
@@ -223,25 +236,27 @@ P _projectDocumentDeserializeProp<P>(
           ) ??
           []) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
     case 5:
-      return (reader.readBool(offset)) as P;
-    case 6:
       return (reader.readString(offset)) as P;
+    case 6:
+      return (reader.readBool(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readObjectOrNull<SyncMetadataDocument>(
             offset,
             SyncMetadataDocumentSchema.deserialize,
             allOffsets,
           ) ??
           SyncMetadataDocument()) as P;
-    case 9:
+    case 10:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -807,6 +822,160 @@ extension ProjectDocumentQueryFilter
         upper,
         includeUpper,
       );
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'coverUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'coverUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'coverUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'coverUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterFilterCondition>
+      coverUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'coverUrl',
+        value: '',
+      ));
     });
   }
 
@@ -1574,6 +1743,20 @@ extension ProjectDocumentQueryLinks
 extension ProjectDocumentQuerySortBy
     on QueryBuilder<ProjectDocument, ProjectDocument, QSortBy> {
   QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      sortByCoverUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      sortByCoverUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
       sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1670,6 +1853,20 @@ extension ProjectDocumentQuerySortBy
 
 extension ProjectDocumentQuerySortThenBy
     on QueryBuilder<ProjectDocument, ProjectDocument, QSortThenBy> {
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      thenByCoverUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
+      thenByCoverUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.desc);
+    });
+  }
+
   QueryBuilder<ProjectDocument, ProjectDocument, QAfterSortBy>
       thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -1787,6 +1984,13 @@ extension ProjectDocumentQueryWhereDistinct
     });
   }
 
+  QueryBuilder<ProjectDocument, ProjectDocument, QDistinct> distinctByCoverUrl(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'coverUrl', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<ProjectDocument, ProjectDocument, QDistinct>
       distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
@@ -1856,6 +2060,12 @@ extension ProjectDocumentQueryProperty
       collaboratorsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'collaborators');
+    });
+  }
+
+  QueryBuilder<ProjectDocument, String?, QQueryOperations> coverUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'coverUrl');
     });
   }
 

@@ -21,6 +21,7 @@ class ProjectDTO {
     // ⭐ NEW: Sync metadata fields for proper offline-first sync
     this.version = 1,
     this.lastModified,
+    this.coverUrl,
   });
 
   final String id;
@@ -36,6 +37,7 @@ class ProjectDTO {
   // ⭐ NEW: Sync metadata fields (now included in remote storage)
   final int version;
   final DateTime? lastModified;
+  final String? coverUrl;
 
   static const String collection = 'projects';
 
@@ -63,6 +65,7 @@ class ProjectDTO {
     // ⭐ NEW: Include sync metadata for proper offline-first sync
     version: 1, // Initial version for new projects
     lastModified: project.updatedAt ?? project.createdAt,
+    coverUrl: project.coverUrl,
   );
 
   Project toDomain() => Project(
@@ -90,6 +93,7 @@ class ProjectDTO {
           );
         }).toList(),
     isDeleted: isDeleted,
+    coverUrl: coverUrl,
   );
 
   Map<String, dynamic> toJson() => {
@@ -105,6 +109,7 @@ class ProjectDTO {
     // ⭐ NEW: Include sync metadata in JSON
     'version': version,
     'lastModified': lastModified?.toIso8601String(),
+    'coverUrl': coverUrl,
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -138,6 +143,7 @@ class ProjectDTO {
         json['lastModified'] is Timestamp
             ? (json['lastModified'] as Timestamp).toDate()
             : DateTime.tryParse(json['lastModified'] as String? ?? ''),
+    coverUrl: json['coverUrl'] as String?,
   );
 
   /// Creates a ProjectDTO from a Firestore document.
@@ -185,6 +191,7 @@ class ProjectDTO {
       // ⭐ NEW: Parse sync metadata from Firestore
       version: data['version'] as int? ?? 1,
       lastModified: lastModified,
+      coverUrl: data['coverUrl'] as String?,
     );
   }
 
@@ -204,6 +211,7 @@ class ProjectDTO {
       'version': version,
       'lastModified':
           lastModified != null ? Timestamp.fromDate(lastModified!) : null,
+      'coverUrl': coverUrl,
     };
   }
 
@@ -220,6 +228,7 @@ class ProjectDTO {
     bool? isDeleted,
     int? version,
     DateTime? lastModified,
+    String? coverUrl,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -234,6 +243,7 @@ class ProjectDTO {
       // ⭐ NEW: Include sync metadata in copyWith
       version: version ?? this.version,
       lastModified: lastModified ?? this.lastModified,
+      coverUrl: coverUrl ?? this.coverUrl,
     );
   }
 
@@ -281,6 +291,7 @@ class ProjectDTO {
       // ⭐ NEW: Parse sync metadata from map
       version: data['version'] as int? ?? 1,
       lastModified: lastModified,
+      coverUrl: data['coverUrl'] as String?,
     );
   }
 
@@ -299,6 +310,7 @@ class ProjectDTO {
       // ⭐ NEW: Include sync metadata in map
       'version': version,
       'lastModified': lastModified?.toIso8601String(),
+      'coverUrl': coverUrl,
     };
   }
 
@@ -317,7 +329,8 @@ class ProjectDTO {
         other.isDeleted == isDeleted &&
         // ⭐ NEW: Include sync metadata in equality
         other.version == version &&
-        other.lastModified == lastModified;
+        other.lastModified == lastModified &&
+        other.coverUrl == coverUrl;
   }
 
   @override
@@ -333,5 +346,6 @@ class ProjectDTO {
       isDeleted.hashCode ^
       // ⭐ NEW: Include sync metadata in hashCode
       version.hashCode ^
-      lastModified.hashCode;
+      lastModified.hashCode ^
+      coverUrl.hashCode;
 }

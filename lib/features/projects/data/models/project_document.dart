@@ -19,6 +19,7 @@ class ProjectDocument {
   late List<CollaboratorDocument> collaborators;
   @Index()
   bool isDeleted = false;
+  String? coverUrl;
 
   // NEW: Sync metadata for conflict resolution
   late SyncMetadataDocument syncMetadata;
@@ -40,6 +41,7 @@ class ProjectDocument {
       ..collaborators =
           dto.collaborators.map((c) => CollaboratorDocument.fromMap(c)).toList()
       ..isDeleted = dto.isDeleted
+      ..coverUrl = dto.coverUrl
       // ⭐ NEW: Use sync metadata from DTO if available (from remote)
       ..syncMetadata =
           syncMeta ??
@@ -66,6 +68,7 @@ class ProjectDocument {
       ..collaborators =
           dto.collaborators.map((c) => CollaboratorDocument.fromMap(c)).toList()
       ..isDeleted = dto.isDeleted
+      ..coverUrl = dto.coverUrl
       ..syncMetadata = SyncMetadataDocument.fromRemote(
         version: version ?? 1,
         lastModified: lastModified ?? dto.updatedAt ?? dto.createdAt,
@@ -86,6 +89,7 @@ class ProjectDocument {
       // ⭐ NEW: Include sync metadata from document (CRITICAL FIX!)
       version: syncMetadata.version,
       lastModified: syncMetadata.lastModified,
+      coverUrl: coverUrl,
     );
   }
 }

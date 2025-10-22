@@ -22,6 +22,7 @@ class Project extends AggregateRoot<ProjectId> {
   final DateTime? updatedAt;
   final List<ProjectCollaborator> collaborators;
   final bool isDeleted;
+  final String? coverUrl;
 
   Project({
     required ProjectId id,
@@ -32,6 +33,7 @@ class Project extends AggregateRoot<ProjectId> {
     this.updatedAt,
     List<ProjectCollaborator>? collaborators,
     this.isDeleted = false,
+    this.coverUrl,
   }) : collaborators = collaborators ?? [],
        super(id);
 
@@ -44,6 +46,7 @@ class Project extends AggregateRoot<ProjectId> {
     DateTime? updatedAt,
     List<ProjectCollaborator>? collaborators,
     bool? isDeleted,
+    String? coverUrl,
   }) {
     return Project(
       id: id ?? this.id,
@@ -54,6 +57,7 @@ class Project extends AggregateRoot<ProjectId> {
       updatedAt: updatedAt ?? this.updatedAt,
       collaborators: collaborators ?? this.collaborators,
       isDeleted: isDeleted ?? this.isDeleted,
+      coverUrl: coverUrl ?? this.coverUrl,
     );
   }
 

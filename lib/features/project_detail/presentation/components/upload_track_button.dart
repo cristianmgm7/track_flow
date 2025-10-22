@@ -13,14 +13,13 @@ class UploadTrackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BaseCard(
+      backgroundColor: AppColors.background,
       onTap: onTap,
       margin: EdgeInsets.zero,
       borderRadius: BorderRadius.zero,
       padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.space16,
-        vertical: Dimensions.space8,
+        horizontal: Dimensions.space16
       ),
-      backgroundColor: AppColors.surface.withAlpha(128), // Subtle background
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -61,14 +60,7 @@ class UploadTrackButton extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: Dimensions.space8),
-          // Arrow icon to indicate action
-          Icon(
-            Icons.arrow_forward_ios,
-            color: AppColors.primary,
-            size: Dimensions.iconSmall,
-          ),
-          const SizedBox(width: Dimensions.space16),
+          
         ],
       ),
     );
