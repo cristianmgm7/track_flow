@@ -4,6 +4,7 @@ import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
@@ -129,42 +130,37 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
           body: Stack(
             children: [
               // 1. BACKGROUND IMAGE (COVER)
-              Positioned.fill(
-                child: ProjectCoverArt(
-                  projectName: project.name.value.getOrElse(() => 'Project'),
-                  projectDescription: project.description.value.getOrElse(() => ''),
-                  imageUrl: project.coverUrl,
-                  size: MediaQuery.of(context).size.width,
-                  borderRadius: BorderRadius.zero,
-                  showShadow: false,
-                ),
+              Column(
+                children: [
+                  ProjectCoverArt(
+                    projectName: project.name.value.getOrElse(() => 'Project'),
+                    projectDescription: project.description.value.getOrElse(() => ''),
+                    imageUrl: project.coverUrl,
+                    size: MediaQuery.of(context).size.width,
+                  ),
+                  Expanded(child: Container()),
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.background,
+                      
+                    ),
+                  ),
+                ],
               ),
               // 3. SCROLLABLE FOREGROUND CONTENT
               CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverAppBar(
-                    expandedHeight: 300,
+                    expandedHeight: Dimensions.space176,
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     pinned: true,
                     flexibleSpace: FlexibleSpaceBar(
-                      centerTitle: false,
+                      centerTitle: true,
                       title: Text(
-                        textAlign: TextAlign.left,
                         project.name.value.getOrElse(() => 'Project'),
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      background: ProjectCoverArt(
-                        projectName: project.name.value.getOrElse(() => 'Project'),
-                        projectDescription: project.description.value.getOrElse(() => ''),
-                        imageUrl: project.coverUrl,
-                        size: MediaQuery.of(context).size.width,
-                        borderRadius: BorderRadius.zero,
-                        showShadow: false,
+                        style: AppTextStyle.headlineLarge,
                       ),
                     ),
                   ),

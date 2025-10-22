@@ -36,7 +36,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Collaborators (${state.collaborators.length})',
+                  'Collaborators: ${state.collaborators.length}',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 IconButton(
