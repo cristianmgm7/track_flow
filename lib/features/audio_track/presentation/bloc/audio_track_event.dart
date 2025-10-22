@@ -62,6 +62,19 @@ class EditAudioTrackEvent extends AudioTrackEvent {
   List<Object> get props => [trackId, projectId, newName];
 }
 
+class UploadTrackCoverArt extends AudioTrackEvent {
+  final AudioTrackId trackId;
+  final File imageFile;
+
+  const UploadTrackCoverArt({
+    required this.trackId,
+    required this.imageFile,
+  });
+
+  @override
+  List<Object> get props => [trackId, imageFile];
+}
+
 class AudioTracksUpdated extends AudioTrackEvent {
   final Either<Failure, List<AudioTrack>> tracks;
   const AudioTracksUpdated(this.tracks);

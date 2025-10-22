@@ -23,6 +23,7 @@ class Project extends AggregateRoot<ProjectId> {
   final List<ProjectCollaborator> collaborators;
   final bool isDeleted;
   final String? coverUrl;
+  final String? coverLocalPath; // Local cached image path
 
   Project({
     required ProjectId id,
@@ -34,6 +35,7 @@ class Project extends AggregateRoot<ProjectId> {
     List<ProjectCollaborator>? collaborators,
     this.isDeleted = false,
     this.coverUrl,
+    this.coverLocalPath,
   }) : collaborators = collaborators ?? [],
        super(id);
 
@@ -47,6 +49,7 @@ class Project extends AggregateRoot<ProjectId> {
     List<ProjectCollaborator>? collaborators,
     bool? isDeleted,
     String? coverUrl,
+    String? coverLocalPath,
   }) {
     return Project(
       id: id ?? this.id,
@@ -58,6 +61,7 @@ class Project extends AggregateRoot<ProjectId> {
       collaborators: collaborators ?? this.collaborators,
       isDeleted: isDeleted ?? this.isDeleted,
       coverUrl: coverUrl ?? this.coverUrl,
+      coverLocalPath: coverLocalPath ?? this.coverLocalPath,
     );
   }
 

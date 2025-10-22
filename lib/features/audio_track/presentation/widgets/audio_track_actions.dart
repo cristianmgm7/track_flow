@@ -9,6 +9,7 @@ import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/delete_audio_track_alert_dialog.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/rename_audio_track_form_sheet.dart';
+import 'package:trackflow/features/audio_track/presentation/widgets/upload_track_cover_art_form.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_bloc.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_event.dart';
 import 'package:trackflow/features/audio_cache/presentation/bloc/track_cache_state.dart';
@@ -76,6 +77,27 @@ class TrackActions {
               BlocProvider.value(value: context.read<AudioTrackBloc>()),
             ],
             child: RenameTrackForm(track: track),
+          ),
+        );
+      },
+    ),
+    AppBottomSheetAction(
+      icon: Icons.image,
+      title: 'Upload Cover Art',
+      subtitle: 'Add custom cover art for this track',
+      onTap: () {
+        showAppFormSheet(
+          minChildSize: 0.8,
+          initialChildSize: 0.8,
+          maxChildSize: 0.8,
+          useRootNavigator: true,
+          context: context,
+          title: 'Upload Cover Art',
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: context.read<AudioTrackBloc>()),
+            ],
+            child: UploadTrackCoverArtForm(track: track),
           ),
         );
       },

@@ -22,6 +22,7 @@ class ProjectDTO {
     this.version = 1,
     this.lastModified,
     this.coverUrl,
+    this.coverLocalPath, // Local-only, not serialized to Firestore
   });
 
   final String id;
@@ -38,6 +39,7 @@ class ProjectDTO {
   final int version;
   final DateTime? lastModified;
   final String? coverUrl;
+  final String? coverLocalPath; // Local-only, not serialized to Firestore
 
   static const String collection = 'projects';
 
@@ -66,6 +68,7 @@ class ProjectDTO {
     version: 1, // Initial version for new projects
     lastModified: project.updatedAt ?? project.createdAt,
     coverUrl: project.coverUrl,
+    coverLocalPath: project.coverLocalPath,
   );
 
   Project toDomain() => Project(
@@ -94,6 +97,7 @@ class ProjectDTO {
         }).toList(),
     isDeleted: isDeleted,
     coverUrl: coverUrl,
+    coverLocalPath: coverLocalPath,
   );
 
   Map<String, dynamic> toJson() => {
@@ -110,6 +114,7 @@ class ProjectDTO {
     'version': version,
     'lastModified': lastModified?.toIso8601String(),
     'coverUrl': coverUrl,
+    // coverLocalPath intentionally excluded from Firestore
   };
 
   factory ProjectDTO.fromJson(Map<String, dynamic> json) => ProjectDTO(
@@ -229,6 +234,7 @@ class ProjectDTO {
     int? version,
     DateTime? lastModified,
     String? coverUrl,
+    String? coverLocalPath,
   }) {
     return ProjectDTO(
       id: id ?? this.id,
@@ -244,6 +250,7 @@ class ProjectDTO {
       version: version ?? this.version,
       lastModified: lastModified ?? this.lastModified,
       coverUrl: coverUrl ?? this.coverUrl,
+      coverLocalPath: coverLocalPath ?? this.coverLocalPath,
     );
   }
 

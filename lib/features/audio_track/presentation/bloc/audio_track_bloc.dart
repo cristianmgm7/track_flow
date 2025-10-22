@@ -9,6 +9,7 @@ import 'package:trackflow/features/audio_track/domain/usecases/watch_audio_track
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/up_load_audio_track_usecase.dart';
 import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_usecase.dart';
+import 'package:trackflow/features/audio_track/domain/usecases/upload_track_cover_art_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
 
@@ -18,6 +19,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   final DeleteAudioTrack deleteAudioTrack;
   final UploadAudioTrackUseCase uploadAudioTrackUseCase;
   final EditAudioTrackUseCase editAudioTrackUseCase;
+  final UploadTrackCoverArtUseCase uploadTrackCoverArt;
 
   StreamSubscription<Either<Failure, List<AudioTrack>>>? _trackSubscription;
 
@@ -26,10 +28,12 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     required this.deleteAudioTrack,
     required this.uploadAudioTrackUseCase,
     required this.editAudioTrackUseCase,
+    required this.uploadTrackCoverArt,
   }) : super(AudioTrackInitial()) {
     on<WatchAudioTracksByProjectEvent>(_onWatchAudioTracksByProject);
     on<DeleteAudioTrackEvent>(_onDeleteAudioTrack);
     on<UploadAudioTrackEvent>(_onUploadAudioTrack);
+    on<UploadTrackCoverArt>(_onUploadTrackCoverArt);
     on<AudioTracksUpdated>(_onAudioTracksUpdated);
     on<EditAudioTrackEvent>(_onEditAudioTrack);
   }
@@ -49,6 +53,25 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
     result.fold(
       (failure) => emit(AudioTrackError(message: failure.message)),
       (_) => emit(AudioTrackUploadSuccess()),
+    );
+  }
+
+  Future<void> _onUploadTrackCoverArt(
+    UploadTrackCoverArt event,
+    Emitter<AudioTrackState> emit,
+  ) async {
+    emit(AudioTrackLoading());
+
+    final result = await uploadTrackCoverArt(
+      UploadTrackCoverArtParams(
+        trackId: event.trackId,
+        imageFile: event.imageFile,
+      ),
+    );
+
+    result.fold(
+      (failure) => emit(AudioTrackError(message: failure.message)),
+      (downloadUrl) => emit(AudioTrackCoverArtUploaded(downloadUrl)),
     );
   }
 

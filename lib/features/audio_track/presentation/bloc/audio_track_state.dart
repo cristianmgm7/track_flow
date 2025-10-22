@@ -60,6 +60,15 @@ class AudioTrackDeleteSuccess extends AudioTrackState {}
 
 class AudioTrackEditSuccess extends AudioTrackState {}
 
+class AudioTrackCoverArtUploaded extends AudioTrackState {
+  final String downloadUrl;
+
+  const AudioTrackCoverArtUploaded(this.downloadUrl);
+
+  @override
+  List<Object> get props => [downloadUrl];
+}
+
 class AudioTrackEditError extends AudioTrackState {
   final String message;
   const AudioTrackEditError({required this.message});

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dartz/dartz.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/core/sync/domain/services/background_sync_coordinator.dart';
@@ -228,37 +227,4 @@ class ProjectsRepositoryImpl implements ProjectsRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, String>> uploadCoverArt(
-    ProjectId projectId,
-    File imageFile,
-  ) async {
-    try {
-      // Upload to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('projects/${projectId.value}/cover.jpg');
-
-      await storageRef.putFile(imageFile);
-      final downloadUrl = await storageRef.getDownloadURL();
-
-      // Update the project with the new cover URL
-      final projectResult = await getProjectById(projectId);
-
-      return await projectResult.fold(
-        (failure) => Left(failure),
-        (project) async {
-          final updatedProject = project.copyWith(coverUrl: downloadUrl);
-          final updateResult = await updateProject(updatedProject);
-
-          return updateResult.fold(
-            (failure) => Left(failure),
-            (_) => Right(downloadUrl),
-          );
-        },
-      );
-    } catch (e) {
-      return Left(ServerFailure('Failed to upload cover art: $e'));
-    }
-  }
 }
