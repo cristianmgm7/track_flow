@@ -3,7 +3,8 @@ import 'package:trackflow/core/entities/unique_id.dart';
 
 class AudioTrack extends AggregateRoot<AudioTrackId> {
   final String name;
-  final String url; // Cover art URL
+  final String coverUrl; // Cover art URL (renamed from 'url')
+  final String? coverLocalPath; // Local cached cover art path
   final Duration duration; // Duration of active version
   final ProjectId projectId;
   final UserId uploadedBy;
@@ -14,7 +15,8 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
   const AudioTrack({
     required AudioTrackId id,
     required this.name,
-    required this.url,
+    required this.coverUrl,
+    this.coverLocalPath,
     required this.duration,
     required this.projectId,
     required this.uploadedBy,
@@ -25,7 +27,8 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
 
   factory AudioTrack.create({
     required String name,
-    required String url,
+    String? coverUrl, // Renamed parameter
+    String? coverLocalPath,   // New parameter
     required Duration duration,
     required ProjectId projectId,
     required UserId uploadedBy,
@@ -35,7 +38,8 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     return AudioTrack(
       id: AudioTrackId(),
       name: name,
-      url: url,
+      coverUrl: coverUrl ?? '',
+      coverLocalPath: coverLocalPath,
       duration: duration,
       projectId: projectId,
       uploadedBy: uploadedBy,
@@ -48,7 +52,8 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
   AudioTrack copyWith({
     AudioTrackId? id,
     String? name,
-    String? url,
+    String? coverUrl,        // Renamed parameter
+    String? coverLocalPath,  // New parameter
     Duration? duration,
     ProjectId? projectId,
     UserId? uploadedBy,
@@ -59,7 +64,8 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
     return AudioTrack(
       id: id ?? this.id,
       name: name ?? this.name,
-      url: url ?? this.url,
+      coverUrl: coverUrl ?? this.coverUrl,
+      coverLocalPath: coverLocalPath ?? this.coverLocalPath,
       duration: duration ?? this.duration,
       projectId: projectId ?? this.projectId,
       uploadedBy: uploadedBy ?? this.uploadedBy,

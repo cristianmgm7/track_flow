@@ -5,7 +5,8 @@ import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
 class AudioTrackDTO {
   final AudioTrackId id;
   final String name;
-  final String url; // cover art url
+  final String coverUrl; // Renamed from 'url'
+  final String? coverLocalPath; // Local-only, not serialized
   final int duration;
   final ProjectId projectId;
   final UserId uploadedBy;
@@ -21,7 +22,8 @@ class AudioTrackDTO {
   const AudioTrackDTO({
     required this.id,
     required this.name,
-    required this.url,
+    required this.coverUrl,
+    this.coverLocalPath,
     required this.duration,
     required this.projectId,
     required this.uploadedBy,
@@ -40,7 +42,8 @@ class AudioTrackDTO {
     return AudioTrackDTO(
       id: AudioTrackId.fromUniqueString(json['id'] as String),
       name: json['name'] as String,
-      url: json['url'] as String,
+      coverUrl: json['url'] as String? ?? '', // Map from 'url' for backwards compatibility
+      coverLocalPath: null, // Never from Firestore
       duration: json['duration'] as int,
       projectId: ProjectId.fromUniqueString(json['projectId'] as String),
       uploadedBy: UserId.fromUniqueString(json['uploadedBy'] as String),
@@ -69,7 +72,8 @@ class AudioTrackDTO {
     return {
       'id': id.value,
       'name': name,
-      'url': url,
+      'url': coverUrl, // Keep 'url' key for Firestore backwards compatibility
+      // coverLocalPath intentionally excluded
       'duration': duration,
       'projectId': projectId.value,
       'uploadedBy': uploadedBy.value,
@@ -87,7 +91,8 @@ class AudioTrackDTO {
     return AudioTrack(
       id: id,
       name: name,
-      url: url,
+      coverUrl: coverUrl,
+      coverLocalPath: coverLocalPath,
       duration: Duration(milliseconds: duration),
       projectId: projectId,
       uploadedBy: uploadedBy,
@@ -107,7 +112,8 @@ class AudioTrackDTO {
       uploadedBy: track.uploadedBy,
       id: track.id,
       name: track.name,
-      url: url ?? track.url,
+      coverUrl: url ?? track.coverUrl,
+      coverLocalPath: track.coverLocalPath,
       duration: track.duration.inMilliseconds,
       createdAt: track.createdAt,
       extension: extension,

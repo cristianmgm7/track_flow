@@ -197,7 +197,7 @@ class PlayPlaylistUseCase {
                 duration: version.durationMs != null
                     ? Duration(milliseconds: version.durationMs!)
                     : track.duration,
-                coverUrl: track.url, // Cover art URL
+                coverUrl: track.coverUrl, // Cover art URL
               );
               audioSources.add(AudioSource(url: urlToUse!, metadata: metadata));
             }

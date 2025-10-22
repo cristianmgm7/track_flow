@@ -14,7 +14,8 @@ class AudioTrackDocument {
   late String id;
 
   late String name;
-  late String url;
+  late String coverUrl; // Renamed from 'url'
+  String? coverLocalPath;
   late int duration;
 
   @Index()
@@ -37,7 +38,8 @@ class AudioTrackDocument {
     return AudioTrackDocument()
       ..id = dto.id.value
       ..name = dto.name
-      ..url = dto.url
+      ..coverUrl = dto.coverUrl
+      ..coverLocalPath = dto.coverLocalPath
       ..duration = dto.duration
       ..projectId = dto.projectId.value
       ..uploadedBy = dto.uploadedBy.value
@@ -62,7 +64,8 @@ class AudioTrackDocument {
     return AudioTrackDocument()
       ..id = dto.id.value
       ..name = dto.name
-      ..url = dto.url
+      ..coverUrl = dto.coverUrl
+      ..coverLocalPath = dto.coverLocalPath
       ..duration = dto.duration
       ..projectId = dto.projectId.value
       ..uploadedBy = dto.uploadedBy.value
@@ -80,7 +83,8 @@ class AudioTrackDocument {
     return AudioTrackDocument()
       ..id = dto.id.value
       ..name = dto.name
-      ..url = dto.url
+      ..coverUrl = dto.coverUrl
+      ..coverLocalPath = dto.coverLocalPath
       ..duration = dto.duration
       ..projectId = dto.projectId.value
       ..uploadedBy = dto.uploadedBy.value
@@ -94,7 +98,8 @@ class AudioTrackDocument {
     return AudioTrackDTO(
       id: AudioTrackId.fromUniqueString(_cleanId(id)),
       name: name,
-      url: url,
+      coverUrl: coverUrl,
+      coverLocalPath: coverLocalPath,
       duration: duration,
       projectId: ProjectId.fromUniqueString(_cleanId(projectId)),
       uploadedBy: UserId.fromUniqueString(_cleanId(uploadedBy)),

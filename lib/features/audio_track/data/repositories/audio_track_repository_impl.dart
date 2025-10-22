@@ -188,7 +188,7 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
         priority: SyncPriority.high,
         data: {
           'name': trackDto.name,
-          'url': trackDto.url,
+          'coverUrl': trackDto.coverUrl,
           'duration': trackDto.duration,
           'projectId': trackDto.projectId.value,
           'uploadedBy': trackDto.uploadedBy.value,
@@ -306,6 +306,50 @@ class AudioTrackRepositoryImpl implements AudioTrackRepository {
       return localResult;
     } catch (e) {
       return Left(DatabaseFailure('Failed to set active version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateTrack(AudioTrack track) async {
+    try {
+      // 1. Convert to DTO (extension is not used for cover art updates, use empty string)
+      final dto = AudioTrackDTO.fromDomain(track, extension: '');
+
+      // 2. Update local first
+      final localResult = await localDataSource.updateTrack(dto);
+
+      if (localResult.isLeft()) {
+        return localResult;
+      }
+
+      // 3. Queue operation for sync (consistent with offline-first architecture)
+      final queueResult = await _pendingOperationsManager.addUpdateOperation(
+        entityType: 'audio_track',
+        entityId: track.id.value,
+        data: {
+          'coverUrl': track.coverUrl,
+          'coverLocalPath': track.coverLocalPath,
+          'field': 'coverArt',
+        },
+        priority: SyncPriority.medium,
+      );
+
+      // 4. Handle queue failure
+      if (queueResult.isLeft()) {
+        final failure = queueResult.fold((l) => l, (r) => null);
+        return Left(
+          DatabaseFailure(
+            'Failed to queue sync operation: ${failure?.message}',
+          ),
+        );
+      }
+
+      // 5. Trigger upstream sync only (more efficient for local changes)
+      unawaited(_backgroundSyncCoordinator.pushUpstream());
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(DatabaseFailure('Failed to update track: $e'));
     }
   }
 

@@ -38,6 +38,9 @@ abstract class AudioTrackRepository {
     required TrackVersionId versionId,
   });
 
+  /// Update an existing track
+  Future<Either<Failure, Unit>> updateTrack(AudioTrack track);
+
   /// Delete all tracks from local cache
   Future<Either<Failure, Unit>> deleteAllTracks();
 }

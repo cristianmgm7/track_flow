@@ -23,50 +23,55 @@ const AudioTrackDocumentSchema = CollectionSchema(
       name: r'activeVersionId',
       type: IsarType.string,
     ),
-    r'createdAt': PropertySchema(
+    r'coverLocalPath': PropertySchema(
       id: 1,
+      name: r'coverLocalPath',
+      type: IsarType.string,
+    ),
+    r'coverUrl': PropertySchema(
+      id: 2,
+      name: r'coverUrl',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'duration': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'duration',
       type: IsarType.long,
     ),
     r'extension': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'extension',
       type: IsarType.string,
     ),
     r'id': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'id',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'name',
       type: IsarType.string,
     ),
     r'projectId': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'projectId',
       type: IsarType.string,
     ),
     r'syncMetadata': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'syncMetadata',
       type: IsarType.object,
       target: r'SyncMetadataDocument',
     ),
     r'uploadedBy': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'uploadedBy',
-      type: IsarType.string,
-    ),
-    r'url': PropertySchema(
-      id: 9,
-      name: r'url',
       type: IsarType.string,
     )
   },
@@ -123,6 +128,13 @@ int _audioTrackDocumentEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.coverLocalPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.coverUrl.length * 3;
   bytesCount += 3 + object.extension.length * 3;
   bytesCount += 3 + object.id.length * 3;
   bytesCount += 3 + object.name.length * 3;
@@ -136,7 +148,6 @@ int _audioTrackDocumentEstimateSize(
     }
   }
   bytesCount += 3 + object.uploadedBy.length * 3;
-  bytesCount += 3 + object.url.length * 3;
   return bytesCount;
 }
 
@@ -147,20 +158,21 @@ void _audioTrackDocumentSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.activeVersionId);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeLong(offsets[2], object.duration);
-  writer.writeString(offsets[3], object.extension);
-  writer.writeString(offsets[4], object.id);
-  writer.writeString(offsets[5], object.name);
-  writer.writeString(offsets[6], object.projectId);
+  writer.writeString(offsets[1], object.coverLocalPath);
+  writer.writeString(offsets[2], object.coverUrl);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeLong(offsets[4], object.duration);
+  writer.writeString(offsets[5], object.extension);
+  writer.writeString(offsets[6], object.id);
+  writer.writeString(offsets[7], object.name);
+  writer.writeString(offsets[8], object.projectId);
   writer.writeObject<SyncMetadataDocument>(
-    offsets[7],
+    offsets[9],
     allOffsets,
     SyncMetadataDocumentSchema.serialize,
     object.syncMetadata,
   );
-  writer.writeString(offsets[8], object.uploadedBy);
-  writer.writeString(offsets[9], object.url);
+  writer.writeString(offsets[10], object.uploadedBy);
 }
 
 AudioTrackDocument _audioTrackDocumentDeserialize(
@@ -171,19 +183,20 @@ AudioTrackDocument _audioTrackDocumentDeserialize(
 ) {
   final object = AudioTrackDocument();
   object.activeVersionId = reader.readStringOrNull(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
-  object.duration = reader.readLong(offsets[2]);
-  object.extension = reader.readString(offsets[3]);
-  object.id = reader.readString(offsets[4]);
-  object.name = reader.readString(offsets[5]);
-  object.projectId = reader.readString(offsets[6]);
+  object.coverLocalPath = reader.readStringOrNull(offsets[1]);
+  object.coverUrl = reader.readString(offsets[2]);
+  object.createdAt = reader.readDateTime(offsets[3]);
+  object.duration = reader.readLong(offsets[4]);
+  object.extension = reader.readString(offsets[5]);
+  object.id = reader.readString(offsets[6]);
+  object.name = reader.readString(offsets[7]);
+  object.projectId = reader.readString(offsets[8]);
   object.syncMetadata = reader.readObjectOrNull<SyncMetadataDocument>(
-    offsets[7],
+    offsets[9],
     SyncMetadataDocumentSchema.deserialize,
     allOffsets,
   );
-  object.uploadedBy = reader.readString(offsets[8]);
-  object.url = reader.readString(offsets[9]);
+  object.uploadedBy = reader.readString(offsets[10]);
   return object;
 }
 
@@ -197,26 +210,28 @@ P _audioTrackDocumentDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
       return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readString(offset)) as P;
+    case 9:
       return (reader.readObjectOrNull<SyncMetadataDocument>(
         offset,
         SyncMetadataDocumentSchema.deserialize,
         allOffsets,
       )) as P;
-    case 8:
-      return (reader.readString(offset)) as P;
-    case 9:
+    case 10:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -612,6 +627,296 @@ extension AudioTrackDocumentQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'activeVersionId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'coverLocalPath',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'coverLocalPath',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'coverLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'coverLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'coverLocalPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'coverLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'coverLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'coverLocalPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'coverLocalPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverLocalPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverLocalPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'coverLocalPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'coverUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'coverUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'coverUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'coverUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
+      coverUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'coverUrl',
         value: '',
       ));
     });
@@ -1482,142 +1787,6 @@ extension AudioTrackDocumentQueryFilter
       ));
     });
   }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlEqualTo(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'url',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlGreaterThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'url',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlLessThan(
-    String value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'url',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlBetween(
-    String lower,
-    String upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'url',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'url',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'url',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlContains(String value, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'url',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlMatches(String pattern, {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'url',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'url',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterFilterCondition>
-      urlIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'url',
-        value: '',
-      ));
-    });
-  }
 }
 
 extension AudioTrackDocumentQueryObject
@@ -1646,6 +1815,34 @@ extension AudioTrackDocumentQuerySortBy
       sortByActiveVersionIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'activeVersionId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByCoverLocalPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverLocalPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByCoverLocalPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverLocalPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByCoverUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      sortByCoverUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.desc);
     });
   }
 
@@ -1746,20 +1943,6 @@ extension AudioTrackDocumentQuerySortBy
       return query.addSortBy(r'uploadedBy', Sort.desc);
     });
   }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
-      sortByUrl() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'url', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
-      sortByUrlDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'url', Sort.desc);
-    });
-  }
 }
 
 extension AudioTrackDocumentQuerySortThenBy
@@ -1775,6 +1958,34 @@ extension AudioTrackDocumentQuerySortThenBy
       thenByActiveVersionIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'activeVersionId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByCoverLocalPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverLocalPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByCoverLocalPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverLocalPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByCoverUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
+      thenByCoverUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverUrl', Sort.desc);
     });
   }
 
@@ -1889,20 +2100,6 @@ extension AudioTrackDocumentQuerySortThenBy
       return query.addSortBy(r'uploadedBy', Sort.desc);
     });
   }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
-      thenByUrl() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'url', Sort.asc);
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QAfterSortBy>
-      thenByUrlDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'url', Sort.desc);
-    });
-  }
 }
 
 extension AudioTrackDocumentQueryWhereDistinct
@@ -1912,6 +2109,21 @@ extension AudioTrackDocumentQueryWhereDistinct
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'activeVersionId',
           caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct>
+      distinctByCoverLocalPath({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'coverLocalPath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct>
+      distinctByCoverUrl({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'coverUrl', caseSensitive: caseSensitive);
     });
   }
 
@@ -1963,13 +2175,6 @@ extension AudioTrackDocumentQueryWhereDistinct
       return query.addDistinctBy(r'uploadedBy', caseSensitive: caseSensitive);
     });
   }
-
-  QueryBuilder<AudioTrackDocument, AudioTrackDocument, QDistinct> distinctByUrl(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'url', caseSensitive: caseSensitive);
-    });
-  }
 }
 
 extension AudioTrackDocumentQueryProperty
@@ -1984,6 +2189,20 @@ extension AudioTrackDocumentQueryProperty
       activeVersionIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'activeVersionId');
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, String?, QQueryOperations>
+      coverLocalPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'coverLocalPath');
+    });
+  }
+
+  QueryBuilder<AudioTrackDocument, String, QQueryOperations>
+      coverUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'coverUrl');
     });
   }
 
@@ -2037,12 +2256,6 @@ extension AudioTrackDocumentQueryProperty
       uploadedByProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'uploadedBy');
-    });
-  }
-
-  QueryBuilder<AudioTrackDocument, String, QQueryOperations> urlProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'url');
     });
   }
 }

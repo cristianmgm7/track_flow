@@ -111,7 +111,7 @@ class PlayVersionUseCase {
                     version.durationMs != null
                         ? Duration(milliseconds: version.durationMs!)
                         : audioTrack.duration,
-                coverUrl: audioTrack.url, // Use track URL as cover art
+                coverUrl: audioTrack.coverUrl, // Use track URL as cover art
               );
 
               // 6. Create audio source for playback using version file

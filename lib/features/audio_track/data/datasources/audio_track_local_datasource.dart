@@ -23,8 +23,13 @@ abstract class AudioTrackLocalDataSource {
   Stream<List<AudioTrackDTO>> watchAllAccessibleTracks(String userId);
 
   Future<Either<Failure, Unit>> clearCache();
+  Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO track);
   Future<Either<Failure, Unit>> updateTrackName(String trackId, String newName);
-  Future<Either<Failure, Unit>> updateTrackUrl(String trackId, String newUrl);
+  Future<Either<Failure, Unit>> updateTrackCoverUrl(
+    String trackId,
+    String coverUrl,
+    String? coverLocalPath,
+  );
   Future<Either<Failure, Unit>> setActiveVersion(
     String trackId,
     String versionId,
@@ -144,6 +149,19 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
+  Future<Either<Failure, Unit>> updateTrack(AudioTrackDTO track) async {
+    try {
+      final trackDoc = AudioTrackDocument.fromDTO(track);
+      await _isar.writeTxn(() async {
+        await _isar.audioTrackDocuments.put(trackDoc);
+      });
+      return const Right(unit);
+    } catch (e) {
+      return Left(CacheFailure('Failed to update track: $e'));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> updateTrackName(
     String trackId,
     String newName,
@@ -163,21 +181,23 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Future<Either<Failure, Unit>> updateTrackUrl(
+  Future<Either<Failure, Unit>> updateTrackCoverUrl(
     String trackId,
-    String newUrl,
+    String coverUrl,
+    String? coverLocalPath,
   ) async {
     try {
       await _isar.writeTxn(() async {
         final track = await _isar.audioTrackDocuments.get(fastHash(trackId));
         if (track != null) {
-          track.url = newUrl;
+          track.coverUrl = coverUrl;
+          track.coverLocalPath = coverLocalPath;
           await _isar.audioTrackDocuments.put(track);
         }
       });
       return const Right(unit);
     } catch (e) {
-      return Left(CacheFailure('Failed to update track url: $e'));
+      return Left(CacheFailure('Failed to update track cover URL: $e'));
     }
   }
 

@@ -41,7 +41,6 @@ class ProjectTrackService {
 
     // 2. Crear track (solo metadata, sin archivos)
     final track = AudioTrack.create(
-      url: url,
       name: name,
       duration: duration ?? Duration.zero,
       projectId: project.id,
