@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
@@ -17,4 +19,10 @@ abstract class ProjectsRepository {
 
   /// Stream a single project by id from local cache.
   Stream<Either<Failure, Project?>> watchProjectById(ProjectId projectId);
+
+  /// Upload cover art for a project
+  Future<Either<Failure, String>> uploadCoverArt(
+    ProjectId projectId,
+    File imageFile,
+  );
 }

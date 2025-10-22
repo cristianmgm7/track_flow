@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
+import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
@@ -65,4 +68,17 @@ class ChangeProjectsSort extends ProjectsEvent {
   const ChangeProjectsSort(this.sort);
   @override
   List<Object?> get props => [sort];
+}
+
+class UploadProjectCoverArt extends ProjectsEvent {
+  final ProjectId projectId;
+  final File imageFile;
+
+  const UploadProjectCoverArt({
+    required this.projectId,
+    required this.imageFile,
+  });
+
+  @override
+  List<Object?> get props => [projectId, imageFile];
 }

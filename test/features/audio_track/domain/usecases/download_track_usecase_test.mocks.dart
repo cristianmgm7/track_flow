@@ -866,6 +866,32 @@ class MockProjectsRepository extends _i1.Mock
         returnValue:
             _i4.Stream<_i2.Either<_i11.Failure, _i16.Project?>>.empty(),
       ) as _i4.Stream<_i2.Either<_i11.Failure, _i16.Project?>>);
+
+  @override
+  _i4.Future<_i2.Either<_i11.Failure, String>> uploadCoverArt(
+    _i7.ProjectId? projectId,
+    _i8.File? imageFile,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #uploadCoverArt,
+          [
+            projectId,
+            imageFile,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Either<_i11.Failure, String>>.value(
+            _FakeEither_0<_i11.Failure, String>(
+          this,
+          Invocation.method(
+            #uploadCoverArt,
+            [
+              projectId,
+              imageFile,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Either<_i11.Failure, String>>);
 }
 
 /// A class which mocks [SessionService].

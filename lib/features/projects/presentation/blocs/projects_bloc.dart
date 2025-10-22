@@ -9,6 +9,7 @@ import 'package:trackflow/features/projects/domain/usecases/watch_all_projects_u
 import 'package:trackflow/features/projects/domain/usecases/create_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:trackflow/features/projects/domain/usecases/delete_project_usecase.dart';
+import 'package:trackflow/features/projects/domain/usecases/upload_cover_art_usecase.dart';
 import 'projects_event.dart';
 import 'projects_state.dart';
 import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
@@ -19,6 +20,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
   final UpdateProjectUseCase updateProject;
   final DeleteProjectUseCase deleteProject;
   final WatchAllProjectsUseCase watchAllProjects;
+  final UploadCoverArtUseCase uploadCoverArt;
 
   //constructor
   ProjectsBloc({
@@ -26,12 +28,14 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     required this.updateProject,
     required this.deleteProject,
     required this.watchAllProjects,
+    required this.uploadCoverArt,
   }) : super(ProjectsInitial()) {
     on<CreateProjectRequested>(_onCreateProjectRequested);
     on<UpdateProjectRequested>(_onUpdateProjectRequested);
     on<DeleteProjectRequested>(_onDeleteProjectRequested);
     on<StartWatchingProjects>(_onStartWatchingProjects);
     on<ChangeProjectsSort>(_onChangeProjectsSort);
+    on<UploadProjectCoverArt>(_onUploadProjectCoverArt);
   }
 
   ProjectSort _currentSort = ProjectSort.lastActivityDesc;
@@ -121,6 +125,19 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
         ..sort((a, b) => compareProjectsBySort(a, b, _currentSort));
       emit(current.copyWith(projects: resorted, sort: _currentSort));
     }
+  }
+
+  Future<void> _onUploadProjectCoverArt(
+    UploadProjectCoverArt event,
+    Emitter<ProjectsState> emit,
+  ) async {
+    emit(ProjectsLoading());
+    final result = await uploadCoverArt(event.projectId, event.imageFile);
+    result.fold(
+      (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
+      (coverUrl) =>
+          emit(const ProjectOperationSuccess('Cover art uploaded successfully')),
+    );
   }
 
   String _mapFailureToMessage(Failure failure) {

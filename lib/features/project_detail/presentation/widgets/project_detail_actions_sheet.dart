@@ -6,6 +6,7 @@ import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/delete_project_dialog.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/edit_project_form.dart';
 import 'package:trackflow/features/project_detail/presentation/widgets/up_load_track_form.dart';
+import 'package:trackflow/features/project_detail/presentation/widgets/upload_cover_art_form.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 
 class ProjectDetailActions {
@@ -23,6 +24,19 @@ class ProjectDetailActions {
           title: 'Upload Track',
           useRootNavigator: true,
           child: UploadTrackForm(project: project),
+        );
+      },
+    ),
+    AppBottomSheetAction(
+      icon: Icons.image,
+      title: 'Upload Cover Art',
+      subtitle: 'Add a cover image for this project',
+      onTap: () {
+        showAppFormSheet(
+          context: context,
+          title: 'Upload Cover Art',
+          useRootNavigator: true,
+          child: UploadCoverArtForm(project: project),
         );
       },
     ),

@@ -4,6 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i11;
+import 'dart:io' as _i15;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
@@ -15,13 +16,13 @@ import 'package:trackflow/features/audio_cache/domain/repositories/audio_storage
 import 'package:trackflow/features/audio_comment/domain/repositories/audio_comment_repository.dart'
     as _i10;
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart'
-    as _i15;
+    as _i16;
 import 'package:trackflow/features/audio_track/domain/repositories/audio_track_repository.dart'
     as _i3;
 import 'package:trackflow/features/audio_track/domain/services/project_track_service.dart'
     as _i6;
 import 'package:trackflow/features/audio_track/domain/usecases/delete_audio_track_usecase.dart'
-    as _i16;
+    as _i17;
 import 'package:trackflow/features/projects/domain/entities/project.dart'
     as _i13;
 import 'package:trackflow/features/projects/domain/repositories/projects_repository.dart'
@@ -382,6 +383,32 @@ class MockProjectsRepository extends _i1.Mock
         returnValue:
             _i11.Stream<_i2.Either<_i12.Failure, _i13.Project?>>.empty(),
       ) as _i11.Stream<_i2.Either<_i12.Failure, _i13.Project?>>);
+
+  @override
+  _i11.Future<_i2.Either<_i12.Failure, String>> uploadCoverArt(
+    _i14.ProjectId? projectId,
+    _i15.File? imageFile,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #uploadCoverArt,
+          [
+            projectId,
+            imageFile,
+          ],
+        ),
+        returnValue: _i11.Future<_i2.Either<_i12.Failure, String>>.value(
+            _FakeEither_0<_i12.Failure, String>(
+          this,
+          Invocation.method(
+            #uploadCoverArt,
+            [
+              projectId,
+              imageFile,
+            ],
+          ),
+        )),
+      ) as _i11.Future<_i2.Either<_i12.Failure, String>>);
 }
 
 /// A class which mocks [ProjectTrackService].
@@ -403,18 +430,18 @@ class MockProjectTrackService extends _i1.Mock
       ) as _i3.AudioTrackRepository);
 
   @override
-  _i11.Stream<_i2.Either<_i12.Failure, List<_i15.AudioTrack>>>
+  _i11.Stream<_i2.Either<_i12.Failure, List<_i16.AudioTrack>>>
       watchTracksByProject(_i14.ProjectId? projectId) => (super.noSuchMethod(
             Invocation.method(
               #watchTracksByProject,
               [projectId],
             ),
             returnValue: _i11.Stream<
-                _i2.Either<_i12.Failure, List<_i15.AudioTrack>>>.empty(),
-          ) as _i11.Stream<_i2.Either<_i12.Failure, List<_i15.AudioTrack>>>);
+                _i2.Either<_i12.Failure, List<_i16.AudioTrack>>>.empty(),
+          ) as _i11.Stream<_i2.Either<_i12.Failure, List<_i16.AudioTrack>>>);
 
   @override
-  _i11.Future<_i2.Either<_i12.Failure, _i15.AudioTrack>> addTrackToProject({
+  _i11.Future<_i2.Either<_i12.Failure, _i16.AudioTrack>> addTrackToProject({
     required _i13.Project? project,
     required _i14.UserId? requester,
     required String? name,
@@ -436,8 +463,8 @@ class MockProjectTrackService extends _i1.Mock
           },
         ),
         returnValue:
-            _i11.Future<_i2.Either<_i12.Failure, _i15.AudioTrack>>.value(
-                _FakeEither_0<_i12.Failure, _i15.AudioTrack>(
+            _i11.Future<_i2.Either<_i12.Failure, _i16.AudioTrack>>.value(
+                _FakeEither_0<_i12.Failure, _i16.AudioTrack>(
           this,
           Invocation.method(
             #addTrackToProject,
@@ -452,7 +479,7 @@ class MockProjectTrackService extends _i1.Mock
             },
           ),
         )),
-      ) as _i11.Future<_i2.Either<_i12.Failure, _i15.AudioTrack>>);
+      ) as _i11.Future<_i2.Either<_i12.Failure, _i16.AudioTrack>>);
 
   @override
   _i11.Future<_i2.Either<_i12.Failure, _i2.Unit>> deleteTrack({
@@ -520,7 +547,7 @@ class MockProjectTrackService extends _i1.Mock
 /// A class which mocks [DeleteAudioTrack].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockDeleteAudioTrack extends _i1.Mock implements _i16.DeleteAudioTrack {
+class MockDeleteAudioTrack extends _i1.Mock implements _i17.DeleteAudioTrack {
   MockDeleteAudioTrack() {
     _i1.throwOnMissingStub(this);
   }
@@ -590,7 +617,7 @@ class MockDeleteAudioTrack extends _i1.Mock implements _i16.DeleteAudioTrack {
 
   @override
   _i11.Future<_i2.Either<_i12.Failure, _i2.Unit>> call(
-          _i16.DeleteAudioTrackParams? params) =>
+          _i17.DeleteAudioTrackParams? params) =>
       (super.noSuchMethod(
         Invocation.method(
           #call,
