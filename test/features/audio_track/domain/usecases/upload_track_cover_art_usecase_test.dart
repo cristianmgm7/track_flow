@@ -95,7 +95,7 @@ void main() {
       quality: anyNamed('quality'),
     )).thenAnswer((_) async => const Right(downloadUrl));
     when(mockAudioTrackRepository.getTrackById(trackId))
-        .thenAnswer((_) async => const Right(null));
+        .thenAnswer((_) async => Left(DatabaseFailure('Track not found')));
 
     // Act
     final result = await useCase(UploadTrackCoverArtParams(
@@ -104,7 +104,10 @@ void main() {
     ));
 
     // Assert
-    expect(result, Left(DatabaseFailure('Track not found')));
+    result.fold(
+      (failure) => expect(failure, isA<DatabaseFailure>()),
+      (_) => fail('Should return failure'),
+    );
     verify(mockDirectoryService.getFilePath(DirectoryType.trackCovers, any));
     verify(mockImageStorageRepository.uploadImage(
       imageFile: anyNamed('imageFile'),
