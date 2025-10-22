@@ -4,6 +4,7 @@ import 'package:trackflow/core/sync/presentation/bloc/sync_bloc.dart';
 import 'package:trackflow/core/sync/presentation/bloc/sync_event.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/ui/loading/app_loading.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
@@ -63,8 +64,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
       useRootNavigator: true,
       title: 'Project Actions',
       context: context,
-      actions: ProjectDetailActions.forProject(context, project),
+      actions: ProjectDetailActions.forProject(context, project, context.read<ProjectsBloc>()),
       initialChildSize: 0.5,
+      reprovideBlocs: [context.read<ProjectsBloc>()],
     );
   }
 
@@ -147,7 +149,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     elevation: 0,
                     pinned: true,
                     flexibleSpace: FlexibleSpaceBar(
+                      centerTitle: false,
                       title: Text(
+                        textAlign: TextAlign.left,
                         project.name.value.getOrElse(() => 'Project'),
                         style: const TextStyle(
                           color: AppColors.textPrimary,
@@ -175,11 +179,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           topRight: Radius.circular(28),
                         ),
                       ),
-                      padding: const EdgeInsets.all(Dimensions.space0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: Dimensions.space12),
                           const Padding(
                             padding: EdgeInsets.symmetric(horizontal: Dimensions.space16),
                             child: GlobalSyncIndicator(),
@@ -214,7 +216,6 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(height: Dimensions.space8),
                           PlaylistWidget(
                             playlist: playlist,
                             tracks: tracks,

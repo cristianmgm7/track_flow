@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_gradients.dart';
@@ -45,16 +46,13 @@ class ProjectCoverArt extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius ?? AppBorders.medium,
-        child: Image.network(
-          imageUrl!,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl!,
+          width: size,
+          height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildGeneratedCover();
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return _buildLoadingCover();
-          },
+          placeholder: (context, url) => _buildLoadingCover(),
+          errorWidget: (context, url, error) => _buildGeneratedCover(),
         ),
       ),
     );

@@ -13,6 +13,7 @@ class ProjectDetailActions {
   static List<AppBottomSheetAction> forProject(
     BuildContext context,
     Project project,
+    ProjectsBloc projectsBloc,
   ) => [
     AppBottomSheetAction(
       icon: Icons.upload_file,
@@ -36,7 +37,12 @@ class ProjectDetailActions {
           context: context,
           title: 'Upload Cover Art',
           useRootNavigator: true,
-          child: UploadCoverArtForm(project: project),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: projectsBloc),
+            ],
+            child: UploadCoverArtForm(project: project),
+          ),
         );
       },
     ),

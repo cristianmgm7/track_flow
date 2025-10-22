@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/ui/project/project_cover_art.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
@@ -27,7 +28,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
       useRootNavigator: true,
       title: 'Project Actions',
       context: context,
-      actions: ProjectDetailActions.forProject(context, project),
+      actions: ProjectDetailActions.forProject(context, project, context.read<ProjectsBloc>()),
       initialChildSize: 0.5, // open larger by default to avoid manual drag
     );
   }
