@@ -36,7 +36,7 @@ class UploadTrackCoverArtUseCase {
       // For simplicity, we'll work with the entity through a different approach
       // In practice, you'd have a getTrackEntityById method
 
-      // 2. Generate local file path
+      // 2. Generate local file path for PERSISTENT storage
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final localPathResult = await _directoryService.getFilePath(
         DirectoryType.trackCovers,
@@ -46,40 +46,56 @@ class UploadTrackCoverArtUseCase {
       return await localPathResult.fold(
         (failure) async => Left(failure),
         (localPath) async {
-          // 3. Copy to local cache FIRST (offline-first)
+          // 3. Copy to PERSISTENT local cache FIRST (offline-first)
+          // This ensures the file survives even if the picker temp file is deleted
+          final localFile = File(localPath);
+          await localFile.parent.create(recursive: true);
           await params.imageFile.copy(localPath);
 
-          // 4. Upload to Firebase Storage
-          final storagePath = 'cover_art_tracks/${params.trackId.value}/cover_$timestamp.webp';
-          final uploadResult = await _imageStorageRepository.uploadImage(
-            imageFile: params.imageFile,
-            storagePath: storagePath,
-            metadata: {
-              'trackId': params.trackId.value,
-              'uploadedAt': DateTime.now().toIso8601String(),
-            },
-            quality: 85,
-          );
+          // 4. Get current track and update with local path immediately
+          final getTrackResult = await _audioTrackRepository.getTrackById(params.trackId);
 
-          return await uploadResult.fold(
+          return await getTrackResult.fold(
             (failure) async => Left(failure),
-            (downloadUrl) async {
-              // 5. Create updated track with both URLs
-              // We need to get the current track first
-              final getTrackResult = await _audioTrackRepository.getTrackById(params.trackId);
+            (currentTrack) async {
+              // 5. Update track with local path immediately (makes image available offline instantly)
+              final trackWithLocalPath = currentTrack.copyWith(
+                coverLocalPath: localPath,
+              );
 
-              return await getTrackResult.fold(
+              final localUpdateResult = await _audioTrackRepository.updateTrack(trackWithLocalPath);
+
+              if (localUpdateResult.isLeft()) {
+                return localUpdateResult.fold(
+                  (failure) => Left(failure),
+                  (_) => throw StateError('Unreachable'),
+                );
+              }
+
+              // 6. Upload to Firebase Storage from the PERSISTENT local copy
+              // Use localFile instead of params.imageFile to avoid temp file issues
+              final storagePath = 'cover_art_tracks/${params.trackId.value}/cover_$timestamp.webp';
+              final uploadResult = await _imageStorageRepository.uploadImage(
+                imageFile: localFile,
+                storagePath: storagePath,
+                metadata: {
+                  'trackId': params.trackId.value,
+                  'uploadedAt': DateTime.now().toIso8601String(),
+                },
+                quality: 85,
+              );
+
+              return await uploadResult.fold(
                 (failure) async => Left(failure),
-                (currentTrack) async {
-                  // 6. Update track with both local and remote URLs
-                  final updatedTrack = currentTrack.copyWith(
+                (downloadUrl) async {
+                  // 7. Update track with remote URL
+                  final updatedTrack = trackWithLocalPath.copyWith(
                     coverUrl: downloadUrl,
-                    coverLocalPath: localPath,
                   );
 
-                  final updateResult = await _audioTrackRepository.updateTrack(updatedTrack);
+                  final remoteUpdateResult = await _audioTrackRepository.updateTrack(updatedTrack);
 
-                  return updateResult.fold(
+                  return remoteUpdateResult.fold(
                     (failure) => Left(failure),
                     (_) => Right(downloadUrl),
                   );

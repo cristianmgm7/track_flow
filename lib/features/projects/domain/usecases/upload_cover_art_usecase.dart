@@ -37,7 +37,7 @@ class UploadCoverArtUseCase {
       return await projectResult.fold(
         (failure) async => Left(failure),
         (project) async {
-          // 2. Generate local file path
+          // 2. Generate local file path for PERSISTENT storage
           final timestamp = DateTime.now().millisecondsSinceEpoch;
           final localPathResult = await _directoryService.getFilePath(
             DirectoryType.projectCovers,
@@ -47,10 +47,14 @@ class UploadCoverArtUseCase {
           return await localPathResult.fold(
             (failure) async => Left(failure),
             (localPath) async {
-              // 3. Copy to local cache FIRST (offline-first)
+              // 3. Copy to PERSISTENT local cache FIRST (offline-first)
+              // This ensures the file survives even if the picker temp file is deleted
+              final localFile = File(localPath);
+              await localFile.parent.create(recursive: true);
               await params.imageFile.copy(localPath);
 
               // 4. Update project with local path immediately
+              // This makes the image available offline instantly
               final projectWithLocalPath = project.copyWith(
                 coverLocalPath: localPath,
               );
@@ -65,10 +69,11 @@ class UploadCoverArtUseCase {
                 );
               }
 
-              // 5. Upload to Firebase Storage
+              // 5. Upload to Firebase Storage from the PERSISTENT local copy
+              // Use localFile instead of params.imageFile to avoid temp file issues
               final storagePath = 'cover_art_projects/${params.projectId.value}/cover_$timestamp.webp';
               final uploadResult = await _imageStorageRepository.uploadImage(
-                imageFile: params.imageFile,
+                imageFile: localFile,
                 storagePath: storagePath,
                 metadata: {
                   'projectId': params.projectId.value,

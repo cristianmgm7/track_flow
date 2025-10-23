@@ -62,7 +62,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
   ) async {
     emit(AudioTrackLoading());
 
-    final result = await uploadTrackCoverArt(
+    final result = await uploadTrackCoverArt.call(
       UploadTrackCoverArtParams(
         trackId: event.trackId,
         imageFile: event.imageFile,
