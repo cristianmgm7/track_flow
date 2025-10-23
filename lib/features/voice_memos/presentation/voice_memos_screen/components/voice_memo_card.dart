@@ -25,6 +25,20 @@ class VoiceMemoCard extends StatelessWidget {
       return false;
     }
   }
+  
+  void _showRenameDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => VoiceMemoRenameDialog(
+        memo: memo,
+        onRename: (newTitle) {
+          context.read<VoiceMemoBloc>().add(
+            UpdateVoiceMemoRequested(memo, newTitle),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,27 +88,6 @@ class VoiceMemoCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-
-
-
-
-  
-
-
-  void _showRenameDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => VoiceMemoRenameDialog(
-        memo: memo,
-        onRename: (newTitle) {
-          context.read<VoiceMemoBloc>().add(
-            UpdateVoiceMemoRequested(memo, newTitle),
-          );
-        },
       ),
     );
   }

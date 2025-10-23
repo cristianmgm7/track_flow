@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../bloc/audio_player_state.dart';
 import '../../../audio_context/presentation/bloc/audio_context_bloc.dart';
 import '../../../audio_context/presentation/bloc/audio_context_state.dart';
@@ -65,15 +66,24 @@ class ExpandedTrackInfo extends StatelessWidget {
               albumArt != null
                   ? ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: Image.network(
-                      albumArt,
+                    child: CachedNetworkImage(
+                      imageUrl: albumArt,
+                      width: albumArtSize,
+                      height: albumArtSize,
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (context, error, stackTrace) => Icon(
-                            Icons.music_note,
-                            color: AppColors.primary,
-                            size: albumArtSize * 0.3,
-                          ),
+                      placeholder: (context, url) => Container(
+                        width: albumArtSize,
+                        height: albumArtSize,
+                        color: AppColors.grey800,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Icon(
+                        Icons.music_note,
+                        color: AppColors.primary,
+                        size: albumArtSize * 0.3,
+                      ),
                     ),
                   )
                   : Icon(

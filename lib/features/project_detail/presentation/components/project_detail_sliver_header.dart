@@ -76,7 +76,7 @@ class ProjectDetailSliverHeader extends StatelessWidget {
               ProjectCoverArt(
                 projectName: projectName,
                 projectDescription: projectDescription,
-                imageUrl: null, // Replace with project.coverArtUrl if available
+                imageUrl: project.coverUrl,
                 size: expandedHeight,
                 showShadow: false,
                 borderRadius: BorderRadius.zero,

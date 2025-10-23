@@ -22,6 +22,12 @@ abstract class AudioTrackRemoteDataSource {
     String versionId,
   );
 
+  Future<Either<Failure, Unit>> updateTrackCoverUrl(
+    String trackId,
+    String coverUrl,
+    String? coverLocalPath,
+  );
+
   /// Get audio tracks modified since a specific timestamp for specific project IDs
   Future<Either<Failure, List<AudioTrackDTO>>> getAudioTracksModifiedSince(
     DateTime since,
@@ -161,6 +167,9 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
     String versionId,
   ) async {
     try {
+      // DEBUG: trace firestore write arguments (concise)
+      // ignore: avoid_print
+      print('[AUDIO_TRACK_REMOTE] updateActiveVersion → trackId=$trackId versionId=$versionId');
       await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
         {
           'activeVersionId': versionId,
@@ -171,6 +180,30 @@ class AudioTrackRemoteDataSourceImpl implements AudioTrackRemoteDataSource {
       return const Right(unit);
     } catch (e) {
       return Left(ServerFailure('Error updating active version: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> updateTrackCoverUrl(
+    String trackId,
+    String coverUrl,
+    String? coverLocalPath,
+  ) async {
+    try {
+      // Note: coverLocalPath is NOT synced to Firestore (local-only field)
+      // DEBUG: trace firestore write arguments (concise)
+      // ignore: avoid_print
+      print('[AUDIO_TRACK_REMOTE] updateTrackCoverUrl → trackId=$trackId coverUrl=$coverUrl');
+      await _firestore.collection(AudioTrackDTO.collection).doc(trackId).update(
+        {
+          'coverUrl': coverUrl,
+          'lastModified': FieldValue.serverTimestamp(),
+        },
+      );
+
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure('Error updating track cover URL: $e'));
     }
   }
 

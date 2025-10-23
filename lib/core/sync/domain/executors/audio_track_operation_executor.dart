@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
 import 'package:trackflow/core/sync/data/models/sync_operation_document.dart';
 import 'package:trackflow/core/sync/domain/executors/operation_executor.dart';
+import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_remote_datasource.dart';
 import 'package:trackflow/features/audio_track/data/models/audio_track_dto.dart';
 import 'package:trackflow/features/audio_track/data/datasources/audio_track_local_datasource.dart';
@@ -109,6 +110,33 @@ class AudioTrackOperationExecutor implements OperationExecutor {
               ),
           (_) {
             // Successfully updated active version
+          },
+        );
+        break;
+
+      case 'coverArt':
+        final coverUrl = operationData['coverUrl'] as String? ?? '';
+        // coverLocalPath is extracted but not synced (local-only field)
+        // ignore: unused_local_variable
+        final coverLocalPath = operationData['coverLocalPath'] as String?;
+
+        // Update remote with cover URL only (local path is not synced)
+        final result = await _remoteDataSource.updateTrackCoverUrl(
+          trackId,
+          coverUrl,
+          null, // coverLocalPath is intentionally NOT synced to Firestore
+        );
+
+        result.fold(
+          (failure) => throw Exception(
+            'Update cover art failed: ${failure.message}',
+          ),
+          (_) {
+            // Successfully updated cover art
+            AppLogger.info(
+              'Cover art synced for track: $trackId',
+              tag: 'AudioTrackOperationExecutor',
+            );
           },
         );
         break;
