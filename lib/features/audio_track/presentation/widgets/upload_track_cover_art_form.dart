@@ -1,12 +1,15 @@
 import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_bloc.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
+import 'package:trackflow/features/ui/buttons/primary_button.dart';
+import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class UploadTrackCoverArtForm extends StatefulWidget {
   final AudioTrack track;
@@ -21,125 +24,124 @@ class UploadTrackCoverArtForm extends StatefulWidget {
 }
 
 class _UploadTrackCoverArtFormState extends State<UploadTrackCoverArtForm> {
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
+  PlatformFile? _file;
+  bool _isSubmitting = false;
 
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2000,
-        maxHeight: 2000,
-        imageQuality: 90,
-      );
+  Future<void> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
 
-      if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
-        );
-      }
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _file = result.files.first;
+      });
     }
   }
 
-  void _uploadCoverArt() {
-    if (_selectedImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an image first')),
+  Future<void> _submit() async {
+    final selected = _file;
+    if (selected != null) {
+      setState(() => _isSubmitting = true);
+
+      // Get the file
+      File? file;
+      if (selected.path != null && selected.path!.isNotEmpty) {
+        file = File(selected.path!);
+      } else if (selected.bytes != null) {
+        // Create temporary file from bytes
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/${selected.name}');
+        await tempFile.writeAsBytes(selected.bytes!);
+        file = tempFile;
+      }
+
+      if (file == null) {
+        setState(() => _isSubmitting = false);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not access selected image file.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      context.read<AudioTrackBloc>().add(
+        UploadTrackCoverArt(
+          trackId: widget.track.id,
+          imageFile: file,
+        ),
       );
-      return;
+      setState(() => _isSubmitting = false);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select an image file.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
-
-    context.read<AudioTrackBloc>().add(
-      UploadTrackCoverArt(
-        trackId: widget.track.id,
-        imageFile: _selectedImage!,
-      ),
-    );
-
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(Dimensions.space24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Upload Cover Art',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: Dimensions.space24),
-// 
-          // Image Preview
-          if (_selectedImage != null)
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SecondaryButton(
+          text: _file == null ? 'Select Image' : 'Change Image',
+          icon: Icons.image,
+          onPressed: _isSubmitting ? null : _pickFile,
+          isDisabled: _isSubmitting,
+        ),
+        if (_file != null) ...[
+          const SizedBox(height: Dimensions.space16),
+          if (_file!.bytes != null)
             Container(
-              width: 200,
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                child: Image.file(
-                  _selectedImage!,
+                image: DecorationImage(
+                  image: MemoryImage(_file!.bytes!),
                   fit: BoxFit.cover,
                 ),
               ),
             )
-          else
+          else if (_file!.path != null)
             Container(
-              width: 200,
               height: 200,
               decoration: BoxDecoration(
-                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.music_note,
-                  size: 64,
-                  color: AppColors.textSecondary,
+                image: DecorationImage(
+                  image: FileImage(File(_file!.path!)),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
-
-          const SizedBox(height: Dimensions.space24),
-
-          // Pick Image Button
-          ElevatedButton.icon(
-            onPressed: _pickImage,
-            icon: const Icon(Icons.image),
-            label: Text(_selectedImage == null ? 'Pick Image' : 'Change Image'),
-          ),
-
-          const SizedBox(height: Dimensions.space16),
-
-          // Upload Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _selectedImage != null ? _uploadCoverArt : null,
-              child: const Text('Upload'),
+          Padding(
+            padding: const EdgeInsets.only(top: Dimensions.space8),
+            child: Text(
+              'Selected: ${_file!.name}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-
-          // Cancel Button
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
         ],
-      ),
+        const SizedBox(height: Dimensions.space32),
+        PrimaryButton(
+          text: 'Upload Cover Art',
+          onPressed: _isSubmitting ? null : _submit,
+          isLoading: _isSubmitting,
+        ),
+      ],
     );
   }
 }

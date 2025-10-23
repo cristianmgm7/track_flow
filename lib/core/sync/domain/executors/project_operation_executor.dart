@@ -76,6 +76,9 @@ class ProjectOperationExecutor implements OperationExecutor {
           operationData['lastModified'] != null
               ? DateTime.parse(operationData['lastModified'])
               : null,
+      // ✅ Include cover art fields
+      coverUrl: operationData['coverUrl'] as String?,
+      // Note: coverLocalPath is intentionally not synced to Firestore (local-only)
     );
 
     final result = await _remoteDataSource.createProject(projectDto);
@@ -129,6 +132,9 @@ class ProjectOperationExecutor implements OperationExecutor {
           operationData['lastModified'] != null
               ? DateTime.parse(operationData['lastModified'])
               : null,
+      // ✅ CRITICAL FIX: Include cover art fields to prevent data loss
+      coverUrl: operationData['coverUrl'] as String?,
+      // Note: coverLocalPath is intentionally not synced to Firestore (local-only)
     );
 
     final result = await _remoteDataSource.updateProject(projectDto);

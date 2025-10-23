@@ -132,7 +132,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     Emitter<ProjectsState> emit,
   ) async {
     emit(ProjectsLoading());
-    final result = await uploadCoverArt(
+    final result = await uploadCoverArt.call(
       UploadCoverArtParams(
         projectId: event.projectId,
         imageFile: event.imageFile,

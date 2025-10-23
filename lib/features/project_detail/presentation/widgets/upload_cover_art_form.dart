@@ -12,7 +12,6 @@ import 'package:trackflow/features/ui/buttons/primary_button.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 
 class UploadCoverArtForm extends StatefulWidget {
-  
   final Project project;
   const UploadCoverArtForm({super.key, required this.project});
 
