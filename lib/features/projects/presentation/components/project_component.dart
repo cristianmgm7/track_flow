@@ -17,6 +17,13 @@ class ProjectCard extends StatelessWidget {
       (r) => r,
     );
 
+    // DEBUG: Log project cover art fields
+    // ignore: avoid_print
+    print('[PROJECT_COMPONENT] project=$projectName, coverUrl=${project.coverUrl}, coverLocalPath=${project.coverLocalPath}');
+
+    // Prioritize local path for offline-first, fallback to remote URL
+    final coverImageUrl = project.coverLocalPath ?? project.coverUrl;
+
     return AppProjectCard(
       title: projectName,
       description: projectDescription,
@@ -25,7 +32,7 @@ class ProjectCard extends StatelessWidget {
       leading: ProjectCoverArtSizes.large(
         projectName: projectName,
         projectDescription: projectDescription,
-        imageUrl: project.coverUrl,
+        imageUrl: coverImageUrl,
       ),
     );
   }

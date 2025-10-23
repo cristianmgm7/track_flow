@@ -5,7 +5,6 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
-import 'package:trackflow/features/ui/project/project_cover_art.dart';
 
 class AppProjectCard extends StatelessWidget {
   final String title;
@@ -373,51 +372,3 @@ class AppProjectSuccessState extends StatelessWidget {
   }
 }
 
-
-
-class ProjectCardPorpose {
-
-  static AppProjectCard dashboard (BuildContext context, String title, String description, DateTime createdAt, VoidCallback onTap) {
-    return AppProjectCard(
-      title: title,
-      description: description,
-      createdAt: createdAt,
-      onTap: onTap,
-      backgroundColor: AppColors.grey700,
-      height: Dimensions.avatarLarge,
-      margin: EdgeInsets.symmetric(
-        horizontal: Dimensions.space8,
-        vertical: Dimensions.space8,
-      ),
-      borderRadius: AppBorders.tiny,
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.space0,
-        vertical: Dimensions.space0,
-      ),
-      leading: ProjectCoverArtSizes.large(
-        projectName: title,
-        projectDescription: description,
-      ),
-    );
-  }
-
-  static AppProjectCard list (BuildContext context, String title, String description, DateTime createdAt, VoidCallback onTap) {
-    return AppProjectCard(
-      title: title,
-      description: description,
-      createdAt: createdAt,
-      onTap: onTap,
-      backgroundColor: AppColors.surface,
-      height: Dimensions.avatarLarge,
-      margin: EdgeInsets.symmetric(
-        horizontal: Dimensions.space8,
-        vertical: Dimensions.space8,
-      ),
-      borderRadius: AppBorders.tiny,
-      padding: EdgeInsets.symmetric(
-        horizontal: Dimensions.space0,
-        vertical: Dimensions.space0,
-      ),
-    );
-  }
-}

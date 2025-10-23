@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/domain/entities/project.dart';
 import 'package:trackflow/features/projects/presentation/widgets/create_project_form.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
@@ -9,6 +10,7 @@ import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/ui/project/project_card.dart';
+import 'package:trackflow/features/ui/project/project_cover_art.dart';
 
 class DashboardProjectsSection extends StatelessWidget {
   final List<Project> projects;
@@ -107,10 +109,24 @@ class DashboardProjectsSection extends StatelessWidget {
       itemCount: projects.length,
       itemBuilder: (context, index) {
         final project = projects[index];
-        return ProjectCardPorpose.dashboard(context, project.name.value.fold((l) => '', (r) => r), project.description.value.fold((l) => '', (r) => r), project.createdAt, () => context.push(
+
+
+        return AppProjectCard(title: project.name.value.fold((l) => '', (r) => r),
+         description: project.description.value.fold((l) => '', (r) => r),
+         createdAt: project.createdAt,
+         onTap: () => context.push(
           AppRoutes.projectDetails.replaceAll(':id', project.id.value),
           extra: project,
-        ));
+        ),
+        leading: ProjectCoverArtSizes.large(
+          projectName: project.name.value.fold((l) => '', (r) => r),
+          projectDescription: project.description.value.fold((l) => '', (r) => r),
+          imageUrl: project.coverUrl,
+        ),
+        margin: EdgeInsets.all(Dimensions.space0),
+        padding: EdgeInsets.only(left: Dimensions.space16, right: Dimensions.space0, top: Dimensions.space0, bottom: Dimensions.space0),
+        backgroundColor: AppColors.surface,
+        );
       },
     );
   }
