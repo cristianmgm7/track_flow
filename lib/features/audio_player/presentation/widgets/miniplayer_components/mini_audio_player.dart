@@ -50,6 +50,7 @@ class MiniAudioPlayer extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12.0, sigmaY: 12.0),
         child: Container(
+          padding: EdgeInsets.all(Dimensions.space4),
           decoration: BoxDecoration(
             color: (config.backgroundColor ?? AppColors.surface).withValues(
               alpha: 0.15,
@@ -69,7 +70,7 @@ class MiniAudioPlayer extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Padding(
-                    padding: config.padding,
+                    padding: const EdgeInsets.all(Dimensions.space4),
                     child: Row(
                       children: [
                         // Cover art for AudioTrackMetadata
@@ -110,14 +111,11 @@ class MiniAudioPlayer extends StatelessWidget {
                   ),
                   // progress bar at the very bottom, full width
                   if (config.showProgress)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 2),
-                      child: PlaybackProgress(
-                        height: Dimensions.space2,
-                        thumbRadius: Dimensions.space6,
-                        showTimeLabels: false,
-                        // The progress bar will stretch to the card's width
-                      ),
+                    PlaybackProgress(
+                      height: Dimensions.space2,
+                      thumbRadius: Dimensions.space6,
+                      showTimeLabels: false,
+                      // The progress bar will stretch to the card's width
                     ),
                 ],
               );

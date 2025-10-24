@@ -62,7 +62,7 @@ class _TrackComponentState extends State<TrackComponent> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          TrackCoverArtSizes.medium(track: track, imageUrl: track.coverUrl),
+          TrackCoverArtSizes.large(track: track, imageUrl: track.coverUrl),
           SizedBox(width: Dimensions.space12),
           TrackInfoSection(
             track: track,

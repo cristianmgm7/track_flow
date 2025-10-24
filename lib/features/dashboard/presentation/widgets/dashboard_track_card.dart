@@ -39,7 +39,7 @@ class DashboardTrackCard extends StatelessWidget {
       child: Row(
         children: [
           // Cover art on the left
-          TrackCoverArt(track: track, size: Dimensions.avatarLarge),
+          TrackCoverArtSizes.large(track: track, imageUrl: track.coverUrl),
           SizedBox(width: Dimensions.space12),
           // Content stacked vertically on the right
           Expanded(

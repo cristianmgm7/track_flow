@@ -129,7 +129,7 @@ class TrackInfoSection extends StatelessWidget {
             // Status badge (placeholder or actual widget)
             if (config.showStatusBadge) ...[
               statusBadge ?? Container(), // Placeholder when no badge provided
-              const SizedBox(width: 8),
+              
             ],
             Expanded(
               child: Text(
