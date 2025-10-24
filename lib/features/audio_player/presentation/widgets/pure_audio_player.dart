@@ -18,7 +18,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 class PureAudioPlayer extends StatelessWidget {
   const PureAudioPlayer({
     super.key,
-    this.padding = const EdgeInsets.all(16.0),
+    this.padding = const EdgeInsets.all(Dimensions.space8),
     this.backgroundColor,
     this.borderRadius = 12.0,
     this.showVolumeControl = true,
@@ -33,79 +33,107 @@ class PureAudioPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-      return Container(
-        decoration: BoxDecoration(color: Colors.transparent),
-        child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-          builder: (context, state) {
-            String? title;
-            String? coverUrl;
-
-            if (state is AudioPlayerSessionState) {
-              final current = state.session.currentTrack;
-              if (current != null) {
-                title = current.title;
-                coverUrl = current.coverUrl;
-              }
-            }
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+    return SizedBox(
+      height: MediaQuery.of(context).size.height,
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor ?? Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
+        ),
+        child: SafeArea(
+          top: true,
+          child: Padding(
+            padding: padding,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (showTrackInfo) ...[
-                  TrackCoverArt(
-                    metadata: null,
-                    imageUrl: coverUrl,
-                    showShadow: false,
-                    size: Dimensions.playerCoverArtSize,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title ?? 'No track selected',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ) ?? const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  BlocBuilder<AudioContextBloc, AudioContextState>(
-                    builder: (context, contextState) {
-                      String uploaderName = '';
-                      if (contextState is AudioContextLoaded && contextState.collaborator != null) {
-                        uploaderName = contextState.collaborator!.name;
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+                    builder: (context, state) {
+                      String? title;
+                      String? coverUrl;
+
+                      if (state is AudioPlayerSessionState) {
+                        final current = state.session.currentTrack;
+                        if (current != null) {
+                          title = current.title;
+                          coverUrl = current.coverUrl;
+                        }
                       }
-                      if (uploaderName.isEmpty) return const SizedBox.shrink();
-                      return Text(
-                        uploaderName,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (showTrackInfo) ...[
+                            TrackCoverArt(
+                              metadata: null,
+                              imageUrl: coverUrl,
+                              showShadow: false,  
+                              size: Dimensions.playerCoverArtSize,
                             ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                            const SizedBox(height: 12),
+                            Text(
+                              title ?? 'No track selected',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ) ?? const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            BlocBuilder<AudioContextBloc, AudioContextState>(
+                              builder: (context, contextState) {
+                                String uploaderName = '';
+                                if (contextState is AudioContextLoaded && contextState.collaborator != null) {
+                                  uploaderName = contextState.collaborator!.name;
+                                }
+                                if (uploaderName.isEmpty) return const SizedBox.shrink();
+                                return Text(
+                                  uploaderName,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          const QueueControls(
+                            size: 32.0,
+                            spacing: 16.0,
+                            showRepeatMode: true,
+                            showShuffleMode: true,
+                          ),
+                          const SizedBox(height: 12),
+                          const PlaybackProgress(
+                            height: 4.0,
+                            thumbRadius: 10.0,
+                            showTimeLabels: true,
+                          ),
+                        ],
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
-                ],
-                const QueueControls(
-                  size: 32.0,
-                  spacing: 16.0,
-                  showRepeatMode: true,
-                  showShuffleMode: true,
-                ),
-                const SizedBox(height: 12),
-                const PlaybackProgress(
-                  height: 4.0,
-                  thumbRadius: 10.0,
-                  showTimeLabels: true,
                 ),
               ],
-            );
-          },
+            ),
+          ),
         ),
-      );
-    }
+      ),
+    );
   }
+}
