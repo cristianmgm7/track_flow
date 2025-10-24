@@ -1,8 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_shadows.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/audio_player/domain/entities/audio_track_metadata.dart';
 import 'dart:io';
@@ -20,7 +21,7 @@ class TrackCoverArt extends StatelessWidget {
     super.key,
     this.track,
     this.metadata,
-    this.size = 48,
+    this.size = Dimensions.avatarMedium,
     this.imageUrl,
     this.showShadow = false,
     this.borderRadius,
@@ -29,10 +30,11 @@ class TrackCoverArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Priority 1: Explicit imageUrl parameter (local or remote)
+    if (imageUrl != null && imageUrl!.isNotEmpty && !imageUrl!.startsWith('http')) {
+      return _buildLocalImageCover();
+    }
+
     if (imageUrl != null && imageUrl!.isNotEmpty) {
-      if (!imageUrl!.startsWith('http')) {
-        return _buildLocalImageCover();
-      }
       return _buildImageCover();
     }
 
@@ -52,7 +54,7 @@ class TrackCoverArt extends StatelessWidget {
     }
 
     // Priority 5: Generated placeholder
-    return _buildGeneratedCover(context);
+    return _buildGeneratedCover();
   }
 
   Widget _buildImageCover() {
@@ -65,16 +67,13 @@ class TrackCoverArt extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius ?? AppBorders.medium,
-        child: Image.network(
-          imageUrl!,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl!,
+          width: size,
+          height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildGeneratedCover(context);
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return _buildLoadingCover(context);
-          },
+          placeholder: (context, url) => _buildLoadingCover(),
+          errorWidget: (context, url, error) => _buildGeneratedCover(),
         ),
       ),
     );
@@ -95,7 +94,7 @@ class TrackCoverArt extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(),
         ),
       ),
     );
@@ -116,7 +115,7 @@ class TrackCoverArt extends StatelessWidget {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
+          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(),
         ),
       ),
     );
@@ -132,16 +131,13 @@ class TrackCoverArt extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius ?? AppBorders.medium,
-        child: Image.network(
-          track!.coverUrl,
+        child: CachedNetworkImage(
+          imageUrl: track!.coverUrl,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return _buildLoadingCover(context);
-          },
+          placeholder: (context, url) => _buildLoadingCover(),
+          errorWidget: (context, url, error) => _buildGeneratedCover(),
         ),
       ),
     );
@@ -157,25 +153,23 @@ class TrackCoverArt extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: borderRadius ?? AppBorders.medium,
-        child: Image.network(
-          metadata!.coverUrl!,
+        child: CachedNetworkImage(
+          imageUrl: metadata!.coverUrl!,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildGeneratedCover(context),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return _buildLoadingCover(context);
-          },
+          placeholder: (context, url) => _buildLoadingCover(),
+          errorWidget: (context, url, error) => _buildGeneratedCover(),
         ),
       ),
     );
   }
 
-  Widget _buildGeneratedCover(BuildContext context) {
+  Widget _buildGeneratedCover() {
     final String name = track?.name ?? metadata?.title ?? '';
     final iconData = _generateIconFromName(name);
-    final backgroundColor = generateTrackCoverColorFromName(name, context);
+    final backgroundColor = _generateColorFromName(name);
+
     return Container(
       width: size,
       height: size,
@@ -194,23 +188,20 @@ class TrackCoverArt extends StatelessWidget {
     );
   }
 
-  Widget _buildLoadingCover(BuildContext context) {
+  Widget _buildLoadingCover() {
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: AppColors.grey700,
         borderRadius: borderRadius ?? AppBorders.medium,
         boxShadow: showShadow ? AppShadows.card : null,
       ),
       child: Center(
-        child: SizedBox(
-          width: size * 0.4,
-          height: size * 0.4,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+        child: Icon(
+          Icons.music_note_rounded,
+          size: size * 0.3,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -220,6 +211,7 @@ class TrackCoverArt extends StatelessWidget {
     final trackName = name.toLowerCase();
     final hash = name.hashCode;
     final random = math.Random(hash);
+
     if (trackName.contains('piano') || trackName.contains('key')) {
       return Icons.piano;
     } else if (trackName.contains('guitar') || trackName.contains('string')) {
@@ -258,6 +250,27 @@ class TrackCoverArt extends StatelessWidget {
     }
   }
 
+  Color _generateColorFromName(String name) {
+    final hash = name.hashCode;
+    final random = math.Random(hash);
+
+    // Color options similar to project cover art style
+    final colorOptions = [
+      const Color(0xFF1DB954), // Spotify green
+      const Color(0xFF9146FF), // Purple
+      const Color(0xFFE22134), // Red
+      const Color(0xFF0D73EC), // Blue
+      const Color(0xFFF59E0B), // Yellow
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFFEF4444), // Rose
+      const Color(0xFF8B5CF6), // Violet
+      const Color(0xFF06B6D4), // Cyan
+      const Color(0xFFEC4899), // Pink
+    ];
+
+    return colorOptions[random.nextInt(colorOptions.length)];
+  }
+
   Color _getIconColor(Color backgroundColor) {
     // Calculate appropriate icon color based on background
     final brightness = backgroundColor.computeLuminance();
@@ -270,81 +283,93 @@ class TrackCoverArt extends StatelessWidget {
 }
 
 /// Utility to generate a consistent background color for a track, used for cover art and backgrounds.
-Color generateTrackCoverColor(AudioTrack track, BuildContext context) {
+Color generateTrackCoverColor(AudioTrack track) {
   final hash = track.name.hashCode;
   final random = math.Random(hash);
+
   final colorOptions = [
-    Theme.of(context).colorScheme.primaryContainer,
-    Theme.of(context).colorScheme.secondaryContainer,
-    Theme.of(context).colorScheme.tertiaryContainer,
-    Theme.of(context).colorScheme.surfaceContainerHighest,
-    AppColors.primary.withValues(alpha: 0.1),
-    AppColors.accent.withValues(alpha: 0.1),
-    AppColors.success.withValues(alpha: 0.1),
-    AppColors.warning.withValues(alpha: 0.1),
-    AppColors.info.withValues(alpha: 0.1),
+    const Color(0xFF1DB954), // Spotify green
+    const Color(0xFF9146FF), // Purple
+    const Color(0xFFE22134), // Red
+    const Color(0xFF0D73EC), // Blue
+    const Color(0xFFF59E0B), // Yellow
+    const Color(0xFF10B981), // Emerald
+    const Color(0xFFEF4444), // Rose
+    const Color(0xFF8B5CF6), // Violet
+    const Color(0xFF06B6D4), // Cyan
+    const Color(0xFFEC4899), // Pink
   ];
+
   return colorOptions[random.nextInt(colorOptions.length)];
 }
 
-Color generateTrackCoverColorFromName(String name, BuildContext context) {
+Color generateTrackCoverColorFromName(String name) {
   final hash = name.hashCode;
   final random = math.Random(hash);
+
   final colorOptions = [
-    Theme.of(context).colorScheme.primaryContainer,
-    Theme.of(context).colorScheme.secondaryContainer,
-    Theme.of(context).colorScheme.tertiaryContainer,
-    Theme.of(context).colorScheme.surfaceContainerHighest,
-    AppColors.primary.withValues(alpha: 0.1),
-    AppColors.accent.withValues(alpha: 0.1),
-    AppColors.success.withValues(alpha: 0.1),
-    AppColors.warning.withValues(alpha: 0.1),
-    AppColors.info.withValues(alpha: 0.1),
+    const Color(0xFF1DB954), // Spotify green
+    const Color(0xFF9146FF), // Purple
+    const Color(0xFFE22134), // Red
+    const Color(0xFF0D73EC), // Blue
+    const Color(0xFFF59E0B), // Yellow
+    const Color(0xFF10B981), // Emerald
+    const Color(0xFFEF4444), // Rose
+    const Color(0xFF8B5CF6), // Violet
+    const Color(0xFF06B6D4), // Cyan
+    const Color(0xFFEC4899), // Pink
   ];
+
   return colorOptions[random.nextInt(colorOptions.length)];
 }
 
 // Factory methods for different sizes
 class TrackCoverArtSizes {
   static TrackCoverArt small({
-    required AudioTrack track,
+    AudioTrack? track,
+    AudioTrackMetadata? metadata,
     String? imageUrl,
     bool showShadow = false,
   }) {
     return TrackCoverArt(
       track: track,
+      metadata: metadata,
       imageUrl: imageUrl,
-      size: Dimensions.avatarMedium, // 32
+      size: Dimensions.avatarSmall, // 32
       showShadow: showShadow,
-      borderRadius: AppBorders.small,
+      borderRadius: AppBorders.tiny,
     );
   }
 
   static TrackCoverArt medium({
-    required AudioTrack track,
+    AudioTrack? track,
+    AudioTrackMetadata? metadata,
     String? imageUrl,
     bool showShadow = false,
   }) {
     return TrackCoverArt(
       track: track,
+      metadata: metadata,
       imageUrl: imageUrl,
-      size: Dimensions.avatarLarge, // 48
+      size: Dimensions.avatarMedium, // 48
       showShadow: showShadow,
-      borderRadius: AppBorders.medium,
+      borderRadius: AppBorders.tiny,
     );
   }
 
   static TrackCoverArt large({
-    required AudioTrack track,
+    AudioTrack? track,
+    AudioTrackMetadata? metadata,
     String? imageUrl,
     bool showShadow = false,
   }) {
     return TrackCoverArt(
       track: track,
+      metadata: metadata,
       imageUrl: imageUrl,
-      size: Dimensions.avatarXLarge, // 64
+      size: Dimensions.avatarLarge, // 64
       showShadow: showShadow,
-      borderRadius: AppBorders.medium,
+      borderRadius: AppBorders.tiny,
     );
   }
 }

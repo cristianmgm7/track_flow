@@ -42,7 +42,8 @@ class AudioTrackDTO {
     return AudioTrackDTO(
       id: AudioTrackId.fromUniqueString(json['id'] as String),
       name: json['name'] as String,
-      coverUrl: json['url'] as String? ?? '', // Map from 'url' for backwards compatibility
+      // Try 'coverUrl' first (new field), fallback to 'url' (legacy field) for backwards compatibility
+      coverUrl: (json['coverUrl'] as String?) ?? (json['url'] as String?) ?? '',
       coverLocalPath: null, // Never from Firestore
       duration: json['duration'] as int,
       projectId: ProjectId.fromUniqueString(json['projectId'] as String),
@@ -72,7 +73,8 @@ class AudioTrackDTO {
     return {
       'id': id.value,
       'name': name,
-      'url': coverUrl, // Keep 'url' key for Firestore backwards compatibility
+      'coverUrl': coverUrl, // Use 'coverUrl' as the primary field name
+      'url': coverUrl, // Keep 'url' for backwards compatibility with old data
       // coverLocalPath intentionally excluded
       'duration': duration,
       'projectId': projectId.value,
