@@ -16,12 +16,13 @@ class AudioCommentControls extends StatelessWidget {
   final AudioTrack track;
   final TrackVersionId? versionId;
   final double buttonSize;
-
+  final double iconSize;
   const AudioCommentControls({
     super.key,
     required this.track,
     required this.versionId,
     this.buttonSize = 48,
+    this.iconSize = 24,
   });
 
   @override
@@ -94,6 +95,7 @@ class AudioCommentControls extends StatelessWidget {
               isPlaying: isPlaying,
               isBuffering: isBuffering && !isDifferentTrack,
               size: buttonSize,
+              iconSize: iconSize,
               onPressed: () {
                 final audioPlayerBloc = context.read<AudioPlayerBloc>();
                 if (isDifferentTrack) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_bloc.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
 import 'package:trackflow/features/track_version/presentation/cubit/version_selector_cubit.dart';
@@ -53,7 +54,7 @@ class VersionsList extends StatelessWidget {
               height: 56,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal:Dimensions.space8),
                 itemBuilder: (context, index) {
                   final v = loaded.versions[index];
                   final selectedId =
@@ -61,6 +62,8 @@ class VersionsList extends StatelessWidget {
                   final isSelected = selectedId == v.id;
                   final isGloballyActive = loaded.activeVersionId == v.id;
                   return ChoiceChip(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.symmetric(horizontal: Dimensions.space8,vertical: Dimensions.space2),
                     label: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

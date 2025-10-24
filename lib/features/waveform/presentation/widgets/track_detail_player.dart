@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_gradients.dart';
 import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
 import 'package:trackflow/features/waveform/presentation/widgets/enhanced_waveform_display.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
@@ -13,7 +14,6 @@ class TrackDetailPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
 
     // Determine which versionId to use
     final TrackVersionId? effectiveVersionId =
@@ -23,7 +23,9 @@ class TrackDetailPlayer extends StatelessWidget {
       top: true,
       bottom: false,
       child: Container(
-        color: theme.colorScheme.surface,
+        decoration: BoxDecoration(
+          gradient: AppGradients.overlay,
+        ),
         padding: EdgeInsets.symmetric(
           horizontal: Dimensions.screenMarginSmall,
           vertical: 8,
@@ -44,7 +46,8 @@ class TrackDetailPlayer extends StatelessWidget {
             AudioCommentControls(
               track: track,
               versionId: effectiveVersionId,
-              buttonSize: 48,
+              buttonSize: Dimensions.buttonHeightSmall,
+              iconSize: Dimensions.iconMedium,
             ),
           ],
         ),
