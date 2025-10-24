@@ -60,12 +60,11 @@ class VoiceMemoCardHeader extends StatelessWidget {
         ),
 
         // Menu Button
-        Expanded(
-          child: IconButton(
-            padding: EdgeInsets.all(Dimensions.space0),
-            icon: const Icon(Icons.more_horiz, color: Colors.white),
-            onPressed: () => _showMenu(context),
-          ),
+        IconButton(
+          iconSize: Dimensions.iconSmall,
+          padding: EdgeInsets.all(Dimensions.space0),
+          icon: const Icon(Icons.more_horiz, color: Colors.white),
+          onPressed: () => _showMenu(context),
         ),
       ],
     );

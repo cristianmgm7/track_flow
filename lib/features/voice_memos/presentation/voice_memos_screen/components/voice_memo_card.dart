@@ -66,14 +66,11 @@ class VoiceMemoCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.primary,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(Dimensions.radiusMedium),
-                    bottomRight: Radius.circular(Dimensions.radiusMedium),
-                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(Dimensions.radiusMedium)),
                 ),
                 padding: EdgeInsets.symmetric(
                   horizontal: Dimensions.space12,
-                  vertical: Dimensions.space8,
+                  vertical: Dimensions.space12,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,9 +82,6 @@ class VoiceMemoCard extends StatelessWidget {
                         DeleteVoiceMemoRequested(memo.id),
                       ),
                     ),
-
-                    SizedBox(height: Dimensions.space8),
-
                     VoiceMemoWaveformDisplay(
                       memo: memo,
                       height: 50,
