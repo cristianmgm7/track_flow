@@ -122,7 +122,7 @@ class VoiceMemosScreen extends StatelessWidget {
 
   Widget _buildMemosList(BuildContext context, List<VoiceMemo> memos) {
     return ListView.separated(
-      padding: EdgeInsets.all(Dimensions.space16),
+      padding: EdgeInsets.symmetric(horizontal: Dimensions.space0, vertical: Dimensions.space0),
       itemCount: memos.length,
       separatorBuilder: (_, __) => SizedBox(height: Dimensions.space12),
       itemBuilder: (context, index) {
