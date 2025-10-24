@@ -94,7 +94,7 @@ class _PlaybackProgressState extends State<PlaybackProgress> {
                       enabledThumbRadius: widget.thumbRadius,
                     ),
                     overlayShape: RoundSliderOverlayShape(
-                      overlayRadius: widget.thumbRadius * 1.5,
+                      overlayRadius: widget.thumbRadius * 1,
                     ),
                     activeTrackColor: widget.activeColor ?? theme.primaryColor,
                     inactiveTrackColor:

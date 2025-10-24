@@ -41,7 +41,6 @@ class ExpandedTrackInfo extends StatelessWidget {
       title = 'Playback Error';
       artist = 'Please try again';
     }
-
     final albumArtSize = screenSize.width * 0.6;
 
     return Column(
