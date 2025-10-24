@@ -68,6 +68,11 @@ class AppTextStyle {
     fontSize: 16,
     fontWeight: FontWeight.w600,
   );
+  static const TextStyle titleXSmall = TextStyle(
+    color: AppColors.textPrimary,
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+  );
 
   // Body styles
   static const TextStyle bodyLarge = TextStyle(

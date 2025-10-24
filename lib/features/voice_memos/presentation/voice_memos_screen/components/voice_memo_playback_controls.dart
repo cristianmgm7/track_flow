@@ -41,8 +41,7 @@ class VoiceMemoPlaybackControls extends StatelessWidget {
 
       
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Column(
           children: [
             // Play/Pause Button using AudioPlayPauseButton
             AudioPlayPauseButton(
@@ -61,17 +60,6 @@ class VoiceMemoPlaybackControls extends StatelessWidget {
               iconSize: Dimensions.iconMedium,
               backgroundColor: Colors.white.withValues(alpha: 0.2),
               iconColor: Colors.white,
-            ),
-
-
-            // Duration
-            Text(
-              _formatDuration(memo.duration),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
             ),
           ],
         );

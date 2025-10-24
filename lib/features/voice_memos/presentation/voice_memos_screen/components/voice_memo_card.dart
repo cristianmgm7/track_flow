@@ -44,47 +44,58 @@ class VoiceMemoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha:1),
-            AppColors.primary.withValues(alpha: 0.6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
       ),
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: Dimensions.space12, vertical: Dimensions.space0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Header: Title and Menu
-            VoiceMemoCardHeader(
-              memo: memo,
-              onRenamePressed: () => _showRenameDialog(context),
-              onDeletePressed: () => context.read<VoiceMemoBloc>().add(
-                DeleteVoiceMemoRequested(memo.id),
-              ),
-            ),
-
-            SizedBox(height: Dimensions.space8),
-
-            // Waveform Display
-            VoiceMemoWaveformDisplay(
-              memo: memo,
-              height: 50,
-              fileExists: _fileExists,
-            ),
-
-            // SizedBox(height: Dimensions.space12),
-            SizedBox(height: Dimensions.space4),
-
-            // Playback Controls Row
+            // Playback controls on the left
             VoiceMemoPlaybackControls(
               memo: memo,
               onPlayPressed: () => context.read<VoiceMemoBloc>().add(PlayVoiceMemoRequested(memo)),
               onPausePressed: () => context.read<AudioPlayerBloc>().add(const PauseAudioRequested()),
+            ),
+
+            SizedBox(width: Dimensions.space12),
+
+            // Right side: header and waveform
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(Dimensions.radiusMedium),
+                    bottomRight: Radius.circular(Dimensions.radiusMedium),
+                  ),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: Dimensions.space12,
+                  vertical: Dimensions.space8,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    VoiceMemoCardHeader(
+                      memo: memo,
+                      onRenamePressed: () => _showRenameDialog(context),
+                      onDeletePressed: () => context.read<VoiceMemoBloc>().add(
+                        DeleteVoiceMemoRequested(memo.id),
+                      ),
+                    ),
+
+                    SizedBox(height: Dimensions.space8),
+
+                    VoiceMemoWaveformDisplay(
+                      memo: memo,
+                      height: 50,
+                      fileExists: _fileExists,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

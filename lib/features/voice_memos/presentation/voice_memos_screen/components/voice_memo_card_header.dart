@@ -55,15 +55,17 @@ class VoiceMemoCardHeader extends StatelessWidget {
       children: [
         Text(
           memo.title,
-          style: AppTextStyle.titleSmall,
+          style: AppTextStyle.titleXSmall,
           overflow: TextOverflow.ellipsis,
         ),
 
         // Menu Button
-        IconButton(
-          padding: EdgeInsets.all(Dimensions.space0),
-          icon: const Icon(Icons.more_horiz, color: Colors.white),
-          onPressed: () => _showMenu(context),
+        Expanded(
+          child: IconButton(
+            padding: EdgeInsets.all(Dimensions.space0),
+            icon: const Icon(Icons.more_horiz, color: Colors.white),
+            onPressed: () => _showMenu(context),
+          ),
         ),
       ],
     );

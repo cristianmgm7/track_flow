@@ -9,7 +9,7 @@ import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/modals/app_form_sheet.dart';
 // duplicate import removed
 import '../../../audio_track/domain/entities/audio_track.dart';
-import '../../../audio_comment/presentation/components/comments_section.dart';
+import '../../../audio_comment/presentation/components/comments_sliver_section.dart';
 import '../../../audio_comment/presentation/components/comment_input_modal.dart';
 import '../../../waveform/presentation/widgets/track_detail_player.dart';
 import '../blocs/track_versions/track_versions_bloc.dart';
@@ -105,34 +105,37 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
           body: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
-            child: Column(
-              
-              children: [
-                // Versions Section List
-                VersionsSectionComponent(trackId: widget.track.id),
-                VersionHeaderComponent(
-                  trackId: widget.track.id,
-                  track: widget.track,
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: VersionsSectionComponent(trackId: widget.track.id),
                 ),
-                // Audio Player with Version Selector with waveform
-                TrackDetailPlayer(
-                  key: ValueKey('player_${selectedVersionId.value}'),
-                  track: widget.track,
-                  versionId: selectedVersionId,
+                SliverToBoxAdapter(
+                  child: VersionHeaderComponent(
+                    trackId: widget.track.id,
+                    track: widget.track,
+                  ),
                 ),
-
-                // Comments Section
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: Dimensions.screenMarginSmall,
-                    ),
-                    child: CommentsSection(
-                      key: ValueKey('comments_${selectedVersionId.value}'),
-                      projectId: widget.projectId,
-                      trackId: widget.track.id,
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _PinnedPlayerHeaderDelegate(
+                    height: Dimensions.space160,
+                    child: TrackDetailPlayer(
+                      key: ValueKey('player_${selectedVersionId.value}'),
+                      track: widget.track,
                       versionId: selectedVersionId,
                     ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Dimensions.screenMarginSmall,
+                  ),
+                  sliver: CommentsSliverSection(
+                    key: ValueKey('comments_${selectedVersionId.value}'),
+                    projectId: widget.projectId,
+                    trackId: widget.track.id,
+                    versionId: selectedVersionId,
                   ),
                 ),
               ],
@@ -178,5 +181,34 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
         );
       },
     );
+  }
+}
+
+class _PinnedPlayerHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _PinnedPlayerHeaderDelegate({
+    required this.height,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).colorScheme.surface,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedPlayerHeaderDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child.key != child.key;
   }
 }
