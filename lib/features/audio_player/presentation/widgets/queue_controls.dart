@@ -4,6 +4,7 @@ import '../../domain/entities/repeat_mode.dart';
 import '../bloc/audio_player_bloc.dart';
 import '../bloc/audio_player_event.dart';
 import '../bloc/audio_player_state.dart';
+import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
 
 /// Pure audio queue controls (next/previous/shuffle/repeat)
 /// NO business logic - only audio queue operations
@@ -42,6 +43,27 @@ class QueueControls extends StatelessWidget {
 
             // Previous button
             _buildPreviousButton(context, state, iconColor),
+            SizedBox(width: spacing),
+
+            // Play/Pause button (inline, using same state)
+            AudioPlayPauseButton(
+              isPlaying: state is AudioPlayerPlaying,
+              isBuffering: state is AudioPlayerBuffering,
+              onPressed:
+                  state is AudioPlayerPlaying
+                      ? () => context.read<AudioPlayerBloc>().add(
+                            const PauseAudioRequested(),
+                          )
+                      : (state is AudioPlayerPaused ||
+                              state is AudioPlayerStopped ||
+                              state is AudioPlayerCompleted)
+                          ? () => context.read<AudioPlayerBloc>().add(
+                                const ResumeAudioRequested(),
+                              )
+                          : null,
+              size: size * 1.5,
+              iconSize: size,
+            ),
             SizedBox(width: spacing),
 
             // Next button

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
 import '../bloc/audio_player_bloc.dart';
 import '../bloc/audio_player_state.dart';
-import 'audio_controls.dart';
 import 'playback_progress.dart';
 import 'queue_controls.dart';
 import 'package:trackflow/features/ui/track/track_cover_art.dart';
@@ -53,10 +53,11 @@ class PureAudioPlayer extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (showTrackInfo) ...[
-                  TrackCoverArtSizes.large(
+                  TrackCoverArt(
                     metadata: null,
                     imageUrl: coverUrl,
                     showShadow: false,
+                    size: Dimensions.playerCoverArtSize,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -89,12 +90,6 @@ class PureAudioPlayer extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                 ],
-                const AudioControls(
-                  size: 48.0,
-                  showStop: false,
-                  spacing: 20.0,
-                ),
-                const SizedBox(height: 12),
                 const QueueControls(
                   size: 32.0,
                   spacing: 16.0,

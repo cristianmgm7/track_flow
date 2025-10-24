@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/audio_player_bloc.dart';
 import '../../bloc/audio_player_state.dart';
-import '../audio_controls.dart';
 import '../playback_progress.dart';
 import '../queue_controls.dart';
 import 'track_info_widget.dart';
@@ -95,11 +94,6 @@ class MiniAudioPlayer extends StatelessWidget {
                             ),
                           ),
                         // audio controls
-                        const AudioControls(
-                          size: Dimensions.iconMedium,
-                          showStop: false,
-                        ),
-                        SizedBox(width: Dimensions.space8),
                         if (config.showQueueControls)
                           const QueueControls(
                             size: Dimensions.iconSmall,

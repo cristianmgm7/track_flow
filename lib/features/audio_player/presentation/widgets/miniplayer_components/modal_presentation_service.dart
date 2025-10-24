@@ -9,33 +9,29 @@ abstract class IModalPresentationService {
 }
 
 class ModalPresentationService implements IModalPresentationService {
+  
   @override
   void showFullPlayerModal(BuildContext context) {
+    // Read blocs up-front to avoid looking up ancestors from a possibly deactivated context later
+    final audioPlayerBloc = BlocProvider.of<AudioPlayerBloc>(context);
+    final audioContextBloc = BlocProvider.of<AudioContextBloc>(context);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (modalContext) {
-        final mediaQuery = MediaQuery.of(modalContext);
-        return SafeArea(
-          top: false,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
-            child: SizedBox(
-              height: mediaQuery.size.height * 0.9,
-              child: MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(
-                    value: BlocProvider.of<AudioPlayerBloc>(context),
-                  ),
-                  BlocProvider.value(
-                    value: BlocProvider.of<AudioContextBloc>(context),
-                  ),
-                ],
-                child: const PureAudioPlayer(
-                  backgroundColor: Colors.transparent,
-                ),
-              ),
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(
+              value: audioPlayerBloc,
             ),
+            BlocProvider.value(
+              value: audioContextBloc,
+            ),
+          ],
+          child: const PureAudioPlayer(
+            backgroundColor: Colors.transparent,
           ),
         );
       },

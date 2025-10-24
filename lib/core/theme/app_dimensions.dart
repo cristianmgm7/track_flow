@@ -56,6 +56,7 @@ class Dimensions {
   // Audio player dimensions
   static const double miniPlayerHeight = 80.0;
   static const double space6 = 6.0;
+  static const double playerCoverArtSize = 320.0;
 
   // Screen margins
   static const double screenMarginSmall = 16.0;
