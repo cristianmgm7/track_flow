@@ -6,6 +6,7 @@ import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_sect
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_track_card.dart';
 import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/features/track_version/presentation/models/track_detail_screen_args.dart';
 
 class DashboardTracksSection extends StatelessWidget {
   final List<AudioTrack> tracks;
@@ -71,7 +72,16 @@ class DashboardTracksSection extends StatelessWidget {
       itemCount: tracks.length,
       itemBuilder: (context, index) {
         final track = tracks[index];
-        return DashboardTrackCard(track: track);
+        return DashboardTrackCard(track: track, onTap: () {
+          context.push(
+            AppRoutes.trackDetail,
+            extra: TrackDetailScreenArgs(
+              projectId: track.projectId,
+              track: track,
+              versionId: track.activeVersionId!,
+            ),
+          );
+        });
       },
     );
   }

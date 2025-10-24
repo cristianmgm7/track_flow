@@ -33,107 +33,125 @@ class PureAudioPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
-      child: Container(
-        decoration: BoxDecoration(
-          color: backgroundColor ?? Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
-        ),
-        child: SafeArea(
-          top: true,
-          child: Padding(
-            padding: padding,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.of(context).size.height;
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: availableHeight * 0.9,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: backgroundColor ?? Theme.of(context).colorScheme.surface.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(borderRadius)),
+            ),
+            child: SafeArea(
+              top: true,
+              child: Padding(
+                padding: padding,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                    Expanded(
+                      child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
+                        builder: (context, state) {
+                          String? title;
+                          String? coverUrl;
+
+                          if (state is AudioPlayerSessionState) {
+                            final current = state.session.currentTrack;
+                            if (current != null) {
+                              title = current.title;
+                              coverUrl = current.coverUrl;
+                            }
+                          }
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (showTrackInfo) ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(top: Dimensions.space32),
+                                  child: TrackCoverArt(
+                                    metadata: null,
+                                    imageUrl: coverUrl,
+                                    showShadow: false,  
+                                    size: Dimensions.playerCoverArtSize,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: Dimensions.space16),
+                                  child: Text(
+                                    title ?? 'No track selected',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ) ?? const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                BlocBuilder<AudioContextBloc, AudioContextState>(
+                                  builder: (context, contextState) {
+                                    String uploaderName = '';
+                                    if (contextState is AudioContextLoaded && contextState.collaborator != null) {
+                                      uploaderName = contextState.collaborator!.name;
+                                    }
+                                    if (uploaderName.isEmpty) return const SizedBox.shrink();
+                                    return Text(
+                                      uploaderName,
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: AppColors.textSecondary,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+                              const QueueControls(
+                                size: 32.0,
+                                spacing: 16.0,
+                                showRepeatMode: true,
+                                showShuffleMode: true,
+                              ),
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding: const EdgeInsets.all(Dimensions.space16),
+                                child: const PlaybackProgress(
+                                  height: 4.0,
+                                  thumbRadius: 10.0,
+                                  showTimeLabels: true,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
-                Expanded(
-                  child: BlocBuilder<AudioPlayerBloc, AudioPlayerState>(
-                    builder: (context, state) {
-                      String? title;
-                      String? coverUrl;
-
-                      if (state is AudioPlayerSessionState) {
-                        final current = state.session.currentTrack;
-                        if (current != null) {
-                          title = current.title;
-                          coverUrl = current.coverUrl;
-                        }
-                      }
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (showTrackInfo) ...[
-                            TrackCoverArt(
-                              metadata: null,
-                              imageUrl: coverUrl,
-                              showShadow: false,  
-                              size: Dimensions.playerCoverArtSize,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              title ?? 'No track selected',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ) ?? const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            BlocBuilder<AudioContextBloc, AudioContextState>(
-                              builder: (context, contextState) {
-                                String uploaderName = '';
-                                if (contextState is AudioContextLoaded && contextState.collaborator != null) {
-                                  uploaderName = contextState.collaborator!.name;
-                                }
-                                if (uploaderName.isEmpty) return const SizedBox.shrink();
-                                return Text(
-                                  uploaderName,
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                          ],
-                          const QueueControls(
-                            size: 32.0,
-                            spacing: 16.0,
-                            showRepeatMode: true,
-                            showShuffleMode: true,
-                          ),
-                          const SizedBox(height: 12),
-                          const PlaybackProgress(
-                            height: 4.0,
-                            thumbRadius: 10.0,
-                            showTimeLabels: true,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

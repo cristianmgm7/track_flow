@@ -5,6 +5,7 @@ import 'package:trackflow/features/dashboard/presentation/bloc/dashboard_bloc.da
 import 'package:trackflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:trackflow/features/audio_track/presentation/widgets/track_list_item.dart';
 import 'package:trackflow/core/router/app_routes.dart';
+import 'package:trackflow/features/track_version/presentation/models/track_detail_screen_args.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/list/app_list_header_bar.dart';
@@ -68,11 +69,22 @@ class TrackListScreen extends StatelessWidget {
                     padding: EdgeInsets.all(Dimensions.space0),
                     itemCount: tracks.length,
                     separatorBuilder: (context, index) => SizedBox(
-                      height: Dimensions.space12,
+                      height: Dimensions.space0,
                     ),
                     itemBuilder: (context, index) {
                       final track = tracks[index];
-                      return TrackListItem(track: track);
+                      return TrackListItem(track: track,
+                      
+                       onTap: () {
+                        context.push(
+                          AppRoutes.trackDetail,
+                          extra: TrackDetailScreenArgs(
+                            projectId: track.projectId,
+                            track: track,
+                            versionId: track.activeVersionId!,
+                          ),
+                        );
+                      });
                     },
                   ),
                 ),

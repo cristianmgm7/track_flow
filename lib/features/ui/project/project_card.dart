@@ -61,28 +61,31 @@ class AppProjectCard extends StatelessWidget {
       boxShadow: boxShadow,
       enableHover: enableHover,
       enableTapAnimation: enableTapAnimation,
-      child: Row(
-        children: [leading != null ? leading! : SizedBox.shrink(), SizedBox(width: Dimensions.space8),
-          // Content stacked vertically on the right
-          Text(
-                  title,
-                  style: AppTextStyle.titleMedium.copyWith(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: Dimensions.space0),
+        child: Row(
+          children: [leading != null ? leading! : SizedBox.shrink(), SizedBox(width: Dimensions.space8),
+            // Content stacked vertically on the right
+            Text(
+                    title,
+                    style: AppTextStyle.titleMedium.copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-          // Trailing actions/icons on the far right
-          if (trailing != null) ...[
-            SizedBox(width: Dimensions.space8),
-            trailing!,
+            // Trailing actions/icons on the far right
+            if (trailing != null) ...[
+              SizedBox(width: Dimensions.space8),
+              trailing!,
+            ],
+            if (actions != null) ...[
+              SizedBox(width: Dimensions.space8),
+              Row(mainAxisSize: MainAxisSize.min, children: actions!),
+            ],
           ],
-          if (actions != null) ...[
-            SizedBox(width: Dimensions.space8),
-            Row(mainAxisSize: MainAxisSize.min, children: actions!),
-          ],
-        ],
+        ),
       ),
     );
   }
