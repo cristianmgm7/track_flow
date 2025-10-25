@@ -73,9 +73,29 @@ class ProjectDetailState extends Equatable {
 
   @override
   List<Object?> get props => [
-    project,
-    tracks,
-    collaborators,
+    // Include project content fields explicitly to avoid relying on Entity== (id-only)
+    project?.id,
+    project?.name,
+    project?.description,
+    project?.coverUrl,
+    project?.coverLocalPath,
+    project?.updatedAt,
+    tracks.map((t) => [
+      t.id,
+      t.name,
+      t.coverUrl,
+      t.coverLocalPath,
+      t.createdAt,
+      t.activeVersionId,
+      t.isDeleted,
+      t.uploadedBy,
+    ]).toList(),
+    collaborators.map((c) => [
+      c.id,
+      c.name,
+      c.email,
+      c.role,
+    ]).toList(),
     // activeVersionsByTrackId removed
     sort,
     isLoadingProject,

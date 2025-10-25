@@ -40,9 +40,39 @@ class DashboardLoaded extends DashboardState {
 
   @override
   List<Object?> get props => [
-        projectPreview,
-        trackPreview,
-        recentComments,
+        // Use content signatures, not entity identity (id-only), to detect changes
+        projectPreview
+            .map((p) => [
+                  p.id,
+                  p.name,
+                  p.description,
+                  p.coverUrl,
+                  p.coverLocalPath,
+                  p.updatedAt,
+                ])
+            .toList(),
+        trackPreview
+            .map((t) => [
+                  t.id,
+                  t.name,
+                  t.coverUrl,
+                  t.coverLocalPath,
+                  t.createdAt,
+                  t.activeVersionId,
+                ])
+            .toList(),
+        recentComments
+            .map((c) => [
+                  c.id,
+                  c.content,
+                  c.createdAt,
+                  // audio comment extras that could affect rendering
+                  c.audioStorageUrl,
+                  c.localAudioPath,
+                  c.audioDuration,
+                  c.commentType,
+                ])
+            .toList(),
         isLoading,
         failureOption,
       ];

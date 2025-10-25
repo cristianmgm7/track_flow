@@ -76,6 +76,7 @@ class AudioTrack extends AggregateRoot<AudioTrackId> {
   }
 
   bool belongsToProject(ProjectId projectId) {
-    return this.projectId == projectId;
+    return this.projectId == projectId; 
   }
+
 }

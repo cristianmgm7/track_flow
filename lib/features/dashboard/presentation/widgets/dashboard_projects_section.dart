@@ -111,21 +111,31 @@ class DashboardProjectsSection extends StatelessWidget {
         final project = projects[index];
 
 
-        return AppProjectCard(title: project.name.value.fold((l) => '', (r) => r),
-         description: project.description.value.fold((l) => '', (r) => r),
-         createdAt: project.createdAt,
-         onTap: () => context.push(
-          AppRoutes.projectDetails.replaceAll(':id', project.id.value),
-          extra: project,
-        ),
-        leading: ProjectCoverArtSizes.large(
-          projectName: project.name.value.fold((l) => '', (r) => r),
-          projectDescription: project.description.value.fold((l) => '', (r) => r),
-          imageUrl: project.coverUrl,
-        ),
-        margin: EdgeInsets.all(Dimensions.space0),
-        padding: EdgeInsets.only(left: Dimensions.space16, right: Dimensions.space0, top: Dimensions.space0, bottom: Dimensions.space0),
-        backgroundColor: AppColors.surface,
+        return AppProjectCard(
+          title: project.name.value.fold((l) => '', (r) => r),
+          description: project.description.value.fold((l) => '', (r) => r),
+          createdAt: project.createdAt,
+          onTap: () => context.push(
+            AppRoutes.projectDetails.replaceAll(':id', project.id.value),
+            extra: project,
+          ),
+          leading: ProjectCoverArt(
+            key: ValueKey(
+              '${project.id.value}:${project.coverLocalPath ?? project.coverUrl ?? ''}:${project.name.value.fold((l) => '', (r) => r)}',
+            ),
+            projectName: project.name.value.fold((l) => '', (r) => r),
+            projectDescription: project.description.value.fold((l) => '', (r) => r),
+            imageUrl: project.coverLocalPath ?? project.coverUrl,
+            size: Dimensions.avatarLarge,
+          ),
+          margin: EdgeInsets.all(Dimensions.space0),
+          padding: EdgeInsets.only(
+            left: Dimensions.space16,
+            right: Dimensions.space0,
+            top: Dimensions.space0,
+            bottom: Dimensions.space0,
+          ),
+          backgroundColor: AppColors.surface,
         );
       },
     );

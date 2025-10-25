@@ -120,7 +120,7 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
   }
 
   @override
-  Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject(
+  Stream<Either<Failure, List<AudioTrackDTO>>> watchTracksByProject (
     String projectId,
   ) {
     return _isar.audioTrackDocuments
@@ -129,9 +129,11 @@ class IsarAudioTrackLocalDataSource implements AudioTrackLocalDataSource {
         .projectIdEqualTo(projectId)
         .watch(fireImmediately: true)
         .map(
-          (docs) => right<Failure, List<AudioTrackDTO>>(
+          (docs) {
+            return right<Failure, List<AudioTrackDTO>>(
             docs.map((doc) => doc.toDTO()).toList(),
-          ),
+          );
+          },
         )
         .handleError((e) => left(ServerFailure(e.toString())));
   }

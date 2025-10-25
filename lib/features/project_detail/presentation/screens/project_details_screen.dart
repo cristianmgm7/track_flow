@@ -133,9 +133,10 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
               Column(
                 children: [
                   ProjectCoverArt(
+                    key: ValueKey(project.coverLocalPath ?? project.coverUrl),
                     projectName: project.name.value.getOrElse(() => 'Project'),
                     projectDescription: project.description.value.getOrElse(() => ''),
-                    imageUrl: project.coverUrl,
+                    imageUrl: project.coverLocalPath ?? project.coverUrl,
                     size: MediaQuery.of(context).size.width,
                   ),
                   Expanded(child: Container()),

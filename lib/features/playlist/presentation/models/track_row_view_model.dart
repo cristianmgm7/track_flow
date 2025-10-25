@@ -17,6 +17,23 @@ class TrackRowViewModel extends Equatable {
     this.status,
   });
 
+  // Factory method for consistency with new UI models
+  factory TrackRowViewModel.fromDomain({
+    required AudioTrack track,
+    Duration? displayedDuration,
+    String? cacheableRemoteUrl,
+    String? activeVersionId,
+    TrackVersionStatus? status,
+  }) {
+    return TrackRowViewModel(
+      track: track,
+      displayedDuration: displayedDuration ?? track.duration,
+      cacheableRemoteUrl: cacheableRemoteUrl,
+      activeVersionId: activeVersionId,
+      status: status,
+    );
+  }
+
   @override
   List<Object?> get props => [
     track,
