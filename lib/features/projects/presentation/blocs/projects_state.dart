@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
 import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
 
 abstract class ProjectsState extends Equatable {
@@ -22,7 +22,7 @@ class ProjectOperationSuccess extends ProjectsState {
 }
 
 class ProjectCreatedSuccess extends ProjectsState {
-  final Project project;
+  final ProjectUiModel project;
 
   const ProjectCreatedSuccess(this.project);
 
@@ -40,14 +40,14 @@ class ProjectsError extends ProjectsState {
 }
 
 class ProjectDetailsLoaded extends ProjectsState {
-  final Project project;
+  final ProjectUiModel project;
   const ProjectDetailsLoaded(this.project);
   @override
   List<Object?> get props => [project];
 }
 
 class ProjectsLoaded extends ProjectsState {
-  final List<Project> projects;
+  final List<ProjectUiModel> projects;
   final bool isSyncing;
   final double? syncProgress;
   final ProjectSort sort;
@@ -60,7 +60,7 @@ class ProjectsLoaded extends ProjectsState {
   });
 
   ProjectsLoaded copyWith({
-    List<Project>? projects,
+    List<ProjectUiModel>? projects,
     bool? isSyncing,
     double? syncProgress,
     ProjectSort? sort,

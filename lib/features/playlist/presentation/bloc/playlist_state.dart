@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
 import 'package:trackflow/features/playlist/presentation/models/track_row_view_model.dart';
 
 class PlaylistState extends Equatable {
   final bool isLoading;
   final String? error;
-  final List<AudioTrack> tracks;
+  final List<AudioTrackUiModel> tracks;
   final List<TrackRowViewModel> items;
 
   const PlaylistState({
@@ -21,7 +21,7 @@ class PlaylistState extends Equatable {
   PlaylistState copyWith({
     bool? isLoading,
     String? error,
-    List<AudioTrack>? tracks,
+    List<AudioTrackUiModel>? tracks,
     List<TrackRowViewModel>? items,
   }) {
     return PlaylistState(

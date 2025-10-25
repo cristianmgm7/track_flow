@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/track_version/domain/entities/track_version.dart';
+import 'package:trackflow/features/track_version/presentation/models/track_version_ui_model.dart';
 
 abstract class TrackVersionsState extends Equatable {
   const TrackVersionsState();
@@ -18,7 +18,7 @@ class TrackVersionsLoading extends TrackVersionsState {
 }
 
 class TrackVersionsLoaded extends TrackVersionsState {
-  final List<TrackVersion> versions;
+  final List<TrackVersionUiModel> versions;
   final TrackVersionId? activeVersionId;
   const TrackVersionsLoaded({required this.versions, this.activeVersionId});
 

@@ -11,6 +11,7 @@ import '../../domain/usecases/update_voice_memo_usecase.dart';
 import '../../domain/usecases/watch_voice_memos_usecase.dart';
 import 'voice_memo_event.dart';
 import 'voice_memo_state.dart';
+import '../models/voice_memo_ui_model.dart';
 
 @injectable
 class VoiceMemoBloc extends Bloc<VoiceMemoEvent, VoiceMemoState> {
@@ -45,7 +46,9 @@ class VoiceMemoBloc extends Bloc<VoiceMemoEvent, VoiceMemoState> {
       onData: (either) {
         either.fold(
           (failure) => emit(VoiceMemoError(failure.message)),
-          (memos) => emit(VoiceMemosLoaded(memos)),
+          (memos) => emit(VoiceMemosLoaded(
+            memos.map(VoiceMemoUiModel.fromDomain).toList(),
+          )),
         );
       },
       onError: (error, stackTrace) {

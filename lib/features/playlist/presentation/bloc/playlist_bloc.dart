@@ -9,6 +9,7 @@ import 'package:trackflow/features/playlist/domain/usecases/watch_project_playli
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_event.dart';
 import 'package:trackflow/features/playlist/presentation/bloc/playlist_state.dart';
 import 'package:trackflow/features/playlist/presentation/models/track_row_view_model.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
 
 @injectable
 class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
@@ -73,7 +74,7 @@ class PlaylistBloc extends Bloc<PlaylistEvent, PlaylistState> {
               state.copyWith(
                 isLoading: false,
                 error: null,
-                tracks: tracks,
+                tracks: tracks.map(AudioTrackUiModel.fromDomain).toList(),
                 items: items,
               ),
             );

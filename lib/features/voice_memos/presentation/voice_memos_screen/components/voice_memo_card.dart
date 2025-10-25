@@ -6,7 +6,7 @@ import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_e
 import 'package:trackflow/features/voice_memos/presentation/voice_memos_screen/components/voice_memo_playback_controls.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_dimensions.dart';
-import '../../../domain/entities/voice_memo.dart';
+import '../../models/voice_memo_ui_model.dart';
 import '../../bloc/voice_memo_bloc.dart';
 import '../../bloc/voice_memo_event.dart';
 import '../../widgets/voice_memo_rename_dialog.dart';
@@ -14,7 +14,7 @@ import 'voice_memo_waveform_display.dart';
 import 'voice_memo_card_header.dart';
 
 class VoiceMemoCard extends StatelessWidget {
-  final VoiceMemo memo;
+  final VoiceMemoUiModel memo;
 
   const VoiceMemoCard({super.key, required this.memo});
 
@@ -30,10 +30,10 @@ class VoiceMemoCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => VoiceMemoRenameDialog(
-        memo: memo,
+        memo: memo.memo,
         onRename: (newTitle) {
           context.read<VoiceMemoBloc>().add(
-            UpdateVoiceMemoRequested(memo, newTitle),
+            UpdateVoiceMemoRequested(memo.memo, newTitle),
           );
         },
       ),
@@ -57,8 +57,8 @@ class VoiceMemoCard extends StatelessWidget {
           children: [
             // Playback controls on the left
             VoiceMemoPlaybackControls(
-              memo: memo,
-              onPlayPressed: () => context.read<VoiceMemoBloc>().add(PlayVoiceMemoRequested(memo)),
+              memo: memo.memo,
+              onPlayPressed: () => context.read<VoiceMemoBloc>().add(PlayVoiceMemoRequested(memo.memo)),
               onPausePressed: () => context.read<AudioPlayerBloc>().add(const PauseAudioRequested()),
             ),
 
@@ -82,14 +82,14 @@ class VoiceMemoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     VoiceMemoCardHeader(
-                      memo: memo,
+                      memo: memo.memo,
                       onRenamePressed: () => _showRenameDialog(context),
                       onDeletePressed: () => context.read<VoiceMemoBloc>().add(
-                        DeleteVoiceMemoRequested(memo.id),
+                        DeleteVoiceMemoRequested(memo.memo.id),
                       ),
                     ),
                     VoiceMemoWaveformDisplay(
-                      memo: memo,
+                      memo: memo.memo,
                       height: 50,
                       fileExists: _fileExists,
                     ),

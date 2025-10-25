@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/voice_memo.dart';
+import '../models/voice_memo_ui_model.dart';
 
 /// Base state class
 abstract class VoiceMemoState extends Equatable {
@@ -21,7 +21,7 @@ class VoiceMemoLoading extends VoiceMemoState {
 
 /// Memos loaded successfully
 class VoiceMemosLoaded extends VoiceMemoState {
-  final List<VoiceMemo> memos;
+  final List<VoiceMemoUiModel> memos;
 
   const VoiceMemosLoaded(this.memos);
 

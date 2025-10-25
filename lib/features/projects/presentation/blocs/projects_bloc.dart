@@ -13,6 +13,7 @@ import 'package:trackflow/features/projects/domain/usecases/upload_cover_art_use
 import 'projects_event.dart';
 import 'projects_state.dart';
 import 'package:trackflow/features/projects/presentation/models/project_sort.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
 
 @injectable
 class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
@@ -48,7 +49,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     final result = await createProject.call(event.params);
     result.fold(
       (failure) => emit(ProjectsError(_mapFailureToMessage(failure))),
-      (project) => emit(ProjectCreatedSuccess(project)),
+      (project) => emit(ProjectCreatedSuccess(ProjectUiModel.fromDomain(project))),
     );
   }
 
@@ -96,7 +97,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
               ..sort((a, b) => compareProjectsBySort(a, b, _currentSort));
             emit(
               ProjectsLoaded(
-                projects: sorted,
+                projects: sorted.map(ProjectUiModel.fromDomain).toList(),
                 isSyncing: false,
                 syncProgress: 1.0,
                 sort: _currentSort,
@@ -121,9 +122,14 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     _currentSort = event.sort;
     final current = state;
     if (current is ProjectsLoaded) {
-      final resorted = [...current.projects]
+      // Extract domain entities, sort them, then convert back to UI models
+      final domainProjects = current.projects.map((ui) => ui.project).toList();
+      final resorted = [...domainProjects]
         ..sort((a, b) => compareProjectsBySort(a, b, _currentSort));
-      emit(current.copyWith(projects: resorted, sort: _currentSort));
+      emit(current.copyWith(
+        projects: resorted.map(ProjectUiModel.fromDomain).toList(),
+        sort: _currentSort,
+      ));
     }
   }
 

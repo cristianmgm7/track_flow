@@ -9,7 +9,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_style.dart';
 import '../../../ui/navigation/app_scaffold.dart';
 import '../../../ui/navigation/app_bar.dart';
-import '../../domain/entities/voice_memo.dart';
+import '../models/voice_memo_ui_model.dart';
 import '../bloc/voice_memo_bloc.dart';
 import '../bloc/voice_memo_state.dart';
 import 'components/voice_memo_card.dart';
@@ -120,7 +120,7 @@ class VoiceMemosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMemosList(BuildContext context, List<VoiceMemo> memos) {
+  Widget _buildMemosList(BuildContext context, List<VoiceMemoUiModel> memos) {
     return ListView.separated(
       padding: EdgeInsets.symmetric(horizontal: Dimensions.space0, vertical: Dimensions.space0),
       itemCount: memos.length,

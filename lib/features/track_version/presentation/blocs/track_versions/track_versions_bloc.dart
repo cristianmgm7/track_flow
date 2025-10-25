@@ -8,6 +8,7 @@ import 'package:trackflow/features/track_version/domain/usecases/rename_track_ve
 import 'package:trackflow/features/track_version/domain/usecases/delete_track_version_usecase.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_event.dart';
 import 'package:trackflow/features/track_version/presentation/blocs/track_versions/track_versions_state.dart';
+import 'package:trackflow/features/track_version/presentation/models/track_version_ui_model.dart';
 
 @injectable
 class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
@@ -55,7 +56,7 @@ class TrackVersionsBloc extends Bloc<TrackVersionsEvent, TrackVersionsState> {
                       (versions.isEmpty ? null : versions.first.id));
           emit(
             TrackVersionsLoaded(
-              versions: versions,
+              versions: versions.map(TrackVersionUiModel.fromDomain).toList(),
               activeVersionId: activeVersionId,
             ),
           );

@@ -184,9 +184,9 @@ class _ProjectListScreenState extends State<ProjectListScreen> {
                                               AppRoutes.projectDetails
                                                   .replaceAll(
                                                     ':id',
-                                                    project.id.value,
+                                                    project.id,
                                                   ),
-                                              extra: project,
+                                              extra: project.project,
                                             ),
                                       ),
                                     )
