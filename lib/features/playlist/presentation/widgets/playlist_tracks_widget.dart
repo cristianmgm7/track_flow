@@ -63,7 +63,7 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
       child: BlocBuilder<PlaylistBloc, PlaylistState>(
         builder: (context, state) {
           final items = state.items;
-          final tracksForPlayer = state.tracks;
+          final tracksForPlayer = state.tracks.map((t) => t.track).toList();
           // Permissions: determine if user can upload tracks in current project
           final projectUi = context.watch<ProjectDetailBloc>().state.project;
           final userState = context.watch<CurrentUserBloc>().state;

@@ -70,13 +70,13 @@ class VersionHeaderComponent extends StatelessWidget {
             final active =
                 activeId != null
                     ? blocState.versions.firstWhere(
-                      (v) => v.id == activeId,
+                      (v) => v.version.id == activeId,
                       orElse: () => blocState.versions.first,
                     )
                     : blocState.versions.first;
 
-            final label = active.label ?? 'v${active.versionNumber}';
-            final isActive = activeId == active.id;
+            final label = active.displayLabel;
+            final isActive = activeId == active.version.id;
 
             return Padding(
               padding: EdgeInsets.symmetric(horizontal: Dimensions.space12),
@@ -103,13 +103,13 @@ class VersionHeaderComponent extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         // Upload status badge for the active version
-                        if (active.status == TrackVersionStatus.processing)
+                        if (active.version.status == TrackVersionStatus.processing)
                           const SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        else if (active.status == TrackVersionStatus.failed)
+                        else if (active.version.status == TrackVersionStatus.failed)
                           const Icon(
                             Icons.error_outline,
                             size: 18,
@@ -121,15 +121,15 @@ class VersionHeaderComponent extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (active.status == TrackVersionStatus.ready &&
+                      if (active.version.status == TrackVersionStatus.ready &&
                           active.fileRemoteUrl != null)
                         KeyedSubtree(
-                          key: ValueKey(active.id.value),
+                          key: ValueKey(active.id),
                           child: BlocProvider(
                             create: (context) => sl<TrackCacheBloc>(),
                             child: SmartTrackCacheIcon(
                               trackId: trackId.value,
-                              versionId: active.id.value,
+                              versionId: active.id,
                               remoteUrl: active.fileRemoteUrl!,
                               size: 22,
                             ),
@@ -140,7 +140,7 @@ class VersionHeaderComponent extends StatelessWidget {
                         onPressed:
                             () => _openTrackDetailActionsSheet(
                               context,
-                              active.id,
+                              active.version.id,
                             ),
                         tooltip: 'Version actions',
                       ),

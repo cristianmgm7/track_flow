@@ -59,8 +59,8 @@ class VersionsList extends StatelessWidget {
                   final v = loaded.versions[index];
                   final selectedId =
                       selectorState.selectedVersionId ?? loaded.activeVersionId;
-                  final isSelected = selectedId == v.id;
-                  final isGloballyActive = loaded.activeVersionId == v.id;
+                  final isSelected = selectedId == v.version.id;
+                  final isGloballyActive = loaded.activeVersionId == v.version.id;
                   return ChoiceChip(
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.symmetric(horizontal: Dimensions.space8,vertical: Dimensions.space2),
@@ -68,20 +68,20 @@ class VersionsList extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'v${v.versionNumber}${v.label != null ? ' • ${v.label}' : ''}',
+                          v.displayLabel,
                         ),
                         if (isGloballyActive) ...[
                           const SizedBox(width: 6),
                           const Icon(Icons.check_circle, size: 16),
                         ],
-                        if (v.status == TrackVersionStatus.processing) ...[
+                        if (v.version.status == TrackVersionStatus.processing) ...[
                           const SizedBox(width: 6),
                           const SizedBox(
                             width: 14,
                             height: 14,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           ),
-                        ] else if (v.status == TrackVersionStatus.failed) ...[
+                        ] else if (v.version.status == TrackVersionStatus.failed) ...[
                           const SizedBox(width: 6),
                           const Icon(
                             Icons.error_outline,
@@ -93,8 +93,8 @@ class VersionsList extends StatelessWidget {
                     ),
                     selected: isSelected,
                     onSelected: (_) {
-                      context.read<VersionSelectorCubit>().selectVersion(v.id);
-                      onVersionSelected?.call(v.id);
+                      context.read<VersionSelectorCubit>().selectVersion(v.version.id);
+                      onVersionSelected?.call(v.version.id);
                     },
                   );
                 },

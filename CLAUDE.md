@@ -55,7 +55,7 @@ flutter doctor
 ### Clean Architecture + DDD Structure
 - **Domain Layer**: Contains business entities, value objects, repositories contracts, and use cases
 - **Data Layer**: Implements repositories, datasources (Firebase/Isar), and DTOs
-- **Presentation Layer**: BLoC state management, screens, and widgets
+- **Presentation Layer**: BLoC state management, screens, widgets, and **UI models**
 - **Core**: Shared kernel with dependency injection, error handling, and utilities
 
 ### Key Architectural Rules
@@ -63,8 +63,9 @@ flutter doctor
 2. **Always write in English in the code base even comments** - Maintain consistency
 3. **Follow Clean Architecture dependency rules** - Domain layer must not depend on external layers
 4. **Use BLoC pattern for state management** - Consistent reactive programming
-5. **Implement Either<Failure, Success> for error handling** - Functional error handling
-6. **Use dependency injection with get_it and injectable** - Loose coupling
+5. **Use UI Models in presentation layer** - Wrap domain entities with Equatable-friendly models
+6. **Implement Either<Failure, Success> for error handling** - Functional error handling
+7. **Use dependency injection with get_it and injectable** - Loose coupling
 
 ### Feature Development Pattern
 Each feature follows this structure:
@@ -80,10 +81,51 @@ features/[feature_name]/
 │   ├── models/          # DTOs and documents
 │   └── repositories/    # Repository implementations
 └── presentation/
-    ├── bloc/           # State management
+    ├── bloc/           # State management (uses UI models)
+    ├── models/         # UI models (wrap entities)
     ├── screens/        # UI screens
     └── widgets/        # Reusable components
 ```
+
+### UI Models Pattern
+UI models wrap domain entities to provide proper equality comparison and UI-specific features:
+- Extend Equatable for content-based equality (required for BLoC state comparison)
+- Unwrap value objects to primitives for simpler widget code
+- Add UI-specific computed fields (formatted dates, display names, etc.)
+- Use composition pattern (contain the domain entity via `final Entity entity`)
+- Provide `fromDomain()` static factory for conversion
+
+**Example**:
+```dart
+class ProjectUiModel extends Equatable {
+  final Project project;              // Composition pattern
+  final String id;                    // Unwrapped primitives
+  final String name;
+  final String description;
+  // ... other fields
+
+  factory ProjectUiModel.fromDomain(Project project) {
+    return ProjectUiModel(
+      project: project,
+      id: project.id.value,
+      name: project.name.value.getOrElse(() => ''),
+      description: project.description.value.getOrElse(() => ''),
+      // ...
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, name, description /* ... */];
+}
+```
+
+**When to use UI models**:
+- When storing domain entities in BLoC states
+- When passing entities to multiple widgets
+- When you need UI-specific formatting or computed values
+- To avoid manual equality workarounds in Equatable props
+
+See `lib/features/README_UI_MODELS.md` for detailed guidance.
 
 ## Core Systems
 
