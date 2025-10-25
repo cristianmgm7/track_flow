@@ -3,9 +3,9 @@ import 'package:trackflow/config/flavor_config.dart';
 
 /// Helper class to manage flavor-specific logos throughout the app
 class FlavorLogoHelper {
-  static const String _devLogoPath = 'assets/logo/trackflow_dev.jpg';
-  static const String _stagingLogoPath = 'assets/logo/trackflow_staging.jpg';
-  static const String _prodLogoPath = 'assets/logo/trackflow_prod.jpg';
+  static const String _devLogoPath = 'assets/logo/trackflow_dev.png';
+  static const String _stagingLogoPath = 'assets/logo/trackflow_staging.png';
+  static const String _prodLogoPath = 'assets/logo/trackflow_prod.png';
 
   /// Get the appropriate logo path based on the current flavor
   ///
