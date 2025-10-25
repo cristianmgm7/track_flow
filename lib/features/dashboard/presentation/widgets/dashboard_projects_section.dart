@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
 import 'package:trackflow/features/projects/presentation/widgets/create_project_form.dart';
 import 'package:trackflow/features/projects/presentation/blocs/projects_bloc.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_section_header.dart';
@@ -13,7 +13,7 @@ import 'package:trackflow/features/ui/project/project_card.dart';
 import 'package:trackflow/features/ui/project/project_cover_art.dart';
 
 class DashboardProjectsSection extends StatelessWidget {
-  final List<Project> projects;
+  final List<ProjectUiModel> projects;
 
   const DashboardProjectsSection({
     super.key,
@@ -108,24 +108,23 @@ class DashboardProjectsSection extends StatelessWidget {
       ),
       itemCount: projects.length,
       itemBuilder: (context, index) {
-        final project = projects[index];
-
+        final projectUi = projects[index];
 
         return AppProjectCard(
-          title: project.name.value.fold((l) => '', (r) => r),
-          description: project.description.value.fold((l) => '', (r) => r),
-          createdAt: project.createdAt,
+          title: projectUi.name,
+          description: projectUi.description,
+          createdAt: projectUi.createdAt,
           onTap: () => context.push(
-            AppRoutes.projectDetails.replaceAll(':id', project.id.value),
-            extra: project,
+            AppRoutes.projectDetails.replaceAll(':id', projectUi.id),
+            extra: projectUi.project,
           ),
           leading: ProjectCoverArt(
             key: ValueKey(
-              '${project.id.value}:${project.coverLocalPath ?? project.coverUrl ?? ''}:${project.name.value.fold((l) => '', (r) => r)}',
+              '${projectUi.id}:${projectUi.coverLocalPath ?? projectUi.coverUrl ?? ''}:${projectUi.name}',
             ),
-            projectName: project.name.value.fold((l) => '', (r) => r),
-            projectDescription: project.description.value.fold((l) => '', (r) => r),
-            imageUrl: project.coverLocalPath ?? project.coverUrl,
+            projectName: projectUi.name,
+            projectDescription: projectUi.description,
+            imageUrl: projectUi.coverLocalPath ?? projectUi.coverUrl,
             size: Dimensions.avatarLarge,
           ),
           margin: EdgeInsets.all(Dimensions.space0),

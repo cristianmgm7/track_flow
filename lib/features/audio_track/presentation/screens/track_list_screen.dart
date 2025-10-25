@@ -72,16 +72,16 @@ class TrackListScreen extends StatelessWidget {
                       height: Dimensions.space0,
                     ),
                     itemBuilder: (context, index) {
-                      final track = tracks[index];
-                      return TrackListItem(track: track,
-                      
+                      final trackUi = tracks[index];
+                      return TrackListItem(track: trackUi,
+
                        onTap: () {
                         context.push(
                           AppRoutes.trackDetail,
                           extra: TrackDetailScreenArgs(
-                            projectId: track.projectId,
-                            track: track,
-                            versionId: track.activeVersionId!,
+                            projectId: trackUi.track.projectId,
+                            track: trackUi.track,
+                            versionId: trackUi.track.activeVersionId!,
                           ),
                         );
                       });

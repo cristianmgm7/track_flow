@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_section_header.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_comment_item.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 
 class DashboardCommentsSection extends StatelessWidget {
-  final List<AudioComment> comments;
+  final List<AudioCommentUiModel> comments;
 
   const DashboardCommentsSection({
     super.key,

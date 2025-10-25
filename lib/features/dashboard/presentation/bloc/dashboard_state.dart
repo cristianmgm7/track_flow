@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
 
 abstract class DashboardState extends Equatable {
   const DashboardState();
@@ -24,9 +24,9 @@ class DashboardLoading extends DashboardState {
 
 /// Loaded state with preview data
 class DashboardLoaded extends DashboardState {
-  final List<Project> projectPreview;
-  final List<AudioTrack> trackPreview;
-  final List<AudioComment> recentComments;
+  final List<ProjectUiModel> projectPreview;
+  final List<AudioTrackUiModel> trackPreview;
+  final List<AudioCommentUiModel> recentComments;
   final bool isLoading; // For subsequent updates
   final Option<Failure> failureOption; // For partial failures
 
@@ -40,47 +40,18 @@ class DashboardLoaded extends DashboardState {
 
   @override
   List<Object?> get props => [
-        // Use content signatures, not entity identity (id-only), to detect changes
-        projectPreview
-            .map((p) => [
-                  p.id,
-                  p.name,
-                  p.description,
-                  p.coverUrl,
-                  p.coverLocalPath,
-                  p.updatedAt,
-                ])
-            .toList(),
-        trackPreview
-            .map((t) => [
-                  t.id,
-                  t.name,
-                  t.coverUrl,
-                  t.coverLocalPath,
-                  t.createdAt,
-                  t.activeVersionId,
-                ])
-            .toList(),
-        recentComments
-            .map((c) => [
-                  c.id,
-                  c.content,
-                  c.createdAt,
-                  // audio comment extras that could affect rendering
-                  c.audioStorageUrl,
-                  c.localAudioPath,
-                  c.audioDuration,
-                  c.commentType,
-                ])
-            .toList(),
+        // REMOVED manual expansion - UI models handle equality properly
+        projectPreview,
+        trackPreview,
+        recentComments,
         isLoading,
         failureOption,
       ];
 
   DashboardLoaded copyWith({
-    List<Project>? projectPreview,
-    List<AudioTrack>? trackPreview,
-    List<AudioComment>? recentComments,
+    List<ProjectUiModel>? projectPreview,
+    List<AudioTrackUiModel>? trackPreview,
+    List<AudioCommentUiModel>? recentComments,
     bool? isLoading,
     Option<Failure>? failureOption,
   }) {

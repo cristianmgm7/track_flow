@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:intl/intl.dart';
 
 class DashboardCommentItem extends StatelessWidget {
-  final AudioComment comment;
+  final AudioCommentUiModel comment;
 
   const DashboardCommentItem({
     super.key,
@@ -46,7 +45,7 @@ class DashboardCommentItem extends StatelessWidget {
                   SizedBox(height: Dimensions.space4),
                   // Author and timestamp
                   Text(
-                    '${_formatTimestamp(comment.createdAt)} • at ${_formatPosition(comment.timestamp)}',
+                    '${comment.formattedCreatedAt} • at ${comment.formattedTimestamp}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
@@ -61,54 +60,29 @@ class DashboardCommentItem extends StatelessWidget {
   }
 
   Widget _buildTypeIndicator(BuildContext context) {
-    final isAudio = comment.commentType == CommentType.audio ||
-        comment.commentType == CommentType.hybrid;
-
     return Container(
       padding: EdgeInsets.all(Dimensions.space8),
       decoration: BoxDecoration(
-        color: isAudio ? AppColors.primary.withValues(alpha: 0.1) : AppColors.grey700,
+        color: comment.hasAudio ? AppColors.primary.withValues(alpha: 0.1) : AppColors.grey700,
         borderRadius: BorderRadius.circular(Dimensions.radiusSmall),
       ),
       child: Icon(
-        isAudio ? Icons.mic : Icons.comment,
+        comment.hasAudio ? Icons.mic : Icons.comment,
         size: 20,
-        color: isAudio ? AppColors.primary : AppColors.grey400,
+        color: comment.hasAudio ? AppColors.primary : AppColors.grey400,
       ),
     );
   }
 
   String _getCommentPreview() {
-    if (comment.commentType == CommentType.audio) {
+    final type = comment.commentType;
+    if (type == 'CommentType.audio') {
       return '🔊 Audio comment';
-    } else if (comment.commentType == CommentType.hybrid) {
+    } else if (type == 'CommentType.hybrid') {
       return comment.content.isNotEmpty ? comment.content : '🔊 Audio comment';
     } else {
       return comment.content;
     }
-  }
-
-  String _formatTimestamp(DateTime timestamp) {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-
-    if (difference.inDays > 7) {
-      return DateFormat('MMM d').format(timestamp);
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
-
-  String _formatPosition(Duration position) {
-    final minutes = position.inMinutes;
-    final seconds = position.inSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
   }
 }
 

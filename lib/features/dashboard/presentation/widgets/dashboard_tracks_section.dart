@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_section_header.dart';
 import 'package:trackflow/features/dashboard/presentation/widgets/dashboard_track_card.dart';
 import 'package:trackflow/core/router/app_routes.dart';
@@ -9,7 +9,7 @@ import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/track_version/presentation/models/track_detail_screen_args.dart';
 
 class DashboardTracksSection extends StatelessWidget {
-  final List<AudioTrack> tracks;
+  final List<AudioTrackUiModel> tracks;
 
   const DashboardTracksSection({
     super.key,
@@ -71,14 +71,14 @@ class DashboardTracksSection extends StatelessWidget {
       ),
       itemCount: tracks.length,
       itemBuilder: (context, index) {
-        final track = tracks[index];
-        return DashboardTrackCard(track: track, onTap: () {
+        final trackUi = tracks[index];
+        return DashboardTrackCard(track: trackUi, onTap: () {
           context.push(
             AppRoutes.trackDetail,
             extra: TrackDetailScreenArgs(
-              projectId: track.projectId,
-              track: track,
-              versionId: track.activeVersionId!,
+              projectId: trackUi.track.projectId,
+              track: trackUi.track,
+              versionId: trackUi.track.activeVersionId!,
             ),
           );
         });

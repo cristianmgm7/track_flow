@@ -6,6 +6,9 @@ import 'package:trackflow/features/dashboard/domain/usecases/watch_dashboard_bun
 import 'package:trackflow/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:trackflow/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:trackflow/features/dashboard/domain/entities/dashboard_bundle.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
 
 @injectable
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
@@ -35,9 +38,15 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           (bundle) {
             emit(
               DashboardLoaded(
-                projectPreview: bundle.projectPreview,
-                trackPreview: bundle.trackPreview,
-                recentComments: bundle.recentComments,
+                projectPreview: bundle.projectPreview
+                    .map(ProjectUiModel.fromDomain)
+                    .toList(),
+                trackPreview: bundle.trackPreview
+                    .map(AudioTrackUiModel.fromDomain)
+                    .toList(),
+                recentComments: bundle.recentComments
+                    .map(AudioCommentUiModel.fromDomain)
+                    .toList(),
                 isLoading: false,
                 failureOption: none(), // No failure
               ),
