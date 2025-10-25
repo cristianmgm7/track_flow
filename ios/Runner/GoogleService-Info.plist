@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>221115151816-05jordp94aosr55u5m67n7fml52ncn29.apps.googleusercontent.com</string>
+	<string>192570465818-h9hk0gle48pncklsp138mg8balhlhsne.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.221115151816-05jordp94aosr55u5m67n7fml52ncn29</string>
+	<string>com.googleusercontent.apps.192570465818-h9hk0gle48pncklsp138mg8balhlhsne</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAp2t-lRH5mN1-tKm2xD436OF3wBEoX218</string>
+	<string>AIzaSyB7tKnuDS228N60cQfTR8ZJ33LorXajj7Q</string>
 	<key>GCM_SENDER_ID</key>
-	<string>221115151816</string>
+	<string>192570465818</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.trackflow.staging</string>
+	<string>com.trackflow</string>
 	<key>PROJECT_ID</key>
-	<string>trackflow-staging</string>
+	<string>trackflow-prod</string>
 	<key>STORAGE_BUCKET</key>
-	<string>trackflow-staging.firebasestorage.app</string>
+	<string>trackflow-prod.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:221115151816:ios:ebf0539082ccca85943cfd</string>
+	<string>1:192570465818:ios:54629d89f54de835297ba3</string>
 </dict>
 </plist>
