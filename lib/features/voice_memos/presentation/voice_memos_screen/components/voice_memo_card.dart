@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
-import 'package:trackflow/features/ui/audio/audio_play_pause_button.dart';
 import 'package:trackflow/features/voice_memos/presentation/voice_memos_screen/components/voice_memo_playback_controls.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_dimensions.dart';

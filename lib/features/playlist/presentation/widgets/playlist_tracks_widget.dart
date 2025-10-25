@@ -65,13 +65,13 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
           final items = state.items;
           final tracksForPlayer = state.tracks;
           // Permissions: determine if user can upload tracks in current project
-          final project = context.watch<ProjectDetailBloc>().state.project;
+          final projectUi = context.watch<ProjectDetailBloc>().state.project;
           final userState = context.watch<CurrentUserBloc>().state;
           final String? currentUserId =
               userState is CurrentUserLoaded ? userState.profile.id.value : null;
           bool canUploadTrack = false;
-          if (project != null && currentUserId != null) {
-            final me = project.collaborators.firstWhere(
+          if (projectUi != null && currentUserId != null) {
+            final me = projectUi.project.collaborators.firstWhere(
               (c) => c.userId.value == currentUserId,
               orElse: () => ProjectCollaborator.create(
                 userId: UserId.fromUniqueString(currentUserId),
@@ -142,7 +142,7 @@ class _PlaylistTracksWidgetState extends State<PlaylistTracksWidget> {
       useRootNavigator: true,
       child: BlocProvider.value(
         value: projectDetailBloc,
-        child: UploadTrackForm(project: projectDetailBloc.state.project!),
+        child: UploadTrackForm(project: projectDetailBloc.state.project!.project),
       ),
     );
   }

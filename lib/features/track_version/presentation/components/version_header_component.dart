@@ -31,8 +31,9 @@ class VersionHeaderComponent extends StatelessWidget {
     TrackVersionId activeVersionId,
   ) {
     // Get project from ProjectDetailBloc if available
-    final project = context.read<ProjectDetailBloc>().state.project;
-    
+    final projectUi = context.read<ProjectDetailBloc>().state.project;
+    final project = projectUi?.project;
+
     showAppActionSheet(
       showCloseButton: true,
       showHandle: true,

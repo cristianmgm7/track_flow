@@ -1,13 +1,13 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart';
 
 class ProjectDetailState extends Equatable {
-  final Project? project;
-  final List<AudioTrack> tracks;
-  final List<UserProfile> collaborators;
+  final ProjectUiModel? project;
+  final List<AudioTrackUiModel> tracks;
+  final List<UserProfileUiModel> collaborators;
   final AudioTrackSort sort;
   // Removed activeVersionsByTrackId from project detail; handled by playlist
 
@@ -45,9 +45,9 @@ class ProjectDetailState extends Equatable {
   );
 
   ProjectDetailState copyWith({
-    Project? project,
-    List<AudioTrack>? tracks,
-    List<UserProfile>? collaborators,
+    ProjectUiModel? project,
+    List<AudioTrackUiModel>? tracks,
+    List<UserProfileUiModel>? collaborators,
     AudioTrackSort? sort,
     bool? isLoadingProject,
     bool? isLoadingTracks,
@@ -73,30 +73,10 @@ class ProjectDetailState extends Equatable {
 
   @override
   List<Object?> get props => [
-    // Include project content fields explicitly to avoid relying on Entity== (id-only)
-    project?.id,
-    project?.name,
-    project?.description,
-    project?.coverUrl,
-    project?.coverLocalPath,
-    project?.updatedAt,
-    tracks.map((t) => [
-      t.id,
-      t.name,
-      t.coverUrl,
-      t.coverLocalPath,
-      t.createdAt,
-      t.activeVersionId,
-      t.isDeleted,
-      t.uploadedBy,
-    ]).toList(),
-    collaborators.map((c) => [
-      c.id,
-      c.name,
-      c.email,
-      c.role,
-    ]).toList(),
-    // activeVersionsByTrackId removed
+    // REMOVED manual expansion - UI models handle equality properly
+    project,
+    tracks,
+    collaborators,
     sort,
     isLoadingProject,
     isLoadingTracks,

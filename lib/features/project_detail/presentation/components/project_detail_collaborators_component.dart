@@ -76,29 +76,29 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                   // Existing collaborators
                   ...state.collaborators.map((collaborator) {
                     // Find the role from project collaborators
-                    final projectCollaborator = state.project?.collaborators
+                    final projectCollaborator = state.project?.project.collaborators
                         .firstWhere(
-                          (pc) => pc.userId == collaborator.id,
+                          (pc) => pc.userId.value == collaborator.id,
                           orElse:
                               () =>
                                   throw StateError('Collaborator not found'),
                         );
-      
+
                     return CollaboratorCard(
                       name: collaborator.name,
                       email: collaborator.email,
                       avatarUrl: collaborator.avatarUrl,
                       role: projectCollaborator?.role ?? ProjectRole.viewer,
-                      creativeRole: collaborator.creativeRole,
+                      creativeRole: collaborator.profile.creativeRole,
                       onTap: () {
                         context.push(
                           AppRoutes.artistProfile.replaceFirst(
                             ':id',
-                            collaborator.id.value,
+                            collaborator.id,
                           ),
                         );
                       },
-                      id: collaborator.id.value,
+                      id: collaborator.id,
                     );
                   }),
                   // Invite collaborator button at the end (permission-gated)
@@ -109,7 +109,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                           userState is CurrentUserLoaded ? userState.profile.id.value : null;
                       bool canInvite = false;
                       if (state.project != null && currentUserId != null) {
-                        final me = state.project!.collaborators.firstWhere(
+                        final me = state.project!.project.collaborators.firstWhere(
                           (c) => c.userId.value == currentUserId,
                           orElse: () => ProjectCollaborator.create(
                             userId: UserId.fromUniqueString(currentUserId),
@@ -150,7 +150,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
             create: (context) => sl<ProjectInvitationActorBloc>(),
           ),
         ],
-        child: SendInvitationForm(projectId: state.project!.id),
+        child: SendInvitationForm(projectId: state.project!.project.id),
       ),
     );
   }

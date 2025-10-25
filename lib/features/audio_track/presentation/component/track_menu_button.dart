@@ -29,8 +29,9 @@ class TrackMenuButton extends StatelessWidget {
     AudioContextState contextState,
   ) {
     // Get project from ProjectDetailBloc if available
-    final project = context.read<ProjectDetailBloc>().state.project;
-    
+    final projectUi = context.read<ProjectDetailBloc>().state.project;
+    final project = projectUi?.project;
+
     showAppActionSheet(
       context: context,
       title: track.name,

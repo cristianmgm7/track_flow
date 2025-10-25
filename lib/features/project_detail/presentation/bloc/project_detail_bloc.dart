@@ -8,6 +8,9 @@ import 'package:dartz/dartz.dart';
 import 'package:trackflow/core/error/failures.dart';
 import 'package:trackflow/features/audio_track/presentation/models/audio_track_sort.dart'
     as sort_helper;
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 
 @injectable
 class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
@@ -61,9 +64,9 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
             );
             emit(
               state.copyWith(
-                project: bundle.project,
-                tracks: sortedTracks,
-                collaborators: bundle.collaborators,
+                project: ProjectUiModel.fromDomain(bundle.project),
+                tracks: sortedTracks.map(AudioTrackUiModel.fromDomain).toList(),
+                collaborators: bundle.collaborators.map(UserProfileUiModel.fromDomain).toList(),
                 isLoadingProject: false,
                 isLoadingTracks: false,
                 isLoadingCollaborators: false,
@@ -93,7 +96,7 @@ class ProjectDetailBloc extends Bloc<ProjectDetailEvent, ProjectDetailState> {
     Emitter<ProjectDetailState> emit,
   ) {
     final resorted = [...state.tracks]
-      ..sort((a, b) => sort_helper.compareTracksBySort(a, b, event.sort));
+      ..sort((a, b) => sort_helper.compareTracksBySort(a.track, b.track, event.sort));
     emit(state.copyWith(tracks: resorted, sort: event.sort));
   }
 

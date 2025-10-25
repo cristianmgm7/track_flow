@@ -143,8 +143,8 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
           ),
           persistentFooterWidget: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
             builder: (context, pdState) {
-              final project = pdState.project;
-              if (project == null) {
+              final projectUi = pdState.project;
+              if (projectUi == null) {
                 return const SizedBox.shrink();
               }
 
@@ -155,7 +155,7 @@ class _TrackDetailScreenState extends State<TrackDetailScreen> {
 
               bool canAddComment = false;
               if (currentUserId != null) {
-                final me = project.collaborators.firstWhere(
+                final me = projectUi.project.collaborators.firstWhere(
                   (c) => c.userId.value == currentUserId,
                   orElse: () => ProjectCollaborator.create(
                     userId: UserId.fromUniqueString(currentUserId),

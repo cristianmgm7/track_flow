@@ -55,18 +55,18 @@ class ProjectDetailTracksComponent extends StatelessWidget {
               const Text('No tracks found'),
             ],
             if (state.tracks.isNotEmpty) ...[
-              ...state.tracks.map((track) {
-                final index = state.tracks.indexOf(track);
+              ...state.tracks.map((trackUi) {
+                final index = state.tracks.indexOf(trackUi);
                 return TrackComponent(
                   vm: TrackRowViewModel(
-                    track: track,
-                    displayedDuration: track.duration,
+                    track: trackUi.track,
+                    displayedDuration: trackUi.duration,
                   ),
-                  projectId: state.project!.id,
+                  projectId: state.project!.project.id,
                   onPlay: () {
                     context.read<AudioPlayerBloc>().add(
                       PlayPlaylistRequested(
-                        tracks: state.tracks,
+                        tracks: state.tracks.map((t) => t.track).toList(),
                         startIndex: index,
                       ),
                     );

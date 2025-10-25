@@ -123,8 +123,9 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
         }
 
         // getting the tracks to build the playlist
-        final tracks = state.tracks;
-        final playlist = project.toPlaylist(tracks);
+        final tracksUi = state.tracks;
+        final trackEntities = tracksUi.map((t) => t.track).toList();
+        final playlist = project.project.toPlaylist(trackEntities);
 
         return Scaffold(
           body: Stack(
@@ -134,8 +135,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                 children: [
                   ProjectCoverArt(
                     key: ValueKey(project.coverLocalPath ?? project.coverUrl),
-                    projectName: project.name.value.getOrElse(() => 'Project'),
-                    projectDescription: project.description.value.getOrElse(() => ''),
+                    projectName: project.name,
+                    projectDescription: project.description,
                     imageUrl: project.coverLocalPath ?? project.coverUrl,
                     size: MediaQuery.of(context).size.width,
                   ),
@@ -160,7 +161,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                     flexibleSpace: FlexibleSpaceBar(
                       centerTitle: true,
                       title: Text(
-                        project.name.value.getOrElse(() => 'Project'),
+                        project.name,
                         style: AppTextStyle.headlineLarge,
                       ),
                     ),
@@ -191,7 +192,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                                 final currentUserId = profileState is CurrentUserLoaded
                                     ? profileState.profile.id.value
                                     : null;
-                                final hasEditPermission = _userHasEditPermission(project, currentUserId);
+                                final hasEditPermission = _userHasEditPermission(project.project, currentUserId);
 
                                 return Row(
                                   children: [
@@ -206,7 +207,7 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                                           Icons.more_horiz,
                                           color: AppColors.textPrimary,
                                         ),
-                                        onPressed: () => _openProjectDetailActionsSheet(context, project),
+                                        onPressed: () => _openProjectDetailActionsSheet(context, project.project),
                                       ),
                                   ],
                                 );
@@ -215,8 +216,8 @@ class _ProjectDetailsScreenState extends State<ProjectDetailsScreen> {
                           ),
                           PlaylistWidget(
                             playlist: playlist,
-                            tracks: tracks,
-                            projectId: project.id.value,
+                            tracks: trackEntities,
+                            projectId: project.id,
                           ),
                           const SizedBox(height: 16),
                           ProjectDetailCollaboratorsComponent(state: state),
