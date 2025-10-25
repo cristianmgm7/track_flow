@@ -79,12 +79,12 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
         actions: [
           BlocBuilder<ManageCollaboratorsBloc, ManageCollaboratorsState>(
             builder: (context, state) {
-              final currentProject =
+              final project =
                   state is ManageCollaboratorsLoaded
-                      ? state.project
+                      ? state.project.project
                       : widget.project;
               return IconButton(
-                onPressed: () => _openAddCollaboratorSheet(currentProject),
+                onPressed: () => _openAddCollaboratorSheet(project),
                 icon: const Icon(Icons.add),
               );
             },
@@ -117,20 +117,20 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
           bool isLoading = false;
 
           if (state is ManageCollaboratorsLoaded) {
-            currentProject = state.project;
-            currentCollaborators = state.userProfiles;
+            currentProject = state.project.project;
+            currentCollaborators = state.userProfiles.map((ui) => ui.profile).toList();
           } else if (state is UpdateCollaboratorRoleSuccess) {
-            currentProject = state.project;
+            currentProject = state.project.project;
             // For success state, we need to get collaborators from the last loaded state
             // or use a fallback
-            currentCollaborators = _lastLoadedState?.userProfiles ?? [];
+            currentCollaborators = _lastLoadedState?.userProfiles.map((ui) => ui.profile).toList() ?? [];
           } else if (state is RemoveCollaboratorSuccess) {
-            currentProject = state.project;
-            currentCollaborators = _lastLoadedState?.userProfiles ?? [];
+            currentProject = state.project.project;
+            currentCollaborators = _lastLoadedState?.userProfiles.map((ui) => ui.profile).toList() ?? [];
           } else if (state is ManageCollaboratorsLoading) {
             // During loading, show the last known state
-            currentProject = _lastLoadedState?.project ?? widget.project;
-            currentCollaborators = _lastLoadedState?.userProfiles ?? [];
+            currentProject = _lastLoadedState?.project.project ?? widget.project;
+            currentCollaborators = _lastLoadedState?.userProfiles.map((ui) => ui.profile).toList() ?? [];
             isLoading = true;
           } else {
             // Fallback to initial project

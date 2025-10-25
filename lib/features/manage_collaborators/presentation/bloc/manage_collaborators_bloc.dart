@@ -15,6 +15,8 @@ import 'package:trackflow/features/manage_collaborators/domain/usecases/watch_co
 import 'manage_collaborators_event.dart';
 import 'manage_collaborators_state.dart';
 import 'package:trackflow/features/projects/domain/exceptions/project_exceptions.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 
 @injectable
 class ManageCollaboratorsBloc
@@ -71,8 +73,8 @@ class ManageCollaboratorsBloc
       (failure) => emit(ManageCollaboratorsError(failure.toString())),
       (bundle) {
         final loadedState = ManageCollaboratorsLoaded(
-          bundle.project,
-          bundle.userProfiles,
+          ProjectUiModel.fromDomain(bundle.project),
+          bundle.userProfiles.map(UserProfileUiModel.fromDomain).toList(),
         );
         _lastLoadedState = loadedState;
         emit(loadedState);
@@ -140,7 +142,10 @@ class ManageCollaboratorsBloc
       (project) {
         // Emit success state first
         emit(
-          UpdateCollaboratorRoleSuccess(project, event.newRole.toShortString()),
+          UpdateCollaboratorRoleSuccess(
+            ProjectUiModel.fromDomain(project),
+            event.newRole.toShortString(),
+          ),
         );
         // No need to re-subscribe; existing watcher will pick up DB changes
       },
@@ -183,7 +188,9 @@ class ManageCollaboratorsBloc
 
       result.fold(
         (failure) => emit(UserSearchError(failure.message)),
-        (user) => emit(UserSearchSuccess(user)),
+        (user) => emit(UserSearchSuccess(
+          user != null ? UserProfileUiModel.fromDomain(user) : null,
+        )),
       );
     } catch (e) {
       emit(UserSearchError('Unexpected error: $e'));
@@ -234,7 +241,7 @@ class ManageCollaboratorsBloc
           final emailUsername = event.email.split('@').first;
           emit(
             AddCollaboratorByEmailSuccess(
-              project,
+              ProjectUiModel.fromDomain(project),
               'Collaborator $emailUsername added successfully!',
             ),
           );

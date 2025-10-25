@@ -16,6 +16,7 @@ import 'package:trackflow/features/cache_management/domain/usecases/delete_cache
 import 'package:trackflow/features/cache_management/domain/usecases/watch_storage_usage_usecase.dart';
 import 'cache_management_event.dart';
 import 'cache_management_state.dart';
+import '../models/cached_track_bundle_ui_model.dart';
 
 @injectable
 class CacheManagementBloc
@@ -89,7 +90,7 @@ class CacheManagementBloc
             (bundles) => emit(
               state.copyWith(
                 status: CacheManagementStatus.success,
-                bundles: bundles,
+                bundles: bundles.map(CachedTrackBundleUiModel.fromDomain).toList(),
               ),
             ),
           );

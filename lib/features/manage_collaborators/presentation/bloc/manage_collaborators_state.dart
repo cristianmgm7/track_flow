@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
-import 'package:trackflow/features/projects/domain/entities/project.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
+import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
 
 abstract class ManageCollaboratorsState extends Equatable {
   @override
@@ -15,8 +15,8 @@ class ManageCollaboratorsLoading extends ManageCollaboratorsState {
 }
 
 class ManageCollaboratorsLoaded extends ManageCollaboratorsState {
-  final Project project;
-  final List<UserProfile> userProfiles;
+  final ProjectUiModel project;
+  final List<UserProfileUiModel> userProfiles;
   ManageCollaboratorsLoaded(this.project, this.userProfiles);
 
   @override
@@ -32,7 +32,7 @@ class ManageCollaboratorsError extends ManageCollaboratorsState {
 }
 
 class UpdateCollaboratorRoleSuccess extends ManageCollaboratorsState {
-  final Project project;
+  final ProjectUiModel project;
   final String newRole;
 
   UpdateCollaboratorRoleSuccess(this.project, this.newRole);
@@ -42,7 +42,7 @@ class UpdateCollaboratorRoleSuccess extends ManageCollaboratorsState {
 }
 
 class RemoveCollaboratorSuccess extends ManageCollaboratorsState {
-  final Project project;
+  final ProjectUiModel project;
 
   RemoveCollaboratorSuccess(this.project);
 
@@ -51,7 +51,7 @@ class RemoveCollaboratorSuccess extends ManageCollaboratorsState {
 }
 
 class JoinProjectSuccess extends ManageCollaboratorsState {
-  final Project project;
+  final ProjectUiModel project;
   JoinProjectSuccess(this.project);
 
   @override
@@ -79,7 +79,7 @@ class UserSearchLoading extends ManageCollaboratorsState {
 }
 
 class UserSearchSuccess extends ManageCollaboratorsState {
-  final UserProfile? user; // null = new user (not found)
+  final UserProfileUiModel? user; // null = new user (not found)
 
   UserSearchSuccess(this.user);
 
@@ -97,7 +97,7 @@ class UserSearchError extends ManageCollaboratorsState {
 }
 
 class AddCollaboratorByEmailSuccess extends ManageCollaboratorsState {
-  final Project project;
+  final ProjectUiModel project;
   final String message;
 
   AddCollaboratorByEmailSuccess(this.project, this.message);

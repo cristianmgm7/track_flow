@@ -95,7 +95,7 @@ class TrackListView extends StatelessWidget {
               final isSelected = state.selected.any(
                 (id) => id.value == b.trackId,
               );
-              return CachedTrackTile(bundle: b, isSelected: isSelected);
+              return CachedTrackTile(bundle: b.bundle, isSelected: isSelected);
             },
           ),
         ),

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/cache_management/domain/entities/cached_track_bundle.dart';
+import 'package:trackflow/features/cache_management/presentation/models/cached_track_bundle_ui_model.dart';
 import 'package:trackflow/features/cache_management/domain/usecases/get_cache_storage_stats_usecase.dart';
 
 enum CacheManagementStatus { initial, loading, success, failure }
@@ -16,7 +16,7 @@ class CacheManagementState extends Equatable {
   });
 
   final CacheManagementStatus status;
-  final List<CachedTrackBundle> bundles;
+  final List<CachedTrackBundleUiModel> bundles;
   final Set<AudioTrackId> selected;
   final int storageUsageBytes;
   final StorageStats? storageStats;
@@ -24,7 +24,7 @@ class CacheManagementState extends Equatable {
 
   CacheManagementState copyWith({
     CacheManagementStatus? status,
-    List<CachedTrackBundle>? bundles,
+    List<CachedTrackBundleUiModel>? bundles,
     Set<AudioTrackId>? selected,
     int? storageUsageBytes,
     StorageStats? storageStats,
