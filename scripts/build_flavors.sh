@@ -8,10 +8,34 @@
 #   ./scripts/build_flavors.sh development debug android
 #   ./scripts/build_flavors.sh production release ios 1.1.0
 
-FLAVOR=${1:-development}
+INPUT_FLAVOR=${1:-development}
 BUILD_MODE=${2:-debug}
 PLATFORM=${3:-android}
 VERSION=${4:-1.0.0}
+
+# Normalize flavor aliases
+case $INPUT_FLAVOR in
+    dev|develop|development)
+        FLAVOR_SCHEME="develop"
+        FLAVOR_MAIN="development"
+        FLAVOR_FIREBASE="development"
+        ;;
+    staging)
+        FLAVOR_SCHEME="staging"
+        FLAVOR_MAIN="staging"
+        FLAVOR_FIREBASE="staging"
+        ;;
+    prod|production)
+        FLAVOR_SCHEME="production"
+        FLAVOR_MAIN="production"
+        FLAVOR_FIREBASE="production"
+        ;;
+    *)
+        echo "❌ Invalid flavor: $INPUT_FLAVOR"
+        echo "   Supported: development/dev/develop, staging, production/prod"
+        exit 1
+        ;;
+esac
 
 # Auto-generate build number for release builds (timestamp format: YYYYMMDDHHmm)
 if [ "$BUILD_MODE" = "release" ]; then
@@ -21,7 +45,7 @@ else
 fi
 
 echo "🚀 Building TrackFlow"
-echo "   Flavor: $FLAVOR"
+echo "   Flavor: $FLAVOR_SCHEME"
 echo "   Mode: $BUILD_MODE"
 echo "   Platform: $PLATFORM"
 echo "   Version: $VERSION"
@@ -31,7 +55,7 @@ echo ""
 # Switch Firebase configuration for iOS builds
 if [ "$PLATFORM" = "ios" ]; then
     echo "🔥 Switching Firebase configuration..."
-    ./scripts/switch_firebase_config.sh $FLAVOR
+    ./scripts/switch_firebase_config.sh $FLAVOR_FIREBASE
     echo ""
 fi
 
@@ -39,20 +63,20 @@ case $PLATFORM in
     android)
         echo "📱 Building for Android..."
         if [ "$BUILD_MODE" = "debug" ]; then
-            flutter build apk --flavor $FLAVOR -t lib/main_$FLAVOR.dart --debug \
+            flutter build apk --flavor $FLAVOR_SCHEME -t lib/main_$FLAVOR_MAIN.dart --debug \
                 --build-name=$VERSION --build-number=$BUILD_NUMBER
         else
-            flutter build apk --flavor $FLAVOR -t lib/main_$FLAVOR.dart --release \
+            flutter build apk --flavor $FLAVOR_SCHEME -t lib/main_$FLAVOR_MAIN.dart --release \
                 --build-name=$VERSION --build-number=$BUILD_NUMBER
         fi
         ;;
     ios)
         echo "🍎 Building for iOS..."
         if [ "$BUILD_MODE" = "debug" ]; then
-            flutter build ipa --flavor $FLAVOR -t lib/main_$FLAVOR.dart --debug \
+            flutter build ipa --flavor $FLAVOR_SCHEME -t lib/main_$FLAVOR_MAIN.dart --debug \
                 --build-name=$VERSION --build-number=$BUILD_NUMBER
         else
-            flutter build ipa --flavor $FLAVOR -t lib/main_$FLAVOR.dart --release \
+            flutter build ipa --flavor $FLAVOR_SCHEME -t lib/main_$FLAVOR_MAIN.dart --release \
                 --build-name=$VERSION --build-number=$BUILD_NUMBER
         fi
         ;;
