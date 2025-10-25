@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_style.dart';
-import '../../domain/entities/audio_comment.dart';
+import '../../presentation/models/audio_comment_ui_model.dart';
 import 'audio_comment_player.dart';
 
 /// Widget for displaying hybrid audio comments that contain both
 /// audio content and text transcription
 class CommentHybridContent extends StatelessWidget {
-  final AudioComment comment;
+  final AudioCommentUiModel comment;
 
   const CommentHybridContent({
     super.key,

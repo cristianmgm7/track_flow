@@ -3,13 +3,12 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/widgets/user_avatar.dart';
-import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 
 /// Dedicated widget for displaying audio comment user avatars
 class AudioCommentAvatar extends StatelessWidget {
-  final UserProfile collaborator;
-  final UserId createdBy;
+  final UserProfileUiModel collaborator;
+  final String createdBy;
 
   const AudioCommentAvatar({
     super.key,
@@ -31,9 +30,7 @@ class AudioCommentAvatar extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Text(
-          collaborator.name.isNotEmpty
-              ? collaborator.name.substring(0, 1).toUpperCase()
-              : createdBy.value.substring(0, 1).toUpperCase(),
+          collaborator.initials,
           style: AppTextStyle.headlineSmall.copyWith(
             color: AppColors.primary,
             fontWeight: FontWeight.bold,

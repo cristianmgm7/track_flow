@@ -12,6 +12,7 @@ import 'package:trackflow/features/audio_track/domain/usecases/edit_audio_track_
 import 'package:trackflow/features/audio_track/domain/usecases/upload_track_cover_art_usecase.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_event.dart';
 import 'package:trackflow/features/audio_track/presentation/bloc/audio_track_state.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
 
 @injectable
 class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
@@ -115,7 +116,7 @@ class AudioTrackBloc extends Bloc<AudioTrackEvent, AudioTrackState> {
       (tracks) {
         emit(
           AudioTrackLoaded(
-            tracks: tracks,
+            tracks: tracks.map(AudioTrackUiModel.fromDomain).toList(),
             isSyncing: false,
             syncProgress: null,
           ),

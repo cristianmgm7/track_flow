@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 
 abstract class AudioCommentState extends Equatable {
   const AudioCommentState();
@@ -35,11 +35,11 @@ class AudioCommentError extends AudioCommentState {
 }
 
 class AudioCommentsLoaded extends AudioCommentState {
-  final List<AudioComment> comments;
-  final List<UserProfile> collaborators;
+  final List<AudioCommentUiModel> comments;
+  final List<UserProfileUiModel> collaborators;
   final bool isSyncing;
   final double? syncProgress;
-  
+
   const AudioCommentsLoaded({
     required this.comments,
     required this.collaborators,
@@ -48,8 +48,8 @@ class AudioCommentsLoaded extends AudioCommentState {
   });
 
   AudioCommentsLoaded copyWith({
-    List<AudioComment>? comments,
-    List<UserProfile>? collaborators,
+    List<AudioCommentUiModel>? comments,
+    List<UserProfileUiModel>? collaborators,
     bool? isSyncing,
     double? syncProgress,
   }) {

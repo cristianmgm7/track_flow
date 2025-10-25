@@ -8,7 +8,6 @@ import '../bloc/audio_comment_event.dart';
 import 'audio_comment_card.dart';
 import '../../../user_profile/presentation/bloc/current_user/current_user_bloc.dart';
 import '../../../user_profile/presentation/bloc/current_user/current_user_state.dart';
-import '../../../user_profile/domain/entities/user_profile.dart';
 
 class CommentsSliverSection extends StatefulWidget {
   final ProjectId projectId;
@@ -112,16 +111,10 @@ class _CommentsSliverSectionState extends State<CommentsSliverSection> {
                 final comment = state.comments[index];
                 final collaborator = state.collaborators.firstWhere(
                   (u) => u.id == comment.createdBy,
-                  orElse: () => UserProfile(
-                    id: comment.createdBy,
-                    name: '',
-                    email: '',
-                    avatarUrl: '',
-                    createdAt: DateTime.now(),
-                  ),
+                  orElse: () => state.collaborators.first,
                 );
                 final bool isMine =
-                    currentUserId != null && comment.createdBy.value == currentUserId;
+                    currentUserId != null && comment.createdBy == currentUserId;
 
                 return AudioCommentComponent(
                   comment: comment,

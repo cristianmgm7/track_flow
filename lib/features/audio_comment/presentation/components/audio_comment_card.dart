@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/entities/unique_id.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/menus/app_popup_menu.dart';
-import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 import '../bloc/audio_comment_event.dart';
 import '../bloc/audio_comment_bloc.dart';
 import 'audio_comment_avatar.dart';
@@ -14,8 +14,8 @@ import 'audio_comment_content.dart';
 
 /// Audio comment card component using the design system
 class AudioCommentComponent extends StatelessWidget {
-  final AudioComment comment;
-  final UserProfile collaborator;
+  final AudioCommentUiModel comment;
+  final UserProfileUiModel collaborator;
   final ProjectId projectId;
   final TrackVersionId versionId;
   final bool isMine;
@@ -113,7 +113,7 @@ class AudioCommentComponent extends StatelessWidget {
 
   void _deleteComment(BuildContext context) {
     context.read<AudioCommentBloc>().add(
-      DeleteAudioCommentEvent(comment.id, projectId, versionId),
+      DeleteAudioCommentEvent(comment.comment.id, projectId, versionId),
     );
   }
 }

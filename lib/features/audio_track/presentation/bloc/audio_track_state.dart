@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:trackflow/features/audio_track/domain/entities/audio_track.dart';
+import 'package:trackflow/features/audio_track/presentation/models/audio_track_ui_model.dart';
 
 abstract class AudioTrackState extends Equatable {
   const AudioTrackState();
@@ -19,7 +19,7 @@ class AudioTrackEditLoading extends AudioTrackState {}
 class AudioTrackDeleteLoading extends AudioTrackState {}
 
 class AudioTrackLoaded extends AudioTrackState {
-  final List<AudioTrack> tracks;
+  final List<AudioTrackUiModel> tracks;
   final bool isSyncing;
   final double? syncProgress;
 
@@ -30,7 +30,7 @@ class AudioTrackLoaded extends AudioTrackState {
   });
 
   AudioTrackLoaded copyWith({
-    List<AudioTrack>? tracks,
+    List<AudioTrackUiModel>? tracks,
     bool? isSyncing,
     double? syncProgress,
   }) {

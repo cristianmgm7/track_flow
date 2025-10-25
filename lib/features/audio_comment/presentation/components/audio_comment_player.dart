@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
-import 'package:trackflow/features/audio_comment/domain/entities/audio_comment.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_bloc.dart';
 import 'package:trackflow/features/audio_player/presentation/bloc/audio_player_event.dart';
 import 'package:trackflow/features/audio_comment/presentation/cubit/comment_audio_cubit.dart';
@@ -13,7 +13,7 @@ import 'package:trackflow/features/audio_comment/infrastructure/services/comment
 /// Widget to play audio from an audio comment
 /// Supports both local cache and remote streaming
 class AudioCommentPlayer extends StatefulWidget {
-  final AudioComment comment;
+  final AudioCommentUiModel comment;
 
   const AudioCommentPlayer({
     super.key,
@@ -49,7 +49,7 @@ class _AudioCommentPlayerState extends State<AudioCommentPlayer> {
     _commentCubit.play(
       localPath: localPath,
       remoteUrl: remoteUrl,
-      commentId: widget.comment.id.value,
+      commentId: widget.comment.id,
     );
   }
 

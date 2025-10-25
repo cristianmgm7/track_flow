@@ -5,6 +5,8 @@ import 'package:trackflow/features/audio_comment/domain/usecases/add_audio_comme
 import 'package:trackflow/features/audio_comment/domain/usecases/watch_audio_comments_bundle_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/delete_audio_comment_usecase.dart';
 import 'package:trackflow/features/audio_comment/domain/usecases/get_cached_audio_comment_usecase.dart';
+import 'package:trackflow/features/audio_comment/presentation/models/audio_comment_ui_model.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 import 'audio_comment_event.dart';
 import 'audio_comment_state.dart';
 
@@ -93,8 +95,8 @@ class AudioCommentBloc extends Bloc<AudioCommentEvent, AudioCommentState> {
             ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
           emit(
             AudioCommentsLoaded(
-              comments: sorted,
-              collaborators: bundle.collaborators,
+              comments: sorted.map(AudioCommentUiModel.fromDomain).toList(),
+              collaborators: bundle.collaborators.map(UserProfileUiModel.fromDomain).toList(),
               isSyncing: false,
               syncProgress: null,
             ),

@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_text_style.dart';
 import '../../../../core/entities/unique_id.dart';
 import 'audio_comment_card.dart';
-import '../../domain/entities/audio_comment.dart';
+import '../../presentation/models/audio_comment_ui_model.dart';
+import '../../../user_profile/presentation/models/user_profile_ui_model.dart';
 import '../../../user_profile/domain/entities/user_profile.dart';
 import '../../../user_profile/presentation/bloc/current_user/current_user_bloc.dart';
 import '../../../user_profile/presentation/bloc/current_user/current_user_state.dart';
@@ -11,8 +12,8 @@ import '../../../user_profile/presentation/bloc/current_user/current_user_state.
 /// Widget that displays a list of audio comments with proper error handling
 /// for missing collaborators
 class CommentsListView extends StatelessWidget {
-  final List<AudioComment> comments;
-  final List<UserProfile> collaborators;
+  final List<AudioCommentUiModel> comments;
+  final List<UserProfileUiModel> collaborators;
   final ProjectId projectId;
   final TrackVersionId versionId;
 
@@ -49,15 +50,24 @@ class CommentsListView extends StatelessWidget {
             final comment = comments[index];
             final collaborator = collaborators.firstWhere(
               (u) => u.id == comment.createdBy,
-              orElse: () => UserProfile(
+              orElse: () => UserProfileUiModel(
+                profile: UserProfile(
+                  id: comment.comment.createdBy,
+                  name: '',
+                  email: '',
+                  avatarUrl: '',
+                  createdAt: DateTime.now(),
+                ),
                 id: comment.createdBy,
                 name: '',
                 email: '',
                 avatarUrl: '',
                 createdAt: DateTime.now(),
+                displayName: comment.createdBy,
+                initials: '?',
               ),
             );
-            final bool isMine = currentUserId != null && comment.createdBy.value == currentUserId;
+            final bool isMine = currentUserId != null && comment.createdBy == currentUserId;
             return AudioCommentComponent(
               comment: comment,
               collaborator: collaborator,
