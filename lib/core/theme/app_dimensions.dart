@@ -19,6 +19,11 @@ class Dimensions {
   static const double space144 = 144;
   static const double space160 = 160;
   static const double space176 = 176;
+  static const double space200 = 200;
+  static const double space224 = 224;
+  static const double space240 = 240;
+  static const double space256 = 256;
+  static const double space272 = 272;
 
   // Component heights
   static const double buttonHeight = 48.0;

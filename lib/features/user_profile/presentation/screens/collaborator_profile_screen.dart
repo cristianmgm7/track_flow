@@ -34,123 +34,132 @@ class _CollaboratorProfileScreenState extends State<CollaboratorProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      appBar: AppAppBar(title: 'Profile'),
-      backgroundColor: AppColors.background,
-      body: BlocBuilder<UserProfilesBloc, UserProfilesState>(
-        builder: (context, state) {
-          if (state is UserProfilesLoading || state is UserProfilesInitial) {
-            return const Center(
+    return BlocBuilder<UserProfilesBloc, UserProfilesState>(
+      builder: (context, state) {
+        if (state is UserProfilesLoading || state is UserProfilesInitial) {
+          return AppScaffold(
+            appBar: AppAppBar(title: 'Profile'),
+            backgroundColor: AppColors.background,
+            body: const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
-          if (state is UserProfileLoaded) {
-            final profile = state.profile;
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _HeaderBackground(profile: profile),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0,
+            ),
+          );
+        }
+        if (state is UserProfileLoaded) {
+          final profile = state.profile;
+          return Scaffold(
+            body: Stack(
+              children: [
+                // 1. BACKGROUND IMAGE (AVATAR)
+                Column(
+                  children: [
+                    _BackgroundAvatar(profile: profile),
+                    Expanded(child: Container()),
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.background,
+                      ),
                     ),
-                    child: _InfoSection(profile: profile),
-                  ),
-                ],
-              ),
-            );
-          }
-          return Center(
+                  ],
+                ),
+                // 2. SCROLLABLE FOREGROUND CONTENT
+                CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: Dimensions.space272,  
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      pinned: true,
+                      flexibleSpace: FlexibleSpaceBar(
+                        centerTitle: true,
+                        title: Text(
+                          profile.name,
+                          style: AppTextStyle.headlineLarge,
+                        ),
+                      ),
+                    ),
+                    // 3. MAIN CONTENT SECTION
+                    SliverToBoxAdapter(
+
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(28),
+                            topRight: Radius.circular(28),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
+                          child: _InfoSection(profile: profile),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+        return AppScaffold(
+          appBar: AppAppBar(title: 'Profile'),
+          backgroundColor: AppColors.background,
+          body: Center(
             child: Text(
               'Profile unavailable',
               style: AppTextStyle.bodyLarge.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-class _HeaderBackground extends StatelessWidget {
-  const _HeaderBackground({required this.profile});
+class _BackgroundAvatar extends StatelessWidget {
+  const _BackgroundAvatar({required this.profile});
 
   final UserProfile profile;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 260,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background photo (avatar) stretched to cover
-          if ((profile.avatarLocalPath != null &&
-                  profile.avatarLocalPath!.isNotEmpty) ||
-              (profile.avatarUrl.isNotEmpty))
-            Positioned.fill(
-              child: Hero(
-                tag: profile.avatarUrl,
-                child: Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: (profile.avatarLocalPath != null &&
-                              profile.avatarLocalPath!.isNotEmpty)
-                          ? FileImage(
-                              File(profile.avatarLocalPath!),
-                            ) as ImageProvider
-                          : NetworkImage(profile.avatarUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(color: AppColors.grey700.withValues(alpha: 0)),
-                ),
-              ),
-            )
-          else
-            Container(color: AppColors.grey700),
-
-          // Gradient overlay for readability
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.background.withValues(alpha: 0.2),
-                    AppColors.background.withValues(alpha: 0.8),
-                  ],
-                ),
-              ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Avatar image or fallback
+    if ((profile.avatarLocalPath != null &&
+            profile.avatarLocalPath!.isNotEmpty) ||
+        (profile.avatarUrl.isNotEmpty)) {
+      return Hero(
+        tag: profile.avatarUrl,
+        child: Container(
+          width: screenWidth,
+          height: screenWidth,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: (profile.avatarLocalPath != null &&
+                      profile.avatarLocalPath!.isNotEmpty)
+                  ? FileImage(
+                      File(profile.avatarLocalPath!),
+                    ) as ImageProvider
+                  : NetworkImage(profile.avatarUrl),
+              fit: BoxFit.cover,
             ),
           ),
-
-          // Name overlaid at bottom
-          Positioned(
-            left: 24,
-            right: 24,
-            bottom: 24,
-            child: Text(
-              profile.name,
-              style: AppTextStyle.displayMedium.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
+        ),
+      );
+    } else {
+      return Container(
+        width: screenWidth,
+        height: screenWidth,
+        color: AppColors.grey700,
+      );
+    }
   }
 }
 

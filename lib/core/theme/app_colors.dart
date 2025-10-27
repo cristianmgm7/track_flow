@@ -27,4 +27,14 @@ class AppColors {
   static const Color accent = Color(0xFF00BCD4);
   static const Color highlight = Color(0xFFFFEB3B);
   static const Color disabled = Color(0xFF616161);
+
+  // transparent colors
+  static const Color transparent = Colors.transparent;
+  static const Color transparentWhite = Color.fromARGB(255, 255, 255, 255);
+  static const Color transparentBlack = Color.fromARGB(255, 0, 0, 0);
+  static const Color transparentPrimary = Color.fromARGB(255, 53, 53, 151);
+  static const Color transparentSecondary = Color.fromARGB(255, 100, 100, 100);
+  static const Color transparentTertiary = Color.fromARGB(255, 150, 150, 150);
+  static const Color transparentQuaternary = Color.fromARGB(255, 200, 200, 200);
+  static const Color transparentQuinary = Color.fromARGB(255, 250, 250, 250);
 }
