@@ -104,37 +104,9 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
 
         // Handle successful authentication
         if (state is AuthAuthenticated) {
-          AppLogger.info(
-            'Auth successful! User: ${state.user.email} (ID: ${state.user.id})',
-            tag: 'AUTH_SCREEN',
-          );
-
-          // Clear any existing error messages
-          ScaffoldMessenger.of(context).clearSnackBars();
-
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _isLogin
-                    ? 'Successfully signed in!'
-                    : 'Account created successfully!',
-              ),
-              backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-
           // Clear form fields after successful auth
           _emailController.clear();
           _passwordController.clear();
-
-          // Trigger AppFlowBloc for proper state coordination
-          AppLogger.info(
-            'Triggering AppFlowBloc.checkAppFlow() after successful auth',
-            tag: 'AUTH_SCREEN',
-          );
-
           context.read<AppFlowBloc>().add(CheckAppFlow());
         }
       },
