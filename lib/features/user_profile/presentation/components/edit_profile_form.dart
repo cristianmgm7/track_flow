@@ -7,6 +7,7 @@ import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/user_profile/presentation/components/creative_role_selector.dart';
 import 'package:trackflow/features/user_profile/presentation/components/avatar_uploader.dart';
+import 'package:trackflow/features/user_profile/presentation/components/profile_completeness_widget.dart';
 import 'package:trackflow/features/user_profile/presentation/widgets/social_links_editor.dart';
 import 'package:trackflow/features/user_profile/presentation/widgets/multi_select_chips.dart';
 
@@ -197,6 +198,17 @@ class EditProfileFormState extends State<EditProfileForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Profile Completeness Indicator
+          ProfileCompletenessWidget(
+            description: _descriptionController.text,
+            location: _locationController.text,
+            socialLinks: _socialLinks,
+            roles: _selectedRoles,
+            genres: _selectedGenres,
+            skills: _selectedSkills,
+          ),
+          SizedBox(height: Dimensions.space16),
+
           // Basic Info Card
           _buildSectionCard(
             title: 'Basic Information',

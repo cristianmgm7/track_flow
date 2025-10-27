@@ -45,7 +45,7 @@ class ProjectDetailCollaboratorsComponent extends StatelessWidget {
                   onPressed: () {
                     context.push(
                       AppRoutes.manageCollaborators,
-                      extra: state.project,
+                      extra: state.project?.project,
                     );
                   },
                 ),

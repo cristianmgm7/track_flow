@@ -489,9 +489,9 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 **Test**: Verify new fields save to Firestore collection
 
 **Success Criteria**:
-- [ ] New profile fields appear in Firestore console
-- [ ] Social links array serializes correctly
-- [ ] No Firestore write errors
+- [x] New profile fields appear in Firestore console
+- [x] Social links array serializes correctly
+- [x] No Firestore write errors
 
 ### Task 4.2: Update Local Datasource
 
@@ -502,9 +502,9 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 **Test**: Verify new fields persist to local DB
 
 **Success Criteria**:
-- [ ] Local profiles include new fields
-- [ ] Query profiles by new fields (optional)
-- [ ] No Isar write errors
+- [x] Local profiles include new fields
+- [x] Query profiles by new fields (optional)
+- [x] No Isar write errors
 
 ### Task 4.3: Test Repository Layer
 
@@ -520,10 +520,10 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 5. Watch stream emits updated profile
 
 **Success Criteria**:
-- [ ] Profile updates save locally
-- [ ] Profile updates sync to Firebase
-- [ ] Watch stream emits new data
-- [ ] Offline mode works (local-first)
+- [x] Profile updates save locally
+- [x] Profile updates sync to Firebase
+- [x] Watch stream emits new data
+- [x] Offline mode works (local-first)
 
 ## Phase 5: UI Polish & Validation
 
@@ -549,9 +549,9 @@ class UrlValidator {
 ```
 
 **Success Criteria**:
-- [ ] Invalid URLs show error
-- [ ] Valid URLs pass validation
-- [ ] Platform-specific validation works
+- [x] Invalid URLs show error
+- [x] Valid URLs pass validation
+- [x] Platform-specific validation works
 
 ### Task 5.2: Add Profile Completeness Indicator
 
@@ -568,9 +568,9 @@ class UrlValidator {
 ```
 
 **Success Criteria**:
-- [ ] Progress bar shows correct percentage
-- [ ] Displays in edit screen header
-- [ ] Updates live as fields filled
+- [x] Progress bar shows correct percentage
+- [x] Displays in edit screen header
+- [x] Updates live as fields filled
 
 ### Task 5.3: Add Empty States
 
@@ -584,9 +584,9 @@ class UrlValidator {
 **UI**: Friendly message with action button
 
 **Success Criteria**:
-- [ ] Empty states show helpful text
-- [ ] "Add Bio" button navigates to edit
-- [ ] No awkward blank sections
+- [x] Empty states show helpful text
+- [x] "Add Bio" button navigates to edit
+- [x] No awkward blank sections
 
 ## Testing Strategy
 

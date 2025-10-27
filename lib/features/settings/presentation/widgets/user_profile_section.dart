@@ -9,6 +9,7 @@ import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/widgets/compact_profile_completeness.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 
@@ -28,6 +29,18 @@ class UserProfileSection extends StatelessWidget {
               children: [
                 // Profile Header
                 _buildProfileHeader(context, state),
+                
+                // Profile Completeness Indicator (only for loaded state)
+                if (state is CurrentUserLoaded) ...[
+                  SizedBox(height: Dimensions.space12),
+                  CompactProfileCompleteness(
+                    profile: state.profile,
+                    onTap: () {
+                      context.push(AppRoutes.editUserProfile, extra: state.profile);
+                    },
+                  ),
+                ],
+                
                 SizedBox(height: Dimensions.space16),
 
                 // Profile Options

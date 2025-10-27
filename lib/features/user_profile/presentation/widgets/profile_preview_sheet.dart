@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/router/app_routes.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
@@ -210,8 +212,64 @@ class ProfilePreviewContent extends StatelessWidget {
                 label: 'Linktree',
                 url: profile.linktreeUrl!,
               ),
+            SizedBox(height: Dimensions.space16),
           ],
+
+          // View Full Profile Button
+          SizedBox(height: Dimensions.space24),
+          _buildViewFullProfileButton(context),
+          SizedBox(height: Dimensions.space16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildViewFullProfileButton(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Close the preview modal
+            Navigator.pop(context);
+            // Navigate to the full artist profile screen
+            context.push(
+              AppRoutes.artistProfile.replaceFirst(':id', profile.id.value),
+            );
+          },
+          borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: Dimensions.space16,
+              horizontal: Dimensions.space16,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.open_in_new,
+                  size: Dimensions.iconSmall,
+                  color: AppColors.primary,
+                ),
+                SizedBox(width: Dimensions.space8),
+                Text(
+                  'View Full Profile',
+                  style: AppTextStyle.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
