@@ -78,6 +78,12 @@ class ProfileCompletenessWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final completeness = _calculateCompleteness();
+    
+    // Hide widget if profile is 100% complete
+    if (completeness >= 100) {
+      return const SizedBox.shrink();
+    }
+    
     final progressColor = _getProgressColor(completeness);
     final message = _getCompletionMessage(completeness);
 

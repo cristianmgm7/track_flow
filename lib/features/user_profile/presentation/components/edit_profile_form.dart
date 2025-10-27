@@ -159,6 +159,7 @@ class EditProfileFormState extends State<EditProfileForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(height: Dimensions.space8),
           // Profile Completeness Indicator
           ProfileCompletenessWidget(
             description: _descriptionController.text,
@@ -168,7 +169,7 @@ class EditProfileFormState extends State<EditProfileForm> {
             genres: _selectedGenres,
             skills: _selectedSkills,
           ),
-          SizedBox(height: Dimensions.space16),
+          SizedBox(height: Dimensions.space8),
 
           // Basic Info Card
           _buildSectionCard(

@@ -78,6 +78,7 @@ class _EditUserProfileScreenState extends State<EditUserProfileScreen> {
               onPressed: _isLoading ? null : _showPreview,
             ),
           ],
+          backgroundColor: AppColors.background.withValues(alpha: 0.9),
         ),
         backgroundColor: AppColors.background,
         body: SafeArea(
