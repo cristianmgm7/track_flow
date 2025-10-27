@@ -12,6 +12,25 @@ class UserProfileDTO {
   final DateTime? updatedAt;
   final CreativeRole creativeRole;
 
+  // Professional context
+  final String? description;
+  final String? location;
+  final List<String>? roles;
+  final List<String>? genres;
+  final List<String>? skills;
+  final String? availabilityStatus;
+
+  // External links
+  final List<Map<String, String>>? socialLinks;
+  final String? websiteUrl;
+  final String? linktreeUrl;
+
+  // Contact (display only)
+  final Map<String, dynamic>? contactInfo;
+
+  // Meta
+  final bool verified;
+
   // ⭐ NEW: Sync metadata fields for proper offline-first sync
   final int version;
   final DateTime? lastModified;
@@ -25,6 +44,17 @@ class UserProfileDTO {
     required this.createdAt,
     this.updatedAt,
     required this.creativeRole,
+    this.description,
+    this.location,
+    this.roles,
+    this.genres,
+    this.skills,
+    this.availabilityStatus,
+    this.socialLinks,
+    this.websiteUrl,
+    this.linktreeUrl,
+    this.contactInfo,
+    this.verified = false,
     // ⭐ NEW: Sync metadata fields
     this.version = 1,
     this.lastModified,
@@ -42,6 +72,22 @@ class UserProfileDTO {
       createdAt: userProfile.createdAt,
       updatedAt: userProfile.updatedAt,
       creativeRole: userProfile.creativeRole ?? CreativeRole.other,
+      description: userProfile.description,
+      location: userProfile.location,
+      roles: userProfile.roles,
+      genres: userProfile.genres,
+      skills: userProfile.skills,
+      availabilityStatus: userProfile.availabilityStatus,
+      socialLinks: userProfile.socialLinks?.map((l) => {
+        'platform': l.platform,
+        'url': l.url,
+      }).toList(),
+      websiteUrl: userProfile.websiteUrl,
+      linktreeUrl: userProfile.linktreeUrl,
+      contactInfo: userProfile.contactInfo != null ? {
+        'phone': userProfile.contactInfo!.phone,
+      } : null,
+      verified: userProfile.verified,
       // ⭐ NEW: Include sync metadata for user profiles
       version: 1, // Initial version for new user profiles
       lastModified:
@@ -60,6 +106,22 @@ class UserProfileDTO {
       createdAt: createdAt,
       updatedAt: updatedAt,
       creativeRole: creativeRole,
+      description: description,
+      location: location,
+      roles: roles,
+      genres: genres,
+      skills: skills,
+      availabilityStatus: availabilityStatus,
+      socialLinks: socialLinks?.map((l) => SocialLink(
+        platform: l['platform']!,
+        url: l['url']!,
+      )).toList(),
+      websiteUrl: websiteUrl,
+      linktreeUrl: linktreeUrl,
+      contactInfo: contactInfo != null ? ContactInfo(
+        phone: contactInfo!['phone'] as String?,
+      ) : null,
+      verified: verified,
     );
   }
 
@@ -87,6 +149,17 @@ class UserProfileDTO {
       createdAt: parsedCreatedAt ?? DateTime.now(),
       updatedAt: parsedUpdatedAt,
       creativeRole: _parseCreativeRole(json['creativeRole'] as String?),
+      description: json['description'] as String?,
+      location: json['location'] as String?,
+      roles: (json['roles'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      genres: (json['genres'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      skills: (json['skills'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      availabilityStatus: json['availabilityStatus'] as String?,
+      socialLinks: (json['socialLinks'] as List<dynamic>?)?.map((e) => Map<String, String>.from(e as Map)).toList(),
+      websiteUrl: json['websiteUrl'] as String?,
+      linktreeUrl: json['linktreeUrl'] as String?,
+      contactInfo: json['contactInfo'] as Map<String, dynamic>?,
+      verified: json['verified'] as bool? ?? false,
       // ⭐ NEW: Parse sync metadata from JSON
       version: json['version'] as int? ?? 1,
       lastModified:
@@ -105,6 +178,17 @@ class UserProfileDTO {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'creativeRole': creativeRole.name,
+      'description': description,
+      'location': location,
+      'roles': roles,
+      'genres': genres,
+      'skills': skills,
+      'availabilityStatus': availabilityStatus,
+      'socialLinks': socialLinks,
+      'websiteUrl': websiteUrl,
+      'linktreeUrl': linktreeUrl,
+      'contactInfo': contactInfo,
+      'verified': verified,
       // ⭐ NEW: Include sync metadata in JSON
       'version': version,
       'lastModified': lastModified?.toIso8601String(),
@@ -120,6 +204,17 @@ class UserProfileDTO {
     DateTime? createdAt,
     DateTime? updatedAt,
     CreativeRole? creativeRole,
+    String? description,
+    String? location,
+    List<String>? roles,
+    List<String>? genres,
+    List<String>? skills,
+    String? availabilityStatus,
+    List<Map<String, String>>? socialLinks,
+    String? websiteUrl,
+    String? linktreeUrl,
+    Map<String, dynamic>? contactInfo,
+    bool? verified,
     int? version,
     DateTime? lastModified,
   }) {
@@ -132,6 +227,17 @@ class UserProfileDTO {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       creativeRole: creativeRole ?? this.creativeRole,
+      description: description ?? this.description,
+      location: location ?? this.location,
+      roles: roles ?? this.roles,
+      genres: genres ?? this.genres,
+      skills: skills ?? this.skills,
+      availabilityStatus: availabilityStatus ?? this.availabilityStatus,
+      socialLinks: socialLinks ?? this.socialLinks,
+      websiteUrl: websiteUrl ?? this.websiteUrl,
+      linktreeUrl: linktreeUrl ?? this.linktreeUrl,
+      contactInfo: contactInfo ?? this.contactInfo,
+      verified: verified ?? this.verified,
       // ⭐ NEW: Include sync metadata in copyWith
       version: version ?? this.version,
       lastModified: lastModified ?? this.lastModified,

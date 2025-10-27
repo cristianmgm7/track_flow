@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/modals/app_bottom_sheet.dart';
 import 'package:trackflow/features/ui/modals/app_form_sheet.dart';
 import 'package:trackflow/features/manage_collaborators/presentation/bloc/manage_collaborators_bloc.dart';
@@ -133,9 +134,10 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
             currentCollaborators = _lastLoadedState?.userProfiles.map((ui) => ui.profile).toList() ?? [];
             isLoading = true;
           } else {
-            // Fallback to initial project
+            // Fallback - show loading for initial state
             currentProject = widget.project;
             currentCollaborators = [];
+            isLoading = true;
           }
 
           // Update last loaded state for future reference
@@ -174,6 +176,11 @@ class _ManageCollaboratorsScreenState extends State<ManageCollaboratorsScreen> {
                   );
                 },
               ),
+              // Show loading when no data yet
+              if (currentCollaborators.isEmpty && isLoading)
+                Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                ),
               // Loading overlay
               if (isLoading)
                 Positioned(
