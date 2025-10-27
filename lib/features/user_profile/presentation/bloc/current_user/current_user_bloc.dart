@@ -12,6 +12,7 @@ import 'package:trackflow/core/app_flow/domain/usecases/get_current_user_usecase
 import 'package:trackflow/core/app_flow/domain/usecases/get_auth_state_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 import 'package:trackflow/core/common/mixins/resetable_bloc_mixin.dart';
 
@@ -98,7 +99,10 @@ class CurrentUserBloc extends Bloc<CurrentUserEvent, CurrentUserState>
             },
             (profile) {
               if (profile != null) {
-                emit(CurrentUserLoaded(profile: profile));
+                // Convert domain entity to UI model in BLoC
+                emit(CurrentUserLoaded(
+                  uiModel: UserProfileUiModel.fromDomain(profile),
+                ));
               } else {
                 // Keep lightweight loading state while profile is being seeded
                 if (state is! CurrentUserLoading) {
@@ -149,7 +153,9 @@ class CurrentUserBloc extends Bloc<CurrentUserEvent, CurrentUserState>
       (profile) {
         // Profile created successfully
         // The watch stream will emit the new profile, so we can just show success briefly
-        emit(CurrentUserSaved(profile: event.profile));
+        emit(CurrentUserSaved(
+          uiModel: UserProfileUiModel.fromDomain(event.profile),
+        ));
 
         // Auto-transition to watching after 2 seconds
         Future.delayed(const Duration(seconds: 2), () {
@@ -186,14 +192,18 @@ class CurrentUserBloc extends Bloc<CurrentUserEvent, CurrentUserState>
       },
       (unit) async {
         // Update succeeded - show success briefly then return to loaded
-        emit(CurrentUserSaved(profile: event.profile));
+        emit(CurrentUserSaved(
+          uiModel: UserProfileUiModel.fromDomain(event.profile),
+        ));
 
         // Auto-transition back to loaded after 2 seconds
         await Future.delayed(const Duration(seconds: 2));
         if (!isClosed && state is CurrentUserSaved) {
           // The watch stream should have emitted the updated profile by now
           // But if not, we'll emit loaded state with the profile we just saved
-          emit(CurrentUserLoaded(profile: event.profile));
+          emit(CurrentUserLoaded(
+            uiModel: UserProfileUiModel.fromDomain(event.profile),
+          ));
         }
       },
     );

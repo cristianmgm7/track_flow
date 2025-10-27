@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 
 abstract class CurrentUserState extends Equatable {
   @override
@@ -14,16 +15,19 @@ class CurrentUserLoading extends CurrentUserState {}
 
 /// Profile loaded successfully
 class CurrentUserLoaded extends CurrentUserState {
-  final UserProfile profile;
+  final UserProfileUiModel uiModel;
 
-  CurrentUserLoaded({required this.profile});
+  CurrentUserLoaded({required this.uiModel});
 
-  CurrentUserLoaded copyWith({UserProfile? profile}) {
-    return CurrentUserLoaded(profile: profile ?? this.profile);
+  // Access domain entity when needed via composition
+  UserProfile get profile => uiModel.profile;
+
+  CurrentUserLoaded copyWith({UserProfileUiModel? uiModel}) {
+    return CurrentUserLoaded(uiModel: uiModel ?? this.uiModel);
   }
 
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [uiModel];
 }
 
 /// Updating profile in progress (shows loading indicator but keeps current data)
@@ -38,12 +42,15 @@ class CurrentUserUpdating extends CurrentUserState {
 
 /// Profile update succeeded (brief success message)
 class CurrentUserSaved extends CurrentUserState {
-  final UserProfile profile;
+  final UserProfileUiModel uiModel;
 
-  CurrentUserSaved({required this.profile});
+  CurrentUserSaved({required this.uiModel});
+
+  // Access domain entity when needed via composition
+  UserProfile get profile => uiModel.profile;
 
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [uiModel];
 }
 
 /// Error occurred

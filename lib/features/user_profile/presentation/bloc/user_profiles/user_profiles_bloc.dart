@@ -9,6 +9,7 @@ import 'package:trackflow/features/user_profile/domain/usecases/watch_userprofil
 import 'package:trackflow/features/user_profile/domain/usecases/sync_collaborator_profile_usecase.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_state.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
 
 @injectable
@@ -69,7 +70,10 @@ class UserProfilesBloc extends Bloc<UserProfilesEvent, UserProfilesState> {
                   tag: 'USER_PROFILES_BLOC',
                 );
                 _hasSyncedProfile = true;
-                emit(UserProfileLoaded(profile: profile));
+                // Convert domain entity to UI model in BLoC
+                emit(UserProfileLoaded(
+                  uiModel: UserProfileUiModel.fromDomain(profile),
+                ));
               } else if (!_hasSyncedProfile) {
                 // Profile not in cache, sync from remote
                 AppLogger.info(
@@ -132,7 +136,7 @@ class UserProfilesBloc extends Bloc<UserProfilesEvent, UserProfilesState> {
     Emitter<UserProfilesState> emit,
   ) async {
     if (event.userIds.isEmpty) {
-      emit(UserProfilesLoaded(profiles: {}));
+      emit(UserProfilesLoaded(uiModels: {}));
       return;
     }
 
@@ -154,12 +158,15 @@ class UserProfilesBloc extends Bloc<UserProfilesEvent, UserProfilesState> {
               emit(UserProfilesError(failure.message));
             },
             (profiles) {
-              // Convert list to map for easy lookup
-              final profileMap = <String, UserProfile>{};
+              // Convert list to map of UI models
+              final uiModelMap = <String, UserProfileUiModel>{};
+              
               for (final profile in profiles) {
-                profileMap[profile.id.value] = profile;
+                // Convert domain entity to UI model in BLoC
+                uiModelMap[profile.id.value] = UserProfileUiModel.fromDomain(profile);
               }
-              emit(UserProfilesLoaded(profiles: profileMap));
+              
+              emit(UserProfilesLoaded(uiModels: uiModelMap));
             },
           );
         },
