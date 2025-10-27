@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
+import 'package:trackflow/core/theme/app_dimensions.dart';
+import 'package:trackflow/core/theme/app_icons.dart';
 import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
@@ -72,22 +74,18 @@ class _EditUserProfileScreenState extends State<EditUserProfileScreen> {
         appBar: AppAppBar(
           title: 'Edit Profile',
           actions: [
-            TextButton(
+            AppIconButton(
+              icon: AppIcons.preview,
               onPressed: _isLoading ? null : _showPreview,
-              child: Text(
-                'Preview',
-                style: AppTextStyle.labelLarge.copyWith(
-                  color: _isLoading ? AppColors.textSecondary : AppColors.primary,
-                ),
-              ),
             ),
           ],
         ),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(horizontal: Dimensions.space16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              
               EditProfileForm(
                 key: _formKey,
                 initialProfile: widget.profile,

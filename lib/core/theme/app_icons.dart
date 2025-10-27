@@ -18,6 +18,7 @@ class AppIcons {
   static const IconData add = Icons.add_rounded;
   static const IconData edit = Icons.edit_rounded;
   static const IconData delete = Icons.delete_rounded;
+  static const IconData preview = Icons.visibility_rounded;
 
   // Audio icons
   static const IconData play = Icons.play_arrow_rounded;

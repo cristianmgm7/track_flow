@@ -148,7 +148,15 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.editUserProfile,
           builder: (context, state) {
-            final profile = state.extra as UserProfile;
+            final profile = state.extra as UserProfile?;
+            if (profile == null) {
+              // If no profile provided, navigate back to settings
+              return Scaffold(
+                body: Center(
+                  child: Text('Profile not found'),
+                ),
+              );
+            }
             return EditUserProfileScreen(profile: profile);
           },
         ),

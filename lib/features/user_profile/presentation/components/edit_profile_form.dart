@@ -5,6 +5,7 @@ import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/ui/cards/base_card.dart';
 import 'package:trackflow/features/ui/forms/app_form_field.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/domain/constants/profile_field_options.dart';
 import 'package:trackflow/features/user_profile/presentation/components/creative_role_selector.dart';
 import 'package:trackflow/features/user_profile/presentation/components/avatar_uploader.dart';
 import 'package:trackflow/features/user_profile/presentation/components/profile_completeness_widget.dart';
@@ -45,47 +46,6 @@ class EditProfileFormState extends State<EditProfileForm> {
   List<String> _selectedGenres = [];
   List<String> _selectedSkills = [];
   List<SocialLink> _socialLinks = [];
-
-  // Predefined options
-  final List<String> _predefinedRoles = [
-    'Producer',
-    'Composer',
-    'Mixing Engineer',
-    'Mastering Engineer',
-    'Vocalist',
-    'Instrumentalist',
-    'Songwriter',
-    'Beat Maker',
-    'Sound Designer',
-  ];
-
-  final List<String> _predefinedGenres = [
-    'Hip Hop',
-    'R&B',
-    'Pop',
-    'Rock',
-    'Electronic',
-    'Jazz',
-    'Classical',
-    'Country',
-    'Reggae',
-    'Latin',
-    'Afrobeat',
-    'Gospel',
-  ];
-
-  final List<String> _predefinedSkills = [
-    'Audio Recording',
-    'Mixing',
-    'Mastering',
-    'Composition',
-    'Arrangement',
-    'Music Theory',
-    'Sound Design',
-    'Beat Making',
-    'Vocal Production',
-    'Live Performance',
-  ];
 
   // Expose submit method for parent component
   void submit() => _handleSubmit();
@@ -288,7 +248,7 @@ class EditProfileFormState extends State<EditProfileForm> {
               _buildChipSection(
                 label: 'Roles',
                 items: _selectedRoles,
-                predefinedOptions: _predefinedRoles,
+                predefinedOptions: kPredefinedRoles,
                 onChanged: (values) {
                   setState(() => _selectedRoles = values);
                 },
@@ -298,7 +258,7 @@ class EditProfileFormState extends State<EditProfileForm> {
               _buildChipSection(
                 label: 'Genres',
                 items: _selectedGenres,
-                predefinedOptions: _predefinedGenres,
+                predefinedOptions: kPredefinedGenres,
                 onChanged: (values) {
                   setState(() => _selectedGenres = values);
                 },
@@ -308,7 +268,7 @@ class EditProfileFormState extends State<EditProfileForm> {
               _buildChipSection(
                 label: 'Skills',
                 items: _selectedSkills,
-                predefinedOptions: _predefinedSkills,
+                predefinedOptions: kPredefinedSkills,
                 onChanged: (values) {
                   setState(() => _selectedSkills = values);
                 },
