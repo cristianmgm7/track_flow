@@ -58,6 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       },
       child: AppScaffold(
+        backgroundColor: AppColors.background,
         appBar: AppAppBar(
           title: "Settings",
           centerTitle: true,
@@ -101,6 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Icon(
                         Icons.arrow_forward_ios,
                         color: AppColors.textSecondary,
+                        size: Dimensions.iconSmall,
                       ),
                       onTap: () async {
                         try {
@@ -139,6 +141,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Icon(
                         Icons.arrow_forward_ios,
                         color: AppColors.textSecondary,
+                        size: Dimensions.iconSmall,
                       ),
                       onTap: () => context.push(AppRoutes.cacheManagement),
                     ),

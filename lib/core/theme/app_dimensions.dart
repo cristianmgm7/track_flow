@@ -100,7 +100,7 @@ class Dimensions {
   static const double avatarSmall = 24.0;
   static const double avatarMedium = 32.0;
   static const double avatarLarge = 48.0;
-  static const double avatarXLarge = 64.0;
+  static const double avatarXLarge = 56.0;
 
   // Divider dimensions
   static const double dividerHeight = 1.0;
