@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_icons.dart';
-import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/navigation/app_scaffold.dart';
 import 'package:trackflow/features/ui/navigation/app_bar.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
@@ -80,30 +79,35 @@ class _EditUserProfileScreenState extends State<EditUserProfileScreen> {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: Dimensions.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              
-              EditProfileForm(
-                key: _formKey,
-                initialProfile: widget.profile,
-                onSubmit: _handleSubmit,
-                isLoading: _isLoading,
-              ),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                text: 'Save Changes',
-                onPressed: _isLoading
-                    ? null
-                    : () {
-                        _formKey.currentState?.submit();
-                      },
-                isLoading: _isLoading,
-                width: double.infinity,
-              ),
-            ],
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          bottom: true,
+          child: SingleChildScrollView(
+            
+            padding: EdgeInsets.symmetric(horizontal: Dimensions.space16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                
+                EditProfileForm(
+                  key: _formKey,
+                  initialProfile: widget.profile,
+                  onSubmit: _handleSubmit,
+                  isLoading: _isLoading,
+                ),
+                const SizedBox(height: 24),
+                PrimaryButton(
+                  text: 'Save Changes',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          _formKey.currentState?.submit();
+                        },
+                  isLoading: _isLoading,
+                  width: double.infinity,
+                ),
+              ],
+            ),
           ),
         ),
       ),

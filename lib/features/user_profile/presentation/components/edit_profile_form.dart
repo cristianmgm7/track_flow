@@ -156,6 +156,7 @@ class EditProfileFormState extends State<EditProfileForm> {
     return Form(
       key: _formKey,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Profile Completeness Indicator
@@ -174,12 +175,14 @@ class EditProfileFormState extends State<EditProfileForm> {
             title: 'Basic Information',
             children: [
               // Avatar Section
-              AvatarUploader(
-                initialUrl: _avatarUrl,
-                onAvatarChanged: (url) {
-                  setState(() => _avatarUrl = url);
-                },
-                isGoogleUser: false,
+              Center(
+                child: AvatarUploader(
+                  initialUrl: _avatarUrl,
+                  onAvatarChanged: (url) {
+                    setState(() => _avatarUrl = url);
+                  },
+                  isGoogleUser: false,
+                ),
               ),
               SizedBox(height: Dimensions.space24),
 
@@ -336,21 +339,21 @@ class EditProfileFormState extends State<EditProfileForm> {
     required List<Widget> children,
   }) {
     return BaseCard(
-      child: Padding(
-        padding: const EdgeInsets.all(Dimensions.space16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: AppTextStyle.titleLarge.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+      backgroundColor: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+            title,
+            style: AppTextStyle.titleLarge.copyWith(
+              fontWeight: FontWeight.w600,
             ),
-            SizedBox(height: Dimensions.space16),
-            ...children,
-          ],
-        ),
+            ),
+          ),
+          SizedBox(height: Dimensions.space16),
+          ...children,
+        ],
       ),
     );
   }

@@ -132,80 +132,77 @@ class _SocialLinksEditorState extends State<SocialLinksEditor> {
             final index = entry.key;
             final linkEntry = entry.value;
 
-            return Padding(
-              padding: EdgeInsets.only(bottom: Dimensions.space12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Platform Dropdown
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<String>(
-                      initialValue: linkEntry.platform,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Platform Dropdown
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: linkEntry.platform,
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                      items: _platforms.map((platform) {
-                        return DropdownMenuItem(
-                          value: platform,
-                          child: Text(
-                            platform,
-                            style: AppTextStyle.bodySmall,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          _updatePlatform(index, value);
-                        }
-                      },
-                    ),
-                  ),
-
-                  SizedBox(width: Dimensions.space8),
-
-                  // URL Field
-                  Expanded(
-                    flex: 3,
-                    child: TextFormField(
-                      controller: linkEntry.controller,
-                      decoration: InputDecoration(
-                        hintText: 'URL',
-                        hintStyle: AppTextStyle.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      style: AppTextStyle.bodySmall,
-                      keyboardType: TextInputType.url,
-                      validator: _validateUrl,
-                      onChanged: (value) => _updateUrl(index, value),
                     ),
+                    items: _platforms.map((platform) {
+                      return DropdownMenuItem(
+                        value: platform,
+                        child: Text(
+                          platform,
+                          style: AppTextStyle.bodySmall,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        _updatePlatform(index, value);
+                      }
+                    },
                   ),
-
-                  SizedBox(width: Dimensions.space8),
-
-                  // Remove Button
-                  IconButton(
-                    icon: const Icon(Icons.remove_circle_outline),
-                    color: AppColors.error,
-                    onPressed: () => _removeLink(index),
-                    iconSize: 20,
+                ),
+            
+                SizedBox(width: Dimensions.space8),
+            
+                // URL Field
+                Expanded(
+                  flex: 3,
+                  child: TextFormField(
+                    controller: linkEntry.controller,
+                    decoration: InputDecoration(
+                      hintText: 'URL',
+                      hintStyle: AppTextStyle.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    style: AppTextStyle.bodySmall,
+                    keyboardType: TextInputType.url,
+                    validator: _validateUrl,
+                    onChanged: (value) => _updateUrl(index, value),
                   ),
-                ],
-              ),
+                ),
+            
+                SizedBox(width: Dimensions.space8),
+            
+                // Remove Button
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  color: AppColors.error,
+                  onPressed: () => _removeLink(index),
+                  iconSize: 20,
+                ),
+              ],
             );
           }),
 
