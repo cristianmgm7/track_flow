@@ -249,10 +249,10 @@ class EditUserProfileScreen extends StatefulWidget {
 ```
 
 **Success Criteria**:
-- [ ] Screen renders with existing profile data
-- [ ] AppBar has Preview button
-- [ ] Save button submits form
-- [ ] Loading state disables form
+- [x] Screen renders with existing profile data
+- [x] AppBar has Preview button
+- [x] Save button submits form
+- [x] Loading state disables form
 
 ### Task 2.2: Create Edit Profile Form Component
 
@@ -288,10 +288,10 @@ AppFormField(
 ```
 
 **Success Criteria**:
-- [ ] All Phase 1 fields have inputs
-- [ ] Form validates required fields
-- [ ] Controllers initialized with existing data
-- [ ] Submit creates updated UserProfile entity
+- [x] All Phase 1 fields have inputs
+- [x] Form validates required fields
+- [x] Controllers initialized with existing data
+- [x] Submit creates updated UserProfile entity
 
 ### Task 2.3: Create Social Links Editor Widget
 
@@ -312,10 +312,10 @@ class SocialLinksEditor extends StatefulWidget {
 **Validation**: URLs must be valid HTTP/HTTPS
 
 **Success Criteria**:
-- [ ] Add new social link button works
-- [ ] Remove link button works
-- [ ] URL validation prevents invalid links
-- [ ] Platform selection from predefined list
+- [x] Add new social link button works
+- [x] Remove link button works
+- [x] URL validation prevents invalid links
+- [x] Platform selection from predefined list
 
 ### Task 2.4: Create Multi-Select Chip Widget
 
@@ -336,10 +336,10 @@ class MultiSelectChips extends StatefulWidget {
 **Use cases**: Roles, Genres, Skills
 
 **Success Criteria**:
-- [ ] Can select multiple chips
-- [ ] Selected chips show primary color
-- [ ] Custom input field appears if allowCustom
-- [ ] Returns list of selected strings
+- [x] Can select multiple chips
+- [x] Selected chips show primary color
+- [x] Custom input field appears if allowCustom
+- [x] Returns list of selected strings
 
 ### Task 2.5: Update Settings Navigation
 
@@ -357,9 +357,9 @@ onTap: () {
 ```
 
 **Success Criteria**:
-- [ ] Tapping Profile navigates to full-screen editor
-- [ ] Profile data passed via route extra
-- [ ] Back button returns to settings
+- [x] Tapping Profile navigates to full-screen editor
+- [x] Profile data passed via route extra
+- [x] Back button returns to settings
 
 ### Task 2.6: Add Route Configuration
 
@@ -384,9 +384,9 @@ static const String editUserProfile = '/profile/edit';
 ```
 
 **Success Criteria**:
-- [ ] Route registered correctly
-- [ ] Navigation works from settings
-- [ ] Profile data available in screen
+- [x] Route registered correctly
+- [x] Navigation works from settings
+- [x] Profile data available in screen
 
 ## Phase 3: Profile Preview
 
@@ -416,10 +416,10 @@ class ProfilePreviewContent extends StatelessWidget {
 ```
 
 **Success Criteria**:
-- [ ] Preview button opens bottom sheet
-- [ ] Shows profile as others see it
-- [ ] Social links are clickable
-- [ ] Close button dismisses sheet
+- [x] Preview button opens bottom sheet
+- [x] Shows profile as others see it
+- [x] Social links are clickable
+- [x] Close button dismisses sheet
 
 ### Task 3.2: Create Clickable Social Links Widget
 
@@ -446,10 +446,10 @@ class SocialLinksDisplay extends StatelessWidget {
 **Dependency**: Add `url_launcher: ^6.2.0` to `pubspec.yaml`
 
 **Success Criteria**:
-- [ ] Social icons render with correct branding
-- [ ] Tapping icon opens external browser/app
-- [ ] Invalid URLs show error snackbar
-- [ ] No confirmation dialog (direct open)
+- [x] Social icons render with correct branding
+- [x] Tapping icon opens external browser/app
+- [x] Invalid URLs show error snackbar
+- [x] No confirmation dialog (direct open)
 
 ### Task 3.3: Update Collaborator Profile Screen
 
@@ -473,10 +473,10 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 ```
 
 **Success Criteria**:
-- [ ] Bio displays when available
-- [ ] Social links render and work
-- [ ] Layout matches preview sheet
-- [ ] No data shows gracefully (empty state)
+- [x] Bio displays when available
+- [x] Social links render and work
+- [x] Layout matches preview sheet
+- [x] No data shows gracefully (empty state)
 
 ## Phase 4: Data Persistence & Sync
 

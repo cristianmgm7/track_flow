@@ -33,10 +33,15 @@ class UserProfileSection extends StatelessWidget {
                 // Profile Options
                 _buildProfileOption(
                   context,
+                  state: state,
                   icon: Icons.person_rounded,
                   title: 'Profile',
                   subtitle: 'View and edit your profile',
-                  onTap: () => context.push(AppRoutes.userProfile),
+                  onTap: (state) {
+                    if (state is CurrentUserLoaded) {
+                      context.push(AppRoutes.editUserProfile, extra: state.profile);
+                    }
+                  },
                 ),
               ],
             ),
@@ -181,10 +186,11 @@ class UserProfileSection extends StatelessWidget {
 
   Widget _buildProfileOption(
     BuildContext context, {
+    required CurrentUserState state,
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    required void Function(CurrentUserState) onTap,
   }) {
     return ListTile(
       leading: Icon(
@@ -205,7 +211,7 @@ class UserProfileSection extends StatelessWidget {
         color: AppColors.textSecondary,
         size: Dimensions.iconSmall,
       ),
-      onTap: onTap,
+      onTap: state is CurrentUserLoaded ? () => onTap(state) : null,
     );
   }
 }

@@ -11,6 +11,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_state.dart';
+import 'package:trackflow/features/user_profile/presentation/widgets/social_links_display.dart';
 
 class CollaboratorProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -179,17 +180,138 @@ class _InfoSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            // Roles
-            Row(
-              children: [
-                if (profile.creativeRole != null) ...[
+
+            // Location
+            if (profile.location != null) ...[
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: Dimensions.iconSmall,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    profile.location!,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Creative Role (Primary)
+            if (profile.creativeRole != null) ...[
+              Row(
+                children: [
                   _buildChip(_roleName(profile.creativeRole)),
                   const SizedBox(width: 8),
+                  if (profile.role != null)
+                    _buildChip(profile.role!.toShortString()),
                 ],
-                if (profile.role != null)
-                  _buildChip(profile.role!.toShortString()),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Bio/Description
+            if (profile.description != null && profile.description!.isNotEmpty) ...[
+              Text(
+                'About',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                profile.description!,
+                style: AppTextStyle.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Roles (Multiple)
+            if (profile.roles != null && profile.roles!.isNotEmpty) ...[
+              Text(
+                'Roles',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.roles!.map((role) => _buildChip(role)).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Genres
+            if (profile.genres != null && profile.genres!.isNotEmpty) ...[
+              Text(
+                'Genres',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.genres!.map((genre) => _buildChip(genre)).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Skills
+            if (profile.skills != null && profile.skills!.isNotEmpty) ...[
+              Text(
+                'Skills',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.skills!.map((skill) => _buildChip(skill)).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Social Links
+            if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
+              Text(
+                'Connect',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SocialLinksDisplay(socialLinks: profile.socialLinks!),
+              const SizedBox(height: 16),
+            ],
+
+            // Website & Linktree
+            if (profile.websiteUrl != null || profile.linktreeUrl != null) ...[
+              if (profile.websiteUrl != null)
+                _buildLinkRow(
+                  icon: Icons.language,
+                  label: 'Website',
+                  url: profile.websiteUrl!,
+                ),
+              if (profile.linktreeUrl != null) ...[
+                const SizedBox(height: 8),
+                _buildLinkRow(
+                  icon: Icons.link,
+                  label: 'Linktree',
+                  url: profile.linktreeUrl!,
+                ),
               ],
-            ),
+            ],
           ],
         ),
       ),
@@ -217,6 +339,36 @@ class _InfoSection extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+    );
+  }
+
+  Widget _buildLinkRow({
+    required IconData icon,
+    required String label,
+    required String url,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: Dimensions.iconSmall, color: AppColors.textSecondary),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: AppTextStyle.labelMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            url,
+            style: AppTextStyle.bodySmall.copyWith(
+              color: AppColors.primary,
+              decoration: TextDecoration.underline,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 
