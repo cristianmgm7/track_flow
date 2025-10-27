@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
@@ -15,26 +16,35 @@ class SocialLinksDisplay extends StatelessWidget {
   IconData _getPlatformIcon(String platform) {
     switch (platform.toLowerCase()) {
       case 'instagram':
-        return Icons.photo_camera;
+        return FontAwesomeIcons.instagram;
       case 'twitter':
+        return FontAwesomeIcons.twitter;
       case 'x':
-        return Icons.alternate_email;
+        return FontAwesomeIcons.xTwitter;
       case 'spotify':
-        return Icons.music_note;
+        return FontAwesomeIcons.spotify;
       case 'soundcloud':
-        return Icons.cloud;
+        return FontAwesomeIcons.soundcloud;
       case 'youtube':
-        return Icons.play_circle_outline;
+        return FontAwesomeIcons.youtube;
       case 'tiktok':
-        return Icons.video_library;
+        return FontAwesomeIcons.tiktok;
       case 'apple music':
-        return Icons.music_note;
+        return FontAwesomeIcons.itunes;
       case 'bandcamp':
-        return Icons.album;
+        return FontAwesomeIcons.bandcamp;
       case 'facebook':
-        return Icons.facebook;
+        return FontAwesomeIcons.facebook;
+      case 'linkedin':
+        return FontAwesomeIcons.linkedin;
+      case 'github':
+        return FontAwesomeIcons.github;
+      case 'discord':
+        return FontAwesomeIcons.discord;
+      case 'twitch':
+        return FontAwesomeIcons.twitch;
       default:
-        return Icons.link;
+        return FontAwesomeIcons.link;
     }
   }
 
@@ -105,13 +115,6 @@ class SocialLinksDisplay extends StatelessWidget {
           borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
           child: Container(
             padding: EdgeInsets.all(Dimensions.space12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(Dimensions.radiusMedium),
-              border: Border.all(
-                color: color.withValues(alpha: 0.3),
-              ),
-            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

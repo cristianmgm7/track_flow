@@ -91,9 +91,11 @@ class _CollaboratorProfileScreenState extends State<CollaboratorProfileScreen> {
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 12.0,
+                          padding: const EdgeInsets.only(
+                              left: Dimensions.space16,
+                              right: Dimensions.space16,
+                              top: Dimensions.space12,
+                              bottom: Dimensions.space24,
                           ),
                           child: _InfoSection(profile: profile),
                         ),
