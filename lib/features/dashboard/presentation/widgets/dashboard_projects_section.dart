@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:trackflow/core/theme/app_borders.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
 import 'package:trackflow/features/projects/presentation/models/project_ui_model.dart';
 import 'package:trackflow/features/projects/presentation/widgets/create_project_form.dart';
@@ -125,7 +126,8 @@ class DashboardProjectsSection extends StatelessWidget {
             projectName: projectUi.name,
             projectDescription: projectUi.description,
             imageUrl: projectUi.coverLocalPath ?? projectUi.coverUrl,
-            size: Dimensions.avatarLarge,
+            size: Dimensions.avatarXLarge,
+            borderRadius: AppBorders.tiny,
           ),
           margin: EdgeInsets.all(Dimensions.space0),
           padding: EdgeInsets.only(

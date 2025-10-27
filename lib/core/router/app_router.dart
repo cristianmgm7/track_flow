@@ -22,6 +22,8 @@ import 'package:trackflow/features/settings/presentation/screens/settings_screen
 import 'package:trackflow/features/user_profile/presentation/screens/collaborator_profile_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/profile_creation_screen.dart';
 import 'package:trackflow/features/user_profile/presentation/screens/current_user_profile_screen.dart';
+import 'package:trackflow/features/user_profile/presentation/screens/edit_user_profile_screen.dart';
+import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
 import 'package:trackflow/features/cache_management/presentation/screens/cache_management_screen.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/notifications/presentation/screens/notification_center_screen.dart';
@@ -97,8 +99,10 @@ class AppRouter {
               currentLocation == AppRoutes.trackDetail ||
               currentLocation == AppRoutes.cacheManagement ||
               currentLocation == AppRoutes.trackList ||
+              currentLocation == AppRoutes.editUserProfile ||
               currentLocation.startsWith('/artistprofile/') ||
               currentLocation.startsWith('/projects/')) {
+
             return null; // Allow navigation
           }
 
@@ -140,6 +144,21 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.profileCreation,
           builder: (context, state) => const ProfileCreationScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.editUserProfile,
+          builder: (context, state) {
+            final profile = state.extra as UserProfile?;
+            if (profile == null) {
+              // If no profile provided, navigate back to settings
+              return Scaffold(
+                body: Center(
+                  child: Text('Profile not found'),
+                ),
+              );
+            }
+            return EditUserProfileScreen(profile: profile);
+          },
         ),
         GoRoute(
           path: AppRoutes.cacheManagement,

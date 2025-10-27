@@ -55,7 +55,11 @@ if (currentCollaborators.isEmpty && isLoading)
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Screen shows loading spinner instead of white screen
+=======
+- [x] Screen shows loading spinner instead of white screen
+>>>>>>> ui/refactor
 - [ ] Test: Navigate to manage collaborators → see loading → see data
 - [ ] No more blank screen on first load
 
@@ -68,9 +72,15 @@ if (currentCollaborators.isEmpty && isLoading)
 - Route registration in `app_router.dart:169-179`
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Tapping collaborator card navigates to profile
 - [ ] Profile screen loads user data correctly
 - [ ] Back navigation returns to project detail
+=======
+- [x] Tapping collaborator card navigates to profile
+- [x] Profile screen loads user data correctly
+- [x] Back navigation returns to project detail
+>>>>>>> ui/refactor
 
 ### Task 1.3: Expand Domain Entity
 
@@ -121,9 +131,15 @@ class SocialLink extends Equatable {
 **Update copyWith** to include all new fields.
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Entity compiles with new fields
 - [ ] copyWith includes all fields
 - [ ] All fields are nullable (migration safe)
+=======
+- [x] Entity compiles with new fields
+- [x] copyWith includes all fields
+- [x] All fields are nullable (migration safe)
+>>>>>>> ui/refactor
 
 ### Task 1.4: Update DTO Layer
 
@@ -146,7 +162,11 @@ class SocialLink extends Equatable {
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] DTO serializes/deserializes all fields
+=======
+- [x] DTO serializes/deserializes all fields
+>>>>>>> ui/refactor
 - [ ] Tests pass: `flutter test test/features/user_profile/data/models/`
 - [ ] No Firebase serialization errors
 
@@ -190,8 +210,13 @@ class ContactInfoDocument {
 Update `fromDTO()`, `toDTO()`, `fromRemoteDTO()`, `forLocalUpdate()` factories.
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Run: `flutter packages pub run build_runner build --delete-conflicting-outputs`
 - [ ] No Isar generation errors
+=======
+- [x] Run: `flutter packages pub run build_runner build --delete-conflicting-outputs`
+- [x] No Isar generation errors
+>>>>>>> ui/refactor
 - [ ] Document persists to local DB correctly
 
 ### Task 1.6: Update UI Model
@@ -204,8 +229,13 @@ Update `fromDTO()`, `toDTO()`, `fromRemoteDTO()`, `forLocalUpdate()` factories.
 - `props` getter
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] UI model includes all new fields as primitives
 - [ ] BLoC states compare correctly
+=======
+- [x] UI model includes all new fields as primitives
+- [x] BLoC states compare correctly
+>>>>>>> ui/refactor
 
 ## Phase 2: Full-Screen Profile Editor
 
@@ -249,10 +279,17 @@ class EditUserProfileScreen extends StatefulWidget {
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Screen renders with existing profile data
 - [ ] AppBar has Preview button
 - [ ] Save button submits form
 - [ ] Loading state disables form
+=======
+- [x] Screen renders with existing profile data
+- [x] AppBar has Preview button
+- [x] Save button submits form
+- [x] Loading state disables form
+>>>>>>> ui/refactor
 
 ### Task 2.2: Create Edit Profile Form Component
 
@@ -288,10 +325,17 @@ AppFormField(
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] All Phase 1 fields have inputs
 - [ ] Form validates required fields
 - [ ] Controllers initialized with existing data
 - [ ] Submit creates updated UserProfile entity
+=======
+- [x] All Phase 1 fields have inputs
+- [x] Form validates required fields
+- [x] Controllers initialized with existing data
+- [x] Submit creates updated UserProfile entity
+>>>>>>> ui/refactor
 
 ### Task 2.3: Create Social Links Editor Widget
 
@@ -312,10 +356,17 @@ class SocialLinksEditor extends StatefulWidget {
 **Validation**: URLs must be valid HTTP/HTTPS
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Add new social link button works
 - [ ] Remove link button works
 - [ ] URL validation prevents invalid links
 - [ ] Platform selection from predefined list
+=======
+- [x] Add new social link button works
+- [x] Remove link button works
+- [x] URL validation prevents invalid links
+- [x] Platform selection from predefined list
+>>>>>>> ui/refactor
 
 ### Task 2.4: Create Multi-Select Chip Widget
 
@@ -336,10 +387,17 @@ class MultiSelectChips extends StatefulWidget {
 **Use cases**: Roles, Genres, Skills
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Can select multiple chips
 - [ ] Selected chips show primary color
 - [ ] Custom input field appears if allowCustom
 - [ ] Returns list of selected strings
+=======
+- [x] Can select multiple chips
+- [x] Selected chips show primary color
+- [x] Custom input field appears if allowCustom
+- [x] Returns list of selected strings
+>>>>>>> ui/refactor
 
 ### Task 2.5: Update Settings Navigation
 
@@ -357,9 +415,15 @@ onTap: () {
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Tapping Profile navigates to full-screen editor
 - [ ] Profile data passed via route extra
 - [ ] Back button returns to settings
+=======
+- [x] Tapping Profile navigates to full-screen editor
+- [x] Profile data passed via route extra
+- [x] Back button returns to settings
+>>>>>>> ui/refactor
 
 ### Task 2.6: Add Route Configuration
 
@@ -384,9 +448,15 @@ static const String editUserProfile = '/profile/edit';
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Route registered correctly
 - [ ] Navigation works from settings
 - [ ] Profile data available in screen
+=======
+- [x] Route registered correctly
+- [x] Navigation works from settings
+- [x] Profile data available in screen
+>>>>>>> ui/refactor
 
 ## Phase 3: Profile Preview
 
@@ -416,10 +486,17 @@ class ProfilePreviewContent extends StatelessWidget {
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Preview button opens bottom sheet
 - [ ] Shows profile as others see it
 - [ ] Social links are clickable
 - [ ] Close button dismisses sheet
+=======
+- [x] Preview button opens bottom sheet
+- [x] Shows profile as others see it
+- [x] Social links are clickable
+- [x] Close button dismisses sheet
+>>>>>>> ui/refactor
 
 ### Task 3.2: Create Clickable Social Links Widget
 
@@ -446,10 +523,17 @@ class SocialLinksDisplay extends StatelessWidget {
 **Dependency**: Add `url_launcher: ^6.2.0` to `pubspec.yaml`
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Social icons render with correct branding
 - [ ] Tapping icon opens external browser/app
 - [ ] Invalid URLs show error snackbar
 - [ ] No confirmation dialog (direct open)
+=======
+- [x] Social icons render with correct branding
+- [x] Tapping icon opens external browser/app
+- [x] Invalid URLs show error snackbar
+- [x] No confirmation dialog (direct open)
+>>>>>>> ui/refactor
 
 ### Task 3.3: Update Collaborator Profile Screen
 
@@ -473,10 +557,17 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Bio displays when available
 - [ ] Social links render and work
 - [ ] Layout matches preview sheet
 - [ ] No data shows gracefully (empty state)
+=======
+- [x] Bio displays when available
+- [x] Social links render and work
+- [x] Layout matches preview sheet
+- [x] No data shows gracefully (empty state)
+>>>>>>> ui/refactor
 
 ## Phase 4: Data Persistence & Sync
 
@@ -489,9 +580,15 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 **Test**: Verify new fields save to Firestore collection
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] New profile fields appear in Firestore console
 - [ ] Social links array serializes correctly
 - [ ] No Firestore write errors
+=======
+- [x] New profile fields appear in Firestore console
+- [x] Social links array serializes correctly
+- [x] No Firestore write errors
+>>>>>>> ui/refactor
 
 ### Task 4.2: Update Local Datasource
 
@@ -502,9 +599,15 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 **Test**: Verify new fields persist to local DB
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Local profiles include new fields
 - [ ] Query profiles by new fields (optional)
 - [ ] No Isar write errors
+=======
+- [x] Local profiles include new fields
+- [x] Query profiles by new fields (optional)
+- [x] No Isar write errors
+>>>>>>> ui/refactor
 
 ### Task 4.3: Test Repository Layer
 
@@ -520,10 +623,17 @@ if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
 5. Watch stream emits updated profile
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Profile updates save locally
 - [ ] Profile updates sync to Firebase
 - [ ] Watch stream emits new data
 - [ ] Offline mode works (local-first)
+=======
+- [x] Profile updates save locally
+- [x] Profile updates sync to Firebase
+- [x] Watch stream emits new data
+- [x] Offline mode works (local-first)
+>>>>>>> ui/refactor
 
 ## Phase 5: UI Polish & Validation
 
@@ -549,9 +659,15 @@ class UrlValidator {
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Invalid URLs show error
 - [ ] Valid URLs pass validation
 - [ ] Platform-specific validation works
+=======
+- [x] Invalid URLs show error
+- [x] Valid URLs pass validation
+- [x] Platform-specific validation works
+>>>>>>> ui/refactor
 
 ### Task 5.2: Add Profile Completeness Indicator
 
@@ -568,9 +684,15 @@ class UrlValidator {
 ```
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Progress bar shows correct percentage
 - [ ] Displays in edit screen header
 - [ ] Updates live as fields filled
+=======
+- [x] Progress bar shows correct percentage
+- [x] Displays in edit screen header
+- [x] Updates live as fields filled
+>>>>>>> ui/refactor
 
 ### Task 5.3: Add Empty States
 
@@ -584,9 +706,15 @@ class UrlValidator {
 **UI**: Friendly message with action button
 
 **Success Criteria**:
+<<<<<<< HEAD
 - [ ] Empty states show helpful text
 - [ ] "Add Bio" button navigates to edit
 - [ ] No awkward blank sections
+=======
+- [x] Empty states show helpful text
+- [x] "Add Bio" button navigates to edit
+- [x] No awkward blank sections
+>>>>>>> ui/refactor
 
 ## Testing Strategy
 

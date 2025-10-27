@@ -9,6 +9,7 @@ import 'package:trackflow/core/widgets/user_avatar.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_state.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/current_user/current_user_event.dart';
+import 'package:trackflow/features/user_profile/presentation/widgets/compact_profile_completeness.dart';
 import 'package:trackflow/features/ui/buttons/secondary_button.dart';
 import 'package:trackflow/features/ui/buttons/primary_button.dart';
 
@@ -28,15 +29,32 @@ class UserProfileSection extends StatelessWidget {
               children: [
                 // Profile Header
                 _buildProfileHeader(context, state),
+                
+                // Profile Completeness Indicator (only for loaded state)
+                if (state is CurrentUserLoaded) ...[
+                  SizedBox(height: Dimensions.space12),
+                  CompactProfileCompleteness(
+                    profile: state.profile,
+                    onTap: () {
+                      context.push(AppRoutes.editUserProfile, extra: state.profile);
+                    },
+                  ),
+                ],
+                
                 SizedBox(height: Dimensions.space16),
 
                 // Profile Options
                 _buildProfileOption(
                   context,
+                  state: state,
                   icon: Icons.person_rounded,
                   title: 'Profile',
                   subtitle: 'View and edit your profile',
-                  onTap: () => context.push(AppRoutes.userProfile),
+                  onTap: (state) {
+                    if (state is CurrentUserLoaded) {
+                      context.push(AppRoutes.editUserProfile, extra: state.profile);
+                    }
+                  },
                 ),
               ],
             ),
@@ -181,10 +199,11 @@ class UserProfileSection extends StatelessWidget {
 
   Widget _buildProfileOption(
     BuildContext context, {
+    required CurrentUserState state,
     required IconData icon,
     required String title,
     required String subtitle,
-    required VoidCallback onTap,
+    required void Function(CurrentUserState) onTap,
   }) {
     return ListTile(
       leading: Icon(
@@ -205,7 +224,7 @@ class UserProfileSection extends StatelessWidget {
         color: AppColors.textSecondary,
         size: Dimensions.iconSmall,
       ),
-      onTap: onTap,
+      onTap: state is CurrentUserLoaded ? () => onTap(state) : null,
     );
   }
 }

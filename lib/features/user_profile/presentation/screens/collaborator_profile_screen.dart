@@ -11,6 +11,7 @@ import 'package:trackflow/features/user_profile/domain/entities/user_profile.dar
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_bloc.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_event.dart';
 import 'package:trackflow/features/user_profile/presentation/bloc/user_profiles/user_profiles_state.dart';
+import 'package:trackflow/features/user_profile/presentation/widgets/social_links_display.dart';
 
 class CollaboratorProfileScreen extends StatefulWidget {
   final UserId userId;
@@ -33,123 +34,134 @@ class _CollaboratorProfileScreenState extends State<CollaboratorProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AppScaffold(
-      appBar: AppAppBar(title: 'Profile'),
-      backgroundColor: AppColors.background,
-      body: BlocBuilder<UserProfilesBloc, UserProfilesState>(
-        builder: (context, state) {
-          if (state is UserProfilesLoading || state is UserProfilesInitial) {
-            return const Center(
+    return BlocBuilder<UserProfilesBloc, UserProfilesState>(
+      builder: (context, state) {
+        if (state is UserProfilesLoading || state is UserProfilesInitial) {
+          return AppScaffold(
+            appBar: AppAppBar(title: 'Profile'),
+            backgroundColor: AppColors.background,
+            body: const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
-          if (state is UserProfileLoaded) {
-            final profile = state.profile;
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _HeaderBackground(profile: profile),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 12.0,
+            ),
+          );
+        }
+        if (state is UserProfileLoaded) {
+          final profile = state.profile;
+          return Scaffold(
+            body: Stack(
+              children: [
+                // 1. BACKGROUND IMAGE (AVATAR)
+                Column(
+                  children: [
+                    _BackgroundAvatar(profile: profile),
+                    Expanded(child: Container()),
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: AppColors.background,
+                      ),
                     ),
-                    child: _InfoSection(profile: profile),
-                  ),
-                ],
-              ),
-            );
-          }
-          return Center(
+                  ],
+                ),
+                // 2. SCROLLABLE FOREGROUND CONTENT
+                CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverAppBar(
+                      expandedHeight: Dimensions.space272,  
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      pinned: true,
+                      flexibleSpace: FlexibleSpaceBar(
+                        centerTitle: true,
+                        title: Text(
+                          profile.name,
+                          style: AppTextStyle.headlineLarge,
+                        ),
+                      ),
+                    ),
+                    // 3. MAIN CONTENT SECTION
+                    SliverToBoxAdapter(
+
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(28),
+                            topRight: Radius.circular(28),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              left: Dimensions.space16,
+                              right: Dimensions.space16,
+                              top: Dimensions.space12,
+                              bottom: Dimensions.space24,
+                          ),
+                          child: _InfoSection(profile: profile),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+        return AppScaffold(
+          appBar: AppAppBar(title: 'Profile'),
+          backgroundColor: AppColors.background,
+          body: Center(
             child: Text(
               'Profile unavailable',
               style: AppTextStyle.bodyLarge.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-class _HeaderBackground extends StatelessWidget {
-  const _HeaderBackground({required this.profile});
+class _BackgroundAvatar extends StatelessWidget {
+  const _BackgroundAvatar({required this.profile});
 
   final UserProfile profile;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 260,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background photo (avatar) stretched to cover
-          if ((profile.avatarLocalPath != null &&
-                  profile.avatarLocalPath!.isNotEmpty) ||
-              (profile.avatarUrl.isNotEmpty))
-            Positioned.fill(
-              child: Hero(
-                tag: profile.avatarUrl,
-                child: Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: (profile.avatarLocalPath != null &&
-                              profile.avatarLocalPath!.isNotEmpty)
-                          ? FileImage(
-                              File(profile.avatarLocalPath!),
-                            ) as ImageProvider
-                          : NetworkImage(profile.avatarUrl),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: Container(color: AppColors.grey700.withValues(alpha: 0)),
-                ),
-              ),
-            )
-          else
-            Container(color: AppColors.grey700),
-
-          // Gradient overlay for readability
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.background.withValues(alpha: 0.2),
-                    AppColors.background.withValues(alpha: 0.8),
-                  ],
-                ),
-              ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Avatar image or fallback
+    if ((profile.avatarLocalPath != null &&
+            profile.avatarLocalPath!.isNotEmpty) ||
+        (profile.avatarUrl.isNotEmpty)) {
+      return Hero(
+        tag: profile.avatarUrl,
+        child: Container(
+          width: screenWidth,
+          height: screenWidth,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: (profile.avatarLocalPath != null &&
+                      profile.avatarLocalPath!.isNotEmpty)
+                  ? FileImage(
+                      File(profile.avatarLocalPath!),
+                    ) as ImageProvider
+                  : NetworkImage(profile.avatarUrl),
+              fit: BoxFit.cover,
             ),
           ),
-
-          // Name overlaid at bottom
-          Positioned(
-            left: 24,
-            right: 24,
-            bottom: 24,
-            child: Text(
-              profile.name,
-              style: AppTextStyle.displayMedium.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
+        ),
+      );
+    } else {
+      return Container(
+        width: screenWidth,
+        height: screenWidth,
+        color: AppColors.grey700,
+      );
+    }
   }
 }
 
@@ -179,17 +191,138 @@ class _InfoSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            // Roles
-            Row(
-              children: [
-                if (profile.creativeRole != null) ...[
+
+            // Location
+            if (profile.location != null) ...[
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: Dimensions.iconSmall,
+                    color: AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    profile.location!,
+                    style: AppTextStyle.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Creative Role (Primary)
+            if (profile.creativeRole != null) ...[
+              Row(
+                children: [
                   _buildChip(_roleName(profile.creativeRole)),
                   const SizedBox(width: 8),
+                  if (profile.role != null)
+                    _buildChip(profile.role!.toShortString()),
                 ],
-                if (profile.role != null)
-                  _buildChip(profile.role!.toShortString()),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Bio/Description
+            if (profile.description != null && profile.description!.isNotEmpty) ...[
+              Text(
+                'About',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                profile.description!,
+                style: AppTextStyle.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Roles (Multiple)
+            if (profile.roles != null && profile.roles!.isNotEmpty) ...[
+              Text(
+                'Roles',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.roles!.map((role) => _buildChip(role)).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Genres
+            if (profile.genres != null && profile.genres!.isNotEmpty) ...[
+              Text(
+                'Genres',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.genres!.map((genre) => _buildChip(genre)).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Skills
+            if (profile.skills != null && profile.skills!.isNotEmpty) ...[
+              Text(
+                'Skills',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: profile.skills!.map((skill) => _buildChip(skill)).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Social Links
+            if (profile.socialLinks != null && profile.socialLinks!.isNotEmpty) ...[
+              Text(
+                'Connect',
+                style: AppTextStyle.titleMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SocialLinksDisplay(socialLinks: profile.socialLinks!),
+              const SizedBox(height: 16),
+            ],
+
+            // Website & Linktree
+            if (profile.websiteUrl != null || profile.linktreeUrl != null) ...[
+              if (profile.websiteUrl != null)
+                _buildLinkRow(
+                  icon: Icons.language,
+                  label: 'Website',
+                  url: profile.websiteUrl!,
+                ),
+              if (profile.linktreeUrl != null) ...[
+                const SizedBox(height: 8),
+                _buildLinkRow(
+                  icon: Icons.link,
+                  label: 'Linktree',
+                  url: profile.linktreeUrl!,
+                ),
               ],
-            ),
+            ],
           ],
         ),
       ),
@@ -217,6 +350,36 @@ class _InfoSection extends StatelessWidget {
           fontWeight: FontWeight.w500,
         ),
       ),
+    );
+  }
+
+  Widget _buildLinkRow({
+    required IconData icon,
+    required String label,
+    required String url,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: Dimensions.iconSmall, color: AppColors.textSecondary),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: AppTextStyle.labelMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            url,
+            style: AppTextStyle.bodySmall.copyWith(
+              color: AppColors.primary,
+              decoration: TextDecoration.underline,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 

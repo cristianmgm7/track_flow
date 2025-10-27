@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:trackflow/features/user_profile/domain/entities/user_profile.dart';
+import 'package:trackflow/features/user_profile/presentation/models/user_profile_ui_model.dart';
 
 abstract class UserProfilesState extends Equatable {
   @override
@@ -14,28 +15,33 @@ class UserProfilesLoading extends UserProfilesState {}
 
 /// Single profile loaded
 class UserProfileLoaded extends UserProfilesState {
-  final UserProfile profile;
+  final UserProfileUiModel uiModel;
 
-  UserProfileLoaded({required this.profile});
+  UserProfileLoaded({required this.uiModel});
+
+  // Access domain entity when needed via composition
+  UserProfile get profile => uiModel.profile;
 
   @override
-  List<Object?> get props => [profile];
+  List<Object?> get props => [uiModel];
 }
 
 /// Multiple profiles loaded (for collaborator lists)
 class UserProfilesLoaded extends UserProfilesState {
-  final Map<String, UserProfile> profiles; // userId -> profile
+  final Map<String, UserProfileUiModel> uiModels; // userId -> UI model
 
-  UserProfilesLoaded({required this.profiles});
+  UserProfilesLoaded({required this.uiModels});
 
-  UserProfilesLoaded copyWith({Map<String, UserProfile>? profiles}) {
-    return UserProfilesLoaded(
-      profiles: profiles ?? this.profiles,
-    );
+  // Access domain entities when needed via composition
+  Map<String, UserProfile> get profiles => 
+      uiModels.map((key, uiModel) => MapEntry(key, uiModel.profile));
+
+  UserProfilesLoaded copyWith({Map<String, UserProfileUiModel>? uiModels}) {
+    return UserProfilesLoaded(uiModels: uiModels ?? this.uiModels);
   }
 
   @override
-  List<Object?> get props => [profiles];
+  List<Object?> get props => [uiModels];
 }
 
 /// Error occurred

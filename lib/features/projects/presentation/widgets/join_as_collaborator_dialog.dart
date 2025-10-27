@@ -60,7 +60,7 @@ class _JoinAsCollaboratorDialogState extends State<JoinAsCollaboratorDialog> {
               backgroundColor: AppColors.success,
             ),
           );
-          context.go(AppRoutes.projectDetails, extra: state.project);
+          context.go(AppRoutes.projectDetails, extra: state.project.project);
         } else if (state is ManageCollaboratorsError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

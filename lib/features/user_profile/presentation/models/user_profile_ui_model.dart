@@ -16,6 +16,25 @@ class UserProfileUiModel extends Equatable {
   final String? creativeRole;
   final String? projectRole;
 
+  // Professional context
+  final String? description;
+  final String? location;
+  final List<String>? roles;
+  final List<String>? genres;
+  final List<String>? skills;
+  final String? availabilityStatus;
+
+  // External links
+  final List<SocialLink>? socialLinks;
+  final String? websiteUrl;
+  final String? linktreeUrl;
+
+  // Contact
+  final ContactInfo? contactInfo;
+
+  // Meta
+  final bool verified;
+
   // UI-specific computed fields
   final String displayName;
   final String initials;
@@ -31,6 +50,17 @@ class UserProfileUiModel extends Equatable {
     this.updatedAt,
     this.creativeRole,
     this.projectRole,
+    this.description,
+    this.location,
+    this.roles,
+    this.genres,
+    this.skills,
+    this.availabilityStatus,
+    this.socialLinks,
+    this.websiteUrl,
+    this.linktreeUrl,
+    this.contactInfo,
+    this.verified = false,
     required this.displayName,
     required this.initials,
   });
@@ -48,6 +78,17 @@ class UserProfileUiModel extends Equatable {
       updatedAt: profile.updatedAt,
       creativeRole: profile.creativeRole?.toString(),
       projectRole: profile.role?.toString(),
+      description: profile.description,
+      location: profile.location,
+      roles: profile.roles,
+      genres: profile.genres,
+      skills: profile.skills,
+      availabilityStatus: profile.availabilityStatus,
+      socialLinks: profile.socialLinks,
+      websiteUrl: profile.websiteUrl,
+      linktreeUrl: profile.linktreeUrl,
+      contactInfo: profile.contactInfo,
+      verified: profile.verified,
       displayName: name.isNotEmpty ? name : profile.email.split('@').first,
       initials: _getInitials(name),
     );
@@ -73,6 +114,17 @@ class UserProfileUiModel extends Equatable {
     updatedAt,
     creativeRole,
     projectRole,
+    description,
+    location,
+    roles,
+    genres,
+    skills,
+    availabilityStatus,
+    socialLinks,
+    websiteUrl,
+    linktreeUrl,
+    contactInfo,
+    verified,
     displayName,
     initials,
   ];

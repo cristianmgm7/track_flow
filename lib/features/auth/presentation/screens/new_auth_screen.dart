@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_events.dart';
 import 'package:trackflow/core/theme/app_dimensions.dart';
 import 'package:trackflow/core/theme/app_colors.dart';
+import 'package:trackflow/core/theme/app_text_style.dart';
 import 'package:trackflow/features/ui/auth/glassmorphism_card.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_event.dart';
 import 'package:trackflow/features/auth/presentation/bloc/auth_state.dart';
 import 'package:trackflow/core/app_flow/presentation/bloc/app_flow_bloc.dart';
 import 'package:trackflow/core/utils/app_logger.dart';
+import 'package:trackflow/features/ui/inputs/app_text_field.dart';
 
 enum AuthStep { welcome, form }
 
@@ -102,37 +104,9 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
 
         // Handle successful authentication
         if (state is AuthAuthenticated) {
-          AppLogger.info(
-            'Auth successful! User: ${state.user.email} (ID: ${state.user.id})',
-            tag: 'AUTH_SCREEN',
-          );
-
-          // Clear any existing error messages
-          ScaffoldMessenger.of(context).clearSnackBars();
-
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                _isLogin
-                    ? 'Successfully signed in!'
-                    : 'Account created successfully!',
-              ),
-              backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-
           // Clear form fields after successful auth
           _emailController.clear();
           _passwordController.clear();
-
-          // Trigger AppFlowBloc for proper state coordination
-          AppLogger.info(
-            'Triggering AppFlowBloc.checkAppFlow() after successful auth',
-            tag: 'AUTH_SCREEN',
-          );
-
           context.read<AppFlowBloc>().add(CheckAppFlow());
         }
       },
@@ -206,52 +180,55 @@ class _NewAuthScreenState extends State<NewAuthScreen> {
 
   Widget _buildWelcomeStep(bool isLoading) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Logo y título
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.textPrimary.withValues(alpha: 0.1),
-            border: Border.all(
-              color: AppColors.textPrimary.withValues(alpha: 0.3),
-              width: 2,
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Container(
+            width: Dimensions.space32,
+            height: Dimensions.space32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.textPrimary.withValues(alpha: 0.1),
+              border: Border.all(
+                color: AppColors.textPrimary.withValues(alpha: 0.3),
+                width: 2,
+              ),
             ),
-          ),
-          child: const Icon(
-            Icons.music_note,
-            size: 60,
-            color: AppColors.textPrimary,
+            child: Container( 
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/logo/trackflow_staging.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
         ),
         SizedBox(height: Dimensions.space24),
 
-        Text(
-          'TrackFlow',
-          style: TextStyle(
-            fontSize: 48,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-            shadows: [
-              Shadow(
-                color: AppColors.grey900.withValues(alpha: 0.5),
-                offset: const Offset(0, 2),
-                blurRadius: 10,
-              ),
-            ],
+        Padding(
+          padding: const EdgeInsets.only(left:16.0),
+          child: Text(
+            'Enjoy your\nown music',
+            style: AppTextStyle.displayLarge,
           ),
         ),
         SizedBox(height: Dimensions.space12),
 
-        Text(
-          'All your team in the same place',
-          style: TextStyle(
-            fontSize: 18,
-            color: AppColors.textPrimary.withValues(alpha: 0.9),
-            fontWeight: FontWeight.w300,
+        Padding(
+          padding: const EdgeInsets.only(left:16.0),
+          child: Text(
+            'All your team in the same place',
+            style: TextStyle(
+              fontSize: 18,
+              color: AppColors.textPrimary.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w300,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
 
         SizedBox(height: Dimensions.space64),

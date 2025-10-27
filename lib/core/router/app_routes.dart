@@ -22,6 +22,7 @@ class AppRoutes {
   // User profile routes
   static const String userProfile = '/userprofile';
   static const String profileCreation = '/profile/create';
+  static const String editUserProfile = '/profile/edit';
 
   // Audio comment routes
   static const String trackDetail = '/track-detail';
