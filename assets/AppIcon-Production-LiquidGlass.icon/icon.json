@@ -1,0 +1,47 @@
+{
+  "fill" : {
+    "automatic-gradient" : "srgb:0.00000,0.00483,0.01005,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "blend-mode-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : "normal"
+            }
+          ],
+          "fill-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : "none"
+            }
+          ],
+          "image-name" : "Black%20BG%20-%20White%20Dots%20%28Trackflow%20Dots%29.png",
+          "name" : "Black%20BG%20-%20White%20Dots%20%28Trackflow%20Dots%29",
+          "opacity-specializations" : [
+            {
+              "appearance" : "dark",
+              "value" : 0.93
+            }
+          ]
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
